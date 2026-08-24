@@ -42,6 +42,22 @@ See [`docs/RULES.md`](docs/RULES.md) for methodology, sources and limitations.
 
 All analysis runs locally in the browser. FocusTrace does not send page content, DOM data, screenshots or recorded interactions to a FocusTrace server or third-party AI API.
 
+## Try the latest development build
+
+After the CI workflow succeeds for a push to `main`, GitHub Actions publishes an installable Chrome MV3 artifact named `focustrace-chrome-dev`.
+
+To install it:
+
+1. Open the repository **Actions** tab and choose **Dev Extension**.
+2. Open the latest successful run and download the `focustrace-chrome-dev` artifact.
+3. Unzip it to a local folder.
+4. Open `chrome://extensions` and enable **Developer mode**.
+5. Choose **Load unpacked** and select the folder that contains `manifest.json`.
+
+To update an existing development installation, download the newest artifact, replace the local folder contents, then press **Reload** on the FocusTrace card in `chrome://extensions`.
+
+The artifact is generated from the exact `main` commit whose CI run succeeded and includes `FOCUSTRACE_BUILD.txt` with the source commit SHA. Development artifacts are unsigned preview builds and are retained for 14 days.
+
 ## Development
 
 ```bash

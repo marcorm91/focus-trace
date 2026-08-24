@@ -15,13 +15,14 @@ import type {
   SessionState,
 } from '../../shared/types';
 import { ExplanationLevelControl } from './components/ExplanationLevelControl';
+import { AboutView } from './views/AboutView';
 import { FocusGraphView } from './views/FocusGraphView';
 import { FocusView } from './views/FocusView';
 import { ReportView } from './views/ReportView';
 import { RuntimeView } from './views/RuntimeView';
 import { ScanView } from './views/ScanView';
 
-type View = 'scan' | 'focus' | 'runtime' | 'graph' | 'report';
+type View = 'scan' | 'focus' | 'runtime' | 'graph' | 'report' | 'about';
 
 const EMPTY_SESSION: SessionState = {
   tabId: -1,
@@ -200,10 +201,12 @@ export default function App() {
 
       {error && <div className="error" role="alert">{error}</div>}
 
-      <ExplanationLevelControl value={explanationLevel} onChange={setExplanationLevel} />
+      {view !== 'about' && (
+        <ExplanationLevelControl value={explanationLevel} onChange={setExplanationLevel} />
+      )}
 
       <nav className="tabs" aria-label="FocusTrace sections">
-        {(['scan', 'focus', 'runtime', 'graph', 'report'] as const).map((item) => (
+        {(['scan', 'focus', 'runtime', 'graph', 'report', 'about'] as const).map((item) => (
           <button
             key={item}
             type="button"
@@ -252,6 +255,7 @@ export default function App() {
           level={explanationLevel}
         />
       )}
+      {view === 'about' && <AboutView />}
     </main>
   );
 }
