@@ -26,6 +26,8 @@ This normalized representation is consumed directly by the scan engine for ARIA 
 
 `generated/language-subtags.json` is generated from the public IANA Language Subtag Registry. FocusTrace records only entries whose registry `Type` is `language`, plus deprecation metadata and preferred values when available.
 
+IANA is always the authority and primary download location. A public GitHub copy of the same registry is used only as an availability fallback, and the sync refuses to replace a committed snapshot with an older `File-Date`.
+
 This snapshot is the local source for the primary-language check behind `FT-WCAG-009` / ACT `bf051a`. It avoids relying on browser-specific locale APIs and keeps scans deterministic/offline.
 
 ## Deprecation semantics
