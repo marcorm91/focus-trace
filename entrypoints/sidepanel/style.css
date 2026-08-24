@@ -31,10 +31,6 @@ code { display: inline-block; max-width: 100%; overflow-wrap: anywhere; white-sp
 .severity.critical, .severity.serious { color: #b3261e; } .severity.moderate { color: #8a4f00; } .severity.minor, .severity.info { color: GrayText; }
 .focus-card dl { margin: 12px 0 0; display: grid; gap: 8px; } .focus-card dl div { display: grid; grid-template-columns: 72px 1fr; gap: 8px; align-items: start; }
 .focus-card dt { color: GrayText; font-size: 12px; } .focus-card dd { margin: 0; font-size: 12px; }
-.timeline { list-style: none; margin: 0; padding: 0; display: grid; }
-.timeline li { display: grid; grid-template-columns: 74px 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px solid color-mix(in srgb, CanvasText 10%, transparent); }
-.timeline time { font-variant-numeric: tabular-nums; color: GrayText; font-size: 10px; padding-top: 3px; }
-.timeline strong { display: block; margin: 5px 0 3px; font-size: 13px; } .timeline p { margin: 3px 0; font-size: 12px; } .route { overflow-wrap: anywhere; color: GrayText; }
 .empty { text-align: center; padding: 34px 16px; border: 1px dashed color-mix(in srgb, CanvasText 22%, transparent); border-radius: 10px; }
 .empty h2 { margin-bottom: 6px; } .empty p { color: GrayText; font-size: 13px; margin: 0 auto; max-width: 300px; }
 .engine-note { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 9px 11px; border-radius: 8px; background: color-mix(in srgb, Highlight 8%, Canvas); font-size: 12px; }
@@ -46,4 +42,28 @@ code { display: inline-block; max-width: 100%; overflow-wrap: anywhere; white-sp
 .references { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .references li { display: inline-flex; gap: 5px; align-items: center; font-size: 10px; } .references a { color: LinkText; } .references span { color: GrayText; font-size: 9px; text-transform: uppercase; }
 .runtime-finding { background: color-mix(in srgb, CanvasText 3%, transparent); }
-@media (max-width: 380px) { .actions { grid-template-columns: 1fr; } .tabs { grid-template-columns: repeat(2, 1fr); } }
+.cause-line { border-left: 3px solid Highlight; padding-left: 8px; }
+.interaction-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 9px; }
+.interaction { border: 1px solid color-mix(in srgb, CanvasText 14%, transparent); border-radius: 10px; overflow: hidden; }
+.interaction.has-finding { border-color: color-mix(in srgb, #b3261e 45%, CanvasText 14%); }
+.interaction details > summary { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; padding: 12px; cursor: pointer; list-style-position: inside; }
+.interaction details > summary > span { display: grid; gap: 3px; }
+.interaction details > summary strong { font-size: 13px; }
+.interaction details > summary small { color: GrayText; font-size: 10px; line-height: 1.35; }
+.interaction-summary { text-align: right; flex: 0 0 auto; }
+.interaction-summary time { color: GrayText; font-size: 10px; font-variant-numeric: tabular-nums; }
+.cause-box { margin: 0 12px 10px; padding: 10px; border-left: 3px solid Highlight; background: color-mix(in srgb, Highlight 6%, Canvas); }
+.cause-box > strong { display: block; font-size: 11px; text-transform: uppercase; letter-spacing: .05em; }
+.cause-box p { margin: 6px 0 0; font-size: 12px; line-height: 1.4; }
+.causal-chain { list-style: none; margin: 0; padding: 0 12px 6px; display: grid; }
+.causal-chain > li { display: grid; grid-template-columns: 74px 1fr; gap: 10px; padding: 10px 0; border-top: 1px solid color-mix(in srgb, CanvasText 10%, transparent); }
+.causal-chain time { font-variant-numeric: tabular-nums; color: GrayText; font-size: 10px; padding-top: 3px; }
+.causal-chain strong { display: block; margin: 5px 0 3px; font-size: 13px; }
+.causal-chain p { margin: 3px 0; font-size: 12px; }
+.route, .mutation-values { overflow-wrap: anywhere; color: GrayText; }
+@media (max-width: 380px) {
+  .actions { grid-template-columns: 1fr; }
+  .tabs { grid-template-columns: repeat(2, 1fr); }
+  .interaction details > summary { display: grid; }
+  .interaction-summary { text-align: left; }
+}

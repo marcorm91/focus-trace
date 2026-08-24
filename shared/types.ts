@@ -7,12 +7,24 @@ export type RuntimeEventKind =
   | 'keydown'
   | 'click'
   | 'route'
+  | 'dom-mutation'
   | 'focus-lost'
+  | 'focus-hidden'
   | 'focus-obscured'
   | 'dialog-open'
   | 'dialog-close'
   | 'dialog-focus-escape'
   | 'live-region';
+
+export type RuntimeMutationKind = 'node-added' | 'node-removed' | 'attribute-changed';
+
+export type RuntimeCauseType =
+  | 'FOCUSED_NODE_REMOVED'
+  | 'FOCUS_FELL_BACK_TO_BODY'
+  | 'DIALOG_OPENED_WITHOUT_FOCUS'
+  | 'MODAL_FOCUS_ESCAPE'
+  | 'ROUTE_CHANGED_WITHOUT_FOCUS_MOVE'
+  | 'FOCUSED_ELEMENT_BECAME_HIDDEN';
 
 export interface StandardReference {
   type: 'WCAG' | 'ACT' | 'WAI-ARIA' | 'WAI-ARIA APG';
@@ -31,19 +43,47 @@ export interface ElementSnapshot {
   selector: string;
 }
 
+export interface RuntimeMutationSnapshot {
+  kind: RuntimeMutationKind;
+  target: ElementSnapshot;
+  attribute?: string;
+  previousValue?: string | null;
+  currentValue?: string | null;
+}
+
+export interface RuntimeCause {
+  type: RuntimeCauseType;
+  confidence: 'deterministic';
+  summary: string;
+}
+
 export interface RuntimeEvent {
   id: string;
   timestamp: number;
   kind: RuntimeEventKind;
   severity: Severity;
   title: string;
+  interactionId?: string;
   detail?: string;
   element?: ElementSnapshot;
+  mutation?: RuntimeMutationSnapshot;
+  causes?: RuntimeCause[];
   fromUrl?: string;
   toUrl?: string;
   outcome?: FindingOutcome;
   ruleId?: string;
   references?: StandardReference[];
+}
+
+export interface RuntimeInteraction {
+  id: string;
+  correlated: boolean;
+  startedAt: number;
+  endedAt: number;
+  trigger?: RuntimeEvent;
+  events: RuntimeEvent[];
+  findings: number;
+  causes: RuntimeCause[];
 }
 
 export interface ScanIssue {
