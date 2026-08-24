@@ -33,10 +33,10 @@ FocusTrace consumes W3C's generated `common/script/roleInfo.js` data plus the AR
 - ARIA specification version
 - roles and parent roles
 - deprecated roles and the ARIA version in which the role was deprecated when stated in the specification
-- states/properties supported for each role
-- role/property combinations that are required
-- role/property combinations that are prohibited
-- role/property combinations that are deprecated
+- the ARIA state/property type table once, globally
+- supported, required, prohibited and deprecated state/property lists per role
+
+This normalized structure avoids repeating the same state/property metadata hundreds of times and keeps diffs reviewable.
 
 This distinction matters. A **deprecated ACT rule** is an outdated test. A **deprecated ARIA role or role/property combination** can still exist in an application and is useful evidence for a FocusTrace warning.
 
