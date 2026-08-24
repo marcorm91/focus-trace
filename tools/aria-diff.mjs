@@ -2,12 +2,15 @@ function stable(value) {
   return JSON.stringify(value);
 }
 
-function rolePropertyMap(registry, predicate = () => true) {
+function rolePropertyMap(registry, field) {
   const map = new Map();
   for (const role of registry.roles ?? []) {
-    for (const property of role.properties ?? []) {
-      if (!predicate(property)) continue;
-      map.set(`${role.name}|${property.name}`, { role: role.name, ...property });
+    for (const name of role[field] ?? []) {
+      map.set(`${role.name}|${name}`, {
+        role: role.name,
+        name,
+        kind: registry.properties?.[name] ?? 'unknown',
+      });
     }
   }
   return map;
@@ -43,12 +46,12 @@ export function diffAriaRegistries(before, after) {
     if (!currentRoles.has(name)) removedRoles.push(role);
   }
 
-  const previousDeprecated = rolePropertyMap(before, (property) => property.deprecated);
-  const currentDeprecated = rolePropertyMap(after, (property) => property.deprecated);
-  const previousDisallowed = rolePropertyMap(before, (property) => property.disallowed);
-  const currentDisallowed = rolePropertyMap(after, (property) => property.disallowed);
-  const previousRequired = rolePropertyMap(before, (property) => property.required);
-  const currentRequired = rolePropertyMap(after, (property) => property.required);
+  const previousDeprecated = rolePropertyMap(before, 'deprecatedProperties');
+  const currentDeprecated = rolePropertyMap(after, 'deprecatedProperties');
+  const previousDisallowed = rolePropertyMap(before, 'disallowedProperties');
+  const currentDisallowed = rolePropertyMap(after, 'disallowedProperties');
+  const previousRequired = rolePropertyMap(before, 'requiredProperties');
+  const currentRequired = rolePropertyMap(after, 'requiredProperties');
 
   const byName = (a, b) => a.name.localeCompare(b.name);
   return {
@@ -82,6 +85,7 @@ export function renderAriaChangeReport(before, after) {
     '',
     `- ARIA version: **${after.source?.version ?? 'unknown'}**`,
     `- Roles: **${after.summary?.roles ?? after.roles?.length ?? 0}**`,
+    `- ARIA states/properties: **${after.summary?.properties ?? Object.keys(after.properties ?? {}).length}**`,
     `- Deprecated roles: **${after.summary?.deprecatedRoles ?? 0}**`,
     `- Deprecated role/property pairs: **${after.summary?.deprecatedRolePropertyPairs ?? 0}**`,
   ];
