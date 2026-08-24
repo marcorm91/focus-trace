@@ -27,7 +27,7 @@ The automated expectation tested by a rule was met. PASS never means full WCAG c
 
 ## Accessible name computation
 
-FocusTrace now records both the computed name and the source that produced it. The current implementation covers the precedence needed by the rule engine for common HTML controls:
+FocusTrace records both the computed name and the source that produced it. The current implementation covers the precedence needed by the rule engine for common HTML controls:
 
 1. `aria-labelledby` references, in reference order
 2. `aria-label`
@@ -41,6 +41,24 @@ The implementation also supports self-reference inside `aria-labelledby`, multip
 
 A placeholder-derived name is **not** reported as an empty-name WCAG failure. Instead FocusTrace emits `FT-REVIEW-003`, because WCAG 3.3.2 distinguishes a label presented to users from the programmatic name, and W3C techniques recommend persistent visible labels for form controls.
 
+## Label in Name scope
+
+`FT-WCAG-007` implements the current automated subset described by ACT rule `2ee8b8` for WCAG 2.5.3. The rule applies when a widget that supports name from content has visible text content and its accessible name is overridden through `aria-label` or `aria-labelledby`.
+
+FocusTrace compares the visible DOM text with the computed accessible name, ignoring leading/trailing whitespace and case differences. The visible label must occur intact inside the accessible name.
+
+Examples:
+
+```html
+<!-- pass -->
+<button aria-label="Delete item">Delete</button>
+
+<!-- fail -->
+<button aria-label="Remove item">Delete</button>
+```
+
+This first implementation intentionally does not claim complete 2.5.3 coverage. CSS generated text, images of text and broader proximity-based visible-label detection are outside the current automated scope.
+
 ## Static rule set
 
 | FocusTrace rule | Outcome | Source |
@@ -51,6 +69,7 @@ A placeholder-derived name is **not** reported as an empty-name WCAG failure. In
 | FT-WCAG-004 Form field has a non-empty accessible name | FAIL/PASS | WCAG 4.1.2 · ACT e086e5 |
 | FT-WCAG-005 Link has a non-empty accessible name | FAIL/PASS | WCAG 4.1.2 / 2.4.4 · ACT c487ae |
 | FT-WCAG-006 aria-hidden content contains sequentially focusable content | FAIL/PASS | WCAG 4.1.2 · ACT 6cfa84 |
+| FT-WCAG-007 Visible label is part of accessible name | FAIL/PASS | WCAG 2.5.3 · ACT 2ee8b8 |
 | FT-REVIEW-001 Positive tabindex | REVIEW | WCAG 2.4.3 |
 | FT-REVIEW-002 Heading-level jump | REVIEW | WCAG 1.3.1 / 2.4.6 |
 | FT-REVIEW-003 Placeholder-only form label | REVIEW | WCAG 3.3.2 |
@@ -70,6 +89,7 @@ A placeholder-derived name is **not** reported as an empty-name WCAG failure. In
 
 - FocusTrace still implements a targeted subset of the complete AccName algorithm, not a user-agent-level reimplementation.
 - CSS generated content, slots/Shadow DOM, complex embedded-control recursion and cross-origin iframe traversal are not fully covered yet.
+- `FT-WCAG-007` currently covers ACT `2ee8b8` text-content cases; images of text and broader visual-label inference are not covered yet.
 - Runtime focus-obscured detection intentionally returns REVIEW because exact 2.4.11 evaluation has edge cases.
 - Dialog restoration has valid workflow exceptions defined by APG, so it remains REVIEW.
 - No automated result is a full WCAG 2.2 conformance claim.
