@@ -1,5 +1,6 @@
 import { explanationForCause, humanInteractionTitle, humanRuntimeEventTitle } from './explanations';
 import type { FocusGraph, FocusGraphNode } from './focus-graph';
+import { tr, type AppLanguage } from '../../shared/i18n';
 import type { RuntimeEvent, RuntimeInteraction } from '../../shared/types';
 
 export interface FocusArrivalTrace {
@@ -66,7 +67,11 @@ export interface AuditEvidenceBundle {
   }>;
 }
 
-export function focusArrivalTraces(node: FocusGraphNode, interactions: RuntimeInteraction[]): FocusArrivalTrace[] {
+export function focusArrivalTraces(
+  node: FocusGraphNode,
+  interactions: RuntimeInteraction[],
+  language: AppLanguage = 'en',
+): FocusArrivalTrace[] {
   const focusEventIds = new Set(node.focusEventIds);
   const traces: FocusArrivalTrace[] = [];
 
@@ -77,7 +82,7 @@ export function focusArrivalTraces(node: FocusGraphNode, interactions: RuntimeIn
         id: `${interaction.id}:${event.id}`,
         interactionId: interaction.id,
         correlated: interaction.correlated,
-        title: humanInteractionTitle(interaction),
+        title: humanInteractionTitle(interaction, language),
         arrivedAt: event.timestamp,
         arrivalEventId: event.id,
         events: interaction.events.slice(0, index + 1),
@@ -93,8 +98,10 @@ export function buildAuditEvidenceBundle(input: {
   interactions: RuntimeInteraction[];
   page?: { url?: string; title?: string };
   generatedAt?: string;
+  language?: AppLanguage;
 }): AuditEvidenceBundle {
   const { graph, interactions } = input;
+  const language = input.language ?? 'en';
   return {
     schemaVersion: 1,
     product: 'FocusTrace',
@@ -118,7 +125,7 @@ export function buildAuditEvidenceBundle(input: {
       causes: [...node.causeTypes],
     })),
     signals: graph.observations.map((observation) => {
-      const explanation = explanationForCause(observation.causeType);
+      const explanation = explanationForCause(observation.causeType, language);
       return {
         title: explanation.title,
         summary: explanation.summary,
@@ -137,7 +144,7 @@ export function buildAuditEvidenceBundle(input: {
     interactions: interactions.map((interaction) => ({
       id: interaction.id,
       correlated: interaction.correlated,
-      title: humanInteractionTitle(interaction),
+      title: humanInteractionTitle(interaction, language),
       startedAt: interaction.startedAt,
       endedAt: interaction.endedAt,
       findings: interaction.findings,
@@ -146,7 +153,7 @@ export function buildAuditEvidenceBundle(input: {
         id: event.id,
         timestamp: event.timestamp,
         kind: event.kind,
-        title: humanRuntimeEventTitle(event),
+        title: humanRuntimeEventTitle(event, language),
         ...(event.element?.selector ? { selector: event.element.selector } : {}),
         ...(event.ruleId ? { ruleId: event.ruleId } : {}),
         ...(event.outcome ? { outcome: event.outcome } : {}),
@@ -155,46 +162,81 @@ export function buildAuditEvidenceBundle(input: {
   };
 }
 
-export function renderAuditEvidenceMarkdown(bundle: AuditEvidenceBundle): string {
+export function renderAuditEvidenceMarkdown(
+  bundle: AuditEvidenceBundle,
+  language: AppLanguage = 'en',
+): string {
   const lines = [
-    '# FocusTrace accessibility evidence',
+    tr(language, '# FocusTrace accessibility evidence', '# Evidencia de accesibilidad de FocusTrace'),
     '',
-    `Generated: ${bundle.generatedAt}`,
-    'Scope: recorded journey only',
+    tr(language, `Generated: ${bundle.generatedAt}`, `Generado: ${bundle.generatedAt}`),
+    tr(language, 'Scope: recorded journey only', 'Alcance: únicamente el recorrido grabado'),
   ];
 
   if (bundle.page?.title || bundle.page?.url) {
-    lines.push('', '## Page', '', `- Title: ${bundle.page?.title || '—'}`, `- URL: ${bundle.page?.url || '—'}`);
+    lines.push(
+      '',
+      tr(language, '## Page', '## Página'),
+      '',
+      tr(language, `- Title: ${bundle.page?.title || '—'}`, `- Título: ${bundle.page?.title || '—'}`),
+      `- URL: ${bundle.page?.url || '—'}`,
+    );
   }
 
   lines.push(
     '',
-    '## Summary',
+    tr(language, '## Summary', '## Resumen'),
     '',
-    `- Focus points observed: ${bundle.summary.focusPoints}`,
-    `- Focus events: ${bundle.summary.focusEvents}`,
-    `- Focus transitions: ${bundle.summary.transitions}`,
-    `- Affected focus points: ${bundle.summary.affectedPoints}`,
-    `- Runtime signals: ${bundle.summary.runtimeSignals}`,
-    `- Correlated interactions: ${bundle.summary.interactions}`,
+    tr(language, `- Focus points observed: ${bundle.summary.focusPoints}`, `- Puntos de foco observados: ${bundle.summary.focusPoints}`),
+    tr(language, `- Focus events: ${bundle.summary.focusEvents}`, `- Eventos de foco: ${bundle.summary.focusEvents}`),
+    tr(language, `- Focus transitions: ${bundle.summary.transitions}`, `- Transiciones de foco: ${bundle.summary.transitions}`),
+    tr(language, `- Affected focus points: ${bundle.summary.affectedPoints}`, `- Puntos de foco afectados: ${bundle.summary.affectedPoints}`),
+    tr(language, `- Runtime signals: ${bundle.summary.runtimeSignals}`, `- Señales runtime: ${bundle.summary.runtimeSignals}`),
+    tr(language, `- Correlated interactions: ${bundle.summary.interactions}`, `- Interacciones correlacionadas: ${bundle.summary.interactions}`),
   );
 
   if (bundle.signals.length) {
-    lines.push('', '## Things to review');
+    lines.push('', tr(language, '## Things to review', '## Aspectos que revisar'));
     bundle.signals.forEach((signal, index) => {
-      lines.push('', `### ${index + 1}. ${signal.title}`, '', signal.summary, '', `**Impact:** ${signal.impact}`, '', `**What to review:** ${signal.recommendation}`);
-      if (signal.ruleId) lines.push('', `Rule: ${signal.ruleId}`);
-      if (signal.nodeId) lines.push(`Target: ${signal.nodeId}`);
-      signal.references.forEach((reference) => lines.push(`Reference: ${reference}`));
+      lines.push(
+        '',
+        `### ${index + 1}. ${signal.title}`,
+        '',
+        signal.summary,
+        '',
+        tr(language, `**Impact:** ${signal.impact}`, `**Impacto:** ${signal.impact}`),
+        '',
+        tr(language, `**What to review:** ${signal.recommendation}`, `**Qué revisar:** ${signal.recommendation}`),
+      );
+      if (signal.ruleId) lines.push('', tr(language, `Rule: ${signal.ruleId}`, `Regla: ${signal.ruleId}`));
+      if (signal.nodeId) lines.push(tr(language, `Target: ${signal.nodeId}`, `Destino: ${signal.nodeId}`));
+      signal.references.forEach((reference) => lines.push(tr(language, `Reference: ${reference}`, `Referencia: ${reference}`)));
     });
   }
 
-  lines.push('', '## Observed focus points');
+  lines.push('', tr(language, '## Observed focus points', '## Puntos de foco observados'));
   bundle.focusPoints.forEach((point, index) => {
-    lines.push('', `### ${index + 1}. ${point.label}`, '', `- Role/type: ${point.role}`, `- Visits: ${point.visits}`, `- Signals: ${point.signalCount}`, `- Selector: ${point.selector}`);
+    lines.push(
+      '',
+      `### ${index + 1}. ${point.label}`,
+      '',
+      tr(language, `- Role/type: ${point.role}`, `- Rol/tipo: ${point.role}`),
+      tr(language, `- Visits: ${point.visits}`, `- Visitas: ${point.visits}`),
+      tr(language, `- Signals: ${point.signalCount}`, `- Señales: ${point.signalCount}`),
+      `- Selector: ${point.selector}`,
+    );
   });
 
-  lines.push('', '---', '', 'This export contains evidence from the recorded FocusTrace journey. It is not a complete keyboard map and is not a WCAG conformance claim.');
+  lines.push(
+    '',
+    '---',
+    '',
+    tr(
+      language,
+      'This export contains evidence from the recorded FocusTrace journey. It is not a complete keyboard map and is not a WCAG conformance claim.',
+      'Esta exportación contiene evidencia del recorrido grabado con FocusTrace. No es un mapa completo de navegación por teclado ni una declaración de conformidad WCAG.',
+    ),
+  );
   return `${lines.join('\n')}\n`;
 }
 
