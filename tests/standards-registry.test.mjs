@@ -76,14 +76,17 @@ describe('ACT registry', () => {
 });
 
 describe('ARIA registry', () => {
-  it('extracts deprecated roles and role/property combinations', () => {
+  it('extracts normalized roles and deprecated role/property combinations', () => {
     const roleInfo = parseRoleInfoSource(ROLE_INFO);
     expect(deprecatedRoleVersion(ARIA_SPEC, 'directory')).toBe('1.2');
     const registry = buildAriaRegistry(roleInfo, ARIA_SPEC);
     expect(registry.source.version).toBe('1.3');
     expect(registry.summary.deprecatedRoles).toBe(1);
     expect(registry.summary.deprecatedRolePropertyPairs).toBe(1);
+    expect(registry.properties['aria-disabled']).toBe('state');
+    expect(registry.properties['aria-errormessage']).toBe('property');
     expect(registry.roles.find((role) => role.name === 'directory')?.deprecated).toBe(true);
+    expect(registry.roles.find((role) => role.name === 'button')?.deprecatedProperties).toEqual(['aria-errormessage']);
     expect(validateAriaRegistry(registry)).toBe(true);
   });
 
@@ -93,7 +96,7 @@ describe('ARIA registry', () => {
     const diff = diffAriaRegistries(before, after);
     expect(diff.newlyDeprecatedRoles.map((role) => role.name)).toEqual(['directory']);
     expect(diff.newlyDeprecatedProperties).toEqual([
-      expect.objectContaining({ role: 'button', name: 'aria-errormessage' }),
+      expect.objectContaining({ role: 'button', name: 'aria-errormessage', kind: 'property' }),
     ]);
   });
 });
