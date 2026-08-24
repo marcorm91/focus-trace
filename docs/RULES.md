@@ -41,6 +41,10 @@ FocusTrace records both the computed name and the source that produced it. The c
 6. `title` where HTML-AAM defines it as a fallback
 7. `placeholder`, then `aria-placeholder`, for text-entry controls where HTML-AAM defines those fallbacks
 
+Name-from-content traversal includes the computed text alternative of descendants. For example, an icon-only `button` can receive its name from a descendant `svg[role="img"][aria-label]`; FocusTrace must not report `FT-WCAG-003` for that pattern.
+
+When an accessible-name rule fails, the Accessibility and Developer explanation levels expose the resolved role, computed name, winning source and inspected candidates. This evidence is diagnostic context; it does not change the rule outcome.
+
 The implementation also supports self-reference inside `aria-labelledby`, multiple native labels, directly referenced hidden naming nodes, and exclusion of a wrapped control's own value from its label text.
 
 A placeholder-derived name is not reported as an empty-name WCAG failure. FocusTrace emits `FT-REVIEW-003` because a programmatic name and a persistent visible label are separate concerns.

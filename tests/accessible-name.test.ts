@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { accessibleNameDetails } from '../lib/audit/dom';
+import { accessibleNameDetails, accessibleNameDiagnostics } from '../lib/audit/dom';
 
 function mount(html: string) {
   document.open();
@@ -112,6 +112,49 @@ describe('FocusTrace accessible name computation', () => {
 
     expect(accessibleNameDetails(byId('save'))).toEqual({ name: 'Save changes', source: 'subtree' });
     expect(accessibleNameDetails(byId('help'))).toEqual({ name: 'Help center', source: 'subtree' });
+  });
+
+  it('uses an aria-label on a descendant SVG as the button name', () => {
+    mount(`
+      <button id="home">
+        <svg role="img" aria-label="Zara Pre-owned, go to home"><path /></svg>
+      </button>
+    `);
+
+    expect(accessibleNameDetails(byId('home'))).toEqual({
+      name: 'Zara Pre-owned, go to home',
+      source: 'subtree',
+    });
+  });
+
+  it('uses aria-labelledby resolved by a descendant graphic', () => {
+    mount(`
+      <span id="cart-name">Shopping cart</span>
+      <button id="cart"><svg role="img" aria-labelledby="cart-name"><path /></svg></button>
+    `);
+
+    expect(accessibleNameDetails(byId('cart'))).toEqual({
+      name: 'Shopping cart',
+      source: 'subtree',
+    });
+  });
+
+  it('exposes the inspected naming candidates for developer evidence', () => {
+    mount(`<button id="empty"><svg role="img" aria-label=""></svg></button>`);
+
+    expect(accessibleNameDiagnostics(byId('empty'))).toMatchObject({
+      name: '',
+      source: 'none',
+      role: 'button',
+      candidates: expect.arrayContaining([
+        expect.objectContaining({
+          source: 'aria-label',
+          selector: expect.stringContaining('svg'),
+          value: '',
+          used: false,
+        }),
+      ]),
+    });
   });
 
   it('allows a directly referenced hidden node to contribute to aria-labelledby', () => {

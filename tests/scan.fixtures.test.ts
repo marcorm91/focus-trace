@@ -55,6 +55,27 @@ describe('FocusTrace WCAG rule fixtures', () => {
     expect(result.review.map((issue) => issue.ruleId)).toContain('FT-REVIEW-003');
   });
 
+  it('accepts an icon-only button named by its descendant SVG', () => {
+    render(
+      'lang="en"',
+      '<main><h1>Store</h1><button id="home"><svg role="img" aria-label="Zara Pre-owned, go to home"><path></path></svg></button></main>',
+    );
+    const result = runFocusTraceScan();
+    expect(result.issues.some((issue) => issue.ruleId === 'FT-WCAG-003')).toBe(false);
+    expect(result.issues.some((issue) => issue.ruleId === 'FT-WCAG-002')).toBe(false);
+  });
+
+  it('attaches accessible-name calculation context to empty-name failures', () => {
+    render('lang="en"', '<main><h1>Store</h1><button id="empty"><svg aria-hidden="true"></svg></button></main>');
+    const result = runFocusTraceScan();
+    const issue = result.issues.find((candidate) => candidate.ruleId === 'FT-WCAG-003');
+    expect(issue?.accessibleName).toMatchObject({
+      name: '',
+      source: 'none',
+      role: 'button',
+    });
+  });
+
   it('fails FT-WCAG-008 when html lang is missing and leaves FT-WCAG-009 inapplicable', () => {
     render('');
     const result = runFocusTraceScan();

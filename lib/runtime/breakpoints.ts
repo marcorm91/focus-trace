@@ -20,28 +20,28 @@ export const RUNTIME_BREAKPOINTS: readonly RuntimeBreakpointDefinition[] = [
     causeType: 'FOCUSED_NODE_REMOVED',
     label: 'Focused node removed',
     description: 'Pause when the element that owns focus is removed from the DOM.',
-    defaultEnabled: true,
+    defaultEnabled: false,
   },
   {
     id: 'focus-fell-back-to-body',
     causeType: 'FOCUS_FELL_BACK_TO_BODY',
     label: 'Focus falls back to body',
     description: 'Pause when focus falls back to the document body after an interaction.',
-    defaultEnabled: true,
+    defaultEnabled: false,
   },
   {
     id: 'dialog-opened-without-focus',
     causeType: 'DIALOG_OPENED_WITHOUT_FOCUS',
     label: 'Dialog opens without focus',
     description: 'Pause when a dialog opens but focus is not established inside it.',
-    defaultEnabled: true,
+    defaultEnabled: false,
   },
   {
     id: 'modal-focus-escape',
     causeType: 'MODAL_FOCUS_ESCAPE',
     label: 'Focus escapes modal',
     description: 'Pause when focus moves outside an open modal dialog.',
-    defaultEnabled: true,
+    defaultEnabled: false,
   },
   {
     id: 'route-changed-without-focus-move',
@@ -55,7 +55,7 @@ export const RUNTIME_BREAKPOINTS: readonly RuntimeBreakpointDefinition[] = [
     causeType: 'FOCUSED_ELEMENT_BECAME_HIDDEN',
     label: 'Focused element becomes hidden',
     description: 'Pause when the focused element or an ancestor becomes hidden.',
-    defaultEnabled: true,
+    defaultEnabled: false,
   },
 ] as const;
 
