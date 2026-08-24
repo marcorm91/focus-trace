@@ -1,0 +1,104 @@
+name: Standards Registry
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 6 * * *'
+  push:
+    paths:
+      - 'tools/act-sync.mjs'
+      - 'tools/aria-sync.mjs'
+      - 'tools/standards-sync.mjs'
+      - 'tools/standards-utils.mjs'
+      - '.github/workflows/standards-registry.yml'
+
+permissions:
+  contents: write
+  pull-requests: write
+  issues: write
+
+concurrency:
+  group: standards-registry-sync
+  cancel-in-progress: false
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+
+      - name: Preserve current snapshots
+        run: |
+          cp generated/act-catalog.json /tmp/act-before.json
+          cp generated/aria-registry.json /tmp/aria-before.json
+
+      - name: Sync public standards registries
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: node tools/standards-sync.mjs
+
+      - name: Validate generated registries
+        run: node tools/standards-validate.mjs
+
+      - name: Detect registry changes
+        id: changes
+        shell: bash
+        run: |
+          if git diff --quiet -- generated/act-catalog.json generated/aria-registry.json; then
+            echo 'changed=false' >> "$GITHUB_OUTPUT"
+          else
+            echo 'changed=true' >> "$GITHUB_OUTPUT"
+            node tools/standards-diff.mjs \
+              /tmp/act-before.json generated/act-catalog.json \
+              /tmp/aria-before.json generated/aria-registry.json \
+              > /tmp/standards-report.md
+            cat /tmp/standards-report.md >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Bootstrap snapshots on development branch
+        if: steps.changes.outputs.changed == 'true' && github.event_name == 'push' && github.ref_name != 'main'
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add generated/act-catalog.json generated/aria-registry.json
+          git commit -m 'chore: sync standards registries'
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+      - name: Open or refresh upstream registry PR
+        if: steps.changes.outputs.changed == 'true' && !(github.event_name == 'push' && github.ref_name != 'main')
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        shell: bash
+        run: |
+          BRANCH='bot/standards-registry-sync'
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git checkout -B "$BRANCH"
+          git add generated/act-catalog.json generated/aria-registry.json
+          git commit -m 'chore: sync standards registries'
+          git push origin "$BRANCH" --force
+
+          PR_NUMBER="$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number // empty')"
+          if [ -n "$PR_NUMBER" ]; then
+            gh pr edit "$PR_NUMBER" \
+              --title 'chore: sync accessibility standards registries' \
+              --body-file /tmp/standards-report.md
+          else
+            if ! gh pr create \
+              --base main \
+              --head "$BRANCH" \
+              --title 'chore: sync accessibility standards registries' \
+              --body-file /tmp/standards-report.md; then
+              gh issue create \
+                --title 'Accessibility standards registry changed' \
+                --body-file /tmp/standards-report.md
+              exit 1
+            fi
+          fi
