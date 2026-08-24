@@ -55,6 +55,16 @@ async function ensureInjected(tabId: number) {
   }
 }
 
+async function syncContentState(tabId: number, suppliedState?: SessionState) {
+  const state = suppliedState ?? await getSession(tabId);
+  await ensureInjected(tabId);
+  await browser.tabs.sendMessage(tabId, {
+    type: 'FOCUSTRACE_SET_RECORDING',
+    enabled: state.recording,
+    breakpoints: state.breakpoints,
+  } satisfies ExtensionMessage);
+}
+
 export default defineBackground(() => {
   void browser.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
 
@@ -74,6 +84,12 @@ export default defineBackground(() => {
         await saveSession(next);
         await broadcast(next);
       });
+    }
+
+    if (message.type === 'FOCUSTRACE_GET_CONTENT_STATE') {
+      const tabId = sender.tab?.id;
+      if (tabId == null) return;
+      return getSession(tabId);
     }
 
     if (message.type === 'FOCUSTRACE_GET_SESSION') return getSession(message.tabId);
@@ -132,6 +148,23 @@ export default defineBackground(() => {
       });
     }
 
-    if (message.type === 'FOCUSTRACE_ENSURE_INJECTED') return ensureInjected(message.tabId).then(() => true);
+    if (message.type === 'FOCUSTRACE_ENSURE_INJECTED') {
+      return syncContentState(message.tabId).then(() => true);
+    }
+  });
+
+  // A runtime-registered content script is replaced by a full navigation.
+  // Re-inject it and restore the per-tab recording state without requiring the
+  // side panel to stay focused or even open.
+  browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
+    if (changeInfo.status !== 'complete') return;
+    void getSession(tabId)
+      .then((state) => state.recording ? syncContentState(tabId, state) : undefined)
+      .catch(() => undefined);
+  });
+
+  browser.tabs.onRemoved.addListener((tabId) => {
+    tabWriteQueues.delete(tabId);
+    void browser.storage.session.remove(keyForTab(tabId));
   });
 });

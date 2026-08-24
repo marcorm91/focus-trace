@@ -108,6 +108,20 @@ export interface RuntimeInteraction {
   breakpointHits: RuntimeBreakpointHit[];
 }
 
+export interface AccessibleNameCandidateEvidence {
+  source: string;
+  selector: string;
+  value: string;
+  used: boolean;
+}
+
+export interface AccessibleNameEvidence {
+  name: string;
+  source: string;
+  role: string | null;
+  candidates: AccessibleNameCandidateEvidence[];
+}
+
 export interface ScanIssue {
   id: string;
   ruleId: string;
@@ -117,6 +131,7 @@ export interface ScanIssue {
   outcome: FindingOutcome;
   targets: string[];
   evidence?: string;
+  accessibleName?: AccessibleNameEvidence;
   references: StandardReference[];
 }
 
@@ -145,6 +160,7 @@ export interface SessionState {
 
 export type ExtensionMessage =
   | { type: 'FOCUSTRACE_EVENT'; event: RuntimeEvent }
+  | { type: 'FOCUSTRACE_GET_CONTENT_STATE' }
   | { type: 'FOCUSTRACE_GET_SESSION'; tabId: number }
   | { type: 'FOCUSTRACE_CLEAR_SESSION'; tabId: number }
   | { type: 'FOCUSTRACE_ENSURE_INJECTED'; tabId: number }

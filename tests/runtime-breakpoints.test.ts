@@ -21,14 +21,9 @@ const bodyFallback: RuntimeCause = {
 };
 
 describe('runtime accessibility breakpoints', () => {
-  it('enables high-signal breakpoints by default and leaves SPA focus paused opt-in', () => {
+  it('keeps every breakpoint opt-in so normal page interaction does not stop recording', () => {
     const settings = defaultRuntimeBreakpointSettings();
-    expect(settings['focused-node-removed']).toBe(true);
-    expect(settings['focus-fell-back-to-body']).toBe(true);
-    expect(settings['dialog-opened-without-focus']).toBe(true);
-    expect(settings['modal-focus-escape']).toBe(true);
-    expect(settings['focused-element-became-hidden']).toBe(true);
-    expect(settings['route-changed-without-focus-move']).toBe(false);
+    expect(Object.values(settings).every((enabled) => enabled === false)).toBe(true);
   });
 
   it('normalizes partial or legacy session settings against current defaults', () => {
@@ -38,20 +33,23 @@ describe('runtime accessibility breakpoints', () => {
     });
     expect(settings['focused-node-removed']).toBe(false);
     expect(settings['route-changed-without-focus-move']).toBe(true);
-    expect(settings['modal-focus-escape']).toBe(true);
+    expect(settings['modal-focus-escape']).toBe(false);
   });
 
   it('matches only enabled breakpoints for recorded deterministic causes', () => {
     const settings = defaultRuntimeBreakpointSettings();
-    settings['focus-fell-back-to-body'] = false;
+    settings['focused-node-removed'] = true;
     const matches = enabledBreakpointsForCauses([focusedRemoved, bodyFallback], settings);
     expect(matches.map((match) => match.id)).toEqual(['focused-node-removed']);
   });
 
   it('creates hit metadata tied to the exact event and interaction', () => {
+    const settings = defaultRuntimeBreakpointSettings();
+    settings['focused-node-removed'] = true;
+    settings['focus-fell-back-to-body'] = true;
     const hits = createRuntimeBreakpointHits({
       causes: [focusedRemoved, bodyFallback],
-      settings: defaultRuntimeBreakpointSettings(),
+      settings,
       eventId: 'event-1',
       timestamp: 1234,
       interactionId: 'ix-test-1',
@@ -70,9 +68,11 @@ describe('runtime accessibility breakpoints', () => {
   });
 
   it('keeps breakpoint hits attached when events are grouped into a causal interaction', () => {
+    const settings = defaultRuntimeBreakpointSettings();
+    settings['focused-node-removed'] = true;
     const hits = createRuntimeBreakpointHits({
       causes: [focusedRemoved],
-      settings: defaultRuntimeBreakpointSettings(),
+      settings,
       eventId: 'event-2',
       timestamp: 200,
       interactionId: 'ix-test-2',

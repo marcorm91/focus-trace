@@ -1,6 +1,6 @@
 import { RULES, type RuleDefinition } from '../../shared/rule-catalog';
 import type { FindingOutcome, ScanIssue, ScanResult } from '../../shared/types';
-import { accessibleName, accessibleNameDetails, isMarkedDecorative, isProgrammaticallyHidden, isSequentiallyFocusable, selectorFor, semanticRole } from './dom';
+import { accessibleNameDetails, accessibleNameDiagnostics, isMarkedDecorative, isProgrammaticallyHidden, isSequentiallyFocusable, selectorFor, semanticRole } from './dom';
 import { evaluateLabelInName } from './label-in-name';
 import { evaluateAriaAuthoringSignals, pageLanguageStatus, type AriaAuthoringSignal } from './standards-registry';
 
@@ -8,8 +8,8 @@ interface RuleExecution { issues: ScanIssue[]; review: ScanIssue[]; warnings: Sc
 const emptyExecution = (): RuleExecution => ({ issues: [], review: [], warnings: [], passes: 0 });
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-function finding(rule: RuleDefinition, outcome: FindingOutcome, target: Element | string, description: string, evidence?: string): ScanIssue {
-  return { id: uid(), ruleId: rule.id, title: rule.title, description, severity: rule.severity, outcome, targets: [typeof target === 'string' ? target : selectorFor(target)], ...(evidence ? { evidence } : {}), references: rule.references };
+function finding(rule: RuleDefinition, outcome: FindingOutcome, target: Element | string, description: string, evidence?: string, accessibleName?: ScanIssue['accessibleName']): ScanIssue {
+  return { id: uid(), ruleId: rule.id, title: rule.title, description, severity: rule.severity, outcome, targets: [typeof target === 'string' ? target : selectorFor(target)], ...(evidence ? { evidence } : {}), ...(accessibleName ? { accessibleName } : {}), references: rule.references };
 }
 
 function runPageTitle(): RuleExecution {
@@ -43,8 +43,9 @@ function runImages(): RuleExecution {
   const result = emptyExecution();
   for (const element of [...document.querySelectorAll('img, [role="img"]')]) {
     if (isProgrammaticallyHidden(element)) continue;
-    if (isMarkedDecorative(element) || accessibleName(element)) { result.passes += 1; continue; }
-    result.issues.push(finding(RULES.imageName, 'fail', element, 'The image is exposed as image content but has an empty accessible name and is not marked decorative.', element instanceof HTMLImageElement && !element.hasAttribute('alt') ? 'The <img> element has no alt attribute and no alternative naming mechanism was detected.' : 'No non-empty accessible name was detected.'));
+    const name = accessibleNameDiagnostics(element);
+    if (isMarkedDecorative(element) || name.name) { result.passes += 1; continue; }
+    result.issues.push(finding(RULES.imageName, 'fail', element, 'The image is exposed as image content but has an empty accessible name and is not marked decorative.', element instanceof HTMLImageElement && !element.hasAttribute('alt') ? 'The <img> element has no alt attribute and no alternative naming mechanism was detected.' : 'No non-empty accessible name was detected.', name));
   }
   return result;
 }
@@ -54,8 +55,9 @@ function runButtons(): RuleExecution {
   for (const element of [...document.querySelectorAll('button, input, [role]')]) {
     if (element instanceof HTMLInputElement && element.type.toLowerCase() === 'image') continue;
     if (semanticRole(element) !== 'button' || isProgrammaticallyHidden(element)) continue;
-    if (accessibleName(element)) { result.passes += 1; continue; }
-    result.issues.push(finding(RULES.buttonName, 'fail', element, 'The button is exposed to assistive technology with an empty accessible name.', 'No aria-labelledby, aria-label, native label/value, relevant text content or title was detected.'));
+    const name = accessibleNameDiagnostics(element);
+    if (name.name) { result.passes += 1; continue; }
+    result.issues.push(finding(RULES.buttonName, 'fail', element, 'The button is exposed to assistive technology with an empty accessible name.', 'The accessible-name computation returned an empty string.', name));
   }
   return result;
 }
@@ -66,8 +68,9 @@ function runFormFields(): RuleExecution {
   for (const element of [...document.querySelectorAll('input, select, textarea, [role]')]) {
     const role = semanticRole(element);
     if (!role || !FORM_FIELD_ROLES.has(role) || isProgrammaticallyHidden(element)) continue;
-    if (accessibleName(element)) { result.passes += 1; continue; }
-    result.issues.push(finding(RULES.formFieldName, 'fail', element, 'The form field has an empty accessible name.', 'No programmatic label or other non-empty accessible naming mechanism was detected.'));
+    const name = accessibleNameDiagnostics(element);
+    if (name.name) { result.passes += 1; continue; }
+    result.issues.push(finding(RULES.formFieldName, 'fail', element, 'The form field has an empty accessible name.', 'The accessible-name computation returned an empty string.', name));
   }
   return result;
 }
@@ -88,8 +91,9 @@ function runLinks(): RuleExecution {
   const result = emptyExecution();
   for (const element of [...document.querySelectorAll('a, area, [role]')]) {
     if (semanticRole(element) !== 'link' || isProgrammaticallyHidden(element)) continue;
-    if (accessibleName(element)) { result.passes += 1; continue; }
-    result.issues.push(finding(RULES.linkName, 'fail', element, 'The link has an empty accessible name, so its purpose cannot be programmatically determined from its name.', 'No non-empty accessible name was detected.'));
+    const name = accessibleNameDiagnostics(element);
+    if (name.name) { result.passes += 1; continue; }
+    result.issues.push(finding(RULES.linkName, 'fail', element, 'The link has an empty accessible name, so its purpose cannot be programmatically determined from its name.', 'The accessible-name computation returned an empty string.', name));
   }
   return result;
 }

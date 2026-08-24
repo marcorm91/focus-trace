@@ -142,6 +142,15 @@ export default function App() {
     setScan(state.scan);
   }, []);
 
+  const selectTab = useCallback(async (id: number) => {
+    setTabId(id);
+    setSession({ ...EMPTY_SESSION, tabId: id });
+    setScan(undefined);
+    setFocusPathVisible(false);
+    setSelectedFocusSelector(undefined);
+    await refresh(id);
+  }, [refresh]);
+
   useEffect(() => {
     void browser.storage.local.get(SETTINGS_STORAGE_KEY).then((stored) => {
       const settings = stored[SETTINGS_STORAGE_KEY] as { language?: AppLanguage } | undefined;
@@ -155,12 +164,17 @@ export default function App() {
 
   useEffect(() => {
     void activeTabId()
-      .then(async (id) => {
-        setTabId(id);
-        await refresh(id);
-      })
+      .then(selectTab)
       .catch((reason) => setError(String(reason)));
-  }, [refresh]);
+  }, [selectTab]);
+
+  useEffect(() => {
+    const listener = ({ tabId: nextTabId }: { tabId: number }) => {
+      void selectTab(nextTabId).catch((reason) => setError(String(reason)));
+    };
+    browser.tabs.onActivated.addListener(listener);
+    return () => browser.tabs.onActivated.removeListener(listener);
+  }, [selectTab]);
 
   useEffect(() => {
     const listener = (message: ExtensionMessage) => {
@@ -389,32 +403,59 @@ export default function App() {
   const runtimeWarnings = runtimeFindings.filter((event) => ['moderate', 'minor'].includes(event.severity)).length;
   const causalFindings = runtimeFindings.filter((event) => event.causes?.length).length;
   const breakpointHits = session.events.reduce((total, event) => total + (event.breakpointHits?.length ?? 0), 0);
+  const hasRecordedJourney = session.events.length > 0;
   const statusLabel = session.recording
-    ? tr(language, 'Recording', 'Grabando')
+    ? tr(language, 'Recording active', 'Grabación activa')
     : session.pausedByBreakpoint
-      ? tr(language, 'Paused', 'Pausado')
-      : tr(language, 'Idle', 'Inactivo');
+      ? tr(language, 'Paused by breakpoint', 'Pausada por breakpoint')
+      : hasRecordedJourney
+        ? tr(language, 'Recording stopped', 'Grabación detenida')
+        : tr(language, 'Ready', 'Listo');
+  const statusDescription = session.recording
+    ? tr(
+        language,
+        'Return to the page and use it normally. Recording continues when this panel loses focus.',
+        'Vuelve a la página y úsala con normalidad. La grabación continúa aunque este panel pierda el foco.',
+      )
+    : session.pausedByBreakpoint
+      ? tr(
+          language,
+          'The triggering event was saved. Continue when you are ready; the page itself was never paused.',
+          'El evento que lo provocó ya está guardado. Continúa cuando quieras; la página nunca se ha pausado.',
+        )
+      : hasRecordedJourney
+        ? tr(
+            language,
+            'Your recorded journey is kept below. Start a new recording when you want to replace it.',
+            'El recorrido grabado se conserva abajo. Inicia una nueva grabación cuando quieras reemplazarlo.',
+          )
+        : tr(
+            language,
+            'Analyze the current page or record a journey to inspect focus and dynamic changes.',
+            'Analiza la página actual o graba un recorrido para revisar el foco y los cambios dinámicos.',
+          );
+  const sessionTone = session.recording ? 'live' : session.pausedByBreakpoint ? 'paused' : hasRecordedJourney ? 'stopped' : 'ready';
 
-  const navigation: Array<{ id: Exclude<View, 'settings'>; label: string }> = [
-    { id: 'scan', label: tr(language, 'Scan', 'Análisis') },
-    { id: 'focus', label: tr(language, 'Focus', 'Foco') },
-    { id: 'runtime', label: 'Runtime' },
-    { id: 'graph', label: tr(language, 'Graph', 'Grafo') },
-    { id: 'report', label: tr(language, 'Report', 'Informe') },
-    { id: 'about', label: tr(language, 'About', 'Acerca de') },
+  const navigation: Array<{ id: Exclude<View, 'settings'>; label: string; icon: string }> = [
+    { id: 'scan', label: tr(language, 'Analysis', 'Análisis'), icon: '⌕' },
+    { id: 'focus', label: tr(language, 'Focus', 'Foco'), icon: '◎' },
+    { id: 'runtime', label: tr(language, 'Activity', 'Actividad'), icon: '↯' },
+    { id: 'graph', label: tr(language, 'Journey', 'Recorrido'), icon: '↝' },
+    { id: 'report', label: tr(language, 'Report', 'Informe'), icon: '▤' },
+    { id: 'about', label: tr(language, 'Help', 'Ayuda'), icon: '?' },
   ];
 
   return (
     <main className="app-shell">
       <header className="topbar">
-        <div>
-          <p className="eyebrow">{tr(language, 'Accessibility runtime debugger', 'Depurador de accesibilidad en tiempo de ejecución')}</p>
-          <h1>FocusTrace</h1>
+        <div className="brand">
+          <span className="brand-mark" aria-hidden="true">FT</span>
+          <div>
+            <h1>FocusTrace</h1>
+            <p>{tr(language, 'Accessibility journey debugger', 'Depurador de recorridos accesibles')}</p>
+          </div>
         </div>
         <div className="topbar-tools">
-          <span className={`status ${session.recording ? 'live' : session.pausedByBreakpoint ? 'paused' : ''}`.trim()}>
-            <span aria-hidden="true" /> {statusLabel}
-          </span>
           <button
             className="settings-trigger"
             type="button"
@@ -427,26 +468,47 @@ export default function App() {
         </div>
       </header>
 
-      <div className="actions" aria-label={tr(language, 'Primary actions', 'Acciones principales')}>
-        <button className="primary" type="button" onClick={toggleRecording} disabled={busy || tabId == null}>
-          {session.recording
-            ? tr(language, 'Stop recording', 'Detener grabación')
-            : session.pausedByBreakpoint
-              ? tr(language, 'Resume recording', 'Reanudar grabación')
-              : tr(language, 'Record interaction', 'Grabar interacción')}
-        </button>
-        <button type="button" onClick={runScan} disabled={busy || tabId == null}>
-          {busy ? tr(language, 'Working…', 'Procesando…') : tr(language, 'Analyze page', 'Analizar página')}
-        </button>
-      </div>
+      <section className={`session-console ${sessionTone}`} aria-label={tr(language, 'Recording controls', 'Controles de grabación')}>
+        <div className="session-summary">
+          <div className="session-heading">
+            <span className={`status ${sessionTone}`}>
+              <span aria-hidden="true" />
+              {statusLabel}
+            </span>
+            {hasRecordedJourney && (
+              <span className="event-count">
+                {tr(language, `${session.events.length} events`, `${session.events.length} eventos`)}
+              </span>
+            )}
+          </div>
+          <p>{statusDescription}</p>
+        </div>
+        <div className="actions">
+          <button
+            className={`primary record-action ${session.recording ? 'stop' : ''}`}
+            type="button"
+            onClick={toggleRecording}
+            disabled={busy || tabId == null}
+          >
+            <span className="record-icon" aria-hidden="true" />
+            {session.recording
+              ? tr(language, 'Stop recording', 'Detener grabación')
+              : session.pausedByBreakpoint
+                ? tr(language, 'Continue recording', 'Continuar grabación')
+                : hasRecordedJourney
+                  ? tr(language, 'New recording', 'Nueva grabación')
+                  : tr(language, 'Start recording', 'Iniciar grabación')}
+          </button>
+          <button className="scan-action" type="button" onClick={runScan} disabled={busy || tabId == null}>
+            <span aria-hidden="true">⌕</span>
+            {busy ? tr(language, 'Working…', 'Procesando…') : tr(language, 'Analyze page', 'Analizar página')}
+          </button>
+        </div>
+      </section>
 
       {error && <div className="error" role="alert">{error}</div>}
 
-      {view !== 'about' && view !== 'settings' && (
-        <ExplanationLevelControl value={explanationLevel} onChange={setExplanationLevel} language={language} />
-      )}
-
-      <nav className="tabs" aria-label={tr(language, 'FocusTrace sections', 'Secciones de FocusTrace')}>
+      <nav className="tabs workspace-nav" aria-label={tr(language, 'FocusTrace sections', 'Secciones de FocusTrace')}>
         {navigation.map((item) => (
           <button
             key={item.id}
@@ -455,10 +517,15 @@ export default function App() {
             aria-current={view === item.id ? 'page' : undefined}
             onClick={() => setView(item.id)}
           >
-            {item.label}
+            <span aria-hidden="true">{item.icon}</span>
+            <strong>{item.label}</strong>
           </button>
         ))}
       </nav>
+
+      {view !== 'about' && view !== 'settings' && (
+        <ExplanationLevelControl value={explanationLevel} onChange={setExplanationLevel} language={language} />
+      )}
 
       {view === 'scan' && <ScanView scan={scan} level={explanationLevel} language={language} onLocate={locateScanTarget} />}
       {view === 'focus' && (

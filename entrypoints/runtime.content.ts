@@ -15,6 +15,7 @@ import type {
   RuntimeCauseType,
   RuntimeEvent,
   RuntimeMutationSnapshot,
+  SessionState,
 } from '../shared/types';
 
 interface DialogState {
@@ -647,5 +648,19 @@ export default defineContentScript({
 
       if (message.type === 'FOCUSTRACE_RUN_SCAN') return Promise.resolve(runFocusTraceScan());
     });
+
+    // Restore state when this script is re-created after a navigation or when
+    // the side panel is closed. Recording belongs to the inspected tab, not to
+    // the panel's focus lifecycle.
+    void browser.runtime.sendMessage({
+      type: 'FOCUSTRACE_GET_CONTENT_STATE',
+    } satisfies ExtensionMessage).then((state: SessionState | undefined) => {
+      if (!state) return;
+      recording = state.recording;
+      breakpointSettings = normalizeRuntimeBreakpointSettings(state.breakpoints);
+      lastFocused = document.activeElement instanceof Element ? document.activeElement : null;
+      lastUrl = location.href;
+      lastTitle = document.title;
+    }).catch(() => undefined);
   },
 });

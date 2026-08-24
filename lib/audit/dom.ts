@@ -39,6 +39,18 @@ export interface AccessibleNameResult {
   source: AccessibleNameSource;
 }
 
+export interface AccessibleNameCandidateDiagnostic {
+  source: AccessibleNameSource;
+  selector: string;
+  value: string;
+  used: boolean;
+}
+
+export interface AccessibleNameDiagnostic extends AccessibleNameResult {
+  role: string | null;
+  candidates: AccessibleNameCandidateDiagnostic[];
+}
+
 interface NameContext {
   allowLabelledBy: boolean;
   referenced: boolean;
@@ -115,14 +127,27 @@ function subtreeTextAlternative(root: Element, options: { includeHidden: boolean
     if (!(node instanceof Element)) return;
     if (!options.includeHidden && isAccNameHidden(node)) return;
 
-    if (node instanceof HTMLImageElement || node instanceof HTMLAreaElement) {
-      pieces.push(node.getAttribute('aria-label') || node.getAttribute('alt') || '');
-      return;
-    }
-
     if (node instanceof HTMLInputElement || node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement) {
       const value = embeddedControlValue(node);
       if (value) pieces.push(value);
+      return;
+    }
+
+    // During name-from-content traversal, a descendant's own ARIA naming
+    // mechanism contributes its text alternative. This is what lets an
+    // icon-only button inherit a name from <svg role="img" aria-label="…">.
+    if (node.hasAttribute('aria-labelledby') || normalise(node.getAttribute('aria-label'))) {
+      const descendantName = computeName(node, {
+        allowLabelledBy: true,
+        referenced: false,
+        visited: new Set([root]),
+      }).name;
+      if (descendantName) pieces.push(descendantName);
+      return;
+    }
+
+    if (node instanceof HTMLImageElement || node instanceof HTMLAreaElement) {
+      pieces.push(node.getAttribute('alt') || '');
       return;
     }
 
@@ -277,6 +302,86 @@ export function accessibleNameDetails(element: Element): AccessibleNameResult {
     referenced: false,
     visited: new Set<Element>(),
   });
+}
+
+function candidate(
+  element: Element,
+  source: AccessibleNameSource,
+  value: string,
+  result: AccessibleNameResult,
+): AccessibleNameCandidateDiagnostic {
+  const normalizedValue = normalise(value);
+  return {
+    source,
+    selector: selectorFor(element),
+    value: normalizedValue,
+    used:
+      normalizedValue.length > 0 &&
+      (result.source === source || (result.source === 'subtree' && result.name.includes(normalizedValue))),
+  };
+}
+
+export function accessibleNameDiagnostics(element: Element): AccessibleNameDiagnostic {
+  const result = accessibleNameDetails(element);
+  const candidates: AccessibleNameCandidateDiagnostic[] = [];
+
+  if (element.hasAttribute('aria-labelledby')) {
+    const ids = normalise(element.getAttribute('aria-labelledby')).split(/\s+/).filter(Boolean);
+    const value = ids
+      .map((id) => document.getElementById(id))
+      .filter((reference): reference is HTMLElement => reference != null)
+      .map((reference) => accessibleNameDetails(reference).name)
+      .join(' ');
+    candidates.push(candidate(element, 'aria-labelledby', value, result));
+  }
+
+  if (element.hasAttribute('aria-label')) {
+    candidates.push(candidate(element, 'aria-label', element.getAttribute('aria-label') ?? '', result));
+  }
+
+  if (labelableLabels(element).length) {
+    candidates.push(candidate(element, 'label', associatedLabelText(element), result));
+  }
+
+  if ((element instanceof HTMLImageElement || element instanceof HTMLAreaElement) && element.hasAttribute('alt')) {
+    candidates.push(candidate(element, 'alt', element.getAttribute('alt') ?? '', result));
+  }
+
+  if (element instanceof HTMLInputElement && element.hasAttribute('value')) {
+    candidates.push(candidate(element, 'value', element.getAttribute('value') ?? '', result));
+  }
+
+  const role = semanticRole(element);
+  if (NAME_FROM_CONTENT_ROLES.has(role ?? '')) {
+    candidates.push(candidate(element, 'subtree', subtreeTextAlternative(element, { includeHidden: false }), result));
+  }
+
+  for (const descendant of [...element.querySelectorAll('[aria-labelledby], [aria-label]')].slice(0, 8)) {
+    const details = accessibleNameDetails(descendant);
+    const source = descendant.hasAttribute('aria-labelledby')
+      ? 'aria-labelledby'
+      : descendant.hasAttribute('aria-label')
+        ? 'aria-label'
+        : details.source === 'none'
+          ? 'subtree'
+          : details.source;
+    const value = source === 'aria-label'
+      ? descendant.getAttribute('aria-label') ?? ''
+      : details.name;
+    candidates.push(candidate(descendant, source, value, result));
+  }
+
+  if (element.hasAttribute('title')) {
+    candidates.push(candidate(element, 'title', element.getAttribute('title') ?? '', result));
+  }
+  if (element.hasAttribute('placeholder')) {
+    candidates.push(candidate(element, 'placeholder', element.getAttribute('placeholder') ?? '', result));
+  }
+  if (element.hasAttribute('aria-placeholder')) {
+    candidates.push(candidate(element, 'aria-placeholder', element.getAttribute('aria-placeholder') ?? '', result));
+  }
+
+  return { ...result, role, candidates };
 }
 
 export function accessibleName(element: Element): string {

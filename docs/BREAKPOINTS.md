@@ -10,14 +10,14 @@ This distinction is deliberate for the first implementation: FocusTrace can free
 
 | Breakpoint | Runtime cause | Default |
 | --- | --- | --- |
-| Focused node removed | `FOCUSED_NODE_REMOVED` | On |
-| Focus falls back to body | `FOCUS_FELL_BACK_TO_BODY` | On |
-| Dialog opens without focus | `DIALOG_OPENED_WITHOUT_FOCUS` | On |
-| Focus escapes modal | `MODAL_FOCUS_ESCAPE` | On |
+| Focused node removed | `FOCUSED_NODE_REMOVED` | Off |
+| Focus falls back to body | `FOCUS_FELL_BACK_TO_BODY` | Off |
+| Dialog opens without focus | `DIALOG_OPENED_WITHOUT_FOCUS` | Off |
+| Focus escapes modal | `MODAL_FOCUS_ESCAPE` | Off |
 | SPA route changes without focus | `ROUTE_CHANGED_WITHOUT_FOCUS_MOVE` | Off |
-| Focused element becomes hidden | `FOCUSED_ELEMENT_BECAME_HIDDEN` | On |
+| Focused element becomes hidden | `FOCUSED_ELEMENT_BECAME_HIDDEN` | Off |
 
-`ROUTE_CHANGED_WITHOUT_FOCUS_MOVE` is opt-in by default because focus management after client-side navigation is workflow-dependent and some applications intentionally retain focus.
+All breakpoints are opt-in. Starting a recording and returning focus to the inspected page must not pause the session by itself; a pause only occurs when a breakpoint the user explicitly enabled matches a deterministic runtime cause.
 
 ## Hit lifecycle
 
@@ -37,6 +37,8 @@ A manually started new recording still clears the previous runtime journey as be
 Breakpoint settings are stored with the tab session and normalized against current defaults so sessions created by older FocusTrace versions remain compatible when new breakpoint types are introduced.
 
 Changing a breakpoint updates both the background session and the injected runtime recorder. Breakpoint hits are also included in the Session Report metric.
+
+Recording state belongs to the inspected tab, not to the side panel. Closing the panel, focusing the page or reloading/navigating the page does not stop recording. After a full navigation, the background worker re-injects the recorder and restores the saved per-tab state.
 
 ## Scope
 

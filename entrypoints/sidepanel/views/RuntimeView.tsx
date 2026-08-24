@@ -98,8 +98,8 @@ export function RuntimeView({
         <p className="breakpoint-note">
           {tr(
             language,
-            'A hit pauses FocusTrace recording after the triggering event is saved. It does not pause JavaScript execution in the inspected page.',
-            'Cuando se activa un breakpoint, FocusTrace pausa la grabación después de guardar el evento que lo provocó. No pausa la ejecución de JavaScript de la página inspeccionada.',
+            'Breakpoints are optional and off by default. An enabled hit pauses FocusTrace after saving the triggering event; it never pauses JavaScript in the page.',
+            'Los breakpoints son opcionales y vienen desactivados. Si activas uno, FocusTrace pausa la grabación después de guardar el evento; nunca pausa el JavaScript de la página.',
           )}
         </p>
       </details>

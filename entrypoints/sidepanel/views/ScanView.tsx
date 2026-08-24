@@ -181,6 +181,43 @@ function FindingCard({
           <strong>{tr(language, 'Evidence:', 'Evidencia:')}</strong> {copy.evidence}
         </p>
       )}
+      {level !== 'simple' && issue.accessibleName && (
+        <details className="name-computation" open={level === 'developer'}>
+          <summary>{tr(language, 'Accessible name calculation', 'Cálculo del nombre accesible')}</summary>
+          <dl>
+            <div>
+              <dt>{tr(language, 'Computed name', 'Nombre calculado')}</dt>
+              <dd>{issue.accessibleName.name || tr(language, 'Empty', 'Vacío')}</dd>
+            </div>
+            <div>
+              <dt>{tr(language, 'Resolved role', 'Rol resuelto')}</dt>
+              <dd><code>{issue.accessibleName.role ?? tr(language, 'None', 'Ninguno')}</code></dd>
+            </div>
+            <div>
+              <dt>{tr(language, 'Winning source', 'Fuente utilizada')}</dt>
+              <dd><code>{issue.accessibleName.source}</code></dd>
+            </div>
+          </dl>
+          {level === 'developer' && (
+            <div className="name-candidates">
+              <strong>{tr(language, 'Candidates inspected', 'Candidatos inspeccionados')}</strong>
+              {issue.accessibleName.candidates.length ? (
+                <ul>
+                  {issue.accessibleName.candidates.map((candidate, index) => (
+                    <li className={candidate.used ? 'used' : ''} key={`${candidate.selector}-${candidate.source}-${index}`}>
+                      <span><code>{candidate.source}</code>{candidate.used && <b>{tr(language, 'Used', 'Usado')}</b>}</span>
+                      <span>{candidate.value || tr(language, 'Empty', 'Vacío')}</span>
+                      <code>{candidate.selector}</code>
+                    </li>
+                  ))}
+                </ul>
+              ) : (
+                <p>{tr(language, 'No naming candidates were present.', 'No había candidatos de nombre.')}</p>
+              )}
+            </div>
+          )}
+        </details>
+      )}
       {level === 'developer' && <code>{target ?? tr(language, 'No target', 'Sin destino')}</code>}
       {level !== 'simple' && <ReferenceList references={issue.references} language={language} />}
       {target && (
