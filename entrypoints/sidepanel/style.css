@@ -1,0 +1,49 @@
+:root { color-scheme: light dark; font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif; font-synthesis: none; }
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; background: Canvas; color: CanvasText; }
+button, input, select, textarea { font: inherit; }
+button:focus-visible, a:focus-visible { outline: 3px solid Highlight; outline-offset: 2px; }
+.app-shell { padding: 18px; }
+.topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
+.eyebrow { margin: 0 0 4px; font-size: 12px; color: GrayText; text-transform: uppercase; letter-spacing: .08em; }
+h1 { margin: 0; font-size: 22px; } h2 { font-size: 17px; margin: 0; } h3 { font-size: 14px; margin: 8px 0 4px; } p { line-height: 1.45; }
+.status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; }
+.status span { width: 8px; height: 8px; border-radius: 50%; background: GrayText; } .status.live span { background: #d93025; }
+.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 18px 0; }
+.actions button { min-height: 44px; border: 1px solid ButtonBorder; border-radius: 9px; padding: 8px 12px; cursor: pointer; background: ButtonFace; color: ButtonText; }
+.actions .primary { background: Highlight; color: HighlightText; border-color: Highlight; font-weight: 700; }
+.actions button:disabled { opacity: .55; cursor: wait; }
+.error { border: 1px solid #d93025; padding: 10px 12px; border-radius: 8px; margin-bottom: 14px; }
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid color-mix(in srgb, CanvasText 16%, transparent); margin-bottom: 16px; }
+.tabs button { min-height: 42px; border: 0; border-bottom: 3px solid transparent; background: transparent; color: inherit; text-transform: capitalize; cursor: pointer; }
+.tabs button.active { border-bottom-color: Highlight; font-weight: 700; }
+.panel { display: grid; gap: 14px; }
+.section-heading { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+.section-heading p { margin: 3px 0 0; color: GrayText; font-size: 12px; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
+.metric { border: 1px solid color-mix(in srgb, CanvasText 14%, transparent); border-radius: 9px; padding: 12px; display: grid; gap: 2px; }
+.metric strong { font-size: 22px; } .metric span { font-size: 12px; color: GrayText; }
+.issue-list { display: grid; gap: 8px; }
+.issue, .focus-card, .notice { border: 1px solid color-mix(in srgb, CanvasText 14%, transparent); border-radius: 9px; padding: 12px; }
+.issue p, .focus-card p, .notice p { margin: 4px 0 8px; font-size: 13px; }
+code { display: inline-block; max-width: 100%; overflow-wrap: anywhere; white-space: normal; padding: 2px 5px; border-radius: 4px; background: color-mix(in srgb, CanvasText 8%, transparent); font-size: 11px; }
+.severity { display: inline-flex; width: fit-content; padding: 2px 6px; border-radius: 999px; font-size: 10px; font-weight: 800; text-transform: uppercase; border: 1px solid currentColor; }
+.severity.critical, .severity.serious { color: #b3261e; } .severity.moderate { color: #8a4f00; } .severity.minor, .severity.info { color: GrayText; }
+.focus-card dl { margin: 12px 0 0; display: grid; gap: 8px; } .focus-card dl div { display: grid; grid-template-columns: 72px 1fr; gap: 8px; align-items: start; }
+.focus-card dt { color: GrayText; font-size: 12px; } .focus-card dd { margin: 0; font-size: 12px; }
+.timeline { list-style: none; margin: 0; padding: 0; display: grid; }
+.timeline li { display: grid; grid-template-columns: 74px 1fr; gap: 10px; padding: 10px 0; border-bottom: 1px solid color-mix(in srgb, CanvasText 10%, transparent); }
+.timeline time { font-variant-numeric: tabular-nums; color: GrayText; font-size: 10px; padding-top: 3px; }
+.timeline strong { display: block; margin: 5px 0 3px; font-size: 13px; } .timeline p { margin: 3px 0; font-size: 12px; } .route { overflow-wrap: anywhere; color: GrayText; }
+.empty { text-align: center; padding: 34px 16px; border: 1px dashed color-mix(in srgb, CanvasText 22%, transparent); border-radius: 10px; }
+.empty h2 { margin-bottom: 6px; } .empty p { color: GrayText; font-size: 13px; margin: 0 auto; max-width: 300px; }
+.engine-note { display: flex; justify-content: space-between; gap: 10px; align-items: center; padding: 9px 11px; border-radius: 8px; background: color-mix(in srgb, Highlight 8%, Canvas); font-size: 12px; }
+.engine-note span { color: GrayText; text-align: right; }
+.finding-meta { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
+.outcome { display: inline-flex; width: fit-content; padding: 2px 6px; border-radius: 999px; font-size: 10px; font-weight: 900; text-transform: uppercase; border: 1px solid currentColor; }
+.outcome.fail { color: #b3261e; } .outcome.review { color: #8a4f00; }
+.evidence { border-left: 3px solid color-mix(in srgb, CanvasText 25%, transparent); padding-left: 8px; color: GrayText; }
+.references { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
+.references li { display: inline-flex; gap: 5px; align-items: center; font-size: 10px; } .references a { color: LinkText; } .references span { color: GrayText; font-size: 9px; text-transform: uppercase; }
+.runtime-finding { background: color-mix(in srgb, CanvasText 3%, transparent); }
+@media (max-width: 380px) { .actions { grid-template-columns: 1fr; } .tabs { grid-template-columns: repeat(2, 1fr); } }
