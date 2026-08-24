@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Good dialog fixture</title></head>
+<body>
+  <main>
+    <h1>Managed modal focus</h1>
+    <button id="open-good" type="button">Open managed dialog</button>
+    <button id="outside" type="button">Outside control</button>
+  </main>
+  <script>
+    const trigger = document.querySelector('#open-good');
+    trigger.addEventListener('click', () => {
+      const dialog = document.createElement('div');
+      dialog.id = 'managed-dialog';
+      dialog.setAttribute('role', 'dialog');
+      dialog.setAttribute('aria-modal', 'true');
+      dialog.setAttribute('aria-label', 'Managed dialog');
+      dialog.innerHTML = '<p>Dialog content</p><button id="inside" type="button">Inside dialog</button><button id="close" type="button">Close dialog</button>';
+      document.body.append(dialog);
+
+      const inside = dialog.querySelector('#inside');
+      inside.focus();
+
+      dialog.querySelector('#close').addEventListener('click', () => {
+        dialog.remove();
+        trigger.focus();
+      });
+    });
+  </script>
+</body>
+</html>

@@ -1,0 +1,21 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Broken dialog fixture</title></head>
+<body>
+  <main>
+    <h1>Broken dialog focus</h1>
+    <button id="open-broken" type="button">Open broken dialog</button>
+  </main>
+  <script>
+    document.querySelector('#open-broken').addEventListener('click', () => {
+      const dialog = document.createElement('div');
+      dialog.id = 'broken-dialog';
+      dialog.setAttribute('role', 'dialog');
+      dialog.setAttribute('aria-modal', 'true');
+      dialog.setAttribute('aria-label', 'Broken dialog');
+      dialog.innerHTML = '<p>Dialog content</p><button type="button">Continue</button>';
+      document.body.append(dialog);
+    });
+  </script>
+</body>
+</html>

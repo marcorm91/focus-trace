@@ -4,6 +4,20 @@ import type { ExtensionMessage, SessionState } from '../shared/types';
 
 const MAX_EVENTS = 500;
 const keyForTab = (tabId: number) => `session:${tabId}`;
+const tabWriteQueues = new Map<number, Promise<unknown>>();
+
+function serializeTabWrite<T>(tabId: number, work: () => Promise<T>): Promise<T> {
+  const previous = tabWriteQueues.get(tabId) ?? Promise.resolve();
+  const next = previous.catch(() => undefined).then(work);
+  tabWriteQueues.set(tabId, next);
+
+  const release = () => {
+    if (tabWriteQueues.get(tabId) === next) tabWriteQueues.delete(tabId);
+  };
+  next.then(release, release);
+
+  return next;
+}
 
 function normalizeSession(state: SessionState): SessionState {
   return {
@@ -48,7 +62,7 @@ export default defineBackground(() => {
     if (message.type === 'FOCUSTRACE_EVENT') {
       const tabId = sender.tab?.id;
       if (tabId == null) return;
-      return (async () => {
+      return serializeTabWrite(tabId, async () => {
         const state = await getSession(tabId);
         const firstBreakpointHit = message.event.breakpointHits?.[0];
         const next: SessionState = {
@@ -59,13 +73,13 @@ export default defineBackground(() => {
         };
         await saveSession(next);
         await broadcast(next);
-      })();
+      });
     }
 
     if (message.type === 'FOCUSTRACE_GET_SESSION') return getSession(message.tabId);
 
     if (message.type === 'FOCUSTRACE_CLEAR_SESSION') {
-      return (async () => {
+      return serializeTabWrite(message.tabId, async () => {
         const current = await getSession(message.tabId);
         const { pausedByBreakpoint: _paused, ...rest } = current;
         const next: SessionState = {
@@ -77,11 +91,11 @@ export default defineBackground(() => {
         await saveSession(next);
         await broadcast(next);
         return next;
-      })();
+      });
     }
 
     if (message.type === 'FOCUSTRACE_SET_RECORDING_STATE') {
-      return (async () => {
+      return serializeTabWrite(message.tabId, async () => {
         const state = await getSession(message.tabId);
         const { pausedByBreakpoint: _paused, ...rest } = state;
         const next: SessionState = {
@@ -92,11 +106,11 @@ export default defineBackground(() => {
         await saveSession(next);
         await broadcast(next);
         return next;
-      })();
+      });
     }
 
     if (message.type === 'FOCUSTRACE_SAVE_BREAKPOINTS') {
-      return (async () => {
+      return serializeTabWrite(message.tabId, async () => {
         const state = await getSession(message.tabId);
         const next: SessionState = {
           ...state,
@@ -105,17 +119,17 @@ export default defineBackground(() => {
         await saveSession(next);
         await broadcast(next);
         return next;
-      })();
+      });
     }
 
     if (message.type === 'FOCUSTRACE_SAVE_SCAN') {
-      return (async () => {
+      return serializeTabWrite(message.tabId, async () => {
         const state = await getSession(message.tabId);
         const next: SessionState = { ...state, scan: message.scan };
         await saveSession(next);
         await broadcast(next);
         return next;
-      })();
+      });
     }
 
     if (message.type === 'FOCUSTRACE_ENSURE_INJECTED') return ensureInjected(message.tabId).then(() => true);

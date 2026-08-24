@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Focus removed fixture</title></head>
+<body>
+  <main>
+    <h1>Focused node removal</h1>
+    <button id="remove-focused" type="button">Remove focused control</button>
+    <button id="after" type="button">After</button>
+  </main>
+  <script>
+    document.querySelector('#remove-focused').addEventListener('click', (event) => {
+      event.currentTarget.remove();
+    });
+  </script>
+</body>
+</html>
