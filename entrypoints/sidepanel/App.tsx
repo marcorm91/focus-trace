@@ -1,8 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import { browser } from '#imports';
+import {
+  defaultRuntimeBreakpointSettings,
+  normalizeRuntimeBreakpointSettings,
+  RUNTIME_BREAKPOINTS,
+} from '../../lib/runtime/breakpoints';
 import { groupRuntimeInteractions, runtimeInteractionTitle } from '../../lib/runtime/causality';
 import type {
   ExtensionMessage,
+  RuntimeBreakpointHit,
+  RuntimeBreakpointId,
+  RuntimeBreakpointSettings,
   RuntimeEvent,
   RuntimeInteraction,
   ScanIssue,
@@ -12,7 +20,12 @@ import type {
 } from '../../shared/types';
 
 type View = 'scan' | 'focus' | 'runtime' | 'report';
-const EMPTY_SESSION: SessionState = { tabId: -1, recording: false, events: [] };
+const EMPTY_SESSION: SessionState = {
+  tabId: -1,
+  recording: false,
+  events: [],
+  breakpoints: defaultRuntimeBreakpointSettings(),
+};
 
 function timeLabel(timestamp: number) {
   return new Intl.DateTimeFormat(undefined, {
@@ -97,6 +110,11 @@ export default function App() {
     }
   }, [ensureInjected, tabId]);
 
+  const breakpointSettings = useMemo(
+    () => normalizeRuntimeBreakpointSettings(session.breakpoints),
+    [session.breakpoints],
+  );
+
   const toggleRecording = useCallback(async () => {
     if (tabId == null) return;
     setBusy(true);
@@ -104,7 +122,8 @@ export default function App() {
     try {
       await ensureInjected();
       const enabled = !session.recording;
-      if (enabled) {
+      const resumingFromBreakpoint = enabled && session.pausedByBreakpoint != null;
+      if (enabled && !resumingFromBreakpoint) {
         await browser.runtime.sendMessage({
           type: 'FOCUSTRACE_CLEAR_SESSION',
           tabId,
@@ -114,6 +133,7 @@ export default function App() {
       await browser.tabs.sendMessage(tabId, {
         type: 'FOCUSTRACE_SET_RECORDING',
         enabled,
+        breakpoints: breakpointSettings,
       } satisfies ExtensionMessage);
       const next = (await browser.runtime.sendMessage({
         type: 'FOCUSTRACE_SET_RECORDING_STATE',
@@ -128,7 +148,36 @@ export default function App() {
     } finally {
       setBusy(false);
     }
-  }, [ensureInjected, session.recording, tabId]);
+  }, [breakpointSettings, ensureInjected, session.pausedByBreakpoint, session.recording, tabId]);
+
+  const setBreakpoint = useCallback(
+    async (breakpointId: RuntimeBreakpointId, enabled: boolean) => {
+      if (tabId == null) return;
+      setError(undefined);
+      const nextSettings: RuntimeBreakpointSettings = {
+        ...normalizeRuntimeBreakpointSettings(session.breakpoints),
+        [breakpointId]: enabled,
+      };
+      setSession((current) => ({ ...current, breakpoints: nextSettings }));
+
+      try {
+        await ensureInjected();
+        await browser.tabs.sendMessage(tabId, {
+          type: 'FOCUSTRACE_CONFIGURE_BREAKPOINTS',
+          breakpoints: nextSettings,
+        } satisfies ExtensionMessage);
+        const next = (await browser.runtime.sendMessage({
+          type: 'FOCUSTRACE_SAVE_BREAKPOINTS',
+          tabId,
+          breakpoints: nextSettings,
+        } satisfies ExtensionMessage)) as SessionState;
+        setSession(next);
+      } catch (reason) {
+        setError(reason instanceof Error ? reason.message : String(reason));
+      }
+    },
+    [ensureInjected, session.breakpoints, tabId],
+  );
 
   const focusEvents = useMemo(
     () =>
@@ -143,6 +192,8 @@ export default function App() {
   const serious = runtimeFindings.filter((event) => ['critical', 'serious'].includes(event.severity)).length;
   const runtimeWarnings = runtimeFindings.filter((event) => ['moderate', 'minor'].includes(event.severity)).length;
   const causalFindings = runtimeFindings.filter((event) => event.causes?.length).length;
+  const breakpointHits = session.events.reduce((total, event) => total + (event.breakpointHits?.length ?? 0), 0);
+  const statusLabel = session.recording ? 'Recording' : session.pausedByBreakpoint ? 'Paused' : 'Idle';
 
   return (
     <main className="app-shell">
@@ -151,14 +202,18 @@ export default function App() {
           <p className="eyebrow">WCAG 2.2 runtime debugger</p>
           <h1>FocusTrace</h1>
         </div>
-        <span className={session.recording ? 'status live' : 'status'}>
-          <span aria-hidden="true" /> {session.recording ? 'Recording' : 'Idle'}
+        <span className={`status ${session.recording ? 'live' : session.pausedByBreakpoint ? 'paused' : ''}`.trim()}>
+          <span aria-hidden="true" /> {statusLabel}
         </span>
       </header>
 
       <div className="actions" aria-label="Primary actions">
         <button className="primary" type="button" onClick={toggleRecording} disabled={busy || tabId == null}>
-          {session.recording ? 'Stop recording' : 'Record interaction'}
+          {session.recording
+            ? 'Stop recording'
+            : session.pausedByBreakpoint
+              ? 'Resume recording'
+              : 'Record interaction'}
         </button>
         <button type="button" onClick={runScan} disabled={busy || tabId == null}>
           {busy ? 'Working…' : 'Analyze page'}
@@ -188,7 +243,14 @@ export default function App() {
       {view === 'scan' && <ScanView scan={scan} />}
       {view === 'focus' && <FocusView latest={latestFocus} count={focusEvents.length} />}
       {view === 'runtime' && (
-        <RuntimeView events={session.events} interactions={interactions} recording={session.recording} />
+        <RuntimeView
+          events={session.events}
+          interactions={interactions}
+          recording={session.recording}
+          breakpointSettings={breakpointSettings}
+          pausedByBreakpoint={session.pausedByBreakpoint}
+          onBreakpointChange={setBreakpoint}
+        />
       )}
       {view === 'report' && (
         <ReportView
@@ -196,6 +258,7 @@ export default function App() {
           interactionCount={interactions.filter((interaction) => interaction.correlated).length}
           runtimeFindings={runtimeFindings.length}
           causalFindings={causalFindings}
+          breakpointHits={breakpointHits}
           serious={serious}
           runtimeWarnings={runtimeWarnings}
           scan={scan}
@@ -349,32 +412,18 @@ function RuntimeView({
   events,
   interactions,
   recording,
+  breakpointSettings,
+  pausedByBreakpoint,
+  onBreakpointChange,
 }: {
   events: RuntimeEvent[];
   interactions: RuntimeInteraction[];
   recording: boolean;
+  breakpointSettings: RuntimeBreakpointSettings;
+  pausedByBreakpoint?: RuntimeBreakpointHit | undefined;
+  onBreakpointChange: (breakpointId: RuntimeBreakpointId, enabled: boolean) => void | Promise<void>;
 }) {
-  if (events.length === 0) {
-    return (
-      <section className="panel" aria-labelledby="runtime-title">
-        <div className="section-heading">
-          <div>
-            <h2 id="runtime-title">Runtime timeline</h2>
-            <p>{recording ? 'Use the inspected page normally.' : '0 events captured.'}</p>
-          </div>
-        </div>
-        <Empty
-          title="Timeline is empty"
-          text="Record a user journey to correlate actions, DOM mutations, routes and focus changes."
-        />
-      </section>
-    );
-  }
-
-  const indexed = interactions.map((interaction, index) => ({
-    interaction,
-    number: index + 1,
-  }));
+  const enabledCount = RUNTIME_BREAKPOINTS.filter((breakpoint) => breakpointSettings[breakpoint.id]).length;
 
   return (
     <section className="panel" aria-labelledby="runtime-title">
@@ -389,10 +438,67 @@ function RuntimeView({
         </div>
       </div>
 
-      <ol className="interaction-list">
-        {[...indexed].reverse().map(({ interaction, number }) => (
-          <li key={interaction.id} className={interaction.findings ? 'interaction has-finding' : 'interaction'}>
-            <details open={interaction.findings > 0}>
+      {pausedByBreakpoint && (
+        <div className="breakpoint-pause" role="status">
+          <strong>Paused on breakpoint</strong>
+          <p>{pausedByBreakpoint.label}</p>
+          <code>{pausedByBreakpoint.causeType}</code>
+          <p>{pausedByBreakpoint.summary}</p>
+        </div>
+      )}
+
+      <details className="breakpoint-panel" open={pausedByBreakpoint != null}>
+        <summary>
+          <strong>Accessibility breakpoints</strong>
+          <span>{enabledCount}/{RUNTIME_BREAKPOINTS.length} enabled</span>
+        </summary>
+        <div className="breakpoint-list">
+          {RUNTIME_BREAKPOINTS.map((breakpoint) => (
+            <label key={breakpoint.id} className="breakpoint-option">
+              <input
+                type="checkbox"
+                checked={breakpointSettings[breakpoint.id]}
+                onChange={(event) => void onBreakpointChange(breakpoint.id, event.currentTarget.checked)}
+              />
+              <span>
+                <strong>{breakpoint.label}</strong>
+                <small>{breakpoint.description}</small>
+              </span>
+            </label>
+          ))}
+        </div>
+        <p className="breakpoint-note">
+          A hit pauses FocusTrace recording after the triggering event is saved. It does not pause JavaScript execution in the inspected page.
+        </p>
+      </details>
+
+      {events.length === 0 ? (
+        <Empty
+          title="Timeline is empty"
+          text="Record a user journey to correlate actions, DOM mutations, routes and focus changes."
+        />
+      ) : (
+        <RuntimeInteractionList interactions={interactions} />
+      )}
+    </section>
+  );
+}
+
+function RuntimeInteractionList({ interactions }: { interactions: RuntimeInteraction[] }) {
+  const indexed = interactions.map((interaction, index) => ({ interaction, number: index + 1 }));
+
+  return (
+    <ol className="interaction-list">
+      {[...indexed].reverse().map(({ interaction, number }) => {
+        const classNames = [
+          'interaction',
+          interaction.findings ? 'has-finding' : '',
+          interaction.breakpointHits.length ? 'has-breakpoint' : '',
+        ].filter(Boolean).join(' ');
+
+        return (
+          <li key={interaction.id} className={classNames}>
+            <details open={interaction.findings > 0 || interaction.breakpointHits.length > 0}>
               <summary>
                 <span>
                   <strong>{interaction.correlated ? `Interaction #${number}` : 'Ambient event'}</strong>
@@ -405,9 +511,23 @@ function RuntimeView({
                   <small>
                     {interaction.events.length} event{interaction.events.length === 1 ? '' : 's'}
                     {interaction.findings ? ` · ${interaction.findings} finding${interaction.findings === 1 ? '' : 's'}` : ''}
+                    {interaction.breakpointHits.length
+                      ? ` · ${interaction.breakpointHits.length} breakpoint${interaction.breakpointHits.length === 1 ? '' : 's'}`
+                      : ''}
                   </small>
                 </span>
               </summary>
+
+              {interaction.breakpointHits.length > 0 && (
+                <div className="breakpoint-hit-box">
+                  <strong>Breakpoint hit</strong>
+                  {interaction.breakpointHits.map((hit) => (
+                    <p key={`${hit.breakpointId}-${hit.eventId}`}>
+                      <code>{hit.breakpointId}</code> {hit.label}
+                    </p>
+                  ))}
+                </div>
+              )}
 
               {interaction.causes.length > 0 && (
                 <div className="cause-box">
@@ -427,9 +547,9 @@ function RuntimeView({
               </ol>
             </details>
           </li>
-        ))}
-      </ol>
-    </section>
+        );
+      })}
+    </ol>
   );
 }
 
@@ -439,12 +559,18 @@ function RuntimeEventRow({ event }: { event: RuntimeEvent }) {
       <time dateTime={new Date(event.timestamp).toISOString()}>{timeLabel(event.timestamp)}</time>
       <div>
         <div className="finding-meta">
+          {event.breakpointHits?.length ? <span className="breakpoint-badge">breakpoint</span> : null}
           {event.outcome && <span className={`outcome ${event.outcome}`}>{event.outcome}</span>}
           <span className={`severity ${event.severity}`}>{event.kind}</span>
           {event.ruleId && <code>{event.ruleId}</code>}
         </div>
         <strong>{event.title}</strong>
         {event.detail && <p>{event.detail}</p>}
+        {event.breakpointHits?.map((hit) => (
+          <p className="breakpoint-event" key={`${hit.breakpointId}-${hit.eventId}`}>
+            <strong>{hit.label}:</strong> {hit.summary}
+          </p>
+        ))}
         {event.mutation?.attribute && (
           <p className="mutation-values">
             <code>{event.mutation.attribute}</code> {JSON.stringify(event.mutation.previousValue)} →{' '}
@@ -468,6 +594,7 @@ function ReportView({
   interactionCount,
   runtimeFindings,
   causalFindings,
+  breakpointHits,
   serious,
   runtimeWarnings,
   scan,
@@ -476,6 +603,7 @@ function ReportView({
   interactionCount: number;
   runtimeFindings: number;
   causalFindings: number;
+  breakpointHits: number;
   serious: number;
   runtimeWarnings: number;
   scan?: ScanResult | undefined;
@@ -493,6 +621,7 @@ function ReportView({
         <Metric label="Runtime events" value={runtimeCount} />
         <Metric label="Runtime findings" value={runtimeFindings} />
         <Metric label="Causal findings" value={causalFindings} />
+        <Metric label="Breakpoint hits" value={breakpointHits} />
         <Metric label="Serious" value={serious} />
         <Metric label="Runtime warnings" value={runtimeWarnings} />
         <Metric label="Scan failures" value={scan?.issues.length ?? 0} />

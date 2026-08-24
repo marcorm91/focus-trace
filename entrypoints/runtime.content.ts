@@ -1,5 +1,10 @@
 import { browser, defineContentScript } from '#imports';
 import { accessibleName, isProgrammaticallyHidden, selectorFor } from '../lib/audit/dom';
+import {
+  createRuntimeBreakpointHits,
+  defaultRuntimeBreakpointSettings,
+  normalizeRuntimeBreakpointSettings,
+} from '../lib/runtime/breakpoints';
 import { RuntimeInteractionTracker } from '../lib/runtime/causality';
 import { runFocusTraceScan } from '../lib/audit/scan';
 import { RULES } from '../shared/rule-catalog';
@@ -121,6 +126,7 @@ export default defineContentScript({
   runAt: 'document_idle',
   main(ctx) {
     let recording = false;
+    let breakpointSettings = defaultRuntimeBreakpointSettings();
     let lastFocused: Element | null = document.activeElement instanceof Element ? document.activeElement : null;
     let lastActionElement: Element | null = null;
     let lastUrl = location.href;
@@ -157,14 +163,29 @@ export default defineContentScript({
       const interactionId = explicitInteractionId ?? activeInteractionId(timestamp);
       if (interactionId) interactionTracker.touch(interactionId, timestamp);
 
+      const eventId = uid();
+      const breakpointHits = createRuntimeBreakpointHits({
+        causes: event.causes,
+        settings: breakpointSettings,
+        eventId,
+        timestamp,
+        ...(interactionId ? { interactionId } : {}),
+      });
+
       const runtimeEvent: RuntimeEvent = {
-        id: uid(),
+        id: eventId,
         timestamp,
         ...event,
         ...(interactionId ? { interactionId } : {}),
+        ...(breakpointHits.length ? { breakpointHits } : {}),
       };
       const message: ExtensionMessage = { type: 'FOCUSTRACE_EVENT', event: runtimeEvent };
       void browser.runtime.sendMessage(message).catch(() => undefined);
+
+      if (breakpointHits.length) {
+        recording = false;
+        interactionTracker.reset();
+      }
     };
 
     const emitMutation = (
@@ -606,8 +627,14 @@ export default defineContentScript({
     browser.runtime.onMessage.addListener((message: ExtensionMessage | { type: 'FOCUSTRACE_PING' }) => {
       if (message.type === 'FOCUSTRACE_PING') return Promise.resolve(true);
 
+      if (message.type === 'FOCUSTRACE_CONFIGURE_BREAKPOINTS') {
+        breakpointSettings = normalizeRuntimeBreakpointSettings(message.breakpoints);
+        return Promise.resolve({ breakpoints: breakpointSettings });
+      }
+
       if (message.type === 'FOCUSTRACE_SET_RECORDING') {
         recording = message.enabled;
+        breakpointSettings = normalizeRuntimeBreakpointSettings(message.breakpoints ?? breakpointSettings);
         lastFocused = document.activeElement instanceof Element ? document.activeElement : null;
         lastActionElement = null;
         lastUrl = location.href;
@@ -615,7 +642,7 @@ export default defineContentScript({
         focusVersion = 0;
         hiddenFocusReported = null;
         interactionTracker.reset();
-        return Promise.resolve({ recording });
+        return Promise.resolve({ recording, breakpoints: breakpointSettings });
       }
 
       if (message.type === 'FOCUSTRACE_RUN_SCAN') return Promise.resolve(runFocusTraceScan());

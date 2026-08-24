@@ -1,4 +1,4 @@
-import type { RuntimeCause, RuntimeEvent, RuntimeInteraction } from '../../shared/types';
+import type { RuntimeBreakpointHit, RuntimeCause, RuntimeEvent, RuntimeInteraction } from '../../shared/types';
 
 export const INTERACTION_WINDOW_MS = 1600;
 export const MAX_INTERACTION_DURATION_MS = 5000;
@@ -104,7 +104,6 @@ export class RuntimeInteractionTracker {
 function uniqueCauses(events: RuntimeEvent[]): RuntimeCause[] {
   const seen = new Set<string>();
   const causes: RuntimeCause[] = [];
-
   for (const event of events) {
     for (const cause of event.causes ?? []) {
       const key = `${cause.type}:${cause.summary}`;
@@ -113,8 +112,21 @@ function uniqueCauses(events: RuntimeEvent[]): RuntimeCause[] {
       causes.push(cause);
     }
   }
-
   return causes;
+}
+
+function uniqueBreakpointHits(events: RuntimeEvent[]): RuntimeBreakpointHit[] {
+  const seen = new Set<string>();
+  const hits: RuntimeBreakpointHit[] = [];
+  for (const event of events) {
+    for (const hit of event.breakpointHits ?? []) {
+      const key = `${hit.breakpointId}:${hit.eventId}`;
+      if (seen.has(key)) continue;
+      seen.add(key);
+      hits.push(hit);
+    }
+  }
+  return hits;
 }
 
 function interactionFromEvents(id: string, correlated: boolean, events: RuntimeEvent[]): RuntimeInteraction {
@@ -131,13 +143,13 @@ function interactionFromEvents(id: string, correlated: boolean, events: RuntimeE
     events,
     findings: events.filter((event) => event.outcome != null).length,
     causes: uniqueCauses(events),
+    breakpointHits: uniqueBreakpointHits(events),
   };
 }
 
 export function groupRuntimeInteractions(events: RuntimeEvent[]): RuntimeInteraction[] {
   const grouped = new Map<string, RuntimeEvent[]>();
   const order: string[] = [];
-
   for (const event of events) {
     const key = event.interactionId ?? `ambient:${event.id}`;
     if (!grouped.has(key)) {
@@ -146,21 +158,17 @@ export function groupRuntimeInteractions(events: RuntimeEvent[]): RuntimeInterac
     }
     grouped.get(key)?.push(event);
   }
-
   return order.map((key) => interactionFromEvents(key, !key.startsWith('ambient:'), grouped.get(key) ?? []));
 }
 
 export function runtimeInteractionTitle(interaction: RuntimeInteraction): string {
   const trigger = interaction.trigger;
-
   if (trigger?.kind === 'keydown') {
     const target = trigger.element?.name || trigger.element?.selector;
     return target ? `${trigger.title} · ${target}` : trigger.title;
   }
-
   if (trigger?.kind === 'click') return trigger.title;
   if (interaction.causes[0]) return interaction.causes[0].summary;
-
   const first = interaction.events[0];
   return first?.title ?? 'Runtime activity';
 }

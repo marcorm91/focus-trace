@@ -26,6 +26,16 @@ export type RuntimeCauseType =
   | 'ROUTE_CHANGED_WITHOUT_FOCUS_MOVE'
   | 'FOCUSED_ELEMENT_BECAME_HIDDEN';
 
+export type RuntimeBreakpointId =
+  | 'focused-node-removed'
+  | 'focus-fell-back-to-body'
+  | 'dialog-opened-without-focus'
+  | 'modal-focus-escape'
+  | 'route-changed-without-focus-move'
+  | 'focused-element-became-hidden';
+
+export type RuntimeBreakpointSettings = Record<RuntimeBreakpointId, boolean>;
+
 export interface StandardReference {
   type: 'WCAG' | 'ACT' | 'WAI-ARIA' | 'WAI-ARIA APG';
   id: string;
@@ -57,6 +67,16 @@ export interface RuntimeCause {
   summary: string;
 }
 
+export interface RuntimeBreakpointHit {
+  breakpointId: RuntimeBreakpointId;
+  causeType: RuntimeCauseType;
+  eventId: string;
+  timestamp: number;
+  label: string;
+  summary: string;
+  interactionId?: string;
+}
+
 export interface RuntimeEvent {
   id: string;
   timestamp: number;
@@ -68,6 +88,7 @@ export interface RuntimeEvent {
   element?: ElementSnapshot;
   mutation?: RuntimeMutationSnapshot;
   causes?: RuntimeCause[];
+  breakpointHits?: RuntimeBreakpointHit[];
   fromUrl?: string;
   toUrl?: string;
   outcome?: FindingOutcome;
@@ -84,6 +105,7 @@ export interface RuntimeInteraction {
   events: RuntimeEvent[];
   findings: number;
   causes: RuntimeCause[];
+  breakpointHits: RuntimeBreakpointHit[];
 }
 
 export interface ScanIssue {
@@ -116,6 +138,8 @@ export interface SessionState {
   recording: boolean;
   startedAt?: number;
   events: RuntimeEvent[];
+  breakpoints?: RuntimeBreakpointSettings;
+  pausedByBreakpoint?: RuntimeBreakpointHit;
   scan?: ScanResult;
 }
 
@@ -125,7 +149,9 @@ export type ExtensionMessage =
   | { type: 'FOCUSTRACE_CLEAR_SESSION'; tabId: number }
   | { type: 'FOCUSTRACE_ENSURE_INJECTED'; tabId: number }
   | { type: 'FOCUSTRACE_SESSION_UPDATED'; state: SessionState }
-  | { type: 'FOCUSTRACE_SET_RECORDING'; enabled: boolean }
+  | { type: 'FOCUSTRACE_SET_RECORDING'; enabled: boolean; breakpoints?: RuntimeBreakpointSettings }
   | { type: 'FOCUSTRACE_SET_RECORDING_STATE'; tabId: number; enabled: boolean; startedAt?: number }
+  | { type: 'FOCUSTRACE_CONFIGURE_BREAKPOINTS'; breakpoints: RuntimeBreakpointSettings }
+  | { type: 'FOCUSTRACE_SAVE_BREAKPOINTS'; tabId: number; breakpoints: RuntimeBreakpointSettings }
   | { type: 'FOCUSTRACE_RUN_SCAN' }
   | { type: 'FOCUSTRACE_SAVE_SCAN'; tabId: number; scan: ScanResult };
