@@ -1,6 +1,6 @@
 import { RULES, type RuleDefinition } from '../../shared/rule-catalog';
 import type { ScanIssue, ScanResult } from '../../shared/types';
-import { accessibleName, isMarkedDecorative, isProgrammaticallyHidden, isSequentiallyFocusable, selectorFor, semanticRole } from './dom';
+import { accessibleName, accessibleNameDetails, isMarkedDecorative, isProgrammaticallyHidden, isSequentiallyFocusable, selectorFor, semanticRole } from './dom';
 
 interface RuleExecution { issues: ScanIssue[]; review: ScanIssue[]; passes: number }
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -51,6 +51,27 @@ function runFormFields(): RuleExecution {
   return result;
 }
 
+function runPlaceholderOnlyLabels(): RuleExecution {
+  const result: RuleExecution = { issues: [], review: [], passes: 0 };
+
+  for (const element of [...document.querySelectorAll('input, textarea')]) {
+    if (isProgrammaticallyHidden(element)) continue;
+    const name = accessibleNameDetails(element);
+    if (name.source !== 'placeholder' && name.source !== 'aria-placeholder') continue;
+
+    result.review.push(finding(
+      RULES.placeholderOnlyLabel,
+      'review',
+      element,
+      'The control has a programmatically computed name, but that name comes only from placeholder text. Review whether a persistent visible label or instruction identifies the field for all users.',
+      `Accessible name ${JSON.stringify(name.name)} is sourced from ${name.source}.`,
+    ));
+  }
+
+  if (!result.review.length) result.passes += 1;
+  return result;
+}
+
 function runLinks(): RuleExecution {
   const result: RuleExecution = { issues: [], review: [], passes: 0 };
   for (const element of [...document.querySelectorAll('a, area, [role]')]) {
@@ -98,6 +119,6 @@ function runHeadingJumps(): RuleExecution {
 }
 
 export function runFocusTraceScan(): ScanResult {
-  const executions = [runPageTitle(), runImages(), runButtons(), runFormFields(), runLinks(), runAriaHiddenFocusable(), runPositiveTabindex(), runHeadingJumps()];
+  const executions = [runPageTitle(), runImages(), runButtons(), runFormFields(), runPlaceholderOnlyLabels(), runLinks(), runAriaHiddenFocusable(), runPositiveTabindex(), runHeadingJumps()];
   return { engine: 'FocusTrace Rules', standard: 'WCAG 2.2', url: location.href, title: document.title, scannedAt: Date.now(), issues: executions.flatMap((execution) => execution.issues), review: executions.flatMap((execution) => execution.review), passes: executions.reduce((sum, execution) => sum + execution.passes, 0), rulesRun: executions.length };
 }
