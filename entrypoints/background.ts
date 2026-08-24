@@ -27,7 +27,7 @@ async function ensureInjected(tabId: number) {
   try {
     await browser.tabs.sendMessage(tabId, { type: 'FOCUSTRACE_PING' });
   } catch {
-    await browser.scripting.executeScript({ target: { tabId }, files: ['content-scripts/runtime.js'] });
+    await browser.scripting.executeScript({ target: { tabId }, files: ['/content-scripts/runtime.js'] });
   }
 }
 
