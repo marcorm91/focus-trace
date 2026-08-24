@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "repository": "w3c/aria",
+    "ref": "main",
+    "version": "unknown",
+    "roleInfo": "common/script/roleInfo.js",
+    "specification": "index.html"
+  },
+  "summary": {
+    "roles": 0,
+    "deprecatedRoles": 0,
+    "deprecatedRolePropertyPairs": 0,
+    "disallowedRolePropertyPairs": 0,
+    "requiredRolePropertyPairs": 0
+  },
+  "roles": []
+}
