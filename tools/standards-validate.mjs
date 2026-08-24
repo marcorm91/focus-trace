@@ -26,22 +26,33 @@ export function validateActCatalog(catalog) {
 }
 
 export function validateAriaRegistry(registry) {
-  assert(registry.schemaVersion >= 1, 'ARIA registry schemaVersion must be >= 1.');
+  assert(registry.schemaVersion >= 2, 'ARIA registry schemaVersion must be >= 2.');
+  assert(registry.properties && typeof registry.properties === 'object', 'ARIA registry properties must be an object.');
+  const propertyNames = new Set(Object.keys(registry.properties));
+  for (const [name, kind] of Object.entries(registry.properties)) {
+    assert(name.startsWith('aria-'), `Invalid ARIA property name: ${name}.`);
+    assert(['state', 'property'].includes(kind), `ARIA ${name} has invalid kind ${kind}.`);
+  }
+
   assert(Array.isArray(registry.roles), 'ARIA registry roles must be an array.');
   assert(registry.roles.length > 0, 'ARIA registry must not be empty.');
   const names = new Set();
+  const fields = ['supportedProperties', 'requiredProperties', 'disallowedProperties', 'deprecatedProperties'];
   for (const role of registry.roles) {
     assert(role.name, 'Every ARIA role needs a name.');
     assert(!names.has(role.name), `Duplicate ARIA role: ${role.name}`);
     names.add(role.name);
     assert(typeof role.deprecated === 'boolean', `ARIA role ${role.name} must declare deprecated.`);
-    assert(Array.isArray(role.properties), `ARIA role ${role.name} must declare properties.`);
-    for (const property of role.properties) {
-      assert(property.name?.startsWith('aria-'), `ARIA role ${role.name} has invalid property ${property.name}.`);
-      assert(['state', 'property'].includes(property.kind), `ARIA ${property.name} on ${role.name} has invalid kind.`);
+    assert(Array.isArray(role.parentRoles), `ARIA role ${role.name} must declare parentRoles.`);
+    for (const field of fields) {
+      assert(Array.isArray(role[field]), `ARIA role ${role.name} must declare ${field}.`);
+      for (const propertyName of role[field]) {
+        assert(propertyNames.has(propertyName), `ARIA role ${role.name} references unknown ${propertyName}.`);
+      }
     }
   }
   assert(registry.summary.roles === registry.roles.length, 'ARIA summary.roles does not match roles length.');
+  assert(registry.summary.properties === propertyNames.size, 'ARIA summary.properties does not match property count.');
   return true;
 }
 
