@@ -1,25 +1,29 @@
 # FocusTrace rule methodology
 
-FocusTrace does not use axe-core as its analysis engine. The extension implements its own local rules and maps each rule to the W3C source that justifies the expectation.
+FocusTrace does not use axe-core as its analysis engine. The extension implements its own local rules and maps each rule to the standards source that justifies the expectation.
 
 ## Sources
 
-1. **WCAG 2.2** is the conformance standard and the normative source for success criteria.
-2. **W3C ACT Rules** are used where available to make applicability, expectations and outcome mapping explicit. ACT rules may be proposed or approved; FocusTrace records the ACT status in the UI.
-3. **WAI-ARIA Authoring Practices Guide (APG)** is used for runtime widget patterns such as modal dialog focus behavior. APG findings are guidance findings, not direct WCAG conformance failures.
-4. **Accessible Name and Description Computation (AccName)** and **HTML Accessibility API Mappings (HTML-AAM)** are used to implement accessible-name precedence and host-language fallbacks. The current 1.2 / 1.0 publications are W3C Working Drafts, so FocusTrace treats them as implementation guidance rather than WCAG conformance criteria.
+1. **WCAG 2.2** is the conformance standard and normative source for success criteria.
+2. **W3C ACT Rules** make applicability, expectations and outcome mapping explicit where available.
+3. **WAI-ARIA** supplies role/state/property semantics. The automated registry currently follows the public ARIA 1.3 Editor Draft; findings sourced only from this registry are authoring warnings, not direct WCAG failures.
+4. **WAI-ARIA APG** is used for runtime widget patterns such as modal-dialog focus behavior and remains informative guidance.
+5. **AccName** and **HTML-AAM** guide accessible-name precedence and host-language fallbacks.
+6. **IANA Language Subtag Registry** supplies the primary language subtags used by the ACT rule behind `FT-WCAG-009`.
 
 ## Outcomes
 
 ### FAIL
 
-FocusTrace found observable evidence that matches an automated rule whose expectation can be evaluated deterministically. A FAIL is linked to the corresponding WCAG criterion and, when available, the ACT rule.
-
-A FAIL does **not** mean that FocusTrace has evaluated every requirement of the linked WCAG criterion.
+FocusTrace found observable evidence that matches an automated rule whose expectation can be evaluated deterministically. A FAIL is linked to the corresponding WCAG criterion and, when available, the ACT rule. A FAIL does not mean that every requirement of the linked WCAG criterion was evaluated.
 
 ### REVIEW
 
-FocusTrace found a signal that can indicate an accessibility problem but the final judgement depends on context, meaning, workflow or user interaction.
+FocusTrace found a signal that can indicate an accessibility problem but final judgement depends on context, meaning, workflow or user interaction.
+
+### WARNING
+
+FocusTrace found an authoring or standards-maintenance risk that should be fixed or reviewed but is not automatically represented as a WCAG failure. Current examples include deprecated or prohibited ARIA usage sourced from the local WAI-ARIA registry.
 
 ### PASS
 
@@ -39,15 +43,11 @@ FocusTrace records both the computed name and the source that produced it. The c
 
 The implementation also supports self-reference inside `aria-labelledby`, multiple native labels, directly referenced hidden naming nodes, and exclusion of a wrapped control's own value from its label text.
 
-A placeholder-derived name is **not** reported as an empty-name WCAG failure. Instead FocusTrace emits `FT-REVIEW-003`, because WCAG 3.3.2 distinguishes a label presented to users from the programmatic name, and W3C techniques recommend persistent visible labels for form controls.
+A placeholder-derived name is not reported as an empty-name WCAG failure. FocusTrace emits `FT-REVIEW-003` because a programmatic name and a persistent visible label are separate concerns.
 
 ## Label in Name scope
 
-`FT-WCAG-007` implements the current automated subset described by ACT rule `2ee8b8` for WCAG 2.5.3. The rule applies when a widget that supports name from content has visible text content and its accessible name is overridden through `aria-label` or `aria-labelledby`.
-
-FocusTrace compares the visible DOM text with the computed accessible name, ignoring leading/trailing whitespace and case differences. The visible label must occur intact inside the accessible name.
-
-Examples:
+`FT-WCAG-007` implements the automated text-content subset of ACT `2ee8b8` for WCAG 2.5.3. For a name-from-content widget whose accessible name is overridden by `aria-label` or `aria-labelledby`, the visible DOM text must occur intact inside the accessible name after whitespace/case normalization.
 
 ```html
 <!-- pass -->
@@ -57,7 +57,23 @@ Examples:
 <button aria-label="Remove item">Delete</button>
 ```
 
-This first implementation intentionally does not claim complete 2.5.3 coverage. CSS generated text, images of text and broader proximity-based visible-label detection are outside the current automated scope.
+CSS-generated text, images of text and broader visual-label inference remain outside this automated subset.
+
+## Language of Page
+
+`FT-WCAG-008` implements ACT `b5c3f8`: a top-level `text/html` document must have a non-empty `lang` attribute on its root HTML element.
+
+`FT-WCAG-009` implements ACT `bf051a`: when `lang` is non-empty, its primary language subtag must be registered by IANA as `Type: language`. FocusTrace uses the committed `generated/language-subtags.json` snapshot, so the page scan remains offline and deterministic. Later subtags are intentionally not validated by this rule; for example `en-US-GB` still has the known primary subtag `en`.
+
+## ARIA authoring warnings
+
+The scan consumes `generated/aria-registry.json` instead of maintaining role/property lists by hand. For recognized explicit ARIA roles FocusTrace currently reports:
+
+- `FT-WARN-001` when the role itself is deprecated;
+- `FT-WARN-002` when a state/property is deprecated for that role;
+- `FT-WARN-003` when a state/property is prohibited for that role.
+
+These are `WARNING`, not `FAIL`. Unknown roles/attributes, required ARIA properties, context/owned-element requirements and value validation are planned as separate conformance rules so each can be mapped to the appropriate ACT expectation.
 
 ## Static rule set
 
@@ -70,6 +86,11 @@ This first implementation intentionally does not claim complete 2.5.3 coverage. 
 | FT-WCAG-005 Link has a non-empty accessible name | FAIL/PASS | WCAG 4.1.2 / 2.4.4 · ACT c487ae |
 | FT-WCAG-006 aria-hidden content contains sequentially focusable content | FAIL/PASS | WCAG 4.1.2 · ACT 6cfa84 |
 | FT-WCAG-007 Visible label is part of accessible name | FAIL/PASS | WCAG 2.5.3 · ACT 2ee8b8 |
+| FT-WCAG-008 HTML page has a non-empty lang attribute | FAIL/PASS | WCAG 3.1.1 · ACT b5c3f8 |
+| FT-WCAG-009 Page lang has a known primary language tag | FAIL/PASS | WCAG 3.1.1 · ACT bf051a · IANA |
+| FT-WARN-001 Deprecated ARIA role | WARNING/PASS | WAI-ARIA registry |
+| FT-WARN-002 Deprecated ARIA property for role | WARNING/PASS | WAI-ARIA registry |
+| FT-WARN-003 Prohibited ARIA property for role | WARNING/PASS | WAI-ARIA registry |
 | FT-REVIEW-001 Positive tabindex | REVIEW | WCAG 2.4.3 |
 | FT-REVIEW-002 Heading-level jump | REVIEW | WCAG 1.3.1 / 2.4.6 |
 | FT-REVIEW-003 Placeholder-only form label | REVIEW | WCAG 3.3.2 |
@@ -87,9 +108,11 @@ This first implementation intentionally does not claim complete 2.5.3 coverage. 
 
 ## Known limitations of v0.1
 
-- FocusTrace still implements a targeted subset of the complete AccName algorithm, not a user-agent-level reimplementation.
-- CSS generated content, slots/Shadow DOM, complex embedded-control recursion and cross-origin iframe traversal are not fully covered yet.
-- `FT-WCAG-007` currently covers ACT `2ee8b8` text-content cases; images of text and broader visual-label inference are not covered yet.
+- FocusTrace implements a targeted subset of the complete AccName algorithm, not a user-agent-level reimplementation.
+- CSS-generated content, slots/Shadow DOM, complex embedded-control recursion and cross-origin iframe traversal are not fully covered.
+- `FT-WCAG-007` currently covers ACT `2ee8b8` text-content cases only.
+- `FT-WCAG-009` checks the ACT primary-language expectation, not full BCP 47 syntax/semantics.
+- ARIA warnings currently operate on recognized explicit role tokens; native implicit-role validation is a later layer.
 - Runtime focus-obscured detection intentionally returns REVIEW because exact 2.4.11 evaluation has edge cases.
 - Dialog restoration has valid workflow exceptions defined by APG, so it remains REVIEW.
 - No automated result is a full WCAG 2.2 conformance claim.

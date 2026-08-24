@@ -1,0 +1,13 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "url": "https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry",
+    "fileDate": "bootstrap"
+  },
+  "summary": {
+    "languages": 0,
+    "deprecated": 0
+  },
+  "subtags": [],
+  "deprecated": {}
+}

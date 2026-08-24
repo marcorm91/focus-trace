@@ -1,17 +1,19 @@
 import { RULES, type RuleDefinition } from '../../shared/rule-catalog';
-import type { ScanIssue, ScanResult } from '../../shared/types';
+import type { FindingOutcome, ScanIssue, ScanResult } from '../../shared/types';
 import { accessibleName, accessibleNameDetails, isMarkedDecorative, isProgrammaticallyHidden, isSequentiallyFocusable, selectorFor, semanticRole } from './dom';
 import { evaluateLabelInName } from './label-in-name';
+import { evaluateAriaAuthoringSignals, pageLanguageStatus, type AriaAuthoringSignal } from './standards-registry';
 
-interface RuleExecution { issues: ScanIssue[]; review: ScanIssue[]; passes: number }
+interface RuleExecution { issues: ScanIssue[]; review: ScanIssue[]; warnings: ScanIssue[]; passes: number }
+const emptyExecution = (): RuleExecution => ({ issues: [], review: [], warnings: [], passes: 0 });
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-function finding(rule: RuleDefinition, outcome: 'fail' | 'review', target: Element | string, description: string, evidence?: string): ScanIssue {
+function finding(rule: RuleDefinition, outcome: FindingOutcome, target: Element | string, description: string, evidence?: string): ScanIssue {
   return { id: uid(), ruleId: rule.id, title: rule.title, description, severity: rule.severity, outcome, targets: [typeof target === 'string' ? target : selectorFor(target)], ...(evidence ? { evidence } : {}), references: rule.references };
 }
 
 function runPageTitle(): RuleExecution {
-  const result: RuleExecution = { issues: [], review: [], passes: 0 };
+  const result = emptyExecution();
   const titles = [...document.documentElement.querySelectorAll('title')].filter((title) => title.namespaceURI === 'http://www.w3.org/1999/xhtml');
   const first = titles[0];
   if (!first || !first.textContent?.trim()) result.issues.push(finding(RULES.pageTitle, 'fail', 'html', 'The first HTML <title> is missing or contains only whitespace.', `document.title = ${JSON.stringify(document.title)}`));
@@ -19,8 +21,26 @@ function runPageTitle(): RuleExecution {
   return result;
 }
 
+function runPageLangPresent(): RuleExecution {
+  const result = emptyExecution();
+  const status = pageLanguageStatus();
+  if (!status.applicable) return result;
+  if (status.present) result.passes += 1;
+  else result.issues.push(finding(RULES.pageLangPresent, 'fail', 'html', 'The root HTML element does not have a non-empty lang attribute.', `lang = ${JSON.stringify(status.value)}`));
+  return result;
+}
+
+function runPageLangKnown(): RuleExecution {
+  const result = emptyExecution();
+  const status = pageLanguageStatus();
+  if (!status.applicable || !status.present) return result;
+  if (status.knownPrimary) result.passes += 1;
+  else result.issues.push(finding(RULES.pageLangKnown, 'fail', 'html', 'The page lang value does not start with a primary language subtag registered by IANA as Type: language.', `lang = ${JSON.stringify(status.value)}; primary subtag = ${JSON.stringify(status.primary)}`));
+  return result;
+}
+
 function runImages(): RuleExecution {
-  const result: RuleExecution = { issues: [], review: [], passes: 0 };
+  const result = emptyExecution();
   for (const element of [...document.querySelectorAll('img, [role="img"]')]) {
     if (isProgrammaticallyHidden(element)) continue;
     if (isMarkedDecorative(element) || accessibleName(element)) { result.passes += 1; continue; }
@@ -30,7 +50,7 @@ function runImages(): RuleExecution {
 }
 
 function runButtons(): RuleExecution {
-  const result: RuleExecution = { issues: [], review: [], passes: 0 };
+  const result = emptyExecution();
   for (const element of [...document.querySelectorAll('button, input, [role]')]) {
     if (element instanceof HTMLInputElement && element.type.toLowerCase() === 'image') continue;
     if (semanticRole(element) !== 'button' || isProgrammaticallyHidden(element)) continue;
@@ -42,7 +62,7 @@ function runButtons(): RuleExecution {
 
 const FORM_FIELD_ROLES = new Set(['checkbox', 'combobox', 'listbox', 'menuitemcheckbox', 'menuitemradio', 'radio', 'searchbox', 'slider', 'spinbutton', 'switch', 'textbox']);
 function runFormFields(): RuleExecution {
-  const result: RuleExecution = { issues: [], review: [], passes: 0 };
+  const result = emptyExecution();
   for (const element of [...document.querySelectorAll('input, select, textarea, [role]')]) {
     const role = semanticRole(element);
     if (!role || !FORM_FIELD_ROLES.has(role) || isProgrammaticallyHidden(element)) continue;
@@ -53,28 +73,19 @@ function runFormFields(): RuleExecution {
 }
 
 function runPlaceholderOnlyLabels(): RuleExecution {
-  const result: RuleExecution = { issues: [], review: [], passes: 0 };
-
+  const result = emptyExecution();
   for (const element of [...document.querySelectorAll('input, textarea')]) {
     if (isProgrammaticallyHidden(element)) continue;
     const name = accessibleNameDetails(element);
     if (name.source !== 'placeholder' && name.source !== 'aria-placeholder') continue;
-
-    result.review.push(finding(
-      RULES.placeholderOnlyLabel,
-      'review',
-      element,
-      'The control has a programmatically computed name, but that name comes only from placeholder text. Review whether a persistent visible label or instruction identifies the field for all users.',
-      `Accessible name ${JSON.stringify(name.name)} is sourced from ${name.source}.`,
-    ));
+    result.review.push(finding(RULES.placeholderOnlyLabel, 'review', element, 'The control has a programmatically computed name, but that name comes only from placeholder text. Review whether a persistent visible label or instruction identifies the field for all users.', `Accessible name ${JSON.stringify(name.name)} is sourced from ${name.source}.`));
   }
-
   if (!result.review.length) result.passes += 1;
   return result;
 }
 
 function runLinks(): RuleExecution {
-  const result: RuleExecution = { issues: [], review: [], passes: 0 };
+  const result = emptyExecution();
   for (const element of [...document.querySelectorAll('a, area, [role]')]) {
     if (semanticRole(element) !== 'link' || isProgrammaticallyHidden(element)) continue;
     if (accessibleName(element)) { result.passes += 1; continue; }
@@ -84,26 +95,17 @@ function runLinks(): RuleExecution {
 }
 
 function runLabelInName(): RuleExecution {
-  const result: RuleExecution = { issues: [], review: [], passes: 0 };
-  const evaluations = evaluateLabelInName();
-
-  for (const evaluation of evaluations) {
+  const result = emptyExecution();
+  for (const evaluation of evaluateLabelInName()) {
     if (evaluation.matches) continue;
-    result.issues.push(finding(
-      RULES.labelInName,
-      'fail',
-      evaluation.element,
-      'The control has visible text, but that visible label is not contained in the accessible name used by assistive technology and speech input.',
-      `Visible label ${JSON.stringify(evaluation.visibleLabel)} is not contained in accessible name ${JSON.stringify(evaluation.accessibleName)}.`,
-    ));
+    result.issues.push(finding(RULES.labelInName, 'fail', evaluation.element, 'The control has visible text, but that visible label is not contained in the accessible name used by assistive technology and speech input.', `Visible label ${JSON.stringify(evaluation.visibleLabel)} is not contained in accessible name ${JSON.stringify(evaluation.accessibleName)}.`));
   }
-
   if (!result.issues.length) result.passes += 1;
   return result;
 }
 
 function runAriaHiddenFocusable(): RuleExecution {
-  const result: RuleExecution = { issues: [], review: [], passes: 0 };
+  const result = emptyExecution();
   const containers = [...document.querySelectorAll('[aria-hidden]')].filter((element) => element.getAttribute('aria-hidden')?.trim().toLowerCase() === 'true');
   for (const container of containers) {
     const focusable = [container, ...container.querySelectorAll('*')].find((element) => isSequentiallyFocusable(element));
@@ -113,8 +115,29 @@ function runAriaHiddenFocusable(): RuleExecution {
   return result;
 }
 
+function ariaWarningExecutions(signals: AriaAuthoringSignal[]): RuleExecution[] {
+  const deprecatedRoles = emptyExecution();
+  const deprecatedProperties = emptyExecution();
+  const prohibitedProperties = emptyExecution();
+
+  for (const signal of signals) {
+    if (signal.kind === 'deprecated-role') {
+      deprecatedRoles.warnings.push(finding(RULES.deprecatedAriaRole, 'warning', signal.element, 'This explicit ARIA role is marked deprecated in the current WAI-ARIA registry. Prefer the replacement or native host-language semantics where possible.', `role=${JSON.stringify(signal.role.name)}${signal.role.deprecatedVersion ? `; deprecated since ARIA ${signal.role.deprecatedVersion}` : ''}`));
+    } else if (signal.kind === 'deprecated-property') {
+      deprecatedProperties.warnings.push(finding(RULES.deprecatedAriaProperty, 'warning', signal.element, 'This ARIA state/property is marked deprecated for the resolved explicit role in the current WAI-ARIA registry.', `${signal.property} on role=${JSON.stringify(signal.role.name)}`));
+    } else {
+      prohibitedProperties.warnings.push(finding(RULES.prohibitedAriaProperty, 'warning', signal.element, 'This ARIA state/property is listed as prohibited for the resolved explicit role in the current WAI-ARIA registry. Review the authoring semantics.', `${signal.property} on role=${JSON.stringify(signal.role.name)}`));
+    }
+  }
+
+  if (!deprecatedRoles.warnings.length) deprecatedRoles.passes += 1;
+  if (!deprecatedProperties.warnings.length) deprecatedProperties.passes += 1;
+  if (!prohibitedProperties.warnings.length) prohibitedProperties.passes += 1;
+  return [deprecatedRoles, deprecatedProperties, prohibitedProperties];
+}
+
 function runPositiveTabindex(): RuleExecution {
-  const result: RuleExecution = { issues: [], review: [], passes: 0 };
+  const result = emptyExecution();
   for (const element of [...document.querySelectorAll('[tabindex]')]) {
     const value = Number.parseInt(element.getAttribute('tabindex') ?? '', 10);
     if (!Number.isFinite(value) || value <= 0 || isProgrammaticallyHidden(element)) continue;
@@ -125,7 +148,7 @@ function runPositiveTabindex(): RuleExecution {
 }
 
 function runHeadingJumps(): RuleExecution {
-  const result: RuleExecution = { issues: [], review: [], passes: 0 };
+  const result = emptyExecution();
   const headings = [...document.querySelectorAll('h1, h2, h3, h4, h5, h6')].filter((heading) => !isProgrammaticallyHidden(heading));
   for (let index = 1; index < headings.length; index += 1) {
     const previousHeading = headings[index - 1]; const currentHeading = headings[index];
@@ -139,6 +162,18 @@ function runHeadingJumps(): RuleExecution {
 }
 
 export function runFocusTraceScan(): ScanResult {
-  const executions = [runPageTitle(), runImages(), runButtons(), runFormFields(), runPlaceholderOnlyLabels(), runLinks(), runLabelInName(), runAriaHiddenFocusable(), runPositiveTabindex(), runHeadingJumps()];
-  return { engine: 'FocusTrace Rules', standard: 'WCAG 2.2', url: location.href, title: document.title, scannedAt: Date.now(), issues: executions.flatMap((execution) => execution.issues), review: executions.flatMap((execution) => execution.review), passes: executions.reduce((sum, execution) => sum + execution.passes, 0), rulesRun: executions.length };
+  const ariaExecutions = ariaWarningExecutions(evaluateAriaAuthoringSignals());
+  const executions = [runPageTitle(), runPageLangPresent(), runPageLangKnown(), runImages(), runButtons(), runFormFields(), runPlaceholderOnlyLabels(), runLinks(), runLabelInName(), runAriaHiddenFocusable(), ...ariaExecutions, runPositiveTabindex(), runHeadingJumps()];
+  return {
+    engine: 'FocusTrace Rules',
+    standard: 'WCAG 2.2',
+    url: location.href,
+    title: document.title,
+    scannedAt: Date.now(),
+    issues: executions.flatMap((execution) => execution.issues),
+    review: executions.flatMap((execution) => execution.review),
+    warnings: executions.flatMap((execution) => execution.warnings),
+    passes: executions.reduce((sum, execution) => sum + execution.passes, 0),
+    rulesRun: executions.length,
+  };
 }

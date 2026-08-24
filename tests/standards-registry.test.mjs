@@ -3,7 +3,9 @@ import { buildCatalog, parseActRule } from '../tools/act-sync.mjs';
 import { diffCatalogs } from '../tools/act-diff.mjs';
 import { buildAriaRegistry, deprecatedRoleVersion, parseRoleInfoSource } from '../tools/aria-sync.mjs';
 import { diffAriaRegistries } from '../tools/aria-diff.mjs';
-import { validateActCatalog, validateAriaRegistry } from '../tools/standards-validate.mjs';
+import { parseLanguageSubtagRegistry } from '../tools/language-sync.mjs';
+import { diffLanguageRegistries } from '../tools/language-diff.mjs';
+import { validateActCatalog, validateAriaRegistry, validateLanguageRegistry } from '../tools/standards-validate.mjs';
 
 const ACT_RULE = `---
 id: abc123
@@ -52,6 +54,26 @@ const ARIA_SPEC = `<!doctype html><html><head><title>Accessible Rich Internet Ap
 <div class="role" id="directory"><div class="role-description"><p>[Deprecated in ARIA 1.2] A list of references.</p></div><table></table></div>
 </body></html>`;
 
+const LANGUAGE_REGISTRY = `File-Date: 2026-08-08
+%%
+Type: language
+Subtag: en
+Description: English
+Added: 2005-10-16
+%%
+Type: language
+Subtag: iw
+Description: Hebrew
+Added: 2005-10-16
+Deprecated: 1989-01-01
+Preferred-Value: he
+%%
+Type: script
+Subtag: Latn
+Description: Latin
+Added: 2005-10-16
+`;
+
 describe('ACT registry', () => {
   it('extracts semantic metadata and a stable logic hash', () => {
     const rule = parseActRule(ACT_RULE, { filename: 'example-abc123.md', url: 'https://example.test/rule' });
@@ -98,5 +120,23 @@ describe('ARIA registry', () => {
     expect(diff.newlyDeprecatedProperties).toEqual([
       expect.objectContaining({ role: 'button', name: 'aria-errormessage', kind: 'property' }),
     ]);
+  });
+});
+
+describe('IANA language registry', () => {
+  it('keeps only Type: language subtags and records deprecations', () => {
+    const registry = parseLanguageSubtagRegistry(LANGUAGE_REGISTRY);
+    expect(registry.source.fileDate).toBe('2026-08-08');
+    expect(registry.subtags).toEqual(['en', 'iw']);
+    expect(registry.deprecated.iw).toEqual({ date: '1989-01-01', preferredValue: 'he' });
+    expect(validateLanguageRegistry(registry)).toBe(true);
+  });
+
+  it('detects new and newly deprecated primary language subtags', () => {
+    const before = parseLanguageSubtagRegistry(LANGUAGE_REGISTRY.replace('Deprecated: 1989-01-01\nPreferred-Value: he\n', ''));
+    const after = parseLanguageSubtagRegistry(`${LANGUAGE_REGISTRY}%%\nType: language\nSubtag: zz\nDescription: Example\nAdded: 2026-01-01\n`);
+    const diff = diffLanguageRegistries(before, after);
+    expect(diff.added).toEqual(['zz']);
+    expect(diff.newlyDeprecated).toEqual(['iw']);
   });
 });

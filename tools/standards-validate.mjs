@@ -56,9 +56,31 @@ export function validateAriaRegistry(registry) {
   return true;
 }
 
+export function validateLanguageRegistry(registry) {
+  assert(registry.schemaVersion >= 1, 'IANA language registry schemaVersion must be >= 1.');
+  assert(Array.isArray(registry.subtags), 'IANA language registry subtags must be an array.');
+  assert(registry.subtags.length > 0, 'IANA language registry must not be empty.');
+  const subtags = new Set();
+  for (const subtag of registry.subtags) {
+    assert(/^[a-z0-9]+$/.test(subtag), `Invalid IANA language subtag: ${subtag}.`);
+    assert(!subtags.has(subtag), `Duplicate IANA language subtag: ${subtag}.`);
+    subtags.add(subtag);
+  }
+  assert(registry.summary.languages === registry.subtags.length, 'IANA summary.languages does not match subtag count.');
+  for (const subtag of Object.keys(registry.deprecated ?? {})) {
+    assert(subtags.has(subtag), `Deprecated IANA language subtag ${subtag} is missing from subtags.`);
+  }
+  return true;
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
-  const [actPath = 'generated/act-catalog.json', ariaPath = 'generated/aria-registry.json'] = process.argv.slice(2);
+  const [
+    actPath = 'generated/act-catalog.json',
+    ariaPath = 'generated/aria-registry.json',
+    languagePath = 'generated/language-subtags.json',
+  ] = process.argv.slice(2);
   validateActCatalog(await load(actPath));
   validateAriaRegistry(await load(ariaPath));
+  validateLanguageRegistry(await load(languagePath));
   console.log('Standards registries are valid.');
 }

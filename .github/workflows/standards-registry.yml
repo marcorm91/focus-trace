@@ -8,6 +8,7 @@ on:
     paths:
       - 'tools/act-sync.mjs'
       - 'tools/aria-sync.mjs'
+      - 'tools/language-sync.mjs'
       - 'tools/standards-sync.mjs'
       - 'tools/standards-utils.mjs'
       - '.github/workflows/standards-registry.yml'
@@ -37,6 +38,7 @@ jobs:
         run: |
           cp generated/act-catalog.json /tmp/act-before.json
           cp generated/aria-registry.json /tmp/aria-before.json
+          cp generated/language-subtags.json /tmp/language-before.json
 
       - name: Sync public standards registries
         env:
@@ -50,13 +52,14 @@ jobs:
         id: changes
         shell: bash
         run: |
-          if git diff --quiet -- generated/act-catalog.json generated/aria-registry.json; then
+          if git diff --quiet -- generated/act-catalog.json generated/aria-registry.json generated/language-subtags.json; then
             echo 'changed=false' >> "$GITHUB_OUTPUT"
           else
             echo 'changed=true' >> "$GITHUB_OUTPUT"
             node tools/standards-diff.mjs \
               /tmp/act-before.json generated/act-catalog.json \
               /tmp/aria-before.json generated/aria-registry.json \
+              /tmp/language-before.json generated/language-subtags.json \
               > /tmp/standards-report.md
             cat /tmp/standards-report.md >> "$GITHUB_STEP_SUMMARY"
           fi
@@ -67,7 +70,7 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add generated/act-catalog.json generated/aria-registry.json
+          git add generated/act-catalog.json generated/aria-registry.json generated/language-subtags.json
           git commit -m 'chore: sync standards registries'
           git push origin "HEAD:${GITHUB_REF_NAME}"
 
@@ -81,7 +84,7 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git checkout -B "$BRANCH"
-          git add generated/act-catalog.json generated/aria-registry.json
+          git add generated/act-catalog.json generated/aria-registry.json generated/language-subtags.json
           git commit -m 'chore: sync standards registries'
           git push origin "$BRANCH" --force
 

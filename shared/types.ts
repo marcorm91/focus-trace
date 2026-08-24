@@ -1,5 +1,5 @@
 export type Severity = 'critical' | 'serious' | 'moderate' | 'minor' | 'info';
-export type FindingOutcome = 'fail' | 'review';
+export type FindingOutcome = 'fail' | 'review' | 'warning';
 export type ConformanceLevel = 'A' | 'AA' | 'AAA';
 
 export type RuntimeEventKind =
@@ -15,12 +15,12 @@ export type RuntimeEventKind =
   | 'live-region';
 
 export interface StandardReference {
-  type: 'WCAG' | 'ACT' | 'WAI-ARIA APG';
+  type: 'WCAG' | 'ACT' | 'WAI-ARIA' | 'WAI-ARIA APG';
   id: string;
   label: string;
   url: string;
   level?: ConformanceLevel;
-  status?: 'normative' | 'informative' | 'proposed';
+  status?: 'normative' | 'informative' | 'proposed' | 'editor-draft';
 }
 
 export interface ElementSnapshot {
@@ -66,6 +66,7 @@ export interface ScanResult {
   scannedAt: number;
   issues: ScanIssue[];
   review: ScanIssue[];
+  warnings: ScanIssue[];
   passes: number;
   rulesRun: number;
 }
