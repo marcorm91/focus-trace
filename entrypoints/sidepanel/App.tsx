@@ -229,7 +229,14 @@ export default function App() {
           level={explanationLevel}
         />
       )}
-      {view === 'graph' && <FocusGraphView graph={focusGraph} level={explanationLevel} />}
+      {view === 'graph' && (
+        <FocusGraphView
+          graph={focusGraph}
+          interactions={interactions}
+          level={explanationLevel}
+          page={scan ? { url: scan.url, title: scan.title } : undefined}
+        />
+      )}
       {view === 'report' && (
         <ReportView
           runtimeCount={session.events.length}
