@@ -3,7 +3,7 @@ import { buildCatalog, parseActRule } from '../tools/act-sync.mjs';
 import { diffCatalogs } from '../tools/act-diff.mjs';
 import { buildAriaRegistry, deprecatedRoleVersion, parseRoleInfoSource } from '../tools/aria-sync.mjs';
 import { diffAriaRegistries } from '../tools/aria-diff.mjs';
-import { parseLanguageSubtagRegistry } from '../tools/language-sync.mjs';
+import { expandLanguageSubtag, parseLanguageSubtagRegistry } from '../tools/language-sync.mjs';
 import { diffLanguageRegistries } from '../tools/language-diff.mjs';
 import { validateActCatalog, validateAriaRegistry, validateLanguageRegistry } from '../tools/standards-validate.mjs';
 
@@ -68,6 +68,11 @@ Added: 2005-10-16
 Deprecated: 1989-01-01
 Preferred-Value: he
 %%
+Type: language
+Subtag: qaa..qac
+Description: Private use
+Added: 2005-10-16
+%%
 Type: script
 Subtag: Latn
 Description: Latin
@@ -124,10 +129,14 @@ describe('ARIA registry', () => {
 });
 
 describe('IANA language registry', () => {
-  it('keeps only Type: language subtags and records deprecations', () => {
+  it('expands reserved language subtag ranges deterministically', () => {
+    expect(expandLanguageSubtag('qaa..qac')).toEqual(['qaa', 'qab', 'qac']);
+  });
+
+  it('keeps only Type: language subtags, expands ranges and records deprecations', () => {
     const registry = parseLanguageSubtagRegistry(LANGUAGE_REGISTRY);
     expect(registry.source.fileDate).toBe('2026-08-08');
-    expect(registry.subtags).toEqual(['en', 'iw']);
+    expect(registry.subtags).toEqual(['en', 'iw', 'qaa', 'qab', 'qac']);
     expect(registry.deprecated.iw).toEqual({ date: '1989-01-01', preferredValue: 'he' });
     expect(validateLanguageRegistry(registry)).toBe(true);
   });
