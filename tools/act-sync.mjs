@@ -1,6 +1,6 @@
-import { mkdir, writeFile } from 'node:fs/promises';
-import { dirname, resolve } from 'node:path';
+import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
+import { fetchWithRetry, githubHeaders, normaliseText, sha256, writeJson } from './standards-utils.mjs';
 
 const ACT_REPOSITORY = 'act-rules/act-rules.github.io';
 const ACT_REF = 'develop';
@@ -27,7 +27,7 @@ function scalar(front, key) {
   return match ? cleanScalar(match[1]) : '';
 }
 
-function section(front, key) {
+function frontMatterSection(front, key) {
   const lines = front.split(/\r?\n/);
   const start = lines.findIndex((line) => line.trimEnd() === `${key}:`);
   if (start < 0) return '';
@@ -41,15 +41,28 @@ function section(front, key) {
   return collected.join('\n');
 }
 
+function markdownSection(markdown, heading) {
+  const escaped = heading.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = markdown.match(new RegExp(`^##\\s+${escaped}\\s*$([\\s\\S]*?)(?=^##\\s+|\\z)`, 'im'));
+  if (match?.[1]) return normaliseText(match[1]);
+
+  const start = markdown.search(new RegExp(`^##\\s+${escaped}\\s*$`, 'im'));
+  if (start < 0) return '';
+  const afterHeading = markdown.slice(start).replace(/^##[^\n]*\n?/i, '');
+  const nextHeading = afterHeading.search(/^##\s+/m);
+  return normaliseText(nextHeading >= 0 ? afterHeading.slice(0, nextHeading) : afterHeading);
+}
+
 function parseInputAspects(front) {
-  return section(front, 'input_aspects')
+  return frontMatterSection(front, 'input_aspects')
     .split(/\r?\n/)
     .map((line) => line.match(/^\s*-\s*(.*?)(?:\s+#.*)?$/)?.[1]?.trim() ?? '')
-    .filter(Boolean);
+    .filter(Boolean)
+    .sort();
 }
 
 function parseWcagCriteria(front) {
-  const requirements = section(front, 'accessibility_requirements');
+  const requirements = frontMatterSection(front, 'accessibility_requirements');
   const criteria = new Set();
   for (const match of requirements.matchAll(/^\s*wcag(?:20|21|22):([0-9]+(?:\.[0-9]+)+):/gm)) {
     if (match[1]) criteria.add(match[1]);
@@ -67,44 +80,26 @@ export function parseActRule(markdown, source = {}) {
     throw new Error(`ACT rule ${source.filename ?? '<unknown>'} is missing id, name or rule_type.`);
   }
 
+  const deprecated = /^deprecated:\s*/m.test(front);
+  const wcag = parseWcagCriteria(front);
+  const inputAspects = parseInputAspects(front);
+  const applicability = markdownSection(markdown, 'Applicability');
+  const expectation = markdownSection(markdown, 'Expectation');
+  const logicHash = sha256(JSON.stringify({ id, ruleType, deprecated, wcag, inputAspects, applicability, expectation }));
+
   return {
     id,
     name,
     ruleType,
-    deprecated: /^deprecated:\s*/m.test(front),
-    wcag: parseWcagCriteria(front),
-    inputAspects: parseInputAspects(front),
+    deprecated,
+    wcag,
+    inputAspects,
+    logicHash,
     source: {
       filename: source.filename ?? '',
-      sha: source.sha ?? '',
       url: source.url ?? '',
     },
   };
-}
-
-async function fetchWithRetry(url, options = {}, attempts = 3) {
-  let lastError;
-  for (let attempt = 1; attempt <= attempts; attempt += 1) {
-    try {
-      const response = await fetch(url, options);
-      if (!response.ok) throw new Error(`${response.status} ${response.statusText} for ${url}`);
-      return response;
-    } catch (error) {
-      lastError = error;
-      if (attempt < attempts) await new Promise((resolveDelay) => setTimeout(resolveDelay, attempt * 750));
-    }
-  }
-  throw lastError;
-}
-
-function githubHeaders() {
-  const headers = {
-    Accept: 'application/vnd.github+json',
-    'User-Agent': 'FocusTrace-ACT-Sync',
-    'X-GitHub-Api-Version': '2022-11-28',
-  };
-  if (process.env.GITHUB_TOKEN) headers.Authorization = `Bearer ${process.env.GITHUB_TOKEN}`;
-  return headers;
 }
 
 async function mapLimit(items, limit, mapper) {
@@ -128,7 +123,7 @@ export function buildCatalog(rules) {
   const active = sorted.filter((rule) => !rule.deprecated);
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     source: {
       repository: ACT_REPOSITORY,
       ref: ACT_REF,
@@ -147,7 +142,7 @@ export function buildCatalog(rules) {
 }
 
 export async function syncActRules(outputPath = DEFAULT_OUTPUT) {
-  const listingResponse = await fetchWithRetry(ACT_RULES_API, { headers: githubHeaders() });
+  const listingResponse = await fetchWithRetry(ACT_RULES_API, { headers: githubHeaders('FocusTrace-ACT-Sync') });
   const listing = await listingResponse.json();
   if (!Array.isArray(listing)) throw new Error('Unexpected ACT _rules directory response.');
 
@@ -155,13 +150,11 @@ export async function syncActRules(outputPath = DEFAULT_OUTPUT) {
   const rules = await mapLimit(files, CONCURRENCY, async (entry) => {
     const response = await fetchWithRetry(entry.download_url, { headers: { 'User-Agent': 'FocusTrace-ACT-Sync' } });
     const markdown = await response.text();
-    return parseActRule(markdown, { filename: entry.name, sha: entry.sha, url: entry.html_url });
+    return parseActRule(markdown, { filename: entry.name, url: entry.html_url });
   });
 
   const catalog = buildCatalog(rules);
-  const absoluteOutput = resolve(outputPath);
-  await mkdir(dirname(absoluteOutput), { recursive: true });
-  await writeFile(absoluteOutput, `${JSON.stringify(catalog, null, 2)}\n`, 'utf8');
+  await writeJson(outputPath, catalog);
   return catalog;
 }
 
