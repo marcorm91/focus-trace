@@ -7,6 +7,7 @@ FocusTrace does not use axe-core as its analysis engine. The extension implement
 1. **WCAG 2.2** is the conformance standard and the normative source for success criteria.
 2. **W3C ACT Rules** are used where available to make applicability, expectations and outcome mapping explicit. ACT rules may be proposed or approved; FocusTrace records the ACT status in the UI.
 3. **WAI-ARIA Authoring Practices Guide (APG)** is used for runtime widget patterns such as modal dialog focus behavior. APG findings are guidance findings, not direct WCAG conformance failures.
+4. **Accessible Name and Description Computation (AccName)** and **HTML Accessibility API Mappings (HTML-AAM)** are used to implement accessible-name precedence and host-language fallbacks. The current 1.2 / 1.0 publications are W3C Working Drafts, so FocusTrace treats them as implementation guidance rather than WCAG conformance criteria.
 
 ## Outcomes
 
@@ -24,7 +25,23 @@ FocusTrace found a signal that can indicate an accessibility problem but the fin
 
 The automated expectation tested by a rule was met. PASS never means full WCAG conformance.
 
-## Initial static rule set
+## Accessible name computation
+
+FocusTrace now records both the computed name and the source that produced it. The current implementation covers the precedence needed by the rule engine for common HTML controls:
+
+1. `aria-labelledby` references, in reference order
+2. `aria-label`
+3. native HTML labels where applicable
+4. host-language alternatives such as `alt` and button values
+5. name-from-content for controls such as buttons and links
+6. `title` where HTML-AAM defines it as a fallback
+7. `placeholder`, then `aria-placeholder`, for text-entry controls where HTML-AAM defines those fallbacks
+
+The implementation also supports self-reference inside `aria-labelledby`, multiple native labels, directly referenced hidden naming nodes, and exclusion of a wrapped control's own value from its label text.
+
+A placeholder-derived name is **not** reported as an empty-name WCAG failure. Instead FocusTrace emits `FT-REVIEW-003`, because WCAG 3.3.2 distinguishes a label presented to users from the programmatic name, and W3C techniques recommend persistent visible labels for form controls.
+
+## Static rule set
 
 | FocusTrace rule | Outcome | Source |
 | --- | --- | --- |
@@ -36,8 +53,9 @@ The automated expectation tested by a rule was met. PASS never means full WCAG c
 | FT-WCAG-006 aria-hidden content contains sequentially focusable content | FAIL/PASS | WCAG 4.1.2 · ACT 6cfa84 |
 | FT-REVIEW-001 Positive tabindex | REVIEW | WCAG 2.4.3 |
 | FT-REVIEW-002 Heading-level jump | REVIEW | WCAG 1.3.1 / 2.4.6 |
+| FT-REVIEW-003 Placeholder-only form label | REVIEW | WCAG 3.3.2 |
 
-## Initial runtime rules
+## Runtime rules
 
 | FocusTrace rule | Outcome | Source |
 | --- | --- | --- |
@@ -50,8 +68,8 @@ The automated expectation tested by a rule was met. PASS never means full WCAG c
 
 ## Known limitations of v0.1
 
-- FocusTrace currently implements a pragmatic subset of Accessible Name and Description Computation, not the complete AccName specification.
-- Shadow DOM and cross-origin iframe traversal are not covered yet.
+- FocusTrace still implements a targeted subset of the complete AccName algorithm, not a user-agent-level reimplementation.
+- CSS generated content, slots/Shadow DOM, complex embedded-control recursion and cross-origin iframe traversal are not fully covered yet.
 - Runtime focus-obscured detection intentionally returns REVIEW because exact 2.4.11 evaluation has edge cases.
 - Dialog restoration has valid workflow exceptions defined by APG, so it remains REVIEW.
 - No automated result is a full WCAG 2.2 conformance claim.
