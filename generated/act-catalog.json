@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "repository": "act-rules/act-rules.github.io",
+    "ref": "develop",
+    "rulesDirectory": "_rules"
+  },
+  "summary": {
+    "total": 0,
+    "active": 0,
+    "deprecated": 0,
+    "atomic": 0,
+    "composite": 0,
+    "wcagMapped": 0
+  },
+  "rules": []
+}
