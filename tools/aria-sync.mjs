@@ -42,50 +42,42 @@ export function deprecatedRoleVersion(specHtml, roleName) {
   return match?.[1] ?? null;
 }
 
-function normaliseProperty(property) {
-  return {
-    name: property.name,
-    kind: property.is,
-    required: Boolean(property.required),
-    disallowed: Boolean(property.disallowed),
-    deprecated: Boolean(property.deprecated),
-  };
+function sortedUnique(values) {
+  return [...new Set(values)].sort();
 }
 
 export function buildAriaRegistry(roleInfo, specHtml) {
   const version = ariaVersionFromSpec(specHtml);
+  const propertyKinds = new Map();
+
   const roles = Object.values(roleInfo)
     .map((role) => {
-      const deprecatedVersion = deprecatedRoleVersion(specHtml, role.name);
-      const properties = [...(role.allprops ?? [])]
-        .map(normaliseProperty)
-        .sort((a, b) => a.name.localeCompare(b.name));
+      const allProperties = [...(role.allprops ?? [])];
+      for (const property of allProperties) {
+        if (property.name && property.is) propertyKinds.set(property.name, property.is);
+      }
 
+      const deprecatedVersion = deprecatedRoleVersion(specHtml, role.name);
       return {
         name: role.name,
-        parentRoles: [...(role.parentRoles ?? [])].sort(),
+        parentRoles: sortedUnique(role.parentRoles ?? []),
         deprecated: Boolean(deprecatedVersion),
         deprecatedVersion,
-        properties,
+        supportedProperties: sortedUnique(allProperties.map((property) => property.name).filter(Boolean)),
+        requiredProperties: sortedUnique(allProperties.filter((property) => property.required).map((property) => property.name)),
+        disallowedProperties: sortedUnique(allProperties.filter((property) => property.disallowed).map((property) => property.name)),
+        deprecatedProperties: sortedUnique(allProperties.filter((property) => property.deprecated).map((property) => property.name)),
       };
     })
     .sort((a, b) => a.name.localeCompare(b.name));
 
-  const deprecatedRolePropertyPairs = roles.reduce(
-    (total, role) => total + role.properties.filter((property) => property.deprecated).length,
-    0,
-  );
-  const disallowedRolePropertyPairs = roles.reduce(
-    (total, role) => total + role.properties.filter((property) => property.disallowed).length,
-    0,
-  );
-  const requiredRolePropertyPairs = roles.reduce(
-    (total, role) => total + role.properties.filter((property) => property.required).length,
-    0,
-  );
+  const properties = Object.fromEntries([...propertyKinds.entries()].sort(([a], [b]) => a.localeCompare(b)));
+  const deprecatedRolePropertyPairs = roles.reduce((total, role) => total + role.deprecatedProperties.length, 0);
+  const disallowedRolePropertyPairs = roles.reduce((total, role) => total + role.disallowedProperties.length, 0);
+  const requiredRolePropertyPairs = roles.reduce((total, role) => total + role.requiredProperties.length, 0);
 
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     source: {
       repository: ARIA_REPOSITORY,
       ref: ARIA_REF,
@@ -95,11 +87,13 @@ export function buildAriaRegistry(roleInfo, specHtml) {
     },
     summary: {
       roles: roles.length,
+      properties: Object.keys(properties).length,
       deprecatedRoles: roles.filter((role) => role.deprecated).length,
       deprecatedRolePropertyPairs,
       disallowedRolePropertyPairs,
       requiredRolePropertyPairs,
     },
+    properties,
     roles,
   };
 }
