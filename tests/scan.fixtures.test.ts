@@ -1,11 +1,13 @@
 // @vitest-environment jsdom
 
 import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { runFocusTraceScan } from '../lib/audit/scan';
 
 function loadFixture(name: 'pass' | 'fail') {
-  const html = readFileSync(new URL(`./fixtures/${name}.html`, import.meta.url), 'utf8');
+  const path = resolve(process.cwd(), 'tests', 'fixtures', `${name}.html`);
+  const html = readFileSync(path, 'utf8');
   document.open();
   document.write(html);
   document.close();
