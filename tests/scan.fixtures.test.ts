@@ -19,10 +19,10 @@ describe('FocusTrace WCAG rule fixtures', () => {
 
     const result = runFocusTraceScan();
 
-    expect(result.rulesRun).toBe(8);
+    expect(result.rulesRun).toBe(9);
     expect(result.issues).toEqual([]);
     expect(result.review).toEqual([]);
-    expect(result.passes).toBe(8);
+    expect(result.passes).toBe(9);
   });
 
   it('produces the expected deterministic failures and review signals', () => {
@@ -43,5 +43,16 @@ describe('FocusTrace WCAG rule fixtures', () => {
       'FT-REVIEW-001',
       'FT-REVIEW-002',
     ]);
+  });
+
+  it('treats placeholder as an accessible-name fallback but requests label review', () => {
+    document.open();
+    document.write(`<!doctype html><html><head><title>Search</title></head><body><main><h1>Search</h1><input id="query" type="search" placeholder="Search products"></main></body></html>`);
+    document.close();
+
+    const result = runFocusTraceScan();
+
+    expect(result.issues.some((issue) => issue.ruleId === 'FT-WCAG-004')).toBe(false);
+    expect(result.review.map((issue) => issue.ruleId)).toContain('FT-REVIEW-003');
   });
 });

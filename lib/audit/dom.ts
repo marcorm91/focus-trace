@@ -21,70 +21,266 @@ function normalise(value: string | null | undefined): string {
   return value?.replace(/\s+/g, ' ').trim() ?? '';
 }
 
-function labelledByText(element: Element): string {
-  const ids = element.getAttribute('aria-labelledby');
-  if (!ids) return '';
-  return normalise(ids.split(/\s+/).map((id) => document.getElementById(id)?.textContent ?? '').join(' '));
+export type AccessibleNameSource =
+  | 'aria-labelledby'
+  | 'aria-label'
+  | 'label'
+  | 'alt'
+  | 'value'
+  | 'subtree'
+  | 'title'
+  | 'placeholder'
+  | 'aria-placeholder'
+  | 'default'
+  | 'none';
+
+export interface AccessibleNameResult {
+  name: string;
+  source: AccessibleNameSource;
 }
 
-function associatedLabelText(element: Element): string {
-  if (!(element instanceof HTMLInputElement || element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement)) return '';
-  const labels = element.labels;
-  if (!labels?.length) return '';
-  return normalise([...labels].map((label) => label.textContent ?? '').join(' '));
+interface NameContext {
+  allowLabelledBy: boolean;
+  referenced: boolean;
+  visited: Set<Element>;
 }
 
-function subtreeTextAlternative(element: Element): string {
-  const pieces: string[] = [];
-  const walker = document.createTreeWalker(element, NodeFilter.SHOW_ELEMENT | NodeFilter.SHOW_TEXT);
-  let node: Node | null = walker.currentNode;
-  while (node) {
-    if (node.nodeType === Node.TEXT_NODE) pieces.push(node.textContent ?? '');
-    else if (node instanceof HTMLImageElement) pieces.push(node.alt || node.title || '');
-    else if (node instanceof SVGElement && node.tagName.toLowerCase() === 'title') pieces.push(node.textContent ?? '');
-    node = walker.nextNode();
+const NAME_FROM_CONTENT_ROLES = new Set([
+  'button',
+  'checkbox',
+  'link',
+  'menuitem',
+  'menuitemcheckbox',
+  'menuitemradio',
+  'option',
+  'radio',
+  'switch',
+  'tab',
+  'treeitem',
+]);
+
+const TEXT_LIKE_INPUT_TYPES = new Set([
+  'email',
+  'number',
+  'password',
+  'search',
+  'tel',
+  'text',
+  'url',
+]);
+
+function isAccNameHidden(element: Element): boolean {
+  const style = getComputedStyle(element);
+  if (style.display === 'none') return true;
+  if (style.visibility === 'hidden' || style.visibility === 'collapse') return true;
+  if (style.getPropertyValue('content-visibility') === 'hidden') return true;
+  return element.getAttribute('aria-hidden')?.trim().toLowerCase() === 'true';
+}
+
+function labelableLabels(element: Element): readonly HTMLLabelElement[] {
+  if (
+    element instanceof HTMLButtonElement ||
+    element instanceof HTMLInputElement ||
+    element instanceof HTMLMeterElement ||
+    element instanceof HTMLOutputElement ||
+    element instanceof HTMLProgressElement ||
+    element instanceof HTMLSelectElement ||
+    element instanceof HTMLTextAreaElement
+  ) {
+    return element.labels ? [...element.labels] : [];
   }
+  return [];
+}
+
+function embeddedControlValue(element: Element): string {
+  if (element instanceof HTMLInputElement) return normalise(element.value);
+  if (element instanceof HTMLTextAreaElement) return normalise(element.value);
+  if (element instanceof HTMLSelectElement) {
+    return normalise([...element.selectedOptions].map((option) => option.textContent ?? '').join(' '));
+  }
+  return '';
+}
+
+function subtreeTextAlternative(root: Element, options: { includeHidden: boolean; exclude?: Element }): string {
+  const pieces: string[] = [];
+
+  const visit = (node: Node) => {
+    if (node === options.exclude) return;
+
+    if (node.nodeType === Node.TEXT_NODE) {
+      pieces.push(node.textContent ?? '');
+      return;
+    }
+
+    if (!(node instanceof Element)) return;
+    if (!options.includeHidden && isAccNameHidden(node)) return;
+
+    if (node instanceof HTMLImageElement || node instanceof HTMLAreaElement) {
+      pieces.push(node.getAttribute('aria-label') || node.getAttribute('alt') || '');
+      return;
+    }
+
+    if (node instanceof HTMLInputElement || node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement) {
+      const value = embeddedControlValue(node);
+      if (value) pieces.push(value);
+      return;
+    }
+
+    if (node instanceof SVGElement && node.tagName.toLowerCase() === 'title') {
+      pieces.push(node.textContent ?? '');
+      return;
+    }
+
+    for (const child of node.childNodes) visit(child);
+  };
+
+  for (const child of root.childNodes) visit(child);
   return normalise(pieces.join(' '));
 }
 
-export function accessibleName(element: Element): string {
-  const labelledBy = labelledByText(element);
-  if (labelledBy) return labelledBy;
-  const ariaLabel = normalise(element.getAttribute('aria-label'));
-  if (ariaLabel) return ariaLabel;
-  const label = associatedLabelText(element);
-  if (label) return label;
+function associatedLabelText(element: Element): string {
+  const labels = labelableLabels(element);
+  if (!labels.length) return '';
 
-  if (element instanceof HTMLImageElement || element instanceof HTMLAreaElement) {
-    const alt = normalise(element.getAttribute('alt'));
-    if (alt) return alt;
+  return normalise(
+    labels
+      .map((label) => subtreeTextAlternative(label, { includeHidden: true, exclude: element }))
+      .join(' '),
+  );
+}
+
+function computeName(element: Element, context: NameContext): AccessibleNameResult {
+  if (context.visited.has(element)) return { name: '', source: 'none' };
+  if (!context.referenced && isAccNameHidden(element)) return { name: '', source: 'none' };
+
+  const visited = new Set(context.visited);
+  visited.add(element);
+
+  if (context.allowLabelledBy) {
+    const labelledBy = element.getAttribute('aria-labelledby');
+    if (labelledBy) {
+      const references = labelledBy
+        .trim()
+        .split(/\s+/)
+        .map((id) => document.getElementById(id))
+        .filter((reference): reference is HTMLElement => reference != null);
+
+      if (references.length) {
+        const pieces = references.map((reference) => {
+          if (reference === element) {
+            return computeName(element, {
+              allowLabelledBy: false,
+              referenced: true,
+              visited: context.visited,
+            }).name;
+          }
+
+          return computeName(reference, {
+            allowLabelledBy: true,
+            referenced: true,
+            visited,
+          }).name;
+        });
+        const name = normalise(pieces.join(' '));
+        if (name) return { name, source: 'aria-labelledby' };
+      }
+    }
+  }
+
+  const ariaLabel = normalise(element.getAttribute('aria-label'));
+  if (ariaLabel) return { name: ariaLabel, source: 'aria-label' };
+
+  const label = associatedLabelText(element);
+  if (label) return { name: label, source: 'label' };
+
+  if (element instanceof HTMLImageElement) {
+    if (element.hasAttribute('alt')) return { name: normalise(element.alt), source: 'alt' };
+    const title = normalise(element.title);
+    if (title) return { name: title, source: 'title' };
+  }
+
+  if (element instanceof HTMLAreaElement) {
+    const alt = normalise(element.alt);
+    if (alt) return { name: alt, source: 'alt' };
+    const title = normalise(element.title);
+    if (title) return { name: title, source: 'title' };
   }
 
   if (element instanceof HTMLInputElement) {
     const type = element.type.toLowerCase();
-    if (type === 'image' && normalise(element.alt)) return normalise(element.alt);
-    if (['button', 'submit', 'reset'].includes(type)) {
-      const value = normalise(element.value);
-      if (value) return value;
-      if (type === 'submit') return 'Submit';
-      if (type === 'reset') return 'Reset';
+
+    if (type === 'image') {
+      const alt = normalise(element.alt);
+      if (alt) return { name: alt, source: 'alt' };
+      const title = normalise(element.title);
+      if (title) return { name: title, source: 'title' };
+      return { name: 'Submit', source: 'default' };
     }
-    const placeholder = normalise(element.placeholder);
-    if (placeholder) return placeholder;
+
+    if (['button', 'submit', 'reset'].includes(type)) {
+      const value = normalise(element.getAttribute('value'));
+      if (value) return { name: value, source: 'value' };
+      if (type === 'submit') return { name: 'Submit', source: 'default' };
+      if (type === 'reset') return { name: 'Reset', source: 'default' };
+      const title = normalise(element.title);
+      if (title) return { name: title, source: 'title' };
+      return { name: '', source: 'none' };
+    }
+
+    if (TEXT_LIKE_INPUT_TYPES.has(type)) {
+      const title = normalise(element.title);
+      if (title) return { name: title, source: 'title' };
+      const placeholder = normalise(element.placeholder);
+      if (placeholder) return { name: placeholder, source: 'placeholder' };
+      const ariaPlaceholder = normalise(element.getAttribute('aria-placeholder'));
+      if (ariaPlaceholder) return { name: ariaPlaceholder, source: 'aria-placeholder' };
+      return { name: '', source: 'none' };
+    }
+
+    const title = normalise(element.title);
+    if (title) return { name: title, source: 'title' };
   }
 
   if (element instanceof HTMLTextAreaElement) {
+    const title = normalise(element.title);
+    if (title) return { name: title, source: 'title' };
     const placeholder = normalise(element.placeholder);
-    if (placeholder) return placeholder;
+    if (placeholder) return { name: placeholder, source: 'placeholder' };
+    const ariaPlaceholder = normalise(element.getAttribute('aria-placeholder'));
+    if (ariaPlaceholder) return { name: ariaPlaceholder, source: 'aria-placeholder' };
+    return { name: '', source: 'none' };
+  }
+
+  if (element instanceof HTMLSelectElement) {
+    const title = normalise(element.title);
+    if (title) return { name: title, source: 'title' };
+    return { name: '', source: 'none' };
   }
 
   const role = semanticRole(element);
-  if (['button', 'link', 'checkbox', 'radio', 'switch', 'menuitem', 'menuitemcheckbox', 'menuitemradio'].includes(role ?? '')) {
-    const subtree = subtreeTextAlternative(element);
-    if (subtree) return subtree;
+  if (context.referenced || NAME_FROM_CONTENT_ROLES.has(role ?? '')) {
+    const name = subtreeTextAlternative(element, {
+      includeHidden: context.referenced && isAccNameHidden(element),
+    });
+    if (name) return { name, source: 'subtree' };
   }
 
-  return normalise(element.getAttribute('title'));
+  const title = normalise(element.getAttribute('title'));
+  if (title) return { name: title, source: 'title' };
+
+  return { name: '', source: 'none' };
+}
+
+export function accessibleNameDetails(element: Element): AccessibleNameResult {
+  return computeName(element, {
+    allowLabelledBy: true,
+    referenced: false,
+    visited: new Set<Element>(),
+  });
+}
+
+export function accessibleName(element: Element): string {
+  return accessibleNameDetails(element).name;
 }
 
 export function isProgrammaticallyHidden(element: Element): boolean {
