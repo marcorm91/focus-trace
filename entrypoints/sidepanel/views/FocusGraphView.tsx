@@ -30,6 +30,12 @@ interface FocusGraphViewProps {
   level: ExplanationLevel;
   language: AppLanguage;
   page?: { url?: string; title?: string };
+  pathVisible: boolean;
+  recording: boolean;
+  selectedPageNodeId?: string;
+  onTogglePath: () => void | Promise<void>;
+  onSelectPageNode: (selector: string) => void | Promise<void>;
+  onClearPageNode: () => void | Promise<void>;
 }
 
 function timeLabel(timestamp: number, language: AppLanguage): string {
@@ -39,6 +45,12 @@ function timeLabel(timestamp: number, language: AppLanguage): string {
     second: '2-digit',
     fractionalSecondDigits: 3,
   }).format(timestamp);
+}
+
+function focusOrderLabel(orders: number[]): string {
+  const visible = orders.slice(0, 4);
+  const remaining = orders.length - visible.length;
+  return `${visible.join(' · ')}${remaining > 0 ? ` +${remaining}` : ''}`;
 }
 
 function downloadText(filename: string, content: string, mimeType: string): void {
@@ -56,7 +68,19 @@ function safeFilename(value: string | undefined): string {
   return normalized || 'session';
 }
 
-export function FocusGraphView({ graph, interactions, level, language, page }: FocusGraphViewProps) {
+export function FocusGraphView({
+  graph,
+  interactions,
+  level,
+  language,
+  page,
+  pathVisible,
+  recording,
+  selectedPageNodeId,
+  onTogglePath,
+  onSelectPageNode,
+  onClearPageNode,
+}: FocusGraphViewProps) {
   const [filter, setFilter] = useState<GraphFilter>('all');
   const [selectedNodeId, setSelectedNodeId] = useState<string>();
 
@@ -134,6 +158,21 @@ export function FocusGraphView({ graph, interactions, level, language, page }: F
           <button type="button" onClick={() => exportEvidence('markdown')}>Export .md</button>
           <button type="button" onClick={() => exportEvidence('json')}>Export .json</button>
         </div>
+        <button
+          className="focus-path-toggle"
+          type="button"
+          aria-pressed={pathVisible}
+          disabled={recording}
+          title={recording
+            ? tr(language, 'Stop recording before showing the page overlay.', 'Detén la grabación antes de mostrar el resaltado en la página.')
+            : undefined}
+          onClick={() => void onTogglePath()}
+        >
+          <span className="focus-path-swatch" aria-hidden="true">1</span>
+          {pathVisible
+            ? tr(language, 'Hide path on page', 'Ocultar recorrido en la página')
+            : tr(language, 'Show path on page', 'Mostrar recorrido en la página')}
+        </button>
       </div>
 
       {graph.observations.length > 0 && (
@@ -170,15 +209,17 @@ export function FocusGraphView({ graph, interactions, level, language, page }: F
           />
         ) : (
           <ol className="focus-graph" aria-label={tr(language, 'Observed focus graph', 'Grafo de foco observado')}>
-            {visibleNodes.map((node, index) => (
+            {visibleNodes.map((node) => (
               <FocusNodeRow
                 graph={graph}
                 node={node}
-                index={index}
-                selected={selectedNodeId === node.id}
+                selected={selectedNodeId === node.id || selectedPageNodeId === node.id}
                 level={level}
                 language={language}
-                onSelect={() => setSelectedNodeId(node.id)}
+                onSelect={() => {
+                  setSelectedNodeId(node.id);
+                  if (!recording) void onSelectPageNode(node.id);
+                }}
                 key={node.id}
               />
             ))}
@@ -193,7 +234,10 @@ export function FocusGraphView({ graph, interactions, level, language, page }: F
           traces={selectedTraces}
           level={level}
           language={language}
-          onClose={() => setSelectedNodeId(undefined)}
+          onClose={() => {
+            setSelectedNodeId(undefined);
+            void onClearPageNode();
+          }}
         />
       )}
 
@@ -214,7 +258,6 @@ export function FocusGraphView({ graph, interactions, level, language, page }: F
 function FocusNodeRow({
   graph,
   node,
-  index,
   selected,
   level,
   language,
@@ -222,7 +265,6 @@ function FocusNodeRow({
 }: {
   graph: FocusGraph;
   node: FocusGraphNode;
-  index: number;
   selected: boolean;
   level: ExplanationLevel;
   language: AppLanguage;
@@ -231,7 +273,16 @@ function FocusNodeRow({
   const outgoing = outgoingFocusEdges(graph, node.id);
   return (
     <li className={`${node.issueCount ? 'focus-node affected' : 'focus-node'}${selected ? ' selected' : ''}`}>
-      <div className="focus-node-index" aria-hidden="true">{index + 1}</div>
+      <div
+        className="focus-node-index"
+        aria-label={tr(
+          language,
+          `Observed focus positions: ${node.focusOrders.join(', ')}`,
+          `Posiciones de foco observadas: ${node.focusOrders.join(', ')}`,
+        )}
+      >
+        {focusOrderLabel(node.focusOrders)}
+      </div>
       <article>
         <div className="focus-node-heading">
           <button type="button" className="focus-node-select" aria-pressed={selected} onClick={onSelect}>

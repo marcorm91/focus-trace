@@ -44,6 +44,18 @@ Each unique observed focus destination becomes a node identified internally by i
 
 Runtime causes such as focused-node removal, focus falling back to the document body, focus escaping a modal, focus becoming hidden and SPA route changes without focus movement are shown as human-readable things to review.
 
+## Page focus path
+
+The Focus and Graph views can project the recorded journey back onto the current page. Each observed focus destination receives a violet border and one or more numbered badges:
+
+- numbers represent the chronological order of recorded focus events;
+- revisiting the same destination preserves every observed position, for example `1 · 3`;
+- selecting a graph point scrolls it into view and gives it a stronger blue highlight;
+- overlays track scrolling and layout changes and stay visible until explicitly hidden;
+- visualizing historical evidence never calls `focus()`, so inspection does not add a new focus event or change the recorded path.
+
+Only elements that still match their recorded selectors can be highlighted. Removed or replaced elements remain available in the recorded evidence even when they can no longer be projected onto the live page.
+
 ## Evidence boundary
 
 The graph is an observed journey, not a complete model of every focusable control on the page.
