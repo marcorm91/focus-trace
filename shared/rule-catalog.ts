@@ -59,6 +59,8 @@ export const RULES = {
   focusLost: { id: 'FT-RUNTIME-001', title: 'Focused element removed during interaction', severity: 'serious', references: [wcag('2.4.3', 'Focus Order', 'A', 'focus-order')] },
   focusObscured: { id: 'FT-RUNTIME-002', title: 'Focused component may be completely obscured', severity: 'serious', references: [wcag('2.4.11', 'Focus Not Obscured (Minimum)', 'AA', 'focus-not-obscured-minimum')] },
   spaTitleUnchanged: { id: 'FT-RUNTIME-003', title: 'SPA route changed without a document title change', severity: 'moderate', references: [wcag('2.4.2', 'Page Titled', 'A', 'page-titled')] },
+  spaFocusUnchanged: { id: 'FT-RUNTIME-004', title: 'SPA route changed without moving focus', severity: 'moderate', references: [wcag('2.4.3', 'Focus Order', 'A', 'focus-order')] },
+  focusedElementHidden: { id: 'FT-RUNTIME-005', title: 'Focused element became hidden during interaction', severity: 'serious', references: [wcag('2.4.3', 'Focus Order', 'A', 'focus-order'), wcag('4.1.2', 'Name, Role, Value', 'A', 'name-role-value')] },
   dialogInitialFocus: { id: 'FT-APG-001', title: 'Dialog opened while focus remained outside', severity: 'serious', references: [apgDialog] },
   dialogFocusEscape: { id: 'FT-APG-002', title: 'Focus escaped an open modal dialog', severity: 'serious', references: [apgDialog] },
   dialogRestoreFocus: { id: 'FT-APG-003', title: 'Dialog closed without restoring focus to a logical target', severity: 'moderate', references: [apgDialog] },

@@ -75,6 +75,30 @@ The scan consumes `generated/aria-registry.json` instead of maintaining role/pro
 
 These are `WARNING`, not `FAIL`. Unknown roles/attributes, required ARIA properties, context/owned-element requirements and value validation are planned as separate conformance rules so each can be mapped to the appropriate ACT expectation.
 
+## Runtime causality
+
+Runtime recording assigns a stable `interactionId` to user-driven keyboard and pointer activity. Subsequent focus changes, relevant DOM mutations, dialog lifecycle events and SPA route changes inherit that interaction while they remain inside a bounded correlation window.
+
+FocusTrace records only compact evidence needed for debugging:
+
+- element selector, role, accessible name and tag;
+- relevant node additions/removals;
+- focus-affecting attribute changes;
+- route transitions;
+- dialog/focus events;
+- deterministic root-cause classifications.
+
+The runtime engine does **not** persist full DOM snapshots. It also does not use AI to infer root causes. Current causal classifications are deterministic signals such as:
+
+- `FOCUSED_NODE_REMOVED`;
+- `FOCUS_FELL_BACK_TO_BODY`;
+- `DIALOG_OPENED_WITHOUT_FOCUS`;
+- `MODAL_FOCUS_ESCAPE`;
+- `ROUTE_CHANGED_WITHOUT_FOCUS_MOVE`;
+- `FOCUSED_ELEMENT_BECAME_HIDDEN`.
+
+A causal classification explains the recorded chain; the linked runtime WCAG/APG outcome can still remain `REVIEW` where conformance depends on workflow context.
+
 ## Static rule set
 
 | FocusTrace rule | Outcome | Source |
@@ -102,6 +126,8 @@ These are `WARNING`, not `FAIL`. Unknown roles/attributes, required ARIA propert
 | FT-RUNTIME-001 Focused element removed | REVIEW | WCAG 2.4.3 |
 | FT-RUNTIME-002 Focus may be completely obscured | REVIEW | WCAG 2.4.11 |
 | FT-RUNTIME-003 SPA route changed without title change | REVIEW | WCAG 2.4.2 |
+| FT-RUNTIME-004 SPA route changed without moving focus | REVIEW | WCAG 2.4.3 |
+| FT-RUNTIME-005 Focused element became hidden | REVIEW | WCAG 2.4.3 / 4.1.2 |
 | FT-APG-001 Dialog initial focus remains outside | REVIEW | WAI-ARIA APG Dialog Modal |
 | FT-APG-002 Focus escapes modal dialog | REVIEW | WAI-ARIA APG Dialog Modal |
 | FT-APG-003 Focus not restored after dialog close | REVIEW | WAI-ARIA APG Dialog Modal |
@@ -113,6 +139,7 @@ These are `WARNING`, not `FAIL`. Unknown roles/attributes, required ARIA propert
 - `FT-WCAG-007` currently covers ACT `2ee8b8` text-content cases only.
 - `FT-WCAG-009` checks the ACT primary-language expectation, not full BCP 47 syntax/semantics.
 - ARIA warnings currently operate on recognized explicit role tokens; native implicit-role validation is a later layer.
+- Runtime causality uses bounded temporal correlation and intentionally records only accessibility-relevant mutations, not every DOM change.
 - Runtime focus-obscured detection intentionally returns REVIEW because exact 2.4.11 evaluation has edge cases.
-- Dialog restoration has valid workflow exceptions defined by APG, so it remains REVIEW.
+- SPA focus movement and dialog restoration can have workflow-specific exceptions, so those findings remain REVIEW.
 - No automated result is a full WCAG 2.2 conformance claim.
