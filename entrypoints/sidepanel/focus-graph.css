@@ -31,9 +31,9 @@
 .subsection-heading h3 { margin: 0; }
 .subsection-heading span { color: GrayText; font-size: 10px; }
 .focus-graph { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
-.focus-node { position: relative; display: grid; grid-template-columns: 30px 1fr; gap: 9px; padding-bottom: 14px; }
+.focus-node { position: relative; display: grid; grid-template-columns: minmax(30px, max-content) minmax(0, 1fr); gap: 9px; padding-bottom: 14px; }
 .focus-node:not(:last-child)::after { content: ''; position: absolute; left: 14px; top: 30px; bottom: 0; width: 1px; background: color-mix(in srgb, CanvasText 22%, transparent); }
-.focus-node-index { position: relative; z-index: 1; width: 29px; height: 29px; border: 1px solid color-mix(in srgb, CanvasText 24%, transparent); border-radius: 50%; display: grid; place-items: center; background: Canvas; font-size: 10px; font-weight: 800; }
+.focus-node-index { position: relative; z-index: 1; width: fit-content; min-width: 29px; height: 29px; padding: 0 7px; border: 1px solid color-mix(in srgb, CanvasText 24%, transparent); border-radius: 999px; display: grid; place-items: center; background: Canvas; font-size: 10px; font-weight: 800; white-space: nowrap; }
 .focus-node.affected .focus-node-index { border-color: #b3261e; color: #b3261e; }
 .focus-node article { border: 1px solid color-mix(in srgb, CanvasText 14%, transparent); border-radius: 10px; padding: 10px 11px; min-width: 0; }
 .focus-node.affected article { border-color: color-mix(in srgb, #b3261e 38%, CanvasText 14%); }

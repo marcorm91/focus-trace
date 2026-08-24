@@ -17,6 +17,7 @@ export interface FocusGraphNode {
   outgoing: number;
   issueCount: number;
   causeTypes: RuntimeCauseType[];
+  focusOrders: number[];
   focusEventIds: string[];
   interactionIds: string[];
 }
@@ -52,6 +53,15 @@ export interface FocusGraph {
   affectedNodes: number;
 }
 
+export interface ObservedFocusPathTarget {
+  id: string;
+  label: string;
+  element: ElementSnapshot;
+  orders: number[];
+  firstSeenAt: number;
+  lastSeenAt: number;
+}
+
 function nodeId(element: ElementSnapshot): string {
   return element.selector;
 }
@@ -66,6 +76,37 @@ function focusGraphNodeRole(element: ElementSnapshot): string {
 
 function pushUnique<T>(values: T[], value: T): void {
   if (!values.includes(value)) values.push(value);
+}
+
+export function buildObservedFocusPath(events: RuntimeEvent[]): ObservedFocusPathTarget[] {
+  const targets = new Map<string, ObservedFocusPathTarget>();
+  let order = 0;
+
+  for (const event of events) {
+    if (event.kind !== 'focus' || !event.element) continue;
+    order += 1;
+
+    const id = nodeId(event.element);
+    const existing = targets.get(id);
+    if (existing) {
+      existing.orders.push(order);
+      existing.lastSeenAt = event.timestamp;
+      existing.element = event.element;
+      existing.label = focusGraphNodeLabel(event.element);
+      continue;
+    }
+
+    targets.set(id, {
+      id,
+      label: focusGraphNodeLabel(event.element),
+      element: event.element,
+      orders: [order],
+      firstSeenAt: event.timestamp,
+      lastSeenAt: event.timestamp,
+    });
+  }
+
+  return [...targets.values()];
 }
 
 export function buildFocusGraph(events: RuntimeEvent[]): FocusGraph {
@@ -95,6 +136,7 @@ export function buildFocusGraph(events: RuntimeEvent[]): FocusGraph {
       outgoing: 0,
       issueCount: 0,
       causeTypes: [],
+      focusOrders: [],
       focusEventIds: [],
       interactionIds: [],
     };
@@ -108,6 +150,7 @@ export function buildFocusGraph(events: RuntimeEvent[]): FocusGraph {
       const current = ensureNode(event.element, event.timestamp);
       current.visits += 1;
       current.lastSeenAt = event.timestamp;
+      current.focusOrders.push(focusEvents);
       pushUnique(current.focusEventIds, event.id);
       if (event.interactionId) pushUnique(current.interactionIds, event.interactionId);
 

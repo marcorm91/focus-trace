@@ -1,5 +1,9 @@
 import { describe, expect, it } from 'vitest';
-import { buildFocusGraph, outgoingFocusEdges } from '../lib/runtime/focus-graph';
+import {
+  buildFocusGraph,
+  buildObservedFocusPath,
+  outgoingFocusEdges,
+} from '../lib/runtime/focus-graph';
 import type { RuntimeEvent } from '../shared/types';
 
 function focus(id: string, timestamp: number, selector: string, name: string, interactionId = 'ix-a-1'): RuntimeEvent {
@@ -27,9 +31,26 @@ describe('focus graph', () => {
     expect(graph.transitions).toBe(3);
     expect(graph.repeatedTransitions).toBe(1);
     expect(graph.nodes.find((node) => node.id === '#search')?.visits).toBe(2);
+    expect(graph.nodes.find((node) => node.id === '#search')?.focusOrders).toEqual([1, 3]);
+    expect(graph.nodes.find((node) => node.id === '#result')?.focusOrders).toEqual([2, 4]);
     expect(outgoingFocusEdges(graph, '#search')).toEqual([
       expect.objectContaining({ from: '#search', to: '#result', count: 2 }),
     ]);
+  });
+
+  it('keeps chronological page-overlay positions when a focus destination is revisited', () => {
+    const path = buildObservedFocusPath([
+      focus('1', 10, '#search', 'Search'),
+      focus('2', 20, '#result', 'Result'),
+      { id: 'click', timestamp: 25, kind: 'click', severity: 'info', title: 'Click' },
+      focus('3', 30, '#search', 'Search'),
+      focus('4', 40, '#submit', 'Submit'),
+    ]);
+
+    expect(path.map((target) => target.id)).toEqual(['#search', '#result', '#submit']);
+    expect(path.find((target) => target.id === '#search')?.orders).toEqual([1, 3]);
+    expect(path.find((target) => target.id === '#result')?.orders).toEqual([2]);
+    expect(path.find((target) => target.id === '#submit')?.orders).toEqual([4]);
   });
 
   it('keeps source focus-event and interaction ids for audit traceability', () => {

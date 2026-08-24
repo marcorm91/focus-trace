@@ -6,7 +6,16 @@ import {
 } from '../../lib/runtime/breakpoints';
 import { groupRuntimeInteractions } from '../../lib/runtime/causality';
 import { type ExplanationLevel } from '../../lib/runtime/explanations';
-import { buildFocusGraph } from '../../lib/runtime/focus-graph';
+import {
+  buildFocusGraph,
+  buildObservedFocusPath,
+} from '../../lib/runtime/focus-graph';
+import {
+  clearFocusPathInPage,
+  showFocusPathInPage,
+  type FocusPathOverlayEntry,
+  type FocusPathOverlayResult,
+} from '../../lib/runtime/focus-path-overlay';
 import { SETTINGS_STORAGE_KEY, tr, type AppLanguage } from '../../shared/i18n';
 import type {
   ExtensionMessage,
@@ -121,6 +130,8 @@ export default function App() {
   const [scan, setScan] = useState<ScanResult>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
+  const [focusPathVisible, setFocusPathVisible] = useState(false);
+  const [selectedFocusSelector, setSelectedFocusSelector] = useState<string>();
 
   const refresh = useCallback(async (id: number) => {
     const state = (await browser.runtime.sendMessage({
@@ -197,6 +208,13 @@ export default function App() {
     if (tabId == null) return;
     setError(undefined);
     try {
+      await browser.scripting.executeScript({
+        target: { tabId },
+        func: clearFocusPathInPage,
+      }).catch(() => undefined);
+      setFocusPathVisible(false);
+      setSelectedFocusSelector(undefined);
+
       const results = await browser.scripting.executeScript({
         target: { tabId },
         func: locateScanTargetInPage,
@@ -229,6 +247,14 @@ export default function App() {
       await ensureInjected();
       const enabled = !session.recording;
       const resumingFromBreakpoint = enabled && session.pausedByBreakpoint != null;
+      if (enabled) {
+        await browser.scripting.executeScript({
+          target: { tabId },
+          func: clearFocusPathInPage,
+        }).catch(() => undefined);
+        setFocusPathVisible(false);
+        setSelectedFocusSelector(undefined);
+      }
       if (enabled && !resumingFromBreakpoint) {
         await browser.runtime.sendMessage({ type: 'FOCUSTRACE_CLEAR_SESSION', tabId } satisfies ExtensionMessage);
       }
@@ -285,7 +311,79 @@ export default function App() {
   );
   const interactions = useMemo(() => groupRuntimeInteractions(session.events), [session.events]);
   const focusGraph = useMemo(() => buildFocusGraph(session.events), [session.events]);
+  const focusPath = useMemo(() => buildObservedFocusPath(session.events), [session.events]);
+  const focusPathSteps = focusPath.reduce((total, target) => total + target.orders.length, 0);
   const latestFocus = focusEvents.at(-1);
+
+  const showFocusPath = useCallback(async (selectedSelector?: string) => {
+    if (tabId == null || focusPath.length === 0) return;
+    setError(undefined);
+
+    try {
+      const entries: FocusPathOverlayEntry[] = focusPath.map((target) => ({
+        selector: target.element.selector,
+        label: target.label,
+        orders: target.orders,
+      }));
+      const results = await browser.scripting.executeScript({
+        target: { tabId },
+        func: showFocusPathInPage,
+        args: [entries, selectedSelector],
+      });
+      const result = results[0]?.result as FocusPathOverlayResult | undefined;
+      if (!result?.found) {
+        setFocusPathVisible(false);
+        setSelectedFocusSelector(undefined);
+        setError(tr(
+          language,
+          'The recorded focus elements are no longer present on the page.',
+          'Los elementos de foco grabados ya no están presentes en la página.',
+        ));
+        return;
+      }
+
+      setFocusPathVisible(true);
+      setSelectedFocusSelector(selectedSelector);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason));
+    }
+  }, [focusPath, language, tabId]);
+
+  const hideFocusPath = useCallback(async () => {
+    if (tabId == null) return;
+    setError(undefined);
+
+    try {
+      await browser.scripting.executeScript({
+        target: { tabId },
+        func: clearFocusPathInPage,
+      });
+      setFocusPathVisible(false);
+      setSelectedFocusSelector(undefined);
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason));
+    }
+  }, [tabId]);
+
+  const toggleFocusPath = useCallback(async () => {
+    if (focusPathVisible) {
+      await hideFocusPath();
+      return;
+    }
+    await showFocusPath();
+  }, [focusPathVisible, hideFocusPath, showFocusPath]);
+
+  const selectFocusPoint = useCallback(async (selector: string) => {
+    await showFocusPath(selector);
+  }, [showFocusPath]);
+
+  const clearFocusSelection = useCallback(async () => {
+    if (!focusPathVisible) {
+      setSelectedFocusSelector(undefined);
+      return;
+    }
+    await showFocusPath();
+  }, [focusPathVisible, showFocusPath]);
   const runtimeFindings = session.events.filter((event) => event.outcome);
   const serious = runtimeFindings.filter((event) => ['critical', 'serious'].includes(event.severity)).length;
   const runtimeWarnings = runtimeFindings.filter((event) => ['moderate', 'minor'].includes(event.severity)).length;
@@ -363,7 +461,18 @@ export default function App() {
       </nav>
 
       {view === 'scan' && <ScanView scan={scan} level={explanationLevel} language={language} onLocate={locateScanTarget} />}
-      {view === 'focus' && <FocusView latest={latestFocus} count={focusEvents.length} level={explanationLevel} language={language} />}
+      {view === 'focus' && (
+        <FocusView
+          latest={latestFocus}
+          count={focusEvents.length}
+          pathSteps={focusPathSteps}
+          pathVisible={focusPathVisible}
+          recording={session.recording}
+          onTogglePath={toggleFocusPath}
+          level={explanationLevel}
+          language={language}
+        />
+      )}
       {view === 'runtime' && (
         <RuntimeView
           events={session.events}
@@ -383,6 +492,12 @@ export default function App() {
           level={explanationLevel}
           language={language}
           page={scan ? { url: scan.url, title: scan.title } : undefined}
+          pathVisible={focusPathVisible}
+          recording={session.recording}
+          selectedPageNodeId={selectedFocusSelector}
+          onTogglePath={toggleFocusPath}
+          onSelectPageNode={selectFocusPoint}
+          onClearPageNode={clearFocusSelection}
         />
       )}
       {view === 'report' && (

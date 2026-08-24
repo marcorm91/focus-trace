@@ -11,11 +11,19 @@ import { Empty, ReferenceList } from '../components/Common';
 export function FocusView({
   latest,
   count,
+  pathSteps,
+  pathVisible,
+  recording,
+  onTogglePath,
   level,
   language,
 }: {
   latest?: RuntimeEvent | undefined;
   count: number;
+  pathSteps: number;
+  pathVisible: boolean;
+  recording: boolean;
+  onTogglePath: () => void | Promise<void>;
   level: ExplanationLevel;
   language: AppLanguage;
 }) {
@@ -48,6 +56,34 @@ export function FocusView({
             )}
           </p>
         </div>
+      </div>
+
+      <div className="focus-page-controls">
+        <button
+          className="focus-path-toggle"
+          type="button"
+          aria-pressed={pathVisible}
+          disabled={pathSteps === 0 || recording}
+          onClick={() => void onTogglePath()}
+        >
+          <span className="focus-path-swatch" aria-hidden="true">1</span>
+          {pathVisible
+            ? tr(language, 'Hide path on page', 'Ocultar recorrido en la página')
+            : tr(language, 'Show path on page', 'Mostrar recorrido en la página')}
+        </button>
+        <p>
+          {recording
+            ? tr(
+                language,
+                'Stop recording to project the observed path without changing the captured evidence.',
+                'Detén la grabación para proyectar el recorrido observado sin modificar la evidencia capturada.',
+              )
+            : tr(
+                language,
+                `${pathSteps} observed focus step${pathSteps === 1 ? '' : 's'}, numbered in recorded order.`,
+                `${pathSteps} paso${pathSteps === 1 ? '' : 's'} de foco observado${pathSteps === 1 ? '' : 's'}, numerado${pathSteps === 1 ? '' : 's'} en el orden grabado.`,
+              )}
+        </p>
       </div>
 
       <article className="focus-card">
