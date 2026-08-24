@@ -1,34 +1,15 @@
+// @vitest-environment jsdom
+
 import { afterEach, describe, expect, it } from 'vitest';
-import { JSDOM } from 'jsdom';
 import {
   clearFocusPathInPage,
   showFocusPathInPage,
 } from '../lib/runtime/focus-path-overlay';
 
-type DomGlobals = typeof globalThis & {
-  window: Window;
-  document: Document;
-  Event: typeof Event;
-};
+function installFixture(): void {
+  document.body.innerHTML = '<button id="first">First</button><button id="second">Second</button>';
 
-let dom: JSDOM | undefined;
-const previous = {
-  window: (globalThis as Partial<DomGlobals>).window,
-  document: (globalThis as Partial<DomGlobals>).document,
-  Event: (globalThis as Partial<DomGlobals>).Event,
-};
-
-function installDom(): void {
-  dom = new JSDOM(
-    '<!doctype html><html><body><button id="first">First</button><button id="second">Second</button></body></html>',
-    { pretendToBeVisual: true },
-  );
-  const globals = globalThis as DomGlobals;
-  globals.window = dom.window as unknown as Window;
-  globals.document = dom.window.document;
-  globals.Event = dom.window.Event as unknown as typeof Event;
-
-  Object.defineProperty(dom.window.Element.prototype, 'scrollIntoView', {
+  Object.defineProperty(Element.prototype, 'scrollIntoView', {
     configurable: true,
     value: () => undefined,
   });
@@ -52,22 +33,14 @@ function installDom(): void {
 }
 
 afterEach(() => {
-  if (dom) clearFocusPathInPage();
-  dom?.window.close();
-  dom = undefined;
-
-  const globals = globalThis as Partial<DomGlobals>;
-  if (previous.window) globals.window = previous.window;
-  else delete globals.window;
-  if (previous.document) globals.document = previous.document;
-  else delete globals.document;
-  if (previous.Event) globals.Event = previous.Event;
-  else delete globals.Event;
+  clearFocusPathInPage();
+  document.body.innerHTML = '';
+  delete (Element.prototype as { scrollIntoView?: Element['scrollIntoView'] }).scrollIntoView;
 });
 
 describe('focus path page overlay', () => {
   it('shows recorded positions, reports missing targets and never moves focus', () => {
-    installDom();
+    installFixture();
     const first = document.querySelector<HTMLButtonElement>('#first')!;
     first.focus();
     const activeBeforeInspection = document.activeElement;
