@@ -1,0 +1,61 @@
+.tabs { grid-template-columns: repeat(5, 1fr); }
+
+.explanation-level {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin: 0 0 16px;
+  padding: 10px 12px;
+  border: 1px solid color-mix(in srgb, CanvasText 14%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, Highlight 4%, Canvas);
+}
+.explanation-level > span { display: grid; gap: 2px; min-width: 0; }
+.explanation-level strong { font-size: 12px; }
+.explanation-level small { color: GrayText; font-size: 10px; line-height: 1.35; }
+.explanation-level select { min-height: 36px; max-width: 130px; border: 1px solid ButtonBorder; border-radius: 8px; padding: 0 8px; background: Field; color: FieldText; }
+
+.human-explanation { display: grid; gap: 6px; margin-top: 8px; }
+.human-explanation p, .human-cause-box p { margin: 0; }
+.human-cause-box h3 { margin: 7px 0 5px; }
+
+.graph-findings { display: grid; gap: 8px; }
+.graph-finding-list { display: grid; gap: 8px; }
+.graph-finding { border: 1px solid color-mix(in srgb, #b3261e 30%, CanvasText 14%); border-radius: 10px; padding: 12px; background: color-mix(in srgb, #b3261e 3%, Canvas); }
+.graph-finding h3 { margin: 0 0 5px; }
+.graph-finding p { margin: 4px 0; font-size: 12px; }
+.graph-technical { display: flex; flex-wrap: wrap; gap: 5px; }
+
+.subsection-heading { display: flex; justify-content: space-between; gap: 10px; align-items: end; margin-bottom: 8px; }
+.subsection-heading h3 { margin: 0; }
+.subsection-heading span { color: GrayText; font-size: 10px; }
+.focus-graph { list-style: none; margin: 0; padding: 0; display: grid; gap: 0; }
+.focus-node { position: relative; display: grid; grid-template-columns: 30px 1fr; gap: 9px; padding-bottom: 14px; }
+.focus-node:not(:last-child)::after { content: ''; position: absolute; left: 14px; top: 30px; bottom: 0; width: 1px; background: color-mix(in srgb, CanvasText 22%, transparent); }
+.focus-node-index { position: relative; z-index: 1; width: 29px; height: 29px; border: 1px solid color-mix(in srgb, CanvasText 24%, transparent); border-radius: 50%; display: grid; place-items: center; background: Canvas; font-size: 10px; font-weight: 800; }
+.focus-node.affected .focus-node-index { border-color: #b3261e; color: #b3261e; }
+.focus-node article { border: 1px solid color-mix(in srgb, CanvasText 14%, transparent); border-radius: 10px; padding: 10px 11px; min-width: 0; }
+.focus-node.affected article { border-color: color-mix(in srgb, #b3261e 38%, CanvasText 14%); }
+.focus-node-heading { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
+.focus-node-heading > span:first-child { display: grid; gap: 2px; min-width: 0; }
+.focus-node-heading strong { font-size: 13px; overflow-wrap: anywhere; }
+.focus-node-heading small { color: GrayText; font-size: 10px; }
+.graph-issue-count { flex: 0 0 auto; border: 1px solid #b3261e; color: #b3261e; border-radius: 999px; padding: 2px 6px; font-size: 9px; font-weight: 800; }
+.focus-node article > code { margin-top: 7px; }
+.focus-edges { list-style: none; margin: 9px 0 0; padding: 7px 0 0; border-top: 1px solid color-mix(in srgb, CanvasText 9%, transparent); display: grid; gap: 5px; }
+.focus-edges li { display: grid; grid-template-columns: 16px 1fr auto; gap: 5px; align-items: baseline; font-size: 11px; }
+.focus-edges li > span:first-child { color: Highlight; font-weight: 900; }
+.focus-edges small { color: GrayText; }
+.graph-end { margin: 8px 0 0; color: GrayText; font-size: 10px; }
+.graph-scope-note p { margin-bottom: 0; }
+
+@media (max-width: 430px) {
+  .tabs { grid-template-columns: repeat(3, 1fr); }
+  .explanation-level { align-items: stretch; display: grid; }
+  .explanation-level select { max-width: none; width: 100%; }
+  .focus-node-heading { display: grid; }
+  .graph-issue-count { width: fit-content; }
+}
+
+.causal-chain > li.simple-event { grid-template-columns: 1fr; }
