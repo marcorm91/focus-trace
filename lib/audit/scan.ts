@@ -1,6 +1,7 @@
 import { RULES, type RuleDefinition } from '../../shared/rule-catalog';
 import type { ScanIssue, ScanResult } from '../../shared/types';
 import { accessibleName, accessibleNameDetails, isMarkedDecorative, isProgrammaticallyHidden, isSequentiallyFocusable, selectorFor, semanticRole } from './dom';
+import { evaluateLabelInName } from './label-in-name';
 
 interface RuleExecution { issues: ScanIssue[]; review: ScanIssue[]; passes: number }
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -82,6 +83,25 @@ function runLinks(): RuleExecution {
   return result;
 }
 
+function runLabelInName(): RuleExecution {
+  const result: RuleExecution = { issues: [], review: [], passes: 0 };
+  const evaluations = evaluateLabelInName();
+
+  for (const evaluation of evaluations) {
+    if (evaluation.matches) continue;
+    result.issues.push(finding(
+      RULES.labelInName,
+      'fail',
+      evaluation.element,
+      'The control has visible text, but that visible label is not contained in the accessible name used by assistive technology and speech input.',
+      `Visible label ${JSON.stringify(evaluation.visibleLabel)} is not contained in accessible name ${JSON.stringify(evaluation.accessibleName)}.`,
+    ));
+  }
+
+  if (!result.issues.length) result.passes += 1;
+  return result;
+}
+
 function runAriaHiddenFocusable(): RuleExecution {
   const result: RuleExecution = { issues: [], review: [], passes: 0 };
   const containers = [...document.querySelectorAll('[aria-hidden]')].filter((element) => element.getAttribute('aria-hidden')?.trim().toLowerCase() === 'true');
@@ -119,6 +139,6 @@ function runHeadingJumps(): RuleExecution {
 }
 
 export function runFocusTraceScan(): ScanResult {
-  const executions = [runPageTitle(), runImages(), runButtons(), runFormFields(), runPlaceholderOnlyLabels(), runLinks(), runAriaHiddenFocusable(), runPositiveTabindex(), runHeadingJumps()];
+  const executions = [runPageTitle(), runImages(), runButtons(), runFormFields(), runPlaceholderOnlyLabels(), runLinks(), runLabelInName(), runAriaHiddenFocusable(), runPositiveTabindex(), runHeadingJumps()];
   return { engine: 'FocusTrace Rules', standard: 'WCAG 2.2', url: location.href, title: document.title, scannedAt: Date.now(), issues: executions.flatMap((execution) => execution.issues), review: executions.flatMap((execution) => execution.review), passes: executions.reduce((sum, execution) => sum + execution.passes, 0), rulesRun: executions.length };
 }
