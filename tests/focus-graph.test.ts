@@ -2,14 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { buildFocusGraph, outgoingFocusEdges } from '../lib/runtime/focus-graph';
 import type { RuntimeEvent } from '../shared/types';
 
-function focus(id: string, timestamp: number, selector: string, name: string): RuntimeEvent {
+function focus(id: string, timestamp: number, selector: string, name: string, interactionId = 'ix-a-1'): RuntimeEvent {
   return {
     id,
     timestamp,
     kind: 'focus',
     severity: 'info',
     title: `Focus → ${name}`,
-    interactionId: 'ix-a-1',
+    interactionId,
     element: { tag: 'button', selector, name },
   };
 }
@@ -30,6 +30,18 @@ describe('focus graph', () => {
     expect(outgoingFocusEdges(graph, '#search')).toEqual([
       expect.objectContaining({ from: '#search', to: '#result', count: 2 }),
     ]);
+  });
+
+  it('keeps source focus-event and interaction ids for audit traceability', () => {
+    const graph = buildFocusGraph([
+      focus('1', 10, '#search', 'Search', 'ix-a-1'),
+      focus('2', 20, '#result', 'Result', 'ix-a-1'),
+      focus('3', 30, '#result', 'Result', 'ix-a-2'),
+    ]);
+
+    const result = graph.nodes.find((node) => node.id === '#result');
+    expect(result?.focusEventIds).toEqual(['2', '3']);
+    expect(result?.interactionIds).toEqual(['ix-a-1', 'ix-a-2']);
   });
 
   it('attaches runtime causes to affected focus nodes without inventing unreachable controls', () => {

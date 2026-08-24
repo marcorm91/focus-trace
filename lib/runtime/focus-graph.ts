@@ -17,6 +17,8 @@ export interface FocusGraphNode {
   outgoing: number;
   issueCount: number;
   causeTypes: RuntimeCauseType[];
+  focusEventIds: string[];
+  interactionIds: string[];
 }
 
 export interface FocusGraphEdge {
@@ -93,6 +95,8 @@ export function buildFocusGraph(events: RuntimeEvent[]): FocusGraph {
       outgoing: 0,
       issueCount: 0,
       causeTypes: [],
+      focusEventIds: [],
+      interactionIds: [],
     };
     nodes.set(id, created);
     return created;
@@ -104,6 +108,8 @@ export function buildFocusGraph(events: RuntimeEvent[]): FocusGraph {
       const current = ensureNode(event.element, event.timestamp);
       current.visits += 1;
       current.lastSeenAt = event.timestamp;
+      pushUnique(current.focusEventIds, event.id);
+      if (event.interactionId) pushUnique(current.interactionIds, event.interactionId);
 
       if (previousFocusNodeId && previousFocusNodeId !== current.id) {
         const edgeId = `${previousFocusNodeId}→${current.id}`;
@@ -170,6 +176,17 @@ export function outgoingFocusEdges(graph: FocusGraph, nodeIdValue: string): Focu
   return graph.edges.filter((edge) => edge.from === nodeIdValue);
 }
 
+export function incomingFocusEdges(graph: FocusGraph, nodeIdValue: string): FocusGraphEdge[] {
+  return graph.edges.filter((edge) => edge.to === nodeIdValue);
+}
+
 export function focusGraphNodeById(graph: FocusGraph, nodeIdValue: string): FocusGraphNode | undefined {
   return graph.nodes.find((node) => node.id === nodeIdValue);
+}
+
+export function focusGraphObservationsForNode(
+  graph: FocusGraph,
+  nodeIdValue: string,
+): FocusGraphObservation[] {
+  return graph.observations.filter((observation) => observation.nodeId === nodeIdValue);
 }

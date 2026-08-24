@@ -2,7 +2,7 @@
 * { box-sizing: border-box; }
 body { margin: 0; min-width: 320px; background: Canvas; color: CanvasText; }
 button, input, select, textarea { font: inherit; }
-button:focus-visible, a:focus-visible { outline: 3px solid Highlight; outline-offset: 2px; }
+button:focus-visible, a:focus-visible, select:focus-visible { outline: 3px solid Highlight; outline-offset: 2px; }
 .app-shell { padding: 18px; }
 .topbar { display: flex; align-items: flex-start; justify-content: space-between; gap: 16px; }
 .eyebrow { margin: 0 0 4px; font-size: 12px; color: GrayText; text-transform: uppercase; letter-spacing: .08em; }
@@ -14,12 +14,14 @@ h1 { margin: 0; font-size: 22px; } h2 { font-size: 17px; margin: 0; } h3 { font-
 .actions .primary { background: Highlight; color: HighlightText; border-color: Highlight; font-weight: 700; }
 .actions button:disabled { opacity: .55; cursor: wait; }
 .error { border: 1px solid #d93025; padding: 10px 12px; border-radius: 8px; margin-bottom: 14px; }
-.tabs { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid color-mix(in srgb, CanvasText 16%, transparent); margin-bottom: 16px; }
-.tabs button { min-height: 42px; border: 0; border-bottom: 3px solid transparent; background: transparent; color: inherit; text-transform: capitalize; cursor: pointer; }
+.tabs { display: grid; grid-template-columns: repeat(5, 1fr); border-bottom: 1px solid color-mix(in srgb, CanvasText 16%, transparent); margin-bottom: 16px; }
+.tabs button { min-height: 42px; border: 0; border-bottom: 3px solid transparent; background: transparent; color: inherit; text-transform: capitalize; cursor: pointer; padding-inline: 4px; font-size: 12px; }
 .tabs button.active { border-bottom-color: Highlight; font-weight: 700; }
 .panel { display: grid; gap: 14px; }
-.section-heading { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
+.section-heading, .subsection-heading { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
 .section-heading p { margin: 3px 0 0; color: GrayText; font-size: 12px; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.subsection-heading { align-items: center; }
+.subsection-heading span { color: GrayText; font-size: 10px; }
 .metrics { display: grid; grid-template-columns: repeat(2, 1fr); gap: 8px; }
 .metric { border: 1px solid color-mix(in srgb, CanvasText 14%, transparent); border-radius: 9px; padding: 12px; display: grid; gap: 2px; }
 .metric strong { font-size: 22px; } .metric span { font-size: 12px; color: GrayText; }
@@ -79,9 +81,67 @@ code { display: inline-block; max-width: 100%; overflow-wrap: anywhere; white-sp
 .breakpoint-note { margin: 9px 12px 11px; color: GrayText; font-size: 10px; line-height: 1.4; }
 .breakpoint-badge { display: inline-flex; width: fit-content; padding: 2px 6px; border-radius: 999px; font-size: 9px; font-weight: 900; text-transform: uppercase; border: 1px solid #8a4f00; color: #8a4f00; }
 .breakpoint-event { border-left: 3px solid #8a4f00; padding-left: 8px; }
+
+.explanation-level { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: center; padding: 10px 12px; margin-bottom: 12px; border: 1px solid color-mix(in srgb, CanvasText 14%, transparent); border-radius: 9px; }
+.explanation-level > span { display: grid; gap: 2px; }
+.explanation-level strong { font-size: 12px; }
+.explanation-level small { color: GrayText; font-size: 10px; line-height: 1.35; }
+.explanation-level select { min-height: 36px; border: 1px solid color-mix(in srgb, CanvasText 20%, transparent); border-radius: 7px; background: Canvas; color: CanvasText; padding: 4px 28px 4px 8px; }
+
+.graph-toolbar { display: grid; gap: 8px; }
+.graph-filter, .graph-export { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; }
+.graph-toolbar button, .graph-inspector button { min-height: 36px; border: 1px solid color-mix(in srgb, CanvasText 18%, transparent); border-radius: 8px; background: ButtonFace; color: ButtonText; padding: 6px 9px; cursor: pointer; font-size: 11px; }
+.graph-filter button.active { border-color: Highlight; box-shadow: inset 0 0 0 1px Highlight; font-weight: 700; }
+.graph-findings { display: grid; gap: 8px; }
+.graph-finding-list, .graph-selected-signals { display: grid; gap: 8px; }
+.graph-finding { border: 1px solid color-mix(in srgb, #8a4f00 30%, CanvasText 14%); border-radius: 9px; padding: 11px; background: color-mix(in srgb, #8a4f00 4%, Canvas); }
+.graph-finding h3 { margin-top: 0; }
+.graph-finding p { margin: 5px 0; font-size: 12px; }
+.graph-technical { display: flex; flex-wrap: wrap; gap: 5px; }
+.focus-graph { list-style: none; margin: 0; padding: 0; display: grid; gap: 8px; }
+.focus-node { display: grid; grid-template-columns: 24px minmax(0, 1fr); gap: 8px; align-items: start; }
+.focus-node-index { width: 24px; height: 24px; border-radius: 999px; display: grid; place-items: center; background: color-mix(in srgb, CanvasText 9%, Canvas); font-size: 10px; font-weight: 800; margin-top: 8px; }
+.focus-node article { border: 1px solid color-mix(in srgb, CanvasText 14%, transparent); border-radius: 9px; padding: 9px; min-width: 0; }
+.focus-node.affected article { border-color: color-mix(in srgb, #8a4f00 42%, CanvasText 14%); }
+.focus-node.selected article { border-color: Highlight; box-shadow: inset 0 0 0 1px Highlight; }
+.focus-node-heading { display: flex; align-items: flex-start; justify-content: space-between; gap: 8px; }
+.focus-node-select { appearance: none; border: 0; background: transparent; color: inherit; padding: 0; text-align: left; display: grid; gap: 2px; min-width: 0; cursor: pointer; }
+.focus-node-select strong { font-size: 13px; overflow-wrap: anywhere; }
+.focus-node-select small { color: GrayText; font-size: 10px; }
+.graph-issue-count { flex: 0 0 auto; border: 1px solid #8a4f00; color: #8a4f00; border-radius: 999px; padding: 2px 6px; font-size: 9px; font-weight: 800; }
+.focus-edges { list-style: none; margin: 8px 0 0; padding: 7px 0 0; border-top: 1px solid color-mix(in srgb, CanvasText 9%, transparent); display: grid; gap: 4px; }
+.focus-edges li { display: grid; grid-template-columns: 14px minmax(0, 1fr) auto; gap: 5px; align-items: center; font-size: 11px; }
+.focus-edges small, .graph-end { color: GrayText; font-size: 10px; }
+.graph-end { margin: 8px 0 0; }
+.graph-scope-note { margin-top: 2px; }
+.graph-inspector { border: 1px solid Highlight; border-radius: 10px; padding: 12px; display: grid; gap: 12px; background: color-mix(in srgb, Highlight 4%, Canvas); }
+.graph-inspector-heading { display: flex; justify-content: space-between; gap: 10px; align-items: start; }
+.graph-inspector-heading h3 { margin: 0; font-size: 16px; }
+.graph-inspector-heading button { min-height: 32px; }
+.graph-node-summary { display: flex; flex-wrap: wrap; gap: 5px; }
+.graph-node-summary span { border: 1px solid color-mix(in srgb, CanvasText 14%, transparent); border-radius: 999px; padding: 3px 7px; font-size: 10px; }
+.arrival-traces { display: grid; gap: 7px; margin-top: 7px; }
+.arrival-traces details { border: 1px solid color-mix(in srgb, CanvasText 12%, transparent); border-radius: 8px; overflow: hidden; background: Canvas; }
+.arrival-traces summary { display: flex; justify-content: space-between; gap: 10px; padding: 9px; cursor: pointer; }
+.arrival-traces summary > span { display: grid; gap: 2px; }
+.arrival-traces summary strong { font-size: 11px; }
+.arrival-traces summary small, .arrival-traces summary time { color: GrayText; font-size: 9px; }
+.arrival-chain { list-style: none; margin: 0; padding: 0 9px 6px; display: grid; }
+.arrival-chain li { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 8px; padding: 7px 0; border-top: 1px solid color-mix(in srgb, CanvasText 8%, transparent); }
+.arrival-chain li.has-signal { border-left: 3px solid #8a4f00; padding-left: 7px; }
+.arrival-chain time { color: GrayText; font-size: 9px; font-variant-numeric: tabular-nums; }
+.arrival-chain li > div { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; min-width: 0; }
+.arrival-chain strong { font-size: 11px; width: 100%; }
+
 @media (max-width: 380px) {
   .actions { grid-template-columns: 1fr; }
-  .tabs { grid-template-columns: repeat(2, 1fr); }
+  .tabs { grid-template-columns: repeat(3, 1fr); }
   .interaction details > summary { display: grid; }
   .interaction-summary { text-align: left; }
+  .explanation-level { grid-template-columns: 1fr; }
+  .explanation-level select { width: 100%; }
+  .graph-filter, .graph-export { grid-template-columns: 1fr; }
+  .focus-node-heading, .graph-inspector-heading { display: grid; }
+  .graph-issue-count { width: fit-content; }
+  .arrival-traces summary { display: grid; }
 }
