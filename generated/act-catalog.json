@@ -1,17 +1,1747 @@
 {
-  "schemaVersion": 1,
+  "schemaVersion": 2,
   "source": {
     "repository": "act-rules/act-rules.github.io",
     "ref": "develop",
     "rulesDirectory": "_rules"
   },
   "summary": {
-    "total": 0,
-    "active": 0,
-    "deprecated": 0,
-    "atomic": 0,
-    "composite": 0,
-    "wcagMapped": 0
+    "total": 94,
+    "active": 87,
+    "deprecated": 7,
+    "atomic": 86,
+    "composite": 8,
+    "wcagMapped": 75
   },
-  "rules": []
+  "rules": [
+    {
+      "id": "047fe0",
+      "name": "Document has heading for non-repeated content",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "07aabd78445045726b509bfa0170ce78c0fa34e8029d6630b126c33faf973bad",
+      "source": {
+        "filename": "document-has-headings-for-non-repeated-content-047fe0.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/document-has-headings-for-non-repeated-content-047fe0.md"
+      }
+    },
+    {
+      "id": "09o5cg",
+      "name": "Text has enhanced contrast",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.4.3",
+        "1.4.6"
+      ],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS Styling",
+        "DOM Tree",
+        "Language"
+      ],
+      "logicHash": "b7d8e593b470a41ac89685c6146ff1aa55538592dc5e10a59062be12ae7c050c",
+      "source": {
+        "filename": "text-contrast-enhanced-09o5cg.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/text-contrast-enhanced-09o5cg.md"
+      }
+    },
+    {
+      "id": "0ssw9k",
+      "name": "Scrollable content can be reached with sequential focus navigation",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "2.1.1",
+        "2.1.3"
+      ],
+      "inputAspects": [
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "ff2e1bec210a16aa1d3412a69462708cfdc1ec2084da139708e5c5eb7790301f",
+      "source": {
+        "filename": "scrollable-element-keyboard-accessible-0ssw9k.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/scrollable-element-keyboard-accessible-0ssw9k.md"
+      }
+    },
+    {
+      "id": "0va7u6",
+      "name": "HTML images contain no text",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.4.5",
+        "1.4.9"
+      ],
+      "inputAspects": [
+        "CSS Styling",
+        "DOM Tree",
+        "Language"
+      ],
+      "logicHash": "7a64f520077f6673f1afd0e2e572255d79761359ba7205e58366b91be8d00add",
+      "source": {
+        "filename": "image-no-text-0va7u6.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/image-no-text-0va7u6.md"
+      }
+    },
+    {
+      "id": "1a02b0",
+      "name": "Audio and visuals of video element have transcript",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.2.1",
+        "1.2.8",
+        "1.3.1"
+      ],
+      "inputAspects": [
+        "Audio output",
+        "CSS Styling",
+        "DOM Tree",
+        "Language",
+        "Visual output"
+      ],
+      "logicHash": "f278ffc8a642ca127f54d75d3e25b02d2661abf1ae5f0c13b29a5e3ff090da4f",
+      "source": {
+        "filename": "video-transcript-1a02b0.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/video-transcript-1a02b0.md"
+      }
+    },
+    {
+      "id": "1ea59c",
+      "name": "Video element visual content has audio description",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [],
+      "inputAspects": [
+        "Audio output",
+        "CSS Styling",
+        "DOM Tree",
+        "Language",
+        "Visual output"
+      ],
+      "logicHash": "375a86c5b180be5f711d85af15cac9ada9d74fb2b5d145e7a4e92f29b09c7d1a",
+      "source": {
+        "filename": "video-audio-description-1ea59c.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/video-audio-description-1ea59c.md"
+      }
+    },
+    {
+      "id": "1ec09b",
+      "name": "Video element visual content has strict accessible alternative",
+      "ruleType": "composite",
+      "deprecated": false,
+      "wcag": [
+        "1.2.5"
+      ],
+      "inputAspects": [],
+      "logicHash": "2e82cff39b8b3b26b4a611905a6bab15ccb844895971131fb85eaafac52cb9a6",
+      "source": {
+        "filename": "video-strict-alternative-for-visual-1ec09b.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/video-strict-alternative-for-visual-1ec09b.md"
+      }
+    },
+    {
+      "id": "23a2a8",
+      "name": "Image has non-empty accessible name",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.1.1"
+      ],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "8cdf645a5e730802f9f16be870b54a8bd510eb8af7c5363b70f6ab29d2e5ab99",
+      "source": {
+        "filename": "image-non-empty-accessible-name-23a2a8.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/image-non-empty-accessible-name-23a2a8.md"
+      }
+    },
+    {
+      "id": "24afc2",
+      "name": "Important letter spacing in style attributes is wide enough",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.4.12"
+      ],
+      "inputAspects": [
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "b6d0541fcd83778ba0a0195c517be5f9b2e486f709b896d4dc1b5daad1cdba20",
+      "source": {
+        "filename": "important-letter-spacing-wide-enough-24afc2.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/important-letter-spacing-wide-enough-24afc2.md"
+      }
+    },
+    {
+      "id": "2779a5",
+      "name": "HTML page has non-empty title",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "2.4.2"
+      ],
+      "inputAspects": [
+        "DOM Tree"
+      ],
+      "logicHash": "d430ca16a7a7eadac9ba8aa446172f27ef87055fcbf88a48063fd75c0c2d1570",
+      "source": {
+        "filename": "html-page-non-empty-title-2779a5.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/html-page-non-empty-title-2779a5.md"
+      }
+    },
+    {
+      "id": "2eb176",
+      "name": "Audio element content has transcript",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [],
+      "inputAspects": [
+        "Audio output",
+        "CSS Styling",
+        "DOM Tree",
+        "Language"
+      ],
+      "logicHash": "68985934ee5c7af518e2b74c3a896619b6ac6e2cc8e07d7a696a464651feaeeb",
+      "source": {
+        "filename": "audio-transcript-2eb176.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/audio-transcript-2eb176.md"
+      }
+    },
+    {
+      "id": "2ee8b8",
+      "name": "Visible label is part of accessible name",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "2.5.3"
+      ],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "46cfc0b98a8eb2df57dec2bc058b83433f9dc70af9317c06e7fd021d0f5d53f6",
+      "source": {
+        "filename": "visible-label-in-accessible-name-2ee8b8.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/visible-label-in-accessible-name-2ee8b8.md"
+      }
+    },
+    {
+      "id": "2t702h",
+      "name": "Summary element has non-empty accessible name",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "4.1.2"
+      ],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "47dc44a7b4ce57ac6e54b914bc0cfb98004d36556b92eaa20302df9f0605df8c",
+      "source": {
+        "filename": "summary-non-empty-accessible-name-2t702h.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/summary-non-empty-accessible-name-2t702h.md"
+      }
+    },
+    {
+      "id": "307n5z",
+      "name": "Element with presentational children has no focusable content",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "4.1.2"
+      ],
+      "inputAspects": [
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "ee28e953eab95666a7f66700b78758f64bd9e6427f0e04cc7324ff255c97d864",
+      "source": {
+        "filename": "presentational-children-no-focusable-content-307n5z.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/presentational-children-no-focusable-content-307n5z.md"
+      }
+    },
+    {
+      "id": "36b590",
+      "name": "Error message describes invalid form field value",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "3.3.1"
+      ],
+      "inputAspects": [
+        "CSS Styling",
+        "DOM Tree",
+        "Language"
+      ],
+      "logicHash": "e929b43b0324929526fbdfd1a06a3a4d6b3531fee9f06d2f02feddbe7e90ca13",
+      "source": {
+        "filename": "invalid-form-field-value-36b590.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/invalid-form-field-value-36b590.md"
+      }
+    },
+    {
+      "id": "3e12e1",
+      "name": "Block of repeated content is collapsible",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "9bea45a930fbc6713243d6c6bd9fc39ccad5e7aec53f4ebbc86c2c07b0d8e43e",
+      "source": {
+        "filename": "block-collapsible-3e12e1.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/block-collapsible-3e12e1.md"
+      }
+    },
+    {
+      "id": "3ea0c8",
+      "name": "Id attribute value is unique",
+      "ruleType": "atomic",
+      "deprecated": true,
+      "wcag": [
+        "4.1.1"
+      ],
+      "inputAspects": [
+        "DOM Tree"
+      ],
+      "logicHash": "2d03ee4f93a45961d07540943d8e6540d373580e83c92a21eec548530a01db2e",
+      "source": {
+        "filename": "id-value-unique-3ea0c8.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/id-value-unique-3ea0c8.md"
+      }
+    },
+    {
+      "id": "46ca7f",
+      "name": "Element marked as decorative is not exposed",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.1.1"
+      ],
+      "inputAspects": [
+        "Accessibility tree",
+        "CSS styling",
+        "DOM tree"
+      ],
+      "logicHash": "287ffaaa1d0ee66e44fee2ca65864fa3399b15385ef15093e989780388587197",
+      "source": {
+        "filename": "element-marked-decorative-is-not-exposed-46ca7f.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/element-marked-decorative-is-not-exposed-46ca7f.md"
+      }
+    },
+    {
+      "id": "4b1c6c",
+      "name": "Iframe elements with identical accessible names have equivalent purpose",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "4.1.2"
+      ],
+      "inputAspects": [
+        "CSS Styling",
+        "DOM Tree",
+        "Language"
+      ],
+      "logicHash": "3338c84493e66ebd89913db5c36641f7d753ecef27e4f4278ed7ad97bbf75b88",
+      "source": {
+        "filename": "iframe-identical-name-equivalent-purpose-4b1c6c.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/iframe-identical-name-equivalent-purpose-4b1c6c.md"
+      }
+    },
+    {
+      "id": "4c31df",
+      "name": "Audio or video element that plays automatically has a control mechanism",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [],
+      "inputAspects": [
+        "Audio output",
+        "CSS Styling",
+        "DOM Tree",
+        "Visual output"
+      ],
+      "logicHash": "7af7e6016cdaed173f223c74bba657fe6bed1c027575ffb0b4174a0fee6bcbf4",
+      "source": {
+        "filename": "auto-play-audio-has-control-mechanism-4c31df.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/auto-play-audio-has-control-mechanism-4c31df.md"
+      }
+    },
+    {
+      "id": "4e8ab6",
+      "name": "Element with role attribute has required states and properties",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.3.1",
+        "4.1.2"
+      ],
+      "inputAspects": [
+        "DOM Tree"
+      ],
+      "logicHash": "077701abb7b35df4eb82232c4ee6dae4d4ad0855a1227ce1ea5b4e7e63b8558d",
+      "source": {
+        "filename": "role-required-states-and-properties-4e8ab6.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/role-required-states-and-properties-4e8ab6.md"
+      }
+    },
+    {
+      "id": "59796f",
+      "name": "Image button has non-empty accessible name",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.1.1",
+        "4.1.2"
+      ],
+      "inputAspects": [],
+      "logicHash": "c8c249df75e11bf4ed02f66f766204f997faa5021f759d1e060b6835525a2307",
+      "source": {
+        "filename": "image-button-non-empty-accessible-name-59796f.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/image-button-non-empty-accessible-name-59796f.md"
+      }
+    },
+    {
+      "id": "59br37",
+      "name": "Zoomed text node is not clipped with CSS overflow",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [],
+      "inputAspects": [
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "944bbacc40cc9d097d040418ed8ef421ef6ecb49ecbca1172152e06bb898aeb2",
+      "source": {
+        "filename": "zoom-text-no-overflow-clipping-59br37.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/zoom-text-no-overflow-clipping-59br37.md"
+      }
+    },
+    {
+      "id": "5b7ae0",
+      "name": "HTML page lang and xml:lang attributes have matching values",
+      "ruleType": "atomic",
+      "deprecated": true,
+      "wcag": [
+        "3.1.1"
+      ],
+      "inputAspects": [
+        "DOM Tree"
+      ],
+      "logicHash": "c7cbc8beaab69d02a2fc79e33a1815e24ccafeb8932a66f29f7d5553bd26f06c",
+      "source": {
+        "filename": "html-page-lang-xml-lang-match-5b7ae0.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/html-page-lang-xml-lang-match-5b7ae0.md"
+      }
+    },
+    {
+      "id": "5c01ea",
+      "name": "ARIA state or property is permitted",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.3.1",
+        "4.1.2"
+      ],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS styling",
+        "DOM Tree"
+      ],
+      "logicHash": "d4eedbd80ffbb709bb4759ac4f2f2b75acf3e763f0582816aa87262ac38adf83",
+      "source": {
+        "filename": "aria-state-or-property-permitted-5c01ea.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/aria-state-or-property-permitted-5c01ea.md"
+      }
+    },
+    {
+      "id": "5effbb",
+      "name": "Link in context is descriptive",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "2.4.4",
+        "2.4.9"
+      ],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS Styling",
+        "DOM Tree",
+        "Language"
+      ],
+      "logicHash": "c1bfb5b4702d7967a5ee8ca2e62cb31ffb30e965dc96db69205473a0acbbc388",
+      "source": {
+        "filename": "link-in-context-descriptive-5effbb.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/link-in-context-descriptive-5effbb.md"
+      }
+    },
+    {
+      "id": "5f99a7",
+      "name": "ARIA attribute is defined in WAI-ARIA",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.3.1",
+        "4.1.2"
+      ],
+      "inputAspects": [
+        "DOM Tree"
+      ],
+      "logicHash": "7383bf79332873d7822d5a6e6686a104d97f181e14e647b1b32dbe5c12db8f7b",
+      "source": {
+        "filename": "aria-attr-defined-5f99a7.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/aria-attr-defined-5f99a7.md"
+      }
+    },
+    {
+      "id": "674b10",
+      "name": "Role attribute has valid value",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.3.1",
+        "4.1.2"
+      ],
+      "inputAspects": [
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "0baee13488c693fa72f4921e1d9379e47ff49ea7e6e15769b7797b56880b33f8",
+      "source": {
+        "filename": "role-attribute-valid-value-674b10.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/role-attribute-valid-value-674b10.md"
+      }
+    },
+    {
+      "id": "6a7281",
+      "name": "ARIA state or property has valid value",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.3.1",
+        "4.1.2"
+      ],
+      "inputAspects": [
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "671b3589ddd942b727c39c3c88c0bbdc77bc0d34483c7f79705273924e66076a",
+      "source": {
+        "filename": "aria-state-or-property-valid-value-6a7281.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/aria-state-or-property-valid-value-6a7281.md"
+      }
+    },
+    {
+      "id": "6cfa84",
+      "name": "Element with aria-hidden has no content in sequential focus navigation",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "4.1.2"
+      ],
+      "inputAspects": [
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "d037063d824e12fc31ece5dcb42e7f412b807aa7043b4c8e44d03c701128dc75",
+      "source": {
+        "filename": "aria-hidden-no-focusable-content-6cfa84.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/aria-hidden-no-focusable-content-6cfa84.md"
+      }
+    },
+    {
+      "id": "73f2c2",
+      "name": "Autocomplete attribute has valid value",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.3.5"
+      ],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "2844cbd433a29d044a9df063f4e12855938cc7382ea5fa755af981e70251ce6d",
+      "source": {
+        "filename": "autocomplete-valid-value-73f2c2.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/autocomplete-valid-value-73f2c2.md"
+      }
+    },
+    {
+      "id": "7677a9",
+      "name": "Device motion based changes to the content can also be created from the user interface",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "2.5.4"
+      ],
+      "inputAspects": [
+        "Accessibility tree",
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "8cf5cc2d11ff49d6b279f1fddeb73fa6bc585a4113f86aec9e86ff2c7fb1c934",
+      "source": {
+        "filename": "device-motion-user-interface-7677a9.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/device-motion-user-interface-7677a9.md"
+      }
+    },
+    {
+      "id": "78fd32",
+      "name": "Important line height in style attributes is wide enough",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.4.12"
+      ],
+      "inputAspects": [
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "f8d2ec48bddb0f09fc3249d6d18467fa72187431bcb814adf74f6c8e0ff9b243",
+      "source": {
+        "filename": "important-line-height-wide-enough-78fd32.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/important-line-height-wide-enough-78fd32.md"
+      }
+    },
+    {
+      "id": "7d6734",
+      "name": "SVG element with explicit role has non-empty accessible name",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.1.1"
+      ],
+      "inputAspects": [
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "c1a6e757f6f287de05e6ee1b66a65154dbdab710fb31bc496b44e5b1b7db7799",
+      "source": {
+        "filename": "explicit-SVG-image-non-empty-accessible-name-7d6734.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/explicit-SVG-image-non-empty-accessible-name-7d6734.md"
+      }
+    },
+    {
+      "id": "80af7b",
+      "name": "Focusable element has no keyboard trap",
+      "ruleType": "composite",
+      "deprecated": false,
+      "wcag": [
+        "2.1.2"
+      ],
+      "inputAspects": [],
+      "logicHash": "a83d7ab402a8e60e1f299c97074cb2eb22c069cfcbd17d750a7c49a8f928611a",
+      "source": {
+        "filename": "focusable-no-keyboard-trap-80af7b.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/focusable-no-keyboard-trap-80af7b.md"
+      }
+    },
+    {
+      "id": "80f0bf",
+      "name": "Audio or video element avoids automatically playing audio",
+      "ruleType": "composite",
+      "deprecated": false,
+      "wcag": [
+        "1.4.2"
+      ],
+      "inputAspects": [],
+      "logicHash": "8fd3dde67c1a8b7a255a1761e7ee32331adec86c55525ee6037c879d1d61c0ef",
+      "source": {
+        "filename": "audio-or-video-avoids-automatically-playing-audio-80f0bf.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/audio-or-video-avoids-automatically-playing-audio-80f0bf.md"
+      }
+    },
+    {
+      "id": "8fc3b6",
+      "name": "Object element rendering non-text content has non-empty accessible name",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.1.1"
+      ],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "273d36e1d678a4045c06605dd7ca5ea646f690ddda28f906850988c9f2e79566",
+      "source": {
+        "filename": "object-has-accessible-name-8fc3b6.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/object-has-accessible-name-8fc3b6.md"
+      }
+    },
+    {
+      "id": "97a4e1",
+      "name": "Button has non-empty accessible name",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "4.1.2"
+      ],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "01686661890876abdee595465efc5a64c25abf1569518b3b2a9760d10a996cfd",
+      "source": {
+        "filename": "button-non-empty-accessible-name-97a4e1.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/button-non-empty-accessible-name-97a4e1.md"
+      }
+    },
+    {
+      "id": "9bd38c",
+      "name": "Content has alternative for visual reference",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.3.3"
+      ],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS Styling",
+        "DOM Tree",
+        "Language"
+      ],
+      "logicHash": "5a4692bc77ab89892227336b7d4eb1286793b79fb27593b39394d84eb116fff8",
+      "source": {
+        "filename": "non-visual-reference-alternative-9bd38c.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/non-visual-reference-alternative-9bd38c.md"
+      }
+    },
+    {
+      "id": "9e45ec",
+      "name": "Important word spacing in style attributes is wide enough",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.4.12"
+      ],
+      "inputAspects": [
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "e22f63d47f7527930401e75faf8db01d9b6ef401b26c327832c9f3ccc1adf55c",
+      "source": {
+        "filename": "important-word-spacing-wide-enough-9e45ec.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/important-word-spacing-wide-enough-9e45ec.md"
+      }
+    },
+    {
+      "id": "9eb3f6",
+      "name": "Image filename is accessible name for image",
+      "ruleType": "atomic",
+      "deprecated": true,
+      "wcag": [
+        "1.1.1"
+      ],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS Styling",
+        "DOM Tree",
+        "Language"
+      ],
+      "logicHash": "35a828278d79df57d67c0cffa6cf4f9249c9b2e1c99a2588ca7c62ede45994fd",
+      "source": {
+        "filename": "image-filename-as-accessible-name-9eb3f6.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/image-filename-as-accessible-name-9eb3f6.md"
+      }
+    },
+    {
+      "id": "a1b64e",
+      "name": "Focusable element has no keyboard trap via standard navigation",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [],
+      "inputAspects": [
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "9d8fb449baf520ca8a3252b8dc216da423ea1741a3000ed0a2928e94a682a64a",
+      "source": {
+        "filename": "focusable-no-keyboard-trap-standard-nav-a1b64e.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/focusable-no-keyboard-trap-standard-nav-a1b64e.md"
+      }
+    },
+    {
+      "id": "a25f45",
+      "name": "Headers attribute specified on a cell refers to cells in the same table element",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.3.1"
+      ],
+      "inputAspects": [
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "84e5f65b55d1c0dfaa0efb0351232eb363d524f374a29da9877103f4295d7f12",
+      "source": {
+        "filename": "table-headers-attribute-refer-to-data-cells-a25f45.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/table-headers-attribute-refer-to-data-cells-a25f45.md"
+      }
+    },
+    {
+      "id": "aaa1bf",
+      "name": "Audio or video element that plays automatically has no audio that lasts more than 3 seconds",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [],
+      "inputAspects": [
+        "Audio output",
+        "CSS Styling",
+        "DOM Tree",
+        "Visual output"
+      ],
+      "logicHash": "96144587e7d05582d668f558a3692735d4f8231bd12b4200111ddd7d243b2b3c",
+      "source": {
+        "filename": "auto-play-audio-does-not-exceed-3-seconds-aaa1bf.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/auto-play-audio-does-not-exceed-3-seconds-aaa1bf.md"
+      }
+    },
+    {
+      "id": "ab4d13",
+      "name": "Video element content is media alternative for text",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [],
+      "inputAspects": [
+        "Audio output",
+        "CSS Styling",
+        "DOM Tree",
+        "Language"
+      ],
+      "logicHash": "2d43c82f77866d89d8d188dbb591f2e87ba48a7afa7b491346283ac606313db7",
+      "source": {
+        "filename": "video-as-media-alternative-ab4d13.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/video-as-media-alternative-ab4d13.md"
+      }
+    },
+    {
+      "id": "ac7dc6",
+      "name": "Video element visual-only content has description track",
+      "ruleType": "atomic",
+      "deprecated": true,
+      "wcag": [],
+      "inputAspects": [
+        "Audio output",
+        "CSS Styling",
+        "DOM Tree",
+        "Language",
+        "Visual output"
+      ],
+      "logicHash": "da0035121d52947a17b9cc66a06c7395112d1fd74189294709c784c6b44bdb89",
+      "source": {
+        "filename": "video-only-description-track-ac7dc6.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/video-only-description-track-ac7dc6.md"
+      }
+    },
+    {
+      "id": "afb423",
+      "name": "Audio element content is media alternative for text",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [],
+      "inputAspects": [
+        "Audio output",
+        "CSS Styling",
+        "DOM Tree",
+        "Language"
+      ],
+      "logicHash": "cf18e576f2c52cfe861730728a002e8eefa870ae011915b8b97198bdd4e45603",
+      "source": {
+        "filename": "audio-as-media-alternative-afb423.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/audio-as-media-alternative-afb423.md"
+      }
+    },
+    {
+      "id": "afw4f7",
+      "name": "Text has minimum contrast",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.4.3",
+        "1.4.6"
+      ],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS Styling",
+        "DOM Tree",
+        "Language"
+      ],
+      "logicHash": "a5ee5b57ade347b43351e2e320c3c110f10cce02e0a7285f041c6821690fe6ff",
+      "source": {
+        "filename": "text-contrast-afw4f7.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/text-contrast-afw4f7.md"
+      }
+    },
+    {
+      "id": "aizyf1",
+      "name": "Link is descriptive",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "2.4.9"
+      ],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS Styling",
+        "DOM Tree",
+        "Language"
+      ],
+      "logicHash": "42d2a309af215bebe534c6e4d54a24837a3b2338eea430e7c8f11bef62f0ee4b",
+      "source": {
+        "filename": "link-alone-descriptive-aizyf1.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/link-alone-descriptive-aizyf1.md"
+      }
+    },
+    {
+      "id": "akn7bn",
+      "name": "Iframe with interactive elements is not excluded from tab-order",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "2.1.1",
+        "2.1.3"
+      ],
+      "inputAspects": [
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "ef4dbcd7b33269ed7539dd1d0562dfb15607bc969ecec9a1bdc28373f5b37c90",
+      "source": {
+        "filename": "iframe-with-interactive-content-in-tab-order-akn7bn.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/iframe-with-interactive-content-in-tab-order-akn7bn.md"
+      }
+    },
+    {
+      "id": "b20e66",
+      "name": "Links with identical accessible names have equivalent purpose",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "2.4.9"
+      ],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS Styling",
+        "DOM Tree",
+        "Language"
+      ],
+      "logicHash": "0fb5aaa2dd6844974e3a4b6c7061cf57296643c18164487b3df09df52065ab00",
+      "source": {
+        "filename": "links-identical-name-equivalent-purpose-b20e66.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/links-identical-name-equivalent-purpose-b20e66.md"
+      }
+    },
+    {
+      "id": "b33eff",
+      "name": "Orientation of the page is not restricted using CSS transforms",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.3.4"
+      ],
+      "inputAspects": [
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "6011c27523f5bcb67523c8d5ca85bc1a5b2c7591f63527c711040d3b232b5d5c",
+      "source": {
+        "filename": "css-restrict-orientation-b33eff.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/css-restrict-orientation-b33eff.md"
+      }
+    },
+    {
+      "id": "b40fd1",
+      "name": "Document has a landmark with non-repeated content",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS styling",
+        "DOM Tree"
+      ],
+      "logicHash": "af13d08936fc05294a7aae7962330c77f3d3c36036c844d991ff150ede9a6ce5",
+      "source": {
+        "filename": "document-has-landmark-with-non-repeated-content-b40fd1.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/document-has-landmark-with-non-repeated-content-b40fd1.md"
+      }
+    },
+    {
+      "id": "b49b2e",
+      "name": "Heading is descriptive",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "2.4.6"
+      ],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS Styling",
+        "DOM Tree",
+        "Language"
+      ],
+      "logicHash": "48ed38ef286bc03b206415ef5b764e2730b8d9ca3d2c407b37318ef65cba5428",
+      "source": {
+        "filename": "heading-descriptive-b49b2e.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/heading-descriptive-b49b2e.md"
+      }
+    },
+    {
+      "id": "b4f0c3",
+      "name": "Meta viewport allows for zoom",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.4.4",
+        "1.4.10"
+      ],
+      "inputAspects": [
+        "DOM Tree"
+      ],
+      "logicHash": "eb9918c617a03783236730421d1dfb9661692570bf7d767a0e203ff65a6b9d38",
+      "source": {
+        "filename": "meta-viewport-b4f0c3.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/meta-viewport-b4f0c3.md"
+      }
+    },
+    {
+      "id": "b5c3f8",
+      "name": "HTML page has lang attribute",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "3.1.1"
+      ],
+      "inputAspects": [
+        "DOM Tree"
+      ],
+      "logicHash": "35251408913a3291938949aad55a8e5a3d5d5e5ceddccc35c066951e52de2ad7",
+      "source": {
+        "filename": "html-page-lang-b5c3f8.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/html-page-lang-b5c3f8.md"
+      }
+    },
+    {
+      "id": "bc4a75",
+      "name": "ARIA required owned elements",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.3.1"
+      ],
+      "inputAspects": [
+        "Accessibility tree",
+        "CSS styling",
+        "DOM Tree"
+      ],
+      "logicHash": "0f403e9b1e286f96ce4e10e66f24cdab59c42be41c4fc1ef3cbbdbdd4773a8cf",
+      "source": {
+        "filename": "aria-required-owned-element-bc4a75.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/aria-required-owned-element-bc4a75.md"
+      }
+    },
+    {
+      "id": "bc659a",
+      "name": "Meta element has no refresh delay",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "2.2.1",
+        "2.2.4",
+        "3.2.5"
+      ],
+      "inputAspects": [
+        "DOM Tree"
+      ],
+      "logicHash": "0cb22a84c3d6a9a6cfd6681867cfeabb88e1b4ce06666c4a36742a6d0d6d89d6",
+      "source": {
+        "filename": "meta-refresh-no-delay-bc659a.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/meta-refresh-no-delay-bc659a.md"
+      }
+    },
+    {
+      "id": "bf051a",
+      "name": "HTML page lang attribute has valid language tag",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "3.1.1"
+      ],
+      "inputAspects": [
+        "DOM Tree"
+      ],
+      "logicHash": "42d578552034f3366e765eb44d728faebc2361266e587b261dd88355ca1eb5b1",
+      "source": {
+        "filename": "html-page-lang-valid-bf051a.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/html-page-lang-valid-bf051a.md"
+      }
+    },
+    {
+      "id": "bisz58",
+      "name": "Meta element has no refresh delay (no exception)",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "2.2.1",
+        "2.2.4",
+        "3.2.5"
+      ],
+      "inputAspects": [
+        "DOM Tree"
+      ],
+      "logicHash": "9ac190713238981ac713002f3c12651b2c63683dd8a9571c7e8b72ba9a002d1f",
+      "source": {
+        "filename": "meta-refresh-no-delay-no-exception-bisz58.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/meta-refresh-no-delay-no-exception-bisz58.md"
+      }
+    },
+    {
+      "id": "c249d5",
+      "name": "Device motion based changes to the content can be disabled",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "2.5.4"
+      ],
+      "inputAspects": [
+        "Accessibility tree",
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "b7e7268441a2b81fe8adc727d33c9fc0b99c142eb903bba723ee8938e13ea87b",
+      "source": {
+        "filename": "device-motion-disabled-c249d5.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/device-motion-disabled-c249d5.md"
+      }
+    },
+    {
+      "id": "c3232f",
+      "name": "Video element visual-only content has accessible alternative",
+      "ruleType": "composite",
+      "deprecated": false,
+      "wcag": [
+        "1.2.1"
+      ],
+      "inputAspects": [],
+      "logicHash": "8258d75e52b0ccc829832b861f550c6ff56da684a408344b299826199834f968",
+      "source": {
+        "filename": "video-only-alternative-for-visual-c3232f.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/video-only-alternative-for-visual-c3232f.md"
+      }
+    },
+    {
+      "id": "c487ae",
+      "name": "Link has non-empty accessible name",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.1.1",
+        "2.4.4",
+        "2.4.9",
+        "4.1.2"
+      ],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "085a49001885853d0b420e83a10113e64bccee8fee5b1fc60f15b615216fff17",
+      "source": {
+        "filename": "link-non-empty-accessible-name-c487ae.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/link-non-empty-accessible-name-c487ae.md"
+      }
+    },
+    {
+      "id": "c4a8a4",
+      "name": "HTML page title is descriptive",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "2.4.2"
+      ],
+      "inputAspects": [
+        "DOM Tree",
+        "Language"
+      ],
+      "logicHash": "8f3e247403b0dc45424f3bc70528ddfb725dfbb53a6687ead8b84d5d84d06c14",
+      "source": {
+        "filename": "html-page-title-descriptive-c4a8a4.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/html-page-title-descriptive-c4a8a4.md"
+      }
+    },
+    {
+      "id": "c5a4ea",
+      "name": "Video element visual content has accessible alternative",
+      "ruleType": "composite",
+      "deprecated": false,
+      "wcag": [
+        "1.2.3",
+        "1.2.5",
+        "1.2.8"
+      ],
+      "inputAspects": [],
+      "logicHash": "2a8a3bb823f8f2f0d7da0ea06b5770b952f4c48bad40423e2b8a97f0f1cfe53d",
+      "source": {
+        "filename": "video-alternative-for-visual-c5a4ea.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/video-alternative-for-visual-c5a4ea.md"
+      }
+    },
+    {
+      "id": "cae760",
+      "name": "Iframe element has non-empty accessible name",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "4.1.2"
+      ],
+      "inputAspects": [
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "2f18f51c4c3753f7c205e56ef42bd9251025d398159abf2c4bdea8cb6966a9a2",
+      "source": {
+        "filename": "iframe-non-empty-accessible-name-cae760.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/iframe-non-empty-accessible-name-cae760.md"
+      }
+    },
+    {
+      "id": "cc0f0a",
+      "name": "Form field label is descriptive",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "2.4.6"
+      ],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS Styling",
+        "DOM Tree",
+        "Language"
+      ],
+      "logicHash": "e38a3167662280ad7eebc63603e0c2167a17d554e9b8e2f097b1faab338434b1",
+      "source": {
+        "filename": "form-field-label-descriptive-cc0f0a.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/form-field-label-descriptive-cc0f0a.md"
+      }
+    },
+    {
+      "id": "cf77f2",
+      "name": "Bypass Blocks of Repeated Content",
+      "ruleType": "composite",
+      "deprecated": false,
+      "wcag": [
+        "2.4.1"
+      ],
+      "inputAspects": [],
+      "logicHash": "5645b5e499dd1663856e5320ab9a0988c7518a5099a144ee21f8779d1a409aa4",
+      "source": {
+        "filename": "bypass-blocks-cf77f2.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/bypass-blocks-cf77f2.md"
+      }
+    },
+    {
+      "id": "d0f69e",
+      "name": "Table header cell has assigned cells",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.3.1"
+      ],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS styling",
+        "DOM Tree"
+      ],
+      "logicHash": "90f1dc3b0853e061d9c11892588ca583e6c876b4cd7b41f314fca6ba654dee2b",
+      "source": {
+        "filename": "table-header-cell-has-assigned-cells-d0f69e.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/table-header-cell-has-assigned-cells-d0f69e.md"
+      }
+    },
+    {
+      "id": "d7ba54",
+      "name": "Video element visual-only content has audio track alternative",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [],
+      "inputAspects": [
+        "Audio output",
+        "CSS Styling",
+        "DOM Tree",
+        "Language",
+        "Visual output"
+      ],
+      "logicHash": "67561c9b4bc5bb38d714288729bf4273d5fe72db5f25f7c565c538dd7dbabebc",
+      "source": {
+        "filename": "video-only-audio-track-d7ba54.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/video-only-audio-track-d7ba54.md"
+      }
+    },
+    {
+      "id": "de46e4",
+      "name": "Element with lang attribute has valid language tag",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "3.1.2"
+      ],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "8aea5982fdb8453fe21ef35c2241791fe4528dcf7b27ff99beb95c409fe536c1",
+      "source": {
+        "filename": "element-lang-valid-de46e4.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/element-lang-valid-de46e4.md"
+      }
+    },
+    {
+      "id": "e086e5",
+      "name": "Form field has non-empty accessible name",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.3.1",
+        "2.5.3",
+        "4.1.2"
+      ],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS styling",
+        "DOM Tree"
+      ],
+      "logicHash": "3855c48a18de6c9d4cedd45fd7b781ad514043cfb6618cc64f84178b1f454c92",
+      "source": {
+        "filename": "form-field-non-empty-accessible-name-e086e5.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/form-field-non-empty-accessible-name-e086e5.md"
+      }
+    },
+    {
+      "id": "e6952f",
+      "name": "Attribute is not duplicated",
+      "ruleType": "atomic",
+      "deprecated": true,
+      "wcag": [
+        "4.1.1"
+      ],
+      "inputAspects": [
+        "Source code"
+      ],
+      "logicHash": "4bace06b1b585c207931d9aad4c6d27ec0d2da5853cc241a3a610854a8dc7a86",
+      "source": {
+        "filename": "attr-not-duplicated-e6952f.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/attr-not-duplicated-e6952f.md"
+      }
+    },
+    {
+      "id": "e7aa44",
+      "name": "Audio element content has text alternative",
+      "ruleType": "composite",
+      "deprecated": false,
+      "wcag": [
+        "1.2.1"
+      ],
+      "inputAspects": [],
+      "logicHash": "ac6afcd3fa5731a3cedd5de61b7a7f98678c17d71f6b72219504a42a13b1d8b8",
+      "source": {
+        "filename": "audio-text-alternative-e7aa44.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/audio-text-alternative-e7aa44.md"
+      }
+    },
+    {
+      "id": "e88epe",
+      "name": "Image not in the accessibility tree is decorative",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.1.1"
+      ],
+      "inputAspects": [
+        "Accessibility tree",
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "7638c291d97c1d876e94eea493e004e59d1a23caa645ec1965fa6f46809841fc",
+      "source": {
+        "filename": "image-not-in-acc-tree-is-decorative-e88epe.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/image-not-in-acc-tree-is-decorative-e88epe.md"
+      }
+    },
+    {
+      "id": "eac66b",
+      "name": "Video element auditory content has accessible alternative",
+      "ruleType": "composite",
+      "deprecated": false,
+      "wcag": [
+        "1.2.2"
+      ],
+      "inputAspects": [],
+      "logicHash": "8d4897b5b707b7a97b4d31ee94f6f7af147ec23068fb63af67f7dda9b8c6ff30",
+      "source": {
+        "filename": "video-alternative-for-auditory-eac66b.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/video-alternative-for-auditory-eac66b.md"
+      }
+    },
+    {
+      "id": "ebe86a",
+      "name": "Focusable element has no keyboard trap via non-standard navigation",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [],
+      "inputAspects": [
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "374108b36567bf6536353b93f833137e0d366a2b921b0ca93215d38a025c3782",
+      "source": {
+        "filename": "focusable-no-keyboard-trap-non-standard-nav-ebe86a.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/focusable-no-keyboard-trap-non-standard-nav-ebe86a.md"
+      }
+    },
+    {
+      "id": "ee13b5",
+      "name": "Video element visual-only content has transcript",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.2.1",
+        "1.3.1"
+      ],
+      "inputAspects": [
+        "Audio output",
+        "CSS Styling",
+        "DOM Tree",
+        "Language",
+        "Visual output"
+      ],
+      "logicHash": "aefdb9a43faaafa82006a72050cd109670b401ea03a4f18b53bdfaf0a01b1235",
+      "source": {
+        "filename": "video-only-transcript-ee13b5.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/video-only-transcript-ee13b5.md"
+      }
+    },
+    {
+      "id": "efbfc7",
+      "name": "Text content that changes automatically can be paused, stopped or hidden",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [],
+      "inputAspects": [
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "8e3413ea92abc68ed5a7e82bab73e90374cdf30fab66d5421530a0b23535b4f0",
+      "source": {
+        "filename": "auto-update-text-efbfc7.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/auto-update-text-efbfc7.md"
+      }
+    },
+    {
+      "id": "f196ce",
+      "name": "Video element visual content has description track",
+      "ruleType": "atomic",
+      "deprecated": true,
+      "wcag": [],
+      "inputAspects": [
+        "Audio output",
+        "CSS Styling",
+        "DOM Tree",
+        "Language",
+        "Visual output"
+      ],
+      "logicHash": "a91d1a9c56bc67d7ec5666ed25e94d071a60a4a8322d561347a24f6f22c56767",
+      "source": {
+        "filename": "video-description-track-f196ce.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/video-description-track-f196ce.md"
+      }
+    },
+    {
+      "id": "f51b46",
+      "name": "Video element auditory content has captions",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.2.1"
+      ],
+      "inputAspects": [
+        "Audio output",
+        "CSS Styling",
+        "DOM Tree",
+        "Visual output"
+      ],
+      "logicHash": "d97fbe6f109c9dbe66d40cfe9ccca2a7415ec67d08806f23700ddfa4661dd8d0",
+      "source": {
+        "filename": "video-captions-f51b46.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/video-captions-f51b46.md"
+      }
+    },
+    {
+      "id": "fd26cf",
+      "name": "Video element visual-only content is media alternative for text",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [],
+      "inputAspects": [
+        "Audio output",
+        "CSS Styling",
+        "DOM Tree",
+        "Language"
+      ],
+      "logicHash": "6753c78c6a72773cba8f8aafaf824b4aa508e81d52a6cd48d20b450986f0bbed",
+      "source": {
+        "filename": "video-only-as-media-alternative-fd26cf.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/video-only-as-media-alternative-fd26cf.md"
+      }
+    },
+    {
+      "id": "fd3a94",
+      "name": "Links with identical accessible names and same context serve equivalent purpose",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "2.4.4",
+        "2.4.9"
+      ],
+      "inputAspects": [
+        "CSS Styling",
+        "DOM Tree",
+        "Language"
+      ],
+      "logicHash": "e97518c5fe302e7b1c28c2205b362433be62f1ed201dc3270e545d65cf7ca594",
+      "source": {
+        "filename": "links-with-identical-names-and-context-serve-equivalent-purpose-fd3a94.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/links-with-identical-names-and-context-serve-equivalent-purpose-fd3a94.md"
+      }
+    },
+    {
+      "id": "ff89c9",
+      "name": "ARIA required context role",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.3.1"
+      ],
+      "inputAspects": [
+        "Accessibility tree",
+        "CSS styling",
+        "DOM Tree"
+      ],
+      "logicHash": "1fc8c59d7cc639652e6a56be57216bf38372547c28d50087293e1ad6a48cb9e1",
+      "source": {
+        "filename": "aria-required-context-role-ff89c9.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/aria-required-context-role-ff89c9.md"
+      }
+    },
+    {
+      "id": "ffbc54",
+      "name": "No keyboard shortcut uses only printable characters",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "2.1.4"
+      ],
+      "inputAspects": [
+        "DOM Tree"
+      ],
+      "logicHash": "74b7a689f451525dbdce8afd48471d1a1a89bf63ae1f72ed923772a21e55988d",
+      "source": {
+        "filename": "printable-characters-shortcut-ffbc54.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/printable-characters-shortcut-ffbc54.md"
+      }
+    },
+    {
+      "id": "ffd0e9",
+      "name": "Heading has non-empty accessible name",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "a4940f3a66657473609a26d14a9f7e46d70a69cd4a74d0f3a736989981e559e5",
+      "source": {
+        "filename": "heading-non-empty-accessible-name-ffd0e9.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/heading-non-empty-accessible-name-ffd0e9.md"
+      }
+    },
+    {
+      "id": "in6db8",
+      "name": "ARIA required ID references exist",
+      "ruleType": "atomic",
+      "deprecated": true,
+      "wcag": [
+        "1.3.1",
+        "4.1.2"
+      ],
+      "inputAspects": [
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "c6c9c9fa3bdfb56063472bcd487b2f4f33661ff41e029b509ce58ebdce5ff975",
+      "source": {
+        "filename": "aria-required-id-references-in6db8.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/aria-required-id-references-in6db8.md"
+      }
+    },
+    {
+      "id": "kb1m8s",
+      "name": "ARIA global properties not used where prohibited",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.3.1"
+      ],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS styling",
+        "DOM Tree"
+      ],
+      "logicHash": "99c67bcf7be9476134a0509fe0584cdac4f9f5777ff1983de10ded6935a8a434",
+      "source": {
+        "filename": "aria-global-property-not-prohibited-kb1m8s.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/aria-global-property-not-prohibited-kb1m8s.md"
+      }
+    },
+    {
+      "id": "m6b1q3",
+      "name": "Menuitem has non-empty accessible name",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "4.1.2"
+      ],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS Styling",
+        "DOM Tree"
+      ],
+      "logicHash": "64477083de38873c96dcad7dcc6eaad24d300a23d52c754133945a655742f362",
+      "source": {
+        "filename": "menuitem-non-empty-name-m6b1q3.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/menuitem-non-empty-name-m6b1q3.md"
+      }
+    },
+    {
+      "id": "off6ek",
+      "name": "HTML element language subtag matches language",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "3.1.2"
+      ],
+      "inputAspects": [
+        "Accessibility tree",
+        "CSS Styling",
+        "DOM tree",
+        "Language"
+      ],
+      "logicHash": "c5e849ab90a6256008984133375b1d9ec38ab19cc2eda4998af16377853e5e87",
+      "source": {
+        "filename": "element-lang-matches-default-language-off6ek.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/element-lang-matches-default-language-off6ek.md"
+      }
+    },
+    {
+      "id": "oj04fd",
+      "name": "Element in sequential focus order has visible focus",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "2.4.7"
+      ],
+      "inputAspects": [
+        "CSS styling",
+        "DOM tree"
+      ],
+      "logicHash": "fa60aa29a38613488375bfb941ee4c43c5204a9286fd613a11457067c490914a",
+      "source": {
+        "filename": "sequentially-focusable-element-has-visible-focus-oj04fd.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/sequentially-focusable-element-has-visible-focus-oj04fd.md"
+      }
+    },
+    {
+      "id": "qt1vmo",
+      "name": "Image accessible name is descriptive",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "1.1.1"
+      ],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS Styling",
+        "DOM Tree",
+        "Language"
+      ],
+      "logicHash": "09c41609a4f121f93c02207c2c8e3dfe8733b74e7f02c5fa96b0545b88a22d98",
+      "source": {
+        "filename": "image-accessible-name-descriptive-qt1vmo.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/image-accessible-name-descriptive-qt1vmo.md"
+      }
+    },
+    {
+      "id": "ucwvc8",
+      "name": "HTML page language subtag matches default language",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [
+        "3.1.1"
+      ],
+      "inputAspects": [
+        "Accessibility tree",
+        "CSS Styling",
+        "DOM tree",
+        "Language"
+      ],
+      "logicHash": "4126758f147d2686c5cdeb8ac31bc7581002acf09c8811bcf73248f0338b9eb2",
+      "source": {
+        "filename": "html-page-lang-matches-default-ucwvc8.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/html-page-lang-matches-default-ucwvc8.md"
+      }
+    },
+    {
+      "id": "ye5d6e",
+      "name": "Document has an instrument to move focus to non-repeated content",
+      "ruleType": "atomic",
+      "deprecated": false,
+      "wcag": [],
+      "inputAspects": [
+        "Accessibility Tree",
+        "CSS styling",
+        "DOM Tree",
+        "Language"
+      ],
+      "logicHash": "ba3aa2f36e96ed4fe19c18183cc163185bb9066b585a04bd6b0e0f4a53056dd5",
+      "source": {
+        "filename": "document-has-instrument-to-non-repeated-content-ye5d6e.md",
+        "url": "https://github.com/act-rules/act-rules.github.io/blob/develop/_rules/document-has-instrument-to-non-repeated-content-ye5d6e.md"
+      }
+    }
+  ]
 }
