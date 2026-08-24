@@ -47,17 +47,29 @@ async function broadcast(state: SessionState) {
   }
 }
 
-async function ensureInjected(tabId: number) {
+async function ensureInjected(tabId: number): Promise<boolean> {
   try {
     await browser.tabs.sendMessage(tabId, { type: 'FOCUSTRACE_PING' });
+    return false;
   } catch {
     await browser.scripting.executeScript({ target: { tabId }, files: ['/content-scripts/runtime.js'] });
+    return true;
   }
 }
 
 async function syncContentState(tabId: number, suppliedState?: SessionState) {
   const state = suppliedState ?? await getSession(tabId);
   await ensureInjected(tabId);
+  await browser.tabs.sendMessage(tabId, {
+    type: 'FOCUSTRACE_SET_RECORDING',
+    enabled: state.recording,
+    breakpoints: state.breakpoints,
+  } satisfies ExtensionMessage);
+}
+
+async function restoreContentStateAfterNavigation(tabId: number, state: SessionState) {
+  const injected = await ensureInjected(tabId);
+  if (!injected) return;
   await browser.tabs.sendMessage(tabId, {
     type: 'FOCUSTRACE_SET_RECORDING',
     enabled: state.recording,
@@ -159,7 +171,7 @@ export default defineBackground(() => {
   browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
     if (changeInfo.status !== 'complete') return;
     void getSession(tabId)
-      .then((state) => state.recording ? syncContentState(tabId, state) : undefined)
+      .then((state) => state.recording ? restoreContentStateAfterNavigation(tabId, state) : undefined)
       .catch(() => undefined);
   });
 
