@@ -1,7 +1,8 @@
+import { localeFor, localizedReferenceStatus, tr, type AppLanguage } from '../../../shared/i18n';
 import type { StandardReference } from '../../../shared/types';
 
-export function timeLabel(timestamp: number) {
-  return new Intl.DateTimeFormat(undefined, {
+export function timeLabel(timestamp: number, language: AppLanguage = 'en') {
+  return new Intl.DateTimeFormat(localeFor(language), {
     hour: '2-digit',
     minute: '2-digit',
     second: '2-digit',
@@ -9,10 +10,16 @@ export function timeLabel(timestamp: number) {
   }).format(timestamp);
 }
 
-export function ReferenceList({ references }: { references?: StandardReference[] | undefined }) {
+export function ReferenceList({
+  references,
+  language = 'en',
+}: {
+  references?: StandardReference[] | undefined;
+  language?: AppLanguage;
+}) {
   if (!references?.length) return null;
   return (
-    <ul className="references" aria-label="Standards references">
+    <ul className="references" aria-label={tr(language, 'Standards references', 'Referencias normativas')}>
       {references.map((reference) => (
         <li key={`${reference.type}-${reference.id}`}>
           <a href={reference.url} target="_blank" rel="noreferrer">
@@ -20,7 +27,7 @@ export function ReferenceList({ references }: { references?: StandardReference[]
             {reference.level ? ` · ${reference.level}` : ''}
           </a>
           {(reference.status === 'proposed' || reference.status === 'editor-draft') && (
-            <span>{reference.status.replace('-', ' ')}</span>
+            <span>{localizedReferenceStatus(reference.status, language)}</span>
           )}
         </li>
       ))}

@@ -1,0 +1,183 @@
+.topbar-tools {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.settings-trigger {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, CanvasText 18%, transparent);
+  border-radius: 8px;
+  background: ButtonFace;
+  color: ButtonText;
+  cursor: pointer;
+  font-size: 16px;
+}
+
+.settings-trigger[aria-pressed="true"] {
+  border-color: Highlight;
+  box-shadow: inset 0 0 0 1px Highlight;
+}
+
+.scan-filter-tabs {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+  padding: 4px;
+  border: 1px solid color-mix(in srgb, CanvasText 14%, transparent);
+  border-radius: 10px;
+  background: color-mix(in srgb, CanvasText 3%, Canvas);
+}
+
+.scan-filter-tabs button {
+  min-width: 0;
+  min-height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid transparent;
+  border-radius: 7px;
+  padding: 6px 7px;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  font-size: 11px;
+}
+
+.scan-filter-tabs button strong {
+  min-width: 20px;
+  padding: 1px 5px;
+  border-radius: 999px;
+  background: color-mix(in srgb, CanvasText 9%, Canvas);
+  font-size: 10px;
+  line-height: 1.6;
+}
+
+.scan-filter-tabs button.active {
+  border-color: Highlight;
+  background: color-mix(in srgb, Highlight 8%, Canvas);
+  font-weight: 700;
+}
+
+.scan-results-panel {
+  min-width: 0;
+}
+
+.scan-filter-empty {
+  padding: 22px 12px;
+  text-align: center;
+  color: GrayText;
+  font-size: 12px;
+  border: 1px dashed color-mix(in srgb, CanvasText 20%, transparent);
+  border-radius: 9px;
+}
+
+.scan-issue {
+  display: grid;
+  gap: 7px;
+}
+
+.scan-issue h3,
+.scan-issue p {
+  margin-top: 0;
+  margin-bottom: 0;
+}
+
+.locate-finding {
+  min-height: 38px;
+  width: 100%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  margin-top: 3px;
+  border: 1px solid color-mix(in srgb, CanvasText 18%, transparent);
+  border-radius: 8px;
+  background: ButtonFace;
+  color: ButtonText;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.settings-panel {
+  gap: 14px;
+}
+
+.settings-group {
+  margin: 0;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+  border: 1px solid color-mix(in srgb, CanvasText 14%, transparent);
+  border-radius: 10px;
+}
+
+.settings-group legend {
+  padding: 0 4px;
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.settings-help {
+  margin: 0 0 3px;
+  color: GrayText;
+  font-size: 11px;
+}
+
+.language-option {
+  display: grid;
+  grid-template-columns: 20px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, CanvasText 12%, transparent);
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.language-option:has(input:checked) {
+  border-color: Highlight;
+  background: color-mix(in srgb, Highlight 7%, Canvas);
+}
+
+.language-option input {
+  margin: 2px 0 0;
+}
+
+.language-option span {
+  display: grid;
+  gap: 2px;
+}
+
+.language-option strong {
+  font-size: 12px;
+}
+
+.language-option small {
+  color: GrayText;
+  font-size: 10px;
+}
+
+.settings-note p {
+  margin-bottom: 0;
+}
+
+@media (max-width: 360px) {
+  .topbar {
+    gap: 8px;
+  }
+
+  .topbar-tools {
+    gap: 6px;
+  }
+
+  .scan-filter-tabs button {
+    flex-direction: column;
+    gap: 2px;
+  }
+}
