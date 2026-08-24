@@ -1,70 +1,65 @@
 # FocusTrace standards registry
 
-FocusTrace keeps a versioned local snapshot of the public standards data it uses to plan and implement accessibility checks. The registry is metadata, not a remote runtime dependency: the browser extension still analyzes pages locally and does not call W3C, ACT Rules or GitHub while scanning.
+FocusTrace keeps versioned local snapshots of public standards data used to plan and implement accessibility checks. These registries are build-time/repository data, not runtime services: scanning an inspected page remains local and does not call W3C, ACT Rules, IANA or GitHub.
 
 ## Sources
 
 ### ACT Rules
 
-`generated/act-catalog.json` is generated from the public `act-rules/act-rules.github.io` repository.
+`generated/act-catalog.json` is generated from the public `act-rules/act-rules.github.io` repository. It records ACT id/name, atomic/composite type, mapped WCAG criteria, input aspects, deprecated state, source URL and a deterministic `logicHash` derived from implementation-relevant content such as Applicability and Expectation.
 
-For every ACT rule FocusTrace records:
+A deprecated ACT rule is retained for history and migration but is not a candidate for a new active FocusTrace conformance check. A newly discovered ACT rule is also not automatically a FocusTrace `FAIL`; it still needs classification as AUTO, REVIEW, RUNTIME or UNSUPPORTED.
 
-- ACT id and name
-- atomic or composite rule type
-- WCAG criteria mapped by the upstream rule
-- input aspects such as DOM Tree, Accessibility Tree and CSS Styling
-- whether the ACT rule itself is deprecated
-- a deterministic `logicHash` derived from implementation-relevant rule content, including Applicability and Expectation
-- the upstream source file and URL
+### WAI-ARIA
 
-The sync intentionally does not use a timestamp and does not store the upstream blob SHA as a change trigger. This keeps registry updates deterministic and avoids pull requests caused only by unrelated metadata or execution time.
+`generated/aria-registry.json` is generated from the public `w3c/aria` repository. FocusTrace consumes W3C's generated `common/script/roleInfo.js` plus the specification source and stores:
 
-An ACT rule becoming deprecated means the **test rule itself** should no longer be used as an active conformance check. FocusTrace keeps deprecated ACT rules in the registry for history and migration, but they are not candidates for new active automated checks.
+- ARIA version;
+- roles and parent roles;
+- deprecated roles and stated deprecation version;
+- the state/property type table once globally;
+- supported, required, prohibited and deprecated state/property lists per role.
 
-A new ACT rule is not automatically a FocusTrace `FAIL`. It must still be classified and implemented as appropriate: automated, review, runtime or unsupported.
+This normalized representation is consumed directly by the scan engine for ARIA authoring warnings and will be reused for later ACT-backed ARIA conformance rules.
 
-## WAI-ARIA
+### IANA Language Subtag Registry
 
-`generated/aria-registry.json` is generated from the public `w3c/aria` repository.
+`generated/language-subtags.json` is generated from the public IANA Language Subtag Registry. FocusTrace records only entries whose registry `Type` is `language`, plus deprecation metadata and preferred values when available.
 
-FocusTrace consumes W3C's generated `common/script/roleInfo.js` data plus the ARIA specification source. The registry records:
+IANA is always the authority and primary download location. A public GitHub copy of the same registry is used only as an availability fallback, and the sync refuses to replace a committed snapshot with an older `File-Date`.
 
-- ARIA specification version
-- roles and parent roles
-- deprecated roles and the ARIA version in which the role was deprecated when stated in the specification
-- the ARIA state/property type table once, globally
-- supported, required, prohibited and deprecated state/property lists per role
+This snapshot is the local source for the primary-language check behind `FT-WCAG-009` / ACT `bf051a`. It avoids relying on browser-specific locale APIs and keeps scans deterministic/offline.
 
-This normalized structure avoids repeating the same state/property metadata hundreds of times and keeps diffs reviewable.
+## Deprecation semantics
 
-This distinction matters. A **deprecated ACT rule** is an outdated test. A **deprecated ARIA role or role/property combination** can still exist in an application and is useful evidence for a FocusTrace warning.
+A **deprecated ACT rule** is an outdated test methodology and is not executed as a current conformance rule.
 
-Deprecation is therefore preserved rather than discarded. The registry is designed to power a future `WARNING` outcome for obsolete or deprecated authoring patterns without incorrectly turning every deprecation into a WCAG failure.
+A **deprecated ARIA role or role/property combination** can still appear in an application. FocusTrace keeps it as authoring evidence and reports it as `WARNING`, not automatically as a WCAG `FAIL`.
+
+Deprecated IANA language subtags remain known language subtags for the ACT primary-language expectation; their deprecation metadata is preserved so future authoring guidance can distinguish validity from preferred modern usage.
 
 ## Automatic synchronization
 
 `.github/workflows/standards-registry.yml` runs daily and can also be started manually. It:
 
-1. preserves the current snapshots;
-2. fetches the public ACT and WAI-ARIA sources;
-3. regenerates both registries;
-4. validates their structure;
-5. compares the old and new registries semantically;
+1. preserves the ACT, ARIA and IANA snapshots;
+2. fetches all three public sources in parallel where possible;
+3. regenerates the registries;
+4. validates structure, uniqueness and cross-references;
+5. compares old/new snapshots semantically;
 6. does nothing when there is no meaningful change;
-7. otherwise updates the dedicated `bot/standards-registry-sync` branch and opens or refreshes one pull request.
+7. otherwise updates `bot/standards-registry-sync` and opens or refreshes one PR.
 
-The generated report highlights new and removed ACT rules, newly deprecated or reactivated ACT rules, changed ACT rule logic, new/removed/deprecated ARIA roles, newly deprecated role/property combinations, and newly required or prohibited role/property combinations.
-
-If repository settings prevent GitHub Actions from creating a pull request, the workflow falls back to creating an issue with the same change report and fails visibly instead of silently losing the notification.
+Reports highlight ACT additions/removals/logic changes/deprecations, ARIA role/property constraint changes, and IANA language-subtag additions/removals/deprecations. If Actions cannot open a PR, the workflow falls back to an issue instead of silently losing the signal.
 
 ## Local commands
 
 ```bash
 npm run act:sync
 npm run aria:sync
+npm run language:sync
 npm run standards:sync
 npm run standards:validate
 ```
 
-The generated files are committed deliberately. They provide a reviewable history of upstream standards changes and give the extension a future local data source without requiring network access at runtime.
+Generated files are committed deliberately: they provide reviewable upstream history and let the extension consume current standards metadata without a network dependency at runtime.

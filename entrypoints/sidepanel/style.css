@@ -41,7 +41,7 @@ code { display: inline-block; max-width: 100%; overflow-wrap: anywhere; white-sp
 .engine-note span { color: GrayText; text-align: right; }
 .finding-meta { display: flex; flex-wrap: wrap; gap: 5px; align-items: center; }
 .outcome { display: inline-flex; width: fit-content; padding: 2px 6px; border-radius: 999px; font-size: 10px; font-weight: 900; text-transform: uppercase; border: 1px solid currentColor; }
-.outcome.fail { color: #b3261e; } .outcome.review { color: #8a4f00; }
+.outcome.fail { color: #b3261e; } .outcome.review { color: #8a4f00; } .outcome.warning { color: #6b5b00; }
 .evidence { border-left: 3px solid color-mix(in srgb, CanvasText 25%, transparent); padding-left: 8px; color: GrayText; }
 .references { list-style: none; margin: 10px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 6px; }
 .references li { display: inline-flex; gap: 5px; align-items: center; font-size: 10px; } .references a { color: LinkText; } .references span { color: GrayText; font-size: 9px; text-transform: uppercase; }

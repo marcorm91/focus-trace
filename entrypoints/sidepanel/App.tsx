@@ -80,7 +80,7 @@ export default function App() {
   const latestFocus = focusEvents.at(-1);
   const runtimeFindings = session.events.filter((event) => event.outcome);
   const serious = runtimeFindings.filter((event) => ['critical', 'serious'].includes(event.severity)).length;
-  const warnings = runtimeFindings.filter((event) => ['moderate', 'minor'].includes(event.severity)).length;
+  const runtimeWarnings = runtimeFindings.filter((event) => ['moderate', 'minor'].includes(event.severity)).length;
 
   return (
     <main className="app-shell">
@@ -105,22 +105,23 @@ export default function App() {
       {view === 'scan' && <ScanView scan={scan} />}
       {view === 'focus' && <FocusView latest={latestFocus} count={focusEvents.length} />}
       {view === 'runtime' && <RuntimeView events={session.events} recording={session.recording} />}
-      {view === 'report' && <ReportView runtimeCount={session.events.length} runtimeFindings={runtimeFindings.length} serious={serious} warnings={warnings} scan={scan} />}
+      {view === 'report' && <ReportView runtimeCount={session.events.length} runtimeFindings={runtimeFindings.length} serious={serious} runtimeWarnings={runtimeWarnings} scan={scan} />}
     </main>
   );
 }
 
 function ScanView({ scan }: { scan?: ScanResult | undefined }) {
   if (!scan) return <Empty title="No scan yet" text="Choose Analyze page to run the local FocusTrace WCAG rule engine." />;
-  const findings = [...scan.issues, ...scan.review];
+  const scanWarnings = scan.warnings ?? [];
+  const findings = [...scan.issues, ...scan.review, ...scanWarnings];
   return (
     <section className="panel" aria-labelledby="scan-title">
-      <div className="section-heading"><div><h2 id="scan-title">Page scan</h2><p title={scan.url}>{scan.title || scan.url}</p></div><strong>{scan.issues.length} fail</strong></div>
+      <div className="section-heading"><div><h2 id="scan-title">Page scan</h2><p title={scan.url}>{scan.title || scan.url}</p></div><strong>{scan.issues.length} fail · {scanWarnings.length} warning</strong></div>
       <div className="engine-note"><strong>{scan.engine}</strong><span>{scan.standard} · {scan.rulesRun} rule families</span></div>
-      <div className="metrics"><Metric label="Fail" value={scan.issues.length} /><Metric label="Review" value={scan.review.length} /><Metric label="Checks passed" value={scan.passes} /><Metric label="Rule families" value={scan.rulesRun} /></div>
+      <div className="metrics"><Metric label="Fail" value={scan.issues.length} /><Metric label="Review" value={scan.review.length} /><Metric label="Warning" value={scanWarnings.length} /><Metric label="Checks passed" value={scan.passes} /><Metric label="Rule families" value={scan.rulesRun} /></div>
       {findings.length === 0 ? (
-        <div className="notice"><strong>No automated failures found</strong><p>This does not mean the page conforms to WCAG 2.2. Criteria that require human judgement still need manual testing.</p></div>
-      ) : <div className="issue-list">{findings.slice(0, 30).map((issue) => <FindingCard issue={issue} key={issue.id} />)}</div>}
+        <div className="notice"><strong>No automated findings</strong><p>This does not mean the page conforms to WCAG 2.2. Criteria that require human judgement still need manual testing.</p></div>
+      ) : <div className="issue-list">{findings.slice(0, 40).map((issue) => <FindingCard issue={issue} key={issue.id} />)}</div>}
     </section>
   );
 }
@@ -138,7 +139,7 @@ function FindingCard({ issue }: { issue: ScanIssue }) {
 
 function ReferenceList({ references }: { references?: StandardReference[] | undefined }) {
   if (!references?.length) return null;
-  return <ul className="references" aria-label="Standards references">{references.map((reference) => <li key={`${reference.type}-${reference.id}`}><a href={reference.url} target="_blank" rel="noreferrer">{reference.type} {reference.id}{reference.level ? ` · ${reference.level}` : ''}</a>{reference.status === 'proposed' && <span>proposed</span>}</li>)}</ul>;
+  return <ul className="references" aria-label="Standards references">{references.map((reference) => <li key={`${reference.type}-${reference.id}`}><a href={reference.url} target="_blank" rel="noreferrer">{reference.type} {reference.id}{reference.level ? ` · ${reference.level}` : ''}</a>{(reference.status === 'proposed' || reference.status === 'editor-draft') && <span>{reference.status.replace('-', ' ')}</span>}</li>)}</ul>;
 }
 
 function FocusView({ latest, count }: { latest?: RuntimeEvent | undefined; count: number }) {
@@ -167,12 +168,12 @@ function RuntimeView({ events, recording }: { events: RuntimeEvent[]; recording:
   );
 }
 
-function ReportView({ runtimeCount, runtimeFindings, serious, warnings, scan }: { runtimeCount: number; runtimeFindings: number; serious: number; warnings: number; scan?: ScanResult | undefined }) {
+function ReportView({ runtimeCount, runtimeFindings, serious, runtimeWarnings, scan }: { runtimeCount: number; runtimeFindings: number; serious: number; runtimeWarnings: number; scan?: ScanResult | undefined }) {
   return (
     <section className="panel" aria-labelledby="report-title">
       <div className="section-heading"><div><h2 id="report-title">Session report</h2><p>Local summary for the current tab.</p></div></div>
-      <div className="metrics"><Metric label="Runtime events" value={runtimeCount} /><Metric label="Runtime findings" value={runtimeFindings} /><Metric label="Serious" value={serious} /><Metric label="Warnings" value={warnings} /><Metric label="Scan failures" value={scan?.issues.length ?? 0} /><Metric label="Needs review" value={scan?.review.length ?? 0} /></div>
-      <div className="notice"><strong>Evidence-first, not a conformance claim</strong><p>FAIL means a FocusTrace automated rule found evidence matching its documented WCAG/ACT expectation. REVIEW means the signal needs human judgement. Passing automated checks never proves full WCAG 2.2 conformance.</p></div>
+      <div className="metrics"><Metric label="Runtime events" value={runtimeCount} /><Metric label="Runtime findings" value={runtimeFindings} /><Metric label="Serious" value={serious} /><Metric label="Runtime warnings" value={runtimeWarnings} /><Metric label="Scan failures" value={scan?.issues.length ?? 0} /><Metric label="Needs review" value={scan?.review.length ?? 0} /><Metric label="Authoring warnings" value={scan?.warnings?.length ?? 0} /></div>
+      <div className="notice"><strong>Evidence-first, not a conformance claim</strong><p>FAIL means a FocusTrace automated rule found evidence matching its documented WCAG/ACT expectation. REVIEW needs human judgement. WARNING identifies standards-authoring risk such as deprecated or prohibited ARIA and is not automatically a WCAG failure. Passing automated checks never proves full WCAG 2.2 conformance.</p></div>
       <div className="notice"><strong>Privacy first</strong><p>FocusTrace analyzes the inspected page locally. No DOM, screenshots or session data are sent to a FocusTrace server or AI API.</p></div>
     </section>
   );
