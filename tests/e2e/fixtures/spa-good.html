@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Good SPA fixture</title></head>
+<body>
+  <main>
+    <h1>SPA with focus management</h1>
+    <button id="navigate" type="button">Open account view</button>
+    <section id="view"></section>
+  </main>
+  <script>
+    document.querySelector('#navigate').addEventListener('click', () => {
+      history.pushState({}, '', '#account');
+      document.title = 'Account · Good SPA fixture';
+      document.querySelector('#view').innerHTML = '<h2 id="account-heading" tabindex="-1">Account</h2><p>New client-side view.</p>';
+
+      // Focus after the route observer has seen the URL change but before its review window closes.
+      // This fixture verifies that FocusTrace respects an observed focus transition in the new view.
+      window.setTimeout(() => document.querySelector('#account-heading').focus(), 300);
+    });
+  </script>
+</body>
+</html>

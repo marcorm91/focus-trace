@@ -1,0 +1,16 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Hidden focus fixture</title></head>
+<body>
+  <main>
+    <h1>Focused element hidden</h1>
+    <button id="hide-focused" type="button">Hide focused control from accessibility</button>
+    <button type="button">After</button>
+  </main>
+  <script>
+    document.querySelector('#hide-focused').addEventListener('click', (event) => {
+      event.currentTarget.setAttribute('aria-hidden', 'true');
+    });
+  </script>
+</body>
+</html>

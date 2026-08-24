@@ -1,0 +1,17 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Broken SPA fixture</title></head>
+<body>
+  <main>
+    <h1>SPA without focus management</h1>
+    <button id="navigate" type="button">Open account view</button>
+    <section id="view" aria-live="off"></section>
+  </main>
+  <script>
+    document.querySelector('#navigate').addEventListener('click', () => {
+      history.pushState({}, '', '#account');
+      document.querySelector('#view').innerHTML = '<h2>Account</h2><p>New client-side view.</p>';
+    });
+  </script>
+</body>
+</html>
