@@ -18,6 +18,6 @@ const invokedDirectly = process.argv[1] && resolve(process.argv[1]) === fileURLT
 if (invokedDirectly) {
   const { act, aria } = await syncStandards();
   console.log(
-    `Standards sync complete: ACT ${act.summary.total} rules (${act.summary.deprecated} deprecated); ARIA ${aria.summary.roles} roles (${aria.summary.deprecatedRoles} deprecated).`,
+    `Standards sync complete: ACT ${act.summary.total} rules (${act.summary.deprecated} deprecated); ARIA ${aria.summary.roles} roles, ${aria.summary.properties} states/properties (${aria.summary.deprecatedRoles} deprecated roles).`,
   );
 }
