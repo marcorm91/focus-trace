@@ -19,10 +19,10 @@ describe('FocusTrace WCAG rule fixtures', () => {
 
     const result = runFocusTraceScan();
 
-    expect(result.rulesRun).toBe(9);
+    expect(result.rulesRun).toBe(10);
     expect(result.issues).toEqual([]);
     expect(result.review).toEqual([]);
-    expect(result.passes).toBe(9);
+    expect(result.passes).toBe(10);
   });
 
   it('produces the expected deterministic failures and review signals', () => {
