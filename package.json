@@ -14,6 +14,7 @@
     "zip:edge": "wxt zip -b edge",
     "zip:firefox": "wxt zip -b firefox",
     "check": "tsc --noEmit",
+    "test": "vitest run",
     "postinstall": "wxt prepare"
   },
   "dependencies": {
@@ -24,7 +25,9 @@
     "@types/react": "^19.2.0",
     "@types/react-dom": "^19.2.0",
     "@wxt-dev/module-react": "1.2.2",
+    "jsdom": "30.0.1",
     "typescript": "^5.8.3",
+    "vitest": "4.1.11",
     "wxt": "0.21.4"
   }
 }
