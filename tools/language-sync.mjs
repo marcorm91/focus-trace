@@ -11,26 +11,63 @@ function field(record, name) {
   return record.match(new RegExp(`^${name}:\\s*(.+?)\\s*$`, 'm'))?.[1]?.trim() ?? '';
 }
 
+function alphaOrdinal(value) {
+  return [...value].reduce((total, char) => (total * 26) + (char.charCodeAt(0) - 97), 0);
+}
+
+function alphaSubtag(value, length) {
+  let remaining = value;
+  const chars = new Array(length);
+  for (let index = length - 1; index >= 0; index -= 1) {
+    chars[index] = String.fromCharCode(97 + (remaining % 26));
+    remaining = Math.floor(remaining / 26);
+  }
+  return chars.join('');
+}
+
+export function expandLanguageSubtag(value) {
+  const subtag = value.toLowerCase();
+  const range = subtag.match(/^([a-z]+)\.\.([a-z]+)$/);
+  if (!range) return [subtag];
+
+  const [, start, end] = range;
+  if (!start || !end || start.length !== end.length) {
+    throw new Error(`Invalid IANA language subtag range: ${value}.`);
+  }
+
+  const first = alphaOrdinal(start);
+  const last = alphaOrdinal(end);
+  if (last < first || last - first > 20_000) {
+    throw new Error(`Unsupported IANA language subtag range: ${value}.`);
+  }
+
+  return Array.from({ length: last - first + 1 }, (_, offset) => alphaSubtag(first + offset, start.length));
+}
+
 export function parseLanguageSubtagRegistry(source) {
   const fileDate = source.match(/^File-Date:\s*(.+?)\s*$/m)?.[1]?.trim() ?? 'unknown';
-  const languages = [];
+  const languages = new Set();
   const deprecated = {};
 
   for (const record of source.split(/\r?\n%%\r?\n/)) {
     if (field(record, 'Type').toLowerCase() !== 'language') continue;
-    const subtag = field(record, 'Subtag').toLowerCase();
-    if (!subtag) continue;
-    languages.push(subtag);
+    const rawSubtag = field(record, 'Subtag').toLowerCase();
+    if (!rawSubtag) continue;
+
+    const subtags = expandLanguageSubtag(rawSubtag);
+    for (const subtag of subtags) languages.add(subtag);
+
     const deprecatedDate = field(record, 'Deprecated');
     if (deprecatedDate) {
-      deprecated[subtag] = {
+      const metadata = {
         date: deprecatedDate,
         preferredValue: field(record, 'Preferred-Value') || null,
       };
+      for (const subtag of subtags) deprecated[subtag] = metadata;
     }
   }
 
-  languages.sort();
+  const sortedLanguages = [...languages].sort();
   const sortedDeprecated = Object.fromEntries(Object.entries(deprecated).sort(([a], [b]) => a.localeCompare(b)));
 
   return {
@@ -42,10 +79,10 @@ export function parseLanguageSubtagRegistry(source) {
       fileDate,
     },
     summary: {
-      languages: languages.length,
+      languages: sortedLanguages.length,
       deprecated: Object.keys(sortedDeprecated).length,
     },
-    subtags: languages,
+    subtags: sortedLanguages,
     deprecated: sortedDeprecated,
   };
 }
