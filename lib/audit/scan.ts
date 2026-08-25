@@ -1,5 +1,5 @@
 import { RULES, type RuleDefinition } from '../../shared/rule-catalog';
-import type { FindingOutcome, ScanIssue, ScanResult } from '../../shared/types';
+import type { FindingOutcome, HeadingSnapshot, ScanIssue, ScanResult } from '../../shared/types';
 import { accessibleNameDetails, accessibleNameDiagnostics, isMarkedDecorative, isProgrammaticallyHidden, isSequentiallyFocusable, selectorFor, semanticRole } from './dom';
 import { evaluateLabelInName } from './label-in-name';
 import { evaluateAriaAuthoringSignals, pageLanguageStatus, type AriaAuthoringSignal } from './standards-registry';
@@ -158,9 +158,38 @@ function runPositiveTabindex(): RuleExecution {
   return result;
 }
 
+function visibleHeadings(): Element[] {
+  return [...document.querySelectorAll('h1, h2, h3, h4, h5, h6')]
+    .filter((heading) => !isProgrammaticallyHidden(heading));
+}
+
+export function collectHeadingOutline(): HeadingSnapshot[] {
+  const headings = visibleHeadings();
+  const h1Count = headings.filter((heading) => heading.tagName === 'H1').length;
+  let previousLevel: number | undefined;
+
+  return headings.map((heading, index) => {
+    const level = Number(heading.tagName.slice(1)) as HeadingSnapshot['level'];
+    const text = heading.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+    const signals: HeadingSnapshot['signals'] = [];
+    if (!text) signals.push('empty');
+    if (previousLevel != null && level > previousLevel + 1) signals.push('level-jump');
+    if (level === 1 && h1Count > 1) signals.push('multiple-h1');
+    previousLevel = level;
+
+    return {
+      id: `heading-${index + 1}`,
+      level,
+      text,
+      selector: selectorFor(heading),
+      signals,
+    };
+  });
+}
+
 function runHeadingJumps(): RuleExecution {
   const result = emptyExecution();
-  const headings = [...document.querySelectorAll('h1, h2, h3, h4, h5, h6')].filter((heading) => !isProgrammaticallyHidden(heading));
+  const headings = visibleHeadings();
   for (let index = 1; index < headings.length; index += 1) {
     const previousHeading = headings[index - 1]; const currentHeading = headings[index];
     if (!previousHeading || !currentHeading) continue;
@@ -174,6 +203,7 @@ function runHeadingJumps(): RuleExecution {
 
 export function runFocusTraceScan(): ScanResult {
   const ariaExecutions = ariaWarningExecutions(evaluateAriaAuthoringSignals());
+  const headings = collectHeadingOutline();
   const executions = [runPageTitle(), runPageLangPresent(), runPageLangKnown(), runImages(), runButtons(), runFormFields(), runPlaceholderOnlyLabels(), runLinks(), runLabelInName(), runAriaHiddenFocusable(), ...ariaExecutions, runPositiveTabindex(), runHeadingJumps()];
   return {
     engine: 'FocusTrace Rules',
@@ -184,6 +214,7 @@ export function runFocusTraceScan(): ScanResult {
     issues: executions.flatMap((execution) => execution.issues),
     review: executions.flatMap((execution) => execution.review),
     warnings: executions.flatMap((execution) => execution.warnings),
+    headings,
     passes: executions.reduce((sum, execution) => sum + execution.passes, 0),
     rulesRun: executions.length,
   };
