@@ -69,6 +69,29 @@ CSS-generated text, images of text and broader visual-label inference remain out
 
 `FT-WCAG-009` implements ACT `bf051a`: when `lang` is non-empty, its primary language subtag must be registered by IANA as `Type: language`. FocusTrace uses the committed `generated/language-subtags.json` snapshot, so the page scan remains offline and deterministic. Later subtags are intentionally not validated by this rule; for example `en-US-GB` still has the known primary subtag `en`.
 
+## Text contrast scope
+
+`FT-WCAG-010` evaluates WCAG 2.2 1.4.3 Contrast (Minimum) for rendered DOM text whose foreground and background can be resolved deterministically from computed styles.
+
+FocusTrace calculates relative luminance and contrast ratio from the rendered foreground/background colors and applies the WCAG AA thresholds:
+
+- `4.5:1` for normal text;
+- `3:1` for large text (at least `24px`, or at least `18.667px` when the computed font weight is `700` or greater).
+
+The scan records structured evidence with the measured ratio, required ratio, computed foreground/background, font size and weight. These values can be reused by reports without reparsing human-readable evidence.
+
+A contrast result becomes `FAIL` only when the computed colors and threshold are deterministic. FocusTrace returns `REVIEW` instead when the final rendered background can be affected by visual composition it cannot resolve safely, including:
+
+- background images or gradients;
+- element/ancestor opacity;
+- `mix-blend-mode`;
+- CSS filters;
+- an unresolved computed background color.
+
+This conservative model intentionally avoids converting uncertain rendering into false WCAG failures.
+
+WCAG 2.2 1.4.11 Non-text Contrast is **not** automatically failed by `FT-WCAG-010`. Controls, icons, component boundaries, states and focus indicators require separate visual/context evaluation. That coverage should be implemented as its own rule rather than reusing the text-contrast heuristic.
+
 ## ARIA authoring warnings
 
 The scan consumes `generated/aria-registry.json` instead of maintaining role/property lists by hand. For recognized explicit ARIA roles FocusTrace currently reports:
@@ -116,6 +139,7 @@ A causal classification explains the recorded chain; the linked runtime WCAG/APG
 | FT-WCAG-007 Visible label is part of accessible name | FAIL/PASS | WCAG 2.5.3 · ACT 2ee8b8 |
 | FT-WCAG-008 HTML page has a non-empty lang attribute | FAIL/PASS | WCAG 3.1.1 · ACT b5c3f8 |
 | FT-WCAG-009 Page lang has a known primary language tag | FAIL/PASS | WCAG 3.1.1 · ACT bf051a · IANA |
+| FT-WCAG-010 Text has sufficient color contrast | FAIL/REVIEW/PASS | WCAG 1.4.3 AA |
 | FT-WARN-001 Deprecated ARIA role | WARNING/PASS | WAI-ARIA registry |
 | FT-WARN-002 Deprecated ARIA property for role | WARNING/PASS | WAI-ARIA registry |
 | FT-WARN-003 Prohibited ARIA property for role | WARNING/PASS | WAI-ARIA registry |
@@ -142,6 +166,8 @@ A causal classification explains the recorded chain; the linked runtime WCAG/APG
 - CSS-generated content, slots/Shadow DOM, complex embedded-control recursion and cross-origin iframe traversal are not fully covered.
 - `FT-WCAG-007` currently covers ACT `2ee8b8` text-content cases only.
 - `FT-WCAG-009` checks the ACT primary-language expectation, not full BCP 47 syntax/semantics.
+- `FT-WCAG-010` covers DOM text with deterministically resolvable computed foreground/background colors. Images of text, pseudo-element text and complex visual composition remain outside deterministic FAIL coverage.
+- WCAG 1.4.11 Non-text Contrast is not yet automatically evaluated as a conformance result.
 - ARIA warnings currently operate on recognized explicit role tokens; native implicit-role validation is a later layer.
 - Runtime causality uses bounded temporal correlation and intentionally records only accessibility-relevant mutations, not every DOM change.
 - Runtime focus-obscured detection intentionally returns REVIEW because exact 2.4.11 evaluation has edge cases.
