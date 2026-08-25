@@ -13,7 +13,7 @@ export function createFocusEvent({ element, label }: FocusEventInput): PendingRu
   return {
     kind: 'focus',
     severity: 'info',
-    title: `Focus -> ${label}`,
+    title: `Focus → ${label}`,
     element,
   };
 }
