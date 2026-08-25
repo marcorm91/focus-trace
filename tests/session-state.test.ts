@@ -70,9 +70,12 @@ describe('runtime session state helpers', () => {
     expect(next.events.at(-1)?.id).toBe('999');
   });
 
-  it('clears event history and breakpoint pause without losing settings', () => {
+  it('resets runtime evidence without losing scan or breakpoint settings', () => {
+    const scan = { url: 'https://example.com/' } as SessionState['scan'];
     const current = session({
+      startedAt: 1234,
       events: [event('1')],
+      scan,
       pausedByBreakpoint: {
         breakpointId: 'modal-focus-escape',
         causeType: 'MODAL_FOCUS_ESCAPE',
@@ -88,7 +91,9 @@ describe('runtime session state helpers', () => {
 
     expect(next.recording).toBe(false);
     expect(next.events).toEqual([]);
+    expect(next.startedAt).toBeUndefined();
     expect(next.pausedByBreakpoint).toBeUndefined();
+    expect(next.scan).toBe(scan);
     expect(next.breakpoints).toBe(current.breakpoints);
   });
 
