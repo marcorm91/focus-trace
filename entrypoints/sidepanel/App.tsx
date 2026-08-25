@@ -27,16 +27,16 @@ import type {
   ScanResult,
   SessionState,
 } from '../../shared/types';
-import { ExplanationLevelControl } from './components/ExplanationLevelControl';
 import { AboutView } from './views/AboutView';
 import { FocusGraphView } from './views/FocusGraphView';
+import { HeadingTreeView } from './views/HeadingTreeView';
 import { FocusView } from './views/FocusView';
 import { ReportView } from './views/ReportView';
 import { RuntimeView } from './views/RuntimeView';
 import { ScanView } from './views/ScanView';
 import { SettingsView } from './views/SettingsView';
 
-type View = 'scan' | 'focus' | 'runtime' | 'graph' | 'report' | 'about' | 'settings';
+type View = 'scan' | 'focus' | 'headings' | 'runtime' | 'graph' | 'report' | 'about' | 'settings';
 
 const EMPTY_SESSION: SessionState = {
   tabId: -1,
@@ -65,7 +65,7 @@ function waitForRuntimeFlush() {
 
 export default function App() {
   const [view, setView] = useState<View>('scan');
-  const [explanationLevel, setExplanationLevel] = useState<ExplanationLevel>('simple');
+  const explanationLevel: ExplanationLevel = 'developer';
   const [language, setLanguage] = useState<AppLanguage>(defaultLanguage);
   const [tabId, setTabId] = useState<number>();
   const [session, setSession] = useState<SessionState>(EMPTY_SESSION);
@@ -286,7 +286,7 @@ export default function App() {
       setSession(stopped);
       await waitForRuntimeFlush();
       await refresh(tabId);
-      setView(result.focusedSteps > 0 ? 'report' : 'focus');
+      setView('focus');
       if (result.focusedSteps === 0) {
         setError(tr(language, 'No keyboard-focusable elements were detected on this page.', 'No se han detectado elementos enfocables por teclado en esta página.'));
       }
@@ -453,13 +453,10 @@ export default function App() {
           );
   const sessionTone = session.recording ? 'live' : session.pausedByBreakpoint ? 'paused' : hasRecordedJourney ? 'stopped' : 'ready';
 
-  const navigation: Array<{ id: Exclude<View, 'settings'>; label: string; icon: string }> = [
-    { id: 'scan', label: tr(language, 'Analysis', 'Análisis'), icon: '⌕' },
+  const navigation: Array<{ id: 'scan' | 'focus' | 'headings'; label: string; icon: string }> = [
+    { id: 'scan', label: tr(language, 'Review', 'Revisión'), icon: '⌕' },
     { id: 'focus', label: tr(language, 'Focus', 'Foco'), icon: '◎' },
-    { id: 'runtime', label: tr(language, 'Activity', 'Actividad'), icon: '↯' },
-    { id: 'graph', label: tr(language, 'Journey', 'Recorrido'), icon: '↝' },
-    { id: 'report', label: tr(language, 'Report', 'Informe'), icon: '▤' },
-    { id: 'about', label: tr(language, 'Help', 'Ayuda'), icon: '?' },
+    { id: 'headings', label: tr(language, 'Headings', 'Encabezados'), icon: 'H' },
   ];
 
   return (
@@ -485,44 +482,34 @@ export default function App() {
         </div>
       </header>
 
-      <section className={`session-console ${sessionTone}`} aria-label={tr(language, 'Recording controls', 'Controles de grabación')}>
-        <div className="session-summary">
-          <div className="session-heading">
-            <span className={`status ${sessionTone}`}>
-              <span aria-hidden="true" />
-              {statusLabel}
-            </span>
-            {hasRecordedJourney && (
-              <span className="event-count">
-                {tr(language, `${session.events.length} events`, `${session.events.length} eventos`)}
-              </span>
-            )}
-          </div>
-          <p>{statusDescription}</p>
+      <section className="quick-start" aria-label={tr(language, 'Page tools', 'Herramientas de página')}>
+        <div className="quick-start-copy">
+          <span className={`status ${busy ? 'live' : 'ready'}`}>
+            <span aria-hidden="true" />
+            {busy
+              ? tr(language, 'Working…', 'Procesando…')
+              : scan
+                ? tr(language, 'Analysis ready', 'Análisis listo')
+                : tr(language, 'Ready', 'Listo')}
+          </span>
+          <p>
+            {scan
+              ? scan.title || scan.url
+              : tr(
+                  language,
+                  'Analyze the current page or inspect its keyboard focus order.',
+                  'Analiza la página actual o revisa su recorrido de foco por teclado.',
+                )}
+          </p>
         </div>
-        <div className="actions">
-          <button
-            className={`primary record-action ${session.recording ? 'stop' : ''}`}
-            type="button"
-            onClick={toggleRecording}
-            disabled={busy || tabId == null}
-          >
-            <span className="record-icon" aria-hidden="true" />
-            {session.recording
-              ? tr(language, 'Stop recording', 'Detener grabación')
-              : session.pausedByBreakpoint
-                ? tr(language, 'Continue recording', 'Continuar grabación')
-                : hasRecordedJourney
-                  ? tr(language, 'New recording', 'Nueva grabación')
-                  : tr(language, 'Start recording', 'Iniciar grabación')}
-          </button>
-          <button className="scan-action" type="button" onClick={runScan} disabled={busy || tabId == null}>
+        <div className="quick-actions">
+          <button className="primary scan-action" type="button" onClick={runScan} disabled={busy || tabId == null}>
             <span aria-hidden="true">⌕</span>
-            {busy ? tr(language, 'Working…', 'Procesando…') : tr(language, 'Analyze page', 'Analizar página')}
+            {tr(language, 'Analyze this page', 'Analizar esta página')}
           </button>
           <button className="focus-walk-action" type="button" onClick={runFocusWalk} disabled={busy || tabId == null || session.recording}>
             <span aria-hidden="true">◎</span>
-            {busy ? tr(language, 'Simulating…', 'Simulando…') : tr(language, 'Simulate focus', 'Simular foco')}
+            {tr(language, 'Walk with Tab', 'Recorrer con Tab')}
           </button>
         </div>
       </section>
@@ -544,11 +531,10 @@ export default function App() {
         ))}
       </nav>
 
-      {view !== 'about' && view !== 'settings' && (
-        <ExplanationLevelControl value={explanationLevel} onChange={setExplanationLevel} language={language} />
-      )}
-
       {view === 'scan' && <ScanView scan={scan} level={explanationLevel} language={language} onLocate={locateScanTarget} />}
+      {view === 'headings' && (
+        <HeadingTreeView scan={scan} language={language} onLocate={locateScanTarget} />
+      )}
       {view === 'focus' && (
         <FocusView
           latest={latestFocus}
