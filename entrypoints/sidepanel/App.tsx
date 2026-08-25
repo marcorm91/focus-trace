@@ -359,7 +359,7 @@ export default function App() {
       const results = await browser.scripting.executeScript({
         target: { tabId },
         func: showFocusPathInPage,
-        args: [entries, selectedSelector],
+        args: [entries, selectedSelector ?? null],
       });
       const result = results[0]?.result as FocusPathOverlayResult | undefined;
       if (!result?.found) {
