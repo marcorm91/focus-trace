@@ -1,4 +1,13 @@
+import { useEffect, useState } from 'react';
+import { browser } from '#imports';
 import { tr, type AppLanguage } from '../../../shared/i18n';
+import {
+  adjacentUiScale,
+  DEFAULT_UI_SCALE,
+  normalizeUiScale,
+  UI_SCALE_STORAGE_KEY,
+  type UiScale,
+} from '../../../shared/ui-scale';
 
 const CREATOR_LINKEDIN = 'https://es.linkedin.com/in/marcorm91';
 
@@ -9,6 +18,25 @@ export function SettingsView({
   language: AppLanguage;
   onLanguageChange: (language: AppLanguage) => void | Promise<void>;
 }) {
+  const [uiScale, setUiScale] = useState<UiScale>(() =>
+    normalizeUiScale(document.documentElement.dataset.ftUiScale ?? DEFAULT_UI_SCALE),
+  );
+
+  useEffect(() => {
+    void browser.storage.local.get(UI_SCALE_STORAGE_KEY).then((stored) => {
+      const savedScale = normalizeUiScale(stored[UI_SCALE_STORAGE_KEY]);
+      setUiScale(savedScale);
+      document.documentElement.dataset.ftUiScale = String(savedScale);
+    });
+  }, []);
+
+  const updateUiScale = (direction: -1 | 1) => {
+    const nextScale = adjacentUiScale(uiScale, direction);
+    setUiScale(nextScale);
+    document.documentElement.dataset.ftUiScale = String(nextScale);
+    void browser.storage.local.set({ [UI_SCALE_STORAGE_KEY]: nextScale });
+  };
+
   return (
     <section className="panel settings-panel" aria-labelledby="settings-title">
       <div className="section-heading">
@@ -48,6 +76,57 @@ export function SettingsView({
           />
           <span><strong>Español</strong><small>Spanish · Español</small></span>
         </label>
+      </fieldset>
+
+      <fieldset className="settings-group settings-scale-group">
+        <legend>{tr(language, 'Text and interface size', 'Tamaño de texto e interfaz')}</legend>
+        <p className="settings-help">
+          {tr(
+            language,
+            'Increase FocusTrace for easier reading without changing the inspected page.',
+            'Amplía FocusTrace para facilitar la lectura sin modificar la página inspeccionada.',
+          )}
+        </p>
+        <div
+          className="ui-scale-control"
+          role="group"
+          aria-label={tr(language, 'FocusTrace size', 'Tamaño de FocusTrace')}
+        >
+          <button
+            type="button"
+            className="ui-scale-step"
+            disabled={uiScale === 100}
+            aria-label={tr(language, 'Decrease text and interface size', 'Reducir tamaño de texto e interfaz')}
+            title={tr(language, 'Decrease FocusTrace size', 'Reducir tamaño de FocusTrace')}
+            onClick={() => updateUiScale(-1)}
+          >
+            A−
+          </button>
+          <output
+            className="ui-scale-value"
+            aria-live="polite"
+            aria-label={tr(language, `Current size ${uiScale}%`, `Tamaño actual ${uiScale}%`)}
+          >
+            {uiScale}%
+          </output>
+          <button
+            type="button"
+            className="ui-scale-step"
+            disabled={uiScale === 130}
+            aria-label={tr(language, 'Increase text and interface size', 'Aumentar tamaño de texto e interfaz')}
+            title={tr(language, 'Increase FocusTrace size', 'Aumentar tamaño de FocusTrace')}
+            onClick={() => updateUiScale(1)}
+          >
+            A+
+          </button>
+        </div>
+        <small className="ui-scale-note">
+          {tr(
+            language,
+            'Available sizes: 100%, 110%, 120% and 130%. Your choice is kept for future sessions.',
+            'Tamaños disponibles: 100%, 110%, 120% y 130%. La elección se conserva para futuras sesiones.',
+          )}
+        </small>
       </fieldset>
 
       <section className="settings-group settings-contact" aria-labelledby="settings-contact-title">
