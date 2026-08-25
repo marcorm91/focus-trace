@@ -76,15 +76,6 @@ export function ScanView({
         </strong>
       </div>
 
-      {level !== 'simple' && (
-        <div className="engine-note">
-          <strong>{scan.engine}</strong>
-          <span>
-            {scan.standard} · {scan.rulesRun} {tr(language, 'rule families', 'familias de reglas')}
-          </span>
-        </div>
-      )}
-
       <div className="metrics">
         <Metric label={tr(language, 'Fail', 'Fallos')} value={scan.issues.length} />
         <Metric label={tr(language, 'Review', 'Revisión')} value={scan.review.length} />
@@ -182,7 +173,7 @@ function FindingCard({
         </p>
       )}
       {level !== 'simple' && issue.accessibleName && (
-        <details className="name-computation" open={level === 'developer'}>
+        <details className="name-computation">
           <summary>{tr(language, 'Accessible name calculation', 'Cálculo del nombre accesible')}</summary>
           <dl>
             <div>
@@ -207,7 +198,6 @@ function FindingCard({
                     <li className={candidate.used ? 'used' : ''} key={`${candidate.selector}-${candidate.source}-${index}`}>
                       <span><code>{candidate.source}</code>{candidate.used && <b>{tr(language, 'Used', 'Usado')}</b>}</span>
                       <span>{candidate.value || tr(language, 'Empty', 'Vacío')}</span>
-                      <code>{candidate.selector}</code>
                     </li>
                   ))}
                 </ul>
@@ -218,7 +208,6 @@ function FindingCard({
           )}
         </details>
       )}
-      {level === 'developer' && <code>{target ?? tr(language, 'No target', 'Sin destino')}</code>}
       {level !== 'simple' && <ReferenceList references={issue.references} language={language} />}
       {target && (
         <button className="locate-finding" type="button" onClick={() => void onLocate(target)}>

@@ -53,8 +53,8 @@ export function SettingsView({
         <p>
           {tr(
             language,
-            'Identifiers such as WCAG 1.1.1, ACT 23a2a8, rule IDs and CSS selectors are not translated. FocusTrace translates the explanation around that evidence.',
-            'Identificadores como WCAG 1.1.1, ACT 23a2a8, los IDs de reglas y los selectores CSS no se traducen. FocusTrace traduce la explicación que acompaña a esa evidencia.',
+            'Identifiers such as WCAG 1.1.1, ACT 23a2a8 and rule IDs keep their canonical names. FocusTrace translates the explanation around that evidence.',
+            'Identificadores como WCAG 1.1.1, ACT 23a2a8 y los IDs de reglas mantienen su nomenclatura oficial. FocusTrace traduce la explicación que acompaña a esa evidencia.',
           )}
         </p>
       </div>
