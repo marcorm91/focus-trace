@@ -61,6 +61,7 @@ export default defineContentScript({
   runAt: 'document_idle',
   main(ctx) {
     let recording = false;
+    let explicitStateVersion = 0;
     let breakpointSettings = defaultRuntimeBreakpointSettings();
     let lastFocused: Element | null = document.activeElement instanceof Element ? document.activeElement : null;
     let lastActionElement: Element | null = null;
@@ -487,6 +488,7 @@ export default defineContentScript({
       }
 
       if (message.type === 'FOCUSTRACE_SET_RECORDING') {
+        explicitStateVersion += 1;
         recording = message.enabled;
         breakpointSettings = normalizeRuntimeBreakpointSettings(message.breakpoints ?? breakpointSettings);
         lastFocused = document.activeElement instanceof Element ? document.activeElement : null;
@@ -506,10 +508,11 @@ export default defineContentScript({
     // Restore state when this script is re-created after a navigation or when
     // the side panel is closed. Recording belongs to the inspected tab, not to
     // the panel's focus lifecycle.
+    const restoreVersion = explicitStateVersion;
     void browser.runtime.sendMessage({
       type: 'FOCUSTRACE_GET_CONTENT_STATE',
     } satisfies ExtensionMessage).then((state: SessionState | undefined) => {
-      if (!state) return;
+      if (!state || explicitStateVersion !== restoreVersion) return;
       recording = state.recording;
       breakpointSettings = normalizeRuntimeBreakpointSettings(state.breakpoints);
       lastFocused = document.activeElement instanceof Element ? document.activeElement : null;
