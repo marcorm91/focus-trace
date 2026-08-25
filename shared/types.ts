@@ -140,8 +140,8 @@ export interface ScanIssue {
 export interface ScanResult {
   engine: 'FocusTrace Rules';
   standard: 'WCAG 2.2';
-  url: location.href,
-  title: document.title,
+  url: string;
+  title: string;
   scannedAt: number;
   issues: ScanIssue[];
   review: ScanIssue[];
