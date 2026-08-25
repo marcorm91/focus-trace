@@ -2,9 +2,10 @@ import type { BrowserContext, Worker } from '@playwright/test';
 import { expect, test } from './support/extension';
 
 async function openSidepanel(context: BrowserContext, extensionWorker: Worker) {
-  const extensionOrigin = new URL(extensionWorker.url()).origin;
+  const extensionId = new URL(extensionWorker.url()).hostname;
+  if (!extensionId) throw new Error('Could not resolve the FocusTrace extension ID from its service worker.');
   const panel = await context.newPage();
-  await panel.goto(`${extensionOrigin}/sidepanel.html`);
+  await panel.goto(`chrome-extension://${extensionId}/sidepanel.html`);
   await expect(panel.getByRole('heading', { level: 1, name: 'FocusTrace' })).toBeVisible();
   return panel;
 }
