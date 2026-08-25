@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { FocusJourney } from '../../../lib/runtime/focus-journey';
 import type { FocusGraph } from '../../../lib/runtime/focus-graph';
 import { explanationForCause, humanInteractionTitle, type ExplanationLevel } from '../../../lib/runtime/explanations';
@@ -12,10 +12,11 @@ import type {
 } from '../../../shared/types';
 import { FocusGraphView } from './FocusGraphView';
 import { FocusView } from './FocusView';
+import { ReplayView } from './ReplayView';
 import { RuntimeView } from './RuntimeView';
 import './trace.css';
 
-type TraceMode = 'journey' | 'interactions' | 'graph';
+type TraceMode = 'replay' | 'journey' | 'interactions' | 'graph';
 
 function directionSymbol(direction: FocusJourney['steps'][number]['direction']): string {
   if (direction === 'backward') return '↩';
@@ -68,6 +69,7 @@ export function TraceView({
   onBreakpointChange: (breakpointId: RuntimeBreakpointId, enabled: boolean) => void | Promise<void>;
 }) {
   const [mode, setMode] = useState<TraceMode>('journey');
+  const previousRecording = useRef(recording);
   const correlatedInteractions = interactions.filter((interaction) => interaction.correlated);
   const findings = events.filter((event) => event.outcome != null);
   const causalInteractions = correlatedInteractions.filter((interaction) => interaction.causes.length > 0);
@@ -75,6 +77,11 @@ export function TraceView({
   const latestExplanation = latestCause ? explanationForCause(latestCause.type, language) : undefined;
 
   const previewSteps = useMemo(() => journey.steps.slice(-10), [journey.steps]);
+
+  useEffect(() => {
+    if (previousRecording.current && !recording && events.length > 0) setMode('replay');
+    previousRecording.current = recording;
+  }, [events.length, recording]);
 
   return (
     <section className="trace-workspace" aria-labelledby="trace-title">
@@ -190,6 +197,10 @@ export function TraceView({
       )}
 
       <div className="trace-mode-switcher" role="tablist" aria-label={tr(language, 'Trace inspector', 'Inspector de traza')}>
+        <button type="button" role="tab" aria-selected={mode === 'replay'} className={mode === 'replay' ? 'active' : ''} onClick={() => setMode('replay')}>
+          {tr(language, 'Replay', 'Replay')}
+          {events.length > 0 && <span>{events.length}</span>}
+        </button>
         <button type="button" role="tab" aria-selected={mode === 'journey'} className={mode === 'journey' ? 'active' : ''} onClick={() => setMode('journey')}>
           {tr(language, 'Journey', 'Recorrido')}
         </button>
@@ -203,6 +214,18 @@ export function TraceView({
       </div>
 
       <div className="trace-inspector" role="tabpanel">
+        {mode === 'replay' && (
+          <ReplayView
+            events={events}
+            interactions={interactions}
+            journey={journey}
+            recording={recording}
+            level={level}
+            language={language}
+            onSelectFocusTarget={onSelectStep}
+            onClearFocusTarget={onClearSelection}
+          />
+        )}
         {mode === 'journey' && (
           <FocusView
             journey={journey}
