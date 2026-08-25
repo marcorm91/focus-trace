@@ -7,20 +7,26 @@ const packageJson = JSON.parse(
   readFileSync(resolve(process.cwd(), 'package.json'), 'utf8'),
 ) as { version: string; private: boolean };
 
+const configuredManifest = config.manifest;
+if (!configuredManifest || typeof configuredManifest === 'function' || configuredManifest instanceof Promise) {
+  throw new Error('Release contract expects a static production manifest configuration.');
+}
+const manifest = configuredManifest;
+
 describe('v0.1.0 release contract', () => {
   it('keeps package and extension manifest versions synchronized', () => {
-    expect(config.manifest?.version).toBe(packageJson.version);
+    expect(manifest.version).toBe(packageJson.version);
     expect(packageJson.version).toBe('0.1.0');
   });
 
   it('keeps production permissions minimal and explicit', () => {
-    expect(config.manifest?.permissions).toEqual([
+    expect(manifest.permissions).toEqual([
       'activeTab',
       'scripting',
       'storage',
       'sidePanel',
     ]);
-    expect(config.manifest?.host_permissions).toBeUndefined();
+    expect(manifest.host_permissions).toBeUndefined();
   });
 
   it('keeps npm publishing disabled for the extension package', () => {
