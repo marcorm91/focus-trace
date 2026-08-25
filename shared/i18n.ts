@@ -54,6 +54,7 @@ const RULE_TITLES_ES: Record<string, string> = {
   'FT-WCAG-008': 'La página HTML tiene un atributo lang no vacío',
   'FT-WCAG-009': 'El atributo lang contiene una etiqueta de idioma principal conocida',
   'FT-WCAG-010': 'El texto tiene suficiente contraste de color',
+  'FT-WCAG-011': 'La información visual no textual necesaria tiene suficiente contraste',
   'FT-WARN-001': 'Se utiliza un rol ARIA obsoleto',
   'FT-WARN-002': 'El estado o propiedad ARIA está obsoleto para este rol',
   'FT-WARN-003': 'El estado o propiedad ARIA está prohibido para este rol',
@@ -145,6 +146,17 @@ export function localizedScanIssue(
       description: issue.outcome === 'fail'
         ? `El contraste del texto renderizado es ${issue.contrast?.ratio ?? '?'}:1, por debajo del mínimo requerido de ${issue.contrast?.requiredRatio ?? '?'}:1.`
         : 'FocusTrace no puede determinar con fiabilidad el contraste final entre el texto y su fondo. Revisa este caso manualmente en lugar de tratar un cálculo incierto como un fallo WCAG.',
+      ...(issue.evidence ? { evidence: issue.evidence } : {}),
+    };
+  }
+
+  if (issue.ruleId === 'FT-WCAG-011') {
+    const subject = issue.contrast?.subject ?? 'señal visual';
+    return {
+      title: localizedRuleTitle(issue.ruleId, issue.title, language),
+      description: issue.outcome === 'fail'
+        ? `El contraste observado para ${subject} es ${issue.contrast?.ratio ?? '?'}:1, por debajo del mínimo 3:1 exigido para la señal visual no textual evaluada.`
+        : 'La señal visual no textual medida necesita revisión. FocusTrace conserva el ratio cuando puede calcularlo, pero no marca como fallo los casos donde no puede demostrar que ese borde, relleno, estado o gráfico sea imprescindible para comprender el componente.',
       ...(issue.evidence ? { evidence: issue.evidence } : {}),
     };
   }

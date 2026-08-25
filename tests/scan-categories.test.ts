@@ -2,8 +2,9 @@ import { describe, expect, it } from 'vitest';
 import { scanCategoryForRule } from '../shared/scan-categories';
 
 describe('scan categories', () => {
-  it('keeps contrast inside the full Analyze scan', () => {
+  it('keeps text and non-text contrast inside the full Analyze scan', () => {
     expect(scanCategoryForRule('FT-WCAG-010')).toBe('contrast');
+    expect(scanCategoryForRule('FT-WCAG-011')).toBe('contrast');
   });
 
   it('groups existing rules into useful audit areas', () => {

@@ -27,6 +27,18 @@ function categoryLabel(category: ScanCategory, language: AppLanguage): string {
   return tr(language, 'Other', 'Otros');
 }
 
+function contrastSubjectLabel(issue: ScanIssue, language: AppLanguage): string {
+  if (issue.contrast?.kind === 'text' || issue.ruleId === 'FT-WCAG-010') return tr(language, 'Current text', 'Texto actual');
+  const subject = issue.contrast?.subject;
+  if (subject === 'icon fill') return tr(language, 'Icon fill', 'Relleno del icono');
+  if (subject === 'icon stroke') return tr(language, 'Icon stroke', 'Trazo del icono');
+  if (subject === 'component fill') return tr(language, 'Component fill', 'Relleno del componente');
+  if (subject === 'component border') return tr(language, 'Component border', 'Borde del componente');
+  if (subject === 'observed focus outline') return tr(language, 'Focus outline', 'Contorno de foco');
+  if (subject === 'observed focus indicator') return tr(language, 'Focus indicator', 'Indicador de foco');
+  return tr(language, 'Visual cue', 'Señal visual');
+}
+
 function formattedColor(value: string, format: ColorFormat): string {
   const parsed = parseCssColor(value);
   if (!parsed) return value;
@@ -262,7 +274,7 @@ function FindingCard({
   const [copiedKey, setCopiedKey] = useState<string>();
 
   const suggestion = useMemo(() => {
-    if (issue.outcome !== 'fail' || issue.ruleId !== 'FT-WCAG-010') return undefined;
+    if (issue.outcome !== 'fail') return undefined;
     const contrast = issue.contrast;
     if (!contrast?.foreground || !contrast.background) return undefined;
     return suggestAccessibleForeground(contrast.foreground, contrast.background, contrast.requiredRatio);
@@ -303,7 +315,7 @@ function FindingCard({
           <dl>
             {issue.contrast.foreground && (
               <div>
-                <dt>{tr(language, 'Current text', 'Texto actual')}</dt>
+                <dt>{contrastSubjectLabel(issue, language)}</dt>
                 <dd className="contrast-color-value">
                   <span className="contrast-swatch" style={{ backgroundColor: issue.contrast.foreground }} aria-hidden="true" />
                   <code>{formattedColor(issue.contrast.foreground, colorFormat)}</code>
@@ -315,7 +327,7 @@ function FindingCard({
             )}
             {issue.contrast.background && (
               <div>
-                <dt>{tr(language, 'Background', 'Fondo')}</dt>
+                <dt>{issue.contrast.kind === 'text' || issue.ruleId === 'FT-WCAG-010' ? tr(language, 'Background', 'Fondo') : tr(language, 'Adjacent color', 'Color adyacente')}</dt>
                 <dd className="contrast-color-value">
                   <span className="contrast-swatch" style={{ backgroundColor: issue.contrast.background }} aria-hidden="true" />
                   <code>{formattedColor(issue.contrast.background, colorFormat)}</code>
@@ -361,8 +373,8 @@ function FindingCard({
               <p>
                 {tr(
                   language,
-                  'FocusTrace adjusts the current color toward black or white and picks the smallest sRGB change that reaches the required ratio. It does not claim a global perceptual nearest color.',
-                  'FocusTrace ajusta el color actual hacia negro o blanco y elige el menor cambio sRGB que alcanza el ratio requerido. No pretende ser el color perceptualmente más cercano posible.',
+                  'FocusTrace adjusts the current visual color toward black or white and picks the smallest sRGB change that reaches the required ratio. It does not claim a global perceptual nearest color.',
+                  'FocusTrace ajusta el color visual actual hacia negro o blanco y elige el menor cambio sRGB que alcanza el ratio requerido. No pretende ser el color perceptualmente más cercano posible.',
                 )}
               </p>
             </div>

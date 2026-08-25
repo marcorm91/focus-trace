@@ -140,6 +140,8 @@ export interface AccessibleNameEvidence {
 }
 
 export interface ContrastEvidence {
+  kind?: 'text' | 'ui-boundary' | 'graphic' | 'focus-indicator';
+  subject?: string;
   ratio?: number;
   requiredRatio: number;
   foreground?: string;

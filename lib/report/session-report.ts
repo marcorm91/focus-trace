@@ -239,21 +239,18 @@ export function buildSessionSuggestions(
 
   for (const issue of uniqueIssues(scan?.issues ?? []).slice(0, 6)) {
     let detail = issue.description;
-    if (
-      issue.ruleId === 'FT-WCAG-010' &&
-      issue.contrast?.foreground &&
-      issue.contrast.background
-    ) {
+    if (issue.contrast?.foreground && issue.contrast.background) {
       const accessibleColor = suggestAccessibleForeground(
         issue.contrast.foreground,
         issue.contrast.background,
         issue.contrast.requiredRatio,
       );
       if (accessibleColor) {
+        const isText = issue.contrast.kind === 'text' || issue.ruleId === 'FT-WCAG-010';
         detail = translated(
           language,
-          `${issue.description} Suggested text color: ${accessibleColor.hex} (${accessibleColor.rgb}), producing ${accessibleColor.ratio}:1 against the recorded background.`,
-          `${issue.description} Color de texto sugerido: ${accessibleColor.hex} (${accessibleColor.rgb}), con un contraste de ${accessibleColor.ratio}:1 sobre el fondo registrado.`,
+          `${issue.description} Suggested ${isText ? 'text' : 'visual'} color: ${accessibleColor.hex} (${accessibleColor.rgb}), producing ${accessibleColor.ratio}:1 against the recorded ${isText ? 'background' : 'adjacent color'}.`,
+          `${issue.description} Color ${isText ? 'de texto' : 'visual'} sugerido: ${accessibleColor.hex} (${accessibleColor.rgb}), con un contraste de ${accessibleColor.ratio}:1 sobre ${isText ? 'el fondo' : 'el color adyacente'} registrado.`,
         );
       }
     }
@@ -407,7 +404,7 @@ export function buildSessionReportModel(
     handledTransitions: transitionSemantics.filter((semantic) => semantic.tone === 'positive').length,
     focusSteps: journey.steps.length,
     focusJumps: journey.jumps,
-    contrastFailures: scan?.issues.filter((issue) => issue.ruleId === 'FT-WCAG-010').length ?? 0,
+    contrastFailures: scan?.issues.filter((issue) => scanCategoryForIssue(issue) === 'contrast').length ?? 0,
     categories,
     traceStories,
     suggestions: buildSessionSuggestions(scan, events, language),

@@ -3,6 +3,7 @@ import type { FindingOutcome, HeadingSnapshot, ScanIssue, ScanResult } from '../
 import { evaluateTextContrastForElement, elementHasRenderedText } from './contrast';
 import { accessibleNameDetails, accessibleNameDiagnostics, isMarkedDecorative, isProgrammaticallyHidden, isSequentiallyFocusable, selectorFor, semanticRole } from './dom';
 import { evaluateLabelInName } from './label-in-name';
+import { evaluateNonTextContrast } from './non-text-contrast';
 import { evaluateAriaAuthoringSignals, pageLanguageStatus, type AriaAuthoringSignal } from './standards-registry';
 
 interface RuleExecution { issues: ScanIssue[]; review: ScanIssue[]; warnings: ScanIssue[]; passes: number }
@@ -192,6 +193,8 @@ function runTextContrast(): RuleExecution {
     applicable += 1;
 
     const contrast: ScanIssue['contrast'] = {
+      kind: 'text',
+      subject: 'text',
       requiredRatio: evaluation.requiredRatio ?? 4.5,
       ...(evaluation.ratio != null ? { ratio: evaluation.ratio } : {}),
       ...(evaluation.foreground ? { foreground: evaluation.foreground } : {}),
@@ -233,6 +236,62 @@ function runTextContrast(): RuleExecution {
   }
 
   if (applicable === 0) result.passes += 1;
+  return result;
+}
+
+function runNonTextContrast(): RuleExecution {
+  const result = emptyExecution();
+  const evaluations = evaluateNonTextContrast();
+  if (!evaluations.length) {
+    result.passes += 1;
+    return result;
+  }
+
+  for (const { element, evaluation } of evaluations) {
+    if (isProgrammaticallyHidden(element) || evaluation.status === 'inapplicable') continue;
+    const contrast: ScanIssue['contrast'] = {
+      kind: evaluation.kind,
+      subject: evaluation.subject,
+      requiredRatio: evaluation.requiredRatio,
+      ...(evaluation.ratio != null ? { ratio: evaluation.ratio } : {}),
+      ...(evaluation.foreground ? { foreground: evaluation.foreground } : {}),
+      ...(evaluation.background ? { background: evaluation.background } : {}),
+      ...(evaluation.reason ? { reason: evaluation.reason } : {}),
+    };
+
+    if (evaluation.status === 'pass') {
+      result.passes += 1;
+      continue;
+    }
+
+    const evidence = evaluation.ratio != null
+      ? `${evaluation.subject}: ${evaluation.ratio}:1; required ${evaluation.requiredRatio}:1; visual color ${evaluation.foreground ?? 'unresolved'}; adjacent color ${evaluation.background ?? 'unresolved'}.`
+      : `${evaluation.subject}: ${evaluation.reason ?? 'A deterministic non-text contrast ratio could not be resolved.'}`;
+
+    if (evaluation.status === 'fail') {
+      result.issues.push(finding(
+        RULES.nonTextContrast,
+        'fail',
+        element,
+        `The observed ${evaluation.subject} contrast is ${evaluation.ratio}:1, below the required 3:1 for the non-text visual cue used to identify the component or its current state.`,
+        evidence,
+        undefined,
+        contrast,
+      ));
+      continue;
+    }
+
+    result.review.push(finding(
+      RULES.nonTextContrast,
+      'review',
+      element,
+      'A non-text visual cue is below 3:1 or cannot be reduced to one reliable ratio, but whether that cue is required to identify the component, state or graphic depends on visual context. Review it manually instead of treating it as an automatic WCAG failure.',
+      `${evidence}${evaluation.reason ? ` ${evaluation.reason}` : ''}`,
+      undefined,
+      contrast,
+    ));
+  }
+
   return result;
 }
 
@@ -282,7 +341,7 @@ function runHeadingJumps(): RuleExecution {
 export function runFocusTraceScan(): ScanResult {
   const ariaExecutions = ariaWarningExecutions(evaluateAriaAuthoringSignals());
   const headings = collectHeadingOutline();
-  const executions = [runPageTitle(), runPageLangPresent(), runPageLangKnown(), runImages(), runButtons(), runFormFields(), runPlaceholderOnlyLabels(), runLinks(), runLabelInName(), runAriaHiddenFocusable(), runTextContrast(), ...ariaExecutions, runPositiveTabindex(), runHeadingJumps()];
+  const executions = [runPageTitle(), runPageLangPresent(), runPageLangKnown(), runImages(), runButtons(), runFormFields(), runPlaceholderOnlyLabels(), runLinks(), runLabelInName(), runAriaHiddenFocusable(), runTextContrast(), runNonTextContrast(), ...ariaExecutions, runPositiveTabindex(), runHeadingJumps()];
   return {
     engine: 'FocusTrace Rules',
     standard: 'WCAG 2.2',

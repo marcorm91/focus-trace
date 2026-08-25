@@ -51,6 +51,7 @@ export const RULES = {
   pageLangPresent: { id: 'FT-WCAG-008', title: 'HTML page has a non-empty lang attribute', severity: 'serious', references: [wcag('3.1.1', 'Language of Page', 'A', 'language-of-page'), act('b5c3f8', 'HTML page has lang attribute')] },
   pageLangKnown: { id: 'FT-WCAG-009', title: 'HTML page lang has a known primary language tag', severity: 'serious', references: [wcag('3.1.1', 'Language of Page', 'A', 'language-of-page'), act('bf051a', 'HTML page lang attribute has valid language tag')] },
   textContrast: { id: 'FT-WCAG-010', title: 'Text has sufficient color contrast', severity: 'serious', references: [wcag('1.4.3', 'Contrast (Minimum)', 'AA', 'contrast-minimum')] },
+  nonTextContrast: { id: 'FT-WCAG-011', title: 'Required non-text visual information has sufficient contrast', severity: 'serious', references: [wcag('1.4.11', 'Non-text Contrast', 'AA', 'non-text-contrast')] },
   deprecatedAriaRole: { id: 'FT-WARN-001', title: 'Deprecated ARIA role is used', severity: 'moderate', references: [aria] },
   deprecatedAriaProperty: { id: 'FT-WARN-002', title: 'ARIA state or property is deprecated for this role', severity: 'minor', references: [aria] },
   prohibitedAriaProperty: { id: 'FT-WARN-003', title: 'ARIA state or property is prohibited for this role', severity: 'moderate', references: [aria] },

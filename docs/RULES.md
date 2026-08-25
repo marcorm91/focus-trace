@@ -90,7 +90,21 @@ A contrast result becomes `FAIL` only when the computed colors and threshold are
 
 This conservative model intentionally avoids converting uncertain rendering into false WCAG failures.
 
-WCAG 2.2 1.4.11 Non-text Contrast is **not** automatically failed by `FT-WCAG-010`. Controls, icons, component boundaries, states and focus indicators require separate visual/context evaluation. That coverage should be implemented as its own rule rather than reusing the text-contrast heuristic.
+## Non-text contrast scope
+
+`FT-WCAG-011` evaluates a conservative automated subset of WCAG 2.2 1.4.11 Non-text Contrast. The required ratio is `3:1` against adjacent colors for visual information needed to identify user interface components, states or graphical objects.
+
+FocusTrace deliberately distinguishes deterministic evidence from contextual visual judgement:
+
+- an icon that is the only visible identifying cue inside an interactive control can become `FAIL` when a single SVG fill/stroke and its adjacent background resolve reliably below `3:1`;
+- the same low-contrast icon beside a visible text label is not failed automatically because the graphic may be decorative;
+- standalone graphical objects below `3:1` become `REVIEW` because FocusTrace cannot prove from DOM/style evidence alone that the low-contrast portion is required to understand the content;
+- form/control borders and fills can be measured, but a sub-`3:1` result remains `REVIEW` when visual context determines whether that boundary or state cue is necessary;
+- when the page already has an element focused, an author-defined outline can be evaluated in its observed state. A simple outline below `3:1` can become `FAIL`; complex box-shadow focus treatments remain `REVIEW` rather than being reduced to a misleading single color.
+
+User-agent appearance is not modified merely to perform this scan. FocusTrace does not programmatically focus every control, trigger hover/pressed states, or rewrite the page in order to manufacture visual evidence. As a result, state and focus coverage is limited to what is actually rendered/observed when the scan runs.
+
+The same structured contrast evidence used by text contrast is reused here with an explicit kind (`ui-boundary`, `graphic`, or `focus-indicator`) and subject. Deterministic failures can therefore reuse the HEX/RGB converter, copy controls and accessible-color suggestion without conflating text and non-text semantics.
 
 ## ARIA authoring warnings
 
@@ -140,6 +154,7 @@ A causal classification explains the recorded chain; the linked runtime WCAG/APG
 | FT-WCAG-008 HTML page has a non-empty lang attribute | FAIL/PASS | WCAG 3.1.1 · ACT b5c3f8 |
 | FT-WCAG-009 Page lang has a known primary language tag | FAIL/PASS | WCAG 3.1.1 · ACT bf051a · IANA |
 | FT-WCAG-010 Text has sufficient color contrast | FAIL/REVIEW/PASS | WCAG 1.4.3 AA |
+| FT-WCAG-011 Required non-text visual information has sufficient contrast | FAIL/REVIEW/PASS | WCAG 1.4.11 AA |
 | FT-WARN-001 Deprecated ARIA role | WARNING/PASS | WAI-ARIA registry |
 | FT-WARN-002 Deprecated ARIA property for role | WARNING/PASS | WAI-ARIA registry |
 | FT-WARN-003 Prohibited ARIA property for role | WARNING/PASS | WAI-ARIA registry |
@@ -167,7 +182,7 @@ A causal classification explains the recorded chain; the linked runtime WCAG/APG
 - `FT-WCAG-007` currently covers ACT `2ee8b8` text-content cases only.
 - `FT-WCAG-009` checks the ACT primary-language expectation, not full BCP 47 syntax/semantics.
 - `FT-WCAG-010` covers DOM text with deterministically resolvable computed foreground/background colors. Images of text, pseudo-element text and complex visual composition remain outside deterministic FAIL coverage.
-- WCAG 1.4.11 Non-text Contrast is not yet automatically evaluated as a conformance result.
+- `FT-WCAG-011` does not programmatically exercise every hover, pressed, checked or focus state. Multi-color graphics, CSS pseudo-element icons, complex shadows, images/canvas and contextual “required visual information” decisions remain REVIEW/manual territory.
 - ARIA warnings currently operate on recognized explicit role tokens; native implicit-role validation is a later layer.
 - Runtime causality uses bounded temporal correlation and intentionally records only accessibility-relevant mutations, not every DOM change.
 - Runtime focus-obscured detection intentionally returns REVIEW because exact 2.4.11 evaluation has edge cases.
