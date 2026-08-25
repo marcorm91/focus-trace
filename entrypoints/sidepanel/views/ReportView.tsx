@@ -421,7 +421,7 @@ export function ReportView({
                     )}
 
                     <button className="focus-path-toggle" type="button" onClick={() => void onLocate(element.selector)}>
-                      {tr(language, 'Locate on page', 'Localizar en la página')}
+                      {tr(language, 'Inspect in page context', 'Revisar en contexto sobre la página')}
                     </button>
                   </article>
                 );
