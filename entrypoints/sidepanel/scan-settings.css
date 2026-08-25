@@ -169,6 +169,31 @@
   font-size: 10px;
 }
 
+.settings-contact h3 {
+  margin: 0;
+  font-size: 13px;
+}
+
+.settings-contact-link {
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 18%, transparent));
+  border-radius: 8px;
+  padding: 8px 10px;
+  color: LinkText;
+  text-decoration: none;
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.settings-contact-link:hover {
+  border-color: var(--ft-brand, Highlight);
+  background: var(--ft-brand-soft, color-mix(in srgb, Highlight 7%, Canvas));
+}
+
 .settings-note p {
   margin-bottom: 0;
 }
