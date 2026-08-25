@@ -37,8 +37,8 @@ describe('runtime session state helpers', () => {
       recording: false,
       events: [],
       breakpoints: expect.objectContaining({
-        'focused-node-removed': true,
-        'dialog-opened-without-focus': true,
+        'focused-node-removed': false,
+        'dialog-opened-without-focus': false,
       }),
     });
 
@@ -110,12 +110,12 @@ describe('runtime session state helpers', () => {
     expect(recording.pausedByBreakpoint).toBeUndefined();
 
     const breakpoints = updateSessionBreakpoints(current, {
-      'focused-node-removed': false,
+      'focused-node-removed': true,
     } as never).breakpoints;
     expect(breakpoints).toMatchObject({
-      'focused-node-removed': false,
-      'focus-fell-back-to-body': true,
-      'focused-element-became-hidden': true,
+      'focused-node-removed': true,
+      'focus-fell-back-to-body': false,
+      'focused-element-became-hidden': false,
     });
   });
 });
