@@ -1,5 +1,12 @@
 import { useState } from 'react';
 import type { FocusJourney, FocusJourneyDirection } from '../../../lib/runtime/focus-journey';
+import {
+  focusTransitionSemanticCopy,
+  focusTransitionSemanticIcon,
+  focusTransitionSemanticsForEvent,
+  primaryFocusTransitionSemantic,
+  type FocusTransitionSemantic,
+} from '../../../lib/runtime/focus-transition-semantics';
 import { tr, type AppLanguage } from '../../../shared/i18n';
 
 function directionLabel(
@@ -35,6 +42,7 @@ function directionIcon(direction: FocusJourneyDirection): string {
 
 export function FocusView({
   journey,
+  semantics,
   pathSteps,
   pathVisible,
   recording,
@@ -46,6 +54,7 @@ export function FocusView({
   language,
 }: {
   journey: FocusJourney;
+  semantics: FocusTransitionSemantic[];
   pathSteps: number;
   pathVisible: boolean;
   recording: boolean;
@@ -59,6 +68,9 @@ export function FocusView({
   const [expanded, setExpanded] = useState(false);
   const visibleSteps = expanded ? journey.steps : journey.steps.slice(0, 12);
   const hiddenSteps = journey.steps.length - visibleSteps.length;
+  const positiveSemantics = semantics.filter((semantic) => semantic.tone === 'positive').length;
+  const reviewSemantics = semantics.filter((semantic) => semantic.tone === 'review').length;
+  const neutralSemantics = semantics.filter((semantic) => semantic.tone === 'neutral').length;
 
   return (
     <section className="panel focus-journey-view" aria-labelledby="focus-title">
@@ -69,8 +81,8 @@ export function FocusView({
             {journey.steps.length
               ? tr(
                   language,
-                  'Read the graph from top to bottom. Every connector explains how focus moved.',
-                  'Lee el grafo de arriba abajo. Cada conexión explica cómo se ha movido el foco.',
+                  'Read the journey from top to bottom. Connectors show movement; semantic labels explain what that movement meant.',
+                  'Lee el recorrido de arriba abajo. Las conexiones muestran el movimiento y las etiquetas semánticas explican qué significó.',
                 )
               : tr(
                   language,
@@ -120,9 +132,23 @@ export function FocusView({
           <div className="focus-journey-summary" aria-label={tr(language, 'Journey summary', 'Resumen del recorrido')}>
             <span><strong>{journey.steps.length}</strong>{tr(language, 'Steps', 'Pasos')}</span>
             <span><strong>{journey.forward + journey.wraps}</strong>{tr(language, 'Forward', 'Avances')}</span>
-            <span className={journey.backward ? 'has-warning' : ''}><strong>{journey.backward}</strong>{tr(language, 'Backward', 'Retrocesos')}</span>
-            <span className={journey.repeated ? 'has-warning' : ''}><strong>{journey.repeated}</strong>{tr(language, 'Repeated', 'Repetidos')}</span>
+            <span><strong>{journey.backward}</strong>{tr(language, 'Backward', 'Retrocesos')}</span>
+            <span><strong>{journey.repeated}</strong>{tr(language, 'Repeated', 'Repetidos')}</span>
           </div>
+
+          {semantics.length > 0 && (
+            <div className="transition-semantic-summary" aria-label={tr(language, 'Interpreted focus transitions', 'Transiciones de foco interpretadas')}>
+              {positiveSemantics > 0 && (
+                <span className="positive">✓ {tr(language, `${positiveSemantics} handled`, `${positiveSemantics} correctas`)}</span>
+              )}
+              {reviewSemantics > 0 && (
+                <span className="review">⚠ {tr(language, `${reviewSemantics} to review`, `${reviewSemantics} a revisar`)}</span>
+              )}
+              {neutralSemantics > 0 && (
+                <span className="neutral">• {tr(language, `${neutralSemantics} observed patterns`, `${neutralSemantics} patrones observados`)}</span>
+              )}
+            </div>
+          )}
 
           <div className="focus-page-controls">
             <button
@@ -158,13 +184,25 @@ export function FocusView({
                     `Posición Tab ${step.element.tabOrderIndex} de ${step.element.tabOrderSize}`,
                   )
                 : tr(language, 'Tab position unavailable', 'Posición Tab no disponible');
+              const stepSemantics = focusTransitionSemanticsForEvent(semantics, step.id);
+              const primarySemantic = primaryFocusTransitionSemantic(stepSemantics);
+              const primaryCopy = primarySemantic
+                ? focusTransitionSemanticCopy(primarySemantic, language)
+                : undefined;
 
               return (
-                <li className={`journey-step direction-${step.direction}`} key={step.id}>
+                <li
+                  className={`journey-step direction-${step.direction}${primarySemantic ? ` semantic-${primarySemantic.tone}` : ''}`}
+                  key={step.id}
+                >
                   {step.direction !== 'start' && (
-                    <div className="journey-connector">
-                      <span aria-hidden="true">{directionIcon(step.direction)}</span>
-                      <strong>{directionLabel(step.direction, step.distance, language)}</strong>
+                    <div className={`journey-connector${primarySemantic ? ' has-semantic' : ''}`}>
+                      <span aria-hidden="true">
+                        {primarySemantic ? focusTransitionSemanticIcon(primarySemantic) : directionIcon(step.direction)}
+                      </span>
+                      <strong>
+                        {primaryCopy?.label ?? directionLabel(step.direction, step.distance, language)}
+                      </strong>
                     </div>
                   )}
                   <button
@@ -177,11 +215,27 @@ export function FocusView({
                       <strong>{name}</strong>
                       <small>{role} · {position}</small>
                     </span>
-                    {step.event.outcome && (
+                    {stepSemantics.length > 0 ? (
+                      <span className="journey-semantics">
+                        {stepSemantics.slice(0, 2).map((semantic) => {
+                          const copy = focusTransitionSemanticCopy(semantic, language);
+                          return (
+                            <span
+                              className={`journey-semantic ${semantic.tone}`}
+                              title={copy.detail}
+                              key={semantic.id}
+                            >
+                              <span aria-hidden="true">{focusTransitionSemanticIcon(semantic)}</span>
+                              {copy.label}
+                            </span>
+                          );
+                        })}
+                      </span>
+                    ) : step.event.outcome ? (
                       <span className={`journey-signal ${step.event.outcome}`}>
                         {tr(language, 'Review', 'Revisar')}
                       </span>
-                    )}
+                    ) : null}
                   </button>
                 </li>
               );
