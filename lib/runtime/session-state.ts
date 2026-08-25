@@ -35,7 +35,11 @@ export function appendRuntimeEventToSession(state: SessionState, event: RuntimeE
 }
 
 export function clearSessionEvents(state: SessionState, tabId = state.tabId): SessionState {
-  const { pausedByBreakpoint: _paused, ...rest } = state;
+  const {
+    pausedByBreakpoint: _paused,
+    startedAt: _startedAt,
+    ...rest
+  } = state;
   return {
     ...rest,
     tabId,
