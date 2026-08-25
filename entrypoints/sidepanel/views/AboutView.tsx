@@ -4,7 +4,7 @@ import '../about.css';
 
 const VERSION_DATE = '2026-08-24';
 const CREATOR_NAME = 'Marco Romero';
-const CREATOR_LINKEDIN = 'https://www.linkedin.com/in/marcorm91/';
+const CREATOR_LINKEDIN = 'https://es.linkedin.com/in/marcorm91';
 
 export function AboutView({ language }: { language: AppLanguage }) {
   const version = browser.runtime.getManifest().version;
