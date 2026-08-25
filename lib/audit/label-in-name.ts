@@ -14,11 +14,15 @@ const NAME_FROM_CONTENT_WIDGET_ROLES = new Set([
   'treeitem',
 ]);
 
+export type LabelInNameOutcome = 'pass' | 'warning' | 'fail';
+
 export interface LabelInNameEvaluation {
   element: Element;
   visibleLabel: string;
   accessibleName: string;
   matches: boolean;
+  outcome: LabelInNameOutcome;
+  reason?: string;
 }
 
 function normalise(value: string): string {
@@ -27,6 +31,56 @@ function normalise(value: string): string {
 
 function comparisonValue(value: string): string {
   return normalise(value).toLocaleLowerCase();
+}
+
+function comparisonTokens(value: string): string[] {
+  return comparisonValue(value).match(/[\p{L}\p{N}]+/gu) ?? [];
+}
+
+function uniqueTokens(tokens: string[]): string[] {
+  return [...new Set(tokens)];
+}
+
+function containsLetter(token: string): boolean {
+  return /\p{L}/u.test(token);
+}
+
+function isAuxiliaryVisibleLabel(tokens: string[]): boolean {
+  if (!tokens.length) return false;
+  return tokens.every((token) => !containsLetter(token));
+}
+
+function sharedTokenRatio(visibleLabel: string, accessibleName: string): number {
+  const visibleTokens = uniqueTokens(comparisonTokens(visibleLabel));
+  if (!visibleTokens.length) return 0;
+
+  const nameTokens = new Set(comparisonTokens(accessibleName));
+  const shared = visibleTokens.filter((token) => nameTokens.has(token));
+  return shared.length / visibleTokens.length;
+}
+
+function labelInNameOutcome(visibleLabel: string, accessibleName: string): { outcome: LabelInNameOutcome; reason?: string } {
+  const visible = comparisonValue(visibleLabel);
+  const name = comparisonValue(accessibleName);
+  if (visible.length > 0 && name.includes(visible)) return { outcome: 'pass' };
+
+  const visibleTokens = comparisonTokens(visibleLabel);
+  if (isAuxiliaryVisibleLabel(visibleTokens)) {
+    return {
+      outcome: 'warning',
+      reason: 'The visible text looks like auxiliary metadata, such as a counter or badge, rather than the primary control label.',
+    };
+  }
+
+  const ratio = sharedTokenRatio(visibleLabel, accessibleName);
+  if (ratio >= 0.5) {
+    return {
+      outcome: 'warning',
+      reason: `The accessible name shares ${Math.round(ratio * 100)}% of the visible-label tokens, but the full visible label is not contained as written.`,
+    };
+  }
+
+  return { outcome: 'fail' };
 }
 
 function isVisuallyHidden(element: Element): boolean {
@@ -69,14 +123,15 @@ export function evaluateLabelInName(): LabelInNameEvaluation[] {
     if (!visibleLabel) continue;
 
     const accessibleName = accessibleNameDetails(element).name;
-    const visible = comparisonValue(visibleLabel);
-    const name = comparisonValue(accessibleName);
+    const { outcome, reason } = labelInNameOutcome(visibleLabel, accessibleName);
 
     evaluations.push({
       element,
       visibleLabel,
       accessibleName,
-      matches: visible.length > 0 && name.includes(visible),
+      matches: outcome === 'pass',
+      outcome,
+      ...(reason ? { reason } : {}),
     });
   }
 
