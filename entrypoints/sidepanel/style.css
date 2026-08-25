@@ -1285,3 +1285,36 @@ code {
   .suggestion-list li > div { grid-row: auto; display: flex; }
   .suggestion-list li > p { grid-column: 1; }
 }
+
+
+.export-text-report {
+  min-height: 36px;
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid var(--ft-brand);
+  border-radius: 9px;
+  padding: 7px 10px;
+  background: var(--ft-brand);
+  color: #fff;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+.export-text-report:disabled {
+  opacity: .5;
+  cursor: not-allowed;
+}
+
+@media (max-width: 420px) {
+  .session-report > .section-heading {
+    align-items: stretch;
+  }
+
+  .export-text-report {
+    width: 100%;
+  }
+}
