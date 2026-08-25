@@ -33,8 +33,8 @@ export function FocusView({
         title={tr(language, 'No focus events', 'No hay eventos de foco')}
         text={tr(
           language,
-          'Start recording and navigate the page with Tab, Shift+Tab and Enter.',
-          'Inicia una grabación y navega por la página con Tab, Shift+Tab y Enter.',
+          'Start recording and navigate with Tab, or use Simulate focus to generate an automatic keyboard walk.',
+          'Inicia una grabación y navega con Tab, o usa Simular foco para generar un recorrido automático de teclado.',
         )}
       />
     );
