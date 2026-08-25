@@ -1,5 +1,7 @@
 import { tr, type AppLanguage } from '../../../shared/i18n';
 
+const CREATOR_LINKEDIN = 'https://www.linkedin.com/in/marcorm91/';
+
 export function SettingsView({
   language,
   onLanguageChange,
@@ -48,13 +50,27 @@ export function SettingsView({
         </label>
       </fieldset>
 
+      <section className="settings-group settings-contact" aria-labelledby="settings-contact-title">
+        <h3 id="settings-contact-title">{tr(language, 'Contact', 'Contacto')}</h3>
+        <p className="settings-help">
+          {tr(
+            language,
+            'Questions, feedback or accessibility ideas for FocusTrace.',
+            'Dudas, feedback o ideas de accesibilidad para FocusTrace.',
+          )}
+        </p>
+        <a className="settings-contact-link" href={CREATOR_LINKEDIN} target="_blank" rel="noreferrer">
+          {tr(language, 'Contact Marco on LinkedIn', 'Contactar con Marco en LinkedIn')} <span aria-hidden="true">↗</span>
+        </a>
+      </section>
+
       <div className="notice settings-note">
         <strong>{tr(language, 'Standards stay canonical', 'Los estándares mantienen su nomenclatura oficial')}</strong>
         <p>
           {tr(
             language,
-            'Identifiers such as WCAG 1.1.1, ACT 23a2a8 and rule IDs keep their canonical names. FocusTrace translates the explanation around that evidence.',
-            'Identificadores como WCAG 1.1.1, ACT 23a2a8 y los IDs de reglas mantienen su nomenclatura oficial. FocusTrace traduce la explicación que acompaña a esa evidencia.',
+            'Identifiers such as WCAG 1.1.1, ACT 23a2a8, rule IDs and CSS selectors are not translated. FocusTrace translates the explanation around that evidence.',
+            'Identificadores como WCAG 1.1.1, ACT 23a2a8, los IDs de reglas y los selectores CSS no se traducen. FocusTrace traduce la explicación que acompaña a esa evidencia.',
           )}
         </p>
       </div>
