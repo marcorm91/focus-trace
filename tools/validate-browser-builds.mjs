@@ -11,6 +11,11 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
+function hasNoHostPermissions(manifest) {
+  return manifest.host_permissions == null
+    || (Array.isArray(manifest.host_permissions) && manifest.host_permissions.length === 0);
+}
+
 const chrome = readManifest('chrome-mv3');
 const edge = readManifest('edge-mv3');
 const firefox = readManifest('firefox-mv3');
@@ -18,7 +23,7 @@ const firefox = readManifest('firefox-mv3');
 for (const [name, manifest] of Object.entries({ chrome, edge, firefox })) {
   assert(manifest.manifest_version === 3, `${name} must be Manifest V3`);
   assert(manifest.version === packageJson.version, `${name} version must match package.json`);
-  assert(!manifest.host_permissions, `${name} production build must not request host_permissions`);
+  assert(hasNoHostPermissions(manifest), `${name} production build must not request host_permissions`);
 }
 
 for (const [name, manifest] of Object.entries({ chrome, edge })) {
