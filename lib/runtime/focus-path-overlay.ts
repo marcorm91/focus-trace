@@ -65,6 +65,10 @@ export function showFocusPathInPage(
     zIndex: '2147483646',
   });
 
+  const totalSteps = entries.reduce(
+    (maximum, entry) => Math.max(maximum, ...entry.orders),
+    0,
+  );
   const items = entries.map((entry) => {
     const selected = entry.selector === selectedSelector;
     const tone = entry.tone ?? 'review';
@@ -104,7 +108,7 @@ export function showFocusPathInPage(
     });
     overlay.append(badge);
     root.append(overlay);
-    return { entry, overlay, selected };
+    return { entry, overlay, badge, selected };
   });
 
   const selectedItem = items.find((item) => item.selected);
@@ -120,7 +124,7 @@ export function showFocusPathInPage(
     const tone = selectedItem.entry.tone ?? 'review';
     const colors = toneColors[tone];
 
-    title.textContent = `#${selectedItem.entry.orders[0] ?? ''} · ${selectedItem.entry.label}`;
+    title.textContent = `#${selectedItem.entry.orders[0] ?? ''} / ${totalSteps} · ${selectedItem.entry.label}`;
     status.textContent = selectedItem.entry.status ?? '';
     meta.textContent = selectedItem.entry.meta ?? selectedItem.entry.selector;
     detail.textContent = selectedItem.entry.detail ?? '';
@@ -206,20 +210,50 @@ export function showFocusPathInPage(
     if (!card) return;
     const margin = 12;
     const cardWidth = Math.min(360, Math.max(240, window.innerWidth - margin * 2));
-    const estimatedHeight = 155;
-    const below = rect.bottom + margin;
-    const top = below + estimatedHeight <= window.innerHeight
-      ? below
-      : Math.max(margin, rect.top - estimatedHeight - margin);
-    const left = Math.min(
-      Math.max(margin, rect.left),
-      Math.max(margin, window.innerWidth - cardWidth - margin),
-    );
     Object.assign(card.style, {
       display: 'block',
+      visibility: 'hidden',
+      top: `${margin}px`,
+      left: `${margin}px`,
+      width: `${cardWidth}px`,
+    });
+
+    const measuredHeight = card.getBoundingClientRect().height;
+    const cardHeight = measuredHeight > 0 ? measuredHeight : 155;
+    const maxLeft = Math.max(margin, window.innerWidth - cardWidth - margin);
+    const maxTop = Math.max(margin, window.innerHeight - cardHeight - margin);
+    const clampLeft = (value: number) => Math.min(Math.max(margin, value), maxLeft);
+    const clampTop = (value: number) => Math.min(Math.max(margin, value), maxTop);
+    const fitsBelow = rect.bottom + margin + cardHeight <= window.innerHeight - margin;
+    const fitsAbove = rect.top - margin - cardHeight >= margin;
+    const fitsRight = rect.right + margin + cardWidth <= window.innerWidth - margin;
+    const fitsLeft = rect.left - margin - cardWidth >= margin;
+
+    let placement: 'below' | 'above' | 'right' | 'left' | 'pinned' = 'pinned';
+    let top = clampTop(rect.bottom + margin);
+    let left = clampLeft(rect.left);
+
+    if (fitsBelow) {
+      placement = 'below';
+      top = rect.bottom + margin;
+    } else if (fitsAbove) {
+      placement = 'above';
+      top = rect.top - cardHeight - margin;
+    } else if (fitsRight) {
+      placement = 'right';
+      top = clampTop(rect.top);
+      left = rect.right + margin;
+    } else if (fitsLeft) {
+      placement = 'left';
+      top = clampTop(rect.top);
+      left = rect.left - cardWidth - margin;
+    }
+
+    card.dataset.focustracePlacement = placement;
+    Object.assign(card.style, {
+      visibility: 'visible',
       top: `${top}px`,
       left: `${left}px`,
-      width: `${cardWidth}px`,
     });
   };
 
@@ -242,12 +276,26 @@ export function showFocusPathInPage(
 
       found += 1;
       const padding = item.selected ? 5 : 3;
+      const badgeHeight = 28;
+      const overlayHeight = rect.height + padding * 2;
+      const hasSpaceAbove = rect.top - padding >= badgeHeight;
+      const hasSpaceBelow = rect.bottom + padding + badgeHeight <= window.innerHeight;
+      const badgePlacement = hasSpaceAbove ? 'above' : hasSpaceBelow ? 'below' : 'inside';
+      item.badge.dataset.focustracePlacement = badgePlacement;
+      Object.assign(item.badge.style, {
+        top: badgePlacement === 'above'
+          ? '-28px'
+          : badgePlacement === 'below'
+            ? `${overlayHeight + 4}px`
+            : '4px',
+        left: `${Math.max(-rect.left + 4, item.selected ? -4 : -2)}px`,
+      });
       Object.assign(item.overlay.style, {
         display: 'block',
         top: `${rect.top - padding}px`,
         left: `${rect.left - padding}px`,
         width: `${rect.width + padding * 2}px`,
-        height: `${rect.height + padding * 2}px`,
+        height: `${overlayHeight}px`,
       });
       if (item.selected) positionCard(rect);
     }
