@@ -1,7 +1,15 @@
-import type { ExplanationLevel } from '../../../lib/runtime/explanations';
-import { tr, type AppLanguage } from '../../../shared/i18n';
-import type { ElementSnapshot, RuntimeEvent, ScanResult } from '../../../shared/types';
-import { Metric } from '../components/Common';
+import {
+  outcomeLabel,
+  type ExplanationLevel,
+} from '../../../lib/runtime/explanations';
+import {
+  localizedScanIssue,
+  localizedSeverity,
+  tr,
+  type AppLanguage,
+} from '../../../shared/i18n';
+import type { ElementSnapshot, RuntimeEvent, ScanIssue, ScanResult } from '../../../shared/types';
+import { Metric, ReferenceList } from '../components/Common';
 
 function timeLabel(timestamp: number) {
   return new Date(timestamp).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
@@ -26,7 +34,7 @@ function latestFocusWalkReport(events: RuntimeEvent[]) {
   const summary = ended?.focusWalk ?? started?.focusWalk;
 
   if (!summary) return undefined;
-  return { started, ended, focusEvents, findings, summary };
+  return { started, ended, focusEvents, findings, reportEvents, summary };
 }
 
 function isNativeInteractive(element: ElementSnapshot) {
@@ -58,15 +66,50 @@ function nameSourceLabel(element: ElementSnapshot, language: AppLanguage) {
   return tr(language, 'missing', 'ausente');
 }
 
-function componentFindings(element: ElementSnapshot, language: AppLanguage) {
-  const notes: Array<{ tone: 'info' | 'moderate'; title: string; detail: string }> = [];
+function targetMatchesSelector(target: string, selector: string, element: ElementSnapshot) {
+  if (target === selector) return true;
+  if (target.startsWith(`${selector} `) || target.startsWith(`${selector} >`)) return true;
+  if (selector.startsWith(`${target} `) || selector.startsWith(`${target} >`)) return true;
+  return Boolean(element.id && target.includes(`#${element.id}`));
+}
+
+function scanIssuesForElement(scan: ScanResult | undefined, element: ElementSnapshot): ScanIssue[] {
+  if (!scan) return [];
+  const all = [...scan.issues, ...scan.review, ...(scan.warnings ?? [])];
+  return all.filter((issue) => issue.targets.some((target) => targetMatchesSelector(target, element.selector, element)));
+}
+
+function runtimeIssuesForElement(events: RuntimeEvent[], element: ElementSnapshot): RuntimeEvent[] {
+  return events.filter((event) => {
+    if (!event.outcome || !event.element) return false;
+    return targetMatchesSelector(event.element.selector, element.selector, element);
+  });
+}
+
+function componentSignals({
+  element,
+  focusIndex,
+  focusEvents,
+  scanIssues,
+  runtimeIssues,
+  language,
+}: {
+  element: ElementSnapshot;
+  focusIndex: number;
+  focusEvents: RuntimeEvent[];
+  scanIssues: ScanIssue[];
+  runtimeIssues: RuntimeEvent[];
+  language: AppLanguage;
+}) {
+  const signals: Array<{ tone: 'info' | 'moderate' | 'serious'; title: string; detail: string }> = [];
   const role = element.role?.toLowerCase();
   const nativeInteractive = isNativeInteractive(element);
   const hasInteractiveRole = ['button', 'link', 'checkbox', 'radio', 'switch', 'tab', 'menuitem'].includes(role ?? '');
+  const repeated = focusEvents.findIndex((event) => event.element?.selector === element.selector) !== focusIndex;
   const nameSource = nameSourceLabel(element, language);
 
   if (element.name) {
-    notes.push({
+    signals.push({
       tone: 'info',
       title: tr(language, 'Accessible name', 'Nombre accesible'),
       detail: tr(
@@ -76,19 +119,19 @@ function componentFindings(element: ElementSnapshot, language: AppLanguage) {
       ),
     });
   } else {
-    notes.push({
-      tone: 'moderate',
-      title: tr(language, 'Accessible name needs review', 'Revisar nombre accesible'),
+    signals.push({
+      tone: 'serious',
+      title: tr(language, 'Accessible name missing', 'Nombre accesible ausente'),
       detail: tr(
         language,
-        'No accessible name was captured for this focusable component. Review visible text, aria-label or aria-labelledby.',
-        'No se ha capturado nombre accesible para este componente focusable. Revisa texto visible, aria-label o aria-labelledby.',
+        'This focused component has no captured accessible name. Screen reader and voice-control users may not identify it.',
+        'Este componente enfocado no tiene nombre accesible capturado. Usuarios de lector de pantalla o control por voz podrían no identificarlo.',
       ),
     });
   }
 
   if (nativeInteractive) {
-    notes.push({
+    signals.push({
       tone: 'info',
       title: tr(language, 'Native semantics', 'Semántica nativa'),
       detail: tr(
@@ -98,17 +141,17 @@ function componentFindings(element: ElementSnapshot, language: AppLanguage) {
       ),
     });
   } else if (hasInteractiveRole) {
-    notes.push({
-      tone: 'info',
-      title: tr(language, 'ARIA role', 'Rol ARIA'),
+    signals.push({
+      tone: 'moderate',
+      title: tr(language, 'Custom ARIA control', 'Control ARIA custom'),
       detail: tr(
         language,
-        `The component exposes role="${role}". Review that keyboard behavior matches that role.`,
-        `El componente expone role="${role}". Revisa que el comportamiento de teclado corresponda con ese rol.`,
+        `The component exposes role="${role}". Review keyboard behavior and states because ARIA does not add behavior by itself.`,
+        `El componente expone role="${role}". Revisa comportamiento de teclado y estados porque ARIA no añade comportamiento por sí solo.`,
       ),
     });
   } else {
-    notes.push({
+    signals.push({
       tone: 'moderate',
       title: tr(language, 'Focusable custom element', 'Elemento custom focusable'),
       detail: tr(
@@ -120,17 +163,17 @@ function componentFindings(element: ElementSnapshot, language: AppLanguage) {
   }
 
   if ((element.attributes?.tabIndex ?? 0) > 0) {
-    notes.push({
-      tone: 'moderate',
-      title: tr(language, 'Positive tabindex', 'Tabindex positivo'),
+    signals.push({
+      tone: 'serious',
+      title: tr(language, 'Positive tabindex changes order', 'Tabindex positivo altera el orden'),
       detail: tr(
         language,
-        `tabindex="${element.attributes?.tabIndex}" changes the natural keyboard order. Review whether this is intentional.`,
-        `tabindex="${element.attributes?.tabIndex}" altera el orden natural de teclado. Revisa si es intencionado.`,
+        `tabindex="${element.attributes?.tabIndex}" forces this component ahead of the natural DOM order. Review the resulting focus sequence.`,
+        `tabindex="${element.attributes?.tabIndex}" fuerza este componente por delante del orden natural del DOM. Revisa la secuencia resultante.`,
       ),
     });
   } else if (element.attributes?.tabIndex === 0 && !nativeInteractive) {
-    notes.push({
+    signals.push({
       tone: 'info',
       title: tr(language, 'Programmatic focus entry', 'Entrada de foco programática'),
       detail: tr(
@@ -141,7 +184,47 @@ function componentFindings(element: ElementSnapshot, language: AppLanguage) {
     });
   }
 
-  return notes;
+  if (repeated) {
+    signals.push({
+      tone: 'moderate',
+      title: tr(language, 'Repeated focus target', 'Destino de foco repetido'),
+      detail: tr(
+        language,
+        'This selector appeared earlier in the automatic walk. Review whether focus is looping or duplicated unexpectedly.',
+        'Este selector apareció antes en el recorrido automático. Revisa si el foco está entrando en bucle o duplicado de forma inesperada.',
+      ),
+    });
+  }
+
+  if (scanIssues.length) {
+    signals.push({
+      tone: scanIssues.some((issue) => issue.outcome === 'fail') ? 'serious' : 'moderate',
+      title: tr(language, 'Static analysis overlap', 'Cruce con análisis estático'),
+      detail: tr(
+        language,
+        `${scanIssues.length} scan finding${scanIssues.length === 1 ? '' : 's'} target this focused component or one of its descendants.`,
+        `${scanIssues.length} hallazgo${scanIssues.length === 1 ? '' : 's'} del análisis apunta${scanIssues.length === 1 ? '' : 'n'} a este componente enfocado o a alguno de sus descendientes.`,
+      ),
+    });
+  }
+
+  if (runtimeIssues.length) {
+    signals.push({
+      tone: runtimeIssues.some((event) => ['critical', 'serious'].includes(event.severity)) ? 'serious' : 'moderate',
+      title: tr(language, 'Runtime issue overlap', 'Cruce con runtime'),
+      detail: tr(
+        language,
+        `${runtimeIssues.length} runtime finding${runtimeIssues.length === 1 ? '' : 's'} occurred on this focused component during the walk.`,
+        `${runtimeIssues.length} hallazgo${runtimeIssues.length === 1 ? '' : 's'} runtime ocurrió${runtimeIssues.length === 1 ? '' : 'n'} sobre este componente enfocado durante el recorrido.`,
+      ),
+    });
+  }
+
+  return signals;
+}
+
+function needsReview(signals: Array<{ tone: string }>, scanIssues: ScanIssue[], runtimeIssues: RuntimeEvent[]) {
+  return signals.some((signal) => signal.tone !== 'info') || scanIssues.length > 0 || runtimeIssues.length > 0;
 }
 
 export function ReportView({
@@ -176,6 +259,26 @@ export function ReportView({
   onLocate: (selector: string) => void | Promise<void>;
 }) {
   const focusWalk = latestFocusWalkReport(events);
+  const componentReports = focusWalk?.focusEvents.map((event, index) => {
+    const element = event.element!;
+    const scanIssues = scanIssuesForElement(scan, element);
+    const runtimeIssues = runtimeIssuesForElement(focusWalk.reportEvents, element);
+    const signals = componentSignals({
+      element,
+      focusIndex: index,
+      focusEvents: focusWalk.focusEvents,
+      scanIssues,
+      runtimeIssues,
+      language,
+    });
+    return { event, element, index, runtimeIssues, scanIssues, signals };
+  }) ?? [];
+  const componentsNeedingReview = componentReports.filter((report) => needsReview(report.signals, report.scanIssues, report.runtimeIssues)).length;
+  const orderSignals = componentReports.reduce(
+    (total, report) => total + report.signals.filter((signal) => signal.title.includes('tabindex') || signal.title.includes('Tabindex') || signal.title.includes('Repeated') || signal.title.includes('repetido')).length,
+    0,
+  );
+  const staticOverlaps = componentReports.reduce((total, report) => total + report.scanIssues.length, 0);
 
   return (
     <section className="panel" aria-labelledby="report-title">
@@ -221,47 +324,103 @@ export function ReportView({
 
           <div className="metrics">
             <Metric label={tr(language, 'Reached focus', 'Focos alcanzados')} value={focusWalk.summary.focusedSteps} />
-            <Metric label={tr(language, 'Components reviewed', 'Componentes revisados')} value={focusWalk.focusEvents.length} />
-            <Metric label={tr(language, 'Needs review', 'Requieren revisión')} value={focusWalk.findings.length} />
+            <Metric label={tr(language, 'Components reviewed', 'Componentes revisados')} value={componentReports.length} />
+            <Metric label={tr(language, 'Components with signals', 'Componentes con señales')} value={componentsNeedingReview} />
+            <Metric label={tr(language, 'Static overlaps', 'Cruces estáticos')} value={staticOverlaps} />
+            <Metric label={tr(language, 'Order signals', 'Señales de orden')} value={orderSignals} />
             <Metric label={tr(language, 'Skipped', 'Omitidos')} value={focusWalk.summary.skipped} />
           </div>
 
           <p>
             {tr(
               language,
-              'Each card below represents a focused component, with the captured accessible name, semantic source and focus-order evidence.',
-              'Cada tarjeta representa un componente enfocado, con el nombre accesible capturado, la fuente semántica y la evidencia de orden de foco.',
+              'Each card combines focus evidence with static scan findings and focus-order signals for the same component.',
+              'Cada tarjeta combina evidencia de foco con hallazgos del análisis estático y señales de orden para el mismo componente.',
             )}
           </p>
 
-          {focusWalk.focusEvents.length > 0 && (
+          {componentReports.length > 0 && (
             <div className="issue-list">
-              {focusWalk.focusEvents.map((event, index) => {
-                if (!event.element) return null;
-                const notes = componentFindings(event.element, language);
+              {componentReports.map(({ event, element, index, runtimeIssues, scanIssues, signals }) => {
+                const review = needsReview(signals, scanIssues, runtimeIssues);
                 return (
                   <article className="focus-card" key={event.id}>
                     <div className="finding-meta">
                       <span className="severity info">#{index + 1}</span>
-                      <span className="severity info">{componentLabel(event.element, language)}</span>
+                      <span className="severity info">{componentLabel(element, language)}</span>
+                      <span className={`severity ${review ? 'moderate' : 'info'}`}>
+                        {review ? tr(language, 'Review', 'Revisar') : 'OK'}
+                      </span>
                       <time>{timeLabel(event.timestamp)}</time>
                     </div>
-                    <h3>{event.element.name || tr(language, 'Unnamed focused component', 'Componente enfocado sin nombre')}</h3>
+                    <h3>{element.name || tr(language, 'Unnamed focused component', 'Componente enfocado sin nombre')}</h3>
                     <dl>
-                      <div><dt>{tr(language, 'Component', 'Componente')}</dt><dd>{componentLabel(event.element, language)}</dd></div>
-                      <div><dt>{tr(language, 'Name source', 'Fuente nombre')}</dt><dd>{nameSourceLabel(event.element, language)}</dd></div>
-                      <div><dt>{tr(language, 'Role', 'Rol')}</dt><dd>{event.element.role ?? event.element.tag}</dd></div>
-                      {level === 'developer' && <div><dt>Selector</dt><dd><code>{event.element.selector}</code></dd></div>}
+                      <div><dt>{tr(language, 'Component', 'Componente')}</dt><dd>{componentLabel(element, language)}</dd></div>
+                      <div><dt>{tr(language, 'Name source', 'Fuente nombre')}</dt><dd>{nameSourceLabel(element, language)}</dd></div>
+                      <div><dt>{tr(language, 'Role', 'Rol')}</dt><dd>{element.role ?? element.tag}</dd></div>
+                      <div><dt>{tr(language, 'Linked scan findings', 'Hallazgos vinculados')}</dt><dd>{scanIssues.length}</dd></div>
+                      <div><dt>{tr(language, 'Runtime findings', 'Hallazgos runtime')}</dt><dd>{runtimeIssues.length}</dd></div>
+                      {level === 'developer' && <div><dt>Selector</dt><dd><code>{element.selector}</code></dd></div>}
                     </dl>
+
                     <div className="issue-list">
-                      {notes.map((note) => (
-                        <p className="cause-line" key={`${event.id}-${note.title}`}>
-                          <span className={`severity ${note.tone}`}>{note.tone === 'info' ? 'OK' : tr(language, 'Review', 'Revisar')}</span>{' '}
-                          <strong>{note.title}:</strong> {note.detail}
+                      {signals.map((signal) => (
+                        <p className="cause-line" key={`${event.id}-${signal.title}`}>
+                          <span className={`severity ${signal.tone}`}>{signal.tone === 'info' ? 'OK' : tr(language, 'Review', 'Revisar')}</span>{' '}
+                          <strong>{signal.title}:</strong> {signal.detail}
                         </p>
                       ))}
                     </div>
-                    <button className="focus-path-toggle" type="button" onClick={() => void onLocate(event.element!.selector)}>
+
+                    {scanIssues.length > 0 && (
+                      <details className="name-computation" open={level === 'developer'}>
+                        <summary>{tr(language, 'Static scan findings on this component', 'Hallazgos estáticos sobre este componente')}</summary>
+                        <div className="issue-list">
+                          {scanIssues.map((issue) => {
+                            const copy = localizedScanIssue(issue, language);
+                            return (
+                              <article className="issue scan-issue" key={issue.id}>
+                                <div className="finding-meta">
+                                  <span className={`outcome ${issue.outcome}`}>{outcomeLabel(issue.outcome, level, language)}</span>
+                                  {level !== 'simple' && <span className={`severity ${issue.severity}`}>{localizedSeverity(issue.severity, language)}</span>}
+                                  {level !== 'simple' && <code>{issue.ruleId}</code>}
+                                </div>
+                                <h3>{copy.title}</h3>
+                                <p>{copy.description}</p>
+                                {level !== 'simple' && copy.evidence && (
+                                  <p className="evidence"><strong>{tr(language, 'Evidence:', 'Evidencia:')}</strong> {copy.evidence}</p>
+                                )}
+                                {level === 'developer' && issue.targets.map((target) => <code key={target}>{target}</code>)}
+                                {level !== 'simple' && <ReferenceList references={issue.references} language={language} />}
+                              </article>
+                            );
+                          })}
+                        </div>
+                      </details>
+                    )}
+
+                    {runtimeIssues.length > 0 && (
+                      <details className="name-computation" open={level === 'developer'}>
+                        <summary>{tr(language, 'Runtime findings during focus walk', 'Hallazgos runtime durante el recorrido')}</summary>
+                        <div className="issue-list">
+                          {runtimeIssues.map((runtimeIssue) => (
+                            <article className="issue runtime-finding" key={runtimeIssue.id}>
+                              <div className="finding-meta">
+                                {runtimeIssue.outcome && <span className={`outcome ${runtimeIssue.outcome}`}>{outcomeLabel(runtimeIssue.outcome, level, language)}</span>}
+                                <span className={`severity ${runtimeIssue.severity}`}>{localizedSeverity(runtimeIssue.severity, language)}</span>
+                                {runtimeIssue.ruleId && <code>{runtimeIssue.ruleId}</code>}
+                              </div>
+                              <h3>{runtimeIssue.title}</h3>
+                              {runtimeIssue.detail && <p>{runtimeIssue.detail}</p>}
+                              {level === 'developer' && runtimeIssue.element && <code>{runtimeIssue.element.selector}</code>}
+                              {level !== 'simple' && <ReferenceList references={runtimeIssue.references} language={language} />}
+                            </article>
+                          ))}
+                        </div>
+                      </details>
+                    )}
+
+                    <button className="focus-path-toggle" type="button" onClick={() => void onLocate(element.selector)}>
                       {tr(language, 'Locate on page', 'Localizar en la página')}
                     </button>
                   </article>
