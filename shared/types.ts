@@ -139,6 +139,17 @@ export interface AccessibleNameEvidence {
   candidates: AccessibleNameCandidateEvidence[];
 }
 
+export interface ContrastEvidence {
+  ratio?: number;
+  requiredRatio: number;
+  foreground?: string;
+  background?: string;
+  fontSizePx?: number;
+  fontWeight?: number;
+  largeText?: boolean;
+  reason?: string;
+}
+
 export interface ScanIssue {
   id: string;
   ruleId: string;
@@ -149,6 +160,7 @@ export interface ScanIssue {
   targets: string[];
   evidence?: string;
   accessibleName?: AccessibleNameEvidence;
+  contrast?: ContrastEvidence;
   references: StandardReference[];
 }
 

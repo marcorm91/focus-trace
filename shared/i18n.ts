@@ -53,6 +53,7 @@ const RULE_TITLES_ES: Record<string, string> = {
   'FT-WCAG-007': 'La etiqueta visible forma parte del nombre accesible',
   'FT-WCAG-008': 'La página HTML tiene un atributo lang no vacío',
   'FT-WCAG-009': 'El atributo lang contiene una etiqueta de idioma principal conocida',
+  'FT-WCAG-010': 'El texto tiene suficiente contraste de color',
   'FT-WARN-001': 'Se utiliza un rol ARIA obsoleto',
   'FT-WARN-002': 'El estado o propiedad ARIA está obsoleto para este rol',
   'FT-WARN-003': 'El estado o propiedad ARIA está prohibido para este rol',
@@ -136,6 +137,16 @@ export function localizedScanIssue(
 ): Pick<ScanIssue, 'title' | 'description' | 'evidence'> {
   if (language === 'en') {
     return { title: issue.title, description: issue.description, ...(issue.evidence ? { evidence: issue.evidence } : {}) };
+  }
+
+  if (issue.ruleId === 'FT-WCAG-010') {
+    return {
+      title: localizedRuleTitle(issue.ruleId, issue.title, language),
+      description: issue.outcome === 'fail'
+        ? `El contraste del texto renderizado es ${issue.contrast?.ratio ?? '?'}:1, por debajo del mínimo requerido de ${issue.contrast?.requiredRatio ?? '?'}:1.`
+        : 'FocusTrace no puede determinar con fiabilidad el contraste final entre el texto y su fondo. Revisa este caso manualmente en lugar de tratar un cálculo incierto como un fallo WCAG.',
+      ...(issue.evidence ? { evidence: issue.evidence } : {}),
+    };
   }
 
   const copy = SCAN_COPY_ES[issue.ruleId];
