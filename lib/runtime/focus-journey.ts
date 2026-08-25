@@ -53,7 +53,7 @@ function movementDirection(
   }
 
   if (!comparable) {
-    return { direction: intent === 'backward' ? 'backward' : 'forward' };
+    return { direction: 'forward' };
   }
 
   const distance = currentIndex - previousIndex;
