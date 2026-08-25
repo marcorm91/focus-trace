@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { colorToHex, colorToRgb, parseCssColor, suggestAccessibleForeground } from '../../../lib/audit/contrast';
 import { outcomeLabel, type ExplanationLevel } from '../../../lib/runtime/explanations';
 import { scanCategoryForIssue, type ScanCategory } from '../../../shared/scan-categories';
 import {
@@ -11,6 +12,7 @@ import type { FindingOutcome, ScanIssue, ScanResult } from '../../../shared/type
 import { Empty, Metric, ReferenceList } from '../components/Common';
 
 type ScanFilter = FindingOutcome;
+type ColorFormat = 'hex' | 'rgb';
 
 const CATEGORY_ORDER: ScanCategory[] = ['all', 'contrast', 'names', 'forms', 'structure', 'keyboard', 'aria', 'other'];
 
@@ -23,6 +25,39 @@ function categoryLabel(category: ScanCategory, language: AppLanguage): string {
   if (category === 'keyboard') return tr(language, 'Keyboard', 'Teclado');
   if (category === 'aria') return 'ARIA';
   return tr(language, 'Other', 'Otros');
+}
+
+function formattedColor(value: string, format: ColorFormat): string {
+  const parsed = parseCssColor(value);
+  if (!parsed) return value;
+  return format === 'hex' ? colorToHex(parsed) : colorToRgb(parsed);
+}
+
+async function copyText(value: string): Promise<boolean> {
+  try {
+    if (navigator.clipboard?.writeText) {
+      await navigator.clipboard.writeText(value);
+      return true;
+    }
+  } catch {
+    // Fall through to the legacy copy path for extension environments where
+    // the Clipboard API is unavailable despite a direct user gesture.
+  }
+
+  try {
+    const textarea = document.createElement('textarea');
+    textarea.value = value;
+    textarea.setAttribute('readonly', '');
+    textarea.style.position = 'fixed';
+    textarea.style.opacity = '0';
+    document.body.appendChild(textarea);
+    textarea.select();
+    const copied = document.execCommand('copy');
+    textarea.remove();
+    return copied;
+  } catch {
+    return false;
+  }
 }
 
 export function ScanView({
@@ -223,6 +258,22 @@ function FindingCard({
 }) {
   const copy = localizedScanIssue(issue, language);
   const target = issue.targets[0];
+  const [colorFormat, setColorFormat] = useState<ColorFormat>('hex');
+  const [copiedKey, setCopiedKey] = useState<string>();
+
+  const suggestion = useMemo(() => {
+    if (issue.outcome !== 'fail' || issue.ruleId !== 'FT-WCAG-010') return undefined;
+    const contrast = issue.contrast;
+    if (!contrast?.foreground || !contrast.background) return undefined;
+    return suggestAccessibleForeground(contrast.foreground, contrast.background, contrast.requiredRatio);
+  }, [issue]);
+
+  const copyColor = async (value: string, key: string) => {
+    const copied = await copyText(value);
+    if (!copied) return;
+    setCopiedKey(key);
+    window.setTimeout(() => setCopiedKey((current) => current === key ? undefined : current), 1200);
+  };
 
   return (
     <article className="issue scan-issue">
@@ -241,17 +292,37 @@ function FindingCard({
             <strong>{issue.contrast.ratio != null ? `${issue.contrast.ratio}:1` : tr(language, 'Review', 'Revisar')}</strong>
             <small>{tr(language, `Required ${issue.contrast.requiredRatio}:1`, `Requerido ${issue.contrast.requiredRatio}:1`)}</small>
           </div>
+
+          {(issue.contrast.foreground || suggestion) && (
+            <div className="contrast-format" role="group" aria-label={tr(language, 'Color format', 'Formato de color')}>
+              <button type="button" className={colorFormat === 'hex' ? 'active' : ''} aria-pressed={colorFormat === 'hex'} onClick={() => setColorFormat('hex')}>HEX</button>
+              <button type="button" className={colorFormat === 'rgb' ? 'active' : ''} aria-pressed={colorFormat === 'rgb'} onClick={() => setColorFormat('rgb')}>RGB</button>
+            </div>
+          )}
+
           <dl>
             {issue.contrast.foreground && (
               <div>
-                <dt>{tr(language, 'Text', 'Texto')}</dt>
-                <dd><span className="contrast-swatch" style={{ backgroundColor: issue.contrast.foreground }} aria-hidden="true" /><code>{issue.contrast.foreground}</code></dd>
+                <dt>{tr(language, 'Current text', 'Texto actual')}</dt>
+                <dd className="contrast-color-value">
+                  <span className="contrast-swatch" style={{ backgroundColor: issue.contrast.foreground }} aria-hidden="true" />
+                  <code>{formattedColor(issue.contrast.foreground, colorFormat)}</code>
+                  <button type="button" className="copy-color" onClick={() => void copyColor(formattedColor(issue.contrast!.foreground!, colorFormat), 'current')}>
+                    {copiedKey === 'current' ? tr(language, 'Copied', 'Copiado') : tr(language, 'Copy', 'Copiar')}
+                  </button>
+                </dd>
               </div>
             )}
             {issue.contrast.background && (
               <div>
                 <dt>{tr(language, 'Background', 'Fondo')}</dt>
-                <dd><span className="contrast-swatch" style={{ backgroundColor: issue.contrast.background }} aria-hidden="true" /><code>{issue.contrast.background}</code></dd>
+                <dd className="contrast-color-value">
+                  <span className="contrast-swatch" style={{ backgroundColor: issue.contrast.background }} aria-hidden="true" />
+                  <code>{formattedColor(issue.contrast.background, colorFormat)}</code>
+                  <button type="button" className="copy-color" onClick={() => void copyColor(formattedColor(issue.contrast!.background!, colorFormat), 'background')}>
+                    {copiedKey === 'background' ? tr(language, 'Copied', 'Copiado') : tr(language, 'Copy', 'Copiar')}
+                  </button>
+                </dd>
               </div>
             )}
             {level !== 'simple' && issue.contrast.fontSizePx != null && (
@@ -267,6 +338,36 @@ function FindingCard({
               </div>
             )}
           </dl>
+
+          {suggestion && (
+            <div className="contrast-suggestion">
+              <div>
+                <strong>{tr(language, 'Suggested accessible color', 'Color accesible sugerido')}</strong>
+                <small>
+                  {tr(
+                    language,
+                    `Smallest ${suggestion.direction} adjustment found · ${suggestion.ratio}:1`,
+                    `Menor ajuste hacia ${suggestion.direction === 'darker' ? 'oscuro' : 'claro'} encontrado · ${suggestion.ratio}:1`,
+                  )}
+                </small>
+              </div>
+              <div className="contrast-suggestion-value">
+                <span className="contrast-swatch contrast-swatch-large" style={{ backgroundColor: suggestion.rgb }} aria-hidden="true" />
+                <code>{colorFormat === 'hex' ? suggestion.hex : suggestion.rgb}</code>
+                <button type="button" className="copy-color primary" onClick={() => void copyColor(colorFormat === 'hex' ? suggestion.hex : suggestion.rgb, 'suggestion')}>
+                  {copiedKey === 'suggestion' ? tr(language, 'Copied', 'Copiado') : tr(language, 'Copy', 'Copiar')}
+                </button>
+              </div>
+              <p>
+                {tr(
+                  language,
+                  'FocusTrace adjusts the current color toward black or white and picks the smallest sRGB change that reaches the required ratio. It does not claim a global perceptual nearest color.',
+                  'FocusTrace ajusta el color actual hacia negro o blanco y elige el menor cambio sRGB que alcanza el ratio requerido. No pretende ser el color perceptualmente más cercano posible.',
+                )}
+              </p>
+            </div>
+          )}
+
           {issue.contrast.reason && <p>{issue.contrast.reason}</p>}
         </div>
       )}
