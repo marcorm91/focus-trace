@@ -13,6 +13,12 @@ import type { ExtensionMessage, SessionState } from '../shared/types';
 const keyForTab = (tabId: number) => `session:${tabId}`;
 const tabWriteQueues = new Map<number, Promise<unknown>>();
 
+type FirefoxSidebarBrowser = typeof browser & {
+  sidebarAction: {
+    open: () => Promise<void>;
+  };
+};
+
 function serializeTabWrite<T>(tabId: number, work: () => Promise<T>): Promise<T> {
   const previous = tabWriteQueues.get(tabId) ?? Promise.resolve();
   const next = previous.catch(() => undefined).then(work);
@@ -77,8 +83,11 @@ async function restoreContentStateAfterNavigation(tabId: number, state: SessionS
 
 function configurePanelAction() {
   if (import.meta.env.FIREFOX) {
+    // WXT generates Firefox `sidebar_action`, but WxtBrowser does not currently
+    // expose the corresponding runtime namespace in its cross-browser type.
+    const firefoxBrowser = browser as FirefoxSidebarBrowser;
     browser.action.onClicked.addListener(() => {
-      void browser.sidebarAction.open().catch(() => undefined);
+      void firefoxBrowser.sidebarAction.open().catch(() => undefined);
     });
     return;
   }
