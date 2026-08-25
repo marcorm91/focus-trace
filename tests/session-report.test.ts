@@ -127,7 +127,7 @@ describe('session report suggestions', () => {
     expect(model.categories).toContainEqual({ id: 'contrast', label: 'Contrast', count: 1 });
     const suggestion = model.suggestions.find((item) => item.id === 'analysis-FT-WCAG-011');
     expect(suggestion?.detail).toContain('Suggested visual color');
-    expect(suggestion?.detail).toContain('3:1');
+    expect(suggestion?.detail).toContain('recorded adjacent color');
   });
 
   it('turns a correlated runtime cause into a trace story with remediation', () => {
