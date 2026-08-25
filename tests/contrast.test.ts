@@ -2,9 +2,12 @@
 
 import { describe, expect, it } from 'vitest';
 import {
+  colorToHex,
+  colorToRgb,
   contrastRatio,
   evaluateTextContrastForElement,
   parseCssColor,
+  suggestAccessibleForeground,
   textContrastRequirement,
 } from '../lib/audit/contrast';
 
@@ -22,6 +25,12 @@ describe('text contrast', () => {
     expect(parseCssColor('#00000080')?.a).toBeCloseTo(128 / 255);
   });
 
+  it('converts parsed colors to hex and rgb', () => {
+    const color = parseCssColor('#778899')!;
+    expect(colorToHex(color)).toBe('#778899');
+    expect(colorToRgb(color)).toBe('rgb(119, 136, 153)');
+  });
+
   it('calculates the WCAG black-on-white ratio', () => {
     expect(contrastRatio(parseCssColor('#000')!, parseCssColor('#fff')!)).toBeCloseTo(21, 5);
   });
@@ -30,6 +39,22 @@ describe('text contrast', () => {
     expect(textContrastRequirement(16, 400)).toEqual({ largeText: false, requiredRatio: 4.5 });
     expect(textContrastRequirement(24, 400)).toEqual({ largeText: true, requiredRatio: 3 });
     expect(textContrastRequirement(18.667, 700)).toEqual({ largeText: true, requiredRatio: 3 });
+  });
+
+  it('suggests the smallest black/white-mix adjustment that reaches the target ratio', () => {
+    const suggestion = suggestAccessibleForeground('rgb(119, 119, 119)', 'rgb(255, 255, 255)', 4.5);
+    expect(suggestion).toMatchObject({
+      hex: '#767676',
+      rgb: 'rgb(118, 118, 118)',
+      direction: 'darker',
+    });
+    expect(suggestion?.ratio).toBeGreaterThanOrEqual(4.5);
+  });
+
+  it('can choose a lighter accessible suggestion when that requires less change', () => {
+    const suggestion = suggestAccessibleForeground('#777', '#000', 4.5);
+    expect(suggestion?.direction).toBe('lighter');
+    expect(suggestion?.ratio).toBeGreaterThanOrEqual(4.5);
   });
 
   it('fails deterministic low-contrast normal text with structured evidence', () => {
