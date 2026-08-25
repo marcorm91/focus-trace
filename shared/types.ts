@@ -149,6 +149,16 @@ export interface ScanIssue {
   references: StandardReference[];
 }
 
+export type HeadingSignal = 'empty' | 'level-jump' | 'multiple-h1';
+
+export interface HeadingSnapshot {
+  id: string;
+  level: 1 | 2 | 3 | 4 | 5 | 6;
+  text: string;
+  selector: string;
+  signals: HeadingSignal[];
+}
+
 export interface ScanResult {
   engine: 'FocusTrace Rules';
   standard: 'WCAG 2.2';
@@ -158,6 +168,7 @@ export interface ScanResult {
   issues: ScanIssue[];
   review: ScanIssue[];
   warnings: ScanIssue[];
+  headings?: HeadingSnapshot[];
   passes: number;
   rulesRun: number;
 }
