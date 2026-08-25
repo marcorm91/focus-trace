@@ -233,7 +233,7 @@ export function suggestAccessibleForeground(
   };
 }
 
-function complexVisualReason(style: CSSStyleDeclaration): string | undefined {
+export function complexVisualReason(style: CSSStyleDeclaration): string | undefined {
   if (style.backgroundImage && style.backgroundImage !== 'none') return 'A background image or gradient affects the rendered background.';
   const opacity = Number.parseFloat(style.opacity || '1');
   if (Number.isFinite(opacity) && opacity < 0.999) return 'Element or ancestor opacity affects the rendered colors.';
@@ -242,7 +242,7 @@ function complexVisualReason(style: CSSStyleDeclaration): string | undefined {
   return undefined;
 }
 
-function effectiveBackground(element: Element): { color?: RgbaColor; reason?: string } {
+export function effectiveBackground(element: Element): { color?: RgbaColor; reason?: string } {
   const layers: RgbaColor[] = [];
   let current: Element | null = element;
   while (current) {
