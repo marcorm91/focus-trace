@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { browser } from '#imports';
 import type { FocusJourney } from '../../../lib/runtime/focus-journey';
 import type { FocusGraph } from '../../../lib/runtime/focus-graph';
 import {
@@ -11,6 +12,7 @@ import {
 import { explanationForCause, humanInteractionTitle, type ExplanationLevel } from '../../../lib/runtime/explanations';
 import { tr, type AppLanguage } from '../../../shared/i18n';
 import type {
+  ExtensionMessage,
   RuntimeBreakpointHit,
   RuntimeBreakpointId,
   RuntimeBreakpointSettings,
@@ -22,6 +24,7 @@ import { FocusView } from './FocusView';
 import { ReplayView } from './ReplayView';
 import { RuntimeView } from './RuntimeView';
 import './trace.css';
+import './trace-reset.css';
 import './transition-semantics.css';
 
 type TraceMode = 'replay' | 'journey' | 'interactions' | 'graph';
@@ -77,7 +80,12 @@ export function TraceView({
   onBreakpointChange: (breakpointId: RuntimeBreakpointId, enabled: boolean) => void | Promise<void>;
 }) {
   const [mode, setMode] = useState<TraceMode>('journey');
+  const [resetDialogOpen, setResetDialogOpen] = useState(false);
+  const [resetting, setResetting] = useState(false);
+  const [resetError, setResetError] = useState<string>();
   const previousRecording = useRef(recording);
+  const resetDialogRef = useRef<HTMLDialogElement>(null);
+  const cancelResetRef = useRef<HTMLButtonElement>(null);
   const correlatedInteractions = interactions.filter((interaction) => interaction.correlated);
   const findings = events.filter((event) => event.outcome != null);
   const causalInteractions = correlatedInteractions.filter((interaction) => interaction.causes.length > 0);
@@ -87,6 +95,7 @@ export function TraceView({
     () => buildFocusTransitionSemantics(events, interactions, journey),
     [events, interactions, journey],
   );
+  const hasSessionEvidence = events.length > 0;
 
   const previewSteps = useMemo(() => journey.steps.slice(-10), [journey.steps]);
 
@@ -94,6 +103,53 @@ export function TraceView({
     if (previousRecording.current && !recording && events.length > 0) setMode('replay');
     previousRecording.current = recording;
   }, [events.length, recording]);
+
+  useEffect(() => {
+    const dialog = resetDialogRef.current;
+    if (!dialog) return;
+
+    if (resetDialogOpen && !dialog.open) {
+      dialog.showModal();
+      requestAnimationFrame(() => cancelResetRef.current?.focus());
+      return;
+    }
+
+    if (!resetDialogOpen && dialog.open) dialog.close();
+  }, [resetDialogOpen]);
+
+  const resetSession = async () => {
+    if (!hasSessionEvidence || recording || busy || resetting) return;
+    setResetting(true);
+    setResetError(undefined);
+
+    try {
+      try {
+        if (pathVisible) await onTogglePath();
+        else await onClearSelection();
+      } catch {
+        // The recorded page may already have navigated away. Session reset must still succeed.
+      }
+
+      const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+      if (tab?.id == null) throw new Error('No active tab is available.');
+
+      await browser.runtime.sendMessage({
+        type: 'FOCUSTRACE_CLEAR_SESSION',
+        tabId: tab.id,
+      } satisfies ExtensionMessage);
+
+      setMode('journey');
+      setResetDialogOpen(false);
+    } catch {
+      setResetError(tr(
+        language,
+        'Could not reset this Trace session. Try again.',
+        'No se pudo reiniciar esta sesión de Trace. Inténtalo de nuevo.',
+      ));
+    } finally {
+      setResetting(false);
+    }
+  };
 
   return (
     <section className="trace-workspace" aria-labelledby="trace-title">
@@ -115,18 +171,77 @@ export function TraceView({
                 )}
           </p>
         </div>
-        <button
-          className={recording ? 'trace-record stop' : 'trace-record primary'}
-          type="button"
-          disabled={busy}
-          onClick={() => void onToggleRecording()}
-        >
-          <span className="record-icon" aria-hidden="true" />
-          {recording
-            ? tr(language, 'Stop trace', 'Detener traza')
-            : tr(language, 'Start trace', 'Iniciar traza')}
-        </button>
+        <div className="trace-hero-actions">
+          <button
+            className={recording ? 'trace-record stop' : 'trace-record primary'}
+            type="button"
+            disabled={busy}
+            onClick={() => void onToggleRecording()}
+          >
+            <span className="record-icon" aria-hidden="true" />
+            {recording
+              ? tr(language, 'Stop trace', 'Detener traza')
+              : tr(language, 'Start trace', 'Iniciar traza')}
+          </button>
+          <button
+            className="trace-reset"
+            type="button"
+            disabled={!hasSessionEvidence || recording || busy || resetting}
+            onClick={() => {
+              setResetError(undefined);
+              setResetDialogOpen(true);
+            }}
+          >
+            {tr(language, 'Reset session', 'Reiniciar sesión')}
+          </button>
+        </div>
       </div>
+
+      {resetError && <div className="trace-reset-error" role="alert">{resetError}</div>}
+
+      <dialog
+        ref={resetDialogRef}
+        className="trace-reset-dialog"
+        aria-labelledby="trace-reset-title"
+        aria-describedby="trace-reset-description"
+        onCancel={(event) => {
+          event.preventDefault();
+          if (!resetting) setResetDialogOpen(false);
+        }}
+        onClose={() => setResetDialogOpen(false)}
+      >
+        <div className="trace-reset-dialog-copy">
+          <p className="eyebrow">{tr(language, 'Current Trace', 'Trace actual')}</p>
+          <h3 id="trace-reset-title">{tr(language, 'Reset current session?', '¿Reiniciar la sesión actual?')}</h3>
+          <p id="trace-reset-description">
+            {tr(
+              language,
+              'This clears recorded interactions, the focus journey and Replay evidence. The latest page analysis and breakpoint settings are kept.',
+              'Esto borra las interacciones grabadas, el recorrido de foco y la evidencia de Replay. Se conservan el último análisis de página y los breakpoints.',
+            )}
+          </p>
+        </div>
+        <div className="trace-reset-dialog-actions">
+          <button
+            ref={cancelResetRef}
+            type="button"
+            disabled={resetting}
+            onClick={() => setResetDialogOpen(false)}
+          >
+            {tr(language, 'Cancel', 'Cancelar')}
+          </button>
+          <button
+            className="trace-reset-confirm"
+            type="button"
+            disabled={resetting}
+            onClick={() => void resetSession()}
+          >
+            {resetting
+              ? tr(language, 'Resetting…', 'Reiniciando…')
+              : tr(language, 'Reset session', 'Reiniciar sesión')}
+          </button>
+        </div>
+      </dialog>
 
       <div className="trace-metrics" aria-label={tr(language, 'Trace summary', 'Resumen de la traza')}>
         <span><strong>{journey.steps.length}</strong>{tr(language, 'Focus steps', 'Pasos de foco')}</span>
