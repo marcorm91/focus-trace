@@ -51,8 +51,8 @@ describe('text contrast', () => {
     expect(suggestion?.ratio).toBeGreaterThanOrEqual(4.5);
   });
 
-  it('can choose a lighter accessible suggestion when that requires less change', () => {
-    const suggestion = suggestAccessibleForeground('#777', '#000', 4.5);
+  it('can choose a lighter accessible suggestion for failing text on a dark background', () => {
+    const suggestion = suggestAccessibleForeground('#555', '#000', 4.5);
     expect(suggestion?.direction).toBe('lighter');
     expect(suggestion?.ratio).toBeGreaterThanOrEqual(4.5);
   });
