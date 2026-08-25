@@ -16,6 +16,7 @@ import {
   type FocusPathOverlayEntry,
   type FocusPathOverlayResult,
 } from '../../lib/runtime/focus-path-overlay';
+import { buildPageInspectorEntries } from '../../lib/runtime/page-inspector';
 import { locateScanTargetInPage, type ScanTargetHighlightResult } from '../../lib/runtime/scan-target-overlay';
 import { SETTINGS_STORAGE_KEY, tr, type AppLanguage } from '../../shared/i18n';
 import type {
@@ -349,11 +350,12 @@ export default function App() {
     setError(undefined);
 
     try {
-      const entries: FocusPathOverlayEntry[] = focusPath.map((target) => ({
-        selector: target.element.selector,
-        label: target.label,
-        orders: target.orders,
-      }));
+      const entries: FocusPathOverlayEntry[] = buildPageInspectorEntries(
+        focusPath,
+        scan,
+        session.events,
+        language,
+      );
       const results = await browser.scripting.executeScript({
         target: { tabId },
         func: showFocusPathInPage,
@@ -376,7 +378,7 @@ export default function App() {
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
     }
-  }, [focusPath, language, tabId]);
+  }, [focusPath, language, scan, session.events, tabId]);
 
   const hideFocusPath = useCallback(async () => {
     if (tabId == null) return;
@@ -601,7 +603,7 @@ export default function App() {
           scan={scan}
           level={explanationLevel}
           language={language}
-          onLocate={locateScanTarget}
+          onLocate={selectFocusPoint}
         />
       )}
       {view === 'about' && <AboutView language={language} />}
