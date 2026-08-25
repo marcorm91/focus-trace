@@ -14,6 +14,8 @@ A release candidate is blocked if standards validation, TypeScript, unit tests, 
 
 CI must also be green on the exact commit that will be tagged.
 
+The committed `package-lock.json` must remain synchronized with `package.json`, and CI/release packaging must install it with `npm ci` so the dependency graph cannot drift between builds of the same source commit.
+
 ## Accessibility self-audit
 
 - Navigate the side panel entirely with the keyboard.
@@ -62,7 +64,7 @@ Also review generated build artifacts before attaching them to a GitHub release.
 
 ## Release
 
-- Confirm `package.json` and the extension manifest both report `0.1.0`.
+- Confirm `package.json`, `package-lock.json` and the extension manifest all report `0.1.0`.
 - Confirm the release commit is on `main` and CI is green.
 - Build the production Chrome and Edge artifacts from that commit.
 - Smoke-test the unpacked production build in supported Chromium browsers.
