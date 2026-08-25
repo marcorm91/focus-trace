@@ -54,7 +54,7 @@ describe('non-text contrast', () => {
   });
 
   it('fails an observed author-defined focus outline below 3:1 when no second focus cue exists', () => {
-    render('<button id="focus" style="background:#fff;border:0;outline:2px solid rgb(180,180,180)">Continue</button>');
+    render('<button id="focus" style="background:#fff;border:0;outline-width:2px;outline-style:solid;outline-color:rgb(180,180,180)">Continue</button>');
     const button = document.querySelector('#focus') as HTMLButtonElement;
     button.focus();
     const finding = evaluateNonTextContrast().find(
