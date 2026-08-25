@@ -70,7 +70,7 @@ export function ReplayView({
   const currentInteraction = current?.event.interactionId
     ? interactions.find((interaction) => interaction.id === current.event.interactionId)
     : undefined;
-  const canHighlight = Boolean(current?.target && focusSelectors.has(current.target.selector));
+  const linkedToFocusPath = Boolean(current?.target && focusSelectors.has(current.target.selector));
 
   useEffect(() => {
     if (recording || !current) return;
@@ -191,9 +191,9 @@ export function ReplayView({
               <strong>{targetName}</strong>
               <small>{current.target.role ?? current.target.tag}</small>
             </div>
-            <span className={canHighlight ? 'replay-page-sync available' : 'replay-page-sync'}>
-              {canHighlight
-                ? tr(language, 'Highlighted on page', 'Resaltado en página')
+            <span className={linkedToFocusPath ? 'replay-page-sync available' : 'replay-page-sync'}>
+              {linkedToFocusPath
+                ? tr(language, 'Linked to recorded focus path', 'Vinculado al recorrido de foco')
                 : tr(language, 'Recorded evidence only', 'Solo evidencia grabada')}
             </span>
             {level === 'developer' && <code>{current.target.selector}</code>}
@@ -252,6 +252,15 @@ export function ReplayView({
             <small>{phaseLabel(step.phase, language)}</small>
           </button>
         ))}
+      </div>
+
+      <div className="notice replay-scope-note">
+        <strong>{tr(language, 'Historical evidence vs current page', 'Evidencia histórica frente a página actual')}</strong>
+        <p>{tr(
+          language,
+          'Replay describes what FocusTrace recorded at that moment. A page highlight uses the current DOM, so it may be unavailable if the element was removed or the view has changed.',
+          'Replay describe lo que FocusTrace registró en ese momento. El resaltado usa el DOM actual, por lo que puede no estar disponible si el elemento se eliminó o la vista ha cambiado.',
+        )}</p>
       </div>
     </section>
   );
