@@ -4,6 +4,8 @@ import {
   createFocusHiddenEvent,
   createFocusLostEvent,
   createFocusObscuredEvent,
+  createFocusWalkEndEvent,
+  createFocusWalkStartEvent,
 } from '../lib/runtime/focus-events';
 
 const button = {
@@ -20,6 +22,20 @@ describe('runtime focus event builders', () => {
       severity: 'info',
       title: 'Focus → Save',
       element: button,
+    });
+  });
+
+  it('creates automatic focus walk lifecycle events', () => {
+    expect(createFocusWalkStartEvent(3)).toMatchObject({
+      kind: 'focus-walk-start',
+      severity: 'info',
+      title: 'Automatic focus walk started',
+    });
+    expect(createFocusWalkEndEvent({ focusedSteps: 2, totalCandidates: 3, skipped: 1, stopped: false })).toMatchObject({
+      kind: 'focus-walk-end',
+      severity: 'info',
+      title: 'Automatic focus walk completed',
+      detail: 'Focused 2/3 candidates; skipped 1.',
     });
   });
 

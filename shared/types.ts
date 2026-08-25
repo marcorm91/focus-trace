@@ -14,7 +14,9 @@ export type RuntimeEventKind =
   | 'dialog-open'
   | 'dialog-close'
   | 'dialog-focus-escape'
-  | 'live-region';
+  | 'live-region'
+  | 'focus-walk-start'
+  | 'focus-walk-end';
 
 export type RuntimeMutationKind = 'node-added' | 'node-removed' | 'attribute-changed';
 
@@ -148,6 +150,18 @@ export interface ScanResult {
   rulesRun: number;
 }
 
+export interface FocusWalkOptions {
+  delayMs?: number;
+  maxSteps?: number;
+}
+
+export interface FocusWalkResult {
+  totalCandidates: number;
+  focusedSteps: number;
+  skipped: number;
+  stopped: boolean;
+}
+
 export interface SessionState {
   tabId: number;
   recording: boolean;
@@ -170,4 +184,5 @@ export type ExtensionMessage =
   | { type: 'FOCUSTRACE_CONFIGURE_BREAKPOINTS'; breakpoints: RuntimeBreakpointSettings }
   | { type: 'FOCUSTRACE_SAVE_BREAKPOINTS'; tabId: number; breakpoints: RuntimeBreakpointSettings }
   | { type: 'FOCUSTRACE_RUN_SCAN' }
+  | { type: 'FOCUSTRACE_RUN_FOCUS_WALK'; options?: FocusWalkOptions }
   | { type: 'FOCUSTRACE_SAVE_SCAN'; tabId: number; scan: ScanResult };

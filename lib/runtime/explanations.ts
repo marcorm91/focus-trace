@@ -130,6 +130,10 @@ export function humanRuntimeEventTitle(event: RuntimeEvent, language: AppLanguag
   switch (event.kind) {
     case 'focus':
       return target ? tr(language, `Focus moved to ${target}`, `El foco se movió a ${target}`) : tr(language, 'Focus moved', 'El foco se movió');
+    case 'focus-walk-start':
+      return tr(language, 'Automatic focus simulation started', 'Ha empezado la simulación automática de foco');
+    case 'focus-walk-end':
+      return tr(language, 'Automatic focus simulation finished', 'Ha terminado la simulación automática de foco');
     case 'keydown': {
       const key = event.title.replace(/^Key:\s*/, '');
       return target

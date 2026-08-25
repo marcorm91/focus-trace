@@ -9,8 +9,8 @@ button:focus-visible, a:focus-visible, select:focus-visible { outline: 3px solid
 h1 { margin: 0; font-size: 22px; } h2 { font-size: 17px; margin: 0; } h3 { font-size: 14px; margin: 8px 0 4px; } p { line-height: 1.45; }
 .status { display: inline-flex; align-items: center; gap: 6px; font-size: 12px; font-weight: 700; }
 .status span { width: 8px; height: 8px; border-radius: 50%; background: GrayText; } .status.live span { background: #d93025; } .status.paused span { background: #8a4f00; }
-.actions { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin: 18px 0; }
-.actions button { min-height: 44px; border: 1px solid ButtonBorder; border-radius: 9px; padding: 8px 12px; cursor: pointer; background: ButtonFace; color: ButtonText; }
+.actions { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 8px; margin: 18px 0; }
+.actions button { min-height: 44px; border: 1px solid ButtonBorder; border-radius: 9px; padding: 8px 10px; cursor: pointer; background: ButtonFace; color: ButtonText; }
 .actions .primary { background: Highlight; color: HighlightText; border-color: Highlight; font-weight: 700; }
 .actions button:disabled { opacity: .55; cursor: wait; }
 .error { border: 1px solid #d93025; padding: 10px 12px; border-radius: 8px; margin-bottom: 14px; }
@@ -394,7 +394,7 @@ summary:focus-visible {
 
 .session-console .actions {
   display: grid;
-  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1.25fr) minmax(0, 1fr) minmax(0, 1fr);
   gap: 8px;
   margin: 0;
 }

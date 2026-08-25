@@ -18,6 +18,8 @@ import {
   createFocusHiddenEvent,
   createFocusLostEvent,
   createFocusObscuredEvent,
+  createFocusWalkEndEvent,
+  createFocusWalkStartEvent,
 } from '../lib/runtime/focus-events';
 import { createClickEvent, createKeydownEvent } from '../lib/runtime/interaction-events';
 import { createLiveRegionEvent, createMutationEvent } from '../lib/runtime/mutation-events';
@@ -35,9 +37,13 @@ import {
   createRouteFocusUnchangedEvent,
   createRouteTitleUnchangedEvent,
 } from '../lib/runtime/route-events';
+import { focusWalkCandidates, isFocusWalkCandidateStillUsable } from '../lib/runtime/focus-walk';
+import { showFocusWalkBackdropInPage } from '../lib/runtime/focus-walk-backdrop';
 import { runFocusTraceScan } from '../lib/audit/scan';
 import type {
   ExtensionMessage,
+  FocusWalkOptions,
+  FocusWalkResult,
   RuntimeEvent,
   RuntimeMutationSnapshot,
   SessionState,
@@ -62,6 +68,7 @@ export default defineContentScript({
     let lastTitle = document.title;
     let focusVersion = 0;
     let hiddenFocusReported: Element | null = null;
+    let focusWalkRunning = false;
     const interactionTracker = new RuntimeInteractionTracker();
     const dialogs = new Map<Element, DialogState>();
 
@@ -138,6 +145,65 @@ export default defineContentScript({
           interactionId,
         );
       });
+
+    const sleep = (ms: number) => new Promise((resolve) => ctx.setTimeout(() => resolve(undefined), ms));
+
+    const runAutomaticFocusWalk = async (options: FocusWalkOptions = {}): Promise<FocusWalkResult> => {
+      if (focusWalkRunning) {
+        return { totalCandidates: 0, focusedSteps: 0, skipped: 0, stopped: true };
+      }
+
+      focusWalkRunning = true;
+      const candidates = focusWalkCandidates();
+      const totalCandidates = Math.min(candidates.length, options.maxSteps ?? 80);
+      const delayMs = Math.min(Math.max(options.delayMs ?? 180, 60), 1000);
+      const backdrop = showFocusWalkBackdropInPage(totalCandidates);
+      let focusedSteps = 0;
+      let skipped = candidates.length - totalCandidates;
+      let stopped = false;
+
+      emit(createFocusWalkStartEvent(totalCandidates));
+
+      try {
+        for (const [index, candidate] of candidates.slice(0, totalCandidates).entries()) {
+          if (!recording) {
+            stopped = true;
+            break;
+          }
+
+          const { element } = candidate;
+          backdrop.update(index + 1, totalCandidates);
+          if (!isFocusWalkCandidateStillUsable(element)) {
+            skipped += 1;
+            continue;
+          }
+
+          const target = actionTarget(element);
+          const interactionId = beginInteraction('keyboard', target, 'Tab');
+          emit(
+            createKeydownEvent({
+              key: 'Tab',
+              element: snapshot(target),
+            }),
+            interactionId,
+          );
+
+          element.scrollIntoView({ block: 'center', inline: 'center', behavior: 'auto' });
+          await sleep(Math.round(delayMs / 2));
+          element.focus({ preventScroll: true });
+          await sleep(delayMs);
+
+          if (document.activeElement === element) focusedSteps += 1;
+          else skipped += 1;
+        }
+      } finally {
+        emit(createFocusWalkEndEvent({ focusedSteps, totalCandidates, skipped, stopped }));
+        backdrop.dispose();
+        focusWalkRunning = false;
+      }
+
+      return { totalCandidates, focusedSteps, skipped, stopped };
+    };
 
     ctx.addEventListener(
       document,
@@ -434,6 +500,7 @@ export default defineContentScript({
       }
 
       if (message.type === 'FOCUSTRACE_RUN_SCAN') return Promise.resolve(runFocusTraceScan());
+      if (message.type === 'FOCUSTRACE_RUN_FOCUS_WALK') return runAutomaticFocusWalk(message.options);
     });
 
     // Restore state when this script is re-created after a navigation or when
