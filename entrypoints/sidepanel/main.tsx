@@ -4,6 +4,7 @@ import App from './App';
 import './style.css';
 import './focus-graph.css';
 import './scan-settings.css';
+import './ux-polish.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('FocusTrace root element was not found.');
