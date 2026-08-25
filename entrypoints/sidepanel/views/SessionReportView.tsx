@@ -1,4 +1,5 @@
 import { buildSessionSuggestions } from '../../../lib/report/session-report';
+import { buildTextReportFilename, buildTextSessionReport } from '../../../lib/report/text-report';
 import { localizedScanIssue, tr, type AppLanguage } from '../../../shared/i18n';
 import type { HeadingSignal, RuntimeEvent, ScanIssue, ScanResult } from '../../../shared/types';
 
@@ -37,6 +38,20 @@ export function SessionReportView({
   const walkEnd = [...events].reverse().find((event) => event.kind === 'focus-walk-end');
   const automatic = Boolean(walkStart);
   const suggestions = buildSessionSuggestions(scan, events, language);
+  const downloadTextReport = () => {
+    const generatedAt = Date.now();
+    const text = buildTextSessionReport({ scan, events, language, generatedAt });
+    const blob = new Blob(['\uFEFF', text], { type: 'text/plain;charset=utf-8' });
+    const url = URL.createObjectURL(blob);
+    const anchor = document.createElement('a');
+    anchor.href = url;
+    anchor.download = buildTextReportFilename(scan, generatedAt);
+    anchor.style.display = 'none';
+    document.body.append(anchor);
+    anchor.click();
+    anchor.remove();
+    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+  };
   const uniqueFocusTargets = new Map<string, { event: RuntimeEvent; orders: number[] }>();
   focusEvents.forEach((event, index) => {
     const selector = event.element!.selector;
@@ -56,6 +71,15 @@ export function SessionReportView({
               : tr(language, 'Analyze the page to start the report.', 'Analiza la página para iniciar el informe.')}
           </p>
         </div>
+        <button
+          className="export-text-report"
+          type="button"
+          disabled={!scan}
+          onClick={downloadTextReport}
+        >
+          <span aria-hidden="true">↓</span>
+          {tr(language, 'Download .txt', 'Descargar .txt')}
+        </button>
       </div>
 
       <div className="report-coverage">
