@@ -16,8 +16,8 @@ import {
   type FocusPathOverlayEntry,
   type FocusPathOverlayResult,
 } from '../../lib/runtime/focus-path-overlay';
-import { buildPageInspectorEntries } from '../../lib/runtime/page-inspector';
 import { buildFocusJourney } from '../../lib/runtime/focus-journey';
+import { buildPageInspectorEntries } from '../../lib/runtime/page-inspector';
 import { locateScanTargetInPage, type ScanTargetHighlightResult } from '../../lib/runtime/scan-target-overlay';
 import { SETTINGS_STORAGE_KEY, tr, type AppLanguage } from '../../shared/i18n';
 import type {
@@ -29,15 +29,13 @@ import type {
   SessionState,
 } from '../../shared/types';
 import { AboutView } from './views/AboutView';
-import { FocusGraphView } from './views/FocusGraphView';
 import { HeadingTreeView } from './views/HeadingTreeView';
-import { FocusView } from './views/FocusView';
-import { SessionReportView } from './views/SessionReportView';
-import { RuntimeView } from './views/RuntimeView';
 import { ScanView } from './views/ScanView';
+import { SessionReportView } from './views/SessionReportView';
 import { SettingsView } from './views/SettingsView';
+import { TraceView } from './views/TraceView';
 
-type View = 'scan' | 'focus' | 'headings' | 'runtime' | 'graph' | 'report' | 'about' | 'settings';
+type View = 'scan' | 'trace' | 'headings' | 'report' | 'about' | 'settings';
 
 const EMPTY_SESSION: SessionState = {
   tabId: -1,
@@ -179,7 +177,11 @@ export default function App() {
       });
       const result = results[0]?.result as ScanTargetHighlightResult | undefined;
       if (!result?.found) {
-        setError(tr(language, 'The element is no longer present on the page. Run the scan again.', 'El elemento ya no está presente en la página. Vuelve a ejecutar el análisis.'));
+        setError(tr(
+          language,
+          'The element is no longer present on the page. Run the scan again.',
+          'El elemento ya no está presente en la página. Vuelve a ejecutar el análisis.',
+        ));
       }
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
@@ -204,6 +206,7 @@ export default function App() {
       await ensureInjected();
       const enabled = !session.recording;
       const resumingFromBreakpoint = enabled && session.pausedByBreakpoint != null;
+
       if (enabled) {
         await browser.scripting.executeScript({
           target: { tabId },
@@ -212,15 +215,18 @@ export default function App() {
         setFocusPathVisible(false);
         setSelectedFocusSelector(undefined);
       }
+
       if (enabled && !resumingFromBreakpoint) {
         await browser.runtime.sendMessage({ type: 'FOCUSTRACE_CLEAR_SESSION', tabId } satisfies ExtensionMessage);
       }
+
       const startedAt = enabled ? Date.now() : undefined;
       await browser.tabs.sendMessage(tabId, {
         type: 'FOCUSTRACE_SET_RECORDING',
         enabled,
         breakpoints: breakpointSettings,
       } satisfies ExtensionMessage);
+
       const next = (await browser.runtime.sendMessage({
         type: 'FOCUSTRACE_SET_RECORDING_STATE',
         tabId,
@@ -228,7 +234,7 @@ export default function App() {
         ...(startedAt ? { startedAt } : {}),
       } satisfies ExtensionMessage)) as SessionState;
       setSession(next);
-      setView(enabled ? 'focus' : 'report');
+      setView('trace');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
     } finally {
@@ -258,6 +264,7 @@ export default function App() {
         breakpoints: breakpointSettings,
       } satisfies ExtensionMessage);
       contentRecording = true;
+
       const started = (await browser.runtime.sendMessage({
         type: 'FOCUSTRACE_SET_RECORDING_STATE',
         tabId,
@@ -265,7 +272,7 @@ export default function App() {
         startedAt: Date.now(),
       } satisfies ExtensionMessage)) as SessionState;
       setSession(started);
-      setView('focus');
+      setView('trace');
 
       const result = (await browser.tabs.sendMessage(tabId, {
         type: 'FOCUSTRACE_RUN_FOCUS_WALK',
@@ -279,6 +286,7 @@ export default function App() {
         breakpoints: breakpointSettings,
       } satisfies ExtensionMessage);
       contentRecording = false;
+
       const stopped = (await browser.runtime.sendMessage({
         type: 'FOCUSTRACE_SET_RECORDING_STATE',
         tabId,
@@ -287,9 +295,14 @@ export default function App() {
       setSession(stopped);
       await waitForRuntimeFlush();
       await refresh(tabId);
-      setView('report');
+      setView('trace');
+
       if (result.focusedSteps === 0) {
-        setError(tr(language, 'No keyboard-focusable elements were detected on this page.', 'No se han detectado elementos enfocables por teclado en esta página.'));
+        setError(tr(
+          language,
+          'No keyboard-focusable elements were detected on this page.',
+          'No se han detectado elementos enfocables por teclado en esta página.',
+        ));
       }
     } catch (reason) {
       if (contentRecording) {
@@ -313,6 +326,7 @@ export default function App() {
   const setBreakpoint = useCallback(async (breakpointId: RuntimeBreakpointId, enabled: boolean) => {
     if (tabId == null) return;
     setError(undefined);
+
     const nextSettings: RuntimeBreakpointSettings = {
       ...normalizeRuntimeBreakpointSettings(session.breakpoints),
       [breakpointId]: enabled,
@@ -380,7 +394,6 @@ export default function App() {
   const hideFocusPath = useCallback(async () => {
     if (tabId == null) return;
     setError(undefined);
-
     try {
       await browser.scripting.executeScript({
         target: { tabId },
@@ -412,47 +425,10 @@ export default function App() {
     }
     await showFocusPath();
   }, [focusPathVisible, showFocusPath]);
-  const runtimeFindings = session.events.filter((event) => event.outcome);
-  const serious = runtimeFindings.filter((event) => ['critical', 'serious'].includes(event.severity)).length;
-  const runtimeWarnings = runtimeFindings.filter((event) => ['moderate', 'minor'].includes(event.severity)).length;
-  const causalFindings = runtimeFindings.filter((event) => event.causes?.length).length;
-  const breakpointHits = session.events.reduce((total, event) => total + (event.breakpointHits?.length ?? 0), 0);
-  const hasRecordedJourney = session.events.length > 0;
-  const statusLabel = session.recording
-    ? tr(language, 'Recording active', 'Grabación activa')
-    : session.pausedByBreakpoint
-      ? tr(language, 'Paused by breakpoint', 'Pausada por breakpoint')
-      : hasRecordedJourney
-        ? tr(language, 'Recording stopped', 'Grabación detenida')
-        : tr(language, 'Ready', 'Listo');
-  const statusDescription = session.recording
-    ? tr(
-        language,
-        'Return to the page and use it normally. Recording continues when this panel loses focus.',
-        'Vuelve a la página y úsala con normalidad. La grabación continúa aunque este panel pierda el foco.',
-      )
-    : session.pausedByBreakpoint
-      ? tr(
-          language,
-          'The triggering event was saved. Continue when you are ready; the page itself was never paused.',
-          'El evento que lo provocó ya está guardado. Continúa cuando quieras; la página nunca se ha pausado.',
-        )
-      : hasRecordedJourney
-        ? tr(
-            language,
-            'Your recorded journey is kept below. Start a new recording when you want to replace it.',
-            'El recorrido grabado se conserva abajo. Inicia una nueva grabación cuando quieras reemplazarlo.',
-          )
-        : tr(
-            language,
-            'Analyze the current page, record a journey or simulate focus to inspect keyboard navigation.',
-            'Analiza la página actual, graba un recorrido o simula el foco para revisar la navegación por teclado.',
-          );
-  const sessionTone = session.recording ? 'live' : session.pausedByBreakpoint ? 'paused' : hasRecordedJourney ? 'stopped' : 'ready';
 
-  const navigation: Array<{ id: 'scan' | 'focus' | 'headings' | 'report'; label: string; icon: string }> = [
+  const navigation: Array<{ id: 'scan' | 'trace' | 'headings' | 'report'; label: string; icon: string }> = [
     { id: 'scan', label: tr(language, 'Review', 'Revisión'), icon: '⌕' },
-    { id: 'focus', label: tr(language, 'Focus', 'Foco'), icon: '◎' },
+    { id: 'trace', label: 'Trace', icon: '◎' },
     { id: 'headings', label: tr(language, 'Headings', 'Encabezados'), icon: 'H' },
     { id: 'report', label: tr(language, 'Report', 'Informe'), icon: '▤' },
   ];
@@ -464,7 +440,7 @@ export default function App() {
           <span className="brand-mark" aria-hidden="true">FT</span>
           <div>
             <h1>FocusTrace</h1>
-            <p>{tr(language, 'Accessibility journey debugger', 'Depurador de recorridos accesibles')}</p>
+            <p>{tr(language, 'Runtime accessibility debugger', 'Depurador de accesibilidad runtime')}</p>
           </div>
         </div>
         <div className="topbar-tools">
@@ -482,22 +458,30 @@ export default function App() {
 
       <section className="quick-start" aria-label={tr(language, 'Page tools', 'Herramientas de página')}>
         <div className="quick-start-copy">
-          <span className={`status ${busy ? 'live' : 'ready'}`}>
+          <span className={`status ${session.recording ? 'live' : busy ? 'live' : 'ready'}`}>
             <span aria-hidden="true" />
-            {busy
-              ? tr(language, 'Working…', 'Procesando…')
-              : scan
-                ? tr(language, 'Analysis ready', 'Análisis listo')
-                : tr(language, 'Ready', 'Listo')}
+            {session.recording
+              ? tr(language, 'Trace recording', 'Grabando traza')
+              : busy
+                ? tr(language, 'Working…', 'Procesando…')
+                : scan
+                  ? tr(language, 'Analysis ready', 'Análisis listo')
+                  : tr(language, 'Ready', 'Listo')}
           </span>
           <p>
-            {scan
-              ? scan.title || scan.url
-              : tr(
+            {session.recording
+              ? tr(
                   language,
-                  'Analyze the current page or inspect its keyboard focus order.',
-                  'Analiza la página actual o revisa su recorrido de foco por teclado.',
-                )}
+                  'Return to the page and interact normally. Recording continues while this panel is not focused.',
+                  'Vuelve a la página e interactúa con normalidad. La grabación continúa aunque este panel no tenga el foco.',
+                )
+              : scan
+                ? scan.title || scan.url
+                : tr(
+                    language,
+                    'Analyze the page or trace a real keyboard journey.',
+                    'Analiza la página o traza un recorrido real con teclado.',
+                  )}
           </p>
         </div>
         <div className="quick-actions">
@@ -529,58 +513,37 @@ export default function App() {
         ))}
       </nav>
 
-      {view === 'scan' && <ScanView scan={scan} level={explanationLevel} language={language} onLocate={locateScanTarget} />}
-      {view === 'headings' && (
-        <HeadingTreeView scan={scan} language={language} onLocate={locateScanTarget} />
+      {view === 'scan' && (
+        <ScanView scan={scan} level={explanationLevel} language={language} onLocate={locateScanTarget} />
       )}
-      {view === 'focus' && (
-        <FocusView
+      {view === 'trace' && (
+        <TraceView
           journey={focusJourney}
+          graph={focusGraph}
+          events={session.events}
+          interactions={interactions}
           pathSteps={focusPathSteps}
           pathVisible={focusPathVisible}
           recording={session.recording}
           busy={busy}
           selectedSelector={selectedFocusSelector}
-          onTogglePath={toggleFocusPath}
-          onToggleRecording={toggleRecording}
-          onSelectStep={selectFocusPoint}
-          language={language}
-        />
-      )}
-      {view === 'runtime' && (
-        <RuntimeView
-          events={session.events}
-          interactions={interactions}
-          recording={session.recording}
           breakpointSettings={breakpointSettings}
           pausedByBreakpoint={session.pausedByBreakpoint}
-          onBreakpointChange={setBreakpoint}
-          level={explanationLevel}
-          language={language}
-        />
-      )}
-      {view === 'graph' && (
-        <FocusGraphView
-          graph={focusGraph}
-          interactions={interactions}
           level={explanationLevel}
           language={language}
           page={scan ? { url: scan.url, title: scan.title } : undefined}
-          pathVisible={focusPathVisible}
-          recording={session.recording}
-          selectedPageNodeId={selectedFocusSelector}
           onTogglePath={toggleFocusPath}
-          onSelectPageNode={selectFocusPoint}
-          onClearPageNode={clearFocusSelection}
+          onToggleRecording={toggleRecording}
+          onSelectStep={selectFocusPoint}
+          onClearSelection={clearFocusSelection}
+          onBreakpointChange={setBreakpoint}
         />
       )}
+      {view === 'headings' && (
+        <HeadingTreeView scan={scan} language={language} onLocate={locateScanTarget} />
+      )}
       {view === 'report' && (
-        <SessionReportView
-          scan={scan}
-          events={session.events}
-          language={language}
-          onLocate={locateScanTarget}
-        />
+        <SessionReportView scan={scan} events={session.events} language={language} onLocate={locateScanTarget} />
       )}
       {view === 'about' && <AboutView language={language} />}
       {view === 'settings' && <SettingsView language={language} onLanguageChange={updateLanguage} />}
