@@ -78,6 +78,7 @@ describe('session report suggestions', () => {
           outcome: 'fail',
           targets: ['#muted'],
           contrast: {
+            kind: 'text',
             ratio: 4.48,
             requiredRatio: 4.5,
             foreground: 'rgb(119, 119, 119)',
@@ -93,6 +94,40 @@ describe('session report suggestions', () => {
     expect(model.contrastFailures).toBe(1);
     expect(model.categories).toContainEqual({ id: 'contrast', label: 'Contrast', count: 1 });
     expect(model.suggestions.find((item) => item.id === 'analysis-FT-WCAG-010')?.detail).toContain('#767676');
+  });
+
+  it('counts non-text contrast failures and recommends a visual color', () => {
+    const nonTextScan: ScanResult = {
+      ...scan,
+      issues: [
+        ...scan.issues,
+        {
+          id: 'non-text-1',
+          ruleId: 'FT-WCAG-011',
+          title: 'Required non-text visual information has sufficient contrast',
+          description: 'The icon contrast is below 3:1.',
+          severity: 'serious',
+          outcome: 'fail',
+          targets: ['#settings'],
+          contrast: {
+            kind: 'graphic',
+            subject: 'icon fill',
+            ratio: 2.32,
+            requiredRatio: 3,
+            foreground: 'rgb(170, 170, 170)',
+            background: 'rgb(255, 255, 255)',
+          },
+          references: [],
+        },
+      ],
+    };
+
+    const model = buildSessionReportModel(nonTextScan, [], 'en');
+    expect(model.contrastFailures).toBe(1);
+    expect(model.categories).toContainEqual({ id: 'contrast', label: 'Contrast', count: 1 });
+    const suggestion = model.suggestions.find((item) => item.id === 'analysis-FT-WCAG-011');
+    expect(suggestion?.detail).toContain('Suggested visual color');
+    expect(suggestion?.detail).toContain('3:1');
   });
 
   it('turns a correlated runtime cause into a trace story with remediation', () => {
