@@ -17,7 +17,15 @@ export interface TextContrastEvaluation {
   reason?: string;
 }
 
+export interface AccessibleColorSuggestion {
+  hex: string;
+  rgb: string;
+  ratio: number;
+  direction: 'darker' | 'lighter';
+}
+
 const WHITE: RgbaColor = { r: 255, g: 255, b: 255, a: 1 };
+const BLACK: RgbaColor = { r: 0, g: 0, b: 0, a: 1 };
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -125,12 +133,104 @@ function numericFontWeight(value: string): number {
   return Number.isFinite(numeric) ? numeric : 400;
 }
 
+function integerColor(color: RgbaColor): RgbaColor {
+  return {
+    r: Math.round(clamp(color.r, 0, 255)),
+    g: Math.round(clamp(color.g, 0, 255)),
+    b: Math.round(clamp(color.b, 0, 255)),
+    a: color.a,
+  };
+}
+
+export function colorToRgb(color: RgbaColor): string {
+  const normalized = integerColor(color);
+  if (normalized.a >= 0.999) return `rgb(${normalized.r}, ${normalized.g}, ${normalized.b})`;
+  return `rgba(${normalized.r}, ${normalized.g}, ${normalized.b}, ${Number(normalized.a.toFixed(3))})`;
+}
+
+export function colorToHex(color: RgbaColor): string {
+  const normalized = integerColor(color);
+  const channel = (value: number) => value.toString(16).padStart(2, '0');
+  const rgb = `#${channel(normalized.r)}${channel(normalized.g)}${channel(normalized.b)}`;
+  if (normalized.a >= 0.999) return rgb;
+  return `${rgb}${channel(Math.round(normalized.a * 255))}`;
+}
+
 function colorLabel(color: RgbaColor): string {
-  const r = Math.round(color.r);
-  const g = Math.round(color.g);
-  const b = Math.round(color.b);
-  if (color.a >= 0.999) return `rgb(${r}, ${g}, ${b})`;
-  return `rgba(${r}, ${g}, ${b}, ${Number(color.a.toFixed(3))})`;
+  return colorToRgb(color);
+}
+
+function mixToward(color: RgbaColor, target: RgbaColor, amount: number): RgbaColor {
+  return integerColor({
+    r: color.r + (target.r - color.r) * amount,
+    g: color.g + (target.g - color.g) * amount,
+    b: color.b + (target.b - color.b) * amount,
+    a: 1,
+  });
+}
+
+function rgbDistance(first: RgbaColor, second: RgbaColor): number {
+  return Math.hypot(first.r - second.r, first.g - second.g, first.b - second.b);
+}
+
+function firstAccessibleToward(
+  foreground: RgbaColor,
+  background: RgbaColor,
+  requiredRatio: number,
+  target: RgbaColor,
+  direction: AccessibleColorSuggestion['direction'],
+): { color: RgbaColor; ratio: number; distance: number; direction: AccessibleColorSuggestion['direction'] } | undefined {
+  if (contrastRatio(target, background) + Number.EPSILON < requiredRatio) return undefined;
+
+  let previousKey = '';
+  for (let step = 1; step <= 255; step += 1) {
+    const candidate = mixToward(foreground, target, step / 255);
+    const key = `${candidate.r},${candidate.g},${candidate.b}`;
+    if (key === previousKey) continue;
+    previousKey = key;
+    const ratio = contrastRatio(candidate, background);
+    if (ratio + Number.EPSILON >= requiredRatio) {
+      return { color: candidate, ratio, distance: rgbDistance(foreground, candidate), direction };
+    }
+  }
+  return undefined;
+}
+
+/**
+ * Suggest the smallest deterministic sRGB adjustment toward black or white
+ * that reaches the requested contrast against a resolved opaque background.
+ * This deliberately avoids claiming a global perceptual nearest-color result.
+ */
+export function suggestAccessibleForeground(
+  foregroundValue: string,
+  backgroundValue: string,
+  requiredRatio: number,
+): AccessibleColorSuggestion | undefined {
+  const foreground = parseCssColor(foregroundValue);
+  const background = parseCssColor(backgroundValue);
+  if (!foreground || !background || foreground.a < 0.999 || background.a < 0.999) return undefined;
+  if (contrastRatio(foreground, background) + Number.EPSILON >= requiredRatio) {
+    return {
+      hex: colorToHex(foreground),
+      rgb: colorToRgb(foreground),
+      ratio: Number(contrastRatio(foreground, background).toFixed(2)),
+      direction: 'darker',
+    };
+  }
+
+  const darker = firstAccessibleToward(foreground, background, requiredRatio, BLACK, 'darker');
+  const lighter = firstAccessibleToward(foreground, background, requiredRatio, WHITE, 'lighter');
+  const candidates = [darker, lighter].filter((candidate): candidate is NonNullable<typeof candidate> => Boolean(candidate));
+  candidates.sort((first, second) => first.distance - second.distance || first.ratio - second.ratio);
+  const best = candidates[0];
+  if (!best) return undefined;
+
+  return {
+    hex: colorToHex(best.color),
+    rgb: colorToRgb(best.color),
+    ratio: Number(best.ratio.toFixed(2)),
+    direction: best.direction,
+  };
 }
 
 function complexVisualReason(style: CSSStyleDeclaration): string | undefined {
