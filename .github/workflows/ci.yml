@@ -5,35 +5,19 @@ on:
     branches: [main]
   pull_request:
 
-# Temporary write access on this branch is used only to bootstrap package-lock.json
-# from a clean runner. The final state of this PR restores contents: read.
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.event_name == 'pull_request' && github.head_ref || github.ref_name }}
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --no-audit --no-fund
-      - name: Commit generated dependency lock once
-        if: github.event_name == 'pull_request' && github.head_ref == 'chore/reproducible-release-builds'
-        shell: bash
-        run: |
-          if git ls-files --error-unmatch package-lock.json >/dev/null 2>&1; then
-            echo "package-lock.json is already tracked."
-            exit 0
-          fi
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add package-lock.json
-          git commit -m "chore: lock release dependencies"
-          git push origin "HEAD:${GITHUB_HEAD_REF}"
+          cache: npm
+      - run: npm ci --no-audit --no-fund
       - name: Bootstrap IANA language snapshot when empty
         shell: bash
         run: |
@@ -62,7 +46,8 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - run: npm install --no-audit --no-fund
+          cache: npm
+      - run: npm ci --no-audit --no-fund
       - run: npm run build:e2e
       - name: Install Chromium for extension E2E
         run: npx playwright install --with-deps --no-shell chromium
