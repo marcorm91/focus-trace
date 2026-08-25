@@ -47,12 +47,23 @@ export interface StandardReference {
   status?: 'normative' | 'informative' | 'proposed' | 'editor-draft';
 }
 
+export interface ElementAttributesSnapshot {
+  ariaLabel?: string;
+  ariaLabelledby?: string;
+  ariaDescribedby?: string;
+  tabIndex?: number;
+  href?: string;
+  type?: string;
+  disabled?: boolean;
+}
+
 export interface ElementSnapshot {
   tag: string;
   id?: string;
   role?: string;
   name?: string;
   selector: string;
+  attributes?: ElementAttributesSnapshot;
 }
 
 export interface RuntimeMutationSnapshot {
