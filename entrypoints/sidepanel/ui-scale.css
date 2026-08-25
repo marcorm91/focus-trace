@@ -1,0 +1,39 @@
+:root {
+  --ft-ui-scale: 1;
+}
+
+html[data-ft-ui-scale='110'] {
+  --ft-ui-scale: 1.1;
+}
+
+html[data-ft-ui-scale='120'] {
+  --ft-ui-scale: 1.2;
+}
+
+html[data-ft-ui-scale='130'] {
+  --ft-ui-scale: 1.3;
+}
+
+/*
+ * FocusTrace currently targets Chromium. CSS zoom keeps the established px-based
+ * type hierarchy, controls and spacing proportional. The reciprocal width keeps
+ * the scaled root inside the side-panel viewport instead of creating x-overflow.
+ */
+html[data-ft-ui-scale='110'] #root {
+  width: 90.9091%;
+  zoom: 1.1;
+}
+
+html[data-ft-ui-scale='120'] #root {
+  width: 83.3333%;
+  zoom: 1.2;
+}
+
+html[data-ft-ui-scale='130'] #root {
+  width: 76.9231%;
+  zoom: 1.3;
+}
+
+html[data-ft-ui-scale]:not([data-ft-ui-scale='100']) #root {
+  max-width: none;
+}
