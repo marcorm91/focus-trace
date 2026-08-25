@@ -51,6 +51,31 @@ test('sidepanel exposes an accessible shell and keyboard order', async ({ contex
   await expect(panel.getByRole('button', { name: /Review|Revisión/ })).toBeFocused();
 });
 
+test('sidepanel stays inside a narrow viewport and uses the product logo', async ({ context, extensionWorker }) => {
+  const panel = await openSidepanel(context, extensionWorker);
+  await panel.setViewportSize({ width: 360, height: 800 });
+
+  const brandMark = panel.locator('.brand-mark');
+  await expect(brandMark).toBeVisible();
+  const brandImage = await brandMark.evaluate((element) => getComputedStyle(element).backgroundImage);
+  expect(brandImage).toContain('/icon/48.png');
+
+  const noHorizontalOverflow = await panel.evaluate(() =>
+    document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+  );
+  expect(noHorizontalOverflow).toBe(true);
+
+  await panel.getByRole('button', { name: 'Trace' }).click();
+  const startTrace = panel.getByRole('button', { name: /Start trace|Iniciar traza/ });
+  await expect(startTrace).toBeVisible();
+  await expect(startTrace).toHaveAttribute('title', /.+/);
+
+  const traceFits = await panel.evaluate(() =>
+    document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+  );
+  expect(traceFits).toBe(true);
+});
+
 test('language setting updates the document language and visible navigation', async ({ context, extensionWorker }) => {
   const panel = await openSidepanel(context, extensionWorker);
   await panel.getByRole('button', { name: /Open settings|Abrir ajustes/ }).click();
