@@ -356,7 +356,7 @@ export function evaluateNonTextContrast(): NonTextContrastFinding[] {
 
   for (const control of controls) {
     if (isDisabled(control)) continue;
-    const svgs = [...control.querySelectorAll('svg')].filter((svg): svg is SVGElement => svg instanceof SVGElement);
+    const svgs = [...control.querySelectorAll('svg')];
     const iconOnly = svgs.length > 0 && !visibleTextOutsideSvg(control);
     if (iconOnly) {
       const evaluation = svgs.length === 1
@@ -376,7 +376,7 @@ export function evaluateNonTextContrast(): NonTextContrastFinding[] {
   }
 
   for (const svg of [...document.querySelectorAll('svg[role="img"]')]) {
-    if (!(svg instanceof SVGElement) || owningInteractiveControl(svg)) continue;
+    if (owningInteractiveControl(svg)) continue;
     findings.push({ element: svg, evaluation: evaluateGraphic(svg) });
   }
 
