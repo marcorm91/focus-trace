@@ -6,13 +6,13 @@ import {
   normalizeRuntimeBreakpointSettings,
 } from '../lib/runtime/breakpoints';
 import { RuntimeInteractionTracker } from '../lib/runtime/causality';
+import { createRuntimeCause as cause, createRuntimeEventId as uid } from '../lib/runtime/events';
 import { runFocusTraceScan } from '../lib/audit/scan';
 import { RULES } from '../shared/rule-catalog';
 import type {
   ElementSnapshot,
   ExtensionMessage,
   RuntimeCause,
-  RuntimeCauseType,
   RuntimeEvent,
   RuntimeMutationSnapshot,
   SessionState,
@@ -40,12 +40,6 @@ function snapshot(element: Element): ElementSnapshot {
   }
   return result;
 }
-
-function cause(type: RuntimeCauseType, summary: string): RuntimeCause {
-  return { type, confidence: 'deterministic', summary };
-}
-
-const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
 function actionTarget(element: Element): Element {
   return element.closest('button, a[href], input, select, textarea, [role="button"], [role="link"], [tabindex]') ?? element;
