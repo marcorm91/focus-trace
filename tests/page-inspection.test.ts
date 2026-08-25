@@ -37,6 +37,16 @@ describe('runtime page inspection helpers', () => {
     });
   });
 
+  it('stores the element position in the sequential focus order', () => {
+    mount('<button id="save">Save</button>');
+
+    expect(snapshot(document.querySelector('#save')!, { index: 3, size: 8 })).toMatchObject({
+      selector: '#save',
+      tabOrderIndex: 3,
+      tabOrderSize: 8,
+    });
+  });
+
   it('resolves action targets from nested event targets', () => {
     mount('<button id="save"><span id="label">Save</span></button><div id="plain"><span id="text">Text</span></div>');
 

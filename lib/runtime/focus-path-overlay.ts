@@ -16,24 +16,6 @@ export interface FocusPathOverlayResult {
   missing: number;
 }
 
-const TONE_COLORS: Record<FocusPathOverlayTone, { solid: string; fill: string; ring: string }> = {
-  ok: {
-    solid: '#08745b',
-    fill: 'rgba(8, 116, 91, 0.08)',
-    ring: 'rgba(8, 116, 91, 0.22)',
-  },
-  review: {
-    solid: '#b54708',
-    fill: 'rgba(181, 71, 8, 0.08)',
-    ring: 'rgba(181, 71, 8, 0.22)',
-  },
-  fail: {
-    solid: '#b42318',
-    fill: 'rgba(180, 35, 24, 0.08)',
-    ring: 'rgba(180, 35, 24, 0.22)',
-  },
-};
-
 export function clearFocusPathInPage(): { removed: boolean } {
   const overlay = document.querySelector('[data-focustrace-focus-path]');
   if (!overlay) return { removed: false };
@@ -45,8 +27,25 @@ export function clearFocusPathInPage(): { removed: boolean } {
 
 export function showFocusPathInPage(
   entries: FocusPathOverlayEntry[],
-  selectedSelector?: string,
+  selectedSelector?: string | null,
 ): FocusPathOverlayResult {
+  const toneColors: Record<FocusPathOverlayTone, { solid: string; fill: string; ring: string }> = {
+    ok: {
+      solid: '#08745b',
+      fill: 'rgba(8, 116, 91, 0.08)',
+      ring: 'rgba(8, 116, 91, 0.22)',
+    },
+    review: {
+      solid: '#b54708',
+      fill: 'rgba(181, 71, 8, 0.08)',
+      ring: 'rgba(181, 71, 8, 0.22)',
+    },
+    fail: {
+      solid: '#b42318',
+      fill: 'rgba(180, 35, 24, 0.08)',
+      ring: 'rgba(180, 35, 24, 0.22)',
+    },
+  };
   const disposeEvent = 'focustrace:dispose-focus-path';
   const existing = document.querySelector('[data-focustrace-focus-path]');
   if (existing) {
@@ -69,7 +68,7 @@ export function showFocusPathInPage(
   const items = entries.map((entry) => {
     const selected = entry.selector === selectedSelector;
     const tone = entry.tone ?? 'review';
-    const colors = TONE_COLORS[tone];
+    const colors = toneColors[tone];
     const overlay = document.createElement('div');
     overlay.setAttribute('data-focustrace-focus-target', entry.selector);
     overlay.setAttribute('data-focustrace-tone', tone);
@@ -119,7 +118,7 @@ export function showFocusPathInPage(
     const detail = document.createElement('p');
     const count = document.createElement('div');
     const tone = selectedItem.entry.tone ?? 'review';
-    const colors = TONE_COLORS[tone];
+    const colors = toneColors[tone];
 
     title.textContent = `#${selectedItem.entry.orders[0] ?? ''} · ${selectedItem.entry.label}`;
     status.textContent = selectedItem.entry.status ?? '';

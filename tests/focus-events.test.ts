@@ -16,12 +16,19 @@ const button = {
 };
 
 describe('runtime focus event builders', () => {
-  it('creates an informational focus event', () => {
-    expect(createFocusEvent({ element: button, label: 'Save' })).toMatchObject({
+  it('creates an informational focus event with its navigation intent', () => {
+    expect(createFocusEvent({ element: button, label: 'Save', intent: 'backward' })).toMatchObject({
       kind: 'focus',
       severity: 'info',
       title: 'Focus → Save',
+      focusIntent: 'backward',
       element: button,
+    });
+  });
+
+  it('defaults focus intent to programmatic when there was no Tab key', () => {
+    expect(createFocusEvent({ element: button, label: 'Save' })).toMatchObject({
+      focusIntent: 'programmatic',
     });
   });
 

@@ -63,6 +63,8 @@ export interface ElementSnapshot {
   role?: string;
   name?: string;
   selector: string;
+  tabOrderIndex?: number;
+  tabOrderSize?: number;
   attributes?: ElementAttributesSnapshot;
 }
 
@@ -97,6 +99,7 @@ export interface RuntimeEvent {
   severity: Severity;
   title: string;
   interactionId?: string;
+  focusIntent?: 'forward' | 'backward' | 'programmatic';
   detail?: string;
   element?: ElementSnapshot;
   mutation?: RuntimeMutationSnapshot;

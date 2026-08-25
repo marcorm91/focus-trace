@@ -37,7 +37,11 @@ import {
   createRouteFocusUnchangedEvent,
   createRouteTitleUnchangedEvent,
 } from '../lib/runtime/route-events';
-import { focusWalkCandidates, isFocusWalkCandidateStillUsable } from '../lib/runtime/focus-walk';
+import {
+  focusWalkCandidates,
+  isFocusWalkCandidateStillUsable,
+  sequentialFocusPosition,
+} from '../lib/runtime/focus-walk';
 import { showFocusWalkBackdropInPage } from '../lib/runtime/focus-walk-backdrop';
 import { runFocusTraceScan } from '../lib/audit/scan';
 import type {
@@ -68,6 +72,7 @@ export default defineContentScript({
     let lastUrl = location.href;
     let lastTitle = document.title;
     let focusVersion = 0;
+    let pendingFocusIntent: 'forward' | 'backward' | 'programmatic' = 'programmatic';
     let hiddenFocusReported: Element | null = null;
     let focusWalkRunning = false;
     const interactionTracker = new RuntimeInteractionTracker();
@@ -191,7 +196,9 @@ export default defineContentScript({
 
           element.scrollIntoView({ block: 'center', inline: 'center', behavior: 'auto' });
           await sleep(Math.round(delayMs / 2));
+          pendingFocusIntent = 'forward';
           element.focus({ preventScroll: true });
+          pendingFocusIntent = 'programmatic';
           await sleep(delayMs);
 
           if (document.activeElement === element) focusedSteps += 1;
@@ -228,11 +235,15 @@ export default defineContentScript({
         lastFocused = event.target;
         hiddenFocusReported = null;
         const interactionId = activeInteractionId();
+        const focusIntent = pendingFocusIntent;
+        pendingFocusIntent = 'programmatic';
+        const focusPosition = sequentialFocusPosition(event.target);
 
         emit(
           createFocusEvent({
             label: accessibleName(event.target) || event.target.tagName.toLowerCase(),
-            element: snapshot(event.target),
+            element: snapshot(event.target, focusPosition),
+            intent: focusIntent,
           }),
           interactionId,
         );
@@ -259,6 +270,7 @@ export default defineContentScript({
       (rawEvent) => {
         const event = rawEvent as KeyboardEvent;
         if (!['Tab', 'Enter', 'Escape', ' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+        if (event.key === 'Tab') pendingFocusIntent = event.shiftKey ? 'backward' : 'forward';
         const target = event.target instanceof Element ? actionTarget(event.target) : null;
         const interactionId = beginInteraction('keyboard', target, event.key);
         emit(

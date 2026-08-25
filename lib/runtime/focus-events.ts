@@ -7,13 +7,15 @@ type PendingRuntimeEvent = Omit<RuntimeEvent, 'id' | 'timestamp'>;
 interface FocusEventInput {
   element: ElementSnapshot;
   label: string;
+  intent?: 'forward' | 'backward' | 'programmatic';
 }
 
-export function createFocusEvent({ element, label }: FocusEventInput): PendingRuntimeEvent {
+export function createFocusEvent({ element, label, intent = 'programmatic' }: FocusEventInput): PendingRuntimeEvent {
   return {
     kind: 'focus',
     severity: 'info',
     title: `Focus → ${label}`,
+    focusIntent: intent,
     element,
   };
 }

@@ -17,6 +17,7 @@ import {
   type FocusPathOverlayResult,
 } from '../../lib/runtime/focus-path-overlay';
 import { buildPageInspectorEntries } from '../../lib/runtime/page-inspector';
+import { buildFocusJourney } from '../../lib/runtime/focus-journey';
 import { locateScanTargetInPage, type ScanTargetHighlightResult } from '../../lib/runtime/scan-target-overlay';
 import { SETTINGS_STORAGE_KEY, tr, type AppLanguage } from '../../shared/i18n';
 import type {
@@ -335,15 +336,11 @@ export default function App() {
     }
   }, [ensureInjected, session.breakpoints, tabId]);
 
-  const focusEvents = useMemo(
-    () => session.events.filter((event) => ['focus', 'focus-lost', 'focus-hidden', 'focus-obscured'].includes(event.kind)),
-    [session.events],
-  );
   const interactions = useMemo(() => groupRuntimeInteractions(session.events), [session.events]);
   const focusGraph = useMemo(() => buildFocusGraph(session.events), [session.events]);
+  const focusJourney = useMemo(() => buildFocusJourney(session.events), [session.events]);
   const focusPath = useMemo(() => buildObservedFocusPath(session.events), [session.events]);
   const focusPathSteps = focusPath.reduce((total, target) => total + target.orders.length, 0);
-  const latestFocus = focusEvents.at(-1);
 
   const showFocusPath = useCallback(async (selectedSelector?: string) => {
     if (tabId == null || focusPath.length === 0) return;
@@ -359,7 +356,7 @@ export default function App() {
       const results = await browser.scripting.executeScript({
         target: { tabId },
         func: showFocusPathInPage,
-        args: [entries, selectedSelector],
+        args: [entries, selectedSelector ?? null],
       });
       const result = results[0]?.result as FocusPathOverlayResult | undefined;
       if (!result?.found) {
@@ -538,15 +535,15 @@ export default function App() {
       )}
       {view === 'focus' && (
         <FocusView
-          latest={latestFocus}
-          count={focusEvents.length}
+          journey={focusJourney}
           pathSteps={focusPathSteps}
           pathVisible={focusPathVisible}
           recording={session.recording}
           busy={busy}
+          selectedSelector={selectedFocusSelector}
           onTogglePath={toggleFocusPath}
           onToggleRecording={toggleRecording}
-          level={explanationLevel}
+          onSelectStep={selectFocusPoint}
           language={language}
         />
       )}

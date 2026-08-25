@@ -69,6 +69,16 @@ export function focusWalkCandidates(root: ParentNode = document): FocusWalkCandi
     });
 }
 
+export function sequentialFocusPosition(
+  element: Element,
+  root: ParentNode = document,
+): { index: number; size: number } | undefined {
+  const candidates = focusWalkCandidates(root);
+  const index = candidates.findIndex((candidate) => candidate.element === element);
+  if (index < 0) return undefined;
+  return { index: index + 1, size: candidates.length };
+}
+
 export function isFocusWalkCandidateStillUsable(element: Element): element is HTMLElement | SVGElement {
   return isVisibleFocusable(element);
 }
