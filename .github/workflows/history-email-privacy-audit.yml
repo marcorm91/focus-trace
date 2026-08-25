@@ -1,0 +1,105 @@
+name: History Email Privacy Audit
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/history-email-privacy-audit.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout complete history
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Fetch retained pull-request refs
+        shell: bash
+        run: |
+          git fetch origin \
+            '+refs/pull/*/head:refs/remotes/pull/*/head' \
+            '+refs/pull/*/merge:refs/remotes/pull/*/merge' \
+            --force
+
+      - name: Audit author and committer email exposure
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          import subprocess
+
+          def git(*args):
+              return subprocess.check_output(['git', *args], text=True).splitlines()
+
+          def is_private_address(email: str) -> bool:
+              email = email.strip().lower()
+              return not (
+                  email == 'noreply@github.com'
+                  or email.endswith('@users.noreply.github.com')
+                  or email.endswith('@github.com')
+              )
+
+          all_commits = set(git('rev-list', '--all'))
+          main_commits = set(git('rev-list', 'origin/main'))
+          rows = git('log', '--all', '--format=%H%x09%ae%x09%ce%x09%P%x09%s')
+
+          # One row per unique commit even when reachable from multiple refs.
+          commits = {}
+          for row in rows:
+              parts = row.split('\t', 4)
+              if len(parts) != 5:
+                  continue
+              sha, author_email, committer_email, parents, subject = parts
+              commits.setdefault(sha, (author_email, committer_email, parents, subject))
+
+          personal_author = {sha for sha, (ae, _, _, _) in commits.items() if is_private_address(ae)}
+          personal_committer = {sha for sha, (_, ce, _, _) in commits.items() if is_private_address(ce)}
+          merge_personal_author = {
+              sha for sha, (ae, _, parents, _) in commits.items()
+              if is_private_address(ae) and len(parents.split()) > 1
+          }
+          direct_personal_author = personal_author - merge_personal_author
+
+          personal_author_emails = {
+              ae.lower() for ae, _, _, _ in commits.values() if is_private_address(ae)
+          }
+          personal_committer_emails = {
+              ce.lower() for _, ce, _, _ in commits.values() if is_private_address(ce)
+          }
+
+          pr_refs = git('for-each-ref', 'refs/remotes/pull', '--format=%(refname)')
+          branch_refs = git('for-each-ref', 'refs/remotes/origin', '--format=%(refname)')
+
+          result = {
+              'reachable_commits_all_refs': len(all_commits),
+              'commits_in_main_history': len(main_commits),
+              'remote_branch_refs': len(branch_refs),
+              'retained_pr_refs': len(pr_refs),
+              'personal_author_commits_all_refs': len(personal_author),
+              'personal_author_commits_in_main': len(personal_author & main_commits),
+              'personal_author_commits_outside_main': len(personal_author - main_commits),
+              'personal_author_merge_commits': len(merge_personal_author),
+              'personal_author_direct_commits': len(direct_personal_author),
+              'personal_committer_commits_all_refs': len(personal_committer),
+              'personal_committer_commits_in_main': len(personal_committer & main_commits),
+              'distinct_personal_author_addresses': len(personal_author_emails),
+              'distinct_personal_committer_addresses': len(personal_committer_emails),
+          }
+
+          print(json.dumps(result, indent=2))
+          with open('history-email-privacy-summary.json', 'w', encoding='utf-8') as f:
+              json.dump(result, f, indent=2)
+          PY
+
+      - name: Upload privacy summary only
+        uses: actions/upload-artifact@v4
+        with:
+          name: history-email-privacy-summary
+          path: history-email-privacy-summary.json
+          if-no-files-found: error
+          retention-days: 7
