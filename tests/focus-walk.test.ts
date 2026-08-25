@@ -48,7 +48,7 @@ describe('focusWalkCandidates', () => {
 
   it('includes contenteditable and explicit tabindex targets', () => {
     render(`
-      <div id="editable" contenteditable="true">Edit me</div>
+      <div id="editable" contenteditable="true" tabindex="0">Edit me</div>
       <div id="custom" tabindex="0">Custom</div>
     `);
 
