@@ -23,10 +23,16 @@ function snapshotAttributes(element: Element): ElementAttributesSnapshot | undef
   return Object.keys(attributes).length ? attributes : undefined;
 }
 
-export function snapshot(element: Element): ElementSnapshot {
+export function snapshot(
+  element: Element,
+  focusPosition?: { index: number; size: number },
+): ElementSnapshot {
   const result: ElementSnapshot = {
     tag: element.tagName.toLowerCase(),
     selector: selectorFor(element),
+    ...(focusPosition
+      ? { tabOrderIndex: focusPosition.index, tabOrderSize: focusPosition.size }
+      : {}),
   };
   if (element.id) result.id = element.id;
   const role = element.getAttribute('role');
