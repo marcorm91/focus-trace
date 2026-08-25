@@ -1,6 +1,13 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import type { FocusJourney } from '../../../lib/runtime/focus-journey';
 import type { FocusGraph } from '../../../lib/runtime/focus-graph';
+import {
+  buildFocusTransitionSemantics,
+  focusTransitionSemanticCopy,
+  focusTransitionSemanticIcon,
+  focusTransitionSemanticsForEvent,
+  primaryFocusTransitionSemantic,
+} from '../../../lib/runtime/focus-transition-semantics';
 import { explanationForCause, humanInteractionTitle, type ExplanationLevel } from '../../../lib/runtime/explanations';
 import { tr, type AppLanguage } from '../../../shared/i18n';
 import type {
@@ -15,6 +22,7 @@ import { FocusView } from './FocusView';
 import { ReplayView } from './ReplayView';
 import { RuntimeView } from './RuntimeView';
 import './trace.css';
+import './transition-semantics.css';
 
 type TraceMode = 'replay' | 'journey' | 'interactions' | 'graph';
 
@@ -75,6 +83,10 @@ export function TraceView({
   const causalInteractions = correlatedInteractions.filter((interaction) => interaction.causes.length > 0);
   const latestCause = [...correlatedInteractions].reverse().find((interaction) => interaction.causes.length > 0)?.causes[0];
   const latestExplanation = latestCause ? explanationForCause(latestCause.type, language) : undefined;
+  const transitionSemantics = useMemo(
+    () => buildFocusTransitionSemantics(events, interactions, journey),
+    [events, interactions, journey],
+  );
 
   const previewSteps = useMemo(() => journey.steps.slice(-10), [journey.steps]);
 
@@ -120,7 +132,7 @@ export function TraceView({
         <span><strong>{journey.steps.length}</strong>{tr(language, 'Focus steps', 'Pasos de foco')}</span>
         <span><strong>{correlatedInteractions.length}</strong>{tr(language, 'Interactions', 'Interacciones')}</span>
         <span className={findings.length ? 'has-signal' : ''}><strong>{findings.length}</strong>{tr(language, 'Signals', 'Señales')}</span>
-        <span><strong>{causalInteractions.length}</strong>{tr(language, 'Explained causes', 'Causas explicadas')}</span>
+        <span><strong>{transitionSemantics.length}</strong>{tr(language, 'Interpreted transitions', 'Transiciones interpretadas')}</span>
       </div>
 
       {previewSteps.length > 0 && (
@@ -140,16 +152,32 @@ export function TraceView({
             {previewSteps.map((step) => {
               const selected = step.element.selector === selectedSelector;
               const name = step.element.name || step.element.role || step.element.tag;
+              const stepSemantics = focusTransitionSemanticsForEvent(transitionSemantics, step.id);
+              const primarySemantic = primaryFocusTransitionSemantic(stepSemantics);
+              const primaryCopy = primarySemantic
+                ? focusTransitionSemanticCopy(primarySemantic, language)
+                : undefined;
               return (
-                <li key={step.id} className={step.event.outcome ? 'has-signal' : ''}>
-                  <span className={`trace-direction direction-${step.direction}`} aria-label={step.direction}>{directionSymbol(step.direction)}</span>
+                <li
+                  key={step.id}
+                  className={`${step.event.outcome ? 'has-signal ' : ''}${primarySemantic ? `semantic-${primarySemantic.tone}` : ''}`.trim()}
+                >
+                  <span className={`trace-direction direction-${step.direction}`} aria-label={step.direction}>
+                    {primarySemantic ? focusTransitionSemanticIcon(primarySemantic) : directionSymbol(step.direction)}
+                  </span>
                   <button
                     type="button"
                     aria-current={selected ? 'step' : undefined}
                     onClick={() => void onSelectStep(step.element.selector)}
+                    title={primaryCopy?.detail}
                   >
                     <strong>{step.order}</strong>
                     <span>{name}</span>
+                    {primarySemantic && (
+                      <span className={`trace-step-semantic ${primarySemantic.tone}`} aria-label={primaryCopy?.label}>
+                        {focusTransitionSemanticIcon(primarySemantic)}
+                      </span>
+                    )}
                   </button>
                 </li>
               );
@@ -219,6 +247,7 @@ export function TraceView({
             events={events}
             interactions={interactions}
             journey={journey}
+            semantics={transitionSemantics}
             recording={recording}
             level={level}
             language={language}
@@ -229,6 +258,7 @@ export function TraceView({
         {mode === 'journey' && (
           <FocusView
             journey={journey}
+            semantics={transitionSemantics}
             pathSteps={pathSteps}
             pathVisible={pathVisible}
             recording={recording}
