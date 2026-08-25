@@ -10,11 +10,12 @@ function headingSignalLabel(signal: HeadingSignal, language: AppLanguage): strin
 
 function findingGroup(
   scan: ScanResult,
+  language: AppLanguage,
 ): Array<{ id: string; label: string; tone: string; issues: ScanIssue[] }> {
   return [
-    { id: 'fail', label: 'Fallos', tone: 'fail', issues: scan.issues },
-    { id: 'review', label: 'Revisar', tone: 'review', issues: scan.review },
-    { id: 'warning', label: 'Avisos', tone: 'warning', issues: scan.warnings ?? [] },
+    { id: 'fail', label: tr(language, 'Failures', 'Fallos'), tone: 'fail', issues: scan.issues },
+    { id: 'review', label: tr(language, 'Review', 'Revisar'), tone: 'review', issues: scan.review },
+    { id: 'warning', label: tr(language, 'Warnings', 'Avisos'), tone: 'warning', issues: scan.warnings ?? [] },
   ];
 }
 
@@ -99,7 +100,7 @@ export function SessionReportView({
               </div>
             </div>
 
-            {findingGroup(scan).map((group) => (
+            {findingGroup(scan, language).map((group) => (
               <details className="report-group" key={group.id} open={group.id === 'fail' && group.issues.length > 0}>
                 <summary>
                   <span>{group.label}</span>
