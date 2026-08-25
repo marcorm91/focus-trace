@@ -65,7 +65,7 @@ export default defineConfig({
       // such as the localhost permission used by the E2E build.
       if (!manifest.host_permissions) return;
       manifest.host_permissions = manifest.host_permissions.filter(
-        (permission) => !AUTO_RUNTIME_HOST_PERMISSIONS.has(permission),
+        (permission: string) => !AUTO_RUNTIME_HOST_PERMISSIONS.has(permission),
       );
       if (manifest.host_permissions.length === 0) delete manifest.host_permissions;
     },
