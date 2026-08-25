@@ -375,7 +375,7 @@ export function evaluateNonTextContrast(): NonTextContrastFinding[] {
     }
   }
 
-  for (const svg of [...document.querySelectorAll('svg[role="img"]')]) {
+  for (const svg of [...document.querySelectorAll<SVGElement>('svg[role="img"]')]) {
     if (owningInteractiveControl(svg)) continue;
     findings.push({ element: svg, evaluation: evaluateGraphic(svg) });
   }
