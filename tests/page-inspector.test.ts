@@ -34,12 +34,12 @@ describe('page inspector entries', () => {
     expect(entry).toMatchObject({ tone: 'ok', status: 'No signals', findingCount: 0 });
   });
 
-  it('links descendant scan findings and exposes their evidence in context', () => {
+  it('links descendant failures and exposes the exact rule in context', () => {
     const scan: ScanResult = {
       ...emptyScan,
       issues: [{
         id: 'issue-1',
-        ruleId: 'button-name',
+        ruleId: 'FT-WCAG-003',
         title: 'Button has no accessible name',
         description: 'Provide a programmatic name.',
         severity: 'serious',
@@ -49,11 +49,11 @@ describe('page inspector entries', () => {
       }],
     };
     const [entry] = buildPageInspectorEntries([target()], scan, [], 'es');
-    expect(entry).toMatchObject({ tone: 'fail', status: 'Fallo probable', findingCount: 1 });
+    expect(entry).toMatchObject({ tone: 'fail', status: 'FAIL · FT-WCAG-003', findingCount: 1 });
     expect(entry?.detail).toContain('Button has no accessible name');
   });
 
-  it('marks missing names, positive tabindex and repeated targets', () => {
+  it('keeps contextual focus-path signals as review instead of red failure', () => {
     const [missing] = buildPageInspectorEntries([
       target({ element: { tag: 'button', selector: '#save' } }),
     ], emptyScan, [], 'en');
@@ -64,23 +64,39 @@ describe('page inspector entries', () => {
       target({ orders: [1, 4] }),
     ], emptyScan, [], 'en');
 
-    expect(missing?.tone).toBe('fail');
-    expect(positive?.tone).toBe('fail');
-    expect(repeated?.tone).toBe('review');
+    expect(missing).toMatchObject({ tone: 'review', status: 'REVIEW · accessible name' });
+    expect(positive).toMatchObject({ tone: 'review', status: 'REVIEW · tabindex' });
+    expect(repeated).toMatchObject({ tone: 'review', status: 'REVIEW · repeated focus' });
   });
 
-  it('links serious runtime findings to the same selector', () => {
+  it('links deterministic runtime failures to the same selector', () => {
     const events: RuntimeEvent[] = [{
       id: 'runtime-1',
       timestamp: 1,
       kind: 'focus-obscured',
       severity: 'serious',
       outcome: 'fail',
+      ruleId: 'FT-RUNTIME-002',
       title: 'Focus is obscured',
       element: { tag: 'button', name: 'Save', selector: '#save' },
     }];
     const [entry] = buildPageInspectorEntries([target()], emptyScan, events, 'en');
-    expect(entry).toMatchObject({ tone: 'fail', findingCount: 1 });
+    expect(entry).toMatchObject({ tone: 'fail', status: 'FAIL · FT-RUNTIME-002', findingCount: 1 });
     expect(entry?.detail).toContain('Focus is obscured');
+  });
+
+  it('does not promote a serious runtime review to deterministic failure', () => {
+    const events: RuntimeEvent[] = [{
+      id: 'runtime-review',
+      timestamp: 2,
+      kind: 'focus-obscured',
+      severity: 'serious',
+      outcome: 'review',
+      ruleId: 'FT-RUNTIME-002',
+      title: 'Focus may be obscured',
+      element: { tag: 'button', name: 'Save', selector: '#save' },
+    }];
+    const [entry] = buildPageInspectorEntries([target()], emptyScan, events, 'en');
+    expect(entry).toMatchObject({ tone: 'review', status: 'REVIEW · FT-RUNTIME-002' });
   });
 });
