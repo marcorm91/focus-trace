@@ -1,5 +1,6 @@
 import { RULES, type RuleDefinition } from '../../shared/rule-catalog';
 import type { FindingOutcome, HeadingSnapshot, ScanIssue, ScanResult } from '../../shared/types';
+import { evaluateTextContrastForElement, elementHasRenderedText } from './contrast';
 import { accessibleNameDetails, accessibleNameDiagnostics, isMarkedDecorative, isProgrammaticallyHidden, isSequentiallyFocusable, selectorFor, semanticRole } from './dom';
 import { evaluateLabelInName } from './label-in-name';
 import { evaluateAriaAuthoringSignals, pageLanguageStatus, type AriaAuthoringSignal } from './standards-registry';
@@ -8,8 +9,28 @@ interface RuleExecution { issues: ScanIssue[]; review: ScanIssue[]; warnings: Sc
 const emptyExecution = (): RuleExecution => ({ issues: [], review: [], warnings: [], passes: 0 });
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
-function finding(rule: RuleDefinition, outcome: FindingOutcome, target: Element | string, description: string, evidence?: string, accessibleName?: ScanIssue['accessibleName']): ScanIssue {
-  return { id: uid(), ruleId: rule.id, title: rule.title, description, severity: rule.severity, outcome, targets: [typeof target === 'string' ? target : selectorFor(target)], ...(evidence ? { evidence } : {}), ...(accessibleName ? { accessibleName } : {}), references: rule.references };
+function finding(
+  rule: RuleDefinition,
+  outcome: FindingOutcome,
+  target: Element | string,
+  description: string,
+  evidence?: string,
+  accessibleName?: ScanIssue['accessibleName'],
+  contrast?: ScanIssue['contrast'],
+): ScanIssue {
+  return {
+    id: uid(),
+    ruleId: rule.id,
+    title: rule.title,
+    description,
+    severity: rule.severity,
+    outcome,
+    targets: [typeof target === 'string' ? target : selectorFor(target)],
+    ...(evidence ? { evidence } : {}),
+    ...(accessibleName ? { accessibleName } : {}),
+    ...(contrast ? { contrast } : {}),
+    references: rule.references,
+  };
 }
 
 function runPageTitle(): RuleExecution {
@@ -158,6 +179,63 @@ function runPositiveTabindex(): RuleExecution {
   return result;
 }
 
+function runTextContrast(): RuleExecution {
+  const result = emptyExecution();
+  const body = document.body;
+  if (!body) { result.passes += 1; return result; }
+
+  let applicable = 0;
+  for (const element of [body, ...body.querySelectorAll('*')]) {
+    if (!elementHasRenderedText(element) || isProgrammaticallyHidden(element)) continue;
+    const evaluation = evaluateTextContrastForElement(element);
+    if (evaluation.status === 'inapplicable') continue;
+    applicable += 1;
+
+    const contrast: ScanIssue['contrast'] = {
+      requiredRatio: evaluation.requiredRatio ?? 4.5,
+      ...(evaluation.ratio != null ? { ratio: evaluation.ratio } : {}),
+      ...(evaluation.foreground ? { foreground: evaluation.foreground } : {}),
+      ...(evaluation.background ? { background: evaluation.background } : {}),
+      ...(evaluation.fontSizePx != null ? { fontSizePx: evaluation.fontSizePx } : {}),
+      ...(evaluation.fontWeight != null ? { fontWeight: evaluation.fontWeight } : {}),
+      ...(evaluation.largeText != null ? { largeText: evaluation.largeText } : {}),
+      ...(evaluation.reason ? { reason: evaluation.reason } : {}),
+    };
+
+    if (evaluation.status === 'pass') {
+      result.passes += 1;
+      continue;
+    }
+
+    if (evaluation.status === 'fail') {
+      const evidence = `Contrast ${evaluation.ratio}:1; required ${evaluation.requiredRatio}:1; foreground ${evaluation.foreground}; background ${evaluation.background}; font ${evaluation.fontSizePx}px / ${evaluation.fontWeight}.`;
+      result.issues.push(finding(
+        RULES.textContrast,
+        'fail',
+        element,
+        `Rendered text contrast is ${evaluation.ratio}:1, below the required ${evaluation.requiredRatio}:1 for ${evaluation.largeText ? 'large' : 'normal'} text.`,
+        evidence,
+        undefined,
+        contrast,
+      ));
+      continue;
+    }
+
+    result.review.push(finding(
+      RULES.textContrast,
+      'review',
+      element,
+      'FocusTrace could not determine the rendered text/background contrast reliably. Review this text manually instead of treating an uncertain visual calculation as a WCAG failure.',
+      `${evaluation.reason ?? 'Rendered colors could not be resolved reliably.'} Required ratio: ${evaluation.requiredRatio}:1 for ${evaluation.largeText ? 'large' : 'normal'} text.`,
+      undefined,
+      contrast,
+    ));
+  }
+
+  if (applicable === 0) result.passes += 1;
+  return result;
+}
+
 function visibleHeadings(): Element[] {
   return [...document.querySelectorAll('h1, h2, h3, h4, h5, h6')]
     .filter((heading) => !isProgrammaticallyHidden(heading));
@@ -204,7 +282,7 @@ function runHeadingJumps(): RuleExecution {
 export function runFocusTraceScan(): ScanResult {
   const ariaExecutions = ariaWarningExecutions(evaluateAriaAuthoringSignals());
   const headings = collectHeadingOutline();
-  const executions = [runPageTitle(), runPageLangPresent(), runPageLangKnown(), runImages(), runButtons(), runFormFields(), runPlaceholderOnlyLabels(), runLinks(), runLabelInName(), runAriaHiddenFocusable(), ...ariaExecutions, runPositiveTabindex(), runHeadingJumps()];
+  const executions = [runPageTitle(), runPageLangPresent(), runPageLangKnown(), runImages(), runButtons(), runFormFields(), runPlaceholderOnlyLabels(), runLinks(), runLabelInName(), runAriaHiddenFocusable(), runTextContrast(), ...ariaExecutions, runPositiveTabindex(), runHeadingJumps()];
   return {
     engine: 'FocusTrace Rules',
     standard: 'WCAG 2.2',
