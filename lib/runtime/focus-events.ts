@@ -13,8 +13,36 @@ export function createFocusEvent({ element, label }: FocusEventInput): PendingRu
   return {
     kind: 'focus',
     severity: 'info',
-    title: `Focus → ${label}`,
+    title: `Focus -> ${label}`,
     element,
+  };
+}
+
+export function createFocusWalkStartEvent(totalCandidates: number): PendingRuntimeEvent {
+  return {
+    kind: 'focus-walk-start',
+    severity: 'info',
+    title: 'Automatic focus walk started',
+    detail: `FocusTrace will move focus across ${totalCandidates} keyboard-focusable candidate${totalCandidates === 1 ? '' : 's'} in computed tab order.`,
+  };
+}
+
+export function createFocusWalkEndEvent({
+  focusedSteps,
+  totalCandidates,
+  skipped,
+  stopped,
+}: {
+  focusedSteps: number;
+  totalCandidates: number;
+  skipped: number;
+  stopped: boolean;
+}): PendingRuntimeEvent {
+  return {
+    kind: 'focus-walk-end',
+    severity: 'info',
+    title: stopped ? 'Automatic focus walk stopped early' : 'Automatic focus walk completed',
+    detail: `Focused ${focusedSteps}/${totalCandidates} candidate${totalCandidates === 1 ? '' : 's'}; skipped ${skipped}.`,
   };
 }
 
