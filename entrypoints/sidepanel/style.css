@@ -1318,3 +1318,227 @@ code {
     width: 100%;
   }
 }
+
+
+/* Visual focus journey */
+.focus-journey-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.focus-journey-summary span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  padding: 9px 5px;
+  border: 1px solid var(--ft-border);
+  border-radius: 9px;
+  background: var(--ft-surface);
+  color: var(--ft-muted);
+  font-size: 9px;
+  text-align: center;
+}
+
+.focus-journey-summary strong {
+  color: var(--ft-text);
+  font-size: 18px;
+}
+
+.focus-journey-summary span.has-warning {
+  border-color: color-mix(in srgb, var(--ft-warning) 55%, var(--ft-border));
+  background: var(--ft-warning-soft);
+}
+
+.focus-journey-summary span.has-warning strong {
+  color: var(--ft-warning);
+}
+
+.focus-journey-graph {
+  list-style: none;
+  margin: 0;
+  padding: 2px 0;
+  display: grid;
+}
+
+.journey-step {
+  position: relative;
+  display: grid;
+}
+
+.journey-connector {
+  position: relative;
+  min-height: 31px;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 9px;
+  align-items: center;
+  color: var(--ft-muted);
+}
+
+.journey-connector::before {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 16px;
+  width: 2px;
+  background: var(--ft-border);
+  content: "";
+}
+
+.journey-connector > span {
+  position: relative;
+  z-index: 1;
+  width: 24px;
+  height: 24px;
+  margin-left: 5px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--ft-surface);
+  color: var(--ft-muted);
+  font-size: 13px;
+  font-weight: 800;
+}
+
+.journey-connector > strong {
+  font-size: 9px;
+  font-weight: 750;
+}
+
+.direction-backward .journey-connector::before,
+.direction-backward .journey-connector > span {
+  background: var(--ft-danger-soft);
+  color: var(--ft-danger);
+}
+
+.direction-backward .journey-connector > strong {
+  color: var(--ft-danger);
+}
+
+.direction-repeat .journey-connector::before,
+.direction-repeat .journey-connector > span,
+.direction-jump .journey-connector::before,
+.direction-jump .journey-connector > span {
+  background: var(--ft-warning-soft);
+  color: var(--ft-warning);
+}
+
+.direction-repeat .journey-connector > strong,
+.direction-jump .journey-connector > strong {
+  color: var(--ft-warning);
+}
+
+.direction-wrap .journey-connector::before,
+.direction-wrap .journey-connector > span {
+  background: var(--ft-brand-soft);
+  color: var(--ft-brand-strong);
+}
+
+.journey-step > button {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr) auto;
+  gap: 9px;
+  align-items: center;
+  border: 1px solid var(--ft-border);
+  border-radius: 11px;
+  padding: 9px;
+  background: var(--ft-surface);
+  color: var(--ft-text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.journey-step > button:hover {
+  border-color: color-mix(in srgb, var(--ft-brand) 48%, var(--ft-border));
+  background: var(--ft-brand-soft);
+}
+
+.journey-step > button[aria-current="step"] {
+  border-color: var(--ft-brand);
+  box-shadow: inset 0 0 0 1px var(--ft-brand);
+  background: var(--ft-brand-soft);
+}
+
+.journey-node {
+  width: 32px;
+  height: 32px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--ft-brand);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 850;
+}
+
+.direction-backward .journey-node {
+  background: var(--ft-danger);
+}
+
+.direction-repeat .journey-node,
+.direction-jump .journey-node {
+  background: var(--ft-warning);
+}
+
+.journey-node-copy {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.journey-node-copy strong {
+  overflow: hidden;
+  color: var(--ft-text);
+  font-size: 11px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.journey-node-copy small {
+  overflow: hidden;
+  color: var(--ft-muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.journey-signal {
+  padding: 3px 6px;
+  border-radius: 999px;
+  color: var(--ft-warning);
+  font-size: 8px;
+  font-weight: 800;
+}
+
+.journey-signal.fail {
+  color: var(--ft-danger);
+}
+
+.show-full-journey {
+  min-height: 36px;
+  border: 1px solid var(--ft-border);
+  border-radius: 9px;
+  background: var(--ft-surface);
+  color: var(--ft-text);
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 750;
+}
+
+@media (max-width: 380px) {
+  .focus-journey-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .journey-step > button {
+    grid-template-columns: 34px minmax(0, 1fr);
+  }
+
+  .journey-signal {
+    grid-column: 2;
+    width: fit-content;
+  }
+}
