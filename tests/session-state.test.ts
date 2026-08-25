@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { buildFocusJourney } from '../lib/runtime/focus-journey';
 import {
   MAX_RUNTIME_EVENTS,
   appendRuntimeEventToSession,
@@ -95,6 +96,11 @@ describe('runtime session state helpers', () => {
     expect(next.pausedByBreakpoint).toBeUndefined();
     expect(next.scan).toBe(scan);
     expect(next.breakpoints).toBe(current.breakpoints);
+
+    const restarted = appendRuntimeEventToSession(next, event('2', {
+      element: { tag: 'button', selector: '#fresh-start', name: 'Fresh start' },
+    }));
+    expect(buildFocusJourney(restarted.events).steps[0]?.order).toBe(1);
   });
 
   it('starts recording from a clean pause state and normalizes saved breakpoints', () => {
