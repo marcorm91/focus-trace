@@ -50,6 +50,7 @@ export const RULES = {
   labelInName: { id: 'FT-WCAG-007', title: 'Visible label is part of the accessible name', severity: 'serious', references: [wcag('2.5.3', 'Label in Name', 'A', 'label-in-name'), act('2ee8b8', 'Visible label is part of accessible name')] },
   pageLangPresent: { id: 'FT-WCAG-008', title: 'HTML page has a non-empty lang attribute', severity: 'serious', references: [wcag('3.1.1', 'Language of Page', 'A', 'language-of-page'), act('b5c3f8', 'HTML page has lang attribute')] },
   pageLangKnown: { id: 'FT-WCAG-009', title: 'HTML page lang has a known primary language tag', severity: 'serious', references: [wcag('3.1.1', 'Language of Page', 'A', 'language-of-page'), act('bf051a', 'HTML page lang attribute has valid language tag')] },
+  textContrast: { id: 'FT-WCAG-010', title: 'Text has sufficient color contrast', severity: 'serious', references: [wcag('1.4.3', 'Contrast (Minimum)', 'AA', 'contrast-minimum')] },
   deprecatedAriaRole: { id: 'FT-WARN-001', title: 'Deprecated ARIA role is used', severity: 'moderate', references: [aria] },
   deprecatedAriaProperty: { id: 'FT-WARN-002', title: 'ARIA state or property is deprecated for this role', severity: 'minor', references: [aria] },
   prohibitedAriaProperty: { id: 'FT-WARN-003', title: 'ARIA state or property is prohibited for this role', severity: 'moderate', references: [aria] },
