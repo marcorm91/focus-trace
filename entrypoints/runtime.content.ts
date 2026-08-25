@@ -146,7 +146,7 @@ export default defineContentScript({
         );
       });
 
-    const sleep = (ms: number) => new Promise((resolve) => ctx.setTimeout(resolve, ms));
+    const sleep = (ms: number) => new Promise((resolve) => ctx.setTimeout(() => resolve(undefined), ms));
 
     const runAutomaticFocusWalk = async (options: FocusWalkOptions = {}): Promise<FocusWalkResult> => {
       if (focusWalkRunning) {
