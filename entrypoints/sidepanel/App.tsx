@@ -20,6 +20,7 @@ import { locateScanTargetInPage, type ScanTargetHighlightResult } from '../../li
 import { SETTINGS_STORAGE_KEY, tr, type AppLanguage } from '../../shared/i18n';
 import type {
   ExtensionMessage,
+  FocusWalkResult,
   RuntimeBreakpointId,
   RuntimeBreakpointSettings,
   ScanResult,
@@ -55,6 +56,10 @@ async function activeTabId() {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   if (tab?.id == null) throw new Error('No active browser tab is available.');
   return tab.id;
+}
+
+function waitForRuntimeFlush() {
+  return new Promise((resolve) => setTimeout(resolve, 250));
 }
 
 export default function App() {
@@ -229,6 +234,80 @@ export default function App() {
     }
   }, [breakpointSettings, ensureInjected, session.pausedByBreakpoint, session.recording, tabId]);
 
+  const runFocusWalk = useCallback(async () => {
+    if (tabId == null) return;
+    setBusy(true);
+    setError(undefined);
+    let contentRecording = false;
+
+    try {
+      await ensureInjected();
+      await browser.scripting.executeScript({
+        target: { tabId },
+        func: clearFocusPathInPage,
+      }).catch(() => undefined);
+      setFocusPathVisible(false);
+      setSelectedFocusSelector(undefined);
+
+      await browser.runtime.sendMessage({ type: 'FOCUSTRACE_CLEAR_SESSION', tabId } satisfies ExtensionMessage);
+      await browser.tabs.sendMessage(tabId, {
+        type: 'FOCUSTRACE_SET_RECORDING',
+        enabled: true,
+        breakpoints: breakpointSettings,
+      } satisfies ExtensionMessage);
+      contentRecording = true;
+      const started = (await browser.runtime.sendMessage({
+        type: 'FOCUSTRACE_SET_RECORDING_STATE',
+        tabId,
+        enabled: true,
+        startedAt: Date.now(),
+      } satisfies ExtensionMessage)) as SessionState;
+      setSession(started);
+      setView('focus');
+
+      const result = (await browser.tabs.sendMessage(tabId, {
+        type: 'FOCUSTRACE_RUN_FOCUS_WALK',
+        options: { delayMs: 180, maxSteps: 80 },
+      } satisfies ExtensionMessage)) as FocusWalkResult;
+
+      await waitForRuntimeFlush();
+      await browser.tabs.sendMessage(tabId, {
+        type: 'FOCUSTRACE_SET_RECORDING',
+        enabled: false,
+        breakpoints: breakpointSettings,
+      } satisfies ExtensionMessage);
+      contentRecording = false;
+      const stopped = (await browser.runtime.sendMessage({
+        type: 'FOCUSTRACE_SET_RECORDING_STATE',
+        tabId,
+        enabled: false,
+      } satisfies ExtensionMessage)) as SessionState;
+      setSession(stopped);
+      await waitForRuntimeFlush();
+      await refresh(tabId);
+      setView(result.focusedSteps > 0 ? 'report' : 'focus');
+      if (result.focusedSteps === 0) {
+        setError(tr(language, 'No keyboard-focusable elements were detected on this page.', 'No se han detectado elementos enfocables por teclado en esta página.'));
+      }
+    } catch (reason) {
+      if (contentRecording) {
+        await browser.tabs.sendMessage(tabId, {
+          type: 'FOCUSTRACE_SET_RECORDING',
+          enabled: false,
+          breakpoints: breakpointSettings,
+        } satisfies ExtensionMessage).catch(() => undefined);
+        await browser.runtime.sendMessage({
+          type: 'FOCUSTRACE_SET_RECORDING_STATE',
+          tabId,
+          enabled: false,
+        } satisfies ExtensionMessage).catch(() => undefined);
+      }
+      setError(reason instanceof Error ? reason.message : String(reason));
+    } finally {
+      setBusy(false);
+    }
+  }, [breakpointSettings, ensureInjected, language, refresh, tabId]);
+
   const setBreakpoint = useCallback(async (breakpointId: RuntimeBreakpointId, enabled: boolean) => {
     if (tabId == null) return;
     setError(undefined);
@@ -367,8 +446,8 @@ export default function App() {
           )
         : tr(
             language,
-            'Analyze the current page or record a journey to inspect focus and dynamic changes.',
-            'Analiza la página actual o graba un recorrido para revisar el foco y los cambios dinámicos.',
+            'Analyze the current page, record a journey or simulate focus to inspect keyboard navigation.',
+            'Analiza la página actual, graba un recorrido o simula el foco para revisar la navegación por teclado.',
           );
   const sessionTone = session.recording ? 'live' : session.pausedByBreakpoint ? 'paused' : hasRecordedJourney ? 'stopped' : 'ready';
 
@@ -438,6 +517,10 @@ export default function App() {
           <button className="scan-action" type="button" onClick={runScan} disabled={busy || tabId == null}>
             <span aria-hidden="true">⌕</span>
             {busy ? tr(language, 'Working…', 'Procesando…') : tr(language, 'Analyze page', 'Analizar página')}
+          </button>
+          <button className="focus-walk-action" type="button" onClick={runFocusWalk} disabled={busy || tabId == null || session.recording}>
+            <span aria-hidden="true">◎</span>
+            {busy ? tr(language, 'Simulating…', 'Simulando…') : tr(language, 'Simulate focus', 'Simular foco')}
           </button>
         </div>
       </section>
