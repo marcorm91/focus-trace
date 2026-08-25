@@ -1,5 +1,5 @@
 import { RULES } from '../../shared/rule-catalog';
-import type { ElementSnapshot, RuntimeEvent } from '../../shared/types';
+import type { ElementSnapshot, FocusWalkResult, RuntimeEvent } from '../../shared/types';
 import { createRuntimeCause as cause } from './events';
 
 type PendingRuntimeEvent = Omit<RuntimeEvent, 'id' | 'timestamp'>;
@@ -24,6 +24,12 @@ export function createFocusWalkStartEvent(totalCandidates: number): PendingRunti
     severity: 'info',
     title: 'Automatic focus walk started',
     detail: `FocusTrace will move focus across ${totalCandidates} keyboard-focusable candidate${totalCandidates === 1 ? '' : 's'} in computed tab order.`,
+    focusWalk: {
+      totalCandidates,
+      focusedSteps: 0,
+      skipped: 0,
+      stopped: false,
+    },
   };
 }
 
@@ -32,17 +38,18 @@ export function createFocusWalkEndEvent({
   totalCandidates,
   skipped,
   stopped,
-}: {
-  focusedSteps: number;
-  totalCandidates: number;
-  skipped: number;
-  stopped: boolean;
-}): PendingRuntimeEvent {
+}: FocusWalkResult): PendingRuntimeEvent {
   return {
     kind: 'focus-walk-end',
     severity: 'info',
     title: stopped ? 'Automatic focus walk stopped early' : 'Automatic focus walk completed',
     detail: `Focused ${focusedSteps}/${totalCandidates} candidate${totalCandidates === 1 ? '' : 's'}; skipped ${skipped}.`,
+    focusWalk: {
+      focusedSteps,
+      totalCandidates,
+      skipped,
+      stopped,
+    },
   };
 }
 
