@@ -47,7 +47,16 @@ describe('focus path page overlay', () => {
 
     const result = showFocusPathInPage([
       { selector: '#first', label: 'First', orders: [1, 3] },
-      { selector: '#second', label: 'Second', orders: [2] },
+      {
+        selector: '#second',
+        label: 'Second',
+        orders: [2],
+        tone: 'fail',
+        status: 'Likely failure',
+        detail: 'The button has no accessible name.',
+        meta: 'button · Unnamed',
+        findingCount: 2,
+      },
       { selector: '#removed', label: 'Removed', orders: [4] },
     ], '#second');
 
@@ -58,7 +67,14 @@ describe('focus path page overlay', () => {
     expect(overlays[0]?.textContent).toBe('1 · 3');
     expect(overlays[1]?.textContent).toBe('2');
     expect((overlays[1] as HTMLElement).style.border).toContain('4px');
+    expect((overlays[1] as HTMLElement).dataset.focustraceTone).toBe('fail');
     expect((overlays[2] as HTMLElement).style.display).toBe('none');
+
+    const card = document.querySelector<HTMLElement>('[data-focustrace-inspector-card]');
+    expect(card?.textContent).toContain('#2 · Second');
+    expect(card?.textContent).toContain('Likely failure');
+    expect(card?.textContent).toContain('The button has no accessible name.');
+    expect(card?.textContent).toContain('2 linked findings');
 
     expect(clearFocusPathInPage()).toEqual({ removed: true });
     expect(document.querySelector('[data-focustrace-focus-path]')).toBeNull();
