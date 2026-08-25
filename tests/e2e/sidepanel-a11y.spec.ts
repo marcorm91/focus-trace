@@ -90,3 +90,31 @@ test('language setting updates the document language and visible navigation', as
   await expect(panel.getByRole('button', { name: 'Encabezados' })).toBeVisible();
   await expect(panel.getByRole('button', { name: 'Informe' })).toBeVisible();
 });
+
+test('text and interface size reaches 130 percent, persists and does not overflow', async ({ context, extensionWorker }) => {
+  const panel = await openSidepanel(context, extensionWorker);
+  await panel.setViewportSize({ width: 360, height: 800 });
+  await panel.getByRole('button', { name: /Open settings|Abrir ajustes/ }).click();
+
+  const increase = panel.getByRole('button', { name: /Increase text and interface size|Aumentar tamaño de texto e interfaz/ });
+  const current = panel.locator('.ui-scale-value');
+  await expect(current).toHaveText('100%');
+
+  await increase.click();
+  await increase.click();
+  await increase.click();
+
+  await expect(current).toHaveText('130%');
+  await expect(increase).toBeDisabled();
+  await expect(panel.locator('html')).toHaveAttribute('data-ft-ui-scale', '130');
+
+  const noHorizontalOverflow = await panel.evaluate(() =>
+    document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+  );
+  expect(noHorizontalOverflow).toBe(true);
+
+  await panel.reload();
+  await expect(panel.locator('html')).toHaveAttribute('data-ft-ui-scale', '130');
+  await panel.getByRole('button', { name: /Open settings|Abrir ajustes/ }).click();
+  await expect(panel.locator('.ui-scale-value')).toHaveText('130%');
+});
