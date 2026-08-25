@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { focusWalkCandidates } from '../lib/runtime/focus-walk';
+import { focusWalkCandidates, sequentialFocusPosition } from '../lib/runtime/focus-walk';
 
 function render(body: string) {
   document.open();
@@ -53,5 +53,19 @@ describe('focusWalkCandidates', () => {
     `);
 
     expect(focusWalkCandidates().map((candidate) => candidate.selector)).toEqual(['#editable', '#custom']);
+  });
+
+  it('returns the one-based position and total sequential focus size', () => {
+    render(`
+      <button id="first">First</button>
+      <button id="second">Second</button>
+      <a id="third" href="/third">Third</a>
+    `);
+
+    expect(sequentialFocusPosition(document.querySelector('#second')!)).toEqual({
+      index: 2,
+      size: 3,
+    });
+    expect(sequentialFocusPosition(document.body)).toBeUndefined();
   });
 });
