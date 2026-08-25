@@ -1,8 +1,15 @@
 import { browser, defineBackground } from '#imports';
-import { defaultRuntimeBreakpointSettings, normalizeRuntimeBreakpointSettings } from '../lib/runtime/breakpoints';
+import {
+  appendRuntimeEventToSession,
+  clearSessionEvents,
+  emptySessionState,
+  normalizeSessionState,
+  setSessionRecordingState,
+  updateSessionBreakpoints,
+  updateSessionScan,
+} from '../lib/runtime/session-state';
 import type { ExtensionMessage, SessionState } from '../shared/types';
 
-const MAX_EVENTS = 500;
 const keyForTab = (tabId: number) => `session:${tabId}`;
 const tabWriteQueues = new Map<number, Promise<unknown>>();
 
@@ -19,20 +26,11 @@ function serializeTabWrite<T>(tabId: number, work: () => Promise<T>): Promise<T>
   return next;
 }
 
-function normalizeSession(state: SessionState): SessionState {
-  return {
-    ...state,
-    breakpoints: normalizeRuntimeBreakpointSettings(state.breakpoints),
-  };
-}
-
 async function getSession(tabId: number): Promise<SessionState> {
   const key = keyForTab(tabId);
   const stored = await browser.storage.session.get(key);
   const existing = stored[key] as SessionState | undefined;
-  return existing
-    ? normalizeSession(existing)
-    : { tabId, recording: false, events: [], breakpoints: defaultRuntimeBreakpointSettings() };
+  return existing ? normalizeSessionState(existing) : emptySessionState(tabId);
 }
 
 async function saveSession(state: SessionState) {
@@ -86,13 +84,7 @@ export default defineBackground(() => {
       if (tabId == null) return;
       return serializeTabWrite(tabId, async () => {
         const state = await getSession(tabId);
-        const firstBreakpointHit = message.event.breakpointHits?.[0];
-        const next: SessionState = {
-          ...state,
-          recording: firstBreakpointHit ? false : state.recording,
-          events: [...state.events, message.event].slice(-MAX_EVENTS),
-          ...(firstBreakpointHit ? { pausedByBreakpoint: firstBreakpointHit } : {}),
-        };
+        const next = appendRuntimeEventToSession(state, message.event);
         await saveSession(next);
         await broadcast(next);
       });
@@ -109,13 +101,7 @@ export default defineBackground(() => {
     if (message.type === 'FOCUSTRACE_CLEAR_SESSION') {
       return serializeTabWrite(message.tabId, async () => {
         const current = await getSession(message.tabId);
-        const { pausedByBreakpoint: _paused, ...rest } = current;
-        const next: SessionState = {
-          ...rest,
-          tabId: message.tabId,
-          recording: false,
-          events: [],
-        };
+        const next = clearSessionEvents(current, message.tabId);
         await saveSession(next);
         await broadcast(next);
         return next;
@@ -125,12 +111,7 @@ export default defineBackground(() => {
     if (message.type === 'FOCUSTRACE_SET_RECORDING_STATE') {
       return serializeTabWrite(message.tabId, async () => {
         const state = await getSession(message.tabId);
-        const { pausedByBreakpoint: _paused, ...rest } = state;
-        const next: SessionState = {
-          ...rest,
-          recording: message.enabled,
-          ...(message.enabled && message.startedAt ? { startedAt: message.startedAt } : {}),
-        };
+        const next = setSessionRecordingState(state, message.enabled, message.startedAt);
         await saveSession(next);
         await broadcast(next);
         return next;
@@ -140,10 +121,7 @@ export default defineBackground(() => {
     if (message.type === 'FOCUSTRACE_SAVE_BREAKPOINTS') {
       return serializeTabWrite(message.tabId, async () => {
         const state = await getSession(message.tabId);
-        const next: SessionState = {
-          ...state,
-          breakpoints: normalizeRuntimeBreakpointSettings(message.breakpoints),
-        };
+        const next = updateSessionBreakpoints(state, message.breakpoints);
         await saveSession(next);
         await broadcast(next);
         return next;
@@ -153,7 +131,7 @@ export default defineBackground(() => {
     if (message.type === 'FOCUSTRACE_SAVE_SCAN') {
       return serializeTabWrite(message.tabId, async () => {
         const state = await getSession(message.tabId);
-        const next: SessionState = { ...state, scan: message.scan };
+        const next = updateSessionScan(state, message.scan);
         await saveSession(next);
         await broadcast(next);
         return next;
