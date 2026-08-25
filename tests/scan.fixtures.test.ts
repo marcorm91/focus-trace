@@ -13,9 +13,9 @@ function loadFixture(name: 'pass' | 'fail') {
   document.close();
 }
 
-function render(htmlAttributes: string, body = '<main><h1>Test</h1></main>') {
+function render(htmlAttributes: string, body = '<main><h1>Test</h1></main>', styles = '') {
   document.open();
-  document.write(`<!doctype html><html ${htmlAttributes}><head><title>Test</title></head><body>${body}</body></html>`);
+  document.write(`<!doctype html><html ${htmlAttributes}><head><title>Test</title>${styles ? `<style>${styles}</style>` : ''}</head><body>${body}</body></html>`);
   document.close();
 }
 
@@ -23,11 +23,11 @@ describe('FocusTrace WCAG rule fixtures', () => {
   it('produces no findings for the passing fixture', () => {
     loadFixture('pass');
     const result = runFocusTraceScan();
-    expect(result.rulesRun).toBe(15);
+    expect(result.rulesRun).toBe(16);
     expect(result.issues).toEqual([]);
     expect(result.review).toEqual([]);
     expect(result.warnings).toEqual([]);
-    expect(result.passes).toBe(15);
+    expect(result.passes).toBe(16);
   });
 
   it('produces the expected deterministic failures and review signals', () => {
@@ -106,5 +106,34 @@ describe('FocusTrace WCAG rule fixtures', () => {
     render('lang="en"', '<main><h1>Test</h1><div id="alert" role="alert" aria-disabled="true">Notice</div></main>');
     const result = runFocusTraceScan();
     expect(result.warnings.map((issue) => issue.ruleId)).toContain('FT-WARN-002');
+  });
+
+  it('adds low text contrast to the same full-page scan with structured evidence', () => {
+    render(
+      'lang="en"',
+      '<main><h1>Contrast</h1><p id="low">Secondary description</p></main>',
+      'html,body{background:rgb(255,255,255);color:rgb(0,0,0);font-size:16px} #low{color:rgb(119,119,119);background:rgb(255,255,255);font-size:16px;font-weight:400}',
+    );
+    const result = runFocusTraceScan();
+    const contrast = result.issues.find((issue) => issue.ruleId === 'FT-WCAG-010' && issue.targets.includes('#low'));
+    expect(contrast?.contrast).toMatchObject({
+      ratio: 4.48,
+      requiredRatio: 4.5,
+      foreground: 'rgb(119, 119, 119)',
+      background: 'rgb(255, 255, 255)',
+      largeText: false,
+    });
+  });
+
+  it('sends complex gradient contrast to review instead of fail', () => {
+    render(
+      'lang="en"',
+      '<main><h1>Contrast</h1><p id="hero">Hero copy</p></main>',
+      'html,body{background:#fff;color:#000;font-size:16px} #hero{color:rgb(119,119,119);background-image:linear-gradient(#fff,#ddd);font-size:16px}',
+    );
+    const result = runFocusTraceScan();
+    expect(result.issues.some((issue) => issue.ruleId === 'FT-WCAG-010' && issue.targets.includes('#hero'))).toBe(false);
+    const review = result.review.find((issue) => issue.ruleId === 'FT-WCAG-010' && issue.targets.includes('#hero'));
+    expect(review?.contrast?.reason).toContain('background image or gradient');
   });
 });
