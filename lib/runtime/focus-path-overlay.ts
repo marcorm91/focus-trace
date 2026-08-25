@@ -1,13 +1,38 @@
+export type FocusPathOverlayTone = 'ok' | 'review' | 'fail';
+
 export interface FocusPathOverlayEntry {
   selector: string;
   label: string;
   orders: number[];
+  tone?: FocusPathOverlayTone;
+  status?: string;
+  detail?: string;
+  meta?: string;
+  findingCount?: number;
 }
 
 export interface FocusPathOverlayResult {
   found: number;
   missing: number;
 }
+
+const TONE_COLORS: Record<FocusPathOverlayTone, { solid: string; fill: string; ring: string }> = {
+  ok: {
+    solid: '#08745b',
+    fill: 'rgba(8, 116, 91, 0.08)',
+    ring: 'rgba(8, 116, 91, 0.22)',
+  },
+  review: {
+    solid: '#b54708',
+    fill: 'rgba(181, 71, 8, 0.08)',
+    ring: 'rgba(181, 71, 8, 0.22)',
+  },
+  fail: {
+    solid: '#b42318',
+    fill: 'rgba(180, 35, 24, 0.08)',
+    ring: 'rgba(180, 35, 24, 0.22)',
+  },
+};
 
 export function clearFocusPathInPage(): { removed: boolean } {
   const overlay = document.querySelector('[data-focustrace-focus-path]');
@@ -43,18 +68,18 @@ export function showFocusPathInPage(
 
   const items = entries.map((entry) => {
     const selected = entry.selector === selectedSelector;
-    const color = selected ? '#1d4ed8' : '#6d28d9';
+    const tone = entry.tone ?? 'review';
+    const colors = TONE_COLORS[tone];
     const overlay = document.createElement('div');
     overlay.setAttribute('data-focustrace-focus-target', entry.selector);
+    overlay.setAttribute('data-focustrace-tone', tone);
     Object.assign(overlay.style, {
       position: 'absolute',
       display: 'none',
-      border: `${selected ? 4 : 3}px solid ${color}`,
-      borderRadius: '5px',
-      background: selected ? 'rgba(29, 78, 216, 0.10)' : 'rgba(109, 40, 217, 0.07)',
-      boxShadow: selected
-        ? '0 0 0 5px rgba(29, 78, 216, 0.24)'
-        : '0 0 0 4px rgba(109, 40, 217, 0.20)',
+      border: `${selected ? 4 : 2}px solid ${colors.solid}`,
+      borderRadius: '7px',
+      background: selected ? colors.fill : 'transparent',
+      boxShadow: selected ? `0 0 0 5px ${colors.ring}` : 'none',
       pointerEvents: 'none',
       boxSizing: 'border-box',
     });
@@ -66,22 +91,99 @@ export function showFocusPathInPage(
     badge.title = `${entry.label}: ${entry.orders.join(', ')}`;
     Object.assign(badge.style, {
       position: 'absolute',
-      top: '-27px',
-      left: `${selected ? -4 : -3}px`,
-      minWidth: '24px',
+      top: '-28px',
+      left: `${selected ? -4 : -2}px`,
+      minWidth: '25px',
       padding: '3px 7px',
       borderRadius: '999px',
-      background: color,
+      background: colors.solid,
       color: '#fff',
       font: '800 12px/1.5 system-ui, sans-serif',
       textAlign: 'center',
       whiteSpace: 'nowrap',
-      boxShadow: '0 1px 4px rgba(0, 0, 0, 0.3)',
+      boxShadow: '0 2px 6px rgba(0, 0, 0, 0.24)',
     });
     overlay.append(badge);
     root.append(overlay);
     return { entry, overlay, selected };
   });
+
+  const selectedItem = items.find((item) => item.selected);
+  const card = selectedItem ? document.createElement('aside') : undefined;
+  if (card && selectedItem) {
+    card.setAttribute('data-focustrace-inspector-card', 'true');
+    const heading = document.createElement('div');
+    const title = document.createElement('strong');
+    const status = document.createElement('span');
+    const meta = document.createElement('div');
+    const detail = document.createElement('p');
+    const count = document.createElement('div');
+    const tone = selectedItem.entry.tone ?? 'review';
+    const colors = TONE_COLORS[tone];
+
+    title.textContent = `#${selectedItem.entry.orders[0] ?? ''} · ${selectedItem.entry.label}`;
+    status.textContent = selectedItem.entry.status ?? '';
+    meta.textContent = selectedItem.entry.meta ?? selectedItem.entry.selector;
+    detail.textContent = selectedItem.entry.detail ?? '';
+    count.textContent = selectedItem.entry.findingCount
+      ? `${selectedItem.entry.findingCount} linked finding${selectedItem.entry.findingCount === 1 ? '' : 's'}`
+      : '';
+
+    Object.assign(card.style, {
+      position: 'fixed',
+      display: 'none',
+      width: 'min(360px, calc(100vw - 24px))',
+      padding: '13px 14px',
+      border: `1px solid ${colors.solid}`,
+      borderLeft: `5px solid ${colors.solid}`,
+      borderRadius: '11px',
+      background: '#fff',
+      color: '#172033',
+      boxShadow: '0 14px 34px rgba(15, 23, 42, 0.24)',
+      font: '400 13px/1.45 system-ui, sans-serif',
+      pointerEvents: 'none',
+      boxSizing: 'border-box',
+    });
+    Object.assign(heading.style, {
+      display: 'flex',
+      alignItems: 'start',
+      justifyContent: 'space-between',
+      gap: '12px',
+      marginBottom: '5px',
+    });
+    Object.assign(title.style, {
+      minWidth: '0',
+      fontSize: '14px',
+      lineHeight: '1.35',
+    });
+    Object.assign(status.style, {
+      flex: '0 0 auto',
+      color: colors.solid,
+      fontSize: '11px',
+      fontWeight: '800',
+    });
+    Object.assign(meta.style, {
+      marginBottom: '7px',
+      color: '#667085',
+      fontSize: '11px',
+      overflowWrap: 'anywhere',
+    });
+    Object.assign(detail.style, {
+      margin: '0',
+      color: '#344054',
+    });
+    Object.assign(count.style, {
+      display: selectedItem.entry.findingCount ? 'block' : 'none',
+      marginTop: '8px',
+      color: colors.solid,
+      fontSize: '11px',
+      fontWeight: '700',
+    });
+
+    heading.append(title, status);
+    card.append(heading, meta, detail, count);
+    root.append(card);
+  }
 
   document.documentElement.append(root);
 
@@ -101,8 +203,31 @@ export function showFocusPathInPage(
     });
   }
 
+  const positionCard = (rect: DOMRect): void => {
+    if (!card) return;
+    const margin = 12;
+    const cardWidth = Math.min(360, Math.max(240, window.innerWidth - margin * 2));
+    const estimatedHeight = 155;
+    const below = rect.bottom + margin;
+    const top = below + estimatedHeight <= window.innerHeight
+      ? below
+      : Math.max(margin, rect.top - estimatedHeight - margin);
+    const left = Math.min(
+      Math.max(margin, rect.left),
+      Math.max(margin, window.innerWidth - cardWidth - margin),
+    );
+    Object.assign(card.style, {
+      display: 'block',
+      top: `${top}px`,
+      left: `${left}px`,
+      width: `${cardWidth}px`,
+    });
+  };
+
   const update = (): number => {
     let found = 0;
+    if (card) card.style.display = 'none';
+
     for (const item of items) {
       const target = findTarget(item.entry.selector);
       if (!target) {
@@ -125,6 +250,7 @@ export function showFocusPathInPage(
         width: `${rect.width + padding * 2}px`,
         height: `${rect.height + padding * 2}px`,
       });
+      if (item.selected) positionCard(rect);
     }
     return found;
   };
