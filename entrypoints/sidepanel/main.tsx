@@ -7,6 +7,7 @@ import './style.css';
 import './focus-graph.css';
 import './scan-settings.css';
 import './ux-polish.css';
+import './settings-scale.css';
 import './ui-scale.css';
 
 const root = document.getElementById('root');
