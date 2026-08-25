@@ -5,3 +5,19 @@ dist
 .DS_Store
 playwright-report
 test-results
+coverage
+*.log
+
+# Local environment and secret files
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Local editor and OS metadata
+.idea
+.vscode
+Thumbs.db
