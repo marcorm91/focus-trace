@@ -6,6 +6,12 @@ import {
   normalizeRuntimeBreakpointSettings,
 } from '../lib/runtime/breakpoints';
 import { RuntimeInteractionTracker } from '../lib/runtime/causality';
+import {
+  createDialogCloseEvent,
+  createDialogFocusEscapeEvent,
+  createDialogOpenEvent,
+  createDialogRestoreFocusEvent,
+} from '../lib/runtime/dialog-events';
 import { createRuntimeCause as cause, createRuntimeEventId as uid } from '../lib/runtime/events';
 import {
   actionTarget,
@@ -184,17 +190,10 @@ export default defineContentScript({
         for (const state of dialogs.values()) {
           if (!isDialogOpen(state.element) || !isModalDialog(state.element) || state.element.contains(event.target)) continue;
           emit(
-            {
-              kind: 'dialog-focus-escape',
-              severity: RULES.dialogFocusEscape.severity,
-              outcome: 'review',
-              ruleId: RULES.dialogFocusEscape.id,
-              references: RULES.dialogFocusEscape.references,
-              title: RULES.dialogFocusEscape.title,
-              detail: `Focus moved to ${selectorFor(event.target)} while a modal dialog remained open.`,
-              element: snapshot(event.target),
-              causes: [cause('MODAL_FOCUS_ESCAPE', 'Focus moved outside an open modal dialog.')],
-            },
+            createDialogFocusEscapeEvent({
+              target: snapshot(event.target),
+              targetSelector: selectorFor(event.target),
+            }),
             interactionId,
           );
         }
@@ -256,34 +255,7 @@ export default defineContentScript({
       queueMicrotask(() => {
         if (!recording || !isDialogOpen(dialog)) return;
         const focusedInside = document.activeElement instanceof Element && dialog.contains(document.activeElement);
-        emit(
-          {
-            kind: 'dialog-open',
-            severity: focusedInside ? 'info' : RULES.dialogInitialFocus.severity,
-            ...(focusedInside
-              ? {}
-              : {
-                  outcome: 'review' as const,
-                  ruleId: RULES.dialogInitialFocus.id,
-                  references: RULES.dialogInitialFocus.references,
-                  causes: [
-                    cause(
-                      'DIALOG_OPENED_WITHOUT_FOCUS',
-                      'A dialog opened but focus was not established inside it.',
-                    ),
-                  ],
-                }),
-            title: focusedInside ? 'Dialog opened with focus inside' : RULES.dialogInitialFocus.title,
-            ...(!focusedInside
-              ? {
-                  detail:
-                    'WAI-ARIA APG expects focus to move to an element inside a modal dialog when it opens.',
-                }
-              : {}),
-            element: snapshot(dialog),
-          },
-          interactionId,
-        );
+        emit(createDialogOpenEvent({ dialog: snapshot(dialog), focusedInside }), interactionId);
       });
     };
 
@@ -292,24 +264,17 @@ export default defineContentScript({
         if (isDialogOpen(dialog)) continue;
         dialogs.delete(dialog);
         const interactionId = activeInteractionId();
-        emit({ kind: 'dialog-close', severity: 'info', title: 'Dialog closed', element: snapshot(dialog) }, interactionId);
+        emit(createDialogCloseEvent(snapshot(dialog)), interactionId);
         ctx.setTimeout(() => {
           if (!recording || !state.trigger?.isConnected) return;
           const active = document.activeElement instanceof Element ? document.activeElement : null;
           if (active === state.trigger) return;
           emit(
-            {
-              kind: 'dialog-close',
-              severity: RULES.dialogRestoreFocus.severity,
-              outcome: 'review',
-              ruleId: RULES.dialogRestoreFocus.id,
-              references: RULES.dialogRestoreFocus.references,
-              title: RULES.dialogRestoreFocus.title,
-              detail: `Dialog trigger was ${selectorFor(state.trigger)}; focus ended on ${
-                active ? selectorFor(active) : 'no element'
-              }. APG allows workflow-specific exceptions, so this requires review.`,
-              ...(active ? { element: snapshot(active) } : {}),
-            },
+            createDialogRestoreFocusEvent({
+              triggerSelector: selectorFor(state.trigger),
+              activeSelector: active ? selectorFor(active) : 'no element',
+              ...(active ? { activeElement: snapshot(active) } : {}),
+            }),
             interactionId,
           );
         }, 50);
