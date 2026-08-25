@@ -1,50 +1,76 @@
-import {
-  explanationForCause,
-  humanRuntimeEventTitle,
-  outcomeLabel,
-  type ExplanationLevel,
-} from '../../../lib/runtime/explanations';
-import { localizedSeverity, tr, type AppLanguage } from '../../../shared/i18n';
-import type { RuntimeEvent } from '../../../shared/types';
-import { ReferenceList } from '../components/Common';
+import { useState } from 'react';
+import type { FocusJourney, FocusJourneyDirection } from '../../../lib/runtime/focus-journey';
+import { tr, type AppLanguage } from '../../../shared/i18n';
+
+function directionLabel(
+  direction: FocusJourneyDirection,
+  distance: number | undefined,
+  language: AppLanguage,
+): string {
+  const amount = Math.abs(distance ?? 0);
+  if (direction === 'backward') {
+    return amount > 1
+      ? tr(language, `Moves back ${amount} positions`, `Retrocede ${amount} posiciones`)
+      : tr(language, 'Moves back', 'Retrocede');
+  }
+  if (direction === 'repeat') return tr(language, 'Repeats component', 'Repite componente');
+  if (direction === 'wrap') return tr(language, 'Restarts at beginning', 'Reinicia desde el principio');
+  if (direction === 'jump') {
+    return amount > 1
+      ? tr(language, `Jumps forward ${amount} positions`, `Salta ${amount} posiciones`)
+      : tr(language, 'Jumps forward', 'Salta hacia delante');
+  }
+  if (direction === 'forward') return tr(language, 'Moves forward', 'Avanza');
+  return tr(language, 'Journey starts', 'Inicio del recorrido');
+}
+
+function directionIcon(direction: FocusJourneyDirection): string {
+  if (direction === 'backward') return '↖';
+  if (direction === 'repeat') return '↺';
+  if (direction === 'wrap') return '↻';
+  if (direction === 'jump') return '⇣';
+  if (direction === 'forward') return '↓';
+  return '●';
+}
 
 export function FocusView({
-  latest,
-  count,
+  journey,
   pathSteps,
   pathVisible,
   recording,
   busy,
+  selectedSelector,
   onTogglePath,
   onToggleRecording,
-  level,
+  onSelectStep,
   language,
 }: {
-  latest?: RuntimeEvent | undefined;
-  count: number;
+  journey: FocusJourney;
   pathSteps: number;
   pathVisible: boolean;
   recording: boolean;
   busy: boolean;
+  selectedSelector?: string | undefined;
   onTogglePath: () => void | Promise<void>;
   onToggleRecording: () => void | Promise<void>;
-  level: ExplanationLevel;
+  onSelectStep: (selector: string) => void | Promise<void>;
   language: AppLanguage;
 }) {
-  const primaryCause = latest?.causes?.[0];
-  const explanation = primaryCause ? explanationForCause(primaryCause.type, language) : undefined;
+  const [expanded, setExpanded] = useState(false);
+  const visibleSteps = expanded ? journey.steps : journey.steps.slice(0, 12);
+  const hiddenSteps = journey.steps.length - visibleSteps.length;
 
   return (
-    <section className="panel" aria-labelledby="focus-title">
+    <section className="panel focus-journey-view" aria-labelledby="focus-title">
       <div className="section-heading">
         <div>
           <h2 id="focus-title">{tr(language, 'Focus journey', 'Recorrido de foco')}</h2>
           <p>
-            {count > 0
+            {journey.steps.length
               ? tr(
                   language,
-                  `${count} focus-related events recorded`,
-                  `${count} eventos relacionados con el foco registrados`,
+                  'Read the graph from top to bottom. Every connector explains how focus moved.',
+                  'Lee el grafo de arriba abajo. Cada conexión explica cómo se ha movido el foco.',
                 )
               : tr(
                   language,
@@ -66,13 +92,13 @@ export function FocusView({
             {recording
               ? tr(
                   language,
-                  'Return to the page and navigate with Tab. Recording continues while the panel is not focused.',
-                  'Vuelve a la página y navega con Tab. La grabación continúa aunque el panel no tenga el foco.',
+                  'Return to the page and navigate with Tab or Shift+Tab. Both directions will be recorded.',
+                  'Vuelve a la página y navega con Tab o Shift+Tab. Se registrarán ambas direcciones.',
                 )
               : tr(
                   language,
-                  'Start recording, return to the page and use Tab naturally. Stop when the journey is complete.',
-                  'Inicia la grabación, vuelve a la página y utiliza Tab con normalidad. Deténla al terminar.',
+                  'Start recording, navigate naturally and stop when the journey is complete.',
+                  'Inicia la grabación, navega con normalidad y detenla cuando termines.',
                 )}
           </p>
         </div>
@@ -89,8 +115,15 @@ export function FocusView({
         </button>
       </div>
 
-      {latest ? (
+      {journey.steps.length > 0 ? (
         <>
+          <div className="focus-journey-summary" aria-label={tr(language, 'Journey summary', 'Resumen del recorrido')}>
+            <span><strong>{journey.steps.length}</strong>{tr(language, 'Steps', 'Pasos')}</span>
+            <span><strong>{journey.forward + journey.wraps}</strong>{tr(language, 'Forward', 'Avances')}</span>
+            <span className={journey.backward ? 'has-warning' : ''}><strong>{journey.backward}</strong>{tr(language, 'Backward', 'Retrocesos')}</span>
+            <span className={journey.repeated ? 'has-warning' : ''}><strong>{journey.repeated}</strong>{tr(language, 'Repeated', 'Repetidos')}</span>
+          </div>
+
           <div className="focus-page-controls">
             <button
               className="focus-path-toggle"
@@ -101,53 +134,74 @@ export function FocusView({
             >
               <span className="focus-path-swatch" aria-hidden="true">1</span>
               {pathVisible
-                ? tr(language, 'Hide path on page', 'Ocultar recorrido en la página')
-                : tr(language, 'Show path on page', 'Mostrar recorrido en la página')}
+                ? tr(language, 'Hide route on page', 'Ocultar recorrido en la página')
+                : tr(language, 'Show route on page', 'Mostrar recorrido en la página')}
             </button>
             <p>
-              {recording
-                ? tr(
-                    language,
-                    'Stop recording to project the observed path without changing the captured evidence.',
-                    'Detén la grabación para proyectar el recorrido observado sin modificar la evidencia capturada.',
-                  )
-                : tr(
-                    language,
-                    `${pathSteps} observed focus step${pathSteps === 1 ? '' : 's'}, numbered in recorded order.`,
-                    `${pathSteps} paso${pathSteps === 1 ? '' : 's'} de foco observado${pathSteps === 1 ? '' : 's'}, numerado${pathSteps === 1 ? '' : 's'} en el orden grabado.`,
-                  )}
+              {tr(
+                language,
+                'Select any graph node to locate that step and its evidence on the inspected page.',
+                'Selecciona cualquier nodo del grafo para localizar ese paso y su evidencia en la página.',
+              )}
             </p>
           </div>
 
-          <article className="focus-card">
-            <div className="finding-meta">
-              {latest.outcome && <span className={`outcome ${latest.outcome}`}>{outcomeLabel(latest.outcome, level, language)}</span>}
-              {level !== 'simple' && <span className={`severity ${latest.severity}`}>{localizedSeverity(latest.severity, language)}</span>}
-              {level !== 'simple' && latest.ruleId && <code>{latest.ruleId}</code>}
-            </div>
+          <ol className="focus-journey-graph" aria-label={tr(language, 'Ordered focus graph', 'Grafo ordenado de foco')}>
+            {visibleSteps.map((step) => {
+              const selected = step.element.selector === selectedSelector;
+              const name = step.element.name || tr(language, 'Unnamed component', 'Componente sin nombre');
+              const role = step.element.role ?? step.element.tag;
+              const position = step.element.tabOrderIndex != null && step.element.tabOrderSize != null
+                ? tr(
+                    language,
+                    `Tab position ${step.element.tabOrderIndex} of ${step.element.tabOrderSize}`,
+                    `Posición Tab ${step.element.tabOrderIndex} de ${step.element.tabOrderSize}`,
+                  )
+                : tr(language, 'Tab position unavailable', 'Posición Tab no disponible');
 
-            <h3>{explanation?.title ?? humanRuntimeEventTitle(latest, language)}</h3>
-            {explanation ? (
-              <div className="human-explanation">
-                <p>{explanation.summary}</p>
-                <p><strong>{tr(language, 'Impact:', 'Impacto:')}</strong> {explanation.impact}</p>
-                <p><strong>{tr(language, 'What to review:', 'Qué revisar:')}</strong> {explanation.recommendation}</p>
-                {level !== 'simple' && <p><strong>{tr(language, 'Accessibility:', 'Accesibilidad:')}</strong> {explanation.accessibility}</p>}
-              </div>
-            ) : latest.detail ? <p>{latest.detail}</p> : null}
+              return (
+                <li className={`journey-step direction-${step.direction}`} key={step.id}>
+                  {step.direction !== 'start' && (
+                    <div className="journey-connector">
+                      <span aria-hidden="true">{directionIcon(step.direction)}</span>
+                      <strong>{directionLabel(step.direction, step.distance, language)}</strong>
+                    </div>
+                  )}
+                  <button
+                    type="button"
+                    aria-current={selected ? 'step' : undefined}
+                    onClick={() => void onSelectStep(step.element.selector)}
+                  >
+                    <span className="journey-node" aria-hidden="true">{step.order}</span>
+                    <span className="journey-node-copy">
+                      <strong>{name}</strong>
+                      <small>{role} · {position}</small>
+                    </span>
+                    {step.event.outcome && (
+                      <span className={`journey-signal ${step.event.outcome}`}>
+                        {tr(language, 'Review', 'Revisar')}
+                      </span>
+                    )}
+                  </button>
+                </li>
+              );
+            })}
+          </ol>
 
-            {latest.element && (
-              <dl>
-                <div><dt>{tr(language, 'Name', 'Nombre')}</dt><dd>{latest.element.name ?? '—'}</dd></div>
-                <div><dt>{tr(language, 'Role', 'Rol')}</dt><dd>{latest.element.role ?? latest.element.tag}</dd></div>
-              </dl>
-            )}
-
-            {level === 'developer' && latest.causes?.map((item) => (
-              <p className="cause-line" key={item.type}><strong>{item.type}:</strong> {item.summary}</p>
-            ))}
-            {level !== 'simple' && <ReferenceList references={latest.references} language={language} />}
-          </article>
+          {hiddenSteps > 0 && (
+            <button className="show-full-journey" type="button" onClick={() => setExpanded(true)}>
+              {tr(
+                language,
+                `Show ${hiddenSteps} more steps`,
+                `Mostrar ${hiddenSteps} pasos más`,
+              )}
+            </button>
+          )}
+          {expanded && journey.steps.length > 12 && (
+            <button className="show-full-journey" type="button" onClick={() => setExpanded(false)}>
+              {tr(language, 'Show first 12 steps', 'Mostrar los primeros 12 pasos')}
+            </button>
+          )}
         </>
       ) : (
         <div className="focus-empty-state">
