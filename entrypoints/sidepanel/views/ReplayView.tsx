@@ -1,5 +1,10 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { FocusJourney } from '../../../lib/runtime/focus-journey';
+import {
+  focusTransitionSemanticCopy,
+  focusTransitionSemanticIcon,
+  type FocusTransitionSemantic,
+} from '../../../lib/runtime/focus-transition-semantics';
 import { buildRuntimeReplay, type RuntimeReplayPhase } from '../../../lib/runtime/replay';
 import {
   explanationForCause,
@@ -40,6 +45,7 @@ export function ReplayView({
   events,
   interactions,
   journey,
+  semantics,
   recording,
   level,
   language,
@@ -49,6 +55,7 @@ export function ReplayView({
   events: RuntimeEvent[];
   interactions: RuntimeInteraction[];
   journey: FocusJourney;
+  semantics: FocusTransitionSemantic[];
   recording: boolean;
   level: ExplanationLevel;
   language: AppLanguage;
@@ -71,6 +78,9 @@ export function ReplayView({
     ? interactions.find((interaction) => interaction.id === current.event.interactionId)
     : undefined;
   const linkedToFocusPath = Boolean(current?.target && focusSelectors.has(current.target.selector));
+  const currentSemantics = current
+    ? semantics.filter((semantic) => semantic.eventIds[0] === current.event.id)
+    : [];
 
   useEffect(() => {
     if (recording || !current) return;
@@ -183,6 +193,23 @@ export function ReplayView({
         )}
 
         {current.event.detail && <p className="replay-detail">{current.event.detail}</p>}
+
+        {currentSemantics.length > 0 && (
+          <section className="replay-transition-results" aria-label={tr(language, 'Transition result', 'Resultado de la transición')}>
+            {currentSemantics.map((semantic) => {
+              const copy = focusTransitionSemanticCopy(semantic, language);
+              return (
+                <div className={`replay-transition-result ${semantic.tone}`} key={semantic.id}>
+                  <span className={`replay-semantic-label ${semantic.tone}`}>
+                    <span aria-hidden="true">{focusTransitionSemanticIcon(semantic)}</span>
+                    {copy.label}
+                  </span>
+                  <p>{copy.detail}</p>
+                </div>
+              );
+            })}
+          </section>
+        )}
 
         {current.target && (
           <div className="replay-target">
