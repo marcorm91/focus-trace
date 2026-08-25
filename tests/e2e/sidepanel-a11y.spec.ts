@@ -1,9 +1,7 @@
+import type { BrowserContext, Worker } from '@playwright/test';
 import { expect, test } from './support/extension';
 
-async function openSidepanel(
-  context: Parameters<Parameters<typeof test>[1]>[0]['context'],
-  extensionWorker: Parameters<Parameters<typeof test>[1]>[0]['extensionWorker'],
-) {
+async function openSidepanel(context: BrowserContext, extensionWorker: Worker) {
   const extensionOrigin = new URL(extensionWorker.url()).origin;
   const panel = await context.newPage();
   await panel.goto(`${extensionOrigin}/sidepanel.html`);
