@@ -96,6 +96,7 @@ export interface RuntimeEvent {
   outcome?: FindingOutcome;
   ruleId?: string;
   references?: StandardReference[];
+  focusWalk?: FocusWalkResult;
 }
 
 export interface RuntimeInteraction {
