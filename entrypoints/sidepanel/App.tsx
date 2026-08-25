@@ -336,16 +336,11 @@ export default function App() {
     }
   }, [ensureInjected, session.breakpoints, tabId]);
 
-  const focusEvents = useMemo(
-    () => session.events.filter((event) => ['focus', 'focus-lost', 'focus-hidden', 'focus-obscured'].includes(event.kind)),
-    [session.events],
-  );
   const interactions = useMemo(() => groupRuntimeInteractions(session.events), [session.events]);
   const focusGraph = useMemo(() => buildFocusGraph(session.events), [session.events]);
   const focusJourney = useMemo(() => buildFocusJourney(session.events), [session.events]);
   const focusPath = useMemo(() => buildObservedFocusPath(session.events), [session.events]);
   const focusPathSteps = focusPath.reduce((total, target) => total + target.orders.length, 0);
-  const latestFocus = focusEvents.at(-1);
 
   const showFocusPath = useCallback(async (selectedSelector?: string) => {
     if (tabId == null || focusPath.length === 0) return;
