@@ -101,10 +101,17 @@ function runLinks(): RuleExecution {
 function runLabelInName(): RuleExecution {
   const result = emptyExecution();
   for (const evaluation of evaluateLabelInName()) {
-    if (evaluation.matches) continue;
-    result.issues.push(finding(RULES.labelInName, 'fail', evaluation.element, 'The control has visible text, but that visible label is not contained in the accessible name used by assistive technology and speech input.', `Visible label ${JSON.stringify(evaluation.visibleLabel)} is not contained in accessible name ${JSON.stringify(evaluation.accessibleName)}.`));
+    if (evaluation.outcome === 'pass') continue;
+
+    const evidence = `Visible label ${JSON.stringify(evaluation.visibleLabel)} is not contained in accessible name ${JSON.stringify(evaluation.accessibleName)}.${evaluation.reason ? ` ${evaluation.reason}` : ''}`;
+    if (evaluation.outcome === 'warning') {
+      result.warnings.push(finding(RULES.labelInName, 'warning', evaluation.element, 'The control has visible text that is not fully contained in the accessible name, but the mismatch looks ambiguous and needs manual review.', evidence));
+      continue;
+    }
+
+    result.issues.push(finding(RULES.labelInName, 'fail', evaluation.element, 'The control has visible text, but that visible label is not contained in the accessible name used by assistive technology and speech input.', evidence));
   }
-  if (!result.issues.length) result.passes += 1;
+  if (!result.issues.length && !result.warnings.length) result.passes += 1;
   return result;
 }
 
