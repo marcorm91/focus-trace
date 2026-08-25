@@ -1,0 +1,74 @@
+.trace-hero-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.trace-reset {
+  border-color: rgba(176, 42, 42, 0.38);
+  background: transparent;
+  color: inherit;
+}
+
+.trace-reset:not(:disabled):hover {
+  border-color: rgba(176, 42, 42, 0.7);
+  background: rgba(176, 42, 42, 0.06);
+}
+
+.trace-reset-error {
+  padding: 10px 12px;
+  border: 1px solid rgba(176, 42, 42, 0.4);
+  border-radius: 10px;
+  background: rgba(176, 42, 42, 0.06);
+}
+
+.trace-reset-dialog {
+  width: min(360px, calc(100vw - 32px));
+  max-width: 100%;
+  padding: 0;
+  border: 1px solid var(--border, #d8dde6);
+  border-radius: 16px;
+  background: var(--panel, #fff);
+  color: inherit;
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.24);
+}
+
+.trace-reset-dialog::backdrop {
+  background: rgba(15, 20, 30, 0.48);
+}
+
+.trace-reset-dialog-copy {
+  padding: 18px 18px 8px;
+}
+
+.trace-reset-dialog-copy h3 {
+  margin: 4px 0 8px;
+}
+
+.trace-reset-dialog-copy p:last-child {
+  margin-bottom: 0;
+}
+
+.trace-reset-dialog-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  padding: 14px 18px 18px;
+}
+
+.trace-reset-confirm {
+  border-color: rgba(176, 42, 42, 0.72);
+  background: rgba(176, 42, 42, 0.1);
+  font-weight: 700;
+}
+
+.trace-reset-confirm:not(:disabled):hover {
+  background: rgba(176, 42, 42, 0.16);
+}
+
+@media (min-width: 560px) {
+  .trace-hero-actions {
+    justify-content: flex-end;
+  }
+}
