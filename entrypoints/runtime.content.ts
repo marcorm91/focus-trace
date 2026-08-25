@@ -20,6 +20,7 @@ import {
   createFocusObscuredEvent,
 } from '../lib/runtime/focus-events';
 import { createClickEvent, createKeydownEvent } from '../lib/runtime/interaction-events';
+import { createLiveRegionEvent, createMutationEvent } from '../lib/runtime/mutation-events';
 import {
   actionTarget,
   findDialogs,
@@ -121,22 +122,7 @@ export default defineContentScript({
       detail: string,
       explicitInteractionId?: string,
     ) => {
-      emit(
-        {
-          kind: 'dom-mutation',
-          severity: 'info',
-          title:
-            mutation.kind === 'node-added'
-              ? `DOM added → ${mutation.target.selector}`
-              : mutation.kind === 'node-removed'
-                ? `DOM removed → ${mutation.target.selector}`
-                : `DOM attribute changed → ${mutation.target.selector}`,
-          detail,
-          element: mutation.target,
-          mutation,
-        },
-        explicitInteractionId,
-      );
+      emit(createMutationEvent(mutation, detail), explicitInteractionId);
     };
 
     const inspectFocusObscured = (element: Element, interactionId?: string) =>
@@ -317,18 +303,7 @@ export default defineContentScript({
 
         const live = mutation.target.closest('[aria-live], [role="status"], [role="alert"]');
         if (live) {
-          emit(
-            {
-              kind: 'live-region',
-              severity: 'info',
-              title: 'Live region updated',
-              ...(live.textContent?.trim()
-                ? { detail: live.textContent.trim().replace(/\s+/g, ' ').slice(0, 160) }
-                : {}),
-              element: snapshot(live),
-            },
-            interactionId,
-          );
+          emit(createLiveRegionEvent(snapshot(live), live.textContent), interactionId);
         }
 
         if (mutation.type === 'attributes') {
