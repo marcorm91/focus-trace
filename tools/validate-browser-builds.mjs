@@ -20,6 +20,26 @@ const chrome = readManifest('chrome-mv3');
 const edge = readManifest('edge-mv3');
 const firefox = readManifest('firefox-mv3');
 
+console.log('Generated manifest security summary:');
+console.log(JSON.stringify({
+  chrome: {
+    permissions: chrome.permissions,
+    host_permissions: chrome.host_permissions,
+    side_panel: chrome.side_panel,
+  },
+  edge: {
+    permissions: edge.permissions,
+    host_permissions: edge.host_permissions,
+    side_panel: edge.side_panel,
+  },
+  firefox: {
+    permissions: firefox.permissions,
+    host_permissions: firefox.host_permissions,
+    sidebar_action: firefox.sidebar_action,
+    browser_specific_settings: firefox.browser_specific_settings,
+  },
+}, null, 2));
+
 for (const [name, manifest] of Object.entries({ chrome, edge, firefox })) {
   assert(manifest.manifest_version === 3, `${name} must be Manifest V3`);
   assert(manifest.version === packageJson.version, `${name} version must match package.json`);
