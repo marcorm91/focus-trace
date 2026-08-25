@@ -19,6 +19,7 @@ import {
   createFocusLostEvent,
   createFocusObscuredEvent,
 } from '../lib/runtime/focus-events';
+import { createClickEvent, createKeydownEvent } from '../lib/runtime/interaction-events';
 import {
   actionTarget,
   findDialogs,
@@ -208,12 +209,10 @@ export default defineContentScript({
         const target = event.target instanceof Element ? actionTarget(event.target) : null;
         const interactionId = beginInteraction('keyboard', target, event.key);
         emit(
-          {
-            kind: 'keydown',
-            severity: 'info',
-            title: `Key: ${event.key === ' ' ? 'Space' : event.key}`,
+          createKeydownEvent({
+            key: event.key,
             ...(target ? { element: snapshot(target) } : {}),
-          },
+          }),
           interactionId,
         );
       },
@@ -232,12 +231,10 @@ export default defineContentScript({
 
         lastActionElement = target;
         emit(
-          {
-            kind: 'click',
-            severity: 'info',
-            title: `Click → ${accessibleName(target) || target.tagName.toLowerCase()}`,
+          createClickEvent({
+            label: accessibleName(target) || target.tagName.toLowerCase(),
             element: snapshot(target),
-          },
+          }),
           interactionId,
         );
       },
