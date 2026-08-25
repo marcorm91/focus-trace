@@ -37,12 +37,20 @@ describe('non-text contrast', () => {
     expect(finding?.evaluation.ratio).toBeLessThan(3);
   });
 
-  it('reports a low-contrast form boundary for manual review rather than manufacturing a failure', () => {
-    render('<input id="email" aria-label="Email" style="background:#fff;border:1px solid rgb(190,190,190)">');
+  it('reports a low-contrast author-styled form boundary for manual review rather than manufacturing a failure', () => {
+    render('<input id="email" aria-label="Email" style="appearance:none;background:#fff;border:1px solid rgb(190,190,190)">');
     const finding = evaluateNonTextContrast().find((item) => item.element.id === 'email');
     expect(finding?.evaluation.status).toBe('review');
     expect(finding?.evaluation.kind).toBe('ui-boundary');
     expect(finding?.evaluation.ratio).toBeLessThan(3);
+  });
+
+  it('skips native form boundaries while their appearance is still determined by the user agent', () => {
+    render('<input id="native" aria-label="Email">');
+    const finding = evaluateNonTextContrast().find(
+      (item) => item.element.id === 'native' && item.evaluation.kind === 'ui-boundary',
+    );
+    expect(finding).toBeUndefined();
   });
 
   it('fails an observed author-defined focus outline below 3:1 when no second focus cue exists', () => {
