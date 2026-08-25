@@ -27,6 +27,7 @@ The committed `package-lock.json` must remain synchronized with `package.json`, 
 - Check Windows/high-contrast or forced-colors behavior before public release when available.
 - Run Analyze against representative fixtures and manually inspect any new REVIEW result for noise.
 - Exercise at least one broken and one correctly managed dialog, SPA navigation and focus-restoration flow.
+- Record a Trace, inspect Replay and Report, reset the session, then confirm runtime evidence is empty while the latest Analyze result remains available; start another Trace and confirm focus numbering restarts at step 1.
 
 The automated side-panel E2E smoke test is a regression guard; it is not a substitute for the manual checks above.
 
