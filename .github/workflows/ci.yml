@@ -29,6 +29,8 @@ jobs:
       - run: npm test
       - run: npm run build
       - run: npm run build:edge
+      - run: npm run build:firefox
+      - run: npm run validate:builds
       - name: Preserve bootstrapped language registry
         if: always()
         uses: actions/upload-artifact@v4

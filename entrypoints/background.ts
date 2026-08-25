@@ -13,6 +13,12 @@ import type { ExtensionMessage, SessionState } from '../shared/types';
 const keyForTab = (tabId: number) => `session:${tabId}`;
 const tabWriteQueues = new Map<number, Promise<unknown>>();
 
+type FirefoxSidebarBrowser = typeof browser & {
+  sidebarAction: {
+    open: () => Promise<void>;
+  };
+};
+
 function serializeTabWrite<T>(tabId: number, work: () => Promise<T>): Promise<T> {
   const previous = tabWriteQueues.get(tabId) ?? Promise.resolve();
   const next = previous.catch(() => undefined).then(work);
@@ -41,7 +47,7 @@ async function broadcast(state: SessionState) {
   try {
     await browser.runtime.sendMessage({ type: 'FOCUSTRACE_SESSION_UPDATED', state } satisfies ExtensionMessage);
   } catch {
-    // Side panel may be closed.
+    // Sidebar/side panel may be closed.
   }
 }
 
@@ -75,8 +81,22 @@ async function restoreContentStateAfterNavigation(tabId: number, state: SessionS
   } satisfies ExtensionMessage);
 }
 
+function configurePanelAction() {
+  if (import.meta.env.FIREFOX) {
+    // WXT generates Firefox `sidebar_action`, but WxtBrowser does not currently
+    // expose the corresponding runtime namespace in its cross-browser type.
+    const firefoxBrowser = browser as FirefoxSidebarBrowser;
+    browser.action.onClicked.addListener(() => {
+      void firefoxBrowser.sidebarAction.open().catch(() => undefined);
+    });
+    return;
+  }
+
+  void browser.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => undefined);
+}
+
 export default defineBackground(() => {
-  void browser.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+  configurePanelAction();
 
   browser.runtime.onMessage.addListener((message: ExtensionMessage, sender) => {
     if (message.type === 'FOCUSTRACE_EVENT') {
@@ -145,7 +165,7 @@ export default defineBackground(() => {
 
   // A runtime-registered content script is replaced by a full navigation.
   // Re-inject it and restore the per-tab recording state without requiring the
-  // side panel to stay focused or even open.
+  // sidebar/side panel to stay focused or even open.
   browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
     if (changeInfo.status !== 'complete') return;
     void getSession(tabId)
