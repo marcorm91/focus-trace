@@ -76,6 +76,15 @@ function isDisabled(element: Element): boolean {
     : false;
 }
 
+function usesNativeUserAgentAppearance(element: Element, style: CSSStyleDeclaration): boolean {
+  const nativeFormControl = element instanceof HTMLInputElement ||
+    element instanceof HTMLSelectElement ||
+    element instanceof HTMLTextAreaElement;
+  if (!nativeFormControl) return false;
+  const appearance = style.appearance?.trim().toLowerCase();
+  return appearance !== 'none';
+}
+
 function visibleTextOutsideSvg(element: Element): string {
   const walker = document.createTreeWalker(element, NodeFilter.SHOW_TEXT);
   const chunks: string[] = [];
@@ -215,6 +224,7 @@ function evaluateUiBoundary(element: Element): NonTextContrastEvaluation | undef
   if (hasVisibleText && !BOUNDARY_RELEVANT_ROLES.has(role)) return undefined;
 
   const style = getComputedStyle(element);
+  if (usesNativeUserAgentAppearance(element, style)) return undefined;
   const complex = complexVisualReason(style);
   if (complex) {
     return {
