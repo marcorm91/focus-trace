@@ -41,7 +41,7 @@ async function broadcast(state: SessionState) {
   try {
     await browser.runtime.sendMessage({ type: 'FOCUSTRACE_SESSION_UPDATED', state } satisfies ExtensionMessage);
   } catch {
-    // Side panel may be closed.
+    // Sidebar/side panel may be closed.
   }
 }
 
@@ -75,8 +75,19 @@ async function restoreContentStateAfterNavigation(tabId: number, state: SessionS
   } satisfies ExtensionMessage);
 }
 
+function configurePanelAction() {
+  if (import.meta.env.FIREFOX) {
+    browser.action.onClicked.addListener(() => {
+      void browser.sidebarAction.open().catch(() => undefined);
+    });
+    return;
+  }
+
+  void browser.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => undefined);
+}
+
 export default defineBackground(() => {
-  void browser.sidePanel.setPanelBehavior({ openPanelOnActionClick: true });
+  configurePanelAction();
 
   browser.runtime.onMessage.addListener((message: ExtensionMessage, sender) => {
     if (message.type === 'FOCUSTRACE_EVENT') {
@@ -145,7 +156,7 @@ export default defineBackground(() => {
 
   // A runtime-registered content script is replaced by a full navigation.
   // Re-inject it and restore the per-tab recording state without requiring the
-  // side panel to stay focused or even open.
+  // sidebar/side panel to stay focused or even open.
   browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
     if (changeInfo.status !== 'complete') return;
     void getSession(tabId)
