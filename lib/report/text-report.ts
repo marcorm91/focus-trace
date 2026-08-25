@@ -1,6 +1,7 @@
+import { suggestAccessibleForeground } from '../audit/contrast';
 import { tr, type AppLanguage } from '../../shared/i18n';
 import type { RuntimeEvent, ScanIssue, ScanResult } from '../../shared/types';
-import { buildSessionSuggestions } from './session-report';
+import { buildSessionReportModel } from './session-report';
 
 export interface TextSessionReportInput {
   scan?: ScanResult | undefined;
@@ -17,14 +18,34 @@ function heading(title: string): string[] {
   return ['', title, '='.repeat(title.length)];
 }
 
+function contrastLines(issue: ScanIssue, language: AppLanguage): string[] {
+  const contrast = issue.contrast;
+  if (!contrast) return [];
+  const lines = [
+    ...(contrast.ratio != null
+      ? [`   ${lineLabel(language, 'Contrast', 'Contraste')}: ${contrast.ratio}:1 / ${lineLabel(language, 'required', 'requerido')} ${contrast.requiredRatio}:1`]
+      : [`   ${lineLabel(language, 'Contrast', 'Contraste')}: ${lineLabel(language, 'manual review required', 'requiere revisión manual')}`]),
+    ...(contrast.foreground ? [`   ${lineLabel(language, 'Text color', 'Color de texto')}: ${contrast.foreground}`] : []),
+    ...(contrast.background ? [`   ${lineLabel(language, 'Background', 'Fondo')}: ${contrast.background}`] : []),
+  ];
+  if (issue.outcome === 'fail' && contrast.foreground && contrast.background) {
+    const suggestion = suggestAccessibleForeground(contrast.foreground, contrast.background, contrast.requiredRatio);
+    if (suggestion) {
+      lines.push(
+        `   ${lineLabel(language, 'Suggested accessible color', 'Color accesible sugerido')}: ${suggestion.hex} · ${suggestion.rgb} · ${suggestion.ratio}:1`,
+      );
+    }
+  }
+  if (contrast.reason) lines.push(`   ${lineLabel(language, 'Review note', 'Nota de revisión')}: ${contrast.reason}`);
+  return lines;
+}
+
 function issueLines(
   issues: ScanIssue[],
   category: string,
   language: AppLanguage,
 ): string[] {
-  if (issues.length === 0) {
-    return [`- ${category}: ${lineLabel(language, 'none', 'ninguno')}`];
-  }
+  if (issues.length === 0) return [`- ${category}: ${lineLabel(language, 'none', 'ninguno')}`];
 
   return issues.flatMap((issue, index) => {
     const references = issue.references
@@ -35,12 +56,9 @@ function issueLines(
       `   ${lineLabel(language, 'Rule', 'Regla')}: ${issue.ruleId}`,
       `   ${lineLabel(language, 'Severity', 'Gravedad')}: ${issue.severity}`,
       `   ${lineLabel(language, 'Description', 'Descripción')}: ${issue.description}`,
-      ...(issue.evidence
-        ? [`   ${lineLabel(language, 'Evidence', 'Evidencia')}: ${issue.evidence}`]
-        : []),
-      ...(references
-        ? [`   ${lineLabel(language, 'References', 'Referencias')}: ${references}`]
-        : []),
+      ...contrastLines(issue, language),
+      ...(issue.evidence ? [`   ${lineLabel(language, 'Evidence', 'Evidencia')}: ${issue.evidence}`] : []),
+      ...(references ? [`   ${lineLabel(language, 'References', 'Referencias')}: ${references}`] : []),
       '',
     ];
   });
@@ -87,17 +105,13 @@ export function buildTextSessionReport({
   language,
   generatedAt = Date.now(),
 }: TextSessionReportInput): string {
-  const focusEvents = events.filter((event) => event.kind === 'focus' && event.element);
-  const focusFindings = events.filter((event) => event.outcome);
-  const walkEnd = [...events].reverse().find((event) => event.kind === 'focus-walk-end');
+  const model = buildSessionReportModel(scan, events, language);
   const headings = scan?.headings ?? [];
-  const suggestions = buildSessionSuggestions(scan, events, language);
   const title = lineLabel(
     language,
     'FOCUS TRACE - ACCESSIBILITY REPORT',
     'FOCUS TRACE - INFORME DE ACCESIBILIDAD',
   );
-
   const lines: string[] = [
     title,
     '='.repeat(title.length),
@@ -107,21 +121,66 @@ export function buildTextSessionReport({
     `${lineLabel(language, 'Standard', 'Estándar')}: ${scan?.standard ?? 'WCAG 2.2'}`,
   ];
 
-  lines.push(...heading(lineLabel(language, 'SUMMARY', 'RESUMEN')));
+  lines.push(...heading(lineLabel(language, 'EXECUTIVE SUMMARY', 'RESUMEN EJECUTIVO')));
   lines.push(
-    `${lineLabel(language, 'Analysis', 'Análisis')}: ${scan ? lineLabel(language, 'Completed', 'Completado') : lineLabel(language, 'Not performed', 'No realizado')}`,
-    `${lineLabel(language, 'Focus', 'Foco')}: ${focusMode(events, language)}`,
-    `${lineLabel(language, 'Headings', 'Encabezados')}: ${scan ? `${headings.length} ${lineLabel(language, 'nodes', 'nodos')}` : lineLabel(language, 'Not performed', 'No realizado')}`,
+    `${lineLabel(language, 'Static failures', 'Fallos estáticos')}: ${model.failures}`,
+    `${lineLabel(language, 'Static reviews', 'Revisiones estáticas')}: ${model.reviews}`,
+    `${lineLabel(language, 'Authoring warnings', 'Avisos de autoría')}: ${model.warnings}`,
+    `${lineLabel(language, 'Runtime findings', 'Hallazgos runtime')}: ${model.runtimeFindings}`,
+    `${lineLabel(language, 'Causal interactions', 'Interacciones causales')}: ${model.causalInteractions}`,
+    `${lineLabel(language, 'Focus transition reviews', 'Transiciones de foco a revisar')}: ${model.transitionReviews}`,
+    `${lineLabel(language, 'Handled focus transitions', 'Transiciones de foco correctas')}: ${model.handledTransitions}`,
+    `${lineLabel(language, 'Focus journey', 'Recorrido de foco')}: ${focusMode(events, language)} · ${model.focusSteps} ${lineLabel(language, 'steps', 'pasos')}`,
   );
-  if (scan) {
-    lines.push(
-      `${lineLabel(language, 'Failures', 'Fallos')}: ${scan.issues.length}`,
-      `${lineLabel(language, 'Needs review', 'Requiere revisión')}: ${scan.review.length}`,
-      `${lineLabel(language, 'Warnings', 'Avisos')}: ${scan.warnings?.length ?? 0}`,
-    );
+  if (model.categories.length) {
+    lines.push('', lineLabel(language, 'Static findings by area:', 'Hallazgos estáticos por área:'));
+    model.categories.forEach((category) => lines.push(`- ${category.label}: ${category.count}`));
   }
 
-  lines.push(...heading(lineLabel(language, '1. AUTOMATED ANALYSIS', '1. ANÁLISIS AUTOMÁTICO')));
+  lines.push(...heading(lineLabel(language, '1. HIGHEST PRIORITY', '1. MÁXIMA PRIORIDAD')));
+  const highPriority = model.suggestions.filter((suggestion) => suggestion.priority === 'high').slice(0, 6);
+  if (!highPriority.length) {
+    lines.push(lineLabel(
+      language,
+      'No high-priority automated recommendation was produced. Manual review is still required.',
+      'No se ha generado ninguna recomendación automática de prioridad alta. Sigue siendo necesaria una revisión manual.',
+    ));
+  } else {
+    highPriority.forEach((suggestion, index) => {
+      lines.push(`${index + 1}. ${suggestion.title}`, `   ${suggestion.detail}`, '');
+    });
+  }
+
+  lines.push(...heading(lineLabel(language, '2. RUNTIME TRACE', '2. TRAZA RUNTIME')));
+  if (!model.traceStories.length) {
+    lines.push(lineLabel(
+      language,
+      'No significant correlated runtime story was recorded. Use Trace to capture real interactions.',
+      'No se ha registrado ninguna historia runtime correlacionada significativa. Utiliza Trace para capturar interacciones reales.',
+    ));
+  } else {
+    model.traceStories.forEach((story, index) => {
+      const tone = story.tone === 'handled'
+        ? lineLabel(language, 'HANDLED', 'CORRECTO')
+        : story.tone === 'review'
+          ? lineLabel(language, 'REVIEW', 'REVISAR')
+          : lineLabel(language, 'OBSERVED', 'OBSERVADO');
+      lines.push(
+        `${index + 1}. [${tone}] ${story.interactionNumber ? `${lineLabel(language, 'Interaction', 'Interacción')} #${story.interactionNumber} · ` : ''}${story.trigger}`,
+        `   ${lineLabel(language, 'Trace', 'Traza')}: ${story.chain.join(' → ')}`,
+        `   ${lineLabel(language, 'Result', 'Resultado')}: ${story.result}`,
+        `   ${story.detail}`,
+        ...(story.impact ? [`   ${lineLabel(language, 'Impact', 'Impacto')}: ${story.impact}`] : []),
+        ...(story.recommendation ? [`   ${lineLabel(language, 'Recommendation', 'Recomendación')}: ${story.recommendation}`] : []),
+        ...(story.references.length
+          ? [`   ${lineLabel(language, 'References', 'Referencias')}: ${story.references.map((reference) => `${reference.type} ${reference.id}: ${reference.url}`).join(' | ')}`]
+          : []),
+        '',
+      );
+    });
+  }
+
+  lines.push(...heading(lineLabel(language, '3. FULL PAGE SCAN', '3. BARRIDO COMPLETO DE PÁGINA')));
   if (!scan) {
     lines.push(lineLabel(language, 'The page analysis was not performed.', 'No se ha realizado el análisis de la página.'));
   } else {
@@ -134,45 +193,7 @@ export function buildTextSessionReport({
     );
   }
 
-  lines.push(...heading(lineLabel(language, '2. KEYBOARD FOCUS JOURNEY', '2. RECORRIDO DE FOCO POR TECLADO')));
-  lines.push(`${lineLabel(language, 'Mode', 'Modo')}: ${focusMode(events, language)}`);
-  if (focusEvents.length === 0) {
-    lines.push(lineLabel(
-      language,
-      'No manual or automatic focus evidence is included.',
-      'No se incluye evidencia de foco manual ni automático.',
-    ));
-  } else {
-    lines.push(
-      `${lineLabel(language, 'Recorded steps', 'Pasos registrados')}: ${focusEvents.length}`,
-      `${lineLabel(language, 'Runtime findings', 'Hallazgos runtime')}: ${focusFindings.length}`,
-    );
-    if (walkEnd?.focusWalk) {
-      lines.push(
-        `${lineLabel(language, 'Candidates', 'Candidatos')}: ${walkEnd.focusWalk.totalCandidates}`,
-        `${lineLabel(language, 'Reached', 'Alcanzados')}: ${walkEnd.focusWalk.focusedSteps}`,
-        `${lineLabel(language, 'Skipped', 'Omitidos')}: ${walkEnd.focusWalk.skipped}`,
-      );
-    }
-    lines.push('');
-    focusEvents.forEach((event, index) => {
-      lines.push(
-        `${index + 1}. ${event.element?.name || lineLabel(language, 'Unnamed component', 'Componente sin nombre')}`,
-        `   ${lineLabel(language, 'Role', 'Rol')}: ${event.element?.role ?? event.element?.tag ?? '—'}`,
-      );
-    });
-    if (focusFindings.length) {
-      lines.push('', lineLabel(language, 'Focus findings:', 'Hallazgos de foco:'));
-      focusFindings.forEach((event, index) => {
-        lines.push(
-          `${index + 1}. ${event.title}`,
-          ...(event.detail ? [`   ${event.detail}`] : []),
-        );
-      });
-    }
-  }
-
-  lines.push(...heading(lineLabel(language, '3. HEADING STRUCTURE', '3. ESTRUCTURA DE ENCABEZADOS')));
+  lines.push(...heading(lineLabel(language, '4. HEADING STRUCTURE', '4. ESTRUCTURA DE ENCABEZADOS')));
   if (!scan) {
     lines.push(lineLabel(language, 'The heading outline was not collected.', 'No se ha recogido el árbol de encabezados.'));
   } else if (!headings.length) {
@@ -183,31 +204,25 @@ export function buildTextSessionReport({
       const signals = item.signals.length
         ? ` [${item.signals.map((signal) => headingSignal(signal, language)).join(', ')}]`
         : '';
-      lines.push(
-        `${indentation}- H${item.level}: ${item.text || lineLabel(language, 'Empty heading', 'Encabezado vacío')}${signals}`,
-      );
+      lines.push(`${indentation}- H${item.level}: ${item.text || lineLabel(language, 'Empty heading', 'Encabezado vacío')}${signals}`);
     });
   }
 
-  lines.push(...heading(lineLabel(language, '4. RECOMMENDED IMPROVEMENTS', '4. SUGERENCIAS DE MEJORA')));
-  if (!suggestions.length) {
+  lines.push(...heading(lineLabel(language, '5. RECOMMENDED IMPROVEMENTS', '5. SUGERENCIAS DE MEJORA')));
+  if (!model.suggestions.length) {
     lines.push(lineLabel(
       language,
       'No immediate automated suggestions. A complete manual WCAG review is still required.',
       'No hay sugerencias automáticas inmediatas. Sigue siendo necesaria una revisión WCAG manual completa.',
     ));
   } else {
-    suggestions.forEach((suggestion, index) => {
+    model.suggestions.forEach((suggestion, index) => {
       const priority = suggestion.priority === 'high'
         ? lineLabel(language, 'HIGH', 'ALTA')
         : suggestion.priority === 'medium'
           ? lineLabel(language, 'MEDIUM', 'MEDIA')
           : lineLabel(language, 'COVERAGE', 'COBERTURA');
-      lines.push(
-        `${index + 1}. [${priority}] ${suggestion.title}`,
-        `   ${suggestion.detail}`,
-        '',
-      );
+      lines.push(`${index + 1}. [${priority}] ${suggestion.title}`, `   ${suggestion.detail}`, '');
     });
   }
 
@@ -215,8 +230,8 @@ export function buildTextSessionReport({
     ...heading(lineLabel(language, 'SCOPE NOTE', 'NOTA DE ALCANCE')),
     lineLabel(
       language,
-      'Automated checks and recorded journeys do not prove complete WCAG conformance. Manual review remains necessary.',
-      'Las comprobaciones automáticas y los recorridos grabados no demuestran el cumplimiento completo de WCAG. Sigue siendo necesaria una revisión manual.',
+      'Automated checks and recorded runtime traces do not prove complete WCAG conformance. Manual review remains necessary.',
+      'Las comprobaciones automáticas y las trazas runtime grabadas no demuestran el cumplimiento completo de WCAG. Sigue siendo necesaria una revisión manual.',
     ),
   );
 
