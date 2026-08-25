@@ -26,24 +26,35 @@ jobs:
           cache: npm
       - run: npm ci --no-audit --no-fund
       - run: npm run build
+      - run: npm run build:firefox
       - name: Add build provenance
         shell: bash
         env:
           SOURCE_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
         run: |
-          VERSION="$(node -p "require('./.output/chrome-mv3/manifest.json').version")"
           BUILD_DATE="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-          {
-            echo "FocusTrace development build"
-            echo "Version: ${VERSION}"
-            echo "Build date: ${BUILD_DATE}"
-            echo "Commit: ${SOURCE_SHA}"
-            echo "Source: main"
-          } > .output/chrome-mv3/FOCUSTRACE_BUILD.txt
+          for TARGET in chrome-mv3 firefox-mv3; do
+            VERSION="$(node -p "require('./.output/${TARGET}/manifest.json').version")"
+            {
+              echo "FocusTrace development build"
+              echo "Version: ${VERSION}"
+              echo "Build date: ${BUILD_DATE}"
+              echo "Commit: ${SOURCE_SHA}"
+              echo "Source: main"
+              echo "Target: ${TARGET}"
+            } > ".output/${TARGET}/FOCUSTRACE_BUILD.txt"
+          done
       - name: Upload Chrome development extension
         uses: actions/upload-artifact@v4
         with:
           name: focustrace-chrome-dev
           path: .output/chrome-mv3/
+          if-no-files-found: error
+          retention-days: 14
+      - name: Upload Firefox development extension
+        uses: actions/upload-artifact@v4
+        with:
+          name: focustrace-firefox-dev
+          path: .output/firefox-mv3/
           if-no-files-found: error
           retention-days: 14
