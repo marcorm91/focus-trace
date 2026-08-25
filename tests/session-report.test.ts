@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildSessionSuggestions } from '../lib/report/session-report';
+import { buildSessionReportModel, buildSessionSuggestions } from '../lib/report/session-report';
 import type { RuntimeEvent, ScanResult } from '../shared/types';
 
 const scan: ScanResult = {
@@ -62,5 +62,87 @@ describe('session report suggestions', () => {
     const suggestions = buildSessionSuggestions(scan, events, 'en');
     expect(suggestions.map((item) => item.title)).toContain('Focus is obscured');
     expect(suggestions.map((item) => item.id)).not.toContain('coverage-focus');
+  });
+
+  it('builds executive counts and accessibility-area summaries', () => {
+    const contrastScan: ScanResult = {
+      ...scan,
+      issues: [
+        ...scan.issues,
+        {
+          id: 'contrast-1',
+          ruleId: 'FT-WCAG-010',
+          title: 'Text has sufficient contrast',
+          description: 'Rendered text contrast is below the required ratio.',
+          severity: 'serious',
+          outcome: 'fail',
+          targets: ['#muted'],
+          contrast: {
+            ratio: 4.48,
+            requiredRatio: 4.5,
+            foreground: 'rgb(119, 119, 119)',
+            background: 'rgb(255, 255, 255)',
+          },
+          references: [],
+        },
+      ],
+    };
+
+    const model = buildSessionReportModel(contrastScan, [], 'en');
+    expect(model.failures).toBe(2);
+    expect(model.contrastFailures).toBe(1);
+    expect(model.categories).toContainEqual({ id: 'contrast', label: 'Contrast', count: 1 });
+    expect(model.suggestions.find((item) => item.id === 'analysis-FT-WCAG-010')?.detail).toContain('#767676');
+  });
+
+  it('turns a correlated runtime cause into a trace story with remediation', () => {
+    const events: RuntimeEvent[] = [
+      {
+        id: 'key-1',
+        timestamp: 10,
+        kind: 'keydown',
+        severity: 'info',
+        title: 'Key: Enter',
+        interactionId: 'ix-a-1',
+        element: { tag: 'button', role: 'button', name: 'Save profile', selector: '#save' },
+      },
+      {
+        id: 'mutation-1',
+        timestamp: 20,
+        kind: 'dom-mutation',
+        severity: 'info',
+        title: 'DOM removed',
+        interactionId: 'ix-a-1',
+      },
+      {
+        id: 'lost-1',
+        timestamp: 30,
+        kind: 'focus-lost',
+        severity: 'serious',
+        outcome: 'review',
+        title: 'Focused element removed',
+        interactionId: 'ix-a-1',
+        element: { tag: 'button', role: 'button', name: 'Save profile', selector: '#save' },
+        causes: [{
+          type: 'FOCUSED_NODE_REMOVED',
+          confidence: 'deterministic',
+          summary: 'Focused node was removed.',
+        }],
+      },
+    ];
+
+    const model = buildSessionReportModel(scan, events, 'en');
+    expect(model.runtimeFindings).toBe(1);
+    expect(model.causalInteractions).toBe(1);
+    expect(model.transitionReviews).toBeGreaterThanOrEqual(1);
+    expect(model.traceStories).toHaveLength(1);
+    expect(model.traceStories[0]).toMatchObject({
+      tone: 'review',
+      interactionNumber: 1,
+      result: 'Focus lost',
+      selector: '#save',
+    });
+    expect(model.traceStories[0]?.chain.join(' → ')).toContain('Page content changed');
+    expect(model.traceStories[0]?.recommendation).toContain('Move focus');
   });
 });

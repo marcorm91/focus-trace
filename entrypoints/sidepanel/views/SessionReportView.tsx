@@ -1,7 +1,10 @@
-import { buildSessionSuggestions } from '../../../lib/report/session-report';
+import { useMemo } from 'react';
+import { suggestAccessibleForeground } from '../../../lib/audit/contrast';
+import { buildSessionReportModel } from '../../../lib/report/session-report';
 import { buildTextReportFilename, buildTextSessionReport } from '../../../lib/report/text-report';
 import { localizedScanIssue, tr, type AppLanguage } from '../../../shared/i18n';
 import type { HeadingSignal, RuntimeEvent, ScanIssue, ScanResult } from '../../../shared/types';
+import './session-report.css';
 
 function headingSignalLabel(signal: HeadingSignal, language: AppLanguage): string {
   if (signal === 'empty') return tr(language, 'Empty', 'Vacío');
@@ -20,6 +23,34 @@ function findingGroup(
   ];
 }
 
+function ContrastReportEvidence({ issue, language }: { issue: ScanIssue; language: AppLanguage }) {
+  if (!issue.contrast) return null;
+  const contrast = issue.contrast;
+  const suggestion = issue.outcome === 'fail' && contrast.foreground && contrast.background
+    ? suggestAccessibleForeground(contrast.foreground, contrast.background, contrast.requiredRatio)
+    : undefined;
+
+  return (
+    <div className="report-contrast-evidence">
+      <span>
+        <small>{tr(language, 'Contrast', 'Contraste')}</small>
+        <strong>{contrast.ratio != null ? `${contrast.ratio}:1` : tr(language, 'Review', 'Revisar')}</strong>
+        <em>{tr(language, `Required ${contrast.requiredRatio}:1`, `Requerido ${contrast.requiredRatio}:1`)}</em>
+      </span>
+      {contrast.foreground && <code>{contrast.foreground}</code>}
+      {contrast.background && <code>{contrast.background}</code>}
+      {suggestion && (
+        <span className="report-color-fix">
+          <small>{tr(language, 'Suggested', 'Sugerido')}</small>
+          <strong>{suggestion.hex}</strong>
+          <em>{suggestion.rgb} · {suggestion.ratio}:1</em>
+        </span>
+      )}
+      {contrast.reason && <p>{contrast.reason}</p>}
+    </div>
+  );
+}
+
 export function SessionReportView({
   scan,
   events,
@@ -31,13 +62,12 @@ export function SessionReportView({
   language: AppLanguage;
   onLocate: (selector: string) => void | Promise<void>;
 }) {
+  const model = useMemo(() => buildSessionReportModel(scan, events, language), [events, language, scan]);
   const headings = scan?.headings ?? [];
   const focusEvents = events.filter((event) => event.kind === 'focus' && event.element);
-  const focusFindings = events.filter((event) => event.outcome);
-  const walkStart = events.find((event) => event.kind === 'focus-walk-start');
-  const walkEnd = [...events].reverse().find((event) => event.kind === 'focus-walk-end');
-  const automatic = Boolean(walkStart);
-  const suggestions = buildSessionSuggestions(scan, events, language);
+  const highPriority = model.suggestions.filter((suggestion) => suggestion.priority === 'high').slice(0, 4);
+  const automatic = events.some((event) => event.kind === 'focus-walk-start');
+
   const downloadTextReport = () => {
     const generatedAt = Date.now();
     const text = buildTextSessionReport({ scan, events, language, generatedAt });
@@ -52,59 +82,56 @@ export function SessionReportView({
     anchor.remove();
     window.setTimeout(() => URL.revokeObjectURL(url), 0);
   };
-  const uniqueFocusTargets = new Map<string, { event: RuntimeEvent; orders: number[] }>();
-  focusEvents.forEach((event, index) => {
-    const selector = event.element!.selector;
-    const existing = uniqueFocusTargets.get(selector);
-    if (existing) existing.orders.push(index + 1);
-    else uniqueFocusTargets.set(selector, { event, orders: [index + 1] });
-  });
 
   return (
-    <section className="panel session-report" aria-labelledby="session-report-title">
-      <div className="section-heading">
+    <section className="panel session-report trace-first-report" aria-labelledby="session-report-title">
+      <div className="report-hero">
         <div>
-          <h2 id="session-report-title">{tr(language, 'Complete page report', 'Informe completo de página')}</h2>
+          <span className="report-kicker">FocusTrace</span>
+          <h2 id="session-report-title">{tr(language, 'Accessibility report', 'Informe de accesibilidad')}</h2>
           <p>
             {scan
-              ? tr(language, 'Combined evidence from this page session.', 'Evidencia combinada de la sesión de esta página.')
+              ? tr(
+                  language,
+                  'Static findings and runtime behavior combined into one actionable session report.',
+                  'Hallazgos estáticos y comportamiento runtime combinados en un único informe accionable.',
+                )
               : tr(language, 'Analyze the page to start the report.', 'Analiza la página para iniciar el informe.')}
           </p>
         </div>
-        <button
-          className="export-text-report"
-          type="button"
-          disabled={!scan}
-          onClick={downloadTextReport}
-        >
+        <button className="export-text-report" type="button" disabled={!scan} onClick={downloadTextReport}>
           <span aria-hidden="true">↓</span>
           {tr(language, 'Download .txt', 'Descargar .txt')}
         </button>
       </div>
 
-      <div className="report-coverage">
-        <div>
-          <span>{tr(language, 'Analysis', 'Análisis')}</span>
-          <strong>{scan ? tr(language, 'Completed', 'Completado') : tr(language, 'Not run', 'No realizado')}</strong>
-          <small>{scan ? `${scan.issues.length + scan.review.length + (scan.warnings?.length ?? 0)} ${tr(language, 'findings', 'hallazgos')}` : '—'}</small>
+      <div className="report-scoreline" aria-label={tr(language, 'Executive summary', 'Resumen ejecutivo')}>
+        <div className={model.failures ? 'is-alert' : ''}>
+          <strong>{model.failures}</strong>
+          <span>{tr(language, 'failures', 'fallos')}</span>
         </div>
         <div>
-          <span>{tr(language, 'Focus', 'Foco')}</span>
-          <strong>
-            {focusEvents.length
-              ? automatic
-                ? tr(language, 'Automatic', 'Automático')
-                : tr(language, 'Manual', 'Manual')
-              : tr(language, 'Not run', 'No realizado')}
-          </strong>
-          <small>{focusEvents.length ? `${focusEvents.length} ${tr(language, 'steps', 'pasos')}` : '—'}</small>
+          <strong>{model.reviews}</strong>
+          <span>{tr(language, 'reviews', 'revisiones')}</span>
+        </div>
+        <div className={model.runtimeFindings ? 'is-alert' : ''}>
+          <strong>{model.runtimeFindings}</strong>
+          <span>{tr(language, 'runtime', 'runtime')}</span>
         </div>
         <div>
-          <span>{tr(language, 'Headings', 'Encabezados')}</span>
-          <strong>{scan ? tr(language, 'Completed', 'Completado') : tr(language, 'Not run', 'No realizado')}</strong>
-          <small>{scan ? `${headings.length} ${tr(language, 'nodes', 'nodos')}` : '—'}</small>
+          <strong>{model.focusSteps}</strong>
+          <span>{tr(language, 'focus steps', 'pasos de foco')}</span>
         </div>
       </div>
+
+      {scan && (
+        <div className="report-context-line">
+          <strong>{scan.title || scan.url}</strong>
+          <span>{scan.standard}</span>
+          <span>{model.staticFindings} {tr(language, 'static findings', 'hallazgos estáticos')}</span>
+          <span>{model.causalInteractions} {tr(language, 'causal interactions', 'interacciones causales')}</span>
+        </div>
+      )}
 
       {!scan ? (
         <div className="notice">
@@ -113,16 +140,124 @@ export function SessionReportView({
         </div>
       ) : (
         <>
-          <section className="report-section" aria-labelledby="report-analysis-title">
+          <section className="report-section report-priority" aria-labelledby="report-priority-title">
+            <div className="report-section-heading">
+              <div>
+                <span>!</span>
+                <div>
+                  <h3 id="report-priority-title">{tr(language, 'Highest priority', 'Máxima prioridad')}</h3>
+                  <p>{tr(language, 'The first things worth fixing from the evidence collected.', 'Lo primero que merece la pena corregir según la evidencia recogida.')}</p>
+                </div>
+              </div>
+            </div>
+            {highPriority.length ? (
+              <ol className="report-priority-list">
+                {highPriority.map((suggestion) => (
+                  <li key={suggestion.id}>
+                    <span>{suggestion.source}</span>
+                    <strong>{suggestion.title}</strong>
+                    <p>{suggestion.detail}</p>
+                  </li>
+                ))}
+              </ol>
+            ) : (
+              <p className="report-empty-line">{tr(language, 'No high-priority automated recommendation was produced.', 'No se ha generado ninguna recomendación automática de prioridad alta.')}</p>
+            )}
+          </section>
+
+          <section className="report-section report-trace-section" aria-labelledby="report-trace-title">
             <div className="report-section-heading">
               <div>
                 <span>1</span>
                 <div>
-                  <h3 id="report-analysis-title">{tr(language, 'Automated analysis', 'Análisis automático')}</h3>
+                  <h3 id="report-trace-title">{tr(language, 'Runtime trace', 'Traza runtime')}</h3>
+                  <p>
+                    {focusEvents.length
+                      ? automatic
+                        ? tr(language, 'Automatic Tab evidence plus correlated interactions.', 'Evidencia automática con Tab e interacciones correlacionadas.')
+                        : tr(language, 'Recorded interactions, focus movement and deterministic causes.', 'Interacciones grabadas, movimientos de foco y causas deterministas.')
+                      : tr(language, 'No focus journey has been recorded yet.', 'Todavía no se ha grabado ningún recorrido de foco.')}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div className="report-inline-summary">
+              <span><strong>{model.focusSteps}</strong> {tr(language, 'focus steps', 'pasos de foco')}</span>
+              <span><strong>{model.transitionReviews}</strong> {tr(language, 'transition reviews', 'transiciones a revisar')}</span>
+              <span><strong>{model.handledTransitions}</strong> {tr(language, 'handled', 'correctas')}</span>
+              <span><strong>{model.focusJumps}</strong> {tr(language, 'jumps', 'saltos')}</span>
+            </div>
+
+            {model.traceStories.length ? (
+              <div className="trace-story-list">
+                {model.traceStories.map((story) => (
+                  <article className={`trace-story tone-${story.tone}`} key={story.id}>
+                    <div className="trace-story-head">
+                      <span>{story.tone === 'handled' ? '✓' : story.tone === 'review' ? '⚠' : '•'}</span>
+                      <div>
+                        <small>{story.interactionNumber ? `${tr(language, 'Interaction', 'Interacción')} #${story.interactionNumber}` : tr(language, 'Runtime signal', 'Señal runtime')}</small>
+                        <strong>{story.trigger}</strong>
+                      </div>
+                    </div>
+                    <div className="trace-story-chain" aria-label={tr(language, 'Recorded event chain', 'Cadena de eventos registrada')}>
+                      {story.chain.map((step, index) => (
+                        <span key={`${story.id}-chain-${index}`}>
+                          {index > 0 && <b aria-hidden="true">→</b>}
+                          <em>{step}</em>
+                        </span>
+                      ))}
+                    </div>
+                    <div className="trace-story-result">
+                      <small>{tr(language, 'Result', 'Resultado')}</small>
+                      <strong>{story.result}</strong>
+                      <p>{story.detail}</p>
+                    </div>
+                    {story.impact && (
+                      <p className="trace-story-note"><strong>{tr(language, 'Impact', 'Impacto')}:</strong> {story.impact}</p>
+                    )}
+                    {story.recommendation && (
+                      <p className="trace-story-recommendation"><strong>{tr(language, 'Recommendation', 'Recomendación')}:</strong> {story.recommendation}</p>
+                    )}
+                    {story.references.length > 0 && (
+                      <p className="trace-story-references">
+                        {story.references.map((reference) => `${reference.type} ${reference.id}`).join(' · ')}
+                      </p>
+                    )}
+                    {story.selector && (
+                      <button type="button" onClick={() => void onLocate(story.selector!)}>
+                        {tr(language, 'Locate evidence', 'Localizar evidencia')}
+                      </button>
+                    )}
+                  </article>
+                ))}
+              </div>
+            ) : (
+              <div className="report-pending">
+                <strong>{tr(language, 'Trace evidence pending', 'Evidencia de Trace pendiente')}</strong>
+                <p>{tr(language, 'Record a real interaction or use Walk with Tab to add runtime context to this report.', 'Graba una interacción real o utiliza Recorrer con Tab para añadir contexto runtime al informe.')}</p>
+              </div>
+            )}
+          </section>
+
+          <section className="report-section" aria-labelledby="report-analysis-title">
+            <div className="report-section-heading">
+              <div>
+                <span>2</span>
+                <div>
+                  <h3 id="report-analysis-title">{tr(language, 'Full page scan', 'Barrido completo de página')}</h3>
                   <p>{scan.engine} · {scan.standard} · {scan.rulesRun} {tr(language, 'rule families', 'familias de reglas')}</p>
                 </div>
               </div>
             </div>
+
+            {model.categories.length > 0 && (
+              <div className="report-category-summary">
+                {model.categories.map((category) => (
+                  <span key={category.id}><strong>{category.count}</strong>{category.label}</span>
+                ))}
+              </div>
+            )}
 
             {findingGroup(scan, language).map((group) => (
               <details className="report-group" key={group.id} open={group.id === 'fail' && group.issues.length > 0}>
@@ -143,6 +278,7 @@ export function SessionReportView({
                           </div>
                           <h4>{copy.title}</h4>
                           <p>{copy.description}</p>
+                          <ContrastReportEvidence issue={issue} language={language} />
                           {copy.evidence && <p className="evidence">{copy.evidence}</p>}
                           {target && (
                             <button type="button" onClick={() => void onLocate(target)}>
@@ -158,51 +294,6 @@ export function SessionReportView({
                 )}
               </details>
             ))}
-          </section>
-
-          <section className="report-section" aria-labelledby="report-focus-title">
-            <div className="report-section-heading">
-              <div>
-                <span>2</span>
-                <div>
-                  <h3 id="report-focus-title">{tr(language, 'Keyboard focus journey', 'Recorrido de foco por teclado')}</h3>
-                  <p>
-                    {focusEvents.length
-                      ? automatic
-                        ? tr(language, 'Automatic Tab simulation included.', 'Simulación automática con Tab incluida.')
-                        : tr(language, 'Manual keyboard recording included.', 'Grabación manual de teclado incluida.')
-                      : tr(language, 'No focus journey was performed.', 'No se ha realizado ningún recorrido de foco.')}
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            {focusEvents.length ? (
-              <>
-                <div className="report-inline-summary">
-                  <span><strong>{focusEvents.length}</strong> {tr(language, 'steps', 'pasos')}</span>
-                  <span><strong>{uniqueFocusTargets.size}</strong> {tr(language, 'components', 'componentes')}</span>
-                  <span><strong>{focusFindings.length}</strong> {tr(language, 'findings', 'hallazgos')}</span>
-                  {walkEnd?.focusWalk && <span><strong>{walkEnd.focusWalk.skipped}</strong> {tr(language, 'skipped', 'omitidos')}</span>}
-                </div>
-                <ol className="report-focus-list">
-                  {[...uniqueFocusTargets.values()].map(({ event, orders }) => (
-                    <li key={event.element!.selector}>
-                      <button type="button" onClick={() => void onLocate(event.element!.selector)}>
-                        <span>{orders.join(' · ')}</span>
-                        <strong>{event.element!.name || tr(language, 'Unnamed component', 'Componente sin nombre')}</strong>
-                        <small>{event.element!.role ?? event.element!.tag}</small>
-                      </button>
-                    </li>
-                  ))}
-                </ol>
-              </>
-            ) : (
-              <div className="report-pending">
-                <strong>{tr(language, 'Focus coverage pending', 'Cobertura de foco pendiente')}</strong>
-                <p>{tr(language, 'Use manual recording or Walk with Tab; this section will update automatically.', 'Utiliza la grabación manual o Recorrer con Tab; esta sección se actualizará automáticamente.')}</p>
-              </div>
-            )}
           </section>
 
           <section className="report-section" aria-labelledby="report-headings-title">
@@ -239,14 +330,14 @@ export function SessionReportView({
                 <span>4</span>
                 <div>
                   <h3 id="report-suggestions-title">{tr(language, 'Recommended next steps', 'Sugerencias de mejora')}</h3>
-                  <p>{tr(language, 'Prioritized from the evidence collected in this session.', 'Priorizadas a partir de la evidencia recogida en esta sesión.')}</p>
+                  <p>{tr(language, 'Prioritized from static and runtime evidence.', 'Priorizadas a partir de evidencia estática y runtime.')}</p>
                 </div>
               </div>
             </div>
 
-            {suggestions.length ? (
+            {model.suggestions.length ? (
               <ol className="suggestion-list">
-                {suggestions.map((suggestion) => (
+                {model.suggestions.map((suggestion) => (
                   <li className={`priority-${suggestion.priority}`} key={suggestion.id}>
                     <div>
                       <span>{suggestion.priority === 'high' ? tr(language, 'High', 'Alta') : suggestion.priority === 'medium' ? tr(language, 'Medium', 'Media') : tr(language, 'Coverage', 'Cobertura')}</span>
@@ -260,10 +351,18 @@ export function SessionReportView({
             ) : (
               <div className="notice">
                 <strong>{tr(language, 'No immediate suggestions', 'Sin sugerencias inmediatas')}</strong>
-                <p>{tr(language, 'No automated or structural signals were detected. Manual WCAG review is still required.', 'No se han detectado señales automáticas o estructurales. Sigue siendo necesaria una revisión WCAG manual.')}</p>
+                <p>{tr(language, 'Manual WCAG review is still required.', 'Sigue siendo necesaria una revisión WCAG manual.')}</p>
               </div>
             )}
           </section>
+
+          <p className="report-scope-note">
+            {tr(
+              language,
+              'FocusTrace combines deterministic automated evidence and recorded runtime behavior. This report is not a complete WCAG conformance certificate.',
+              'FocusTrace combina evidencia automática determinista y comportamiento runtime registrado. Este informe no es un certificado completo de conformidad WCAG.',
+            )}
+          </p>
         </>
       )}
     </section>

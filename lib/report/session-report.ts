@@ -1,5 +1,27 @@
+import { suggestAccessibleForeground } from '../audit/contrast';
+import { groupRuntimeInteractions } from '../runtime/causality';
+import {
+  explanationForCause,
+  humanInteractionTitle,
+  humanRuntimeEventTitle,
+} from '../runtime/explanations';
+import { buildFocusJourney } from '../runtime/focus-journey';
+import {
+  buildFocusTransitionSemantics,
+  focusTransitionSemanticCopy,
+  primaryFocusTransitionSemantic,
+  type FocusTransitionSemantic,
+} from '../runtime/focus-transition-semantics';
 import type { AppLanguage } from '../../shared/i18n';
-import type { HeadingSignal, RuntimeEvent, ScanIssue, ScanResult } from '../../shared/types';
+import { scanCategoryForIssue, type ScanCategory } from '../../shared/scan-categories';
+import type {
+  HeadingSignal,
+  RuntimeEvent,
+  RuntimeInteraction,
+  ScanIssue,
+  ScanResult,
+  StandardReference,
+} from '../../shared/types';
 
 export type SessionSuggestionPriority = 'high' | 'medium' | 'low';
 export type SessionSuggestionSource = 'analysis' | 'focus' | 'headings' | 'coverage';
@@ -10,6 +32,45 @@ export interface SessionSuggestion {
   source: SessionSuggestionSource;
   title: string;
   detail: string;
+}
+
+export type ReportTraceTone = 'review' | 'handled' | 'observed';
+
+export interface ReportTraceStory {
+  id: string;
+  tone: ReportTraceTone;
+  interactionNumber?: number;
+  trigger: string;
+  chain: string[];
+  result: string;
+  detail: string;
+  impact?: string;
+  recommendation?: string;
+  selector?: string;
+  references: StandardReference[];
+}
+
+export interface ReportCategorySummary {
+  id: Exclude<ScanCategory, 'all'>;
+  label: string;
+  count: number;
+}
+
+export interface SessionReportModel {
+  staticFindings: number;
+  failures: number;
+  reviews: number;
+  warnings: number;
+  runtimeFindings: number;
+  causalInteractions: number;
+  transitionReviews: number;
+  handledTransitions: number;
+  focusSteps: number;
+  focusJumps: number;
+  contrastFailures: number;
+  categories: ReportCategorySummary[];
+  traceStories: ReportTraceStory[];
+  suggestions: SessionSuggestion[];
 }
 
 function translated(language: AppLanguage, english: string, spanish: string): string {
@@ -29,6 +90,146 @@ function headingSignalCount(scan: ScanResult | undefined, signal: HeadingSignal)
   return scan?.headings?.filter((heading) => heading.signals.includes(signal)).length ?? 0;
 }
 
+function categoryLabel(category: Exclude<ScanCategory, 'all'>, language: AppLanguage): string {
+  if (category === 'contrast') return translated(language, 'Contrast', 'Contraste');
+  if (category === 'names') return translated(language, 'Names & semantics', 'Nombres y semántica');
+  if (category === 'forms') return translated(language, 'Forms', 'Formularios');
+  if (category === 'structure') return translated(language, 'Structure', 'Estructura');
+  if (category === 'keyboard') return translated(language, 'Keyboard', 'Teclado');
+  if (category === 'aria') return 'ARIA';
+  return translated(language, 'Other', 'Otros');
+}
+
+function recommendationForSemantic(
+  semantic: FocusTransitionSemantic | undefined,
+  language: AppLanguage,
+): string | undefined {
+  if (!semantic || semantic.tone !== 'review') return undefined;
+  if (semantic.kind === 'focus-not-restored') {
+    return translated(
+      language,
+      'When the dialog closes, return focus to the control that opened it or another logical destination.',
+      'Al cerrar el diálogo, devuelve el foco al control que lo abrió o a otro destino lógico.',
+    );
+  }
+  if (semantic.kind === 'focus-lost') {
+    return translated(
+      language,
+      'Before removing or hiding the focused element, move focus to the next meaningful destination.',
+      'Antes de eliminar u ocultar el elemento enfocado, mueve el foco al siguiente destino significativo.',
+    );
+  }
+  if (semantic.kind === 'unexpected-jump') {
+    return translated(
+      language,
+      'Review DOM order, tabindex values and any programmatic focus movement that may be skipping expected stops.',
+      'Revisa el orden DOM, los valores tabindex y cualquier movimiento programático que pueda estar saltando paradas esperadas.',
+    );
+  }
+  if (semantic.kind === 'modal-focus-escape') {
+    return translated(
+      language,
+      'Keep keyboard focus inside the modal until it closes and preserve a logical tab sequence within it.',
+      'Mantén el foco de teclado dentro del modal hasta que se cierre y conserva una secuencia de tabulación lógica.',
+    );
+  }
+  if (semantic.kind === 'spa-focus-left-behind') {
+    return translated(
+      language,
+      'After client-side navigation, move focus to a meaningful destination in the new view when the context changes.',
+      'Tras la navegación del lado cliente, mueve el foco a un destino significativo de la nueva vista cuando cambie el contexto.',
+    );
+  }
+  return undefined;
+}
+
+function uniqueStrings(values: string[]): string[] {
+  const result: string[] = [];
+  for (const value of values) {
+    if (!value || result.at(-1) === value) continue;
+    result.push(value);
+  }
+  return result;
+}
+
+function storyForInteraction(
+  interaction: RuntimeInteraction,
+  interactionNumber: number,
+  semantics: FocusTransitionSemantic[],
+  language: AppLanguage,
+): ReportTraceStory | undefined {
+  const matchingSemantics = semantics.filter((semantic) => semantic.interactionId === interaction.id);
+  const semantic = primaryFocusTransitionSemantic(matchingSemantics);
+  const cause = interaction.causes[0];
+  const finding = interaction.events.find((event) => event.outcome != null);
+  if (!semantic && !cause && !finding) return undefined;
+
+  const semanticCopy = semantic ? focusTransitionSemanticCopy(semantic, language) : undefined;
+  const causeCopy = cause ? explanationForCause(cause.type, language) : undefined;
+  const trigger = humanInteractionTitle(interaction, language);
+  const eventChain = interaction.events
+    .filter((event) => event.id !== interaction.trigger?.id)
+    .filter((event) => !['focus-walk-start', 'focus-walk-end'].includes(event.kind))
+    .map((event) => humanRuntimeEventTitle(event, language));
+  const chain = uniqueStrings([trigger, ...eventChain]).slice(0, 7);
+  const tone: ReportTraceTone = semantic?.tone === 'positive'
+    ? 'handled'
+    : semantic?.tone === 'neutral'
+      ? 'observed'
+      : 'review';
+  const referenceSource = finding?.references ?? interaction.events.find((event) => event.references?.length)?.references ?? [];
+  const selector = semantic?.to?.selector
+    ?? semantic?.from?.selector
+    ?? finding?.element?.selector
+    ?? interaction.trigger?.element?.selector;
+
+  return {
+    id: `interaction-story-${interaction.id}`,
+    tone,
+    interactionNumber,
+    trigger,
+    chain,
+    result: semanticCopy?.label ?? causeCopy?.title ?? finding?.title ?? translated(language, 'Runtime signal', 'Señal runtime'),
+    detail: semanticCopy?.detail ?? causeCopy?.summary ?? finding?.detail ?? translated(
+      language,
+      'Review the recorded runtime evidence for this interaction.',
+      'Revisa la evidencia runtime registrada para esta interacción.',
+    ),
+    ...(causeCopy?.impact ? { impact: causeCopy.impact } : {}),
+    ...(causeCopy?.recommendation
+      ? { recommendation: causeCopy.recommendation }
+      : recommendationForSemantic(semantic, language)
+        ? { recommendation: recommendationForSemantic(semantic, language)! }
+        : {}),
+    ...(selector ? { selector } : {}),
+    references: referenceSource,
+  };
+}
+
+function unlinkedRuntimeStories(
+  events: RuntimeEvent[],
+  representedInteractionIds: Set<string>,
+  language: AppLanguage,
+): ReportTraceStory[] {
+  return events
+    .filter((event) => event.outcome != null)
+    .filter((event) => !event.interactionId || !representedInteractionIds.has(event.interactionId))
+    .map((event) => ({
+      id: `event-story-${event.id}`,
+      tone: 'review' as const,
+      trigger: humanRuntimeEventTitle(event, language),
+      chain: [humanRuntimeEventTitle(event, language)],
+      result: event.title,
+      detail: event.detail ?? translated(
+        language,
+        'Review this runtime finding in the recorded page context.',
+        'Revisa este hallazgo runtime dentro del contexto grabado de la página.',
+      ),
+      ...(event.element?.selector ? { selector: event.element.selector } : {}),
+      references: event.references ?? [],
+    }));
+}
+
 export function buildSessionSuggestions(
   scan: ScanResult | undefined,
   events: RuntimeEvent[],
@@ -36,13 +237,32 @@ export function buildSessionSuggestions(
 ): SessionSuggestion[] {
   const suggestions: SessionSuggestion[] = [];
 
-  for (const issue of uniqueIssues(scan?.issues ?? []).slice(0, 5)) {
+  for (const issue of uniqueIssues(scan?.issues ?? []).slice(0, 6)) {
+    let detail = issue.description;
+    if (
+      issue.ruleId === 'FT-WCAG-010' &&
+      issue.contrast?.foreground &&
+      issue.contrast.background
+    ) {
+      const accessibleColor = suggestAccessibleForeground(
+        issue.contrast.foreground,
+        issue.contrast.background,
+        issue.contrast.requiredRatio,
+      );
+      if (accessibleColor) {
+        detail = translated(
+          language,
+          `${issue.description} Suggested text color: ${accessibleColor.hex} (${accessibleColor.rgb}), producing ${accessibleColor.ratio}:1 against the recorded background.`,
+          `${issue.description} Color de texto sugerido: ${accessibleColor.hex} (${accessibleColor.rgb}), con un contraste de ${accessibleColor.ratio}:1 sobre el fondo registrado.`,
+        );
+      }
+    }
     suggestions.push({
       id: `analysis-${issue.ruleId}`,
       priority: 'high',
       source: 'analysis',
       title: issue.title,
-      detail: issue.description,
+      detail,
     });
   }
 
@@ -67,11 +287,13 @@ export function buildSessionSuggestions(
       priority: ['critical', 'serious'].includes(event.severity) ? 'high' : 'medium',
       source: 'focus',
       title: event.title,
-      detail: event.detail ?? translated(
-        language,
-        'Review the focused component in the recorded page context.',
-        'Revisa el componente enfocado dentro del contexto grabado de la página.',
-      ),
+      detail: event.causes?.[0]
+        ? explanationForCause(event.causes[0].type, language).recommendation
+        : event.detail ?? translated(
+          language,
+          'Review the focused component in the recorded page context.',
+          'Revisa el componente enfocado dentro del contexto grabado de la página.',
+        ),
     });
   }
 
@@ -137,4 +359,57 @@ export function buildSessionSuggestions(
 
   const priorityOrder: Record<SessionSuggestionPriority, number> = { high: 0, medium: 1, low: 2 };
   return suggestions.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority]);
+}
+
+export function buildSessionReportModel(
+  scan: ScanResult | undefined,
+  events: RuntimeEvent[],
+  language: AppLanguage,
+): SessionReportModel {
+  const interactions = groupRuntimeInteractions(events);
+  const journey = buildFocusJourney(events);
+  const transitionSemantics = buildFocusTransitionSemantics(events, interactions, journey);
+  const representedInteractionIds = new Set<string>();
+  const traceStories: ReportTraceStory[] = [];
+
+  interactions.forEach((interaction, index) => {
+    if (!interaction.correlated) return;
+    const story = storyForInteraction(interaction, index + 1, transitionSemantics, language);
+    if (!story) return;
+    representedInteractionIds.add(interaction.id);
+    traceStories.push(story);
+  });
+  traceStories.push(...unlinkedRuntimeStories(events, representedInteractionIds, language));
+
+  const allStaticFindings = scan
+    ? [...scan.issues, ...scan.review, ...(scan.warnings ?? [])]
+    : [];
+  const categoryMap = new Map<Exclude<ScanCategory, 'all'>, number>();
+  for (const issue of allStaticFindings) {
+    const category = scanCategoryForIssue(issue);
+    categoryMap.set(category, (categoryMap.get(category) ?? 0) + 1);
+  }
+  const categoryOrder: Array<Exclude<ScanCategory, 'all'>> = [
+    'contrast', 'names', 'forms', 'structure', 'keyboard', 'aria', 'other',
+  ];
+  const categories = categoryOrder
+    .map((id) => ({ id, label: categoryLabel(id, language), count: categoryMap.get(id) ?? 0 }))
+    .filter((item) => item.count > 0);
+
+  return {
+    staticFindings: allStaticFindings.length,
+    failures: scan?.issues.length ?? 0,
+    reviews: scan?.review.length ?? 0,
+    warnings: scan?.warnings?.length ?? 0,
+    runtimeFindings: events.filter((event) => event.outcome != null).length,
+    causalInteractions: interactions.filter((interaction) => interaction.causes.length > 0).length,
+    transitionReviews: transitionSemantics.filter((semantic) => semantic.tone === 'review').length,
+    handledTransitions: transitionSemantics.filter((semantic) => semantic.tone === 'positive').length,
+    focusSteps: journey.steps.length,
+    focusJumps: journey.jumps,
+    contrastFailures: scan?.issues.filter((issue) => issue.ruleId === 'FT-WCAG-010').length ?? 0,
+    categories,
+    traceStories,
+    suggestions: buildSessionSuggestions(scan, events, language),
+  };
 }
