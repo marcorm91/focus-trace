@@ -597,6 +597,7 @@ export default function App() {
           graphSignals={focusGraph.observations.length}
           serious={serious}
           runtimeWarnings={runtimeWarnings}
+          events={session.events}
           scan={scan}
           level={explanationLevel}
           language={language}
