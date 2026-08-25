@@ -1,0 +1,146 @@
+html,
+body,
+#root {
+  width: 100%;
+  max-width: 100%;
+  overflow-x: hidden;
+}
+
+.app-shell,
+.app-shell > *,
+.topbar,
+.brand,
+.brand > div,
+.quick-start,
+.quick-start-copy,
+.quick-actions,
+.workspace-nav,
+.panel,
+.section-heading,
+.section-heading > div,
+.error {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.app-shell {
+  overflow-x: clip;
+}
+
+.error,
+.panel p,
+.panel strong,
+.panel small {
+  overflow-wrap: anywhere;
+}
+
+.brand-mark,
+.about-mark {
+  overflow: hidden;
+  padding: 0;
+  border: 0;
+  background-color: transparent;
+  background-image: url('/icon/48.png');
+  background-position: center;
+  background-repeat: no-repeat;
+  background-size: cover;
+  color: transparent;
+  font-size: 0;
+  text-indent: -9999px;
+}
+
+.brand-mark {
+  border-radius: 11px;
+  box-shadow: 0 6px 16px rgba(79, 70, 229, .22);
+}
+
+.about-mark {
+  border-radius: 12px;
+}
+
+.workspace-nav.tabs {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.workspace-nav.tabs button {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.workspace-nav.tabs button > span {
+  width: 24px;
+  height: 24px;
+  display: grid;
+  place-items: center;
+  border-radius: 8px;
+  background: var(--ft-surface-subtle);
+  font-size: 0;
+}
+
+.workspace-nav.tabs button > span::before {
+  font-size: 14px;
+  line-height: 1;
+}
+
+.workspace-nav.tabs button:nth-child(1) > span::before { content: '⌕'; }
+.workspace-nav.tabs button:nth-child(2) > span::before { content: '⏺'; }
+.workspace-nav.tabs button:nth-child(3) > span::before { content: 'H'; font-size: 12px; font-weight: 900; }
+.workspace-nav.tabs button:nth-child(4) > span::before { content: '▤'; }
+
+.workspace-nav.tabs button.active > span {
+  background: color-mix(in srgb, var(--ft-brand) 14%, var(--ft-surface));
+  color: var(--ft-brand-strong);
+}
+
+.quick-actions button {
+  min-width: 0;
+  overflow: hidden;
+}
+
+.quick-actions button > span {
+  flex: 0 0 auto;
+}
+
+.quick-actions .scan-action > span {
+  font-size: 0;
+}
+
+.quick-actions .scan-action > span::before {
+  content: '⌕';
+  font-size: 13px;
+}
+
+.quick-actions .focus-walk-action > span {
+  font-size: 0;
+}
+
+.quick-actions .focus-walk-action > span::before {
+  content: '⇥';
+  font-size: 14px;
+}
+
+@media (max-width: 520px) {
+  .workspace-nav.tabs {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .workspace-nav.tabs button {
+    min-height: 46px;
+    display: grid;
+    gap: 2px;
+  }
+}
+
+@media (max-width: 360px) {
+  .app-shell {
+    padding-inline: 10px;
+  }
+
+  .workspace-nav.tabs button > strong {
+    font-size: 8px;
+  }
+
+  .quick-start {
+    padding-inline: 11px;
+  }
+}

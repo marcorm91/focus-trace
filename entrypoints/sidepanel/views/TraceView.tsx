@@ -25,6 +25,7 @@ import { ReplayView } from './ReplayView';
 import { RuntimeView } from './RuntimeView';
 import './trace.css';
 import './trace-reset.css';
+import './trace-polish.css';
 import './transition-semantics.css';
 
 type TraceMode = 'replay' | 'journey' | 'interactions' | 'graph';
@@ -87,8 +88,8 @@ export function TraceView({
   const resetDialogRef = useRef<HTMLDialogElement>(null);
   const cancelResetRef = useRef<HTMLButtonElement>(null);
   const correlatedInteractions = interactions.filter((interaction) => interaction.correlated);
+  const recentInteractions = correlatedInteractions.slice(-6);
   const findings = events.filter((event) => event.outcome != null);
-  const causalInteractions = correlatedInteractions.filter((interaction) => interaction.causes.length > 0);
   const latestCause = [...correlatedInteractions].reverse().find((interaction) => interaction.causes.length > 0)?.causes[0];
   const latestExplanation = latestCause ? explanationForCause(latestCause.type, language) : undefined;
   const transitionSemantics = useMemo(
@@ -96,8 +97,6 @@ export function TraceView({
     [events, interactions, journey],
   );
   const hasSessionEvidence = events.length > 0;
-
-  const previewSteps = useMemo(() => journey.steps.slice(-10), [journey.steps]);
 
   useEffect(() => {
     if (previousRecording.current && !recording && events.length > 0) setMode('replay');
@@ -173,12 +172,15 @@ export function TraceView({
         </div>
         <div className="trace-hero-actions">
           <button
-            className={recording ? 'trace-record stop' : 'trace-record primary'}
+            className={recording ? 'trace-record stop' : 'trace-record start'}
             type="button"
+            title={recording
+              ? tr(language, 'Stop the current Trace recording', 'Detener la grabación actual de Trace')
+              : tr(language, 'Start recording a new Trace session', 'Iniciar la grabación de una nueva sesión de Trace')}
             disabled={busy}
             onClick={() => void onToggleRecording()}
           >
-            <span className="record-icon" aria-hidden="true" />
+            <span className="trace-button-icon" aria-hidden="true">{recording ? '■' : '▶'}</span>
             {recording
               ? tr(language, 'Stop trace', 'Detener traza')
               : tr(language, 'Start trace', 'Iniciar traza')}
@@ -186,12 +188,14 @@ export function TraceView({
           <button
             className="trace-reset"
             type="button"
+            title={tr(language, 'Clear the current runtime session', 'Borrar la sesión runtime actual')}
             disabled={!hasSessionEvidence || recording || busy || resetting}
             onClick={() => {
               setResetError(undefined);
               setResetDialogOpen(true);
             }}
           >
+            <span className="trace-button-icon" aria-hidden="true">↻</span>
             {tr(language, 'Reset session', 'Reiniciar sesión')}
           </button>
         </div>
@@ -250,109 +254,195 @@ export function TraceView({
         <span><strong>{transitionSemantics.length}</strong>{tr(language, 'Interpreted transitions', 'Transiciones interpretadas')}</span>
       </div>
 
-      {previewSteps.length > 0 && (
-        <section className="trace-preview" aria-labelledby="trace-preview-title">
-          <div className="trace-preview-heading">
-            <div>
-              <p className="eyebrow">{tr(language, 'Current journey', 'Recorrido actual')}</p>
-              <h3 id="trace-preview-title">{tr(language, 'Observed focus flow', 'Flujo de foco observado')}</h3>
+      {journey.steps.length > 0 && (
+        <details className="trace-accordion trace-journey-accordion" open>
+          <summary title={tr(language, 'Expand or collapse the current focus journey', 'Expandir o contraer el recorrido de foco actual')}>
+            <span className="trace-accordion-icon" aria-hidden="true">⇥</span>
+            <span className="trace-accordion-copy">
+              <small>{tr(language, 'Current journey', 'Recorrido actual')}</small>
+              <strong>{tr(language, 'Observed focus flow', 'Flujo de foco observado')}</strong>
+            </span>
+            <span className="trace-accordion-count">{journey.steps.length}</span>
+          </summary>
+          <div className="trace-accordion-body">
+            <div className="trace-journey-toolbar">
+              <p>{tr(
+                language,
+                'Select a step to locate the recorded focus target on the current page.',
+                'Selecciona un paso para localizar el destino de foco grabado en la página actual.',
+              )}</p>
+              <button
+                type="button"
+                disabled={recording || pathSteps === 0}
+                aria-pressed={pathVisible}
+                title={pathVisible
+                  ? tr(language, 'Hide the recorded focus path on the page', 'Ocultar el recorrido de foco grabado en la página')
+                  : tr(language, 'Show the recorded focus path on the page', 'Mostrar el recorrido de foco grabado en la página')}
+                onClick={() => void onTogglePath()}
+              >
+                <span aria-hidden="true">{pathVisible ? '◉' : '◎'}</span>
+                {pathVisible
+                  ? tr(language, 'Hide on page', 'Ocultar en página')
+                  : tr(language, 'Show on page', 'Mostrar en página')}
+              </button>
             </div>
-            <button type="button" disabled={recording || pathSteps === 0} aria-pressed={pathVisible} onClick={() => void onTogglePath()}>
-              {pathVisible
-                ? tr(language, 'Hide on page', 'Ocultar en página')
-                : tr(language, 'Show on page', 'Mostrar en página')}
-            </button>
-          </div>
-          <ol className="trace-flow" aria-label={tr(language, 'Latest focus steps', 'Últimos pasos de foco')}>
-            {previewSteps.map((step) => {
-              const selected = step.element.selector === selectedSelector;
-              const name = step.element.name || step.element.role || step.element.tag;
-              const stepSemantics = focusTransitionSemanticsForEvent(transitionSemantics, step.id);
-              const primarySemantic = primaryFocusTransitionSemantic(stepSemantics);
-              const primaryCopy = primarySemantic
-                ? focusTransitionSemanticCopy(primarySemantic, language)
-                : undefined;
-              return (
-                <li
-                  key={step.id}
-                  className={`${step.event.outcome ? 'has-signal ' : ''}${primarySemantic ? `semantic-${primarySemantic.tone}` : ''}`.trim()}
-                >
-                  <span className={`trace-direction direction-${step.direction}`} aria-label={step.direction}>
-                    {primarySemantic ? focusTransitionSemanticIcon(primarySemantic) : directionSymbol(step.direction)}
-                  </span>
-                  <button
-                    type="button"
-                    aria-current={selected ? 'step' : undefined}
-                    onClick={() => void onSelectStep(step.element.selector)}
-                    title={primaryCopy?.detail}
+            <ol className="trace-flow-list" aria-label={tr(language, 'Recorded focus steps', 'Pasos de foco grabados')}>
+              {journey.steps.map((step) => {
+                const selected = step.element.selector === selectedSelector;
+                const name = step.element.name || step.element.role || step.element.tag;
+                const stepSemantics = focusTransitionSemanticsForEvent(transitionSemantics, step.id);
+                const primarySemantic = primaryFocusTransitionSemantic(stepSemantics);
+                const primaryCopy = primarySemantic
+                  ? focusTransitionSemanticCopy(primarySemantic, language)
+                  : undefined;
+                const locateTitle = tr(
+                  language,
+                  `Locate focus step ${step.order} on the page`,
+                  `Localizar el paso de foco ${step.order} en la página`,
+                );
+                return (
+                  <li
+                    key={step.id}
+                    className={`${step.event.outcome ? 'has-signal ' : ''}${primarySemantic ? `semantic-${primarySemantic.tone}` : ''}`.trim()}
                   >
-                    <strong>{step.order}</strong>
-                    <span>{name}</span>
-                    {primarySemantic && (
-                      <span className={`trace-step-semantic ${primarySemantic.tone}`} aria-label={primaryCopy?.label}>
-                        {focusTransitionSemanticIcon(primarySemantic)}
+                    <span
+                      className={`trace-direction direction-${step.direction}`}
+                      aria-label={step.direction}
+                      title={step.direction}
+                    >
+                      {primarySemantic ? focusTransitionSemanticIcon(primarySemantic) : directionSymbol(step.direction)}
+                    </span>
+                    <button
+                      className="trace-step-button"
+                      type="button"
+                      aria-current={selected ? 'step' : undefined}
+                      onClick={() => void onSelectStep(step.element.selector)}
+                      title={primaryCopy ? `${locateTitle} · ${primaryCopy.detail}` : locateTitle}
+                    >
+                      <strong className="trace-step-number">{step.order}</strong>
+                      <span className="trace-step-copy">
+                        <span>{name}</span>
+                        <small>
+                          {step.element.role ?? step.element.tag}
+                          {primaryCopy ? ` · ${primaryCopy.label}` : ''}
+                        </small>
                       </span>
-                    )}
-                  </button>
-                </li>
-              );
-            })}
-          </ol>
-        </section>
-      )}
-
-      {latestExplanation && (
-        <section className="trace-cause" aria-labelledby="trace-cause-title">
-          <div className="trace-cause-marker" aria-hidden="true">!</div>
-          <div>
-            <p className="eyebrow">{tr(language, 'Latest explained signal', 'Última señal explicada')}</p>
-            <h3 id="trace-cause-title">{latestExplanation.title}</h3>
-            <p>{latestExplanation.summary}</p>
-            <p><strong>{tr(language, 'Why it matters:', 'Por qué importa:')}</strong> {latestExplanation.impact}</p>
+                      {primarySemantic && (
+                        <span className={`trace-step-semantic ${primarySemantic.tone}`} aria-label={primaryCopy?.label}>
+                          {focusTransitionSemanticIcon(primarySemantic)}
+                        </span>
+                      )}
+                    </button>
+                  </li>
+                );
+              })}
+            </ol>
           </div>
-        </section>
+        </details>
       )}
 
       {correlatedInteractions.length > 0 && (
-        <section className="trace-interaction-strip" aria-labelledby="trace-interactions-title">
-          <div className="trace-preview-heading">
-            <div>
-              <p className="eyebrow">{tr(language, 'Interaction history', 'Historial de interacciones')}</p>
-              <h3 id="trace-interactions-title">{tr(language, 'Actions that produced this journey', 'Acciones que produjeron este recorrido')}</h3>
-            </div>
+        <details className="trace-accordion trace-interactions-accordion">
+          <summary title={tr(language, 'Expand or collapse interaction history', 'Expandir o contraer el historial de interacciones')}>
+            <span className="trace-accordion-icon" aria-hidden="true">⚡</span>
+            <span className="trace-accordion-copy">
+              <small>{tr(language, 'Interaction history', 'Historial de interacciones')}</small>
+              <strong>{tr(language, 'Actions that produced this journey', 'Acciones que produjeron este recorrido')}</strong>
+            </span>
+            <span className="trace-accordion-count">{correlatedInteractions.length}</span>
+          </summary>
+          <div className="trace-accordion-body trace-interaction-strip">
+            <ol>
+              {recentInteractions.map((interaction, index) => (
+                <li key={interaction.id} className={interaction.causes.length ? 'has-signal' : ''}>
+                  <span>{correlatedInteractions.length - recentInteractions.length + index + 1}</span>
+                  <div>
+                    <strong>{humanInteractionTitle(interaction, language)}</strong>
+                    <small>
+                      {interaction.causes[0]
+                        ? explanationForCause(interaction.causes[0].type, language).title
+                        : tr(language, `${interaction.events.length} correlated events`, `${interaction.events.length} eventos correlacionados`)}
+                    </small>
+                  </div>
+                </li>
+              ))}
+            </ol>
+            {correlatedInteractions.length > recentInteractions.length && (
+              <p className="trace-accordion-note">
+                {tr(
+                  language,
+                  `Showing the latest ${recentInteractions.length} interactions. Open Interactions below for the complete history.`,
+                  `Se muestran las últimas ${recentInteractions.length} interacciones. Abre Interacciones abajo para consultar el historial completo.`,
+                )}
+              </p>
+            )}
           </div>
-          <ol>
-            {correlatedInteractions.slice(-4).map((interaction, index) => (
-              <li key={interaction.id} className={interaction.causes.length ? 'has-signal' : ''}>
-                <span>{correlatedInteractions.length - Math.min(4, correlatedInteractions.length) + index + 1}</span>
-                <div>
-                  <strong>{humanInteractionTitle(interaction, language)}</strong>
-                  <small>
-                    {interaction.causes[0]
-                      ? explanationForCause(interaction.causes[0].type, language).title
-                      : tr(language, `${interaction.events.length} correlated events`, `${interaction.events.length} eventos correlacionados`)}
-                  </small>
-                </div>
-              </li>
-            ))}
-          </ol>
-        </section>
+        </details>
+      )}
+
+      {latestExplanation && (
+        <details className="trace-accordion trace-signal-accordion">
+          <summary title={tr(language, 'Expand or collapse the latest explained signal', 'Expandir o contraer la última señal explicada')}>
+            <span className="trace-accordion-icon signal" aria-hidden="true">!</span>
+            <span className="trace-accordion-copy">
+              <small>{tr(language, 'Latest explained signal', 'Última señal explicada')}</small>
+              <strong>{latestExplanation.title}</strong>
+            </span>
+            <span className="trace-accordion-count signal">1</span>
+          </summary>
+          <div className="trace-accordion-body trace-cause-body">
+            <p>{latestExplanation.summary}</p>
+            <p><strong>{tr(language, 'Why it matters:', 'Por qué importa:')}</strong> {latestExplanation.impact}</p>
+          </div>
+        </details>
       )}
 
       <div className="trace-mode-switcher" role="tablist" aria-label={tr(language, 'Trace inspector', 'Inspector de traza')}>
-        <button type="button" role="tab" aria-selected={mode === 'replay'} className={mode === 'replay' ? 'active' : ''} onClick={() => setMode('replay')}>
-          {tr(language, 'Replay', 'Replay')}
-          {events.length > 0 && <span>{events.length}</span>}
+        <button
+          type="button"
+          role="tab"
+          title={tr(language, 'Inspect the recorded evidence step by step', 'Inspeccionar la evidencia grabada paso a paso')}
+          aria-selected={mode === 'replay'}
+          className={mode === 'replay' ? 'active' : ''}
+          onClick={() => setMode('replay')}
+        >
+          <span className="trace-tab-icon" aria-hidden="true">↶</span>
+          <span className="trace-tab-label">{tr(language, 'Replay', 'Replay')}</span>
+          {events.length > 0 && <span className="trace-tab-count">{events.length}</span>}
         </button>
-        <button type="button" role="tab" aria-selected={mode === 'journey'} className={mode === 'journey' ? 'active' : ''} onClick={() => setMode('journey')}>
-          {tr(language, 'Journey', 'Recorrido')}
+        <button
+          type="button"
+          role="tab"
+          title={tr(language, 'Inspect the focus journey', 'Inspeccionar el recorrido de foco')}
+          aria-selected={mode === 'journey'}
+          className={mode === 'journey' ? 'active' : ''}
+          onClick={() => setMode('journey')}
+        >
+          <span className="trace-tab-icon" aria-hidden="true">⇥</span>
+          <span className="trace-tab-label">{tr(language, 'Journey', 'Recorrido')}</span>
         </button>
-        <button type="button" role="tab" aria-selected={mode === 'interactions'} className={mode === 'interactions' ? 'active' : ''} onClick={() => setMode('interactions')}>
-          {tr(language, 'Interactions', 'Interacciones')}
-          {findings.length > 0 && <span>{findings.length}</span>}
+        <button
+          type="button"
+          role="tab"
+          title={tr(language, 'Inspect correlated runtime interactions', 'Inspeccionar las interacciones runtime correlacionadas')}
+          aria-selected={mode === 'interactions'}
+          className={mode === 'interactions' ? 'active' : ''}
+          onClick={() => setMode('interactions')}
+        >
+          <span className="trace-tab-icon" aria-hidden="true">⚡</span>
+          <span className="trace-tab-label">{tr(language, 'Interactions', 'Interacciones')}</span>
+          {findings.length > 0 && <span className="trace-tab-count">{findings.length}</span>}
         </button>
-        <button type="button" role="tab" aria-selected={mode === 'graph'} className={mode === 'graph' ? 'active' : ''} onClick={() => setMode('graph')}>
-          {tr(language, 'Graph', 'Grafo')}
+        <button
+          type="button"
+          role="tab"
+          title={tr(language, 'Inspect the focus graph', 'Inspeccionar el grafo de foco')}
+          aria-selected={mode === 'graph'}
+          className={mode === 'graph' ? 'active' : ''}
+          onClick={() => setMode('graph')}
+        >
+          <span className="trace-tab-icon" aria-hidden="true">⠿</span>
+          <span className="trace-tab-label">{tr(language, 'Graph', 'Grafo')}</span>
         </button>
       </div>
 

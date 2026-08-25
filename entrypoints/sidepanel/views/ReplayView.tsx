@@ -26,11 +26,11 @@ function phaseLabel(phase: RuntimeReplayPhase, language: AppLanguage): string {
 }
 
 function phaseIcon(phase: RuntimeReplayPhase): string {
-  if (phase === 'trigger') return '⌁';
+  if (phase === 'trigger') return '▶';
   if (phase === 'focus') return '◎';
-  if (phase === 'change') return '△';
+  if (phase === 'change') return '◆';
   if (phase === 'signal') return '!';
-  return '·';
+  return '•';
 }
 
 function mutationLabel(event: RuntimeEvent, language: AppLanguage): string | undefined {
@@ -124,6 +124,7 @@ export function ReplayView({
     second: '2-digit',
     fractionalSecondDigits: 3,
   }).format(current.event.timestamp);
+  const currentPhaseLabel = phaseLabel(current.phase, language);
 
   return (
     <section className="replay-view panel" aria-labelledby="replay-title">
@@ -145,14 +146,24 @@ export function ReplayView({
       </div>
 
       <div className="replay-controller" aria-label={tr(language, 'Replay controls', 'Controles de replay')}>
-        <button type="button" disabled={recording || index === 0} onClick={() => setIndex((value) => Math.max(0, value - 1))}>
+        <button
+          type="button"
+          title={tr(language, 'Previous recorded event', 'Evento grabado anterior')}
+          disabled={recording || index === 0}
+          onClick={() => setIndex((value) => Math.max(0, value - 1))}
+        >
           <span aria-hidden="true">←</span> {tr(language, 'Previous', 'Anterior')}
         </button>
         <div className="replay-position" aria-live="polite">
           <strong>{current.order}</strong>
           <span>/ {current.total}</span>
         </div>
-        <button type="button" disabled={recording || index === steps.length - 1} onClick={() => setIndex((value) => Math.min(steps.length - 1, value + 1))}>
+        <button
+          type="button"
+          title={tr(language, 'Next recorded event', 'Siguiente evento grabado')}
+          disabled={recording || index === steps.length - 1}
+          onClick={() => setIndex((value) => Math.min(steps.length - 1, value + 1))}
+        >
           {tr(language, 'Next', 'Siguiente')} <span aria-hidden="true">→</span>
         </button>
       </div>
@@ -172,10 +183,10 @@ export function ReplayView({
 
       <article className={`replay-event phase-${current.phase}${current.cause ? ' has-cause' : ''}`}>
         <div className="replay-event-header">
-          <span className="replay-phase-icon" aria-hidden="true">{phaseIcon(current.phase)}</span>
+          <span className="replay-phase-icon" aria-hidden="true" title={currentPhaseLabel}>{phaseIcon(current.phase)}</span>
           <div>
             <div className="replay-meta">
-              <span>{phaseLabel(current.phase, language)}</span>
+              <span>{currentPhaseLabel}</span>
               {current.interactionNumber && (
                 <span>{tr(language, `Interaction #${current.interactionNumber}`, `Interacción #${current.interactionNumber}`)}</span>
               )}
@@ -201,7 +212,7 @@ export function ReplayView({
               return (
                 <div className={`replay-transition-result ${semantic.tone}`} key={semantic.id}>
                   <span className={`replay-semantic-label ${semantic.tone}`}>
-                    <span aria-hidden="true">{focusTransitionSemanticIcon(semantic)}</span>
+                    <span aria-hidden="true" title={copy.label}>{focusTransitionSemanticIcon(semantic)}</span>
                     {copy.label}
                   </span>
                   <p>{copy.detail}</p>
@@ -270,6 +281,7 @@ export function ReplayView({
           <button
             type="button"
             key={step.id}
+            title={tr(language, `Open replay step ${step.order}`, `Abrir el paso ${step.order} del replay`)}
             className={step.id === current.id ? 'active' : ''}
             aria-current={step.id === current.id ? 'step' : undefined}
             disabled={recording}

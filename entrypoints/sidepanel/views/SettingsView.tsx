@@ -1,6 +1,6 @@
 import { tr, type AppLanguage } from '../../../shared/i18n';
 
-const CREATOR_LINKEDIN = 'https://www.linkedin.com/in/marcorm91/';
+const CREATOR_LINKEDIN = 'https://es.linkedin.com/in/marcorm91';
 
 export function SettingsView({
   language,
