@@ -4,39 +4,58 @@
 
 FocusTrace is a local-first Chrome/Edge extension with its own WCAG 2.2 rule engine and a runtime debugger for keyboard focus, SPA navigation and dynamic UI behavior.
 
-The project is in active early development. The rule set and debugging UI will continue to evolve as runtime coverage grows.
+The project is in active early development. Automated results are intentionally separated into deterministic failures, contextual review signals and authoring warnings so the extension does not claim certainty it cannot support.
 
 ## What makes it different?
 
-FocusTrace does not use axe-core as its scanner. Its rules are implemented in this repository and explicitly mapped to:
+FocusTrace combines two complementary workflows instead of treating accessibility as a single static scan.
 
-- WCAG 2.2 success criteria
-- W3C ACT Rules where an applicable testing rule exists
-- WAI-ARIA APG for runtime widget patterns such as modal-dialog focus behavior
+### Full page analysis
 
-The second differentiator is time: FocusTrace records what had focus, what action occurred, what changed in the DOM, and where focus ended up afterwards.
+The local rule engine evaluates observable WCAG/ARIA expectations and keeps diagnostic evidence such as accessible-name provenance and measured contrast ratios. Rules are mapped to:
+
+- WCAG 2.2 success criteria;
+- W3C ACT Rules where an applicable testing rule exists;
+- WAI-ARIA semantics and registry data;
+- AccName / HTML-AAM naming behavior;
+- WAI-ARIA APG for runtime widget patterns.
+
+FocusTrace does not use axe-core as its scanner.
+
+### Runtime Trace
+
+Trace records what the user did, what had focus, what changed in the page and where focus moved afterwards. Recorded evidence can be inspected as a journey, correlated interactions, a focus graph or a read-only replay.
+
+The runtime debugger can derive deterministic causal explanations for patterns such as a focused node being removed, a modal opening without receiving focus or SPA navigation leaving focus behind. These explanations describe recorded evidence; they do not turn contextual behavior into an automatic WCAG conformance claim.
 
 ## Current rule engine
 
-The first static rules cover:
+Current static coverage includes:
 
-- non-empty page title
-- image accessible name / decorative treatment
-- button accessible name
-- form-field accessible name
-- link accessible name
-- focusable content under `aria-hidden="true"`
-- positive `tabindex` (review)
-- skipped heading levels (review)
+- page title;
+- image accessible name / decorative treatment;
+- button, form field and link accessible names;
+- visible label contained in the accessible name;
+- `aria-hidden="true"` content remaining in sequential focus navigation;
+- page language presence and known primary language subtag;
+- WCAG 1.4.3 text contrast with structured ratio/color evidence;
+- conservative WCAG 1.4.11 non-text contrast coverage for deterministic visual cues;
+- positive `tabindex`, placeholder-only labels and heading-level jumps as review signals;
+- deprecated/prohibited ARIA authoring signals as warnings.
+
+For deterministic contrast failures, FocusTrace can show HEX/RGB values, copy recorded colors and suggest a small sRGB adjustment that reaches the required ratio. Complex visual composition remains REVIEW rather than being manufactured into a false failure.
 
 Runtime recording currently observes:
 
-- focus, keyboard and click events
-- focused nodes removed from the DOM
-- possible complete focus obscuration
-- SPA URL changes and unchanged page titles
-- modal dialog initial focus, focus escape and restoration
-- live-region mutations
+- keyboard and pointer interactions;
+- focus movement, backward navigation, loops and unexpected jumps;
+- focused nodes removed or made hidden;
+- SPA route changes;
+- modal dialog initial focus, focus escape and restoration;
+- relevant DOM mutations and dialog lifecycle evidence;
+- accessibility breakpoints for selected deterministic runtime causes.
+
+Trace also includes a read-only replay of recorded evidence and a Trace-first report that combines static findings with runtime interaction stories and recommendations.
 
 See [`docs/RULES.md`](docs/RULES.md) for methodology, sources and limitations.
 
@@ -111,11 +130,27 @@ npm test
 npm run standards:validate
 ```
 
+Run the release gate, including Chrome and Edge production builds:
+
+```bash
+npm run release:check
+```
+
+Run the complete gate including browser E2E tests:
+
+```bash
+npm run release:check:full
+```
+
+See [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md) before tagging a release or changing repository visibility.
+
 For contribution guidelines, see [`CONTRIBUTING.md`](CONTRIBUTING.md).
 
 ## Security
 
 Please do not disclose security vulnerabilities through public issues. See [`SECURITY.md`](SECURITY.md) for the reporting process and security scope.
+
+Before making the repository public, the complete Git history should be scanned with a dedicated secret scanner. Current-tree review is not a substitute for historical scanning.
 
 ## Important conformance note
 
