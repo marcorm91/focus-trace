@@ -16,6 +16,11 @@ import {
   mayBeCompletelyObscured,
   snapshot,
 } from '../lib/runtime/page-inspection';
+import {
+  createRouteChangeEvent,
+  createRouteFocusUnchangedEvent,
+  createRouteTitleUnchangedEvent,
+} from '../lib/runtime/route-events';
 import { runFocusTraceScan } from '../lib/audit/scan';
 import { RULES } from '../shared/rule-catalog';
 import type {
@@ -471,41 +476,19 @@ export default defineContentScript({
 
       lastUrl = location.href;
       lastTitle = document.title;
-      emit(
-        {
-          kind: 'route',
-          severity: 'info',
-          title: 'SPA/navigation URL change detected',
-          fromUrl,
-          toUrl: lastUrl,
-        },
-        routeInteractionId,
-      );
+      emit(createRouteChangeEvent(fromUrl, lastUrl), routeInteractionId);
 
       ctx.setTimeout(() => {
         if (!recording || focusVersion !== routeFocusVersion) return;
         const active = document.activeElement instanceof Element ? document.activeElement : null;
         emit(
-          {
-            kind: 'route',
-            severity: RULES.spaFocusUnchanged.severity,
-            outcome: 'review',
-            ruleId: RULES.spaFocusUnchanged.id,
-            references: RULES.spaFocusUnchanged.references,
-            title: RULES.spaFocusUnchanged.title,
-            detail: `The URL changed from ${fromUrl} to ${lastUrl}, but no focus transition was observed. Focus ${
-              active === routeFocus ? 'remained on' : 'ended on'
-            } ${active ? selectorFor(active) : 'no element'}. Review whether users are left at a meaningful location in the new view.`,
-            ...(active ? { element: snapshot(active) } : {}),
+          createRouteFocusUnchangedEvent({
             fromUrl,
             toUrl: lastUrl,
-            causes: [
-              cause(
-                'ROUTE_CHANGED_WITHOUT_FOCUS_MOVE',
-                'The SPA route changed without a subsequent focus transition.',
-              ),
-            ],
-          },
+            activeSelector: active ? selectorFor(active) : 'no element',
+            focusRemained: active === routeFocus,
+            ...(active ? { activeElement: snapshot(active) } : {}),
+          }),
           routeInteractionId,
         );
       }, 350);
@@ -517,19 +500,11 @@ export default defineContentScript({
           return;
         }
         emit(
-          {
-            kind: 'route',
-            severity: RULES.spaTitleUnchanged.severity,
-            outcome: 'review',
-            ruleId: RULES.spaTitleUnchanged.id,
-            references: RULES.spaTitleUnchanged.references,
-            title: RULES.spaTitleUnchanged.title,
-            detail: `The URL changed from ${fromUrl} to ${lastUrl}, but document.title remained ${JSON.stringify(
-              document.title,
-            )}. Review whether the new SPA view represents a distinct page/topic that needs a descriptive title.`,
+          createRouteTitleUnchangedEvent({
             fromUrl,
             toUrl: lastUrl,
-          },
+            title: document.title,
+          }),
           routeInteractionId,
         );
       }, 600);
