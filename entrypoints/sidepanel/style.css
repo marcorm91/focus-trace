@@ -725,3 +725,217 @@ code {
   .session-console .actions { grid-template-columns: 1fr; }
   .metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
+
+/* Page-first workspace */
+.quick-start {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid var(--ft-border);
+  border-radius: 14px;
+  background: var(--ft-surface);
+  box-shadow: var(--ft-shadow);
+}
+
+.quick-start-copy p {
+  margin: 7px 0 0;
+  overflow: hidden;
+  color: var(--ft-muted);
+  font-size: 11px;
+  line-height: 1.4;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.quick-actions {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+}
+
+.quick-actions button {
+  min-height: 42px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--ft-border);
+  border-radius: 10px;
+  background: var(--ft-surface);
+  color: var(--ft-text);
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.quick-actions button.primary {
+  border-color: var(--ft-brand);
+  background: var(--ft-brand);
+  color: #fff;
+  box-shadow: 0 4px 12px rgba(79, 70, 229, .22);
+}
+
+.quick-actions button:disabled {
+  opacity: .55;
+  cursor: not-allowed;
+}
+
+.workspace-nav.tabs {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+}
+
+.heading-outline-panel {
+  gap: 14px;
+}
+
+.heading-outline-summary {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 6px;
+}
+
+.heading-outline-summary span {
+  min-width: 0;
+  padding: 9px 7px;
+  border: 1px solid var(--ft-border);
+  border-radius: 9px;
+  background: var(--ft-surface);
+  color: var(--ft-muted);
+  font-size: 9px;
+  text-align: center;
+}
+
+.heading-outline-summary strong {
+  display: block;
+  margin-bottom: 2px;
+  color: var(--ft-text);
+  font-size: 17px;
+}
+
+.heading-tree {
+  display: grid;
+  gap: 4px;
+}
+
+.heading-tree-row {
+  position: relative;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 7px;
+  align-items: stretch;
+}
+
+.heading-tree-row.level-2 { margin-left: 14px; }
+.heading-tree-row.level-3 { margin-left: 28px; }
+.heading-tree-row.level-4 { margin-left: 42px; }
+.heading-tree-row.level-5 { margin-left: 56px; }
+.heading-tree-row.level-6 { margin-left: 70px; }
+
+.heading-tree-row::before {
+  position: absolute;
+  top: -5px;
+  bottom: -5px;
+  left: 16px;
+  width: 1px;
+  background: var(--ft-border);
+  content: "";
+}
+
+.heading-tree-row:last-child::before {
+  bottom: 50%;
+}
+
+.heading-level {
+  position: relative;
+  z-index: 1;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--ft-border);
+  border-radius: 8px;
+  background: var(--ft-surface);
+  color: var(--ft-muted);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.heading-node {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  padding: 8px 9px;
+  background: transparent;
+  color: var(--ft-text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.heading-node > span {
+  overflow: hidden;
+  font-size: 11px;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.heading-node small {
+  color: var(--ft-warning);
+  font-size: 9px;
+}
+
+.heading-tree-row.has-signal .heading-level {
+  border-color: color-mix(in srgb, var(--ft-warning) 55%, var(--ft-border));
+  color: var(--ft-warning);
+}
+
+.heading-tree-row[aria-selected="true"] .heading-node {
+  border-color: var(--ft-brand);
+  background: var(--ft-brand-soft);
+  color: var(--ft-brand-strong);
+}
+
+.heading-selection {
+  display: grid;
+  gap: 6px;
+  padding: 11px;
+  border-left: 4px solid var(--ft-brand);
+  border-radius: 0 9px 9px 0;
+  background: var(--ft-surface);
+}
+
+.heading-selection > div {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.heading-selection > div span {
+  color: var(--ft-brand-strong);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.heading-selection strong {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ft-text);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.heading-selection p {
+  margin: 0;
+  color: var(--ft-muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+@media (max-width: 380px) {
+  .quick-actions { grid-template-columns: 1fr; }
+  .heading-tree-row.level-4,
+  .heading-tree-row.level-5,
+  .heading-tree-row.level-6 { margin-left: 42px; }
+}
