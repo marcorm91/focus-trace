@@ -31,7 +31,7 @@ import { AboutView } from './views/AboutView';
 import { FocusGraphView } from './views/FocusGraphView';
 import { HeadingTreeView } from './views/HeadingTreeView';
 import { FocusView } from './views/FocusView';
-import { ReportView } from './views/ReportView';
+import { SessionReportView } from './views/SessionReportView';
 import { RuntimeView } from './views/RuntimeView';
 import { ScanView } from './views/ScanView';
 import { SettingsView } from './views/SettingsView';
@@ -152,7 +152,7 @@ export default function App() {
         scan: result,
       } satisfies ExtensionMessage)) as SessionState;
       setSession(next);
-      setView('scan');
+      setView('report');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
     } finally {
@@ -227,7 +227,7 @@ export default function App() {
         ...(startedAt ? { startedAt } : {}),
       } satisfies ExtensionMessage)) as SessionState;
       setSession(next);
-      setView('runtime');
+      setView(enabled ? 'focus' : 'report');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
     } finally {
@@ -286,7 +286,7 @@ export default function App() {
       setSession(stopped);
       await waitForRuntimeFlush();
       await refresh(tabId);
-      setView('focus');
+      setView('report');
       if (result.focusedSteps === 0) {
         setError(tr(language, 'No keyboard-focusable elements were detected on this page.', 'No se han detectado elementos enfocables por teclado en esta página.'));
       }
@@ -453,10 +453,11 @@ export default function App() {
           );
   const sessionTone = session.recording ? 'live' : session.pausedByBreakpoint ? 'paused' : hasRecordedJourney ? 'stopped' : 'ready';
 
-  const navigation: Array<{ id: 'scan' | 'focus' | 'headings'; label: string; icon: string }> = [
+  const navigation: Array<{ id: 'scan' | 'focus' | 'headings' | 'report'; label: string; icon: string }> = [
     { id: 'scan', label: tr(language, 'Review', 'Revisión'), icon: '⌕' },
     { id: 'focus', label: tr(language, 'Focus', 'Foco'), icon: '◎' },
     { id: 'headings', label: tr(language, 'Headings', 'Encabezados'), icon: 'H' },
+    { id: 'report', label: tr(language, 'Report', 'Informe'), icon: '▤' },
   ];
 
   return (
@@ -542,7 +543,9 @@ export default function App() {
           pathSteps={focusPathSteps}
           pathVisible={focusPathVisible}
           recording={session.recording}
+          busy={busy}
           onTogglePath={toggleFocusPath}
+          onToggleRecording={toggleRecording}
           level={explanationLevel}
           language={language}
         />
@@ -575,21 +578,11 @@ export default function App() {
         />
       )}
       {view === 'report' && (
-        <ReportView
-          runtimeCount={session.events.length}
-          interactionCount={interactions.filter((interaction) => interaction.correlated).length}
-          runtimeFindings={runtimeFindings.length}
-          causalFindings={causalFindings}
-          breakpointHits={breakpointHits}
-          focusPoints={focusGraph.nodes.length}
-          graphSignals={focusGraph.observations.length}
-          serious={serious}
-          runtimeWarnings={runtimeWarnings}
-          events={session.events}
+        <SessionReportView
           scan={scan}
-          level={explanationLevel}
+          events={session.events}
           language={language}
-          onLocate={selectFocusPoint}
+          onLocate={locateScanTarget}
         />
       )}
       {view === 'about' && <AboutView language={language} />}
