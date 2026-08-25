@@ -12,7 +12,13 @@ import {
   createDialogOpenEvent,
   createDialogRestoreFocusEvent,
 } from '../lib/runtime/dialog-events';
-import { createRuntimeCause as cause, createRuntimeEventId as uid } from '../lib/runtime/events';
+import { createRuntimeEventId as uid } from '../lib/runtime/events';
+import {
+  createFocusEvent,
+  createFocusHiddenEvent,
+  createFocusLostEvent,
+  createFocusObscuredEvent,
+} from '../lib/runtime/focus-events';
 import {
   actionTarget,
   findDialogs,
@@ -28,10 +34,8 @@ import {
   createRouteTitleUnchangedEvent,
 } from '../lib/runtime/route-events';
 import { runFocusTraceScan } from '../lib/audit/scan';
-import { RULES } from '../shared/rule-catalog';
 import type {
   ExtensionMessage,
-  RuntimeCause,
   RuntimeEvent,
   RuntimeMutationSnapshot,
   SessionState,
@@ -140,16 +144,10 @@ export default defineContentScript({
         const result = mayBeCompletelyObscured(element);
         if (!result.obscured) return;
         emit(
-          {
-            kind: 'focus-obscured',
-            severity: RULES.focusObscured.severity,
-            outcome: 'review',
-            ruleId: RULES.focusObscured.id,
-            references: RULES.focusObscured.references,
-            title: RULES.focusObscured.title,
-            ...(result.evidence ? { detail: result.evidence } : {}),
+          createFocusObscuredEvent({
             element: snapshot(element),
-          },
+            ...(result.evidence ? { evidence: result.evidence } : {}),
+          }),
           interactionId,
         );
       });
@@ -178,12 +176,10 @@ export default defineContentScript({
         const interactionId = activeInteractionId();
 
         emit(
-          {
-            kind: 'focus',
-            severity: 'info',
-            title: `Focus → ${accessibleName(event.target) || event.target.tagName.toLowerCase()}`,
+          createFocusEvent({
+            label: accessibleName(event.target) || event.target.tagName.toLowerCase(),
             element: snapshot(event.target),
-          },
+          }),
           interactionId,
         );
 
@@ -294,32 +290,12 @@ export default defineContentScript({
         );
 
         const active = document.activeElement instanceof Element ? document.activeElement : null;
-        const causes: RuntimeCause[] = [
-          cause('FOCUSED_NODE_REMOVED', `Focused node ${removed.selector} was removed from the DOM.`),
-        ];
-        if (active === document.body) {
-          causes.push(
-            cause(
-              'FOCUS_FELL_BACK_TO_BODY',
-              'After the focused node was removed, document focus fell back to <body>.',
-            ),
-          );
-        }
-
         emit(
-          {
-            kind: 'focus-lost',
-            severity: RULES.focusLost.severity,
-            outcome: 'review',
-            ruleId: RULES.focusLost.id,
-            references: RULES.focusLost.references,
-            title: RULES.focusLost.title,
-            detail: `Focused node ${removed.selector} was removed. Focus fell back to ${
-              active === document.body ? '<body>' : active ? selectorFor(active) : 'unknown'
-            }. Review whether the resulting focus order remains meaningful and operable.`,
-            element: removed,
-            causes,
-          },
+          createFocusLostEvent({
+            removed,
+            activeSelector: active === document.body ? '<body>' : active ? selectorFor(active) : 'unknown',
+            fellBackToBody: active === document.body,
+          }),
           interactionId,
         );
         lastFocused = active;
@@ -390,22 +366,10 @@ export default defineContentScript({
             ) {
               hiddenFocusReported = lastFocused;
               emit(
-                {
-                  kind: 'focus-hidden',
-                  severity: RULES.focusedElementHidden.severity,
-                  outcome: 'review',
-                  ruleId: RULES.focusedElementHidden.id,
-                  references: RULES.focusedElementHidden.references,
-                  title: RULES.focusedElementHidden.title,
-                  detail: `Focus remained associated with ${selectorFor(lastFocused)} while it became hidden from rendering or assistive technology.`,
+                createFocusHiddenEvent({
                   element: snapshot(lastFocused),
-                  causes: [
-                    cause(
-                      'FOCUSED_ELEMENT_BECAME_HIDDEN',
-                      'A mutation hid the element that held focus or one of its ancestors.',
-                    ),
-                  ],
-                },
+                  elementSelector: selectorFor(lastFocused),
+                }),
                 interactionId,
               );
             }
