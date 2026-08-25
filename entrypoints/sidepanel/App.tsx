@@ -601,6 +601,7 @@ export default function App() {
           scan={scan}
           level={explanationLevel}
           language={language}
+          onLocate={locateScanTarget}
         />
       )}
       {view === 'about' && <AboutView language={language} />}
