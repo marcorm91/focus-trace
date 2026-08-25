@@ -1,5 +1,27 @@
 import { accessibleName, selectorFor } from '../audit/dom';
-import type { ElementSnapshot } from '../../shared/types';
+import type { ElementAttributesSnapshot, ElementSnapshot } from '../../shared/types';
+
+function snapshotAttributes(element: Element): ElementAttributesSnapshot | undefined {
+  const attributes: ElementAttributesSnapshot = {};
+  const ariaLabel = element.getAttribute('aria-label');
+  const ariaLabelledby = element.getAttribute('aria-labelledby');
+  const ariaDescribedby = element.getAttribute('aria-describedby');
+  const tabindex = element.getAttribute('tabindex');
+  const type = element.getAttribute('type');
+
+  if (ariaLabel) attributes.ariaLabel = ariaLabel;
+  if (ariaLabelledby) attributes.ariaLabelledby = ariaLabelledby;
+  if (ariaDescribedby) attributes.ariaDescribedby = ariaDescribedby;
+  if (tabindex != null && tabindex !== '') {
+    const parsed = Number(tabindex);
+    if (Number.isFinite(parsed)) attributes.tabIndex = parsed;
+  }
+  if (type) attributes.type = type;
+  if (element.hasAttribute('disabled') || element.getAttribute('aria-disabled') === 'true') attributes.disabled = true;
+  if (element instanceof HTMLAnchorElement && element.href) attributes.href = element.href;
+
+  return Object.keys(attributes).length ? attributes : undefined;
+}
 
 export function snapshot(element: Element): ElementSnapshot {
   const result: ElementSnapshot = {
@@ -9,6 +31,8 @@ export function snapshot(element: Element): ElementSnapshot {
   if (element.id) result.id = element.id;
   const role = element.getAttribute('role');
   if (role) result.role = role;
+  const attributes = snapshotAttributes(element);
+  if (attributes) result.attributes = attributes;
   try {
     const name = accessibleName(element);
     if (name) result.name = name;

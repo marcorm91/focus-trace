@@ -31,6 +31,9 @@ describe('runtime page inspection helpers', () => {
       id: 'save',
       selector: '#save',
       name: 'Save profile',
+      attributes: {
+        ariaLabel: 'Save profile',
+      },
     });
   });
 
