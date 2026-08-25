@@ -782,7 +782,7 @@ code {
 }
 
 .workspace-nav.tabs {
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
 }
 
 .heading-outline-panel {
@@ -938,4 +938,350 @@ code {
   .heading-tree-row.level-4,
   .heading-tree-row.level-5,
   .heading-tree-row.level-6 { margin-left: 42px; }
+}
+
+
+/* Focus recording and consolidated report */
+.manual-focus-controls {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  border: 1px solid var(--ft-border);
+  border-left: 4px solid var(--ft-brand);
+  border-radius: 11px;
+  background: var(--ft-surface);
+}
+
+.manual-focus-controls.is-recording {
+  border-color: color-mix(in srgb, var(--ft-danger) 48%, var(--ft-border));
+  border-left-color: var(--ft-danger);
+  background: linear-gradient(120deg, var(--ft-danger-soft), var(--ft-surface) 62%);
+}
+
+.manual-focus-controls strong {
+  color: var(--ft-text);
+  font-size: 12px;
+}
+
+.manual-focus-controls p,
+.focus-empty-state p {
+  margin: 4px 0 0;
+  color: var(--ft-muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.manual-focus-controls button {
+  min-height: 39px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid var(--ft-brand);
+  border-radius: 9px;
+  background: var(--ft-brand);
+  color: #fff;
+  cursor: pointer;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.manual-focus-controls button.stop {
+  border-color: var(--ft-danger);
+  background: var(--ft-danger);
+}
+
+.focus-empty-state,
+.report-pending {
+  padding: 18px;
+  border: 1px dashed color-mix(in srgb, var(--ft-brand) 42%, var(--ft-border));
+  border-radius: 11px;
+  background: color-mix(in srgb, var(--ft-brand-soft) 42%, var(--ft-surface));
+  text-align: center;
+}
+
+.focus-empty-state strong,
+.report-pending strong {
+  color: var(--ft-text);
+  font-size: 13px;
+}
+
+.report-coverage {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+}
+
+.report-coverage > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+  padding: 10px;
+  border: 1px solid var(--ft-border);
+  border-radius: 10px;
+  background: var(--ft-surface);
+}
+
+.report-coverage span,
+.report-coverage small {
+  overflow: hidden;
+  color: var(--ft-muted);
+  font-size: 9px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.report-coverage strong {
+  overflow: hidden;
+  color: var(--ft-text);
+  font-size: 12px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.report-section {
+  display: grid;
+  gap: 10px;
+  padding-top: 15px;
+  border-top: 1px solid var(--ft-border);
+}
+
+.report-section-heading > div {
+  display: grid;
+  grid-template-columns: 26px minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+}
+
+.report-section-heading > div > span {
+  width: 26px;
+  height: 26px;
+  display: grid;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--ft-brand);
+  color: #fff;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.report-section-heading h3 {
+  margin: 0;
+  color: var(--ft-text);
+  font-size: 14px;
+}
+
+.report-section-heading p {
+  margin: 3px 0 0;
+  color: var(--ft-muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.report-group {
+  border: 1px solid var(--ft-border);
+  border-radius: 10px;
+  overflow: hidden;
+  background: var(--ft-surface);
+}
+
+.report-group > summary {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 10px 11px;
+  cursor: pointer;
+  color: var(--ft-text);
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.report-group > summary strong {
+  min-width: 22px;
+  padding: 2px 6px;
+  border-radius: 999px;
+  background: var(--ft-surface-subtle);
+  text-align: center;
+}
+
+.report-finding-list {
+  display: grid;
+  border-top: 1px solid var(--ft-border);
+}
+
+.report-finding {
+  display: grid;
+  gap: 7px;
+  padding: 11px;
+  border-bottom: 1px solid var(--ft-border);
+}
+
+.report-finding:last-child {
+  border-bottom: 0;
+}
+
+.report-finding > div {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.report-finding h4 {
+  margin: 0;
+  color: var(--ft-text);
+  font-size: 12px;
+}
+
+.report-finding p {
+  margin: 0;
+  color: var(--ft-muted);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.report-finding button {
+  width: fit-content;
+  border: 1px solid var(--ft-border);
+  border-radius: 8px;
+  padding: 7px 9px;
+  background: var(--ft-surface);
+  color: var(--ft-text);
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 700;
+}
+
+.report-empty-line {
+  margin: 0;
+  padding: 10px 11px;
+  border-top: 1px solid var(--ft-border);
+  color: var(--ft-muted);
+  font-size: 10px;
+}
+
+.report-inline-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.report-inline-summary span {
+  padding: 5px 8px;
+  border: 1px solid var(--ft-border);
+  border-radius: 999px;
+  background: var(--ft-surface);
+  color: var(--ft-muted);
+  font-size: 9px;
+}
+
+.report-inline-summary strong {
+  color: var(--ft-text);
+}
+
+.report-focus-list,
+.report-heading-list,
+.suggestion-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  gap: 5px;
+}
+
+.report-focus-list button,
+.report-heading-list button {
+  width: 100%;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 7px;
+  align-items: center;
+  border: 1px solid var(--ft-border);
+  border-radius: 9px;
+  padding: 8px 9px;
+  background: var(--ft-surface);
+  color: var(--ft-text);
+  cursor: pointer;
+  text-align: left;
+}
+
+.report-focus-list button > span,
+.report-heading-list button > span {
+  min-width: 25px;
+  color: var(--ft-brand-strong);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.report-focus-list button > strong,
+.report-heading-list button > strong {
+  min-width: 0;
+  overflow: hidden;
+  font-size: 10px;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.report-focus-list button > small,
+.report-heading-list button > small {
+  color: var(--ft-muted);
+  font-size: 9px;
+}
+
+.report-heading-list li.has-signal button {
+  border-left: 4px solid var(--ft-warning);
+}
+
+.suggestion-list li {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  gap: 4px 9px;
+  padding: 10px;
+  border-left: 4px solid var(--ft-border);
+  border-radius: 0 9px 9px 0;
+  background: var(--ft-surface);
+}
+
+.suggestion-list li.priority-high { border-left-color: var(--ft-danger); }
+.suggestion-list li.priority-medium { border-left-color: var(--ft-warning); }
+.suggestion-list li.priority-low { border-left-color: var(--ft-brand); }
+
+.suggestion-list li > div {
+  grid-row: 1 / span 2;
+  display: grid;
+  align-content: start;
+  gap: 3px;
+}
+
+.suggestion-list li > div span {
+  color: var(--ft-text);
+  font-size: 9px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.suggestion-list li > div small {
+  color: var(--ft-muted);
+  font-size: 8px;
+}
+
+.suggestion-list li > strong {
+  color: var(--ft-text);
+  font-size: 11px;
+}
+
+.suggestion-list li > p {
+  grid-column: 2;
+  margin: 0;
+  color: var(--ft-muted);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+@media (max-width: 380px) {
+  .workspace-nav.tabs { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .report-coverage { grid-template-columns: 1fr; }
+  .suggestion-list li { grid-template-columns: 1fr; }
+  .suggestion-list li > div { grid-row: auto; display: flex; }
+  .suggestion-list li > p { grid-column: 1; }
 }
