@@ -125,7 +125,7 @@ test('sidepanel stays inside a narrow viewport and uses the product logo', async
   expect(traceFits).toBe(true);
 });
 
-test('language setting updates the document language and visible navigation', async ({ context, extensionWorker }) => {
+test('settings becomes a focused sub-view and Back restores the workspace', async ({ context, extensionWorker }) => {
   const panel = await openSidepanel(context, extensionWorker);
   await panel.getByRole('button', { name: /Open settings|Abrir ajustes/ }).click();
 
@@ -134,7 +134,15 @@ test('language setting updates the document language and visible navigation', as
 
   await expect(panel.locator('html')).toHaveAttribute('lang', 'es');
   await expect(panel.getByRole('heading', { level: 2, name: 'Ajustes' })).toBeVisible();
+  await expect(panel.getByRole('navigation', { name: 'Secciones de FocusTrace' })).not.toBeVisible();
+  await expect(panel.getByRole('region', { name: 'Herramientas de página' })).not.toBeVisible();
+
+  const back = panel.getByRole('button', { name: 'Volver' });
+  await expect(back).toBeVisible();
+  await back.click();
+
   await expect(panel.getByRole('navigation', { name: 'Secciones de FocusTrace' })).toBeVisible();
+  await expect(panel.getByRole('region', { name: 'Herramientas de página' })).toBeVisible();
   await expect(panel.getByRole('button', { name: 'Revisión' })).toBeVisible();
   await expect(panel.getByRole('button', { name: 'Encabezados' })).toBeVisible();
   await expect(panel.getByRole('button', { name: 'Informe' })).toBeVisible();
