@@ -1,0 +1,37 @@
+.site-audit-entry {
+  display: flex;
+  justify-content: flex-end;
+  margin-block: 0 10px;
+}
+
+.scan-heading-actions {
+  display: grid;
+  justify-items: end;
+  gap: 8px;
+  min-width: 0;
+}
+
+.site-audit-launch {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  border: 1px solid color-mix(in srgb, var(--ft-brand, Highlight) 36%, var(--ft-border, transparent));
+  border-radius: 8px;
+  padding: 6px 10px;
+  background: color-mix(in srgb, var(--ft-brand, Highlight) 8%, Canvas);
+  color: inherit;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.site-audit-launch > span {
+  font-size: 18px !important;
+  line-height: 1;
+}
+
+@media (max-width: 390px) {
+  .scan-heading-actions { justify-items: stretch; }
+  .site-audit-launch { width: 100%; }
+}

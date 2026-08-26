@@ -28,6 +28,12 @@ Trace records what the user did, what had focus, what changed in the page and wh
 
 The runtime debugger can derive deterministic causal explanations for patterns such as a focused node being removed, a modal opening without receiving focus or SPA navigation leaving focus behind. These explanations describe recorded evidence; they do not turn contextual behavior into an automatic WCAG conformance claim.
 
+### Site Audit
+
+Site Audit discovers same-origin pages from sitemaps, robots.txt, internal links and optional manually supplied URLs, groups repeated route families and runs the real FocusTrace page scanner on representative samples instead of blindly scanning every duplicate URL.
+
+The current Site Audit safety limits are 500 discovered URLs, 30 scanned pages and 3 representative samples per route family. Template-wide findings are reported only when the same normalized target signal appears across every successfully scanned sample in that family. Representative sampling is not proof that every URL is identical, and runtime Trace is not automatically exercised across the whole site.
+
 ## Current rule engine
 
 Current static coverage includes:
@@ -87,11 +93,13 @@ FocusTrace intentionally keeps its production permission set narrow:
 
 Firefox uses its native sidebar manifest integration instead of requesting the Chromium-only `sidePanel` permission.
 
-Production builds do not request global host permissions. A localhost host permission is enabled only for the end-to-end test build.
+Production builds do not require global host permissions. HTTP/HTTPS page access is declared as optional and requested only from explicit user actions. Printable reports can optionally include visual evidence; when that option is used, FocusTrace requests the browser's `<all_urls>` screenshot capability from the Export PDF click because `tabs.captureVisibleTab()` requires `activeTab` or `<all_urls>`. That broad screenshot permission is removed after the export operation. A localhost host permission is enabled only for the end-to-end test build.
 
 ## Privacy
 
 All analysis runs locally in the browser. FocusTrace does not send page content, DOM data, screenshots or recorded interactions to a FocusTrace server or third-party AI API.
+
+Visual evidence in printable reports is optional. Screenshot crops can contain visible page content, are prepared locally for that report only and are not transmitted by FocusTrace.
 
 ## Try the latest development build
 
@@ -177,23 +185,3 @@ npm run release:check:full
 ```
 
 See [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md) before tagging a release or changing repository visibility.
-
-For contribution guidelines, see [`CONTRIBUTING.md`](CONTRIBUTING.md).
-
-## Security
-
-Please do not disclose security vulnerabilities through public issues. See [`SECURITY.md`](SECURITY.md) for the reporting process and security scope.
-
-Before making the repository public, the complete Git history should be scanned with a dedicated secret scanner. Current-tree review is not a substitute for historical scanning.
-
-## Important conformance note
-
-FocusTrace is an accessibility testing aid, not an automatic WCAG conformance certificate. A passing automated rule only means that the specific expectation tested by that rule passed.
-
-## License
-
-FocusTrace is released under the [MIT License](LICENSE).
-
-## Author
-
-Created by [Marco Romero](https://es.linkedin.com/in/marcorm91).

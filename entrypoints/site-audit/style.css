@@ -1,0 +1,125 @@
+:root {
+  color-scheme: light dark;
+  font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  background: Canvas;
+  color: CanvasText;
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; min-width: 320px; background: color-mix(in srgb, Canvas 96%, CanvasText 4%); }
+button, textarea { font: inherit; }
+button { min-height: 40px; cursor: pointer; }
+a { color: LinkText; overflow-wrap: anywhere; }
+
+.site-audit-shell {
+  width: min(1180px, calc(100% - 32px));
+  margin: 0 auto;
+  padding: 22px 0 56px;
+  display: grid;
+  gap: 16px;
+}
+
+.site-brand { display: flex; align-items: center; gap: 10px; min-height: 48px; }
+.site-brand img { width: 34px; height: 34px; object-fit: contain; }
+.site-brand div { display: grid; }
+.site-brand strong { font-size: 18px; }
+.site-brand span { font-size: 14px; opacity: .72; }
+.site-brand small { margin-inline-start: auto; font-size: 14px; opacity: .68; }
+
+.site-card {
+  border: 1px solid color-mix(in srgb, CanvasText 14%, transparent);
+  border-radius: 14px;
+  background: Canvas;
+  box-shadow: 0 10px 32px color-mix(in srgb, CanvasText 6%, transparent);
+}
+
+.site-hero { padding: 24px; display: grid; gap: 18px; grid-template-columns: minmax(0, 1fr) minmax(260px, 38%); align-items: end; }
+.site-hero h1 { margin: 4px 0 8px; font-size: clamp(25px, 3vw, 40px); line-height: 1.08; max-width: 780px; }
+.site-hero p { margin: 0; font-size: 16px; line-height: 1.55; opacity: .78; }
+.site-hero code { display: block; min-width: 0; padding: 12px; border-radius: 9px; background: color-mix(in srgb, CanvasText 5%, Canvas); overflow-wrap: anywhere; font-size: 14px; }
+.site-kicker { text-transform: uppercase; letter-spacing: .08em; font-weight: 800; font-size: 13px; color: color-mix(in srgb, Highlight 75%, CanvasText); }
+
+.site-start { padding: 22px; display: grid; gap: 16px; }
+.site-start h2, .site-summary h2 { margin: 0; font-size: 22px; }
+.site-limits, .site-score-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 10px; }
+.site-limits span, .site-score-grid span { min-width: 0; border: 1px solid color-mix(in srgb, CanvasText 12%, transparent); border-radius: 10px; padding: 12px; display: grid; gap: 3px; font-size: 14px; }
+.site-limits strong, .site-score-grid strong { font-size: 22px; }
+.site-extra-urls { display: grid; gap: 7px; font-size: 14px; font-weight: 700; }
+.site-extra-urls textarea { width: 100%; resize: vertical; min-height: 88px; padding: 10px; border-radius: 8px; border: 1px solid color-mix(in srgb, CanvasText 18%, transparent); background: Canvas; color: CanvasText; }
+.site-scope-note { margin: 0; font-size: 14px; line-height: 1.5; opacity: .76; }
+.site-primary { justify-self: start; border: 1px solid color-mix(in srgb, #15803d 70%, transparent); background: #15803d; color: white; border-radius: 9px; padding: 9px 16px; font-weight: 800; }
+.site-error-message, .sample-error { color: #b42318; }
+
+.site-progress { padding: 22px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 14px; align-items: center; }
+.site-progress h2 { margin: 0 0 4px; font-size: 20px; }
+.site-progress p { margin: 4px 0 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 14px; opacity: .7; }
+.site-progress button, .site-report-actions button { border: 1px solid color-mix(in srgb, CanvasText 18%, transparent); border-radius: 8px; background: Canvas; color: CanvasText; padding: 7px 11px; font-weight: 750; }
+.site-spinner { width: 22px; height: 22px; border: 3px solid color-mix(in srgb, Highlight 25%, Canvas); border-top-color: Highlight; border-radius: 50%; animation: spin .8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+.site-summary { padding: 22px; display: grid; gap: 16px; }
+.site-report-actions { display: flex; justify-content: space-between; gap: 16px; align-items: flex-start; }
+.site-report-actions > div:last-child { display: flex; flex-wrap: wrap; justify-content: flex-end; gap: 7px; }
+.site-score-grid { grid-template-columns: repeat(5, minmax(0, 1fr)); }
+.site-summary > p { margin: 0; font-size: 14px; opacity: .72; }
+
+.site-template-list { display: grid; gap: 12px; }
+.site-template { overflow: clip; }
+.site-template summary { list-style: none; display: grid; grid-template-columns: auto minmax(0, 1fr) auto auto; gap: 12px; align-items: center; padding: 16px 18px; cursor: pointer; }
+.site-template summary::-webkit-details-marker { display: none; }
+.site-template[open] summary { border-bottom: 1px solid color-mix(in srgb, CanvasText 12%, transparent); }
+.template-id { display: inline-grid; place-items: center; width: 42px; min-height: 34px; border-radius: 8px; background: color-mix(in srgb, Highlight 12%, Canvas); font-weight: 900; }
+.template-title { display: grid; min-width: 0; }
+.template-title strong { overflow-wrap: anywhere; font-size: 16px; }
+.template-title small { font-size: 14px; opacity: .7; }
+.template-consistency { border-radius: 999px; padding: 6px 9px; background: color-mix(in srgb, #b54708 12%, Canvas); font-size: 13px; font-weight: 800; white-space: nowrap; }
+.template-consistency.is-consistent { background: color-mix(in srgb, #15803d 12%, Canvas); }
+.template-counts { white-space: nowrap; font-size: 14px; font-weight: 800; }
+
+.template-body { padding: 18px; display: grid; gap: 20px; }
+.template-body section { display: grid; gap: 8px; }
+.template-body h3 { margin: 0; font-size: 17px; }
+.template-body p { margin: 0; font-size: 14px; line-height: 1.5; opacity: .75; }
+.template-findings, .template-samples ul { list-style: none; padding: 0; margin: 0; display: grid; gap: 7px; }
+.site-finding { display: grid; grid-template-columns: auto minmax(0, 1fr); gap: 10px; border: 1px solid color-mix(in srgb, CanvasText 11%, transparent); border-radius: 9px; padding: 10px; }
+.site-finding > span { align-self: start; border-radius: 6px; padding: 4px 6px; font-size: 12px; font-weight: 900; }
+.site-finding.outcome-fail > span { background: color-mix(in srgb, #b42318 16%, Canvas); color: #b42318; }
+.site-finding.outcome-review > span { background: color-mix(in srgb, #b54708 16%, Canvas); color: #b54708; }
+.site-finding.outcome-warning > span { background: color-mix(in srgb, #8a6d00 16%, Canvas); color: #7a6100; }
+.site-finding div { display: grid; gap: 2px; min-width: 0; }
+.site-finding strong { font-size: 14px; }
+.site-finding small, .site-finding a { font-size: 13px; }
+.template-samples li { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 12px; align-items: baseline; padding-block: 6px; border-bottom: 1px solid color-mix(in srgb, CanvasText 8%, transparent); font-size: 14px; }
+.site-empty { padding: 12px; border-radius: 9px; background: color-mix(in srgb, #15803d 7%, Canvas); }
+.site-footer { padding: 16px 18px; font-size: 14px; line-height: 1.55; opacity: .78; }
+.site-error { padding: 24px; }
+
+@media (max-width: 760px) {
+  .site-audit-shell { width: min(100% - 20px, 1180px); padding-top: 10px; }
+  .site-hero { grid-template-columns: 1fr; }
+  .site-limits, .site-score-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .site-report-actions { display: grid; }
+  .site-report-actions > div:last-child { justify-content: flex-start; }
+  .site-template summary { grid-template-columns: auto minmax(0, 1fr); }
+  .template-consistency, .template-counts { grid-column: 2; justify-self: start; }
+}
+
+@media (max-width: 460px) {
+  .site-limits, .site-score-grid { grid-template-columns: 1fr; }
+  .site-progress { grid-template-columns: auto minmax(0, 1fr); }
+  .site-progress button { grid-column: 2; justify-self: start; }
+  .template-samples li { grid-template-columns: 1fr; }
+}
+
+@media print {
+  :root { color-scheme: light; }
+  body { background: white; color: #111; }
+  .site-audit-shell { width: 100%; max-width: none; padding: 0; }
+  .site-brand, .site-hero, .site-start, .site-progress, .site-report-actions button, .site-footer { display: none !important; }
+  .site-card { box-shadow: none; border-color: #d0d0d0; break-inside: avoid; }
+  .site-summary, .site-template-list { display: grid; }
+  .site-template { break-inside: avoid; }
+  .site-template > summary { pointer-events: none; }
+  .site-template:not([open]) > .template-body { display: grid !important; }
+  a { color: #111; text-decoration: none; }
+}

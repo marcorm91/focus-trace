@@ -32,7 +32,7 @@ const packageLock = JSON.parse(
 const chromeManifest = manifestForBrowser('chrome');
 const edgeManifest = manifestForBrowser('edge');
 const firefoxManifest = manifestForBrowser('firefox');
-const PAGE_HOSTS = ['http://*/*', 'https://*/*'];
+const OPTIONAL_HOSTS = ['http://*/*', 'https://*/*', '<all_urls>'];
 
 describe('v0.1.0 release contract', () => {
   it('keeps package, lockfile and browser manifests on the same version', () => {
@@ -50,7 +50,7 @@ describe('v0.1.0 release contract', () => {
     expect(packageLock.packages?.['']?.devDependencies).toEqual(packageJson.devDependencies);
   });
 
-  it('keeps Chromium production permissions minimal and page access optional', () => {
+  it('keeps Chromium production permissions minimal and page/screenshot access optional', () => {
     for (const manifest of [chromeManifest, edgeManifest]) {
       expect(manifest.permissions).toEqual([
         'activeTab',
@@ -59,7 +59,7 @@ describe('v0.1.0 release contract', () => {
         'sidePanel',
       ]);
       expect(manifest.host_permissions).toBeUndefined();
-      expect(manifest.optional_host_permissions).toEqual(PAGE_HOSTS);
+      expect(manifest.optional_host_permissions).toEqual(OPTIONAL_HOSTS);
       expect(manifest.minimum_chrome_version).toBe('114');
       expect(manifest.browser_specific_settings).toBeUndefined();
     }
@@ -73,7 +73,7 @@ describe('v0.1.0 release contract', () => {
     ]);
     expect(firefoxManifest.permissions).not.toContain('sidePanel');
     expect(firefoxManifest.host_permissions).toBeUndefined();
-    expect(firefoxManifest.optional_permissions).toEqual(PAGE_HOSTS);
+    expect(firefoxManifest.optional_permissions).toEqual(OPTIONAL_HOSTS);
     expect(firefoxManifest.minimum_chrome_version).toBeUndefined();
     expect(firefoxManifest.browser_specific_settings?.gecko).toMatchObject({
       id: 'focustrace@focus-mode.app',

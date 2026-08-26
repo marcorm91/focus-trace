@@ -10,6 +10,7 @@ import {
 } from '../../../shared/i18n';
 import type { FindingOutcome, ScanIssue, ScanResult } from '../../../shared/types';
 import { Empty, Metric, ReferenceList } from '../components/Common';
+import { SiteAuditLauncher } from '../components/SiteAuditLauncher';
 
 type ScanFilter = FindingOutcome;
 type ColorFormat = 'hex' | 'rgb';
@@ -133,14 +134,17 @@ export function ScanView({
 
   if (!scan) {
     return (
-      <Empty
-        title={tr(language, 'No scan yet', 'Todavía no hay análisis')}
-        text={tr(
-          language,
-          'Choose Analyze page to run the local FocusTrace WCAG rule engine.',
-          'Pulsa Analizar página para ejecutar localmente el motor de reglas WCAG de FocusTrace.',
-        )}
-      />
+      <>
+        <div className="site-audit-entry"><SiteAuditLauncher language={language} /></div>
+        <Empty
+          title={tr(language, 'No scan yet', 'Todavía no hay análisis')}
+          text={tr(
+            language,
+            'Choose Analyze page to run the local FocusTrace WCAG rule engine.',
+            'Pulsa Analizar página para ejecutar localmente el motor de reglas WCAG de FocusTrace.',
+          )}
+        />
+      </>
     );
   }
 
@@ -162,13 +166,16 @@ export function ScanView({
           <h2 id="scan-title">{tr(language, 'Full page scan', 'Barrido completo de página')}</h2>
           <p title={scan.url}>{scan.title || scan.url}</p>
         </div>
-        <strong>
-          {tr(
-            language,
-            `${scan.issues.length} fail · ${scan.review.length} review · ${scanWarnings.length} warning`,
-            `${scan.issues.length} fallo · ${scan.review.length} revisión · ${scanWarnings.length} aviso`,
-          )}
-        </strong>
+        <div className="scan-heading-actions">
+          <strong>
+            {tr(
+              language,
+              `${scan.issues.length} fail · ${scan.review.length} review · ${scanWarnings.length} warning`,
+              `${scan.issues.length} fallo · ${scan.review.length} revisión · ${scanWarnings.length} aviso`,
+            )}
+          </strong>
+          <SiteAuditLauncher language={language} />
+        </div>
       </div>
 
       <div className="metrics">

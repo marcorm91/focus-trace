@@ -25,9 +25,40 @@ export interface PrintableReportEvidenceBundle {
 
 export const REPORT_EVIDENCE_STORAGE_PREFIX = 'focustrace:report-evidence:';
 const MAX_VISUAL_EVIDENCE = 24;
+const VISUAL_CAPTURE_HOST_PERMISSION = '<all_urls>';
+let pendingVisualCapturePermission: Promise<boolean> | undefined;
 
 function wait(ms: number) {
   return new Promise((resolve) => window.setTimeout(resolve, ms));
+}
+
+/**
+ * permissions.request() must run directly inside the user's click handler.
+ * The sidepanel installs this in the capture phase so the permission request
+ * starts before React awaits component collection and loses user activation.
+ */
+export function armReportVisualEvidencePermissionRequest(target: EventTarget | null) {
+  if (!(target instanceof Element)) return;
+  if (!target.closest('.export-pdf-report')) return;
+  const option = document.querySelector<HTMLInputElement>('.report-visual-evidence-option input');
+  if (!option?.checked) {
+    pendingVisualCapturePermission = undefined;
+    return;
+  }
+  pendingVisualCapturePermission = browser.permissions.request({
+    origins: [VISUAL_CAPTURE_HOST_PERMISSION],
+  }).catch(() => false);
+}
+
+async function hasVisualCapturePermission(): Promise<boolean> {
+  const pending = pendingVisualCapturePermission;
+  pendingVisualCapturePermission = undefined;
+  if (pending) return pending;
+  return browser.permissions.contains({ origins: [VISUAL_CAPTURE_HOST_PERMISSION] }).catch(() => false);
+}
+
+async function releaseVisualCapturePermission() {
+  await browser.permissions.remove({ origins: [VISUAL_CAPTURE_HOST_PERMISSION] }).catch(() => false);
 }
 
 export async function collectReportComponents(
@@ -158,45 +189,53 @@ export async function captureReportVisualEvidence(
   events: RuntimeEvent[] = [],
 ): Promise<{ visuals: ReportVisualEvidence[]; limitReached: boolean }> {
   if (!components.length) return { visuals: [], limitReached: false };
-  const tab = await browser.tabs.get(tabId);
-  if (tab.windowId == null || !tab.active) return { visuals: [], limitReached: false };
-
-  const evidenceSelectors = reportEvidenceSelectors(scan, events);
-  const eligible = components.filter((component) => evidenceSelectors.has(component.selector));
-  const selected = eligible.slice(0, MAX_VISUAL_EVIDENCE);
-  const original = await browser.scripting.executeScript({ target: { tabId }, func: readScrollPositionInPage })
-    .then((results) => results[0]?.result)
-    .catch(() => undefined);
-  const visuals: ReportVisualEvidence[] = [];
+  const captureAllowed = await hasVisualCapturePermission();
+  if (!captureAllowed) return { visuals: [], limitReached: false };
 
   try {
-    for (const component of selected) {
-      const metrics = await browser.scripting.executeScript({
-        target: { tabId },
-        func: prepareCaptureTargetInPage,
-        args: [component.selector],
-      }).then((results) => results[0]?.result).catch(() => null);
-      if (!metrics) continue;
-      await wait(90);
-      try {
-        const screenshot = await browser.tabs.captureVisibleTab(tab.windowId, { format: 'jpeg', quality: 78 });
-        const tone = toneForSelector(component.selector, scan, events);
-        visuals.push({ selector: component.selector, dataUrl: await cropCapture(screenshot, metrics, tone), tone });
-      } catch {
-        // Some Firefox versions and restricted pages cannot capture the active tab.
+    const tab = await browser.tabs.get(tabId);
+    if (tab.windowId == null || !tab.active) return { visuals: [], limitReached: false };
+
+    const evidenceSelectors = reportEvidenceSelectors(scan, events);
+    const eligible = components.filter((component) => evidenceSelectors.has(component.selector));
+    const selected = eligible.slice(0, MAX_VISUAL_EVIDENCE);
+    const original = await browser.scripting.executeScript({ target: { tabId }, func: readScrollPositionInPage })
+      .then((results) => results[0]?.result)
+      .catch(() => undefined);
+    const visuals: ReportVisualEvidence[] = [];
+
+    try {
+      for (const component of selected) {
+        const metrics = await browser.scripting.executeScript({
+          target: { tabId },
+          func: prepareCaptureTargetInPage,
+          args: [component.selector],
+        }).then((results) => results[0]?.result).catch(() => null);
+        if (!metrics) continue;
+        await wait(90);
+        try {
+          const screenshot = await browser.tabs.captureVisibleTab(tab.windowId, { format: 'jpeg', quality: 78 });
+          const tone = toneForSelector(component.selector, scan, events);
+          visuals.push({ selector: component.selector, dataUrl: await cropCapture(screenshot, metrics, tone), tone });
+        } catch {
+          // Restricted browser pages can still reject screenshot capture.
+        }
+      }
+    } finally {
+      if (original) {
+        await browser.scripting.executeScript({
+          target: { tabId },
+          func: restoreScrollPositionInPage,
+          args: [original],
+        }).catch(() => undefined);
       }
     }
-  } finally {
-    if (original) {
-      await browser.scripting.executeScript({
-        target: { tabId },
-        func: restoreScrollPositionInPage,
-        args: [original],
-      }).catch(() => undefined);
-    }
-  }
 
-  return { visuals, limitReached: eligible.length > MAX_VISUAL_EVIDENCE };
+    return { visuals, limitReached: eligible.length > MAX_VISUAL_EVIDENCE };
+  } finally {
+    // Screenshot access is intentionally scoped to this export operation.
+    await releaseVisualCapturePermission();
+  }
 }
 
 export async function storePrintableReportEvidence(bundle: PrintableReportEvidenceBundle): Promise<string> {

@@ -1,6 +1,7 @@
 import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { browser } from '#imports';
+import { armReportVisualEvidencePermissionRequest } from '../../lib/report/visual-evidence';
 import { normalizeUiScale, UI_SCALE_STORAGE_KEY } from '../../shared/ui-scale';
 import App from './App';
 import './style.css';
@@ -19,6 +20,13 @@ void browser.storage.local.get(UI_SCALE_STORAGE_KEY).then((stored) => {
     normalizeUiScale(stored[UI_SCALE_STORAGE_KEY]),
   );
 });
+
+// Start the optional screenshot permission request synchronously from the
+// Export PDF click. permissions.request() loses its user-gesture eligibility
+// after awaited work, while the actual report preparation happens later.
+document.addEventListener('click', (event) => {
+  armReportVisualEvidencePermissionRequest(event.target);
+}, { capture: true });
 
 createRoot(root).render(
   <React.StrictMode>

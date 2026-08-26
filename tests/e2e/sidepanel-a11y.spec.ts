@@ -241,6 +241,8 @@ test('report opens a formatted PDF preview without exposing CSS selectors', asyn
 
   const exportPdf = panel.getByRole('button', { name: /Export PDF|Exportar PDF/ });
   await expect(exportPdf).toBeVisible();
+  const visualEvidence = panel.getByRole('checkbox', { name: /Include visual evidence|Incluir evidencia visual/ });
+  await visualEvidence.uncheck();
 
   const newPage = context.waitForEvent('page');
   await exportPdf.click();
