@@ -149,9 +149,10 @@ const SCAN_COPY_ES: Record<string, { description: string; evidence?: string }> =
 export function localizedScanIssue(
   issue: ScanIssue,
   language: AppLanguage,
-): Pick<ScanIssue, 'title' | 'description' | 'evidence'> {
+): ScanIssue {
   if (language === 'en') {
     return {
+      ...issue,
       title: issue.title,
       description: withCriteria(issue.description, issue, language),
       ...(issue.evidence ? { evidence: issue.evidence } : {}),
@@ -160,6 +161,7 @@ export function localizedScanIssue(
 
   if (issue.ruleId === 'FT-WCAG-010') {
     return {
+      ...issue,
       title: localizedRuleTitle(issue.ruleId, issue.title, language),
       description: withCriteria(
         issue.outcome === 'fail'
@@ -175,6 +177,7 @@ export function localizedScanIssue(
   if (issue.ruleId === 'FT-WCAG-011') {
     const subject = issue.contrast?.subject ?? 'señal visual';
     return {
+      ...issue,
       title: localizedRuleTitle(issue.ruleId, issue.title, language),
       description: withCriteria(
         issue.outcome === 'fail'
@@ -189,6 +192,7 @@ export function localizedScanIssue(
 
   const copy = SCAN_COPY_ES[issue.ruleId];
   return {
+    ...issue,
     title: localizedRuleTitle(issue.ruleId, issue.title, language),
     description: withCriteria(copy?.description ?? issue.description, issue, language),
     ...(issue.evidence ? { evidence: copy?.evidence ?? issue.evidence } : {}),
