@@ -88,6 +88,24 @@ test('sidepanel stays inside a narrow viewport and uses the product logo', async
   const brandImage = await brandMark.evaluate((element) => getComputedStyle(element).backgroundImage);
   expect(brandImage).toContain('/icon/48.png');
 
+  for (const button of [
+    panel.getByRole('button', { name: /Review|Revisión/ }),
+    panel.getByRole('button', { name: 'Trace' }),
+  ]) {
+    const icon = button.locator('span').first();
+    const metrics = await icon.evaluate((element) => {
+      const style = getComputedStyle(element);
+      return {
+        width: element.getBoundingClientRect().width,
+        height: element.getBoundingClientRect().height,
+        fontSize: Number.parseFloat(style.fontSize),
+      };
+    });
+    expect(metrics.width).toBeGreaterThanOrEqual(28);
+    expect(metrics.height).toBeGreaterThanOrEqual(28);
+    expect(metrics.fontSize).toBeGreaterThanOrEqual(19);
+  }
+
   const noHorizontalOverflow = await panel.evaluate(() =>
     document.documentElement.scrollWidth <= document.documentElement.clientWidth,
   );
@@ -149,8 +167,9 @@ test('text and interface size reaches 130 percent, persists and does not overflo
 
 test('report opens a formatted PDF preview without exposing CSS selectors', async ({ context, extensionWorker }) => {
   const panel = await openSidepanel(context, extensionWorker);
+  const longHeading = 'Instala Gas Natural y ahorra un mínimo de energía con una explicación deliberadamente larga para el informe';
 
-  await panel.evaluate(async () => {
+  await panel.evaluate(async ({ longHeadingText }) => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tab?.id == null) throw new Error('Could not resolve the sidepanel test tab.');
     await chrome.runtime.sendMessage({
@@ -181,14 +200,45 @@ test('report opens a formatted PDF preview without exposing CSS selectors', asyn
         }],
         review: [],
         warnings: [],
-        headings: [{ id: 'heading-1', level: 1, text: 'Checkout', selector: 'h1', signals: [] }],
+        headings: [
+          { id: 'heading-1', level: 1, text: 'Checkout', selector: 'h1', signals: [] },
+          {
+            id: 'heading-2',
+            level: 2,
+            text: longHeadingText,
+            selector: 'h2',
+            signals: [],
+          },
+          {
+            id: 'heading-3',
+            level: 3,
+            text: 'HeadingWithoutNaturalBreakpointsThatMustNeverExpandTheFocusTraceSidepanelBeyondItsViewport',
+            selector: 'h3',
+            signals: [],
+          },
+        ],
         passes: 3,
         rulesRun: 17,
       },
     });
-  });
+  }, { longHeadingText: longHeading });
+
+  await panel.setViewportSize({ width: 360, height: 800 });
+  await panel.getByRole('button', { name: /Headings|Encabezados/ }).click();
+
+  const shortHeadingLabel = panel.getByRole('button', { name: 'Checkout' }).locator('span').first();
+  await expect(shortHeadingLabel).not.toHaveAttribute('title', /.+/);
+
+  const longHeadingLabel = panel.getByRole('button', { name: longHeading }).locator('span').first();
+  await expect.poll(() => longHeadingLabel.evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(true);
+  await expect(longHeadingLabel).toHaveAttribute('title', longHeading);
 
   await panel.getByRole('button', { name: /Report|Informe/ }).click();
+  const reportFits = await panel.evaluate(() =>
+    document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+  );
+  expect(reportFits).toBe(true);
+
   const exportPdf = panel.getByRole('button', { name: /Export PDF|Exportar PDF/ });
   await expect(exportPdf).toBeVisible();
 

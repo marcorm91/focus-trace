@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { browser } from '#imports';
 import {
   clearHeadingOutlineInPage,
@@ -41,6 +41,35 @@ function headingDetail(heading: HeadingSnapshot, language: AppLanguage): string 
     language,
     'No structural signals were detected for this heading.',
     'No se han detectado señales estructurales en este encabezado.',
+  );
+}
+
+function HeadingLabel({ text }: { text: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [truncated, setTruncated] = useState(false);
+
+  useEffect(() => {
+    const node = ref.current;
+    if (!node) return undefined;
+
+    const measure = () => setTruncated(node.scrollWidth > node.clientWidth + 1);
+    measure();
+
+    const observer = new ResizeObserver(measure);
+    observer.observe(node);
+    window.addEventListener('resize', measure);
+    void document.fonts.ready.then(measure).catch(() => undefined);
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener('resize', measure);
+    };
+  }, [text]);
+
+  return (
+    <span ref={ref} title={truncated ? text : undefined}>
+      {text}
+    </span>
   );
 }
 
@@ -198,7 +227,7 @@ export function HeadingTreeView({
                       void onLocate(heading.selector);
                     }}
                   >
-                    <span>{label}</span>
+                    <HeadingLabel text={label} />
                     {heading.signals.length > 0 && (
                       <small>{heading.signals.map((signal) => signalLabel(signal, language)).join(' · ')}</small>
                     )}

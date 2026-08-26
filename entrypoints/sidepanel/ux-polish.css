@@ -72,13 +72,14 @@ body,
    a second glyph with ::before, which became visible once the 14px minimum
    typography layer overrode the old font-size: 0 hiding technique. */
 .workspace-nav.tabs button > span {
-  width: 24px;
-  height: 24px;
+  width: 30px;
+  height: 30px;
   display: grid;
   place-items: center;
-  border-radius: 8px;
+  border-radius: 9px;
   background: var(--ft-surface-subtle);
-  font-size: 14px;
+  font-size: 20px;
+  font-weight: 750;
   line-height: 1;
 }
 
@@ -265,9 +266,15 @@ body,
   }
 
   .workspace-nav.tabs button {
-    min-height: 46px;
+    min-height: 52px;
     display: grid;
-    gap: 2px;
+    gap: 3px;
+  }
+
+  .workspace-nav.tabs button > span {
+    width: 28px;
+    height: 28px;
+    font-size: 19px;
   }
 }
 

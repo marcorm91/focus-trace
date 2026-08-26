@@ -49,6 +49,13 @@ html[data-ft-ui-scale='130'] {
   font-size: 0 !important;
 }
 
+/* Workspace navigation glyphs are visual icons, not readable copy. Keep them
+ * deliberately larger than the 14px text floor so Review/Trace remain easy to
+ * recognize at narrow side-panel widths. */
+.app-shell .workspace-nav.tabs button > span {
+  font-size: 20px !important;
+}
+
 /*
  * CSS zoom keeps the established px-based type hierarchy, controls and spacing
  * proportional. The reciprocal width keeps the scaled root inside the side-panel
