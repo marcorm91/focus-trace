@@ -78,17 +78,27 @@ async function saveScan(panel: Page, tabId: number, url: string): Promise<void> 
   }, { id: tabId, pageUrl: url });
 }
 
-test('Inspect, occurrence navigation and compact report track the real target', async ({ context, extensionWorker }) => {
+test('Inspect, localized impact matrix, occurrence navigation and compact report track the real target', async ({ context, extensionWorker }) => {
   const inspected = await context.newPage();
   await inspected.goto(`${fixtures.origin}/scan-targets.html`);
   await expect(inspected.getByRole('button', { name: 'First target' })).toBeVisible();
   const tabId = await tabIdForPage(extensionWorker, inspected);
 
   const panel = await openSidepanel(context, extensionWorker);
+  await panel.bringToFront();
+  await panel.getByRole('button', { name: /Open settings|Abrir ajustes/ }).click();
+  await panel.getByRole('radio', { name: /Español/ }).check();
+  await expect(panel.locator('html')).toHaveAttribute('lang', 'es');
+  await panel.getByRole('button', { name: 'Volver' }).click();
+
   await inspected.bringToFront();
   await saveScan(panel, tabId, inspected.url());
 
   await expect.poll(async () => panel.locator('.section-heading p').first().textContent()).toContain('Scan target navigation fixture');
+  const impactMatrix = panel.getByRole('region', { name: 'Impacto por resultado' });
+  await expect(impactMatrix).toBeVisible();
+  await expect(impactMatrix.getByRole('row', { name: /Fallos 2/ })).toBeVisible();
+  await expect(impactMatrix.getByRole('columnheader', { name: 'crítico' })).toBeVisible();
 
   const inspect = panel.getByRole('button', {
     name: /Highlight element on page|Destacar elemento en la página/,
@@ -99,6 +109,7 @@ test('Inspect, occurrence navigation and compact report track the real target', 
   await expect(overlay).toBeVisible();
   await expect(overlay).toContainText('First target');
   await expect(panel.locator('.finding-dom')).not.toBeVisible();
+  await expect(panel.getByText('Referencia de impacto comparable', { exact: true })).toHaveCount(0);
 
   const next = panel.getByRole('button', {
     name: /Next affected element|Siguiente elemento afectado/,
@@ -111,6 +122,7 @@ test('Inspect, occurrence navigation and compact report track the real target', 
 
   await panel.getByRole('button', { name: /Report|Informe/ }).click();
   await expect(panel.getByRole('heading', { level: 2, name: /Accessibility report|Informe de accesibilidad/ })).toBeVisible();
+  await expect(panel.locator('.report-priority-list > li > span').first()).toHaveText('Análisis');
   await expect(panel.locator('.report-compact-tabs')).toBeVisible();
   await expect(panel.locator('.report-rule-group')).toHaveCount(1);
   await expect(panel.locator('.report-rule-count')).toHaveText('2');

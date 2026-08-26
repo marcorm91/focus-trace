@@ -1,12 +1,11 @@
 import { guidanceForIssue } from '../../../lib/report/finding-guidance';
 import { localizedSeverity, tr, type AppLanguage } from '../../../shared/i18n';
-import { localizedRuleSeverityRationale, ruleDefinitionForId } from '../../../shared/rule-catalog';
+import { localizedRuleSeverityRationale } from '../../../shared/rule-catalog';
 import type { ScanIssue } from '../../../shared/types';
 import './finding-guidance.css';
 
 export function FindingGuidance({ issue, language }: { issue: ScanIssue; language: AppLanguage }) {
   const guidance = guidanceForIssue(issue, language);
-  const rule = ruleDefinitionForId(issue.ruleId);
   const severityRationale = localizedRuleSeverityRationale(issue.ruleId, language);
 
   return (
@@ -18,25 +17,11 @@ export function FindingGuidance({ issue, language }: { issue: ScanIssue; languag
             <strong>{localizedSeverity(issue.severity, language)}</strong>
           </summary>
           <p>{severityRationale}</p>
-          {rule?.impactReferences.length ? (
-            <div className="finding-guidance-impact-references">
-              <small>{tr(language, 'Comparable impact reference', 'Referencia de impacto comparable')}</small>
-              {rule.impactReferences.map((reference) => (
-                <a href={reference.url} target="_blank" rel="noreferrer" key={`${reference.source}-${reference.ruleId}`}>
-                  {reference.source} · {reference.ruleId} · {localizedSeverity(reference.impact, language)}
-                  {reference.relation === 'partial'
-                    ? ` · ${tr(language, 'partial scope', 'alcance parcial')}`
-                    : ''}
-                </a>
-              ))}
-            </div>
-          ) : (
-            <small>{tr(
-              language,
-              'FocusTrace-assessed impact; no direct external rule is used for this signal.',
-              'Impacto evaluado por FocusTrace; no se utiliza una regla externa directamente equivalente para esta señal.',
-            )}</small>
-          )}
+          <small>{tr(
+            language,
+            'FocusTrace assigns this base impact independently. WCAG and ACT references describe accessibility requirements, not severity scores.',
+            'FocusTrace asigna este impacto base de forma independiente. Las referencias WCAG y ACT describen requisitos de accesibilidad, no niveles de severidad.',
+          )}</small>
         </details>
       )}
 

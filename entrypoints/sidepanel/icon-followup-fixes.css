@@ -1,0 +1,105 @@
+/* Final icon corrections from hands-on review. Loaded after modern-icons.css. */
+
+/* The generic topbar mask selector is more specific than the original per-action
+   rules, so pin each action to its own glyph at the same cascade layer. */
+.topbar-tools .reset-all-trigger > span {
+  --ft-mask: var(--ft-i-reset) !important;
+}
+
+.topbar-tools .settings-trigger > span {
+  --ft-mask: var(--ft-i-settings) !important;
+}
+
+/* This action locates/highlights the live page element; a focus/target glyph is
+   more accurate than the previous code symbol. Keep the glyph optically centred
+   and hide the old textual </> fallback. */
+.finding-location > button {
+  display: inline-grid !important;
+  place-items: center !important;
+  padding: 0 !important;
+}
+
+.finding-location > button > span {
+  display: none !important;
+}
+
+.finding-location > button::before {
+  width: 20px;
+  height: 20px;
+  margin: 0 !important;
+  -webkit-mask: var(--ft-i-focus) center / contain no-repeat !important;
+  mask: var(--ft-i-focus) center / contain no-repeat !important;
+}
+
+/* Copy actions are icon-only controls. Force both the button box and the mask
+   itself to share the same optical centre. */
+.copy-color {
+  display: inline-grid !important;
+  place-items: center !important;
+  line-height: 1 !important;
+}
+
+.copy-color::before {
+  margin: 0 auto !important;
+}
+
+/* The filters and impact matrix already carry these counts/context. Keep the
+   scan surface focused by removing the duplicated explanatory/count blocks. */
+.scan-results-note,
+.scan-heading-actions > strong {
+  display: none !important;
+}
+
+/* The four recorded text-style facts read more naturally as a compact 2x2 grid
+   at normal side-panel widths. Collapse to one column only when space is tight. */
+.contrast-evidence > dl {
+  grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+  gap: 9px 14px !important;
+}
+
+.contrast-evidence > dl > div {
+  min-width: 0;
+  grid-template-columns: minmax(64px, auto) minmax(0, 1fr) !important;
+  align-content: start;
+}
+
+/* Hover and keyboard-focus states must always remain visible. In particular,
+   the PDF action previously inherited a dark hover background without changing
+   its text color, which made the label almost disappear. */
+.report-export-actions button:hover:not(:disabled),
+.report-export-actions button:focus-visible,
+.finding-location > button:hover:not(:disabled),
+.finding-location > button:focus-visible,
+.copy-color:hover:not(:disabled),
+.copy-color:focus-visible,
+.scan-occurrence-pager button:hover:not(:disabled),
+.scan-occurrence-pager button:focus-visible,
+.report-rule-pager button:hover:not(:disabled),
+.report-rule-pager button:focus-visible,
+.contrast-format button:hover:not(:disabled),
+.contrast-format button:focus-visible,
+.scan-category-filter button:hover:not(:disabled),
+.scan-category-filter button:focus-visible,
+.scan-filter-tabs button:hover:not(:disabled),
+.scan-filter-tabs button:focus-visible,
+.scan-severity-filter button:hover:not(:disabled),
+.scan-severity-filter button:focus-visible,
+.report-compact-tabs button:hover:not(:disabled),
+.report-compact-tabs button:focus-visible {
+  border-color: var(--ft-accent, Highlight) !important;
+  background: var(--ft-accent-soft, color-mix(in srgb, Highlight 10%, Canvas)) !important;
+  color: var(--ft-ink, CanvasText) !important;
+}
+
+.report-export-actions .export-pdf-report:hover:not(:disabled),
+.report-export-actions .export-pdf-report:focus-visible {
+  border-color: var(--ft-brand-strong, Highlight) !important;
+  background: var(--ft-brand-strong, Highlight) !important;
+  color: var(--ft-paper, Canvas) !important;
+}
+
+@media (max-width: 400px) {
+  .contrast-evidence > dl {
+    grid-template-columns: minmax(0, 1fr) !important;
+  }
+}

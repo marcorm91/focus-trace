@@ -34,7 +34,7 @@ describe('UX polish contract', () => {
     expect(css).toContain('--ft-i-report');
     expect(css).toContain('--ft-i-page-scan');
     expect(css).toContain('--ft-i-site');
-    expect(css).toContain('--ft-i-code');
+    expect(css).toContain('--ft-i-focus');
     expect(css).toContain('-webkit-mask: var(--ft-mask)');
     expect(css).toContain('width: 28px !important');
     expect(css).toContain('height: 28px !important');
@@ -46,9 +46,71 @@ describe('UX polish contract', () => {
     expect(polish).toContain('--ft-i-copy');
     expect(polish).toContain('--ft-i-chevron-left');
 
+    const followup = source('entrypoints/sidepanel/icon-followup-fixes.css');
+    expect(followup).toContain('.topbar-tools .reset-all-trigger > span');
+    expect(followup).toContain('--ft-mask: var(--ft-i-reset) !important');
+    expect(followup).toContain('.topbar-tools .settings-trigger > span');
+    expect(followup).toContain('--ft-mask: var(--ft-i-settings) !important');
+    expect(followup).toContain('-webkit-mask: var(--ft-i-focus)');
+    expect(followup).toContain('place-items: center !important');
+
     const entry = source('entrypoints/sidepanel/main.tsx');
     expect(entry).toContain("import './modern-icons.css';");
     expect(entry).toContain("import './final-review-polish.css';");
+    expect(entry).toContain("import './icon-followup-fixes.css';");
+  });
+
+  it('keeps redundant scan summary blocks out of the visible result surface', () => {
+    const followup = source('entrypoints/sidepanel/icon-followup-fixes.css');
+    expect(followup).toContain('.scan-results-note');
+    expect(followup).toContain('.scan-heading-actions > strong');
+    expect(followup).toContain('display: none !important');
+  });
+
+  it('keeps hover states legible and contrast metadata in a responsive 2x2 grid', () => {
+    const followup = source('entrypoints/sidepanel/icon-followup-fixes.css');
+    expect(followup).toContain('.export-pdf-report:hover:not(:disabled)');
+    expect(followup).toContain('color: var(--ft-paper, Canvas) !important');
+    expect(followup).toContain('grid-template-columns: repeat(2, minmax(0, 1fr)) !important');
+    expect(followup).toContain('@media (max-width: 400px)');
+  });
+
+  it('keeps report source labels localized instead of exposing internal source ids', () => {
+    const entry = source('entrypoints/sidepanel/main.tsx');
+    expect(entry).toContain('localizedSuggestionSource');
+    expect(entry).toContain("spanish ? 'Análisis' : 'Analysis'");
+    expect(entry).toContain("spanish ? 'Encabezados' : 'Headings'");
+  });
+
+  it('keeps the shipped severity model independent from third-party impact-comparison content', () => {
+    const guidance = source('entrypoints/sidepanel/components/FindingGuidance.tsx');
+    const siteReport = source('lib/site-audit/text-report.ts');
+    const catalog = source('shared/rule-catalog.ts');
+    const severityDocs = source('docs/SEVERITY.md');
+    const auditDocs = source('docs/SEVERITY-AUDIT.md');
+    const rulesDocs = source('docs/RULES.md');
+    const readme = source('README.md');
+
+    expect(guidance).not.toContain('impactReferences');
+    expect(guidance).not.toContain('dequeuniversity.com');
+    expect(guidance).toContain('FocusTrace asigna este impacto base de forma independiente');
+    expect(siteReport).not.toContain('Comparable impact reference');
+    expect(siteReport).not.toContain('Referencia de impacto comparable');
+    expect(catalog).not.toContain('impactReferences');
+    expect(catalog).not.toContain('dequeuniversity.com');
+    expect(catalog).not.toContain('axe-core');
+    expect(severityDocs).not.toContain('axe-core');
+    expect(auditDocs).not.toContain('axe-core');
+    expect(rulesDocs).not.toContain('axe-core');
+    expect(readme).not.toContain('axe-core');
+  });
+
+  it('keeps the impact matrix synchronized with the persisted app language', () => {
+    const matrix = source('entrypoints/sidepanel/components/ImpactMatrix.tsx');
+    expect(matrix).toContain('SETTINGS_STORAGE_KEY');
+    expect(matrix).toContain('browser.storage.onChanged.addListener');
+    expect(matrix).toContain('Impacto por resultado');
+    expect(matrix).toContain('Ejemplo: un salto de nivel de encabezado');
   });
 
   it('replaces the long report finding list with a filtered rule accordion surface', () => {

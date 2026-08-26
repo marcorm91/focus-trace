@@ -20,7 +20,7 @@ The local rule engine evaluates observable WCAG/ARIA expectations and keeps diag
 - AccName / HTML-AAM naming behavior;
 - WAI-ARIA APG for runtime widget patterns.
 
-FocusTrace does not use axe-core as its scanner.
+FocusTrace uses its own local rule engine and does not require a third-party accessibility scanner.
 
 ### Runtime Trace
 

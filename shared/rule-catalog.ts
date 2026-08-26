@@ -1,16 +1,5 @@
 import type { Severity, StandardReference } from './types';
 
-export type ImpactSeverity = Exclude<Severity, 'info'>;
-export type ImpactReferenceRelation = 'direct' | 'partial';
-
-export interface ImpactReference {
-  source: 'axe-core 4.12';
-  ruleId: string;
-  impact: ImpactSeverity;
-  relation: ImpactReferenceRelation;
-  url: string;
-}
-
 export interface RuleDefinition {
   id: string;
   title: string;
@@ -19,7 +8,6 @@ export interface RuleDefinition {
     en: string;
     es: string;
   };
-  impactReferences: ImpactReference[];
   references: StandardReference[];
 }
 
@@ -56,25 +44,11 @@ const apgDialog: StandardReference = {
   url: 'https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/',
 };
 
-const axe = (
-  ruleId: string,
-  impact: ImpactSeverity,
-  relation: ImpactReferenceRelation = 'direct',
-): ImpactReference => ({
-  source: 'axe-core 4.12',
-  ruleId,
-  impact,
-  relation,
-  url: `https://dequeuniversity.com/rules/axe/4.12/${ruleId}?application=RuleDescription`,
-});
-
 const impact = (
   en: string,
   es: string,
-  impactReferences: ImpactReference[] = [],
-): Pick<RuleDefinition, 'severityRationale' | 'impactReferences'> => ({
+): Pick<RuleDefinition, 'severityRationale'> => ({
   severityRationale: { en, es },
-  impactReferences,
 });
 
 export const RULES = {
@@ -85,7 +59,6 @@ export const RULES = {
     ...impact(
       'A missing page title can make the current view difficult to identify and navigate, especially across multiple tabs or views.',
       'La ausencia de título puede dificultar identificar y navegar la vista actual, especialmente entre varias pestañas o vistas.',
-      [axe('document-title', 'serious')],
     ),
     references: [wcag('2.4.2', 'Page Titled', 'A', 'page-titled'), act('2779a5', 'HTML page has non-empty title')],
   },
@@ -94,9 +67,8 @@ export const RULES = {
     title: 'Image has an accessible name or is marked decorative',
     severity: 'serious',
     ...impact(
-      'An unnamed meaningful image can remove information for screen-reader users. FocusTrace keeps one severity for both native images and role=img, whose comparable impacts differ.',
-      'Una imagen significativa sin nombre puede eliminar información para usuarios de lector de pantalla. FocusTrace mantiene una única severidad para imágenes nativas y role=img, cuyos impactos comparables difieren.',
-      [axe('image-alt', 'critical', 'partial'), axe('role-img-alt', 'serious', 'partial')],
+      'An unnamed meaningful image can remove information for screen-reader users. FocusTrace uses one base severity for native images and role=img without assuming every image is a complete task blocker.',
+      'Una imagen significativa sin nombre puede eliminar información para usuarios de lector de pantalla. FocusTrace usa una única severidad base para imágenes nativas y role=img sin asumir que toda imagen bloquea por completo una tarea.',
     ),
     references: [wcag('1.1.1', 'Non-text Content', 'A', 'non-text-content'), act('23a2a8', 'Image has non-empty accessible name')],
   },
@@ -107,7 +79,6 @@ export const RULES = {
     ...impact(
       'An unnamed button can make an action impossible to identify or invoke reliably with a screen reader or voice control.',
       'Un botón sin nombre puede hacer imposible identificar o ejecutar de forma fiable una acción con lector de pantalla o control por voz.',
-      [axe('button-name', 'critical', 'partial'), axe('aria-command-name', 'serious', 'partial')],
     ),
     references: [wcag('4.1.2', 'Name, Role, Value', 'A', 'name-role-value'), act('97a4e1', 'Button has non-empty accessible name')],
   },
@@ -118,7 +89,6 @@ export const RULES = {
     ...impact(
       'An unnamed form control can prevent users from knowing what information or action the control represents, blocking completion of a form task.',
       'Un control de formulario sin nombre puede impedir saber qué información o acción representa, bloqueando la finalización de una tarea de formulario.',
-      [axe('select-name', 'critical', 'partial'), axe('aria-input-field-name', 'serious', 'partial')],
     ),
     references: [wcag('4.1.2', 'Name, Role, Value', 'A', 'name-role-value'), act('e086e5', 'Form field has non-empty accessible name')],
   },
@@ -129,7 +99,6 @@ export const RULES = {
     ...impact(
       'An unnamed link can hide its destination or purpose from assistive-technology users and make navigation substantially harder.',
       'Un enlace sin nombre puede ocultar su destino o propósito a usuarios de tecnologías de asistencia y dificultar considerablemente la navegación.',
-      [axe('link-name', 'serious')],
     ),
     references: [wcag('4.1.2', 'Name, Role, Value', 'A', 'name-role-value'), wcag('2.4.4', 'Link Purpose (In Context)', 'A', 'link-purpose-in-context'), act('c487ae', 'Link has non-empty accessible name')],
   },
@@ -140,7 +109,6 @@ export const RULES = {
     ...impact(
       'Keyboard focus entering content hidden from assistive technology creates a substantial mismatch between operability and what is exposed to the accessibility tree.',
       'Que el foco de teclado entre en contenido oculto para tecnologías de asistencia crea una discrepancia importante entre la operabilidad y lo expuesto en el árbol de accesibilidad.',
-      [axe('aria-hidden-focus', 'serious')],
     ),
     references: [wcag('4.1.2', 'Name, Role, Value', 'A', 'name-role-value'), act('6cfa84', 'Element with aria-hidden has no content in sequential focus navigation')],
   },
@@ -151,7 +119,6 @@ export const RULES = {
     ...impact(
       'A mismatch between visible text and accessible name can prevent voice-input users from targeting a control by the words they can see.',
       'Una discrepancia entre el texto visible y el nombre accesible puede impedir que usuarios de entrada por voz activen un control mediante las palabras que ven.',
-      [axe('label-content-name-mismatch', 'serious')],
     ),
     references: [wcag('2.5.3', 'Label in Name', 'A', 'label-in-name'), act('2ee8b8', 'Visible label is part of accessible name')],
   },
@@ -162,7 +129,6 @@ export const RULES = {
     ...impact(
       'Without the page language, assistive technologies can use the wrong pronunciation and language rules across the whole document.',
       'Sin el idioma de la página, las tecnologías de asistencia pueden aplicar reglas de pronunciación e idioma incorrectas en todo el documento.',
-      [axe('html-has-lang', 'serious')],
     ),
     references: [wcag('3.1.1', 'Language of Page', 'A', 'language-of-page'), act('b5c3f8', 'HTML page has lang attribute')],
   },
@@ -173,7 +139,6 @@ export const RULES = {
     ...impact(
       'An invalid primary language tag can cause assistive technologies to apply incorrect pronunciation rules across the page.',
       'Una etiqueta de idioma principal no válida puede provocar que las tecnologías de asistencia apliquen reglas de pronunciación incorrectas en la página.',
-      [axe('html-lang-valid', 'serious')],
     ),
     references: [wcag('3.1.1', 'Language of Page', 'A', 'language-of-page'), act('bf051a', 'HTML page lang attribute has valid language tag')],
   },
@@ -184,7 +149,6 @@ export const RULES = {
     ...impact(
       'Insufficient text contrast can make content substantially harder or impossible to read for people with low vision or reduced contrast sensitivity.',
       'Un contraste de texto insuficiente puede dificultar considerablemente o impedir la lectura a personas con baja visión o sensibilidad reducida al contraste.',
-      [axe('color-contrast', 'serious')],
     ),
     references: [wcag('1.4.3', 'Contrast (Minimum)', 'AA', 'contrast-minimum')],
   },
@@ -205,7 +169,6 @@ export const RULES = {
     ...impact(
       'A deprecated role is an authoring risk and future-compatibility concern, but by itself it usually has limited immediate user impact.',
       'Un rol obsoleto supone un riesgo de autoría y compatibilidad futura, pero por sí solo suele tener un impacto inmediato limitado para el usuario.',
-      [axe('aria-deprecated-role', 'minor')],
     ),
     references: [aria],
   },
@@ -226,7 +189,6 @@ export const RULES = {
     ...impact(
       'A prohibited ARIA attribute can be ignored by accessibility APIs, causing important semantics or state information to be missing or misleading.',
       'Un atributo ARIA prohibido puede ser ignorado por las APIs de accesibilidad, haciendo que información semántica o de estado importante falte o resulte engañosa.',
-      [axe('aria-prohibited-attr', 'serious')],
     ),
     references: [aria],
   },
@@ -237,7 +199,6 @@ export const RULES = {
     ...impact(
       'A positive tabindex can substantially disrupt the natural focus sequence. FocusTrace keeps the outcome as review because the resulting order still needs contextual judgement.',
       'Un tabindex positivo puede alterar de forma importante la secuencia natural de foco. FocusTrace mantiene el resultado como revisión porque el orden resultante todavía requiere criterio contextual.',
-      [axe('tabindex', 'serious')],
     ),
     references: [wcag('2.4.3', 'Focus Order', 'A', 'focus-order')],
   },
@@ -248,7 +209,6 @@ export const RULES = {
     ...impact(
       'A skipped heading level is a structural signal rather than proof of a broken hierarchy. FocusTrace reports it for review with limited base impact unless the hierarchy is actually misleading.',
       'Un salto de nivel de encabezado es una señal estructural, no una prueba de jerarquía rota. FocusTrace lo presenta para revisión con impacto base limitado salvo que la jerarquía resulte realmente engañosa.',
-      [axe('heading-order', 'moderate', 'partial')],
     ),
     references: [wcag('1.3.1', 'Info and Relationships', 'A', 'info-and-relationships'), wcag('2.4.6', 'Headings and Labels', 'AA', 'headings-and-labels')],
   },
