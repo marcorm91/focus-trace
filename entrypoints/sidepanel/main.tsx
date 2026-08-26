@@ -24,6 +24,7 @@ import './heading-tree-visual.css';
 import './modern-icons.css';
 import './regression-fixes.css';
 import './final-review-polish.css';
+import './heading-text-overflow.css';
 
 const PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'];
 const root = document.getElementById('root');
