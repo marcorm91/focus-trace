@@ -236,6 +236,29 @@ body,
   word-break: normal;
 }
 
+/* The global 14px readability floor must not turn this binary format switch
+   into a large segmented control. Keep the text readable while making the
+   control visually compact. */
+.contrast-format {
+  gap: 0;
+  padding: 1px;
+  border-radius: 6px;
+}
+
+.contrast-format button {
+  min-width: 38px;
+  min-height: 30px;
+  padding: 2px 6px;
+  border-radius: 5px;
+  line-height: 1;
+}
+
+/* The suggested value is the useful output; the algorithm disclaimer adds
+   visual noise in the finding card and remains an implementation detail. */
+.contrast-suggestion > p {
+  display: none;
+}
+
 @media (max-width: 520px) {
   .workspace-nav.tabs {
     grid-template-columns: repeat(4, minmax(0, 1fr));
