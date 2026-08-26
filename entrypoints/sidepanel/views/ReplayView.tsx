@@ -146,21 +146,39 @@ export function ReplayView({
       </div>
 
       <div className="replay-controller" aria-label={tr(language, 'Replay controls', 'Controles de replay')}>
-        <button type="button" title={tr(language, 'Previous recorded event', 'Evento grabado anterior')} disabled={recording || index === 0} onClick={() => setIndex((value) => Math.max(0, value - 1))}>
+        <button
+          type="button"
+          title={tr(language, 'Previous recorded event', 'Evento grabado anterior')}
+          disabled={recording || index === 0}
+          onClick={() => setIndex((value) => Math.max(0, value - 1))}
+        >
           <span aria-hidden="true">←</span> {tr(language, 'Previous', 'Anterior')}
         </button>
         <div className="replay-position" aria-live="polite">
           <strong>{current.order}</strong>
           <span>/ {current.total}</span>
         </div>
-        <button type="button" title={tr(language, 'Next recorded event', 'Siguiente evento grabado')} disabled={recording || index === steps.length - 1} onClick={() => setIndex((value) => Math.min(steps.length - 1, value + 1))}>
+        <button
+          type="button"
+          title={tr(language, 'Next recorded event', 'Siguiente evento grabado')}
+          disabled={recording || index === steps.length - 1}
+          onClick={() => setIndex((value) => Math.min(steps.length - 1, value + 1))}
+        >
           {tr(language, 'Next', 'Siguiente')} <span aria-hidden="true">→</span>
         </button>
       </div>
 
       <label className="replay-scrubber">
         <span>{tr(language, 'Recorded timeline', 'Línea temporal grabada')}</span>
-        <input type="range" min="1" max={steps.length} value={current.order} disabled={recording} aria-valuetext={tr(language, `Step ${current.order} of ${current.total}`, `Paso ${current.order} de ${current.total}`)} onChange={(event) => setIndex(Number(event.currentTarget.value) - 1)} />
+        <input
+          type="range"
+          min="1"
+          max={steps.length}
+          value={current.order}
+          disabled={recording}
+          aria-valuetext={tr(language, `Step ${current.order} of ${current.total}`, `Paso ${current.order} de ${current.total}`)}
+          onChange={(event) => setIndex(Number(event.currentTarget.value) - 1)}
+        />
       </label>
 
       <article className={`replay-event phase-${current.phase}${current.cause ? ' has-cause' : ''}`}>
@@ -169,40 +187,75 @@ export function ReplayView({
           <div>
             <div className="replay-meta">
               <span>{currentPhaseLabel}</span>
-              {current.interactionNumber && <span>{tr(language, `Interaction #${current.interactionNumber}`, `Interacción #${current.interactionNumber}`)}</span>}
+              {current.interactionNumber && (
+                <span>{tr(language, `Interaction #${current.interactionNumber}`, `Interacción #${current.interactionNumber}`)}</span>
+              )}
               {level === 'developer' && <time dateTime={new Date(current.event.timestamp).toISOString()}>{formattedTime}</time>}
             </div>
             <h3>{eventTitle}</h3>
           </div>
         </div>
 
-        {currentInteraction?.correlated && <div className="replay-trigger-context"><strong>{tr(language, 'Interaction:', 'Interacción:')}</strong>{' '}{humanInteractionTitle(currentInteraction, language)}</div>}
+        {currentInteraction?.correlated && (
+          <div className="replay-trigger-context">
+            <strong>{tr(language, 'Interaction:', 'Interacción:')}</strong>{' '}
+            {humanInteractionTitle(currentInteraction, language)}
+          </div>
+        )}
+
         {current.event.detail && <p className="replay-detail">{current.event.detail}</p>}
 
         {currentSemantics.length > 0 && (
           <section className="replay-transition-results" aria-label={tr(language, 'Transition result', 'Resultado de la transición')}>
             {currentSemantics.map((semantic) => {
               const copy = focusTransitionSemanticCopy(semantic, language);
-              return <div className={`replay-transition-result ${semantic.tone}`} key={semantic.id}><span className={`replay-semantic-label ${semantic.tone}`}><span aria-hidden="true" title={copy.label}>{focusTransitionSemanticIcon(semantic)}</span>{copy.label}</span><p>{copy.detail}</p></div>;
+              return (
+                <div className={`replay-transition-result ${semantic.tone}`} key={semantic.id}>
+                  <span className={`replay-semantic-label ${semantic.tone}`}>
+                    <span aria-hidden="true" title={copy.label}>{focusTransitionSemanticIcon(semantic)}</span>
+                    {copy.label}
+                  </span>
+                  <p>{copy.detail}</p>
+                </div>
+              );
             })}
           </section>
         )}
 
         {current.target && (
           <div className="replay-target">
-            <div><span>{tr(language, 'Target', 'Destino')}</span><strong>{targetName}</strong><small>{current.target.role ?? current.target.tag}</small></div>
-            <span className={linkedToFocusPath ? 'replay-page-sync available' : 'replay-page-sync'}>{linkedToFocusPath ? tr(language, 'Linked to recorded focus path', 'Vinculado al recorrido de foco') : tr(language, 'Recorded evidence only', 'Solo evidencia grabada')}</span>
+            <div>
+              <span>{tr(language, 'Target', 'Destino')}</span>
+              <strong>{targetName}</strong>
+              <small>{current.target.role ?? current.target.tag}</small>
+            </div>
+            <span className={linkedToFocusPath ? 'replay-page-sync available' : 'replay-page-sync'}>
+              {linkedToFocusPath
+                ? tr(language, 'Linked to recorded focus path', 'Vinculado al recorrido de foco')
+                : tr(language, 'Recorded evidence only', 'Solo evidencia grabada')}
+            </span>
             {level === 'developer' && <code>{current.target.selector}</code>}
           </div>
         )}
 
-        {current.event.fromUrl && current.event.toUrl && <div className="replay-change-block"><strong>{tr(language, 'Route change', 'Cambio de ruta')}</strong><code>{current.event.fromUrl}</code><span aria-hidden="true">→</span><code>{current.event.toUrl}</code></div>}
+        {current.event.fromUrl && current.event.toUrl && (
+          <div className="replay-change-block">
+            <strong>{tr(language, 'Route change', 'Cambio de ruta')}</strong>
+            <code>{current.event.fromUrl}</code>
+            <span aria-hidden="true">→</span>
+            <code>{current.event.toUrl}</code>
+          </div>
+        )}
 
         {mutationTitle && current.event.mutation && (
           <div className="replay-change-block">
             <strong>{mutationTitle}</strong>
             {current.event.mutation.attribute && <code>{current.event.mutation.attribute}</code>}
-            {current.event.mutation.kind === 'attribute-changed' && <span className="replay-value-change">{JSON.stringify(current.event.mutation.previousValue)} → {JSON.stringify(current.event.mutation.currentValue)}</span>}
+            {current.event.mutation.kind === 'attribute-changed' && (
+              <span className="replay-value-change">
+                {JSON.stringify(current.event.mutation.previousValue)} → {JSON.stringify(current.event.mutation.currentValue)}
+              </span>
+            )}
           </div>
         )}
 
@@ -218,17 +271,10 @@ export function ReplayView({
           </div>
         )}
 
-        {current.event.references?.length ? <ReferenceList references={current.event.references} language={language} /> : null}
+        {current.event.references?.length ? (
+          <ReferenceList references={current.event.references} language={language} />
+        ) : null}
       </article>
-
-      <div className="replay-chain" aria-label={tr(language, 'Nearby replay steps', 'Pasos cercanos del replay')}>
-        {steps.slice(Math.max(0, index - 2), Math.min(steps.length, index + 3)).map((step) => (
-          <button type="button" key={step.id} title={tr(language, `Open replay step ${step.order}`, `Abrir el paso ${step.order} del replay`)} className={step.id === current.id ? 'active' : ''} aria-current={step.id === current.id ? 'step' : undefined} disabled={recording} onClick={() => setIndex(step.order - 1)}>
-            <span>{step.order}</span>
-            <small>{phaseLabel(step.phase, language)}</small>
-          </button>
-        ))}
-      </div>
     </section>
   );
 }
