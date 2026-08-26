@@ -141,6 +141,25 @@ body,
   text-decoration: underline;
 }
 
+/* Contrast evidence is a full-width detail block below the ratio/format row.
+   Keeping it out of the 92px summary column prevents color and typography
+   values from collapsing character-by-character in narrower side panels. */
+.contrast-evidence > dl {
+  grid-column: 1 / -1;
+}
+
+.contrast-evidence dd {
+  overflow-wrap: break-word;
+  word-break: normal;
+}
+
+.contrast-color-value code,
+.contrast-suggestion-value code {
+  white-space: nowrap;
+  overflow-wrap: normal;
+  word-break: normal;
+}
+
 @media (max-width: 520px) {
   .workspace-nav.tabs {
     grid-template-columns: repeat(4, minmax(0, 1fr));
