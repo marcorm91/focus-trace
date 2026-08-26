@@ -25,7 +25,7 @@ export function locateScanTargetInPage(
   selector: string,
   options: ScanTargetHighlightOptions = {},
 ): ScanTargetHighlightResult {
-  clearScanTargetHighlightInPage();
+  document.querySelector('[data-focustrace-scan-highlight]')?.remove();
 
   let target: Element | null = null;
   try {
