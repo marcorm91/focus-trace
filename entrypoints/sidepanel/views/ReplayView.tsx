@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
+import { browser } from '#imports';
 import type { FocusJourney } from '../../../lib/runtime/focus-journey';
 import {
   focusTransitionSemanticCopy,
@@ -12,6 +13,11 @@ import {
   humanRuntimeEventTitle,
   type ExplanationLevel,
 } from '../../../lib/runtime/explanations';
+import {
+  clearScanTargetHighlightInPage,
+  locateScanTargetInPage,
+  type ScanTargetHighlightTone,
+} from '../../../lib/runtime/scan-target-overlay';
 import { localeFor, tr, type AppLanguage } from '../../../shared/i18n';
 import type { RuntimeEvent, RuntimeInteraction } from '../../../shared/types';
 import { Empty, ReferenceList } from '../components/Common';
@@ -41,6 +47,53 @@ function mutationLabel(event: RuntimeEvent, language: AppLanguage): string | und
   return tr(language, 'Attribute changed', 'Atributo modificado');
 }
 
+interface ReplayHighlightPresentation {
+  tone: ScanTargetHighlightTone;
+  label: string;
+  detail: string;
+}
+
+function replayHighlightPresentation(
+  event: RuntimeEvent,
+  semantics: FocusTransitionSemantic[],
+  hasCause: boolean,
+  language: AppLanguage,
+): ReplayHighlightPresentation {
+  if (event.outcome === 'fail') {
+    return {
+      tone: 'fail',
+      label: tr(language, `Failure${event.ruleId ? ` · ${event.ruleId}` : ''}`, `Fallo${event.ruleId ? ` · ${event.ruleId}` : ''}`),
+      detail: tr(language, 'A deterministic failure is linked to this recorded step.', 'Este paso grabado tiene asociado un fallo determinista.'),
+    };
+  }
+
+  if (event.outcome === 'review' || event.outcome === 'warning' || hasCause || semantics.some((semantic) => semantic.tone === 'review')) {
+    return {
+      tone: 'review',
+      label: tr(language, `Review${event.ruleId ? ` · ${event.ruleId}` : ''}`, `Revisar${event.ruleId ? ` · ${event.ruleId}` : ''}`),
+      detail: tr(language, 'This step contains evidence that needs review.', 'Este paso contiene evidencia que necesita revisión.'),
+    };
+  }
+
+  if (semantics.some((semantic) => semantic.tone === 'positive')) {
+    return {
+      tone: 'ok',
+      label: tr(language, 'Handled transition', 'Transición gestionada'),
+      detail: tr(language, 'The recorded focus transition was handled as expected.', 'La transición de foco grabada se gestionó como se esperaba.'),
+    };
+  }
+
+  return {
+    tone: 'ok',
+    label: tr(language, 'No signal on this step', 'Sin señal en este paso'),
+    detail: tr(
+      language,
+      'FocusTrace did not record a failure or review signal for this step. This is not a complete WCAG pass.',
+      'FocusTrace no registró un fallo ni una señal de revisión en este paso. Esto no equivale a superar WCAG por completo.',
+    ),
+  };
+}
+
 export function ReplayView({
   events,
   interactions,
@@ -49,8 +102,6 @@ export function ReplayView({
   recording,
   level,
   language,
-  onSelectFocusTarget,
-  onClearFocusTarget,
 }: {
   events: RuntimeEvent[];
   interactions: RuntimeInteraction[];
@@ -68,6 +119,7 @@ export function ReplayView({
     [journey.steps],
   );
   const [index, setIndex] = useState(0);
+  const [pageTargetFound, setPageTargetFound] = useState<boolean>();
 
   useEffect(() => {
     setIndex((current) => Math.min(current, Math.max(0, steps.length - 1)));
@@ -81,19 +133,63 @@ export function ReplayView({
   const currentSemantics = current
     ? semantics.filter((semantic) => semantic.eventIds[0] === current.event.id)
     : [];
+  const highlight = current
+    ? replayHighlightPresentation(current.event, currentSemantics, Boolean(current.cause), language)
+    : undefined;
 
   useEffect(() => {
-    if (recording || !current) return;
-    if (current.target && focusSelectors.has(current.target.selector)) {
-      void onSelectFocusTarget(current.target.selector);
-      return;
+    let cancelled = false;
+
+    const clearHighlight = async () => {
+      const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+      if (tab?.id == null) return;
+      await browser.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: clearScanTargetHighlightInPage,
+      }).catch(() => undefined);
+    };
+
+    if (recording || !current?.target || !highlight) {
+      setPageTargetFound(undefined);
+      void clearHighlight();
+      return () => {
+        cancelled = true;
+      };
     }
-    void onClearFocusTarget();
-  }, [current?.id, current?.target?.selector, focusSelectors, onClearFocusTarget, onSelectFocusTarget, recording]);
+
+    setPageTargetFound(undefined);
+    void (async () => {
+      const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+      if (tab?.id == null || cancelled) return;
+      const results = await browser.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: locateScanTargetInPage,
+        args: [current.target!.selector, {
+          tone: highlight.tone,
+          label: highlight.label,
+          focusTarget: false,
+          durationMs: 0,
+        }],
+      });
+      if (!cancelled) setPageTargetFound(Boolean(results[0]?.result?.found));
+    })().catch(() => {
+      if (!cancelled) setPageTargetFound(false);
+    });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [current?.id, current?.target?.selector, highlight?.label, highlight?.tone, recording]);
 
   useEffect(() => () => {
-    void onClearFocusTarget();
-  }, [onClearFocusTarget]);
+    void browser.tabs.query({ active: true, currentWindow: true }).then(([tab]) => {
+      if (tab?.id == null) return;
+      return browser.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: clearScanTargetHighlightInPage,
+      });
+    }).catch(() => undefined);
+  }, []);
 
   if (steps.length === 0) {
     return (
@@ -112,7 +208,7 @@ export function ReplayView({
     );
   }
 
-  if (!current) return null;
+  if (!current || !highlight) return null;
 
   const eventTitle = humanRuntimeEventTitle(current.event, language);
   const causeExplanation = current.cause ? explanationForCause(current.cause.type, language) : undefined;
@@ -134,8 +230,8 @@ export function ReplayView({
           <h2 id="replay-title">{tr(language, 'Evidence replay', 'Replay de evidencia')}</h2>
           <p>{tr(
             language,
-            'Previous and Next inspect the recorded chain. FocusTrace never re-clicks controls or changes the application state.',
-            'Anterior y Siguiente inspeccionan la cadena grabada. FocusTrace nunca vuelve a pulsar controles ni modifica el estado de la aplicación.',
+            'Previous, Next and the timeline inspect the recorded chain and highlight the current target without moving focus.',
+            'Anterior, Siguiente y la línea temporal inspeccionan la cadena grabada y resaltan el destino actual sin mover el foco.',
           )}</p>
         </div>
         <span className={`replay-recording-state ${recording ? 'is-live' : ''}`}>
@@ -229,10 +325,20 @@ export function ReplayView({
               <strong>{targetName}</strong>
               <small>{current.target.role ?? current.target.tag}</small>
             </div>
-            <span className={linkedToFocusPath ? 'replay-page-sync available' : 'replay-page-sync'}>
-              {linkedToFocusPath
-                ? tr(language, 'Linked to recorded focus path', 'Vinculado al recorrido de foco')
-                : tr(language, 'Recorded evidence only', 'Solo evidencia grabada')}
+            <span
+              className={`replay-target-state tone-${highlight.tone}`}
+              title={highlight.detail}
+            >
+              {highlight.label}
+            </span>
+            <span className={pageTargetFound ? 'replay-page-sync available' : 'replay-page-sync'}>
+              {pageTargetFound
+                ? tr(language, 'Highlighted on the current page', 'Resaltado en la página actual')
+                : pageTargetFound === false
+                  ? tr(language, 'Historical evidence only', 'Solo evidencia histórica')
+                  : linkedToFocusPath
+                    ? tr(language, 'Locating recorded target…', 'Localizando destino grabado…')
+                    : tr(language, 'Checking the current page…', 'Comprobando la página actual…')}
             </span>
             {level === 'developer' && <code>{current.target.selector}</code>}
           </div>
