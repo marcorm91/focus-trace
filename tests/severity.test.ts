@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
-import { countBySeverity, severityRank, sortBySeverity } from '../shared/severity';
-import type { Severity } from '../shared/types';
+import { countByOutcomeAndSeverity, countBySeverity, severityRank, sortBySeverity } from '../shared/severity';
+import type { FindingOutcome, Severity } from '../shared/types';
 
 describe('severity impact helpers', () => {
   it('orders findings from highest to lowest impact', () => {
@@ -38,5 +38,23 @@ describe('severity impact helpers', () => {
     });
     expect(severityRank('critical')).toBeGreaterThan(severityRank('serious'));
     expect(severityRank('minor')).toBeGreaterThan(severityRank('info'));
+  });
+
+  it('keeps outcome and impact as independent matrix dimensions', () => {
+    const findings: Array<{ outcome: FindingOutcome; severity: Severity }> = [
+      { outcome: 'fail', severity: 'serious' },
+      { outcome: 'fail', severity: 'serious' },
+      { outcome: 'review', severity: 'minor' },
+      { outcome: 'review', severity: 'serious' },
+      { outcome: 'warning', severity: 'minor' },
+    ];
+
+    const matrix = countByOutcomeAndSeverity(findings);
+
+    expect(matrix.fail.serious).toBe(2);
+    expect(matrix.fail.minor).toBe(0);
+    expect(matrix.review.minor).toBe(1);
+    expect(matrix.review.serious).toBe(1);
+    expect(matrix.warning.minor).toBe(1);
   });
 });
