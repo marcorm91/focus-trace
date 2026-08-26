@@ -2,7 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const packageJson = JSON.parse(readFileSync(resolve('package.json'), 'utf8'));
-const EXPECTED_HOST_PERMISSIONS = ['http://*/*', 'https://*/*'];
+const EXPECTED_PAGE_HOSTS = ['http://*/*', 'https://*/*'];
 
 function readManifest(target) {
   return JSON.parse(readFileSync(resolve('.output', target, 'manifest.json'), 'utf8'));
@@ -12,11 +12,16 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-function hasExpectedHostPermissions(manifest) {
-  if (!Array.isArray(manifest.host_permissions)) return false;
-  const actual = [...manifest.host_permissions].sort();
-  const expected = [...EXPECTED_HOST_PERMISSIONS].sort();
-  return actual.length === expected.length && actual.every((permission, index) => permission === expected[index]);
+function sameHosts(actual) {
+  if (!Array.isArray(actual)) return false;
+  const left = [...actual].sort();
+  const right = [...EXPECTED_PAGE_HOSTS].sort();
+  return left.length === right.length && left.every((permission, index) => permission === right[index]);
+}
+
+function hasNoRequiredHosts(manifest) {
+  return manifest.host_permissions == null
+    || (Array.isArray(manifest.host_permissions) && manifest.host_permissions.length === 0);
 }
 
 const chrome = readManifest('chrome-mv3');
@@ -28,16 +33,20 @@ console.log(JSON.stringify({
   chrome: {
     permissions: chrome.permissions,
     host_permissions: chrome.host_permissions,
+    optional_host_permissions: chrome.optional_host_permissions,
     side_panel: chrome.side_panel,
   },
   edge: {
     permissions: edge.permissions,
     host_permissions: edge.host_permissions,
+    optional_host_permissions: edge.optional_host_permissions,
     side_panel: edge.side_panel,
   },
   firefox: {
     permissions: firefox.permissions,
     host_permissions: firefox.host_permissions,
+    optional_permissions: firefox.optional_permissions,
+    optional_host_permissions: firefox.optional_host_permissions,
     sidebar_action: firefox.sidebar_action,
     browser_specific_settings: firefox.browser_specific_settings,
   },
@@ -46,10 +55,7 @@ console.log(JSON.stringify({
 for (const [name, manifest] of Object.entries({ chrome, edge, firefox })) {
   assert(manifest.manifest_version === 3, `${name} must be Manifest V3`);
   assert(manifest.version === packageJson.version, `${name} version must match package.json`);
-  assert(
-    hasExpectedHostPermissions(manifest),
-    `${name} must request exactly HTTP/HTTPS page access and no additional host permissions`,
-  );
+  assert(hasNoRequiredHosts(manifest), `${name} production build must not require permanent host access`);
 }
 
 for (const [name, manifest] of Object.entries({ chrome, edge })) {
@@ -58,6 +64,7 @@ for (const [name, manifest] of Object.entries({ chrome, edge })) {
   assert(manifest.permissions?.includes('scripting'), `${name} must request scripting`);
   assert(manifest.permissions?.includes('storage'), `${name} must request storage`);
   assert(manifest.permissions?.includes('sidePanel'), `${name} must request sidePanel`);
+  assert(sameHosts(manifest.optional_host_permissions), `${name} must expose exactly HTTP/HTTPS as optional hosts`);
   assert(manifest.side_panel?.default_path === 'sidepanel.html', `${name} must expose sidepanel.html`);
 }
 
@@ -66,6 +73,10 @@ assert(firefox.permissions?.includes('activeTab'), 'Firefox must request activeT
 assert(firefox.permissions?.includes('scripting'), 'Firefox must request scripting');
 assert(firefox.permissions?.includes('storage'), 'Firefox must request storage');
 assert(!firefox.permissions?.includes('sidePanel'), 'Firefox must not request Chromium sidePanel');
+assert(
+  sameHosts(firefox.optional_permissions) || sameHosts(firefox.optional_host_permissions),
+  'Firefox must expose exactly HTTP/HTTPS as optional hosts',
+);
 assert(firefox.sidebar_action?.default_panel === 'sidepanel.html', 'Firefox must expose sidepanel.html as sidebar_action');
 assert(firefox.browser_specific_settings?.gecko?.id === 'focustrace@focus-mode.app', 'Firefox must have a stable Gecko ID');
 assert(firefox.browser_specific_settings?.gecko?.strict_min_version === '115.0', 'Firefox must require version 115+');
