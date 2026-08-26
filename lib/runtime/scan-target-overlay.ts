@@ -10,6 +10,7 @@ export interface ScanTargetHighlightOptions {
 export interface ScanTargetHighlightResult {
   found: boolean;
   selector: string;
+  snippet?: string;
 }
 
 export function clearScanTargetHighlightInPage(): { removed: boolean } {
@@ -35,6 +36,11 @@ function readableTargetLabel(target: Element): string {
     ? target.value.trim()
     : '';
   return (ariaLabel || labelledText || visible || value).slice(0, 110);
+}
+
+function targetDomSnippet(target: Element): string {
+  const html = target.outerHTML.replace(/\s+/g, ' ').trim();
+  return html.length <= 1400 ? html : `${html.slice(0, 1397)}…`;
 }
 
 export function locateScanTargetInPage(
@@ -170,5 +176,5 @@ export function locateScanTargetInPage(
   const durationMs = options.durationMs ?? 7000;
   if (durationMs > 0) window.setTimeout(() => overlay.remove(), durationMs);
 
-  return { found: true, selector };
+  return { found: true, selector, snippet: targetDomSnippet(target) };
 }
