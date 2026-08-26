@@ -1,0 +1,20 @@
+/* Final icon corrections from hands-on review. Loaded after modern-icons.css. */
+
+/* The generic topbar mask selector is more specific than the original per-action
+   rules, so pin each action to its own glyph at the same cascade layer. */
+.topbar-tools .reset-all-trigger > span {
+  --ft-mask: var(--ft-i-reset) !important;
+}
+
+.topbar-tools .settings-trigger > span {
+  --ft-mask: var(--ft-i-settings) !important;
+}
+
+/* This action locates/highlights the live page element; a focus/target glyph is
+   more accurate than the previous code symbol. */
+.finding-location > button::before {
+  width: 20px;
+  height: 20px;
+  -webkit-mask: var(--ft-i-focus) center / contain no-repeat !important;
+  mask: var(--ft-i-focus) center / contain no-repeat !important;
+}

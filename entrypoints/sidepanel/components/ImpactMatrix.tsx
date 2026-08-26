@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { browser } from '#imports';
-import { localizedSeverity, tr, type AppLanguage } from '../../../shared/i18n';
+import { localizedSeverity, SETTINGS_STORAGE_KEY, tr, type AppLanguage } from '../../../shared/i18n';
 import { countByOutcomeAndSeverity } from '../../../shared/severity';
 import type { ExtensionMessage, FindingOutcome, ScanIssue, ScanResult, SessionState, Severity } from '../../../shared/types';
 import './impact-matrix.css';
@@ -20,14 +20,46 @@ function outcomeLabel(outcome: FindingOutcome, language: AppLanguage): string {
   return tr(language, 'Warnings', 'Avisos');
 }
 
+function documentLanguage(): AppLanguage {
+  return document.documentElement.lang === 'es' ? 'es' : 'en';
+}
+
 function useAppLanguage(): AppLanguage {
-  const resolve = (): AppLanguage => document.documentElement.lang === 'es' ? 'es' : 'en';
-  const [language, setLanguage] = useState<AppLanguage>(resolve);
+  const [language, setLanguage] = useState<AppLanguage>(documentLanguage);
 
   useEffect(() => {
-    const observer = new MutationObserver(() => setLanguage(resolve()));
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
-    return () => observer.disconnect();
+    let cancelled = false;
+
+    const syncFromStorage = async () => {
+      const stored = await browser.storage.local.get(SETTINGS_STORAGE_KEY);
+      if (cancelled) return;
+      const settings = stored[SETTINGS_STORAGE_KEY] as { language?: AppLanguage } | undefined;
+      if (settings?.language === 'en' || settings?.language === 'es') {
+        setLanguage(settings.language);
+        return;
+      }
+      setLanguage(documentLanguage());
+    };
+
+    const documentObserver = new MutationObserver(() => setLanguage(documentLanguage()));
+    documentObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+
+    const storageListener = (changes: Record<string, { newValue?: unknown }>, areaName: string) => {
+      if (areaName !== 'local') return;
+      const change = changes[SETTINGS_STORAGE_KEY];
+      if (!change) return;
+      const settings = change.newValue as { language?: AppLanguage } | undefined;
+      if (settings?.language === 'en' || settings?.language === 'es') setLanguage(settings.language);
+    };
+
+    browser.storage.onChanged.addListener(storageListener);
+    void syncFromStorage().catch(() => setLanguage(documentLanguage()));
+
+    return () => {
+      cancelled = true;
+      documentObserver.disconnect();
+      browser.storage.onChanged.removeListener(storageListener);
+    };
   }, []);
 
   return language;

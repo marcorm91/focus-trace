@@ -25,6 +25,7 @@ import './modern-icons.css';
 import './regression-fixes.css';
 import './final-review-polish.css';
 import './heading-text-overflow.css';
+import './icon-followup-fixes.css';
 
 const PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'];
 const root = document.getElementById('root');
@@ -64,8 +65,8 @@ function syncDynamicPolish() {
   const note = document.querySelector<HTMLElement>('.scan-results-note p');
   if (note) {
     const text = spanish
-      ? 'Cada criterio se muestra una sola vez. Ábrelo para recorrer los elementos afectados. La acción </> destaca el elemento actual en la página. Chrome no permite a una extensión abrir DevTools automáticamente; para inspeccionar el DOM en vivo, abre F12 y usa Elements. Las revisiones de contraste complejo requieren verificación manual y no son fallos WCAG automáticos.'
-      : 'Each criterion is shown once. Open it to move through the affected elements. The </> action highlights the current element on the page. Chrome does not allow an extension to open DevTools automatically; open F12 and use Elements to inspect the live DOM. Complex contrast reviews require manual verification and are not automatic WCAG failures.';
+      ? 'Cada criterio se muestra una sola vez. Ábrelo para recorrer los elementos afectados. La acción de foco destaca el elemento actual en la página. Chrome no permite a una extensión abrir DevTools automáticamente; para inspeccionar el DOM en vivo, abre F12 y usa Elements. Las revisiones de contraste complejo requieren verificación manual y no son fallos WCAG automáticos.'
+      : 'Each criterion is shown once. Open it to move through the affected elements. The focus action highlights the current element on the page. Chrome does not allow an extension to open DevTools automatically; open F12 and use Elements to inspect the live DOM. Complex contrast reviews require manual verification and are not automatic WCAG failures.';
     if (note.textContent !== text) note.textContent = text;
   }
 }

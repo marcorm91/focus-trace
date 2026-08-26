@@ -78,17 +78,26 @@ async function saveScan(panel: Page, tabId: number, url: string): Promise<void> 
   }, { id: tabId, pageUrl: url });
 }
 
-test('Inspect, occurrence navigation and compact report track the real target', async ({ context, extensionWorker }) => {
+test('Inspect, localized impact matrix, occurrence navigation and compact report track the real target', async ({ context, extensionWorker }) => {
   const inspected = await context.newPage();
   await inspected.goto(`${fixtures.origin}/scan-targets.html`);
   await expect(inspected.getByRole('button', { name: 'First target' })).toBeVisible();
   const tabId = await tabIdForPage(extensionWorker, inspected);
 
   const panel = await openSidepanel(context, extensionWorker);
+  await panel.bringToFront();
+  await panel.getByRole('button', { name: /Open settings|Abrir ajustes/ }).click();
+  await panel.getByRole('radio', { name: /Español/ }).check();
+  await expect(panel.locator('html')).toHaveAttribute('lang', 'es');
+  await panel.getByRole('button', { name: 'Volver' }).click();
+
   await inspected.bringToFront();
   await saveScan(panel, tabId, inspected.url());
 
   await expect.poll(async () => panel.locator('.section-heading p').first().textContent()).toContain('Scan target navigation fixture');
+  await expect(panel.getByText('Impacto por resultado', { exact: true })).toBeVisible();
+  await expect(panel.getByText('Fallos', { exact: true }).first()).toBeVisible();
+  await expect(panel.getByText('Crítico', { exact: true }).first()).toBeVisible();
 
   const inspect = panel.getByRole('button', {
     name: /Highlight element on page|Destacar elemento en la página/,

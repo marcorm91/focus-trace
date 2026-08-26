@@ -34,7 +34,7 @@ describe('UX polish contract', () => {
     expect(css).toContain('--ft-i-report');
     expect(css).toContain('--ft-i-page-scan');
     expect(css).toContain('--ft-i-site');
-    expect(css).toContain('--ft-i-code');
+    expect(css).toContain('--ft-i-focus');
     expect(css).toContain('-webkit-mask: var(--ft-mask)');
     expect(css).toContain('width: 28px !important');
     expect(css).toContain('height: 28px !important');
@@ -46,9 +46,25 @@ describe('UX polish contract', () => {
     expect(polish).toContain('--ft-i-copy');
     expect(polish).toContain('--ft-i-chevron-left');
 
+    const followup = source('entrypoints/sidepanel/icon-followup-fixes.css');
+    expect(followup).toContain('.topbar-tools .reset-all-trigger > span');
+    expect(followup).toContain('--ft-mask: var(--ft-i-reset) !important');
+    expect(followup).toContain('.topbar-tools .settings-trigger > span');
+    expect(followup).toContain('--ft-mask: var(--ft-i-settings) !important');
+    expect(followup).toContain('-webkit-mask: var(--ft-i-focus)');
+
     const entry = source('entrypoints/sidepanel/main.tsx');
     expect(entry).toContain("import './modern-icons.css';");
     expect(entry).toContain("import './final-review-polish.css';");
+    expect(entry).toContain("import './icon-followup-fixes.css';");
+  });
+
+  it('keeps the impact matrix synchronized with the persisted app language', () => {
+    const matrix = source('entrypoints/sidepanel/components/ImpactMatrix.tsx');
+    expect(matrix).toContain('SETTINGS_STORAGE_KEY');
+    expect(matrix).toContain('browser.storage.onChanged.addListener');
+    expect(matrix).toContain('Impacto por resultado');
+    expect(matrix).toContain('Ejemplo: un salto de nivel de encabezado');
   });
 
   it('replaces the long report finding list with a filtered rule accordion surface', () => {
