@@ -173,6 +173,29 @@ body,
   color: #b42318;
 }
 
+.replay-target-state {
+  justify-self: start;
+  padding: 4px 8px;
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  font-weight: 800;
+}
+
+.replay-target-state.tone-ok {
+  color: #08745b;
+  background: color-mix(in srgb, #08745b 9%, Canvas);
+}
+
+.replay-target-state.tone-review {
+  color: #b54708;
+  background: color-mix(in srgb, #b54708 9%, Canvas);
+}
+
+.replay-target-state.tone-fail {
+  color: #b42318;
+  background: color-mix(in srgb, #b42318 9%, Canvas);
+}
+
 .settings-meta {
   display: flex;
   flex-wrap: wrap;
