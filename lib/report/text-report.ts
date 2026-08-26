@@ -1,12 +1,20 @@
 import { suggestAccessibleForeground } from '../audit/contrast';
 import { tr, type AppLanguage } from '../../shared/i18n';
 import type { RuntimeEvent, ScanIssue, ScanResult } from '../../shared/types';
+import {
+  componentContextLabel,
+  componentForIssue,
+  componentPrimaryLabel,
+  componentTypeLabel,
+  type ReportComponentIdentity,
+} from './component-identity';
 import { buildSessionReportModel } from './session-report';
 
 export interface TextSessionReportInput {
   scan?: ScanResult | undefined;
   events: RuntimeEvent[];
   language: AppLanguage;
+  components?: ReportComponentIdentity[];
   generatedAt?: number;
 }
 
@@ -40,10 +48,24 @@ function contrastLines(issue: ScanIssue, language: AppLanguage): string[] {
   return lines;
 }
 
+function componentLines(
+  component: ReportComponentIdentity | undefined,
+  language: AppLanguage,
+): string[] {
+  if (!component) return [];
+  const context = componentContextLabel(component);
+  return [
+    `   ${lineLabel(language, 'Element', 'Elemento')}: ${component.componentId} · ${componentTypeLabel(component, language)}`,
+    `   ${lineLabel(language, 'Name / text', 'Nombre / texto')}: ${componentPrimaryLabel(component)}`,
+    ...(context ? [`   ${lineLabel(language, 'Context', 'Contexto')}: ${context}`] : []),
+  ];
+}
+
 function issueLines(
   issues: ScanIssue[],
   category: string,
   language: AppLanguage,
+  components: Map<string, ReportComponentIdentity>,
 ): string[] {
   if (issues.length === 0) return [`- ${category}: ${lineLabel(language, 'none', 'ninguno')}`];
 
@@ -51,10 +73,12 @@ function issueLines(
     const references = issue.references
       .map((reference) => `${reference.type} ${reference.id}: ${reference.url}`)
       .join(' | ');
+    const component = componentForIssue(issue, components);
     return [
       `${index + 1}. [${category}] ${issue.title}`,
       `   ${lineLabel(language, 'Rule', 'Regla')}: ${issue.ruleId}`,
       `   ${lineLabel(language, 'Severity', 'Gravedad')}: ${issue.severity}`,
+      ...componentLines(component, language),
       `   ${lineLabel(language, 'Description', 'Descripción')}: ${issue.description}`,
       ...contrastLines(issue, language),
       ...(issue.evidence ? [`   ${lineLabel(language, 'Evidence', 'Evidencia')}: ${issue.evidence}`] : []),
@@ -68,7 +92,7 @@ function focusMode(events: RuntimeEvent[], language: AppLanguage): string {
   const hasFocus = events.some((event) => event.kind === 'focus');
   if (!hasFocus) return lineLabel(language, 'Not performed', 'No realizado');
   return events.some((event) => event.kind === 'focus-walk-start')
-    ? lineLabel(language, 'Automatic Tab walk', 'Recorrido automático con Tab')
+    ? lineLabel(language, 'Automatic focus walk', 'Recorrido automático de foco')
     : lineLabel(language, 'Manual keyboard recording', 'Grabación manual con teclado');
 }
 
@@ -103,9 +127,11 @@ export function buildTextSessionReport({
   scan,
   events,
   language,
+  components = [],
   generatedAt = Date.now(),
 }: TextSessionReportInput): string {
   const model = buildSessionReportModel(scan, events, language);
+  const componentMap = new Map(components.map((component) => [component.selector, component]));
   const headings = scan?.headings ?? [];
   const title = lineLabel(
     language,
@@ -165,8 +191,10 @@ export function buildTextSessionReport({
         : story.tone === 'review'
           ? lineLabel(language, 'REVIEW', 'REVISAR')
           : lineLabel(language, 'OBSERVED', 'OBSERVADO');
+      const component = story.selector ? componentMap.get(story.selector) : undefined;
       lines.push(
         `${index + 1}. [${tone}] ${story.interactionNumber ? `${lineLabel(language, 'Interaction', 'Interacción')} #${story.interactionNumber} · ` : ''}${story.trigger}`,
+        ...componentLines(component, language),
         `   ${lineLabel(language, 'Trace', 'Traza')}: ${story.chain.join(' → ')}`,
         `   ${lineLabel(language, 'Result', 'Resultado')}: ${story.result}`,
         `   ${story.detail}`,
@@ -187,9 +215,9 @@ export function buildTextSessionReport({
     lines.push(
       `${scan.engine} · ${scan.standard} · ${scan.rulesRun} ${lineLabel(language, 'rule families', 'familias de reglas')}`,
       '',
-      ...issueLines(scan.issues, lineLabel(language, 'FAILURE', 'FALLO'), language),
-      ...issueLines(scan.review, lineLabel(language, 'REVIEW', 'REVISAR'), language),
-      ...issueLines(scan.warnings ?? [], lineLabel(language, 'WARNING', 'AVISO'), language),
+      ...issueLines(scan.issues, lineLabel(language, 'FAILURE', 'FALLO'), language, componentMap),
+      ...issueLines(scan.review, lineLabel(language, 'REVIEW', 'REVISAR'), language, componentMap),
+      ...issueLines(scan.warnings ?? [], lineLabel(language, 'WARNING', 'AVISO'), language, componentMap),
     );
   }
 
