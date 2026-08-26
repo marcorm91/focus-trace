@@ -122,10 +122,15 @@ function restoreScrollPositionInPage(position: { x: number; y: number }) {
   window.scrollTo({ left: position.x, top: position.y, behavior: 'auto' });
 }
 
+function evidenceColor(tone: VisualEvidenceTone): string {
+  return tone === 'fail' ? '#b42318' : tone === 'review' ? '#b54708' : '#8a6d00';
+}
+
 async function cropCapture(
   dataUrl: string,
   metrics: { rect: { x: number; y: number; width: number; height: number }; viewport: { width: number; height: number } },
   tone: VisualEvidenceTone,
+  componentId: string,
 ): Promise<string> {
   const image = new Image();
   image.src = dataUrl;
@@ -133,7 +138,7 @@ async function cropCapture(
 
   const scaleX = image.naturalWidth / metrics.viewport.width;
   const scaleY = image.naturalHeight / metrics.viewport.height;
-  const pad = 28;
+  const pad = 52;
   const leftCss = Math.max(0, metrics.rect.x - pad);
   const topCss = Math.max(0, metrics.rect.y - pad);
   const rightCss = Math.min(metrics.viewport.width, metrics.rect.x + metrics.rect.width + pad);
@@ -157,11 +162,49 @@ async function cropCapture(
   const targetY = (metrics.rect.y - topCss) * scaleY * outputScale;
   const targetW = metrics.rect.width * scaleX * outputScale;
   const targetH = metrics.rect.height * scaleY * outputScale;
-  context.strokeStyle = tone === 'fail' ? '#b42318' : tone === 'review' ? '#b54708' : '#8a6d00';
-  context.lineWidth = Math.max(3, 3 * outputScale);
-  context.strokeRect(targetX + 1.5, targetY + 1.5, Math.max(1, targetW - 3), Math.max(1, targetH - 3));
+  const color = evidenceColor(tone);
 
-  return canvas.toDataURL('image/jpeg', 0.76);
+  // De-emphasize the crop around the target, then redraw the target region at
+  // full brightness so the evidence remains obvious even in a busy UI.
+  context.save();
+  context.fillStyle = 'rgba(15, 23, 42, 0.38)';
+  context.fillRect(0, 0, canvas.width, canvas.height);
+  context.beginPath();
+  context.roundRect(
+    Math.max(0, targetX - 5),
+    Math.max(0, targetY - 5),
+    Math.max(1, targetW + 10),
+    Math.max(1, targetH + 10),
+    7,
+  );
+  context.clip();
+  context.drawImage(image, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
+  context.restore();
+
+  context.save();
+  context.strokeStyle = color;
+  context.lineWidth = Math.max(5, 5 * outputScale);
+  context.shadowColor = color;
+  context.shadowBlur = Math.max(8, 12 * outputScale);
+  context.strokeRect(targetX + 2, targetY + 2, Math.max(1, targetW - 4), Math.max(1, targetH - 4));
+  context.restore();
+
+  const badgeText = componentId || 'E';
+  const fontSize = Math.max(18, Math.round(19 * outputScale));
+  context.font = `800 ${fontSize}px system-ui, sans-serif`;
+  const textWidth = context.measureText(badgeText).width;
+  const badgeWidth = Math.ceil(textWidth + 22);
+  const badgeHeight = Math.ceil(fontSize + 14);
+  const badgeX = Math.max(4, Math.min(canvas.width - badgeWidth - 4, targetX));
+  const badgeY = targetY >= badgeHeight + 10
+    ? Math.max(4, targetY - badgeHeight - 7)
+    : Math.min(canvas.height - badgeHeight - 4, targetY + 7);
+  context.fillStyle = color;
+  context.fillRect(badgeX, badgeY, badgeWidth, badgeHeight);
+  context.fillStyle = '#fff';
+  context.fillText(badgeText, badgeX + 11, badgeY + badgeHeight - 9);
+
+  return canvas.toDataURL('image/jpeg', 0.8);
 }
 
 function reportEvidenceSelectors(
@@ -216,7 +259,11 @@ export async function captureReportVisualEvidence(
         try {
           const screenshot = await browser.tabs.captureVisibleTab(tab.windowId, { format: 'jpeg', quality: 78 });
           const tone = toneForSelector(component.selector, scan, events);
-          visuals.push({ selector: component.selector, dataUrl: await cropCapture(screenshot, metrics, tone), tone });
+          visuals.push({
+            selector: component.selector,
+            dataUrl: await cropCapture(screenshot, metrics, tone, component.componentId),
+            tone,
+          });
         } catch {
           // Restricted browser pages can still reject screenshot capture.
         }
