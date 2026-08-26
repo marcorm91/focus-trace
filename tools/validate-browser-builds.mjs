@@ -1,8 +1,9 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const packageJson = JSON.parse(readFileSync(resolve('package.json'), 'utf8'));
 const EXPECTED_PAGE_HOSTS = ['http://*/*', 'https://*/*'];
+const BUILD_TARGETS = ['chrome-mv3', 'edge-mv3', 'firefox-mv3'];
 
 function readManifest(target) {
   return JSON.parse(readFileSync(resolve('.output', target, 'manifest.json'), 'utf8'));
@@ -58,6 +59,12 @@ for (const [name, manifest] of Object.entries({ chrome, edge, firefox })) {
   assert(hasNoRequiredHosts(manifest), `${name} production build must not require permanent host access`);
 }
 
+for (const target of BUILD_TARGETS) {
+  assert(existsSync(resolve('.output', target, 'site-audit.html')), `${target} must include site-audit.html`);
+  assert(existsSync(resolve('.output', target, 'report-print.html')), `${target} must include report-print.html`);
+  assert(existsSync(resolve('.output', target, 'sidepanel.html')), `${target} must include sidepanel.html`);
+}
+
 for (const [name, manifest] of Object.entries({ chrome, edge })) {
   assert(manifest.minimum_chrome_version === '114', `${name} must require Chromium 114+`);
   assert(manifest.permissions?.includes('activeTab'), `${name} must request activeTab`);
@@ -86,4 +93,4 @@ assert(
   'Firefox must declare that it does not collect/transmit data',
 );
 
-console.log('Browser build manifests validated: chrome-mv3, edge-mv3, firefox-mv3');
+console.log('Browser builds validated: chrome-mv3, edge-mv3, firefox-mv3 (including sidepanel, printable report and Site Audit entrypoints)');
