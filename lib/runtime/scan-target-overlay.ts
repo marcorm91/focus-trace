@@ -12,10 +12,8 @@ export interface ScanTargetHighlightResult {
   selector: string;
 }
 
-const HIGHLIGHT_SELECTOR = '[data-focustrace-scan-highlight]';
-
 export function clearScanTargetHighlightInPage(): { removed: boolean } {
-  const existing = document.querySelector(HIGHLIGHT_SELECTOR);
+  const existing = document.querySelector('[data-focustrace-scan-highlight]');
   if (!existing) return { removed: false };
   existing.remove();
   return { removed: true };
