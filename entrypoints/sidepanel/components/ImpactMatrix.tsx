@@ -2,7 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { browser } from '#imports';
 import { localizedSeverity, tr, type AppLanguage } from '../../../shared/i18n';
-import { countBySeverity } from '../../../shared/severity';
+import { countByOutcomeAndSeverity } from '../../../shared/severity';
 import type { ExtensionMessage, FindingOutcome, ScanIssue, ScanResult, SessionState, Severity } from '../../../shared/types';
 import './impact-matrix.css';
 
@@ -119,8 +119,10 @@ export function ImpactMatrix() {
     { outcome: 'review', label: outcomeLabel('review', language), findings: scan.review },
     { outcome: 'warning', label: outcomeLabel('warning', language), findings: scan.warnings ?? [] },
   ] : [], [language, scan]);
+  const allFindings = useMemo(() => rows.flatMap((row) => row.findings), [rows]);
+  const matrix = useMemo(() => countByOutcomeAndSeverity(allFindings), [allFindings]);
 
-  const total = rows.reduce((sum, row) => sum + row.findings.length, 0);
+  const total = allFindings.length;
   if (!host || total === 0) return null;
 
   return createPortal(
@@ -150,30 +152,30 @@ export function ImpactMatrix() {
             </tr>
           </thead>
           <tbody>
-            {rows.map((row) => {
-              const counts = countBySeverity(row.findings);
-              return (
-                <tr className={`outcome-${row.outcome}`} key={row.outcome}>
-                  <th scope="row">
-                    <span>{row.label}</span>
-                    <strong>{row.findings.length}</strong>
-                  </th>
-                  {DISPLAY_SEVERITIES.map((severity) => (
+            {rows.map((row) => (
+              <tr className={`outcome-${row.outcome}`} key={row.outcome}>
+                <th scope="row">
+                  <span>{row.label}</span>
+                  <strong>{row.findings.length}</strong>
+                </th>
+                {DISPLAY_SEVERITIES.map((severity) => {
+                  const count = matrix[row.outcome][severity];
+                  return (
                     <td
-                      className={`${counts[severity] ? 'has-findings' : 'is-empty'} severity-${severity}`}
+                      className={`${count ? 'has-findings' : 'is-empty'} severity-${severity}`}
                       title={tr(
                         language,
-                        `${row.label}: ${counts[severity]} ${localizedSeverity(severity, language)} impact`,
-                        `${row.label}: ${counts[severity]} de impacto ${localizedSeverity(severity, language)}`,
+                        `${row.label}: ${count} ${localizedSeverity(severity, language)} impact`,
+                        `${row.label}: ${count} de impacto ${localizedSeverity(severity, language)}`,
                       )}
                       key={severity}
                     >
-                      {counts[severity]}
+                      {count}
                     </td>
-                  ))}
-                </tr>
-              );
-            })}
+                  );
+                })}
+              </tr>
+            ))}
           </tbody>
         </table>
       </div>
