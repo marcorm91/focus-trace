@@ -52,6 +52,7 @@ describe('UX polish contract', () => {
     expect(followup).toContain('.topbar-tools .settings-trigger > span');
     expect(followup).toContain('--ft-mask: var(--ft-i-settings) !important');
     expect(followup).toContain('-webkit-mask: var(--ft-i-focus)');
+    expect(followup).toContain('place-items: center !important');
 
     const entry = source('entrypoints/sidepanel/main.tsx');
     expect(entry).toContain("import './modern-icons.css';");
@@ -64,6 +65,31 @@ describe('UX polish contract', () => {
     expect(followup).toContain('.scan-results-note');
     expect(followup).toContain('.scan-heading-actions > strong');
     expect(followup).toContain('display: none !important');
+  });
+
+  it('keeps hover states legible and contrast metadata in a responsive 2x2 grid', () => {
+    const followup = source('entrypoints/sidepanel/icon-followup-fixes.css');
+    expect(followup).toContain('.export-pdf-report:hover:not(:disabled)');
+    expect(followup).toContain('color: var(--ft-paper, Canvas) !important');
+    expect(followup).toContain('grid-template-columns: repeat(2, minmax(0, 1fr)) !important');
+    expect(followup).toContain('@media (max-width: 400px)');
+  });
+
+  it('keeps report source labels localized instead of exposing internal source ids', () => {
+    const entry = source('entrypoints/sidepanel/main.tsx');
+    expect(entry).toContain('localizedSuggestionSource');
+    expect(entry).toContain("spanish ? 'Análisis' : 'Analysis'");
+    expect(entry).toContain("spanish ? 'Encabezados' : 'Headings'");
+  });
+
+  it('does not expose third-party impact-comparison links in product findings or text exports', () => {
+    const guidance = source('entrypoints/sidepanel/components/FindingGuidance.tsx');
+    const siteReport = source('lib/site-audit/text-report.ts');
+    expect(guidance).not.toContain('impactReferences');
+    expect(guidance).not.toContain('dequeuniversity.com');
+    expect(guidance).toContain('FocusTrace asigna este impacto base de forma independiente');
+    expect(siteReport).not.toContain('Comparable impact reference');
+    expect(siteReport).not.toContain('Referencia de impacto comparable');
   });
 
   it('keeps the impact matrix synchronized with the persisted app language', () => {
