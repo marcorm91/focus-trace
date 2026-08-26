@@ -2,7 +2,7 @@ import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const packageJson = JSON.parse(readFileSync(resolve('package.json'), 'utf8'));
-const EXPECTED_PAGE_HOSTS = ['http://*/*', 'https://*/*'];
+const EXPECTED_OPTIONAL_HOSTS = ['http://*/*', 'https://*/*', '<all_urls>'];
 const BUILD_TARGETS = ['chrome-mv3', 'edge-mv3', 'firefox-mv3'];
 
 function readManifest(target) {
@@ -16,7 +16,7 @@ function assert(condition, message) {
 function sameHosts(actual) {
   if (!Array.isArray(actual)) return false;
   const left = [...actual].sort();
-  const right = [...EXPECTED_PAGE_HOSTS].sort();
+  const right = [...EXPECTED_OPTIONAL_HOSTS].sort();
   return left.length === right.length && left.every((permission, index) => permission === right[index]);
 }
 
@@ -71,7 +71,7 @@ for (const [name, manifest] of Object.entries({ chrome, edge })) {
   assert(manifest.permissions?.includes('scripting'), `${name} must request scripting`);
   assert(manifest.permissions?.includes('storage'), `${name} must request storage`);
   assert(manifest.permissions?.includes('sidePanel'), `${name} must request sidePanel`);
-  assert(sameHosts(manifest.optional_host_permissions), `${name} must expose exactly HTTP/HTTPS as optional hosts`);
+  assert(sameHosts(manifest.optional_host_permissions), `${name} must expose HTTP/HTTPS plus temporary visual-capture access as optional hosts`);
   assert(manifest.side_panel?.default_path === 'sidepanel.html', `${name} must expose sidepanel.html`);
 }
 
@@ -82,7 +82,7 @@ assert(firefox.permissions?.includes('storage'), 'Firefox must request storage')
 assert(!firefox.permissions?.includes('sidePanel'), 'Firefox must not request Chromium sidePanel');
 assert(
   sameHosts(firefox.optional_permissions) || sameHosts(firefox.optional_host_permissions),
-  'Firefox must expose exactly HTTP/HTTPS as optional hosts',
+  'Firefox must expose HTTP/HTTPS plus temporary visual-capture access as optional hosts',
 );
 assert(firefox.sidebar_action?.default_panel === 'sidepanel.html', 'Firefox must expose sidepanel.html as sidebar_action');
 assert(firefox.browser_specific_settings?.gecko?.id === 'focustrace@focus-mode.app', 'Firefox must have a stable Gecko ID');
