@@ -1,6 +1,15 @@
 import type { BrowserContext, Worker } from '@playwright/test';
 import { expect, test } from './support/extension';
 
+declare const chrome: {
+  tabs: {
+    query(queryInfo: { active: boolean; currentWindow: boolean }): Promise<Array<{ id?: number }>>;
+  };
+  runtime: {
+    sendMessage(message: unknown): Promise<unknown>;
+  };
+};
+
 async function openSidepanel(context: BrowserContext, extensionWorker: Worker) {
   const extensionId = new URL(extensionWorker.url()).hostname;
   if (!extensionId) throw new Error('Could not resolve the FocusTrace extension ID from its service worker.');
@@ -136,4 +145,61 @@ test('text and interface size reaches 130 percent, persists and does not overflo
   await expect(panel.locator('html')).toHaveAttribute('data-ft-ui-scale', '130');
   await panel.getByRole('button', { name: /Open settings|Abrir ajustes/ }).click();
   await expect(panel.locator('.ui-scale-value')).toHaveText('130%');
+});
+
+test('report opens a formatted PDF preview without exposing CSS selectors', async ({ context, extensionWorker }) => {
+  const panel = await openSidepanel(context, extensionWorker);
+
+  await panel.evaluate(async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab?.id == null) throw new Error('Could not resolve the sidepanel test tab.');
+    await chrome.runtime.sendMessage({
+      type: 'FOCUSTRACE_SAVE_SCAN',
+      tabId: tab.id,
+      scan: {
+        engine: 'FocusTrace Rules',
+        standard: 'WCAG 2.2',
+        url: 'https://example.test/checkout',
+        title: 'Checkout accessibility fixture',
+        scannedAt: Date.now(),
+        issues: [{
+          id: 'print-fixture-1',
+          ruleId: 'FT-WCAG-003',
+          title: 'Button has no accessible name',
+          description: 'The button needs an accessible name.',
+          severity: 'critical',
+          outcome: 'fail',
+          targets: ['#private-selector-must-not-print'],
+          evidence: 'Accessible name is empty.',
+          references: [{
+            type: 'WCAG',
+            id: '4.1.2',
+            label: 'Name, Role, Value',
+            level: 'A',
+            url: 'https://www.w3.org/WAI/WCAG22/Understanding/name-role-value.html',
+          }],
+        }],
+        review: [],
+        warnings: [],
+        headings: [{ id: 'heading-1', level: 1, text: 'Checkout', selector: 'h1', signals: [] }],
+        passes: 3,
+        rulesRun: 17,
+      },
+    });
+  });
+
+  await panel.getByRole('button', { name: /Report|Informe/ }).click();
+  const exportPdf = panel.getByRole('button', { name: /Export PDF|Exportar PDF/ });
+  await expect(exportPdf).toBeVisible();
+
+  const newPage = context.waitForEvent('page');
+  await exportPdf.click();
+  const printable = await newPage;
+  await printable.waitForLoadState('domcontentloaded');
+
+  await expect(printable).toHaveURL(/report-print\.html\?tabId=/);
+  await expect(printable.getByRole('heading', { level: 1, name: 'Checkout accessibility fixture' })).toBeVisible();
+  await expect(printable.getByRole('button', { name: /Print \/ Save as PDF|Imprimir \/ Guardar como PDF/ })).toBeVisible();
+  await expect(printable.getByRole('link', { name: 'WCAG 4.1.2 (A)' })).toBeVisible();
+  await expect(printable.getByText('#private-selector-must-not-print')).toHaveCount(0);
 });

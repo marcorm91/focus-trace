@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
+import { browser } from '#imports';
 import { suggestAccessibleForeground } from '../../../lib/audit/contrast';
 import { buildSessionReportModel } from '../../../lib/report/session-report';
 import { buildTextReportFilename, buildTextSessionReport } from '../../../lib/report/text-report';
 import { localizedScanIssue, tr, type AppLanguage } from '../../../shared/i18n';
 import type { HeadingSignal, RuntimeEvent, ScanIssue, ScanResult } from '../../../shared/types';
 import './session-report.css';
+import './report-export.css';
 
 function headingSignalLabel(signal: HeadingSignal, language: AppLanguage): string {
   if (signal === 'empty') return tr(language, 'Empty', 'Vacío');
@@ -83,6 +85,15 @@ export function SessionReportView({
     window.setTimeout(() => URL.revokeObjectURL(url), 0);
   };
 
+  const openPrintableReport = async () => {
+    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+    if (tab?.id == null) return;
+    const params = new URLSearchParams({ tabId: String(tab.id), language });
+    await browser.tabs.create({
+      url: browser.runtime.getURL(`/report-print.html?${params.toString()}`),
+    });
+  };
+
   return (
     <section className="panel session-report trace-first-report" aria-labelledby="session-report-title">
       <div className="report-hero">
@@ -99,10 +110,16 @@ export function SessionReportView({
               : tr(language, 'Analyze the page to start the report.', 'Analiza la página para iniciar el informe.')}
           </p>
         </div>
-        <button className="export-text-report" type="button" disabled={!scan} onClick={downloadTextReport}>
-          <span aria-hidden="true">↓</span>
-          {tr(language, 'Download .txt', 'Descargar .txt')}
-        </button>
+        <div className="report-export-actions">
+          <button className="export-text-report" type="button" disabled={!scan} onClick={downloadTextReport}>
+            <span aria-hidden="true">↓</span>
+            {tr(language, 'Download .txt', 'Descargar .txt')}
+          </button>
+          <button className="export-pdf-report" type="button" disabled={!scan} onClick={() => void openPrintableReport()}>
+            <span aria-hidden="true">▤</span>
+            {tr(language, 'Export PDF', 'Exportar PDF')}
+          </button>
+        </div>
       </div>
 
       <div className="report-scoreline" aria-label={tr(language, 'Executive summary', 'Resumen ejecutivo')}>
@@ -235,7 +252,7 @@ export function SessionReportView({
             ) : (
               <div className="report-pending">
                 <strong>{tr(language, 'Trace evidence pending', 'Evidencia de Trace pendiente')}</strong>
-                <p>{tr(language, 'Record a real interaction or use Walk with Tab to add runtime context to this report.', 'Graba una interacción real o utiliza Recorrer con Tab para añadir contexto runtime al informe.')}</p>
+                <p>{tr(language, 'Record a real interaction or use Automate focus to add runtime context to this report.', 'Graba una interacción real o utiliza Automatizar foco para añadir contexto runtime al informe.')}</p>
               </div>
             )}
           </section>
