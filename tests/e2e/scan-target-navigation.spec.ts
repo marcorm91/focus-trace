@@ -98,7 +98,7 @@ test('Inspect, occurrence navigation and Review on page track the real target', 
   const overlay = inspected.locator('[data-focustrace-scan-highlight]');
   await expect(overlay).toBeVisible();
   await expect(overlay).toContainText('First target');
-  await expect(panel.getByText(/DOM fragment|Fragmento DOM/)).toBeVisible();
+  await expect(panel.getByText(/^(DOM fragment|Fragmento DOM)$/)).toBeVisible();
 
   const next = panel.getByRole('button', {
     name: /Next affected element|Siguiente elemento afectado/,
