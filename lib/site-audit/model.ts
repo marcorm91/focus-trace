@@ -1,3 +1,4 @@
+import type { ReportComponentIdentity } from '../report/component-identity';
 import type { FindingOutcome, ScanIssue, ScanResult } from '../../shared/types';
 
 export const SITE_AUDIT_MAX_DISCOVERED_URLS = 500;
@@ -35,6 +36,7 @@ export interface SiteAuditPageResult {
   routeFamilyId: string;
   scan?: ScanResult;
   structure?: SitePageStructure;
+  components?: ReportComponentIdentity[];
   error?: string;
 }
 
@@ -49,6 +51,10 @@ export interface SiteAuditFindingAggregate {
   totalSamples: number;
   commonToTemplate: boolean;
   references: ScanIssue['references'];
+  exampleUrl: string;
+  exampleSelector: string;
+  exampleIssue: ScanIssue;
+  component?: ReportComponentIdentity;
 }
 
 export interface SiteAuditTemplate {

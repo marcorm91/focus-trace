@@ -1,4 +1,9 @@
 import { browser } from '#imports';
+import {
+  buildReportComponentIndex,
+  collectComponentIdentitiesInPage,
+  reportComponentSelectors,
+} from '../report/component-identity';
 import type { ExtensionMessage, ScanResult } from '../../shared/types';
 import type { SiteAuditPageResult, SitePageStructure } from './model';
 
@@ -63,7 +68,7 @@ export function collectSitePageStructureInPage(): SitePageStructure {
   };
 }
 
-function waitForTabComplete(tabId: number, signal?: AbortSignal): Promise<void> {
+export function waitForTabComplete(tabId: number, signal?: AbortSignal): Promise<void> {
   return new Promise((resolve, reject) => {
     let timer = 0;
     const cleanup = () => {
@@ -125,7 +130,24 @@ export async function scanRepresentativePage(
       func: collectSitePageStructureInPage,
     });
     const structure = structureResults[0]?.result as SitePageStructure | undefined;
-    return { url: scan.url || url, routeFamilyId, scan, ...(structure ? { structure } : {}) };
+
+    const selectors = reportComponentSelectors(scan, []);
+    const liveComponents = selectors.length
+      ? await browser.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: collectComponentIdentitiesInPage,
+          args: [selectors],
+        }).then((results) => results[0]?.result ?? []).catch(() => [])
+      : [];
+    const components = [...buildReportComponentIndex(scan, [], liveComponents).values()];
+
+    return {
+      url: scan.url || url,
+      routeFamilyId,
+      scan,
+      ...(structure ? { structure } : {}),
+      ...(components.length ? { components } : {}),
+    };
   } catch (reason) {
     if (reason instanceof DOMException && reason.name === 'AbortError') throw reason;
     return {
