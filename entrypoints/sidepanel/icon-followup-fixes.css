@@ -18,3 +18,10 @@
   -webkit-mask: var(--ft-i-focus) center / contain no-repeat !important;
   mask: var(--ft-i-focus) center / contain no-repeat !important;
 }
+
+/* The filters and impact matrix already carry these counts/context. Keep the
+   scan surface focused by removing the duplicated explanatory/count blocks. */
+.scan-results-note,
+.scan-heading-actions > strong {
+  display: none !important;
+}
