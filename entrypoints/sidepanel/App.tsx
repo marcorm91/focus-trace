@@ -37,6 +37,8 @@ import { TraceView } from './views/TraceView';
 
 type View = 'scan' | 'trace' | 'headings' | 'report' | 'about' | 'settings';
 
+const PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'];
+
 const EMPTY_SESSION: SessionState = {
   tabId: -1,
   recording: false,
@@ -56,6 +58,16 @@ async function activeTabId() {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   if (tab?.id == null) throw new Error('No active browser tab is available.');
   return tab.id;
+}
+
+async function requestPageAccess(language: AppLanguage) {
+  const granted = await browser.permissions.request({ origins: PAGE_ACCESS_ORIGINS });
+  if (granted) return;
+  throw new Error(tr(
+    language,
+    'FocusTrace needs access to web pages to analyze the DOM, trace focus and highlight elements. Grant page access and try again.',
+    'FocusTrace necesita acceso a las páginas web para analizar el DOM, trazar el foco y resaltar elementos. Concede el acceso y vuelve a intentarlo.',
+  ));
 }
 
 function waitForRuntimeFlush() {
@@ -129,11 +141,12 @@ export default function App() {
 
   const ensureInjected = useCallback(async () => {
     if (tabId == null) throw new Error('No active tab selected.');
+    await requestPageAccess(language);
     await browser.runtime.sendMessage({
       type: 'FOCUSTRACE_ENSURE_INJECTED',
       tabId,
     } satisfies ExtensionMessage);
-  }, [tabId]);
+  }, [language, tabId]);
 
   const runScan = useCallback(async () => {
     if (tabId == null) return;
@@ -163,6 +176,7 @@ export default function App() {
     if (tabId == null) return;
     setError(undefined);
     try {
+      await requestPageAccess(language);
       await browser.scripting.executeScript({
         target: { tabId },
         func: clearFocusPathInPage,
@@ -361,6 +375,7 @@ export default function App() {
     setError(undefined);
 
     try {
+      await requestPageAccess(language);
       const entries: FocusPathOverlayEntry[] = buildPageInspectorEntries(
         focusPath,
         scan,
