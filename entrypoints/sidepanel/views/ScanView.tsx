@@ -4,13 +4,14 @@ import { reportFindingDescription } from '../../../lib/report/finding-guidance';
 import { outcomeLabel, type ExplanationLevel } from '../../../lib/runtime/explanations';
 import type { ScanTargetHighlightResult } from '../../../lib/runtime/scan-target-overlay';
 import { scanCategoryForIssue, type ScanCategory } from '../../../shared/scan-categories';
+import { countBySeverity, SEVERITY_ORDER, sortBySeverity, type SeverityFilter } from '../../../shared/severity';
 import {
   localizedScanIssue,
   localizedSeverity,
   tr,
   type AppLanguage,
 } from '../../../shared/i18n';
-import type { FindingOutcome, ScanIssue, ScanResult } from '../../../shared/types';
+import type { FindingOutcome, ScanIssue, ScanResult, Severity } from '../../../shared/types';
 import { Empty, Metric, ReferenceList } from '../components/Common';
 import { FindingGuidance } from '../components/FindingGuidance';
 import { SiteAuditLauncher } from '../components/SiteAuditLauncher';
@@ -20,6 +21,7 @@ type ColorFormat = 'hex' | 'rgb';
 type LocateResult = ScanTargetHighlightResult | void;
 
 const CATEGORY_ORDER: ScanCategory[] = ['all', 'contrast', 'names', 'forms', 'structure', 'keyboard', 'aria', 'other'];
+const DISPLAY_SEVERITIES: Severity[] = ['critical', 'serious', 'moderate', 'minor'];
 
 function categoryLabel(category: ScanCategory, language: AppLanguage): string {
   if (category === 'all') return tr(language, 'All findings', 'Todos');
@@ -30,6 +32,30 @@ function categoryLabel(category: ScanCategory, language: AppLanguage): string {
   if (category === 'keyboard') return tr(language, 'Keyboard', 'Teclado');
   if (category === 'aria') return 'ARIA';
   return tr(language, 'Other', 'Otros');
+}
+
+function severityImpactDescription(severity: Severity, language: AppLanguage): string {
+  if (severity === 'critical') return tr(
+    language,
+    'Estimated impact: can prevent access to a key control or task.',
+    'Impacto estimado: puede impedir acceder a un control o una tarea clave.',
+  );
+  if (severity === 'serious') return tr(
+    language,
+    'Estimated impact: substantial barrier that can make a task significantly harder.',
+    'Impacto estimado: barrera importante que puede dificultar de forma considerable una tarea.',
+  );
+  if (severity === 'moderate') return tr(
+    language,
+    'Estimated impact: meaningful difficulty that is usually not completely blocking.',
+    'Impacto estimado: dificultad relevante que normalmente no bloquea por completo la tarea.',
+  );
+  if (severity === 'minor') return tr(
+    language,
+    'Estimated impact: limited or localized accessibility barrier.',
+    'Impacto estimado: barrera de accesibilidad limitada o localizada.',
+  );
+  return tr(language, 'Informational signal.', 'Señal informativa.');
 }
 
 function contrastSubjectLabel(issue: ScanIssue, language: AppLanguage): string {
@@ -100,12 +126,13 @@ export function ScanView({
 }) {
   const [filter, setFilter] = useState<ScanFilter>('fail');
   const [category, setCategory] = useState<ScanCategory>('all');
+  const [severityFilter, setSeverityFilter] = useState<SeverityFilter>('all');
 
   const scanWarnings = scan?.warnings ?? [];
   const groups = useMemo(() => ({
-    fail: scan?.issues ?? [],
-    review: scan?.review ?? [],
-    warning: scanWarnings,
+    fail: sortBySeverity(scan?.issues ?? []),
+    review: sortBySeverity(scan?.review ?? []),
+    warning: sortBySeverity(scanWarnings),
   }), [scan?.issues, scan?.review, scanWarnings]);
 
   const allFindings = useMemo(
@@ -122,7 +149,7 @@ export function ScanView({
     return counts;
   }, [allFindings]);
 
-  const filteredGroups = useMemo(() => {
+  const categoryFilteredGroups = useMemo(() => {
     if (category === 'all') return groups;
     const includesCategory = (issue: ScanIssue) => scanCategoryForIssue(issue) === category;
     return {
@@ -134,17 +161,23 @@ export function ScanView({
 
   useEffect(() => {
     if (!scan) return;
-    if (filteredGroups[filter].length > 0) return;
-    if (filteredGroups.fail.length) setFilter('fail');
-    else if (filteredGroups.review.length) setFilter('review');
-    else if (filteredGroups.warning.length) setFilter('warning');
-  }, [filter, filteredGroups, scan]);
+    if (categoryFilteredGroups[filter].length > 0) return;
+    if (categoryFilteredGroups.fail.length) setFilter('fail');
+    else if (categoryFilteredGroups.review.length) setFilter('review');
+    else if (categoryFilteredGroups.warning.length) setFilter('warning');
+  }, [filter, categoryFilteredGroups, scan]);
 
   useEffect(() => {
     if (category === 'all') return;
     if ((categoryCounts.get(category) ?? 0) > 0) return;
     setCategory('all');
   }, [category, categoryCounts]);
+
+  useEffect(() => {
+    if (severityFilter === 'all') return;
+    if (categoryFilteredGroups[filter].some((issue) => issue.severity === severityFilter)) return;
+    setSeverityFilter('all');
+  }, [categoryFilteredGroups, filter, severityFilter]);
 
   if (!scan) {
     return (
@@ -162,17 +195,23 @@ export function ScanView({
     );
   }
 
-  const findings = filteredGroups[filter];
+  const currentOutcomeFindings = categoryFilteredGroups[filter];
+  const severityCounts = countBySeverity(currentOutcomeFindings);
+  const findings = severityFilter === 'all'
+    ? currentOutcomeFindings
+    : currentOutcomeFindings.filter((issue) => issue.severity === severityFilter);
   const criterionGroups = groupedByCriterion(findings);
   const totalFindings = allFindings.length;
+  const failureSeverityCounts = countBySeverity(groups.fail);
   const tabs: Array<{ id: ScanFilter; label: string; count: number }> = [
-    { id: 'fail', label: tr(language, 'Failures', 'Fallos'), count: filteredGroups.fail.length },
-    { id: 'review', label: tr(language, 'Review', 'Revisión'), count: filteredGroups.review.length },
-    { id: 'warning', label: tr(language, 'Warnings', 'Avisos'), count: filteredGroups.warning.length },
+    { id: 'fail', label: tr(language, 'Failures', 'Fallos'), count: categoryFilteredGroups.fail.length },
+    { id: 'review', label: tr(language, 'Review', 'Revisión'), count: categoryFilteredGroups.review.length },
+    { id: 'warning', label: tr(language, 'Warnings', 'Avisos'), count: categoryFilteredGroups.warning.length },
   ];
   const visibleCategories = CATEGORY_ORDER.filter((candidate) =>
     candidate === 'all' || (categoryCounts.get(candidate) ?? 0) > 0,
   );
+  const visibleSeverityFilters = SEVERITY_ORDER.filter((severity) => severityCounts[severity] > 0);
 
   return (
     <section className="panel" aria-labelledby="scan-title">
@@ -199,6 +238,31 @@ export function ScanView({
         <Metric label={tr(language, 'Warning', 'Avisos')} value={scanWarnings.length} />
         <Metric label={tr(language, 'Checks passed', 'Comprobaciones superadas')} value={scan.passes} />
       </div>
+
+      {scan.issues.length > 0 && (
+        <div className="severity-impact-summary">
+          <div>
+            <strong>{tr(language, 'Failure impact', 'Impacto de los fallos')}</strong>
+            <small>{tr(
+              language,
+              'FocusTrace impact is a prioritization aid, not a WCAG conformance level.',
+              'El impacto de FocusTrace sirve para priorizar; no es un nivel de conformidad WCAG.',
+            )}</small>
+          </div>
+          <div className="severity-impact-counts">
+            {DISPLAY_SEVERITIES.map((severity) => (
+              <span
+                className={`severity-${severity}`}
+                title={severityImpactDescription(severity, language)}
+                key={severity}
+              >
+                <strong>{failureSeverityCounts[severity]}</strong>
+                <small>{localizedSeverity(severity, language)}</small>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
 
       {totalFindings === 0 ? (
         <div className="notice">
@@ -258,6 +322,38 @@ export function ScanView({
             ))}
           </div>
 
+          <div className="scan-severity-filter">
+            <strong>{tr(language, 'Filter by impact', 'Filtrar por impacto')}</strong>
+            <small>{tr(
+              language,
+              'Impact prioritizes findings inside the selected result type; it does not change whether something is a failure or a review.',
+              'El impacto prioriza hallazgos dentro del tipo de resultado seleccionado; no cambia si algo es un fallo o una revisión.',
+            )}</small>
+            <div role="group" aria-label={tr(language, 'Finding impact', 'Impacto del hallazgo')}>
+              <button
+                type="button"
+                aria-pressed={severityFilter === 'all'}
+                onClick={() => setSeverityFilter('all')}
+              >
+                <span>{tr(language, 'All impacts', 'Todos')}</span>
+                <strong>{currentOutcomeFindings.length}</strong>
+              </button>
+              {visibleSeverityFilters.map((severity) => (
+                <button
+                  key={severity}
+                  type="button"
+                  className={`severity-${severity}`}
+                  aria-pressed={severityFilter === severity}
+                  title={severityImpactDescription(severity, language)}
+                  onClick={() => setSeverityFilter(severity)}
+                >
+                  <span>{localizedSeverity(severity, language)}</span>
+                  <strong>{severityCounts[severity]}</strong>
+                </button>
+              ))}
+            </div>
+          </div>
+
           <div
             id={`scan-panel-${filter}`}
             role="tabpanel"
@@ -266,7 +362,9 @@ export function ScanView({
           >
             {criterionGroups.length === 0 ? (
               <div className="scan-filter-empty">
-                {tr(language, 'No findings in this category.', 'No hay resultados en esta categoría.')}
+                {severityFilter === 'all'
+                  ? tr(language, 'No findings in this category.', 'No hay resultados en esta categoría.')
+                  : tr(language, 'No findings with this impact level.', 'No hay hallazgos con este nivel de impacto.')}
               </div>
             ) : (
               <div className="scan-rule-list">
@@ -313,12 +411,20 @@ function FindingRuleAccordion({
   }, [index, issues.length]);
 
   return (
-    <details className={`scan-rule-group outcome-${first.outcome}`} open={defaultOpen ? true : undefined}>
+    <details className={`scan-rule-group outcome-${first.outcome} severity-${first.severity}`} open={defaultOpen ? true : undefined}>
       <summary>
-        <span className={`scan-rule-outcome ${first.outcome}`}>{outcomeLabel(first.outcome, level, language)}</span>
+        <span className="scan-rule-statuses">
+          <span className={`scan-rule-outcome ${first.outcome}`}>{outcomeLabel(first.outcome, level, language)}</span>
+          <span
+            className={`severity-badge severity-${first.severity}`}
+            title={severityImpactDescription(first.severity, language)}
+          >
+            {localizedSeverity(first.severity, language)}
+          </span>
+        </span>
         <span className="scan-rule-title">
           <strong>{copy.title}</strong>
-          <small>{first.ruleId} · {localizedSeverity(first.severity, language)}</small>
+          <small>{first.ruleId}</small>
         </span>
         <span className="scan-rule-count" aria-label={tr(language, `${issues.length} affected elements`, `${issues.length} elementos afectados`)}>{issues.length}</span>
         <span className="scan-rule-chevron" aria-hidden="true">⌄</span>

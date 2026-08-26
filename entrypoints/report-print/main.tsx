@@ -15,12 +15,14 @@ import {
   type PrintableReportEvidenceBundle,
   type ReportVisualEvidence,
 } from '../../lib/report/visual-evidence';
-import { localizedScanIssue, tr, type AppLanguage } from '../../shared/i18n';
+import { localizedScanIssue, localizedSeverity, tr, type AppLanguage } from '../../shared/i18n';
+import { countBySeverity, sortBySeverity } from '../../shared/severity';
 import type {
   ExtensionMessage,
   HeadingSignal,
   ScanIssue,
   SessionState,
+  Severity,
   StandardReference,
 } from '../../shared/types';
 import './style.css';
@@ -34,6 +36,8 @@ interface LoadedReport {
   version: string;
   evidence?: PrintableReportEvidenceBundle;
 }
+
+const DISPLAY_SEVERITIES: Severity[] = ['critical', 'serious', 'moderate', 'minor'];
 
 function referenceLabel(reference: StandardReference): string {
   return `${reference.type} ${reference.id}${reference.level ? ` (${reference.level})` : ''}`;
@@ -54,9 +58,9 @@ function suggestionSourceLabel(source: string, language: AppLanguage): string {
 
 function findingGroup(scan: NonNullable<SessionState['scan']>, language: AppLanguage) {
   return [
-    { id: 'fail', label: tr(language, 'Failures', 'Fallos'), issues: scan.issues },
-    { id: 'review', label: tr(language, 'Review', 'Revisión'), issues: scan.review },
-    { id: 'warning', label: tr(language, 'Warnings', 'Avisos'), issues: scan.warnings ?? [] },
+    { id: 'fail', label: tr(language, 'Failures', 'Fallos'), issues: sortBySeverity(scan.issues) },
+    { id: 'review', label: tr(language, 'Review', 'Revisión'), issues: sortBySeverity(scan.review) },
+    { id: 'warning', label: tr(language, 'Warnings', 'Avisos'), issues: sortBySeverity(scan.warnings ?? []) },
   ] as const;
 }
 
@@ -166,11 +170,11 @@ function Finding({
   const guidance = guidanceForIssue(issue, language);
   const description = reportFindingDescription(issue, language);
   return (
-    <article className={`print-finding tone-${issue.outcome}`}>
+    <article className={`print-finding tone-${issue.outcome} severity-${issue.severity}`}>
       <div className="print-finding-meta">
         <span>{label}</span>
+        <span className={`print-severity severity-${issue.severity}`}>{localizedSeverity(issue.severity, language)}</span>
         <code>{issue.ruleId}</code>
-        <span>{issue.severity}</span>
       </div>
       <h4>{copy.title}</h4>
       <PrintComponentIdentity
@@ -226,6 +230,9 @@ function ReportNotes({ language }: { language: AppLanguage }) {
         <li><strong>{tr(language, 'Review:', 'Revisión:')}</strong> {tr(language,
           'the signal needs human judgement; it must not be treated automatically as a WCAG failure.',
           'la señal necesita criterio humano; no debe tratarse automáticamente como un incumplimiento WCAG.')}</li>
+        <li><strong>{tr(language, 'Impact:', 'Impacto:')}</strong> {tr(language,
+          'critical, serious, moderate and minor are FocusTrace prioritization levels. They are not WCAG A/AA/AAA conformance levels.',
+          'crítico, grave, moderado y leve son niveles de priorización de FocusTrace. No corresponden a los niveles de conformidad WCAG A/AA/AAA.')}</li>
         <li><strong>{tr(language, 'Complex contrast:', 'Contraste complejo:')}</strong> {tr(language,
           'images, gradients, transparency, overlays and other composited backgrounds can make the final contrast impossible to determine reliably. Those cases are reported for manual verification instead of manufacturing an uncertain failure.',
           'imágenes, gradientes, transparencias, overlays y otros fondos compuestos pueden impedir determinar con fiabilidad el contraste final. Esos casos se presentan para verificación manual en lugar de fabricar un fallo incierto.')}</li>
@@ -244,6 +251,7 @@ function PrintableReport({ report }: { report: LoadedReport }) {
     () => buildSessionReportModel(scan, session.events, language),
     [language, scan, session.events],
   );
+  const failureSeverityCounts = useMemo(() => countBySeverity(scan.issues), [scan.issues]);
   const highPriority = model.suggestions.filter((suggestion) => suggestion.priority === 'high').slice(0, 6);
   const headings = scan.headings ?? [];
   const componentMap = useMemo(
@@ -323,6 +331,23 @@ function PrintableReport({ report }: { report: LoadedReport }) {
           <div className="print-category-row">
             {model.categories.map((category) => <span key={category.id}><strong>{category.count}</strong> {category.label}</span>)}
           </div>
+          {scan.issues.length > 0 && (
+            <div className="print-impact-summary">
+              <p>{tr(
+                language,
+                'Failure impact · FocusTrace prioritization, not a WCAG conformance level.',
+                'Impacto de los fallos · priorización de FocusTrace, no nivel de conformidad WCAG.',
+              )}</p>
+              <div className="print-impact-counts">
+                {DISPLAY_SEVERITIES.map((severity) => (
+                  <span className={`severity-${severity}`} key={severity}>
+                    <strong>{failureSeverityCounts[severity]}</strong>
+                    <small>{localizedSeverity(severity, language)}</small>
+                  </span>
+                ))}
+              </div>
+            </div>
+          )}
         </section>
 
         <section className="print-section print-priority" aria-labelledby="priority-title">
@@ -473,7 +498,7 @@ function PrintableReport({ report }: { report: LoadedReport }) {
           <p>{tr(
             language,
             'FocusTrace combines deterministic automated evidence and recorded runtime behavior. This report is not a complete WCAG conformance certificate and manual review is still required.',
-            'FocusTrace combina evidencia automática determinista y comportamiento runtime registrado. Este informe no es un certificado completo de conformidad WCAG y sigue siendo necesaria una revisión manual.',
+            'FocusTrace combina evidencia automática determinista y comportamiento runtime registrado. Este informe no es un certificado completo de conformidad WCAG y sigue siendo necesaria la revisión manual.',
           )}</p>
           <div><span>FocusTrace v{version}</span><span>{generatedLabel}</span></div>
         </footer>
