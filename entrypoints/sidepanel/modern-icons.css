@@ -1,0 +1,106 @@
+/* A single outline icon language for the main FocusTrace controls. Existing
+   aria-hidden glyph spans stay in the DOM as fallbacks; CSS replaces their
+   visual appearance with consistent 2px SVG masks. */
+:root {
+  --ft-i-review: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='m15.5 15.5 4 4M7.5 10.5l2 2 4-4'/%3E%3C/svg%3E");
+  --ft-i-trace: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='5' cy='6' r='2'/%3E%3Ccircle cx='19' cy='18' r='2'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3Cpath d='M6.8 7.2 10.2 10.8M13.8 13.2l3.4 3.6'/%3E%3C/svg%3E");
+  --ft-i-headings: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M5 4v16M5 8h5M5 16h5M10 8v8M10 12h5'/%3E%3Ccircle cx='18' cy='12' r='2'/%3E%3C/svg%3E");
+  --ft-i-report: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M7 3h7l4 4v14H7zM14 3v5h5M10 12h5M10 16h5'/%3E%3C/svg%3E");
+  --ft-i-page-scan: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 8V4h4M16 4h4v4M20 16v4h-4M8 20H4v-4'/%3E%3Ccircle cx='11' cy='11' r='3'/%3E%3Cpath d='m13.4 13.4 3.1 3.1'/%3E%3C/svg%3E");
+  --ft-i-focus: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='7'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3Cpath d='M12 2v3M22 12h-3M12 22v-3M2 12h3'/%3E%3C/svg%3E");
+  --ft-i-site: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M3 12h18M12 3c2.5 2.5 4 5.5 4 9s-1.5 6.5-4 9M12 3c-2.5 2.5-4 5.5-4 9s1.5 6.5 4 9'/%3E%3C/svg%3E");
+  --ft-i-reset: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7v5h5M5.5 16a8 8 0 1 0 .8-9.5L4 9'/%3E%3C/svg%3E");
+  --ft-i-settings: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M4 7h8M16 7h4M4 17h4M12 17h8M12 4v6M8 14v6'/%3E%3C/svg%3E");
+  --ft-i-code: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m8 9-3 3 3 3M16 9l3 3-3 3M14 5l-4 14'/%3E%3C/svg%3E");
+  --ft-i-play: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M8 5.5v13l11-6.5z'/%3E%3C/svg%3E");
+  --ft-i-stop: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='6' y='6' width='12' height='12' rx='2' fill='black'/%3E%3C/svg%3E");
+}
+
+.brand-mark {
+  overflow: hidden;
+  border: 1.5px solid var(--ft-border) !important;
+  background-color: #fff !important;
+  background-image: url('/icon/48.png') !important;
+  background-position: center !important;
+  background-repeat: no-repeat !important;
+  background-size: 29px 29px !important;
+  color: transparent !important;
+  font-size: 0 !important;
+  box-shadow: var(--ft-shadow-sm) !important;
+}
+
+.workspace-nav.tabs button > span,
+.quick-actions button > span,
+.topbar-tools button > span,
+.finding-location > button,
+.trace-button-icon {
+  --ft-mask: var(--ft-i-review);
+}
+
+.workspace-nav.tabs button > span,
+.quick-actions button > span,
+.topbar-tools button > span,
+.trace-button-icon {
+  display: grid !important;
+  place-items: center;
+  font-size: 0 !important;
+}
+
+.workspace-nav.tabs button > span::before,
+.quick-actions button > span::before,
+.topbar-tools button > span::before,
+.trace-button-icon::before {
+  content: '';
+  width: 19px;
+  height: 19px;
+  display: block;
+  background: currentColor;
+  -webkit-mask: var(--ft-mask) center / contain no-repeat;
+  mask: var(--ft-mask) center / contain no-repeat;
+}
+
+.workspace-nav.tabs button:nth-child(1) > span { --ft-mask: var(--ft-i-review); }
+.workspace-nav.tabs button:nth-child(2) > span { --ft-mask: var(--ft-i-trace); }
+.workspace-nav.tabs button:nth-child(3) > span { --ft-mask: var(--ft-i-headings); }
+.workspace-nav.tabs button:nth-child(4) > span { --ft-mask: var(--ft-i-report); }
+
+.quick-actions .scan-action > span { --ft-mask: var(--ft-i-page-scan); }
+.quick-actions .site-audit-launch > span { --ft-mask: var(--ft-i-site); }
+.quick-actions .focus-walk-action > span { --ft-mask: var(--ft-i-focus); }
+.quick-actions .scan-action { order: 1; }
+.quick-actions .site-audit-launch { order: 2; }
+.quick-actions .focus-walk-action { order: 3; }
+
+.reset-all-trigger > span { --ft-mask: var(--ft-i-reset); }
+.settings-trigger > span { --ft-mask: var(--ft-i-settings); }
+
+.trace-record.start .trace-button-icon { --ft-mask: var(--ft-i-play); }
+.trace-record.stop .trace-button-icon { --ft-mask: var(--ft-i-stop); }
+.trace-reset .trace-button-icon { --ft-mask: var(--ft-i-reset); }
+
+.finding-location > button {
+  position: relative;
+  overflow: hidden;
+  color: transparent !important;
+  font-size: 0 !important;
+}
+
+.finding-location > button::before {
+  content: '';
+  width: 20px;
+  height: 20px;
+  display: block;
+  margin: auto;
+  background: var(--ft-surface);
+  -webkit-mask: var(--ft-i-code) center / contain no-repeat;
+  mask: var(--ft-i-code) center / contain no-repeat;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .workspace-nav.tabs button > span::before,
+  .quick-actions button > span::before,
+  .topbar-tools button > span::before,
+  .trace-button-icon::before {
+    transition: none;
+  }
+}
