@@ -1,0 +1,50 @@
+/* Workflow corrections from hands-on audit review. Loaded last on purpose. */
+
+/* The four raw scan metrics duplicate information that is already available in
+   the result tabs and impact breakdown, so keep the scan surface focused. */
+.panel:has(#scan-title) > .metrics {
+  display: none;
+}
+
+/* Site and page analysis are peer entry points. */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.quick-actions > button {
+  min-width: 0;
+}
+
+/* Warning text must stay readable instead of putting amber copy on a dark tile. */
+.heading-tree-row.has-signal .heading-level {
+  border-color: var(--ft-warning) !important;
+  background: var(--ft-warning-soft) !important;
+  color: var(--ft-warning) !important;
+}
+
+.heading-tree-row.has-signal .heading-node small,
+.heading-selection p {
+  color: var(--ft-text) !important;
+}
+
+/* Make the inspect action visibly interactive and large enough to target. */
+.finding-location > button {
+  min-width: 44px;
+  min-height: 44px;
+  border-color: var(--ft-border) !important;
+  background: var(--ft-ink) !important;
+  color: var(--ft-surface) !important;
+}
+
+.finding-location > button:hover:not(:disabled) {
+  background: var(--ft-accent-strong) !important;
+  border-color: var(--ft-accent-strong) !important;
+}
+
+@media (max-width: 430px) {
+  .quick-actions {
+    grid-template-columns: 1fr;
+  }
+}

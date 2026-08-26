@@ -1,4 +1,5 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { browser } from '#imports';
 import { tr, type AppLanguage } from '../../../shared/i18n';
 import './site-audit-launcher.css';
@@ -7,16 +8,36 @@ const PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'];
 
 export function SiteAuditLauncher({ language }: { language: AppLanguage }) {
   const [opening, setOpening] = useState(false);
+  const [portalTarget, setPortalTarget] = useState<Element | null>(null);
+
+  useEffect(() => {
+    const quickActions = document.querySelector('.quick-actions');
+    if (!quickActions) return undefined;
+
+    const host = document.createElement('span');
+    host.dataset.focustraceSiteAuditHost = 'true';
+    host.style.display = 'contents';
+    const focusAction = quickActions.querySelector('.focus-walk-action');
+    quickActions.insertBefore(host, focusAction ?? null);
+    setPortalTarget(host);
+
+    return () => {
+      setPortalTarget(null);
+      host.remove();
+    };
+  }, []);
 
   const open = async () => {
     if (opening) return;
     setOpening(true);
     try {
-      // Keep the optional host-permission request attached to the explicit
-      // Scan site click, just like Analyze page. Without this, Site Audit can
-      // appear to work only after another feature has already granted access.
-      const granted = await browser.permissions.request({ origins: PAGE_ACCESS_ORIGINS });
-      if (!granted) return;
+      // Reuse an existing grant. Requesting optional permissions again after an
+      // awaited call can lose the browser's user-gesture eligibility.
+      const alreadyGranted = await browser.permissions.contains({ origins: PAGE_ACCESS_ORIGINS });
+      if (!alreadyGranted) {
+        const granted = await browser.permissions.request({ origins: PAGE_ACCESS_ORIGINS });
+        if (!granted) return;
+      }
 
       const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
       if (tab?.id == null || !tab.url || !/^https?:/i.test(tab.url)) return;
@@ -31,18 +52,20 @@ export function SiteAuditLauncher({ language }: { language: AppLanguage }) {
     }
   };
 
-  return (
+  const button = (
     <button
       className="site-audit-launch"
       type="button"
       disabled={opening}
-      title={tr(language, 'Discover site pages and scan representative templates', 'Descubrir páginas del sitio y analizar plantillas representativas')}
+      title={tr(language, 'Group similar routes and analyze representative site templates', 'Agrupar rutas similares y analizar plantillas representativas del sitio')}
       onClick={() => void open()}
     >
       <span aria-hidden="true">◎</span>
       {opening
         ? tr(language, 'Opening…', 'Abriendo…')
-        : tr(language, 'Scan site', 'Escanear sitio')}
+        : tr(language, 'Analyze site', 'Analizar sitio')}
     </button>
   );
+
+  return portalTarget ? createPortal(button, portalTarget) : null;
 }

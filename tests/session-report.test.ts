@@ -39,6 +39,29 @@ describe('session report suggestions', () => {
     expect(suggestions[0]?.priority).toBe('high');
   });
 
+  it('keeps known static findings localized in Spanish recommendations', () => {
+    const localizedScan: ScanResult = {
+      ...scan,
+      issues: [{
+        id: 'image-1',
+        ruleId: 'FT-WCAG-002',
+        title: 'Image has an accessible name or is marked decorative',
+        description: 'The image is exposed as image content but has an empty accessible name and is not marked decorative.',
+        severity: 'serious',
+        outcome: 'fail',
+        targets: ['#hero'],
+        references: [],
+      }],
+    };
+
+    const suggestion = buildSessionSuggestions(localizedScan, [], 'es')
+      .find((item) => item.id === 'analysis-FT-WCAG-002');
+
+    expect(suggestion?.title).toBe('La imagen tiene un nombre accesible o está marcada como decorativa');
+    expect(suggestion?.detail).toContain('La imagen se expone como contenido gráfico');
+    expect(suggestion?.detail).not.toContain('The image is exposed');
+  });
+
   it('adds runtime findings and removes the missing-focus coverage suggestion', () => {
     const events: RuntimeEvent[] = [
       {
@@ -60,8 +83,26 @@ describe('session report suggestions', () => {
       },
     ];
     const suggestions = buildSessionSuggestions(scan, events, 'en');
-    expect(suggestions.map((item) => item.title)).toContain('Focus is obscured');
+    expect(suggestions.map((item) => item.title)).toContain('The focused control may be covered by other content');
     expect(suggestions.map((item) => item.id)).not.toContain('coverage-focus');
+  });
+
+  it('does not leak raw English runtime detail into Spanish suggestions', () => {
+    const events: RuntimeEvent[] = [{
+      id: 'runtime-1',
+      timestamp: 2,
+      kind: 'focus-obscured',
+      severity: 'serious',
+      outcome: 'fail',
+      title: 'Focus is obscured',
+      detail: 'A sticky layer covers the focused control.',
+    }];
+
+    const suggestion = buildSessionSuggestions(scan, events, 'es')
+      .find((item) => item.id === 'focus-runtime-1');
+
+    expect(suggestion?.detail).toBe('Revisa el componente enfocado dentro del contexto grabado de la página.');
+    expect(suggestion?.detail).not.toContain('sticky layer');
   });
 
   it('builds executive counts and accessibility-area summaries', () => {

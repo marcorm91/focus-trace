@@ -14,7 +14,9 @@ import './ui-scale.css';
 import './visual-system.css';
 import './accessibility-guardrails.css';
 import './severity.css';
+import './workflow-fixes.css';
 
+const PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'];
 const root = document.getElementById('root');
 if (!root) throw new Error('FocusTrace root element was not found.');
 
@@ -25,11 +27,15 @@ void browser.storage.local.get(UI_SCALE_STORAGE_KEY).then((stored) => {
   );
 });
 
-// Start the optional screenshot permission request synchronously from the
-// Export PDF click. permissions.request() loses its user-gesture eligibility
-// after awaited work, while the actual report preparation happens later.
+// Start optional permission requests synchronously from the original click.
+// Browser permission APIs can lose user-gesture eligibility after awaited work.
 document.addEventListener('click', (event) => {
   armReportVisualEvidencePermissionRequest(event.target);
+
+  const target = event.target instanceof Element ? event.target : null;
+  if (target?.closest('.finding-location button')) {
+    void browser.permissions.request({ origins: PAGE_ACCESS_ORIGINS }).catch(() => false);
+  }
 }, { capture: true });
 
 createRoot(root).render(
