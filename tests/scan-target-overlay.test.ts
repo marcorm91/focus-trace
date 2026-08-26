@@ -55,8 +55,19 @@ describe('scan target page overlay', () => {
     expect(overlay?.textContent).toContain('FocusTrace · section');
     expect(overlay?.textContent).toContain('Broken item');
     expect(overlay?.style.border).toContain('4px solid');
-    expect(overlay?.style.boxShadow).toContain('100vmax');
+    expect(overlay?.style.boxShadow).not.toContain('100vmax');
     expect(overlay?.style.pointerEvents).toBe('none');
+  });
+
+  it('still works when serialized like chrome.scripting.executeScript', () => {
+    installFixture();
+
+    const injected = new Function(`return (${locateScanTargetInPage.toString()});`)() as typeof locateScanTargetInPage;
+    const result = injected('#card', { focusTarget: false, durationMs: 0 });
+
+    expect(result.found).toBe(true);
+    expect(result.selector).toBe('#card');
+    expect(document.querySelector('[data-focustrace-scan-highlight]')).not.toBeNull();
   });
 
   it('returns a miss for stale or invalid selectors without leaving overlays behind', () => {
