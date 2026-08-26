@@ -1,0 +1,108 @@
+.print-report-notes {
+  display: grid;
+  gap: 10px;
+  padding: 13px 14px;
+  border: 1px solid #d9deea;
+  border-left: 4px solid #4f46e5;
+  border-radius: 9px;
+  background: #f8f8ff;
+}
+
+.print-report-notes > div {
+  display: grid;
+  gap: 3px;
+}
+
+.print-report-notes h2 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.print-report-notes p {
+  margin: 0;
+  color: #475467;
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+
+.print-report-notes ul {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding-left: 19px;
+  color: #344054;
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.print-report-notes strong {
+  color: #172033;
+}
+
+.print-finding-description {
+  margin: 0;
+  color: #475467;
+  font-size: 10.5px;
+  line-height: 1.5;
+}
+
+.print-guidance {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 7px;
+  margin-top: 2px;
+}
+
+.print-guidance > div {
+  min-width: 0;
+  display: grid;
+  align-content: start;
+  gap: 4px;
+  padding: 9px 10px;
+  border: 1px solid #e0e4ec;
+  border-radius: 8px;
+  background: #fafbfc;
+}
+
+.print-guidance > div:nth-child(2) {
+  border-color: #b9ddcf;
+  background: #f5fcf8;
+}
+
+.print-guidance > div:nth-child(3) {
+  border-color: #cfd2f4;
+  background: #f8f8ff;
+}
+
+.print-guidance small {
+  color: #667085;
+  font-size: 8.5px;
+  font-weight: 900;
+  letter-spacing: .05em;
+  text-transform: uppercase;
+}
+
+.print-guidance p {
+  margin: 0;
+  color: #344054;
+  font-size: 9.7px;
+  line-height: 1.48;
+}
+
+.print-component-block .print-visual-evidence figcaption strong {
+  color: #172033;
+}
+
+@media (max-width: 760px) {
+  .print-guidance {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media print {
+  .print-report-notes,
+  .print-guidance > div {
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+}
