@@ -21,11 +21,27 @@ import { buildRouteFamilies, selectSiteAuditSamples } from '../../lib/site-audit
 import { scanRepresentativePage, sourcePageLinks } from '../../lib/site-audit/runner';
 import { buildSiteAuditTextReport, siteAuditFilename } from '../../lib/site-audit/text-report';
 import { captureSiteAuditFindingVisual } from '../../lib/site-audit/visual-evidence';
-import { localizedScanIssue, type AppLanguage } from '../../shared/i18n';
+import { localizedScanIssue, localizedSeverity, type AppLanguage } from '../../shared/i18n';
+import { countBySeverity, severityRank } from '../../shared/severity';
+import type { FindingOutcome, Severity } from '../../shared/types';
 import './style.css';
+
+const DISPLAY_SEVERITIES: Severity[] = ['critical', 'serious', 'moderate', 'minor'];
 
 function t(language: AppLanguage, en: string, es: string) {
   return language === 'es' ? es : en;
+}
+
+function outcomeText(outcome: FindingOutcome, language: AppLanguage): string {
+  if (outcome === 'fail') return t(language, 'FAILURE', 'FALLO');
+  if (outcome === 'review') return t(language, 'REVIEW', 'REVISIÓN');
+  return t(language, 'WARNING', 'AVISO');
+}
+
+function sortFindingAggregates(findings: SiteAuditFindingAggregate[]): SiteAuditFindingAggregate[] {
+  return [...findings].sort(
+    (left, right) => severityRank(right.exampleIssue.severity) - severityRank(left.exampleIssue.severity),
+  );
 }
 
 function params() {
@@ -218,6 +234,13 @@ function App() {
 
 function SiteAuditReport({ result, language, onRunAgain }: { result: SiteAuditResult; language: AppLanguage; onRunAgain: () => void }) {
   const commonFindings = result.templates.reduce((total, template) => total + template.findings.filter((finding) => finding.commonToTemplate).length, 0);
+  const failureSignals = result.templates.flatMap((template) =>
+    template.findings
+      .filter((finding) => finding.outcome === 'fail')
+      .map((finding) => finding.exampleIssue),
+  );
+  const failureSeverityCounts = countBySeverity(failureSignals);
+
   return (
     <>
       <section className="site-card site-summary">
@@ -236,6 +259,28 @@ function SiteAuditReport({ result, language, onRunAgain }: { result: SiteAuditRe
           <span><strong>{commonFindings}</strong>{t(language, 'template-wide signals', 'señales de plantilla')}</span>
           <span><strong>{result.failedPages}</strong>{t(language, 'scan errors', 'errores de escaneo')}</span>
         </div>
+
+        {failureSignals.length > 0 && (
+          <div className="site-impact-summary">
+            <div>
+              <strong>{t(language, 'Failure impact', 'Impacto de los fallos')}</strong>
+              <small>{t(
+                language,
+                'FocusTrace impact helps prioritize aggregated findings; it is not a WCAG conformance level.',
+                'El impacto de FocusTrace ayuda a priorizar hallazgos agregados; no es un nivel de conformidad WCAG.',
+              )}</small>
+            </div>
+            <div className="site-impact-counts">
+              {DISPLAY_SEVERITIES.map((severity) => (
+                <span className={`severity-${severity}`} key={severity}>
+                  <strong>{failureSeverityCounts[severity]}</strong>
+                  <small>{localizedSeverity(severity, language)}</small>
+                </span>
+              ))}
+            </div>
+          </div>
+        )}
+
         <p>{t(language, `Discovery source: ${result.discovery.source}.`, `Origen del descubrimiento: ${result.discovery.source}.`)} {result.discovery.truncated && t(language, 'URL discovery hit the safety limit.', 'El descubrimiento alcanzó el límite de seguridad.')}</p>
       </section>
 
@@ -243,8 +288,8 @@ function SiteAuditReport({ result, language, onRunAgain }: { result: SiteAuditRe
         {result.templates.map((template) => {
           const successful = template.sampledPages.filter((page) => page.scan);
           const fingerprints = new Set(successful.flatMap((page) => page.structure?.fingerprint ? [page.structure.fingerprint] : []));
-          const common = template.findings.filter((finding) => finding.commonToTemplate);
-          const variants = template.findings.filter((finding) => !finding.commonToTemplate);
+          const common = sortFindingAggregates(template.findings.filter((finding) => finding.commonToTemplate));
+          const variants = sortFindingAggregates(template.findings.filter((finding) => !finding.commonToTemplate));
           const consistent = successful.length > 1 && fingerprints.size === 1;
           return (
             <details className="site-card site-template" key={template.id} open={template.id === 'T01'}>
@@ -364,9 +409,14 @@ function FindingRow({
 
   return (
     <li>
-      <details className={`site-finding outcome-${finding.outcome}`}>
+      <details className={`site-finding outcome-${finding.outcome} severity-${finding.exampleIssue.severity}`}>
         <summary>
-          <span className="finding-outcome">{finding.outcome.toUpperCase()}</span>
+          <span className="finding-statuses">
+            <span className="finding-outcome">{outcomeText(finding.outcome, language)}</span>
+            <span className={`finding-severity severity-${finding.exampleIssue.severity}`}>
+              {localizedSeverity(finding.exampleIssue.severity, language)}
+            </span>
+          </span>
           <span className="finding-summary-copy">
             <strong>{issue.title}</strong>
             <small>
@@ -392,13 +442,22 @@ function FindingRow({
               )}
             </section>
             <section>
-              <small>{t(language, 'Observed impact', 'Impacto observado')}</small>
+              <small>{t(language, 'Observed coverage', 'Cobertura observada')}</small>
               <strong>{finding.commonToTemplate
                 ? t(language, `Observed in all ${finding.totalSamples} representative samples`, `Observado en las ${finding.totalSamples} muestras representativas`)
                 : t(language, `Observed in ${finding.sampleCount} of ${finding.totalSamples} samples`, `Observado en ${finding.sampleCount} de ${finding.totalSamples} muestras`)}</strong>
               <span>{finding.commonToTemplate
                 ? t(language, 'Likely template/component-level issue within the sampled family.', 'Posible problema de plantilla/componente dentro de la familia muestreada.')
                 : t(language, 'May depend on page content, state or a structural variant.', 'Puede depender del contenido, del estado o de una variante estructural de la página.')}</span>
+            </section>
+            <section className={`finding-severity-context severity-${finding.exampleIssue.severity}`}>
+              <small>{t(language, 'Estimated impact', 'Impacto estimado')}</small>
+              <strong>{localizedSeverity(finding.exampleIssue.severity, language)}</strong>
+              <span>{t(
+                language,
+                'FocusTrace prioritization aid; not a WCAG conformance level.',
+                'Prioridad estimada por FocusTrace; no es un nivel de conformidad WCAG.',
+              )}</span>
             </section>
           </div>
 
