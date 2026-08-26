@@ -59,6 +59,13 @@ describe('UX polish contract', () => {
     expect(entry).toContain("import './icon-followup-fixes.css';");
   });
 
+  it('keeps redundant scan summary blocks out of the visible result surface', () => {
+    const followup = source('entrypoints/sidepanel/icon-followup-fixes.css');
+    expect(followup).toContain('.scan-results-note');
+    expect(followup).toContain('.scan-heading-actions > strong');
+    expect(followup).toContain('display: none !important');
+  });
+
   it('keeps the impact matrix synchronized with the persisted app language', () => {
     const matrix = source('entrypoints/sidepanel/components/ImpactMatrix.tsx');
     expect(matrix).toContain('SETTINGS_STORAGE_KEY');
