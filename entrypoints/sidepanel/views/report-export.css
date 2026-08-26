@@ -1,3 +1,40 @@
+.report-export-tools {
+  flex: 0 0 auto;
+  display: grid;
+  justify-items: end;
+  gap: 7px;
+}
+
+.report-visual-evidence-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 7px;
+  align-items: start;
+  max-width: 310px;
+  padding: 7px 9px;
+  border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 16%, transparent));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ft-brand, Highlight) 3%, Canvas);
+  cursor: pointer;
+}
+
+.report-visual-evidence-option input {
+  width: 18px;
+  height: 18px;
+  margin: 1px 0 0;
+}
+
+.report-visual-evidence-option > span {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.report-visual-evidence-option small {
+  color: var(--ft-muted, GrayText);
+  line-height: 1.35;
+}
+
 .report-export-actions {
   flex: 0 0 auto;
   display: flex;
@@ -37,8 +74,14 @@
     display: grid;
   }
 
+  .report-export-tools,
+  .report-visual-evidence-option,
   .report-export-actions {
     width: 100%;
+    max-width: none;
+  }
+
+  .report-export-actions {
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
