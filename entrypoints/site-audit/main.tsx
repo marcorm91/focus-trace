@@ -30,7 +30,7 @@ function params() {
 
 function permissionPattern(sourceUrl: string) {
   const url = new URL(sourceUrl);
-  return `${url.protocol}//${url.hostname}/*`;
+  return `${url.protocol}//${url.host}/*`;
 }
 
 function downloadText(result: SiteAuditResult, language: AppLanguage) {
