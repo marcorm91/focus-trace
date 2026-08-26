@@ -68,6 +68,9 @@ body,
   overflow: hidden;
 }
 
+/* Icons already exist in the JSX. Keep one source of truth instead of adding
+   a second glyph with ::before, which became visible once the 14px minimum
+   typography layer overrode the old font-size: 0 hiding technique. */
 .workspace-nav.tabs button > span {
   width: 24px;
   height: 24px;
@@ -75,18 +78,13 @@ body,
   place-items: center;
   border-radius: 8px;
   background: var(--ft-surface-subtle);
-  font-size: 0;
-}
-
-.workspace-nav.tabs button > span::before {
   font-size: 14px;
   line-height: 1;
 }
 
-.workspace-nav.tabs button:nth-child(1) > span::before { content: '⌕'; }
-.workspace-nav.tabs button:nth-child(2) > span::before { content: '⏺'; }
-.workspace-nav.tabs button:nth-child(3) > span::before { content: 'H'; font-size: 12px; font-weight: 900; }
-.workspace-nav.tabs button:nth-child(4) > span::before { content: '▤'; }
+.workspace-nav.tabs button:nth-child(3) > span {
+  font-weight: 900;
+}
 
 .workspace-nav.tabs button.active > span {
   background: color-mix(in srgb, var(--ft-brand) 14%, var(--ft-surface));
@@ -100,24 +98,8 @@ body,
 
 .quick-actions button > span {
   flex: 0 0 auto;
-}
-
-.quick-actions .scan-action > span {
-  font-size: 0;
-}
-
-.quick-actions .scan-action > span::before {
-  content: '⌕';
-  font-size: 13px;
-}
-
-.quick-actions .focus-walk-action > span {
-  font-size: 0;
-}
-
-.quick-actions .focus-walk-action > span::before {
-  content: '⇥';
   font-size: 14px;
+  line-height: 1;
 }
 
 .reset-all-trigger {
