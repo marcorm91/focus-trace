@@ -25,6 +25,10 @@ Severity is currently defined as a **base value in the FocusTrace rule catalog**
 
 This keeps the result deterministic and reviewable: the same rule has the same base impact wherever it is detected.
 
+Every rule now carries a bilingual severity rationale in `shared/rule-catalog.ts`. When a sufficiently comparable axe-core 4.12 rule exists, the catalog records that impact reference as either `direct` or `partial`. A direct reference is guarded by tests so its impact cannot silently diverge from FocusTrace; broader or narrower comparisons must be marked partial rather than presented as equivalent.
+
+The full rule-by-rule review, including the severity changes made during the audit, is recorded in [SEVERITY-AUDIT.md](./SEVERITY-AUDIT.md).
+
 The four-level taxonomy aligns with conventions used by established accessibility auditing tools, including the public `critical / serious / moderate / minor` impact taxonomy used by axe-core. FocusTrace does not query axe-core at runtime and owns its own rule catalog and severity assignments.
 
 ## Outcome is not severity

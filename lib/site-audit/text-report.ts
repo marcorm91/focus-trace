@@ -4,6 +4,7 @@ import {
   componentTypeLabel,
 } from '../report/component-identity';
 import { localizedScanIssue, localizedSeverity, type AppLanguage } from '../../shared/i18n';
+import { localizedRuleSeverityRationale, ruleDefinitionForId } from '../../shared/rule-catalog';
 import { countBySeverity, severityRank } from '../../shared/severity';
 import { remediationForIssue } from './remediation';
 import type { SiteAuditFindingAggregate, SiteAuditResult } from './model';
@@ -30,12 +31,24 @@ function findingLines(finding: SiteAuditFindingAggregate, language: AppLanguage)
   const issue = localizedScanIssue(finding.exampleIssue, language);
   const reference = finding.references[0];
   const component = finding.component;
+  const rule = ruleDefinitionForId(finding.ruleId);
+  const severityRationale = localizedRuleSeverityRationale(finding.ruleId, language);
   const output = [
     `- [${outcomeLabel(finding.outcome, language)}] [${localizedSeverity(finding.exampleIssue.severity, language).toUpperCase()}] ${finding.ruleId} · ${issue.title}`,
     `  ${line(es ? 'Impacto estimado' : 'Estimated impact', localizedSeverity(finding.exampleIssue.severity, language))}`,
+    ...(severityRationale ? [`  ${line(es ? 'Por qué este impacto' : 'Why this impact', severityRationale)}`] : []),
     `  ${line(es ? 'Cobertura de muestra' : 'Sample coverage', `${finding.sampleCount}/${finding.totalSamples}`)}`,
     `  ${line(es ? 'Página representativa' : 'Representative page', finding.exampleUrl)}`,
   ];
+
+  if (rule?.impactReferences.length) {
+    output.push(`  ${line(
+      es ? 'Referencia de impacto comparable' : 'Comparable impact reference',
+      rule.impactReferences.map((impactReference) =>
+        `${impactReference.source} ${impactReference.ruleId} (${localizedSeverity(impactReference.impact, language)}${impactReference.relation === 'partial' ? `; ${es ? 'alcance parcial' : 'partial scope'}` : ''})`,
+      ).join(' · '),
+    )}`);
+  }
 
   if (component) {
     output.push(
