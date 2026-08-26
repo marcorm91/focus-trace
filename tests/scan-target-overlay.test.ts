@@ -36,7 +36,7 @@ afterEach(() => {
 });
 
 describe('scan target page overlay', () => {
-  it('highlights a matched scan target and temporarily focuses non-focusable elements', () => {
+  it('strongly highlights a matched target and temporarily focuses non-focusable elements', () => {
     installFixture();
 
     const result = locateScanTargetInPage('#card');
@@ -47,8 +47,11 @@ describe('scan target page overlay', () => {
 
     const overlay = document.querySelector<HTMLElement>('[data-focustrace-scan-highlight]');
     expect(overlay).not.toBeNull();
-    expect(overlay?.textContent).toBe('FocusTrace');
-    expect(overlay?.style.border).toContain('3px solid');
+    expect(overlay?.dataset.focustraceTone).toBe('inspect');
+    expect(overlay?.textContent).toContain('FocusTrace · section');
+    expect(overlay?.textContent).toContain('Broken item');
+    expect(overlay?.style.border).toContain('4px solid');
+    expect(overlay?.style.boxShadow).toContain('100vmax');
     expect(overlay?.style.pointerEvents).toBe('none');
   });
 
