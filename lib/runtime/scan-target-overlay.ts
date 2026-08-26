@@ -1,4 +1,4 @@
-export type ScanTargetHighlightTone = 'ok' | 'review' | 'fail';
+export type ScanTargetHighlightTone = 'inspect' | 'ok' | 'review' | 'fail';
 
 export interface ScanTargetHighlightOptions {
   tone?: ScanTargetHighlightTone;
@@ -66,8 +66,13 @@ export function locateScanTargetInPage(
     }
   }
 
-  const tone = options.tone ?? 'fail';
+  const tone = options.tone ?? 'inspect';
   const colors: Record<ScanTargetHighlightTone, { solid: string; ring: string; fill: string }> = {
+    inspect: {
+      solid: '#7c3aed',
+      ring: 'rgba(124, 58, 237, 0.34)',
+      fill: 'rgba(124, 58, 237, 0.08)',
+    },
     ok: {
       solid: '#08745b',
       ring: 'rgba(8, 116, 91, 0.32)',
