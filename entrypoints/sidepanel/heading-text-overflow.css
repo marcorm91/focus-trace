@@ -1,0 +1,9 @@
+/* Preserve the compact single-line heading labels while keeping the simplified
+   hierarchy from final-review-polish.css. HeadingTreeView detects truncation and
+   exposes the full text through title only when it is actually clipped. */
+.heading-tree-row .heading-node > span {
+  min-width: 0;
+  overflow: hidden !important;
+  text-overflow: ellipsis !important;
+  white-space: nowrap !important;
+}
