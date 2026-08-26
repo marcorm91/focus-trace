@@ -198,8 +198,10 @@ export default function App() {
           'El elemento ya no está presente en la página. Vuelve a ejecutar el análisis.',
         ));
       }
+      return result;
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
+      return undefined;
     }
   }, [language, tabId]);
 
