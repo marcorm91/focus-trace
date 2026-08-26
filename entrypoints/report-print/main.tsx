@@ -8,6 +8,7 @@ import {
   componentTypeLabel,
   type ReportComponentIdentity,
 } from '../../lib/report/component-identity';
+import { guidanceForIssue, reportFindingDescription } from '../../lib/report/finding-guidance';
 import { buildSessionReportModel } from '../../lib/report/session-report';
 import {
   readPrintableReportEvidence,
@@ -24,6 +25,7 @@ import type {
 } from '../../shared/types';
 import './style.css';
 import './visual-evidence.css';
+import './audit-guidance.css';
 
 interface LoadedReport {
   session: SessionState;
@@ -123,11 +125,13 @@ function PrintComponentIdentity({
       {showVisual && visual && (
         <figure className={`print-visual-evidence tone-${visual.tone}`}>
           <img src={visual.dataUrl} alt="" />
-          <figcaption>{tr(
-            language,
-            'Visual evidence captured from the analyzed page. The outlined area identifies the affected element.',
-            'Evidencia visual capturada de la página analizada. El recuadro identifica el elemento afectado.',
-          )}</figcaption>
+          <figcaption>
+            <strong>{component.componentId}</strong> · {tr(
+              language,
+              'Visual evidence from the analyzed page. The bright outlined area is the affected element; surrounding content is deliberately de-emphasized.',
+              'Evidencia visual de la página analizada. El área resaltada con el recuadro corresponde al elemento afectado; el contenido alrededor se atenúa de forma intencionada.',
+            )}
+          </figcaption>
         </figure>
       )}
       {showVisual && visualRequested && !visual && (
@@ -159,6 +163,8 @@ function Finding({
   showVisual: boolean;
 }) {
   const copy = localizedScanIssue(issue, language);
+  const guidance = guidanceForIssue(issue, language);
+  const description = reportFindingDescription(issue, language);
   return (
     <article className={`print-finding tone-${issue.outcome}`}>
       <div className="print-finding-meta">
@@ -174,7 +180,7 @@ function Finding({
         visualRequested={visualRequested}
         showVisual={showVisual}
       />
-      <p>{copy.description}</p>
+      <p className="print-finding-description">{description}</p>
       {issue.references.length > 0 && (
         <div className="print-references" aria-label={tr(language, 'Standards references', 'Referencias normativas')}>
           {issue.references.map((reference) => (
@@ -184,7 +190,50 @@ function Finding({
       )}
       <ContrastEvidence issue={issue} language={language} />
       {copy.evidence && <p className="print-evidence"><strong>{tr(language, 'Evidence:', 'Evidencia:')}</strong> {copy.evidence}</p>}
+      <div className="print-guidance">
+        <div>
+          <small>{tr(language, 'User impact', 'Impacto para el usuario')}</small>
+          <p>{guidance.impact}</p>
+        </div>
+        <div>
+          <small>{tr(language, 'Suggested fix', 'Propuesta de solución')}</small>
+          <p>{guidance.remediation}</p>
+        </div>
+        <div>
+          <small>{tr(language, 'How to verify', 'Cómo validarlo')}</small>
+          <p>{guidance.validation}</p>
+        </div>
+      </div>
     </article>
+  );
+}
+
+function ReportNotes({ language }: { language: AppLanguage }) {
+  return (
+    <section className="print-report-notes" aria-labelledby="report-notes-title">
+      <div>
+        <h2 id="report-notes-title">{tr(language, 'How to read this report', 'Cómo interpretar este informe')}</h2>
+        <p>{tr(
+          language,
+          'General limitations are stated here once so each finding can focus on the affected element, evidence and corrective action.',
+          'Las limitaciones generales se indican aquí una sola vez para que cada hallazgo se centre en el elemento afectado, la evidencia y la acción correctiva.',
+        )}</p>
+      </div>
+      <ul>
+        <li><strong>{tr(language, 'Failure:', 'Fallo:')}</strong> {tr(language,
+          'FocusTrace recorded deterministic evidence that the evaluated rule did not meet its requirement.',
+          'FocusTrace ha registrado evidencia determinista de que la regla evaluada no cumple su requisito.')}</li>
+        <li><strong>{tr(language, 'Review:', 'Revisión:')}</strong> {tr(language,
+          'the signal needs human judgement; it must not be treated automatically as a WCAG failure.',
+          'la señal necesita criterio humano; no debe tratarse automáticamente como un incumplimiento WCAG.')}</li>
+        <li><strong>{tr(language, 'Complex contrast:', 'Contraste complejo:')}</strong> {tr(language,
+          'images, gradients, transparency, overlays and other composited backgrounds can make the final contrast impossible to determine reliably. Those cases are reported for manual verification instead of manufacturing an uncertain failure.',
+          'imágenes, gradientes, transparencias, overlays y otros fondos compuestos pueden impedir determinar con fiabilidad el contraste final. Esos casos se presentan para verificación manual en lugar de fabricar un fallo incierto.')}</li>
+        <li><strong>{tr(language, 'Scope:', 'Alcance:')}</strong> {tr(language,
+          'automated evidence and runtime observations do not by themselves constitute complete WCAG conformance. Manual testing remains necessary.',
+          'la evidencia automática y las observaciones runtime no constituyen por sí solas una conformidad WCAG completa. Sigue siendo necesaria la revisión manual.')}</li>
+      </ul>
+    </section>
   );
 }
 
@@ -256,6 +305,8 @@ function PrintableReport({ report }: { report: LoadedReport }) {
             <span><strong>{tr(language, 'Rules executed', 'Reglas ejecutadas')}</strong>{scan.rulesRun}</span>
           </div>
         </header>
+
+        <ReportNotes language={language} />
 
         <section className="print-section" aria-labelledby="summary-title">
           <div className="print-section-title">

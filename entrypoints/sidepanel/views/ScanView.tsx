@@ -1,6 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
 import { colorToHex, colorToRgb, parseCssColor, suggestAccessibleForeground } from '../../../lib/audit/contrast';
+import { reportFindingDescription } from '../../../lib/report/finding-guidance';
 import { outcomeLabel, type ExplanationLevel } from '../../../lib/runtime/explanations';
+import type { ScanTargetHighlightResult } from '../../../lib/runtime/scan-target-overlay';
 import { scanCategoryForIssue, type ScanCategory } from '../../../shared/scan-categories';
 import {
   localizedScanIssue,
@@ -10,10 +12,12 @@ import {
 } from '../../../shared/i18n';
 import type { FindingOutcome, ScanIssue, ScanResult } from '../../../shared/types';
 import { Empty, Metric, ReferenceList } from '../components/Common';
+import { FindingGuidance } from '../components/FindingGuidance';
 import { SiteAuditLauncher } from '../components/SiteAuditLauncher';
 
 type ScanFilter = FindingOutcome;
 type ColorFormat = 'hex' | 'rgb';
+type LocateResult = ScanTargetHighlightResult | void;
 
 const CATEGORY_ORDER: ScanCategory[] = ['all', 'contrast', 'names', 'forms', 'structure', 'keyboard', 'aria', 'other'];
 
@@ -73,6 +77,16 @@ async function copyText(value: string): Promise<boolean> {
   }
 }
 
+function groupedByCriterion(findings: ScanIssue[]): ScanIssue[][] {
+  const groups = new Map<string, ScanIssue[]>();
+  for (const issue of findings) {
+    const existing = groups.get(issue.ruleId);
+    if (existing) existing.push(issue);
+    else groups.set(issue.ruleId, [issue]);
+  }
+  return [...groups.values()];
+}
+
 export function ScanView({
   scan,
   level,
@@ -82,7 +96,7 @@ export function ScanView({
   scan?: ScanResult | undefined;
   level: ExplanationLevel;
   language: AppLanguage;
-  onLocate: (selector: string) => void | Promise<void>;
+  onLocate: (selector: string) => LocateResult | Promise<LocateResult>;
 }) {
   const [filter, setFilter] = useState<ScanFilter>('fail');
   const [category, setCategory] = useState<ScanCategory>('all');
@@ -149,6 +163,7 @@ export function ScanView({
   }
 
   const findings = filteredGroups[filter];
+  const criterionGroups = groupedByCriterion(findings);
   const totalFindings = allFindings.length;
   const tabs: Array<{ id: ScanFilter; label: string; count: number }> = [
     { id: 'fail', label: tr(language, 'Failures', 'Fallos'), count: filteredGroups.fail.length },
@@ -198,6 +213,15 @@ export function ScanView({
         </div>
       ) : (
         <>
+          <div className="scan-results-note">
+            <strong>{tr(language, 'Less repetition, more context', 'Menos repetición, más contexto')}</strong>
+            <p>{tr(
+              language,
+              'Each criterion is shown once. Open it to move through the affected elements. The </> action highlights the current element and opens its compact DOM fragment. Complex contrast reviews require manual verification and are not automatic WCAG failures.',
+              'Cada criterio se muestra una sola vez. Ábrelo para recorrer los elementos afectados. La acción </> destaca el elemento actual y abre su fragmento DOM compacto. Las revisiones de contraste complejo requieren verificación manual y no son fallos WCAG automáticos.',
+            )}</p>
+          </div>
+
           <div className="scan-category-filter">
             <strong>{tr(language, 'Filter by area', 'Filtrar por área')}</strong>
             <div role="group" aria-label={tr(language, 'Accessibility area', 'Área de accesibilidad')}>
@@ -240,19 +264,20 @@ export function ScanView({
             aria-labelledby={`scan-tab-${filter}`}
             className="scan-results-panel"
           >
-            {findings.length === 0 ? (
+            {criterionGroups.length === 0 ? (
               <div className="scan-filter-empty">
                 {tr(language, 'No findings in this category.', 'No hay resultados en esta categoría.')}
               </div>
             ) : (
-              <div className="issue-list">
-                {findings.map((issue) => (
-                  <FindingCard
-                    issue={issue}
+              <div className="scan-rule-list">
+                {criterionGroups.map((issues, index) => (
+                  <FindingRuleAccordion
+                    issues={issues}
                     level={level}
                     language={language}
                     onLocate={onLocate}
-                    key={issue.id}
+                    defaultOpen={index === 0}
+                    key={issues[0]!.ruleId}
                   />
                 ))}
               </div>
@@ -261,6 +286,74 @@ export function ScanView({
         </>
       )}
     </section>
+  );
+}
+
+function FindingRuleAccordion({
+  issues,
+  level,
+  language,
+  onLocate,
+  defaultOpen,
+}: {
+  issues: ScanIssue[];
+  level: ExplanationLevel;
+  language: AppLanguage;
+  onLocate: (selector: string) => LocateResult | Promise<LocateResult>;
+  defaultOpen: boolean;
+}) {
+  const [index, setIndex] = useState(0);
+  const first = issues[0]!;
+  const issue = issues[Math.min(index, issues.length - 1)]!;
+  const copy = localizedScanIssue(first, language);
+
+  useEffect(() => {
+    if (index < issues.length) return;
+    setIndex(Math.max(0, issues.length - 1));
+  }, [index, issues.length]);
+
+  return (
+    <details className={`scan-rule-group outcome-${first.outcome}`} open={defaultOpen ? true : undefined}>
+      <summary>
+        <span className={`scan-rule-outcome ${first.outcome}`}>{outcomeLabel(first.outcome, level, language)}</span>
+        <span className="scan-rule-title">
+          <strong>{copy.title}</strong>
+          <small>{first.ruleId} · {localizedSeverity(first.severity, language)}</small>
+        </span>
+        <span className="scan-rule-count" aria-label={tr(language, `${issues.length} affected elements`, `${issues.length} elementos afectados`)}>{issues.length}</span>
+        <span className="scan-rule-chevron" aria-hidden="true">⌄</span>
+      </summary>
+
+      <div className="scan-rule-body">
+        {level !== 'simple' && first.references.length > 0 && (
+          <ReferenceList references={first.references} language={language} />
+        )}
+
+        {issues.length > 1 && (
+          <div className="scan-occurrence-pager" aria-label={tr(language, 'Affected element navigation', 'Navegación entre elementos afectados')}>
+            <button
+              type="button"
+              disabled={index === 0}
+              aria-label={tr(language, 'Previous affected element', 'Elemento afectado anterior')}
+              onClick={() => setIndex((current) => Math.max(0, current - 1))}
+            >
+              ‹
+            </button>
+            <strong>{index + 1} {tr(language, 'of', 'de')} {issues.length}</strong>
+            <button
+              type="button"
+              disabled={index >= issues.length - 1}
+              aria-label={tr(language, 'Next affected element', 'Siguiente elemento afectado')}
+              onClick={() => setIndex((current) => Math.min(issues.length - 1, current + 1))}
+            >
+              ›
+            </button>
+          </div>
+        )}
+
+        <FindingCard issue={issue} level={level} language={language} onLocate={onLocate} />
+      </div>
+    </details>
   );
 }
 
@@ -273,12 +366,18 @@ function FindingCard({
   issue: ScanIssue;
   level: ExplanationLevel;
   language: AppLanguage;
-  onLocate: (selector: string) => void | Promise<void>;
+  onLocate: (selector: string) => LocateResult | Promise<LocateResult>;
 }) {
   const copy = localizedScanIssue(issue, language);
+  const description = reportFindingDescription(issue, language);
   const target = issue.targets[0];
   const [colorFormat, setColorFormat] = useState<ColorFormat>('hex');
   const [copiedKey, setCopiedKey] = useState<string>();
+  const [domSnippet, setDomSnippet] = useState<string>();
+
+  useEffect(() => {
+    setDomSnippet(undefined);
+  }, [issue.id]);
 
   const suggestion = useMemo(() => {
     if (issue.outcome !== 'fail') return undefined;
@@ -294,15 +393,39 @@ function FindingCard({
     window.setTimeout(() => setCopiedKey((current) => current === key ? undefined : current), 1200);
   };
 
+  const inspectTarget = async () => {
+    if (!target) return;
+    const result = await onLocate(target);
+    if (result && typeof result === 'object' && result.snippet) setDomSnippet(result.snippet);
+  };
+
   return (
-    <article className="issue scan-issue">
-      <div className="finding-meta">
-        <span className={`outcome ${issue.outcome}`}>{outcomeLabel(issue.outcome, level, language)}</span>
-        {level !== 'simple' && <span className={`severity ${issue.severity}`}>{localizedSeverity(issue.severity, language)}</span>}
-        {level !== 'simple' && <code>{issue.ruleId}</code>}
-      </div>
-      <h3>{copy.title}</h3>
-      <p>{copy.description}</p>
+    <article className="scan-occurrence">
+      <p className="scan-occurrence-description">{description}</p>
+
+      {target && (
+        <div className="finding-location">
+          <div>
+            <small>{tr(language, 'Element location', 'Ubicación del elemento')}</small>
+            <code title={target}>{target}</code>
+          </div>
+          <button
+            type="button"
+            aria-label={tr(language, 'Highlight element and inspect its DOM', 'Destacar elemento e inspeccionar su DOM')}
+            title={tr(language, 'Highlight element and inspect its DOM', 'Destacar elemento e inspeccionar su DOM')}
+            onClick={() => void inspectTarget()}
+          >
+            <span aria-hidden="true">&lt;/&gt;</span>
+          </button>
+        </div>
+      )}
+
+      {domSnippet && (
+        <details className="finding-dom" open>
+          <summary>{tr(language, 'DOM fragment', 'Fragmento DOM')}</summary>
+          <pre><code>{domSnippet}</code></pre>
+        </details>
+      )}
 
       {issue.contrast && (
         <div className={`contrast-evidence ${issue.outcome}`}>
@@ -377,17 +500,10 @@ function FindingCard({
                   {copiedKey === 'suggestion' ? tr(language, 'Copied', 'Copiado') : tr(language, 'Copy', 'Copiar')}
                 </button>
               </div>
-              <p>
-                {tr(
-                  language,
-                  'FocusTrace adjusts the current visual color toward black or white and picks the smallest sRGB change that reaches the required ratio. It does not claim a global perceptual nearest color.',
-                  'FocusTrace ajusta el color visual actual hacia negro o blanco y elige el menor cambio sRGB que alcanza el ratio requerido. No pretende ser el color perceptualmente más cercano posible.',
-                )}
-              </p>
             </div>
           )}
 
-          {issue.contrast.reason && <p>{issue.contrast.reason}</p>}
+          {issue.contrast.reason && issue.outcome !== 'review' && <p>{issue.contrast.reason}</p>}
         </div>
       )}
 
@@ -396,6 +512,7 @@ function FindingCard({
           <strong>{tr(language, 'Evidence:', 'Evidencia:')}</strong> {copy.evidence}
         </p>
       )}
+
       {level !== 'simple' && issue.accessibleName && (
         <details className="name-computation">
           <summary>{tr(language, 'Accessible name calculation', 'Cálculo del nombre accesible')}</summary>
@@ -432,13 +549,8 @@ function FindingCard({
           )}
         </details>
       )}
-      {level !== 'simple' && <ReferenceList references={issue.references} language={language} />}
-      {target && (
-        <button className="locate-finding" type="button" onClick={() => void onLocate(target)}>
-          <span aria-hidden="true">⌖</span>
-          {tr(language, 'Locate on page', 'Localizar en la página')}
-        </button>
-      )}
+
+      <FindingGuidance issue={issue} language={language} />
     </article>
   );
 }

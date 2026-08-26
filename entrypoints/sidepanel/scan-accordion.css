@@ -1,0 +1,243 @@
+.scan-results-note {
+  display: grid;
+  gap: 4px;
+  padding: 10px 11px;
+  border: 1px solid color-mix(in srgb, #4f46e5 24%, transparent);
+  border-left: 4px solid #4f46e5;
+  border-radius: 9px;
+  background: color-mix(in srgb, #4f46e5 5%, Canvas);
+}
+
+.scan-results-note strong {
+  font-size: 11px;
+}
+
+.scan-results-note p {
+  margin: 0;
+  color: var(--ft-muted, GrayText);
+  font-size: 10px;
+  line-height: 1.45;
+}
+
+.scan-rule-list {
+  display: grid;
+  gap: 8px;
+}
+
+.scan-rule-group {
+  overflow: hidden;
+  border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 14%, transparent));
+  border-left: 4px solid #667085;
+  border-radius: 10px;
+  background: var(--ft-surface, Canvas);
+}
+
+.scan-rule-group.outcome-fail { border-left-color: #b42318; }
+.scan-rule-group.outcome-review { border-left-color: #b54708; }
+.scan-rule-group.outcome-warning { border-left-color: #8a6c00; }
+
+.scan-rule-group > summary {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  gap: 8px;
+  align-items: center;
+  padding: 10px 11px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.scan-rule-group > summary::-webkit-details-marker { display: none; }
+
+.scan-rule-group[open] > summary {
+  border-bottom: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 12%, transparent));
+  background: var(--ft-surface-subtle, color-mix(in srgb, CanvasText 3%, Canvas));
+}
+
+.scan-rule-outcome {
+  min-width: 42px;
+  padding: 3px 6px;
+  border-radius: 999px;
+  text-align: center;
+  font-size: 8.5px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.scan-rule-outcome.fail { background: #fff0ed; color: #b42318; }
+.scan-rule-outcome.review { background: #fff4e8; color: #b54708; }
+.scan-rule-outcome.warning { background: #fff9db; color: #765d00; }
+
+.scan-rule-title {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.scan-rule-title strong {
+  overflow-wrap: anywhere;
+  font-size: 11.5px;
+  line-height: 1.35;
+}
+
+.scan-rule-title small {
+  color: var(--ft-muted, GrayText);
+  font-size: 9px;
+}
+
+.scan-rule-count {
+  min-width: 25px;
+  padding: 3px 7px;
+  border-radius: 999px;
+  background: var(--ft-surface-subtle, color-mix(in srgb, CanvasText 9%, Canvas));
+  text-align: center;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.scan-rule-chevron {
+  font-size: 14px;
+  transform: rotate(-90deg);
+  transition: transform .15s ease;
+}
+
+.scan-rule-group[open] .scan-rule-chevron { transform: rotate(0); }
+
+.scan-rule-body {
+  display: grid;
+  gap: 9px;
+  padding: 10px;
+}
+
+.scan-occurrence-pager {
+  display: grid;
+  grid-template-columns: 32px minmax(0, 1fr) 32px;
+  gap: 7px;
+  align-items: center;
+  width: min(190px, 100%);
+  margin-inline: auto;
+}
+
+.scan-occurrence-pager button {
+  width: 32px;
+  height: 30px;
+  border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 16%, transparent));
+  border-radius: 7px;
+  background: var(--ft-surface, Canvas);
+  color: inherit;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+.scan-occurrence-pager button:disabled {
+  opacity: .38;
+  cursor: default;
+}
+
+.scan-occurrence-pager strong {
+  text-align: center;
+  font-size: 10.5px;
+}
+
+.scan-occurrence {
+  min-width: 0;
+  display: grid;
+  gap: 8px;
+}
+
+.scan-occurrence-description {
+  margin: 0;
+  color: var(--ft-text, CanvasText);
+  font-size: 11px;
+  line-height: 1.5;
+}
+
+.finding-location {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 40px;
+  gap: 7px;
+  align-items: stretch;
+  border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 14%, transparent));
+  border-radius: 8px;
+  background: var(--ft-surface-subtle, color-mix(in srgb, CanvasText 3%, Canvas));
+  overflow: hidden;
+}
+
+.finding-location > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 8px 9px;
+}
+
+.finding-location small {
+  color: var(--ft-muted, GrayText);
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.finding-location code {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 10px;
+}
+
+.finding-location button {
+  border: 0;
+  border-left: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 14%, transparent));
+  background: color-mix(in srgb, #7c3aed 8%, Canvas);
+  color: #5b21b6;
+  cursor: pointer;
+  font-size: 10px;
+  font-weight: 900;
+}
+
+.finding-location button:hover,
+.finding-location button:focus-visible {
+  background: color-mix(in srgb, #7c3aed 15%, Canvas);
+}
+
+.finding-dom {
+  overflow: hidden;
+  border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 14%, transparent));
+  border-radius: 8px;
+  background: #111827;
+  color: #f8fafc;
+}
+
+.finding-dom > summary {
+  padding: 7px 9px;
+  cursor: pointer;
+  font-size: 9.5px;
+  font-weight: 800;
+}
+
+.finding-dom pre {
+  max-height: 150px;
+  margin: 0;
+  padding: 9px;
+  overflow: auto;
+  border-top: 1px solid rgba(255,255,255,.12);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.finding-dom code {
+  color: inherit;
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+@media (max-width: 420px) {
+  .scan-rule-group > summary {
+    grid-template-columns: minmax(0, 1fr) auto auto;
+  }
+
+  .scan-rule-outcome {
+    grid-column: 1 / -1;
+    width: fit-content;
+  }
+}

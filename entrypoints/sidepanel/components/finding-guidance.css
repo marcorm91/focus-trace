@@ -1,0 +1,32 @@
+.finding-guidance {
+  display: grid;
+  gap: 7px;
+  margin-top: 2px;
+}
+
+.finding-guidance section {
+  display: grid;
+  gap: 4px;
+  padding: 9px 10px;
+  border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 12%, transparent));
+  border-radius: 8px;
+  background: var(--ft-surface-subtle, color-mix(in srgb, CanvasText 3%, Canvas));
+}
+
+.finding-guidance .finding-guidance-fix {
+  border-color: color-mix(in srgb, #08745b 30%, transparent);
+  background: color-mix(in srgb, #08745b 6%, Canvas);
+}
+
+.finding-guidance small {
+  color: var(--ft-muted, GrayText);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.finding-guidance p {
+  margin: 0;
+  color: inherit;
+  font-size: 14px;
+  line-height: 1.5;
+}

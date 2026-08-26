@@ -7,6 +7,7 @@ import App from './App';
 import './style.css';
 import './focus-graph.css';
 import './scan-settings.css';
+import './scan-accordion.css';
 import './ux-polish.css';
 import './settings-scale.css';
 import './ui-scale.css';
