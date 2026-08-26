@@ -24,7 +24,7 @@ describe('UX polish contract', () => {
     expect(css).toContain('border-bottom-left-radius');
   });
 
-  it('uses the same modern SVG-mask icon language for primary navigation and actions', () => {
+  it('uses the same modern SVG-mask icon language without shrinking navigation affordances', () => {
     const css = source('entrypoints/sidepanel/modern-icons.css');
     expect(css).toContain('--ft-i-review');
     expect(css).toContain('--ft-i-trace');
@@ -34,6 +34,9 @@ describe('UX polish contract', () => {
     expect(css).toContain('--ft-i-site');
     expect(css).toContain('--ft-i-code');
     expect(css).toContain('-webkit-mask: var(--ft-mask)');
+    expect(css).toContain('width: 28px !important');
+    expect(css).toContain('height: 28px !important');
+    expect(css).toContain('font-size: 19px !important');
 
     const entry = source('entrypoints/sidepanel/main.tsx');
     expect(entry).toContain("import './heading-tree-visual.css';");
