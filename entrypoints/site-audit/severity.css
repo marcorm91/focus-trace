@@ -14,9 +14,9 @@
   gap: 9px;
   margin-top: 12px;
   padding: 12px;
-  border: 1.5px solid var(--ft-site-border, #263545);
+  border: 1.5px solid var(--ft-border, #263545);
   border-radius: 9px;
-  background: var(--ft-site-surface, #fff);
+  background: var(--ft-surface, #fff);
 }
 
 .site-impact-summary > div:first-child {
@@ -29,7 +29,7 @@
 }
 
 .site-impact-summary > div:first-child small {
-  color: var(--ft-site-muted, #65717d);
+  color: var(--ft-muted, #65717d);
   font-size: 11px;
 }
 
@@ -43,10 +43,10 @@
   display: grid;
   gap: 2px;
   padding: 8px 9px;
-  border: 1px solid var(--ft-site-border-soft, #cfd5dc);
+  border: 1px solid var(--ft-border-soft, #cfd5dc);
   border-top-width: 4px;
   border-radius: 7px;
-  background: var(--ft-site-surface-subtle, #f4f6f8);
+  background: var(--ft-surface-subtle, #f4f6f8);
 }
 
 .site-impact-counts strong {
@@ -77,7 +77,7 @@
   padding: 3px 6px;
   border: 1px solid currentColor;
   border-radius: 999px;
-  background: var(--ft-site-surface, #fff);
+  background: var(--ft-surface, #fff);
 }
 
 .finding-severity.severity-critical,
@@ -89,10 +89,10 @@
 .finding-severity.severity-minor,
 .finding-severity-context.severity-minor strong { color: var(--ft-severity-minor-aaa); }
 .finding-severity.severity-info,
-.finding-severity-context.severity-info strong { color: var(--ft-site-muted, #65717d); }
+.finding-severity-context.severity-info strong { color: var(--ft-muted, #65717d); }
 
 .finding-severity-context {
-  border-left: 4px solid var(--ft-site-border-soft, #cfd5dc);
+  border-left: 4px solid var(--ft-border-soft, #cfd5dc);
 }
 
 .finding-severity-context.severity-critical { border-left-color: var(--ft-severity-critical-aa); }
