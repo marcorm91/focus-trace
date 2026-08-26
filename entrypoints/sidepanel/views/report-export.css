@@ -2,8 +2,15 @@
   display: none;
 }
 
+.trace-first-report > .report-hero > div:first-child {
+  min-width: 0;
+  flex: 1 1 220px;
+}
+
 .report-export-tools {
-  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 100%;
+  flex: 0 1 auto;
   display: flex;
   flex-wrap: wrap;
   align-items: center;
@@ -12,6 +19,8 @@
 }
 
 .report-visual-evidence-option {
+  min-width: 0;
+  max-width: 100%;
   display: inline-flex;
   gap: 6px;
   align-items: center;
@@ -21,10 +30,10 @@
   border-radius: 8px;
   background: color-mix(in srgb, var(--ft-brand, Highlight) 3%, Canvas);
   cursor: pointer;
-  white-space: nowrap;
 }
 
 .report-visual-evidence-option input {
+  flex: 0 0 auto;
   width: 17px;
   height: 17px;
   margin: 0;
@@ -36,7 +45,10 @@
 }
 
 .report-visual-evidence-option strong {
+  display: block;
+  overflow-wrap: anywhere;
   font-size: 14px;
+  line-height: 1.25;
 }
 
 .report-visual-evidence-option small {
@@ -44,7 +56,9 @@
 }
 
 .report-export-actions {
-  flex: 0 0 auto;
+  min-width: 0;
+  max-width: 100%;
+  flex: 0 1 auto;
   display: flex;
   flex-wrap: wrap;
   justify-content: flex-end;
@@ -52,6 +66,7 @@
 }
 
 .report-export-actions button {
+  min-width: 0;
   min-height: 36px;
   display: inline-flex;
   align-items: center;
@@ -64,6 +79,8 @@
   color: inherit;
   cursor: pointer;
   font-weight: 800;
+  white-space: normal;
+  text-align: center;
 }
 
 .report-export-actions .export-pdf-report {
@@ -77,32 +94,36 @@
   cursor: default;
 }
 
-@media (max-width: 520px) {
+@media (max-width: 720px) {
   .report-hero {
     display: grid;
   }
 
-  .report-export-tools,
-  .report-export-actions {
+  .report-export-tools {
     width: 100%;
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    justify-content: stretch;
   }
 
-  .report-export-tools {
+  .report-visual-evidence-option {
+    width: 100%;
+    box-sizing: border-box;
     justify-content: flex-start;
   }
 
   .report-export-actions {
+    width: 100%;
     display: grid;
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .report-export-actions button {
+    width: 100%;
   }
 }
 
 @media (max-width: 360px) {
-  .report-visual-evidence-option {
-    width: 100%;
-    justify-content: flex-start;
-  }
-
   .report-export-actions {
     grid-template-columns: 1fr;
   }
