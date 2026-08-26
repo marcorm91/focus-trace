@@ -37,7 +37,7 @@ export function normalizeDiscoveredUrl(value: string, origin: string): string | 
 export function sitemapLocations(xml: string): { kind: 'index' | 'urls' | 'unknown'; locations: string[] } {
   const root = /<\s*(?:[\w-]+:)?(sitemapindex|urlset)\b/i.exec(xml)?.[1]?.toLowerCase();
   const locations = [...xml.matchAll(/<\s*(?:[\w-]+:)?loc\b[^>]*>([\s\S]*?)<\s*\/\s*(?:[\w-]+:)?loc\s*>/gi)]
-    .map((match) => decodeXml(match[1].trim()))
+    .map((match) => decodeXml(match[1]?.trim() ?? ''))
     .filter(Boolean);
   return {
     kind: root === 'sitemapindex' ? 'index' : root === 'urlset' ? 'urls' : 'unknown',
