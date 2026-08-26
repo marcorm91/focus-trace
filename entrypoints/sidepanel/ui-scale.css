@@ -15,9 +15,44 @@ html[data-ft-ui-scale='130'] {
 }
 
 /*
- * FocusTrace currently targets Chromium. CSS zoom keeps the established px-based
- * type hierarchy, controls and spacing proportional. The reciprocal width keeps
- * the scaled root inside the side-panel viewport instead of creating x-overflow.
+ * FocusTrace is a dense debugging surface, but no readable UI copy should drop
+ * below 14px. Existing component styles still control weight, spacing and color;
+ * this final cascade layer only establishes the minimum readable size.
+ */
+.app-shell * {
+  font-size: max(14px, 1em) !important;
+}
+
+.app-shell h1 {
+  font-size: 22px !important;
+}
+
+.app-shell h2,
+.app-shell .contrast-ratio strong,
+.app-shell .report-scoreline strong,
+.app-shell .trace-metrics strong {
+  font-size: 20px !important;
+}
+
+.app-shell h3 {
+  font-size: 18px !important;
+}
+
+.app-shell h4,
+.app-shell .metric > strong {
+  font-size: 16px !important;
+}
+
+/* Decorative marks intentionally carry no text. */
+.app-shell .brand-mark,
+.app-shell .about-mark {
+  font-size: 0 !important;
+}
+
+/*
+ * CSS zoom keeps the established px-based type hierarchy, controls and spacing
+ * proportional. The reciprocal width keeps the scaled root inside the side-panel
+ * viewport instead of creating horizontal overflow.
  */
 html[data-ft-ui-scale='110'] #root {
   width: 90.9091%;
