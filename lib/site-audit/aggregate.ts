@@ -1,3 +1,4 @@
+import type { ReportComponentIdentity } from '../report/component-identity';
 import type { ScanIssue } from '../../shared/types';
 import type {
   SiteAuditFindingAggregate,
@@ -21,27 +22,51 @@ function allIssues(page: SiteAuditPageResult): ScanIssue[] {
   return [...page.scan.issues, ...page.scan.review, ...(page.scan.warnings ?? [])];
 }
 
+function componentForSelector(page: SiteAuditPageResult, selector: string): ReportComponentIdentity | undefined {
+  return page.components?.find((component) => component.selector === selector);
+}
+
 function aggregateFindings(pages: SiteAuditPageResult[]): SiteAuditFindingAggregate[] {
   const successful = pages.filter((page) => page.scan);
   const totalSamples = successful.length;
   const groups = new Map<string, {
     issue: ScanIssue;
     targetShape: string;
+    exampleUrl: string;
+    exampleSelector: string;
+    component?: ReportComponentIdentity;
     pages: Set<string>;
   }>();
 
   for (const page of successful) {
     const seenOnPage = new Set<string>();
     for (const issue of allIssues(page)) {
-      const targetShape = normalizeTargetShape(issue.targets[0] ?? 'page');
+      const exampleSelector = issue.targets[0] ?? 'page';
+      const targetShape = normalizeTargetShape(exampleSelector);
       const key = `${issue.ruleId}|${issue.outcome}|${targetShape}`;
       if (seenOnPage.has(key)) continue;
       seenOnPage.add(key);
-      const current = groups.get(key) ?? { issue, targetShape, pages: new Set<string>() };
+      const current = groups.get(key) ?? {
+        issue,
+        targetShape,
+        exampleUrl: page.url,
+        exampleSelector,
+        component: componentForSelector(page, exampleSelector),
+        pages: new Set<string>(),
+      };
       current.pages.add(page.url);
       groups.set(key, current);
     }
   }
+
+  const componentIds = new Map<string, string>();
+  const nextComponentId = (targetShape: string) => {
+    const existing = componentIds.get(targetShape);
+    if (existing) return existing;
+    const id = `E${String(componentIds.size + 1).padStart(2, '0')}`;
+    componentIds.set(targetShape, id);
+    return id;
+  };
 
   return [...groups.entries()]
     .map(([key, value]) => ({
@@ -53,10 +78,14 @@ function aggregateFindings(pages: SiteAuditPageResult[]): SiteAuditFindingAggreg
       pages: [...value.pages],
       sampleCount: value.pages.size,
       totalSamples,
-      commonToTemplate: totalSamples > 0
-        && value.pages.size === totalSamples
-        && (totalSamples > 1 || pages.length === 1),
+      commonToTemplate: totalSamples > 1 && value.pages.size === totalSamples,
       references: value.issue.references,
+      exampleUrl: value.exampleUrl,
+      exampleSelector: value.exampleSelector,
+      exampleIssue: value.issue,
+      ...(value.component
+        ? { component: { ...value.component, componentId: nextComponentId(value.targetShape) } }
+        : {}),
     }))
     .sort((a, b) => {
       const outcomeOrder = { fail: 0, review: 1, warning: 2 } as const;
