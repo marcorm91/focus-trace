@@ -1,29 +1,33 @@
+.trace-first-report > .report-hero {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) max-content;
+  grid-template-areas:
+    "copy evidence"
+    "actions actions";
+  align-items: start;
+}
+
 .trace-first-report > .report-hero .report-kicker {
   display: none;
 }
 
 .trace-first-report > .report-hero > div:first-child {
+  grid-area: copy;
   min-width: 0;
-  flex: 1 1 220px;
 }
 
 .report-export-tools {
-  min-width: 0;
-  max-width: 100%;
-  flex: 0 1 auto;
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: flex-end;
-  gap: 7px;
+  display: contents;
 }
 
 .report-visual-evidence-option {
+  grid-area: evidence;
   min-width: 0;
   max-width: 100%;
   display: inline-flex;
   gap: 6px;
   align-items: center;
+  justify-self: end;
   min-height: 36px;
   padding: 6px 9px;
   border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 16%, transparent));
@@ -56,12 +60,13 @@
 }
 
 .report-export-actions {
+  grid-area: actions;
   min-width: 0;
   max-width: 100%;
-  flex: 0 1 auto;
+  justify-self: start;
   display: flex;
   flex-wrap: wrap;
-  justify-content: flex-end;
+  justify-content: flex-start;
   gap: 7px;
 }
 
@@ -95,23 +100,6 @@
 }
 
 @media (max-width: 720px) {
-  .report-hero {
-    display: grid;
-  }
-
-  .report-export-tools {
-    width: 100%;
-    display: grid;
-    grid-template-columns: minmax(0, 1fr);
-    justify-content: stretch;
-  }
-
-  .report-visual-evidence-option {
-    width: 100%;
-    box-sizing: border-box;
-    justify-content: flex-start;
-  }
-
   .report-export-actions {
     width: 100%;
     display: grid;
@@ -120,6 +108,23 @@
 
   .report-export-actions button {
     width: 100%;
+  }
+}
+
+@media (max-width: 520px) {
+  .trace-first-report > .report-hero {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "copy"
+      "evidence"
+      "actions";
+  }
+
+  .report-visual-evidence-option {
+    width: 100%;
+    box-sizing: border-box;
+    justify-self: stretch;
+    justify-content: flex-start;
   }
 }
 
