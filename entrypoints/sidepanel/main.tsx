@@ -4,6 +4,7 @@ import { browser } from '#imports';
 import { armReportVisualEvidencePermissionRequest } from '../../lib/report/visual-evidence';
 import { normalizeUiScale, UI_SCALE_STORAGE_KEY } from '../../shared/ui-scale';
 import App from './App';
+import { ImpactMatrix } from './components/ImpactMatrix';
 import './style.css';
 import './focus-graph.css';
 import './scan-settings.css';
@@ -41,5 +42,6 @@ document.addEventListener('click', (event) => {
 createRoot(root).render(
   <React.StrictMode>
     <App />
+    <ImpactMatrix />
   </React.StrictMode>
 );
