@@ -79,7 +79,31 @@ describe('Site Audit route sampling', () => {
 });
 
 describe('Site Audit finding aggregation', () => {
-  it('marks a normalized finding as template-wide only when every sample has it', () => {
+  it('marks the same structural target as template-wide when every sample has it', () => {
+    const family: SiteAuditRouteFamily = {
+      id: 'R01',
+      pattern: '/product/:item',
+      urls: ['https://shop.test/product/a', 'https://shop.test/product/b', 'https://shop.test/product/c'],
+      sampleUrls: ['https://shop.test/product/a', 'https://shop.test/product/b', 'https://shop.test/product/c'],
+    };
+    const first = family.urls[0]!;
+    const second = family.urls[1]!;
+    const third = family.urls[2]!;
+    const selector = 'main > article > p:nth-of-type(2)';
+    const pages: SiteAuditPageResult[] = [
+      { url: first, routeFamilyId: family.id, scan: scan(first, selector) },
+      { url: second, routeFamilyId: family.id, scan: scan(second, selector) },
+      { url: third, routeFamilyId: family.id, scan: scan(third, selector) },
+    ];
+    const template = buildSiteAuditTemplates([family], pages)[0]!;
+    const finding = template.findings[0]!;
+    expect(template.findings).toHaveLength(1);
+    expect(finding.targetShape).toBe(selector);
+    expect(finding.commonToTemplate).toBe(true);
+    expect(finding.sampleCount).toBe(3);
+  });
+
+  it('does not conflate the same rule on different positional targets', () => {
     const family: SiteAuditRouteFamily = {
       id: 'R01',
       pattern: '/product/:item',
@@ -95,14 +119,12 @@ describe('Site Audit finding aggregation', () => {
       { url: third, routeFamilyId: family.id, scan: scan(third, 'main > p:nth-of-type(8)') },
     ];
     const template = buildSiteAuditTemplates([family], pages)[0]!;
-    const finding = template.findings[0]!;
-    expect(template.findings).toHaveLength(1);
-    expect(finding.targetShape).toBe('main > p:nth-of-type(*)');
-    expect(finding.commonToTemplate).toBe(true);
-    expect(finding.sampleCount).toBe(3);
+    expect(template.findings).toHaveLength(3);
+    expect(template.findings.every((finding) => !finding.commonToTemplate)).toBe(true);
+    expect(template.findings.every((finding) => finding.sampleCount === 1)).toBe(true);
   });
 
-  it('keeps page-specific findings as variations', () => {
+  it('keeps page-specific findings as variations and normalizes clearly dynamic ids', () => {
     const family: SiteAuditRouteFamily = {
       id: 'R01',
       pattern: '/product/:item',
