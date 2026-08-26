@@ -1,0 +1,82 @@
+/* Follow-up polish from hands-on sidepanel review. Loaded last. */
+
+/* Settings is a focused sub-view: keep the brand, remove workspace chrome. */
+html[data-ft-settings-open='true'] .quick-start,
+html[data-ft-settings-open='true'] .workspace-nav,
+html[data-ft-settings-open='true'] .topbar-tools,
+html[data-ft-settings-open='true'] .error {
+  display: none !important;
+}
+
+html[data-ft-settings-open='true'] .topbar {
+  margin-bottom: 14px;
+}
+
+.settings-back-trigger {
+  width: fit-content;
+  min-height: 38px;
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  justify-self: start;
+  padding: 7px 11px;
+  border: 1.5px solid var(--ft-border);
+  border-radius: var(--ft-radius-sm);
+  background: var(--ft-surface);
+  color: var(--ft-ink);
+  box-shadow: var(--ft-shadow-sm);
+  cursor: pointer;
+  font-weight: 850;
+}
+
+.settings-back-trigger:not(:disabled):hover {
+  background: var(--ft-accent-soft);
+}
+
+.settings-back-trigger span[aria-hidden='true'] {
+  font-size: 18px;
+  line-height: 1;
+}
+
+/* Use the transparent product mark directly instead of placing it on a tile. */
+.brand-mark {
+  border: 0 !important;
+  background-color: transparent !important;
+  background-size: 38px 38px !important;
+  box-shadow: none !important;
+}
+
+/* Findings and recommendations must read as separate cards, not one long block. */
+.report-finding-list {
+  gap: 10px !important;
+  padding-top: 8px !important;
+  border-top: 0 !important;
+}
+
+.report-finding {
+  padding: 12px !important;
+  border: 1.5px solid var(--ft-border-soft) !important;
+  border-radius: var(--ft-radius-md) !important;
+  background: var(--ft-surface) !important;
+}
+
+.report-finding:last-child {
+  border-bottom: 1.5px solid var(--ft-border-soft) !important;
+}
+
+.suggestion-list {
+  gap: 10px !important;
+}
+
+.suggestion-list li {
+  border-top: 1px solid var(--ft-border-soft);
+  border-right: 1px solid var(--ft-border-soft);
+  border-bottom: 1px solid var(--ft-border-soft);
+  border-radius: 0 var(--ft-radius-md) var(--ft-radius-md) 0 !important;
+  padding: 11px !important;
+}
+
+/* Keep the occurrence navigator visually associated with the highlighted target. */
+.scan-occurrence-pager {
+  margin-block: 2px 4px;
+}
