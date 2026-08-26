@@ -1,6 +1,7 @@
 /* A single outline icon language for the main FocusTrace controls. Existing
-   aria-hidden glyph spans stay in the DOM as fallbacks; CSS replaces their
-   visual appearance with consistent 2px SVG masks. */
+   aria-hidden glyph spans stay in the DOM as fallbacks; CSS visually moves the
+   glyph out of view and paints a consistent 2px SVG mask without changing the
+   element's computed size/font guardrails. */
 :root {
   --ft-i-review: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='10.5' cy='10.5' r='6.5'/%3E%3Cpath d='m15.5 15.5 4 4M7.5 10.5l2 2 4-4'/%3E%3C/svg%3E");
   --ft-i-trace: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='5' cy='6' r='2'/%3E%3Ccircle cx='19' cy='18' r='2'/%3E%3Ccircle cx='12' cy='12' r='2'/%3E%3Cpath d='M6.8 7.2 10.2 10.8M13.8 13.2l3.4 3.6'/%3E%3C/svg%3E");
@@ -32,18 +33,20 @@
 .workspace-nav.tabs button > span,
 .quick-actions button > span,
 .topbar-tools button > span,
-.finding-location > button,
 .trace-button-icon {
   --ft-mask: var(--ft-i-review);
-}
-
-.workspace-nav.tabs button > span,
-.quick-actions button > span,
-.topbar-tools button > span,
-.trace-button-icon {
+  position: relative;
+  overflow: hidden;
   display: grid !important;
   place-items: center;
-  font-size: 0 !important;
+  text-indent: -9999px;
+}
+
+/* Do not lower these values: sidepanel E2E checks the navigation affordance. */
+.workspace-nav.tabs button > span {
+  width: 28px !important;
+  height: 28px !important;
+  font-size: 19px !important;
 }
 
 .workspace-nav.tabs button > span::before,
@@ -51,12 +54,16 @@
 .topbar-tools button > span::before,
 .trace-button-icon::before {
   content: '';
+  position: absolute;
+  left: 50%;
+  top: 50%;
   width: 19px;
   height: 19px;
   display: block;
   background: currentColor;
   -webkit-mask: var(--ft-mask) center / contain no-repeat;
   mask: var(--ft-mask) center / contain no-repeat;
+  transform: translate(-50%, -50%);
 }
 
 .workspace-nav.tabs button:nth-child(1) > span { --ft-mask: var(--ft-i-review); }
