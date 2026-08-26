@@ -83,7 +83,7 @@ describe('session report suggestions', () => {
       },
     ];
     const suggestions = buildSessionSuggestions(scan, events, 'en');
-    expect(suggestions.map((item) => item.title)).toContain('Focus is obscured');
+    expect(suggestions.map((item) => item.title)).toContain('The focused control may be covered by other content');
     expect(suggestions.map((item) => item.id)).not.toContain('coverage-focus');
   });
 
