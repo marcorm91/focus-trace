@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import type { ReportComponentIdentity } from '../lib/report/component-identity';
 import {
   buildTextReportFilename,
   buildTextSessionReport,
@@ -50,12 +51,30 @@ const scan: ScanResult = {
   rulesRun: 5,
 };
 
+const components: ReportComponentIdentity[] = [
+  {
+    componentId: 'E01',
+    selector: '#save',
+    tag: 'button',
+    name: 'Save changes',
+    context: ['Products', 'Featured'],
+  },
+  {
+    componentId: 'E02',
+    selector: '#muted',
+    tag: 'p',
+    text: 'Muted product description',
+    context: ['Products'],
+  },
+];
+
 describe('text session report', () => {
-  it('creates a trace-first Spanish report without exposing CSS selectors', () => {
+  it('creates a trace-first Spanish report with human component identity and no CSS selectors', () => {
     const report = buildTextSessionReport({
       scan,
       events: [],
       language: 'es',
+      components,
       generatedAt: Date.UTC(2026, 7, 25, 12, 0, 0),
     });
 
@@ -64,6 +83,9 @@ describe('text session report', () => {
     expect(report).toContain('1. MÁXIMA PRIORIDAD');
     expect(report).toContain('2. TRAZA RUNTIME');
     expect(report).toContain('3. BARRIDO COMPLETO DE PÁGINA');
+    expect(report).toContain('Elemento: E01 · Botón');
+    expect(report).toContain('Nombre / texto: Save changes');
+    expect(report).toContain('Contexto: Products › Featured');
     expect(report).toContain('Color accesible sugerido: #767676');
     expect(report).toContain('4. ESTRUCTURA DE ENCABEZADOS');
     expect(report).toContain('H3: Featured [salto de nivel]');
@@ -78,13 +100,13 @@ describe('text session report', () => {
       { id: 'focus', timestamp: 2, kind: 'focus', severity: 'info', title: 'Focus moved', element: { tag: 'button', role: 'button', name: 'Save', selector: '#save' } },
       { id: 'end', timestamp: 3, kind: 'focus-walk-end', severity: 'info', title: 'Walk ended', focusWalk: { totalCandidates: 1, focusedSteps: 1, skipped: 0, stopped: false } },
     ];
-    const report = buildTextSessionReport({ scan, events, language: 'en', generatedAt: 1 });
-    expect(report).toContain('Focus journey: Automatic Tab walk · 1 steps');
+    const report = buildTextSessionReport({ scan, events, language: 'en', components, generatedAt: 1 });
+    expect(report).toContain('Focus journey: Automatic focus walk · 1 steps');
     expect(report).toContain('2. RUNTIME TRACE');
     expect(report).not.toContain('#save');
   });
 
-  it('exports causal interaction stories with result and recommendation', () => {
+  it('exports causal interaction stories with component identity, result and recommendation', () => {
     const events: RuntimeEvent[] = [
       {
         id: 'key-1', timestamp: 10, kind: 'keydown', severity: 'info', title: 'Key: Enter', interactionId: 'ix-a-1',
@@ -97,8 +119,18 @@ describe('text session report', () => {
         references: [{ type: 'WCAG', id: '2.4.3', label: 'Focus Order', url: 'https://www.w3.org/WAI/WCAG22/Understanding/focus-order.html' }],
       },
     ];
-    const report = buildTextSessionReport({ scan, events, language: 'en', generatedAt: 1 });
+    const runtimeComponents: ReportComponentIdentity[] = [{
+      componentId: 'E03',
+      selector: '#settings',
+      tag: 'button',
+      role: 'button',
+      name: 'Open settings',
+      context: ['Header'],
+    }];
+    const report = buildTextSessionReport({ scan, events, language: 'en', components: [...components, ...runtimeComponents], generatedAt: 1 });
     expect(report).toContain('Interaction #1');
+    expect(report).toContain('Element: E03 · Button');
+    expect(report).toContain('Name / text: Open settings');
     expect(report).toContain('Result: Focus lost');
     expect(report).toContain('Recommendation: Choose a meaningful focus destination');
     expect(report).toContain('WCAG 2.4.3');
