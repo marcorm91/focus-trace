@@ -33,8 +33,8 @@ async function tabIdForPage(worker: Worker, page: Page): Promise<number> {
   }, targetUrl);
 }
 
-async function saveScan(worker: Worker, tabId: number, url: string): Promise<void> {
-  await worker.evaluate(async ({ id, pageUrl }) => {
+async function saveScan(panel: Page, tabId: number, url: string): Promise<void> {
+  await panel.evaluate(async ({ id, pageUrl }) => {
     const chromeApi = (globalThis as any).chrome;
     const reference = {
       type: 'WCAG',
@@ -83,10 +83,10 @@ test('Inspect, occurrence navigation and Review on page track the real target', 
   await inspected.goto(`${fixtures.origin}/scan-targets.html`);
   await expect(inspected.getByRole('button', { name: 'First target' })).toBeVisible();
   const tabId = await tabIdForPage(extensionWorker, inspected);
-  await saveScan(extensionWorker, tabId, inspected.url());
 
   const panel = await openSidepanel(context, extensionWorker);
   await inspected.bringToFront();
+  await saveScan(panel, tabId, inspected.url());
 
   await expect.poll(async () => panel.locator('.section-heading p').first().textContent()).toContain('Scan target navigation fixture');
 
