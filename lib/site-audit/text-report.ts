@@ -1,10 +1,49 @@
-import type { SiteAuditResult } from './model';
+import {
+  componentContextLabel,
+  componentPrimaryLabel,
+  componentTypeLabel,
+} from '../report/component-identity';
+import { localizedScanIssue, type AppLanguage } from '../../shared/i18n';
+import { remediationForIssue } from './remediation';
+import type { SiteAuditFindingAggregate, SiteAuditResult } from './model';
 
 function line(title: string, value: string | number): string {
   return `${title}: ${value}`;
 }
 
-export function buildSiteAuditTextReport(result: SiteAuditResult, language: 'en' | 'es'): string {
+function findingLines(finding: SiteAuditFindingAggregate, language: AppLanguage): string[] {
+  const es = language === 'es';
+  const issue = localizedScanIssue(finding.exampleIssue, language);
+  const reference = finding.references[0];
+  const component = finding.component;
+  const output = [
+    `- [${finding.outcome.toUpperCase()}] ${finding.ruleId} · ${issue.title}`,
+    `  ${line(es ? 'Cobertura de muestra' : 'Sample coverage', `${finding.sampleCount}/${finding.totalSamples}`)}`,
+    `  ${line(es ? 'Página representativa' : 'Representative page', finding.exampleUrl)}`,
+  ];
+
+  if (component) {
+    output.push(
+      `  ${line(es ? 'Elemento' : 'Element', `${component.componentId} · ${componentTypeLabel(component, language)} · ${componentPrimaryLabel(component)}`)}`,
+    );
+    const context = componentContextLabel(component);
+    if (context) output.push(`  ${line(es ? 'Contexto' : 'Context', context)}`);
+  }
+
+  output.push(`  ${line(es ? 'Descripción' : 'Description', issue.description)}`);
+  if (issue.evidence) output.push(`  ${line(es ? 'Evidencia' : 'Evidence', issue.evidence)}`);
+  if (reference) output.push(`  ${line(es ? 'Criterio/fuente' : 'Criterion/source', `${reference.type} ${reference.id}${reference.level ? ` (${reference.level})` : ''}`)}`);
+  if (issue.contrast) {
+    output.push(`  ${line(es ? 'Contraste' : 'Contrast', `${issue.contrast.ratio ?? 'review'}:1 / ${issue.contrast.requiredRatio}:1`)}`);
+  }
+  if (issue.accessibleName) {
+    output.push(`  ${line(es ? 'Nombre accesible' : 'Accessible name', issue.accessibleName.name || '∅')}`);
+  }
+  output.push(`  ${line(es ? 'Solución sugerida' : 'Suggested fix', remediationForIssue(finding.exampleIssue, language))}`);
+  return output;
+}
+
+export function buildSiteAuditTextReport(result: SiteAuditResult, language: AppLanguage): string {
   const es = language === 'es';
   const output: string[] = [
     es ? 'FOCUSTRACE - AUDITORÍA DE SITIO' : 'FOCUSTRACE - SITE AUDIT',
@@ -43,20 +82,15 @@ export function buildSiteAuditTextReport(result: SiteAuditResult, language: 'en'
     const common = template.findings.filter((finding) => finding.commonToTemplate);
     if (common.length) {
       output.push(es ? 'Comunes a todas las muestras:' : 'Common to every sample:');
-      common.forEach((finding) => {
-        const reference = finding.references[0];
-        output.push(`- [${finding.outcome.toUpperCase()}] ${finding.ruleId} · ${finding.title}${reference ? ` · ${reference.type} ${reference.id}` : ''}`);
-      });
-      output.push('');
+      common.forEach((finding) => output.push(...findingLines(finding, language), ''));
     }
 
     const variants = template.findings.filter((finding) => !finding.commonToTemplate);
     if (variants.length) {
-      output.push(es ? 'Variaciones encontradas:' : 'Observed variations:');
-      variants.forEach((finding) => {
-        output.push(`- [${finding.outcome.toUpperCase()}] ${finding.ruleId} · ${finding.sampleCount}/${finding.totalSamples} ${es ? 'muestras' : 'samples'} · ${finding.title}`);
-      });
-      output.push('');
+      output.push(successful.length <= 1
+        ? (es ? 'Hallazgos de la página muestreada:' : 'Findings in the sampled page:')
+        : (es ? 'Variaciones encontradas:' : 'Observed variations:'));
+      variants.forEach((finding) => output.push(...findingLines(finding, language), ''));
     }
 
     output.push(es ? 'Muestras:' : 'Samples:');
