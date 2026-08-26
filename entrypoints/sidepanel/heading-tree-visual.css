@@ -1,0 +1,156 @@
+/* Visual hierarchy for the DOM-order heading outline. The underlying order and
+   treeitem aria-level stay unchanged; connectors make parent/child depth legible. */
+.heading-tree {
+  position: relative;
+  display: grid;
+  gap: 6px;
+  padding: 8px 2px 8px 4px;
+  overflow: hidden;
+}
+
+.heading-tree-row {
+  --heading-depth: 0;
+  position: relative;
+  min-width: 0;
+  display: grid !important;
+  grid-template-columns: 38px minmax(0, 1fr) !important;
+  gap: 7px !important;
+  align-items: stretch;
+  margin: 0 0 0 calc(var(--heading-depth) * 22px) !important;
+  padding: 0 !important;
+}
+
+.heading-tree-row.level-1 { --heading-depth: 0; }
+.heading-tree-row.level-2 { --heading-depth: 1; }
+.heading-tree-row.level-3 { --heading-depth: 2; }
+.heading-tree-row.level-4 { --heading-depth: 3; }
+.heading-tree-row.level-5 { --heading-depth: 4; }
+.heading-tree-row.level-6 { --heading-depth: 5; }
+
+.heading-tree-row:not(.level-1)::before {
+  content: '';
+  position: absolute;
+  left: -14px;
+  top: -9px;
+  width: 13px;
+  height: 27px;
+  border-left: 1.5px solid var(--ft-border-soft);
+  border-bottom: 1.5px solid var(--ft-border-soft);
+  border-bottom-left-radius: 7px;
+  pointer-events: none;
+}
+
+.heading-tree-row:not(.level-1)::after {
+  content: '';
+  position: absolute;
+  left: -14px;
+  top: 18px;
+  bottom: -10px;
+  border-left: 1.5px solid var(--ft-border-faint);
+  pointer-events: none;
+}
+
+.heading-tree-row.has-signal::before {
+  border-color: var(--ft-warning);
+}
+
+.heading-tree-row .heading-level {
+  position: relative;
+  z-index: 1;
+  min-width: 38px !important;
+  width: 38px !important;
+  min-height: 38px;
+  display: grid !important;
+  place-items: center;
+  align-self: start;
+  border: 1.5px solid var(--ft-border) !important;
+  border-radius: 8px !important;
+  background: var(--ft-ink) !important;
+  color: var(--ft-surface) !important;
+  font-family: var(--ft-mono);
+  font-size: 10px !important;
+  font-weight: 900 !important;
+}
+
+.heading-tree-row.level-1 .heading-level {
+  background: var(--ft-accent-strong) !important;
+  border-color: var(--ft-accent-strong) !important;
+  color: #fff !important;
+}
+
+.heading-tree-row.has-signal .heading-level {
+  background: var(--ft-warning-soft) !important;
+  border-color: var(--ft-warning) !important;
+  color: var(--ft-warning) !important;
+  box-shadow: inset 3px 0 0 var(--ft-warning);
+}
+
+.heading-tree-row .heading-node {
+  min-width: 0;
+  min-height: 38px;
+  display: grid !important;
+  align-content: center;
+  gap: 2px;
+  padding: 7px 10px !important;
+  border: 1px solid var(--ft-border-soft) !important;
+  border-radius: 8px !important;
+  background: var(--ft-surface) !important;
+  color: var(--ft-text) !important;
+  text-align: left;
+  box-shadow: none !important;
+}
+
+.heading-tree-row .heading-node:hover {
+  border-color: var(--ft-border) !important;
+  background: var(--ft-accent-soft) !important;
+}
+
+.heading-tree-row[aria-selected='true'] .heading-node {
+  border-color: var(--ft-accent-strong) !important;
+  box-shadow: inset 3px 0 0 var(--ft-accent) !important;
+}
+
+.heading-tree-row.has-signal .heading-node {
+  border-color: color-mix(in srgb, var(--ft-warning) 45%, var(--ft-border-soft)) !important;
+  background: color-mix(in srgb, var(--ft-warning-soft) 46%, var(--ft-surface)) !important;
+}
+
+.heading-tree-row .heading-node > span {
+  min-width: 0;
+  overflow: hidden;
+  color: var(--ft-text);
+  font-size: 11px;
+  font-weight: 800;
+  line-height: 1.3;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.heading-tree-row .heading-node > small {
+  width: fit-content;
+  margin-top: 2px;
+  padding: 2px 5px;
+  border-radius: 999px;
+  background: var(--ft-warning-soft);
+  color: var(--ft-warning) !important;
+  font-size: 8.5px;
+  font-weight: 900;
+  line-height: 1.25;
+}
+
+.heading-selection {
+  border-left: 4px solid var(--ft-accent) !important;
+  background: var(--ft-surface-subtle) !important;
+}
+
+@media (max-width: 430px) {
+  .heading-tree-row {
+    margin-inline-start: calc(var(--heading-depth) * 14px) !important;
+    grid-template-columns: 34px minmax(0, 1fr) !important;
+  }
+
+  .heading-tree-row .heading-level {
+    min-width: 34px !important;
+    width: 34px !important;
+  }
+}

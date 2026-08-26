@@ -4,6 +4,7 @@ import { browser } from '#imports';
 import { armReportVisualEvidencePermissionRequest } from '../../lib/report/visual-evidence';
 import { normalizeUiScale, UI_SCALE_STORAGE_KEY } from '../../shared/ui-scale';
 import App from './App';
+import { ImpactMatrix } from './components/ImpactMatrix';
 import './style.css';
 import './focus-graph.css';
 import './scan-settings.css';
@@ -15,6 +16,8 @@ import './visual-system.css';
 import './accessibility-guardrails.css';
 import './severity.css';
 import './workflow-fixes.css';
+import './heading-tree-visual.css';
+import './modern-icons.css';
 
 const PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'];
 const root = document.getElementById('root');
@@ -41,5 +44,6 @@ document.addEventListener('click', (event) => {
 createRoot(root).render(
   <React.StrictMode>
     <App />
+    <ImpactMatrix />
   </React.StrictMode>
 );
