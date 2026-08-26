@@ -7,8 +7,11 @@ const OPTIONAL_HOST_PERMISSIONS = [
   OPTIONAL_VISUAL_CAPTURE_HOST_PERMISSION,
 ];
 const FIREFOX_115_OPTIONAL_HOSTS = OPTIONAL_HOST_PERMISSIONS as unknown as NonNullable<UserManifest['optional_permissions']>;
+// Browser-level sidepanel tests inject representative scan state directly. In a
+// real session that state only exists after Analyze has already granted page
+// access, so the E2E manifest mirrors that post-analysis permission state.
 const e2eHostPermissions = process.env.FOCUSTRACE_E2E === '1'
-  ? ['http://127.0.0.1/*']
+  ? OPTIONAL_PAGE_HOST_PERMISSIONS
   : undefined;
 const AUTO_RUNTIME_HOST_PERMISSIONS = new Set(OPTIONAL_PAGE_HOST_PERMISSIONS);
 
@@ -74,7 +77,10 @@ export default defineConfig({
     'build:manifestGenerated': (_wxt, manifest) => {
       // WXT derives the runtime content-script matches as required host
       // permissions. FocusTrace asks for web-page access from explicit user
-      // actions in the side panel instead, so keep production access optional.
+      // actions in production instead, so keep production access optional.
+      // E2E intentionally preserves its required hosts to model the already-
+      // granted permission state that exists after a successful analysis.
+      if (process.env.FOCUSTRACE_E2E === '1') return;
       if (!manifest.host_permissions) return;
       manifest.host_permissions = manifest.host_permissions.filter(
         (permission: string) => !AUTO_RUNTIME_HOST_PERMISSIONS.has(permission),
