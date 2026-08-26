@@ -1,10 +1,6 @@
 import { defineConfig, type UserManifest } from 'wxt';
 
-const e2eHostPermissions = process.env.FOCUSTRACE_E2E === '1'
-  ? ['http://127.0.0.1/*']
-  : undefined;
-
-const AUTO_RUNTIME_HOST_PERMISSIONS = new Set(['http://*/*', 'https://*/*']);
+const PAGE_HOST_PERMISSIONS = ['http://*/*', 'https://*/*'];
 
 const icons = {
   16: 'icon/16.png',
@@ -44,7 +40,7 @@ export function manifestForBrowser(browser: string): UserManifest {
     permissions: firefox
       ? ['activeTab', 'scripting', 'storage']
       : ['activeTab', 'scripting', 'storage', 'sidePanel'],
-    ...(e2eHostPermissions ? { host_permissions: e2eHostPermissions } : {}),
+    host_permissions: PAGE_HOST_PERMISSIONS,
     icons,
     action: {
       default_title: 'Open FocusTrace',
@@ -56,18 +52,4 @@ export function manifestForBrowser(browser: string): UserManifest {
 export default defineConfig({
   modules: ['@wxt-dev/module-react'],
   manifest: ({ browser }) => manifestForBrowser(browser),
-  hooks: {
-    'build:manifestGenerated': (_wxt, manifest) => {
-      // The runtime content-script entrypoint is injected explicitly after the
-      // user activates FocusTrace. WXT derives its broad `matches` as permanent
-      // host permissions for runtime registration, but FocusTrace deliberately
-      // relies on `activeTab` instead. Preserve only explicitly configured hosts
-      // such as the localhost permission used by the E2E build.
-      if (!manifest.host_permissions) return;
-      manifest.host_permissions = manifest.host_permissions.filter(
-        (permission: string) => !AUTO_RUNTIME_HOST_PERMISSIONS.has(permission),
-      );
-      if (manifest.host_permissions.length === 0) delete manifest.host_permissions;
-    },
-  },
 });
