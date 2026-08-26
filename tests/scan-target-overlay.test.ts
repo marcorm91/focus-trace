@@ -36,12 +36,16 @@ afterEach(() => {
 });
 
 describe('scan target page overlay', () => {
-  it('strongly highlights a matched target and temporarily focuses non-focusable elements', () => {
+  it('strongly highlights a matched target and returns compact DOM context', () => {
     installFixture();
 
     const result = locateScanTargetInPage('#card');
 
-    expect(result).toEqual({ found: true, selector: '#card' });
+    expect(result).toEqual({
+      found: true,
+      selector: '#card',
+      snippet: '<section id="card"><span>Broken item</span></section>',
+    });
     expect(document.activeElement).toBe(document.querySelector('#card'));
     expect(document.querySelector('#card')?.hasAttribute('tabindex')).toBe(false);
 
