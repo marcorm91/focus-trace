@@ -19,6 +19,24 @@ export function clearScanTargetHighlightInPage(): { removed: boolean } {
   return { removed: true };
 }
 
+function readableTargetLabel(target: Element): string {
+  const ariaLabel = target.getAttribute('aria-label')?.trim();
+  const labelledBy = target.getAttribute('aria-labelledby')?.trim();
+  let labelledText = '';
+  if (labelledBy) {
+    labelledText = labelledBy
+      .split(/\s+/)
+      .map((id) => document.getElementById(id)?.textContent?.replace(/\s+/g, ' ').trim() ?? '')
+      .filter(Boolean)
+      .join(' ');
+  }
+  const visible = target.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+  const value = target instanceof HTMLInputElement || target instanceof HTMLTextAreaElement
+    ? target.value.trim()
+    : '';
+  return (ariaLabel || labelledText || visible || value).slice(0, 110);
+}
+
 export function locateScanTargetInPage(
   selector: string,
   options: ScanTargetHighlightOptions = {},
@@ -52,18 +70,18 @@ export function locateScanTargetInPage(
   const colors: Record<ScanTargetHighlightTone, { solid: string; ring: string; fill: string }> = {
     ok: {
       solid: '#08745b',
-      ring: 'rgba(8, 116, 91, 0.22)',
-      fill: 'rgba(8, 116, 91, 0.06)',
+      ring: 'rgba(8, 116, 91, 0.32)',
+      fill: 'rgba(8, 116, 91, 0.08)',
     },
     review: {
       solid: '#b54708',
-      ring: 'rgba(181, 71, 8, 0.22)',
-      fill: 'rgba(181, 71, 8, 0.06)',
+      ring: 'rgba(181, 71, 8, 0.32)',
+      fill: 'rgba(181, 71, 8, 0.08)',
     },
     fail: {
       solid: '#b42318',
-      ring: 'rgba(180, 35, 24, 0.22)',
-      fill: 'rgba(180, 35, 24, 0.06)',
+      ring: 'rgba(180, 35, 24, 0.34)',
+      fill: 'rgba(180, 35, 24, 0.08)',
     },
   };
   const color = colors[tone];
@@ -74,40 +92,77 @@ export function locateScanTargetInPage(
   overlay.setAttribute('aria-hidden', 'true');
   Object.assign(overlay.style, {
     position: 'fixed',
-    top: `${Math.max(0, rect.top - 4)}px`,
-    left: `${Math.max(0, rect.left - 4)}px`,
-    width: `${Math.max(0, rect.width + 8)}px`,
-    height: `${Math.max(0, rect.height + 8)}px`,
-    border: `3px solid ${color.solid}`,
-    borderRadius: '6px',
+    top: `${Math.max(0, rect.top - 6)}px`,
+    left: `${Math.max(0, rect.left - 6)}px`,
+    width: `${Math.max(0, rect.width + 12)}px`,
+    height: `${Math.max(0, rect.height + 12)}px`,
+    border: `4px solid ${color.solid}`,
+    borderRadius: '8px',
     background: color.fill,
-    boxShadow: `0 0 0 4px ${color.ring}`,
+    boxShadow: `0 0 0 6px ${color.ring}, 0 0 0 100vmax rgba(15, 23, 42, 0.46), 0 10px 34px rgba(0, 0, 0, 0.34)`,
     pointerEvents: 'none',
     zIndex: '2147483647',
     boxSizing: 'border-box',
   });
 
-  const badge = document.createElement('span');
-  badge.textContent = options.label ?? 'FocusTrace';
-  Object.assign(badge.style, {
+  const card = document.createElement('div');
+  Object.assign(card.style, {
     position: 'absolute',
-    top: rect.top >= 32 ? '-27px' : '4px',
-    left: '-3px',
-    maxWidth: 'min(420px, calc(100vw - 24px))',
-    padding: '3px 8px',
-    borderRadius: '5px',
+    top: rect.top >= 74 ? '-66px' : '8px',
+    left: '-4px',
+    minWidth: '180px',
+    maxWidth: 'min(460px, calc(100vw - 24px))',
+    display: 'grid',
+    gap: '2px',
+    padding: '7px 10px',
+    borderRadius: '7px',
+    border: '1px solid rgba(255,255,255,.38)',
     background: color.solid,
     color: '#fff',
-    font: '700 14px/1.4 system-ui, sans-serif',
+    font: '700 14px/1.35 system-ui, sans-serif',
+    boxShadow: '0 5px 18px rgba(0, 0, 0, 0.32)',
+  });
+
+  const title = document.createElement('strong');
+  const tag = target.tagName.toLowerCase();
+  const role = target.getAttribute('role')?.trim();
+  title.textContent = `${options.label ?? 'FocusTrace'} · ${role ? `${tag} · ${role}` : tag}`;
+  Object.assign(title.style, {
     overflow: 'hidden',
     textOverflow: 'ellipsis',
     whiteSpace: 'nowrap',
-    boxShadow: '0 2px 7px rgba(0, 0, 0, 0.2)',
   });
-  overlay.append(badge);
+  card.append(title);
+
+  const targetLabel = readableTargetLabel(target);
+  if (targetLabel) {
+    const detail = document.createElement('span');
+    detail.textContent = targetLabel;
+    Object.assign(detail.style, {
+      maxWidth: '100%',
+      opacity: '.94',
+      font: '500 13px/1.35 system-ui, sans-serif',
+      overflow: 'hidden',
+      textOverflow: 'ellipsis',
+      whiteSpace: 'nowrap',
+    });
+    card.append(detail);
+  }
+
+  overlay.append(card);
   document.documentElement.append(overlay);
 
-  const durationMs = options.durationMs ?? 4000;
+  try {
+    overlay.animate([
+      { transform: 'scale(1)', borderWidth: '4px' },
+      { transform: 'scale(1.025)', borderWidth: '5px' },
+      { transform: 'scale(1)', borderWidth: '4px' },
+    ], { duration: 700, iterations: 2, easing: 'ease-in-out' });
+  } catch {
+    // Web Animations may be unavailable in older/restricted documents.
+  }
+
+  const durationMs = options.durationMs ?? 7000;
   if (durationMs > 0) window.setTimeout(() => overlay.remove(), durationMs);
 
   return { found: true, selector };
