@@ -181,14 +181,36 @@ test('report opens a formatted PDF preview without exposing CSS selectors', asyn
         }],
         review: [],
         warnings: [],
-        headings: [{ id: 'heading-1', level: 1, text: 'Checkout', selector: 'h1', signals: [] }],
+        headings: [
+          { id: 'heading-1', level: 1, text: 'Checkout', selector: 'h1', signals: [] },
+          {
+            id: 'heading-2',
+            level: 2,
+            text: 'Instala Gas Natural y ahorra un mínimo de energía con una explicación deliberadamente larga para el informe',
+            selector: 'h2',
+            signals: [],
+          },
+          {
+            id: 'heading-3',
+            level: 3,
+            text: 'HeadingWithoutNaturalBreakpointsThatMustNeverExpandTheFocusTraceSidepanelBeyondItsViewport',
+            selector: 'h3',
+            signals: [],
+          },
+        ],
         passes: 3,
         rulesRun: 17,
       },
     });
   });
 
+  await panel.setViewportSize({ width: 360, height: 800 });
   await panel.getByRole('button', { name: /Report|Informe/ }).click();
+  const reportFits = await panel.evaluate(() =>
+    document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+  );
+  expect(reportFits).toBe(true);
+
   const exportPdf = panel.getByRole('button', { name: /Export PDF|Exportar PDF/ });
   await expect(exportPdf).toBeVisible();
 
