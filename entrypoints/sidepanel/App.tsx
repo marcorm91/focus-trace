@@ -17,6 +17,7 @@ import {
   type FocusPathOverlayResult,
 } from '../../lib/runtime/focus-path-overlay';
 import { buildFocusJourney } from '../../lib/runtime/focus-journey';
+import { clearHeadingOutlineInPage } from '../../lib/runtime/heading-overlay';
 import { buildPageInspectorEntries } from '../../lib/runtime/page-inspector';
 import { locateScanTargetInPage, type ScanTargetHighlightResult } from '../../lib/runtime/scan-target-overlay';
 import { SETTINGS_STORAGE_KEY, tr, type AppLanguage } from '../../shared/i18n';
@@ -441,6 +442,45 @@ export default function App() {
     await showFocusPath();
   }, [focusPathVisible, showFocusPath]);
 
+  const resetEverything = useCallback(async () => {
+    if (tabId == null || busy) return;
+    const confirmed = window.confirm(tr(
+      language,
+      'Start over? This clears the current page analysis, Trace, Replay, focus journey and breakpoint state. Language and interface size are kept.',
+      '¿Empezar de cero? Se borrarán el análisis actual, Trace, Replay, recorrido de foco y estado de breakpoints. Se conservarán el idioma y el tamaño de interfaz.',
+    ));
+    if (!confirmed) return;
+
+    setBusy(true);
+    setError(undefined);
+    try {
+      const next = (await browser.runtime.sendMessage({
+        type: 'FOCUSTRACE_RESET_TAB',
+        tabId,
+      } satisfies ExtensionMessage)) as SessionState;
+
+      await browser.scripting.executeScript({ target: { tabId }, func: clearFocusPathInPage }).catch(() => undefined);
+      await browser.scripting.executeScript({ target: { tabId }, func: clearHeadingOutlineInPage }).catch(() => undefined);
+      await browser.scripting.executeScript({
+        target: { tabId },
+        func: () => {
+          document.querySelector('[data-focustrace-scan-highlight]')?.remove();
+          document.querySelector('[data-focustrace-focus-walk-backdrop]')?.remove();
+        },
+      }).catch(() => undefined);
+
+      setSession(next);
+      setScan(undefined);
+      setFocusPathVisible(false);
+      setSelectedFocusSelector(undefined);
+      setView('scan');
+    } catch (reason) {
+      setError(reason instanceof Error ? reason.message : String(reason));
+    } finally {
+      setBusy(false);
+    }
+  }, [busy, language, tabId]);
+
   const navigation: Array<{ id: 'scan' | 'trace' | 'headings' | 'report'; label: string; icon: string }> = [
     { id: 'scan', label: tr(language, 'Review', 'Revisión'), icon: '⌕' },
     { id: 'trace', label: 'Trace', icon: '◎' },
@@ -459,6 +499,16 @@ export default function App() {
           </div>
         </div>
         <div className="topbar-tools">
+          <button
+            className="reset-all-trigger"
+            type="button"
+            disabled={busy || tabId == null}
+            title={tr(language, 'Clear all data for the current tab and start over', 'Borrar todos los datos de la pestaña actual y empezar de cero')}
+            aria-label={tr(language, 'Start over', 'Empezar de cero')}
+            onClick={() => void resetEverything()}
+          >
+            <span aria-hidden="true">↻</span>
+          </button>
           <button
             className="settings-trigger"
             type="button"
@@ -504,9 +554,15 @@ export default function App() {
             <span aria-hidden="true">⌕</span>
             {tr(language, 'Analyze this page', 'Analizar esta página')}
           </button>
-          <button className="focus-walk-action" type="button" onClick={runFocusWalk} disabled={busy || tabId == null || session.recording}>
+          <button
+            className="focus-walk-action"
+            type="button"
+            title={tr(language, 'Automatically walk through keyboard focus targets', 'Recorrer automáticamente los destinos de foco por teclado')}
+            onClick={runFocusWalk}
+            disabled={busy || tabId == null || session.recording}
+          >
             <span aria-hidden="true">◎</span>
-            {tr(language, 'Walk with Tab', 'Recorrer con Tab')}
+            {tr(language, 'Automate focus', 'Automatizar foco')}
           </button>
         </div>
       </section>
