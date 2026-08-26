@@ -1,10 +1,17 @@
-import { useMemo } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { browser } from '#imports';
 import { suggestAccessibleForeground } from '../../../lib/audit/contrast';
+import { type ReportComponentIdentity } from '../../../lib/report/component-identity';
 import { buildSessionReportModel } from '../../../lib/report/session-report';
 import { buildTextReportFilename, buildTextSessionReport } from '../../../lib/report/text-report';
+import {
+  captureReportVisualEvidence,
+  collectReportComponents,
+  storePrintableReportEvidence,
+} from '../../../lib/report/visual-evidence';
 import { localizedScanIssue, tr, type AppLanguage } from '../../../shared/i18n';
 import type { HeadingSignal, RuntimeEvent, ScanIssue, ScanResult } from '../../../shared/types';
+import { ReportComponentIdentityView } from '../components/ReportComponentIdentity';
 import './session-report.css';
 import './report-export.css';
 
@@ -69,10 +76,34 @@ export function SessionReportView({
   const focusEvents = events.filter((event) => event.kind === 'focus' && event.element);
   const highPriority = model.suggestions.filter((suggestion) => suggestion.priority === 'high').slice(0, 4);
   const automatic = events.some((event) => event.kind === 'focus-walk-start');
+  const [components, setComponents] = useState<ReportComponentIdentity[]>([]);
+  const [includeVisualEvidence, setIncludeVisualEvidence] = useState(true);
+  const [exportingPdf, setExportingPdf] = useState(false);
+  const componentMap = useMemo(
+    () => new Map(components.map((component) => [component.selector, component])),
+    [components],
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    if (!scan) {
+      setComponents([]);
+      return () => { cancelled = true; };
+    }
+    void browser.tabs.query({ active: true, currentWindow: true })
+      .then(([tab]) => tab?.id == null ? [] : collectReportComponents(tab.id, scan, events))
+      .then((next) => {
+        if (!cancelled) setComponents(next);
+      })
+      .catch(() => {
+        if (!cancelled) setComponents([]);
+      });
+    return () => { cancelled = true; };
+  }, [events, scan]);
 
   const downloadTextReport = () => {
     const generatedAt = Date.now();
-    const text = buildTextSessionReport({ scan, events, language, generatedAt });
+    const text = buildTextSessionReport({ scan, events, language, components, generatedAt });
     const blob = new Blob(['\uFEFF', text], { type: 'text/plain;charset=utf-8' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
@@ -87,11 +118,27 @@ export function SessionReportView({
 
   const openPrintableReport = async () => {
     const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-    if (tab?.id == null) return;
-    const params = new URLSearchParams({ tabId: String(tab.id), language });
-    await browser.tabs.create({
-      url: browser.runtime.getURL(`/report-print.html?${params.toString()}`),
-    });
+    if (tab?.id == null || !scan) return;
+    setExportingPdf(true);
+    try {
+      const freshComponents = await collectReportComponents(tab.id, scan, events);
+      setComponents(freshComponents);
+      const capture = includeVisualEvidence
+        ? await captureReportVisualEvidence(tab.id, scan, freshComponents)
+        : { visuals: [], limitReached: false };
+      const token = await storePrintableReportEvidence({
+        components: freshComponents,
+        visuals: capture.visuals,
+        visualEvidenceRequested: includeVisualEvidence,
+        visualEvidenceLimitReached: capture.limitReached,
+      });
+      const params = new URLSearchParams({ tabId: String(tab.id), language, evidence: token });
+      await browser.tabs.create({
+        url: browser.runtime.getURL(`/report-print.html?${params.toString()}`),
+      });
+    } finally {
+      setExportingPdf(false);
+    }
   };
 
   return (
@@ -110,15 +157,33 @@ export function SessionReportView({
               : tr(language, 'Analyze the page to start the report.', 'Analiza la página para iniciar el informe.')}
           </p>
         </div>
-        <div className="report-export-actions">
-          <button className="export-text-report" type="button" disabled={!scan} onClick={downloadTextReport}>
-            <span aria-hidden="true">↓</span>
-            {tr(language, 'Download .txt', 'Descargar .txt')}
-          </button>
-          <button className="export-pdf-report" type="button" disabled={!scan} onClick={() => void openPrintableReport()}>
-            <span aria-hidden="true">▤</span>
-            {tr(language, 'Export PDF', 'Exportar PDF')}
-          </button>
+        <div className="report-export-tools">
+          <label className="report-visual-evidence-option">
+            <input
+              type="checkbox"
+              checked={includeVisualEvidence}
+              disabled={!scan || exportingPdf}
+              onChange={(event) => setIncludeVisualEvidence(event.currentTarget.checked)}
+            />
+            <span>
+              <strong>{tr(language, 'Include visual evidence', 'Incluir evidencia visual')}</strong>
+              <small>{tr(
+                language,
+                'PDF only. Crops may contain visible page content.',
+                'Solo PDF. Los recortes pueden contener contenido visible de la página.',
+              )}</small>
+            </span>
+          </label>
+          <div className="report-export-actions">
+            <button className="export-text-report" type="button" disabled={!scan || exportingPdf} onClick={downloadTextReport}>
+              <span aria-hidden="true">↓</span>
+              {tr(language, 'Download .txt', 'Descargar .txt')}
+            </button>
+            <button className="export-pdf-report" type="button" disabled={!scan || exportingPdf} onClick={() => void openPrintableReport()}>
+              <span aria-hidden="true">▤</span>
+              {exportingPdf ? tr(language, 'Preparing PDF…', 'Preparando PDF…') : tr(language, 'Export PDF', 'Exportar PDF')}
+            </button>
+          </div>
         </div>
       </div>
 
@@ -191,7 +256,7 @@ export function SessionReportView({
                   <p>
                     {focusEvents.length
                       ? automatic
-                        ? tr(language, 'Automatic Tab evidence plus correlated interactions.', 'Evidencia automática con Tab e interacciones correlacionadas.')
+                        ? tr(language, 'Automatic focus evidence plus correlated interactions.', 'Evidencia automática de foco e interacciones correlacionadas.')
                         : tr(language, 'Recorded interactions, focus movement and deterministic causes.', 'Interacciones grabadas, movimientos de foco y causas deterministas.')
                       : tr(language, 'No focus journey has been recorded yet.', 'Todavía no se ha grabado ningún recorrido de foco.')}
                   </p>
@@ -208,46 +273,50 @@ export function SessionReportView({
 
             {model.traceStories.length ? (
               <div className="trace-story-list">
-                {model.traceStories.map((story) => (
-                  <article className={`trace-story tone-${story.tone}`} key={story.id}>
-                    <div className="trace-story-head">
-                      <span>{story.tone === 'handled' ? '✓' : story.tone === 'review' ? '⚠' : '•'}</span>
-                      <div>
-                        <small>{story.interactionNumber ? `${tr(language, 'Interaction', 'Interacción')} #${story.interactionNumber}` : tr(language, 'Runtime signal', 'Señal runtime')}</small>
-                        <strong>{story.trigger}</strong>
+                {model.traceStories.map((story) => {
+                  const component = story.selector ? componentMap.get(story.selector) : undefined;
+                  return (
+                    <article className={`trace-story tone-${story.tone}`} key={story.id}>
+                      <div className="trace-story-head">
+                        <span>{story.tone === 'handled' ? '✓' : story.tone === 'review' ? '⚠' : '•'}</span>
+                        <div>
+                          <small>{story.interactionNumber ? `${tr(language, 'Interaction', 'Interacción')} #${story.interactionNumber}` : tr(language, 'Runtime signal', 'Señal runtime')}</small>
+                          <strong>{story.trigger}</strong>
+                        </div>
                       </div>
-                    </div>
-                    <div className="trace-story-chain" aria-label={tr(language, 'Recorded event chain', 'Cadena de eventos registrada')}>
-                      {story.chain.map((step, index) => (
-                        <span key={`${story.id}-chain-${index}`}>
-                          {index > 0 && <b aria-hidden="true">→</b>}
-                          <em>{step}</em>
-                        </span>
-                      ))}
-                    </div>
-                    <div className="trace-story-result">
-                      <small>{tr(language, 'Result', 'Resultado')}</small>
-                      <strong>{story.result}</strong>
-                      <p>{story.detail}</p>
-                    </div>
-                    {story.impact && (
-                      <p className="trace-story-note"><strong>{tr(language, 'Impact', 'Impacto')}:</strong> {story.impact}</p>
-                    )}
-                    {story.recommendation && (
-                      <p className="trace-story-recommendation"><strong>{tr(language, 'Recommendation', 'Recomendación')}:</strong> {story.recommendation}</p>
-                    )}
-                    {story.references.length > 0 && (
-                      <p className="trace-story-references">
-                        {story.references.map((reference) => `${reference.type} ${reference.id}`).join(' · ')}
-                      </p>
-                    )}
-                    {story.selector && (
-                      <button type="button" onClick={() => void onLocate(story.selector!)}>
-                        {tr(language, 'Locate evidence', 'Localizar evidencia')}
-                      </button>
-                    )}
-                  </article>
-                ))}
+                      <ReportComponentIdentityView component={component} language={language} compact />
+                      <div className="trace-story-chain" aria-label={tr(language, 'Recorded event chain', 'Cadena de eventos registrada')}>
+                        {story.chain.map((step, index) => (
+                          <span key={`${story.id}-chain-${index}`}>
+                            {index > 0 && <b aria-hidden="true">→</b>}
+                            <em>{step}</em>
+                          </span>
+                        ))}
+                      </div>
+                      <div className="trace-story-result">
+                        <small>{tr(language, 'Result', 'Resultado')}</small>
+                        <strong>{story.result}</strong>
+                        <p>{story.detail}</p>
+                      </div>
+                      {story.impact && (
+                        <p className="trace-story-note"><strong>{tr(language, 'Impact', 'Impacto')}:</strong> {story.impact}</p>
+                      )}
+                      {story.recommendation && (
+                        <p className="trace-story-recommendation"><strong>{tr(language, 'Recommendation', 'Recomendación')}:</strong> {story.recommendation}</p>
+                      )}
+                      {story.references.length > 0 && (
+                        <p className="trace-story-references">
+                          {story.references.map((reference) => `${reference.type} ${reference.id}`).join(' · ')}
+                        </p>
+                      )}
+                      {story.selector && (
+                        <button type="button" onClick={() => void onLocate(story.selector!)}>
+                          {tr(language, 'Locate evidence', 'Localizar evidencia')}
+                        </button>
+                      )}
+                    </article>
+                  );
+                })}
               </div>
             ) : (
               <div className="report-pending">
@@ -287,6 +356,7 @@ export function SessionReportView({
                     {group.issues.map((issue) => {
                       const copy = localizedScanIssue(issue, language);
                       const target = issue.targets[0];
+                      const component = target ? componentMap.get(target) : undefined;
                       return (
                         <article className="report-finding" key={issue.id}>
                           <div>
@@ -294,6 +364,7 @@ export function SessionReportView({
                             <code>{issue.ruleId}</code>
                           </div>
                           <h4>{copy.title}</h4>
+                          <ReportComponentIdentityView component={component} language={language} />
                           <p>{copy.description}</p>
                           <ContrastReportEvidence issue={issue} language={language} />
                           {copy.evidence && <p className="evidence">{copy.evidence}</p>}
