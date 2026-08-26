@@ -51,7 +51,7 @@ function App() {
   const [result, setResult] = useState<SiteAuditResult>();
   const [error, setError] = useState<string>();
   const [extraUrls, setExtraUrls] = useState('');
-  const abortRef = useRef<AbortController>();
+  const abortRef = useRef<AbortController | undefined>(undefined);
   document.documentElement.lang = language;
 
   const validSource = useMemo(() => {
@@ -104,7 +104,7 @@ function App() {
 
       for (let index = 0; index < samples.length; index += 1) {
         if (controller.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
-        const sample = samples[index];
+        const sample = samples[index]!;
         setProgress({ current: index + 1, total: samples.length, url: sample.url });
         pages.push(await scanRepresentativePage(sample.routeFamilyId, sample.url, controller.signal));
       }
