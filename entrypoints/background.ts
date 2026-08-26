@@ -83,8 +83,6 @@ async function restoreContentStateAfterNavigation(tabId: number, state: SessionS
 
 function configurePanelAction() {
   if (import.meta.env.FIREFOX) {
-    // WXT generates Firefox `sidebar_action`, but WxtBrowser does not currently
-    // expose the corresponding runtime namespace in its cross-browser type.
     const firefoxBrowser = browser as FirefoxSidebarBrowser;
     browser.action.onClicked.addListener(() => {
       void firefoxBrowser.sidebarAction.open().catch(() => undefined);
@@ -128,6 +126,20 @@ export default defineBackground(() => {
       });
     }
 
+    if (message.type === 'FOCUSTRACE_RESET_TAB') {
+      return serializeTabWrite(message.tabId, async () => {
+        const next = emptySessionState(message.tabId);
+        await saveSession(next);
+        await browser.tabs.sendMessage(message.tabId, {
+          type: 'FOCUSTRACE_SET_RECORDING',
+          enabled: false,
+          breakpoints: next.breakpoints,
+        } satisfies ExtensionMessage).catch(() => undefined);
+        await broadcast(next);
+        return next;
+      });
+    }
+
     if (message.type === 'FOCUSTRACE_SET_RECORDING_STATE') {
       return serializeTabWrite(message.tabId, async () => {
         const state = await getSession(message.tabId);
@@ -163,9 +175,6 @@ export default defineBackground(() => {
     }
   });
 
-  // A runtime-registered content script is replaced by a full navigation.
-  // Re-inject it and restore the per-tab recording state without requiring the
-  // sidebar/side panel to stay focused or even open.
   browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
     if (changeInfo.status !== 'complete') return;
     void getSession(tabId)
