@@ -32,7 +32,7 @@ const packageLock = JSON.parse(
 const chromeManifest = manifestForBrowser('chrome');
 const edgeManifest = manifestForBrowser('edge');
 const firefoxManifest = manifestForBrowser('firefox');
-const pageHostPermissions = ['http://*/*', 'https://*/*'];
+const PAGE_HOSTS = ['http://*/*', 'https://*/*'];
 
 describe('v0.1.0 release contract', () => {
   it('keeps package, lockfile and browser manifests on the same version', () => {
@@ -50,7 +50,7 @@ describe('v0.1.0 release contract', () => {
     expect(packageLock.packages?.['']?.devDependencies).toEqual(packageJson.devDependencies);
   });
 
-  it('keeps Chromium production permissions explicit', () => {
+  it('keeps Chromium production permissions minimal and page access optional', () => {
     for (const manifest of [chromeManifest, edgeManifest]) {
       expect(manifest.permissions).toEqual([
         'activeTab',
@@ -58,20 +58,22 @@ describe('v0.1.0 release contract', () => {
         'storage',
         'sidePanel',
       ]);
-      expect(manifest.host_permissions).toEqual(pageHostPermissions);
+      expect(manifest.host_permissions).toBeUndefined();
+      expect(manifest.optional_host_permissions).toEqual(PAGE_HOSTS);
       expect(manifest.minimum_chrome_version).toBe('114');
       expect(manifest.browser_specific_settings).toBeUndefined();
     }
   });
 
-  it('keeps Firefox MV3 permissions and Gecko metadata explicit', () => {
+  it('keeps Firefox MV3 permissions, optional hosts and Gecko metadata explicit', () => {
     expect(firefoxManifest.permissions).toEqual([
       'activeTab',
       'scripting',
       'storage',
     ]);
     expect(firefoxManifest.permissions).not.toContain('sidePanel');
-    expect(firefoxManifest.host_permissions).toEqual(pageHostPermissions);
+    expect(firefoxManifest.host_permissions).toBeUndefined();
+    expect(firefoxManifest.optional_permissions).toEqual(PAGE_HOSTS);
     expect(firefoxManifest.minimum_chrome_version).toBeUndefined();
     expect(firefoxManifest.browser_specific_settings?.gecko).toMatchObject({
       id: 'focustrace@focus-mode.app',
