@@ -20,6 +20,19 @@ function outcomeLabel(outcome: FindingOutcome, language: AppLanguage): string {
   return tr(language, 'Warnings', 'Avisos');
 }
 
+function useAppLanguage(): AppLanguage {
+  const resolve = (): AppLanguage => document.documentElement.lang === 'es' ? 'es' : 'en';
+  const [language, setLanguage] = useState<AppLanguage>(resolve);
+
+  useEffect(() => {
+    const observer = new MutationObserver(() => setLanguage(resolve()));
+    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+    return () => observer.disconnect();
+  }, []);
+
+  return language;
+}
+
 function useActiveScan(): ScanResult | undefined {
   const [activeTabId, setActiveTabId] = useState<number>();
   const [scan, setScan] = useState<ScanResult>();
@@ -96,7 +109,8 @@ function useMatrixHost(): Element | null {
   return host;
 }
 
-export function ImpactMatrix({ language }: { language: AppLanguage }) {
+export function ImpactMatrix() {
+  const language = useAppLanguage();
   const scan = useActiveScan();
   const host = useMatrixHost();
 
