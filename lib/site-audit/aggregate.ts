@@ -8,8 +8,9 @@ import type {
 
 export function normalizeTargetShape(selector: string): string {
   return selector
-    .replace(/:nth-of-type\(\d+\)/g, ':nth-of-type(*)')
-    .replace(/:nth-child\(\d+\)/g, ':nth-child(*)')
+    // Keep positional selectors intact. Two pages only share a template-wide
+    // finding when the rule lands on the same observed structural target; a
+    // low-contrast paragraph in different positions must not be conflated.
     .replace(/#([A-Za-z_-]*)(?:\d{3,}|[0-9a-f]{12,})[A-Za-z0-9_-]*/gi, '#$1*')
     .replace(/\s+/g, ' ')
     .trim();
