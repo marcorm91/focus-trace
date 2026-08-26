@@ -1,6 +1,15 @@
 import type { BrowserContext, Worker } from '@playwright/test';
 import { expect, test } from './support/extension';
 
+declare const chrome: {
+  tabs: {
+    query(queryInfo: { active: boolean; currentWindow: boolean }): Promise<Array<{ id?: number }>>;
+  };
+  runtime: {
+    sendMessage(message: unknown): Promise<unknown>;
+  };
+};
+
 async function openSidepanel(context: BrowserContext, extensionWorker: Worker) {
   const extensionId = new URL(extensionWorker.url()).hostname;
   if (!extensionId) throw new Error('Could not resolve the FocusTrace extension ID from its service worker.');
