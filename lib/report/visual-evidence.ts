@@ -154,8 +154,8 @@ function reportEvidenceSelectors(
 export async function captureReportVisualEvidence(
   tabId: number,
   scan: ScanResult | undefined,
-  events: RuntimeEvent[],
   components: ReportComponentIdentity[],
+  events: RuntimeEvent[] = [],
 ): Promise<{ visuals: ReportVisualEvidence[]; limitReached: boolean }> {
   if (!components.length) return { visuals: [], limitReached: false };
   const tab = await browser.tabs.get(tabId);
