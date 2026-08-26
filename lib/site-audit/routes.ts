@@ -60,12 +60,12 @@ export function buildRoutePatterns(urls: string[]): Map<string, string> {
 
 function spreadSamples(urls: string[], count: number): string[] {
   if (urls.length <= count) return [...urls];
-  if (count <= 1) return [urls[0]];
+  if (count <= 1) return urls.length ? [urls[0]!] : [];
   const indexes = new Set<number>();
   for (let i = 0; i < count; i += 1) {
     indexes.add(Math.round((i * (urls.length - 1)) / (count - 1)));
   }
-  return [...indexes].map((index) => urls[index]);
+  return [...indexes].map((index) => urls[index]!);
 }
 
 export function buildRouteFamilies(urls: string[]): SiteAuditRouteFamily[] {
