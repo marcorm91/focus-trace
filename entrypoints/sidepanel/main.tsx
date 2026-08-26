@@ -11,6 +11,8 @@ import './scan-accordion.css';
 import './ux-polish.css';
 import './settings-scale.css';
 import './ui-scale.css';
+import './visual-system.css';
+import './accessibility-guardrails.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('FocusTrace root element was not found.');
