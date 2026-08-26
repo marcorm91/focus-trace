@@ -1,6 +1,6 @@
 # FocusTrace rule methodology
 
-FocusTrace does not use axe-core as its analysis engine. The extension implements its own local rules and maps each rule to the standards source that justifies the expectation.
+FocusTrace implements its own local analysis engine and maps each rule to the standards source that justifies the expectation.
 
 ## Sources
 
