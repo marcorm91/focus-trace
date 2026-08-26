@@ -120,6 +120,77 @@ body,
   font-size: 14px;
 }
 
+.reset-all-trigger {
+  width: 34px;
+  height: 34px;
+  display: grid;
+  place-items: center;
+  border: 1px solid color-mix(in srgb, #b42318 34%, transparent);
+  border-radius: 8px;
+  background: color-mix(in srgb, #b42318 5%, Canvas);
+  color: #b42318;
+  cursor: pointer;
+}
+
+.reset-all-trigger:hover,
+.reset-all-trigger:focus-visible {
+  border-color: #b42318;
+  background: color-mix(in srgb, #b42318 10%, Canvas);
+}
+
+.reset-all-trigger:disabled {
+  opacity: .45;
+  cursor: default;
+}
+
+.heading-overlay-toggle {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 12px;
+  border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 14%, transparent));
+  border-radius: 10px;
+  background: var(--ft-surface-subtle, color-mix(in srgb, CanvasText 3%, Canvas));
+  cursor: pointer;
+}
+
+.heading-overlay-toggle:has(input:checked) {
+  border-color: #047857;
+  background: color-mix(in srgb, #047857 7%, Canvas);
+}
+
+.heading-overlay-toggle input {
+  width: 18px;
+  height: 18px;
+  margin: 2px 0 0;
+}
+
+.heading-overlay-toggle > span {
+  min-width: 0;
+  display: grid;
+  gap: 4px;
+}
+
+.heading-overlay-toggle small,
+.heading-overlay-status,
+.heading-overlay-error {
+  line-height: 1.45;
+}
+
+.heading-overlay-status {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 8px;
+  background: color-mix(in srgb, #047857 7%, Canvas);
+  color: #065f46;
+}
+
+.heading-overlay-error {
+  margin: 0;
+  color: #b42318;
+}
+
 .settings-meta {
   display: flex;
   flex-wrap: wrap;
