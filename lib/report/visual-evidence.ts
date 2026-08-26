@@ -4,6 +4,7 @@ import {
   buildReportComponentIndex,
   collectComponentIdentitiesInPage,
   reportComponentSelectors,
+  type LiveComponentIdentity,
   type ReportComponentIdentity,
 } from './component-identity';
 
@@ -36,7 +37,7 @@ export async function collectReportComponents(
 ): Promise<ReportComponentIdentity[]> {
   const selectors = reportComponentSelectors(scan, events);
   if (!selectors.length) return [];
-  let live = [];
+  let live: LiveComponentIdentity[] = [];
   try {
     const results = await browser.scripting.executeScript({
       target: { tabId },
@@ -50,10 +51,18 @@ export async function collectReportComponents(
   return [...buildReportComponentIndex(scan, events, live).values()];
 }
 
-function toneForSelector(selector: string, scan: ScanResult | undefined): VisualEvidenceTone {
-  if (!scan) return 'review';
-  if (scan.issues.some((issue) => issue.targets.includes(selector))) return 'fail';
-  if (scan.review.some((issue) => issue.targets.includes(selector))) return 'review';
+function toneForSelector(
+  selector: string,
+  scan: ScanResult | undefined,
+  events: RuntimeEvent[],
+): VisualEvidenceTone {
+  if (scan?.issues.some((issue) => issue.targets.includes(selector))) return 'fail';
+  if (events.some((event) => event.element?.selector === selector && event.outcome === 'fail')) return 'fail';
+  if (scan?.review.some((issue) => issue.targets.includes(selector))) return 'review';
+  if (events.some((event) =>
+    (event.element?.selector === selector || event.mutation?.target.selector === selector)
+    && (event.outcome === 'review' || Boolean(event.causes?.length)),
+  )) return 'review';
   return 'warning';
 }
 
@@ -65,7 +74,7 @@ function prepareCaptureTargetInPage(selector: string) {
     return null;
   }
   if (!element) return null;
-  element.scrollIntoView({ block: 'center', inline: 'center', behavior: 'instant' });
+  element.scrollIntoView({ block: 'center', inline: 'center', behavior: 'auto' });
   const rect = element.getBoundingClientRect();
   if (rect.width <= 0 || rect.height <= 0) return null;
   return {
@@ -79,7 +88,7 @@ function readScrollPositionInPage() {
 }
 
 function restoreScrollPositionInPage(position: { x: number; y: number }) {
-  window.scrollTo({ left: position.x, top: position.y, behavior: 'instant' });
+  window.scrollTo({ left: position.x, top: position.y, behavior: 'auto' });
 }
 
 async function cropCapture(
@@ -124,18 +133,36 @@ async function cropCapture(
   return canvas.toDataURL('image/jpeg', 0.76);
 }
 
+function reportEvidenceSelectors(
+  scan: ScanResult | undefined,
+  events: RuntimeEvent[],
+): Set<string> {
+  const selectors = new Set<string>();
+  if (scan) {
+    for (const issue of [...scan.issues, ...scan.review, ...(scan.warnings ?? [])]) {
+      issue.targets.forEach((selector) => selectors.add(selector));
+    }
+  }
+  for (const event of events) {
+    if (!event.outcome && !event.causes?.length) continue;
+    if (event.element?.selector) selectors.add(event.element.selector);
+    if (event.mutation?.target.selector) selectors.add(event.mutation.target.selector);
+  }
+  return selectors;
+}
+
 export async function captureReportVisualEvidence(
   tabId: number,
   scan: ScanResult | undefined,
+  events: RuntimeEvent[],
   components: ReportComponentIdentity[],
 ): Promise<{ visuals: ReportVisualEvidence[]; limitReached: boolean }> {
-  if (!scan || !components.length) return { visuals: [], limitReached: false };
+  if (!components.length) return { visuals: [], limitReached: false };
   const tab = await browser.tabs.get(tabId);
   if (tab.windowId == null || !tab.active) return { visuals: [], limitReached: false };
 
-  const eligible = components.filter((component) =>
-    [...scan.issues, ...scan.review, ...(scan.warnings ?? [])].some((issue) => issue.targets.includes(component.selector)),
-  );
+  const evidenceSelectors = reportEvidenceSelectors(scan, events);
+  const eligible = components.filter((component) => evidenceSelectors.has(component.selector));
   const selected = eligible.slice(0, MAX_VISUAL_EVIDENCE);
   const original = await browser.scripting.executeScript({ target: { tabId }, func: readScrollPositionInPage })
     .then((results) => results[0]?.result)
@@ -153,7 +180,7 @@ export async function captureReportVisualEvidence(
       await wait(90);
       try {
         const screenshot = await browser.tabs.captureVisibleTab(tab.windowId, { format: 'jpeg', quality: 78 });
-        const tone = toneForSelector(component.selector, scan);
+        const tone = toneForSelector(component.selector, scan, events);
         visuals.push({ selector: component.selector, dataUrl: await cropCapture(screenshot, metrics, tone), tone });
       } catch {
         // Some Firefox versions and restricted pages cannot capture the active tab.
