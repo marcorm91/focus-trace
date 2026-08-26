@@ -42,6 +42,40 @@ export function replayTarget(event: RuntimeEvent): ElementSnapshot | undefined {
   return event.element ?? event.mutation?.target;
 }
 
+function findingLinkedToSameTarget(
+  event: RuntimeEvent,
+  interactions: RuntimeInteraction[],
+): RuntimeEvent | undefined {
+  if (event.outcome || !event.interactionId) return undefined;
+  const selector = replayTarget(event)?.selector;
+  if (!selector) return undefined;
+  const interaction = interactions.find((candidate) => candidate.id === event.interactionId);
+  return interaction?.events.find((candidate) =>
+    candidate.outcome != null && replayTarget(candidate)?.selector === selector,
+  );
+}
+
+function replayEventWithLinkedFinding(
+  event: RuntimeEvent,
+  interactions: RuntimeInteraction[],
+): RuntimeEvent {
+  const finding = findingLinkedToSameTarget(event, interactions);
+  if (!finding) return event;
+
+  // Replay describes the state of the target at this step, not only the raw
+  // event object. If the same interaction produced a finding for the same
+  // selector, surface that finding instead of incorrectly saying "no signal".
+  return {
+    ...event,
+    outcome: finding.outcome,
+    severity: finding.severity,
+    ...(finding.ruleId ? { ruleId: finding.ruleId } : {}),
+    title: finding.title,
+    ...(finding.detail ? { detail: finding.detail } : {}),
+    ...(finding.references?.length ? { references: finding.references } : {}),
+  };
+}
+
 export function buildRuntimeReplay(
   events: RuntimeEvent[],
   interactions: RuntimeInteraction[],
@@ -56,18 +90,21 @@ export function buildRuntimeReplay(
   }
 
   const total = events.length;
-  return events.map((event, index) => ({
-    id: event.id,
-    order: index + 1,
-    total,
-    event,
-    phase: replayPhase(event),
-    ...(replayTarget(event) ? { target: replayTarget(event) } : {}),
-    ...(event.interactionId && interactionNumbers.has(event.interactionId)
-      ? { interactionNumber: interactionNumbers.get(event.interactionId) }
-      : {}),
-    ...(event.causes?.[0] ? { cause: event.causes[0] } : {}),
-  }));
+  return events.map((event, index) => {
+    const replayEvent = replayEventWithLinkedFinding(event, interactions);
+    return {
+      id: event.id,
+      order: index + 1,
+      total,
+      event: replayEvent,
+      phase: replayPhase(replayEvent),
+      ...(replayTarget(replayEvent) ? { target: replayTarget(replayEvent) } : {}),
+      ...(event.interactionId && interactionNumbers.has(event.interactionId)
+        ? { interactionNumber: interactionNumbers.get(event.interactionId) }
+        : {}),
+      ...(replayEvent.causes?.[0] ? { cause: replayEvent.causes[0] } : {}),
+    };
+  });
 }
 
 export function runtimeReplayKinds(steps: RuntimeReplayStep[]): RuntimeEventKind[] {
