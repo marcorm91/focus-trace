@@ -16,6 +16,8 @@ import './visual-system.css';
 import './accessibility-guardrails.css';
 import './severity.css';
 import './workflow-fixes.css';
+import './heading-tree-visual.css';
+import './modern-icons.css';
 
 const PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'];
 const root = document.getElementById('root');
