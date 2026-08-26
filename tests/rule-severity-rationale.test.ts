@@ -15,13 +15,12 @@ describe('rule severity rationale', () => {
     }
   });
 
-  it('keeps direct external impact comparisons aligned with the FocusTrace base severity', () => {
+  it('keeps standards references separate from FocusTrace severity', () => {
     for (const rule of rules) {
-      for (const reference of rule.impactReferences) {
-        expect(reference.url).toMatch(/^https:\/\/dequeuniversity\.com\/rules\/axe\/4\.12\//);
-        if (reference.relation === 'direct') {
-          expect(reference.impact, `${rule.id} vs ${reference.ruleId}`).toBe(rule.severity);
-        }
+      expect(rule.references.length, `${rule.id} standards references`).toBeGreaterThan(0);
+      expect(rule).not.toHaveProperty('impactReferences');
+      for (const reference of rule.references) {
+        expect(['WCAG', 'ACT', 'WAI-ARIA', 'WAI-ARIA APG']).toContain(reference.type);
       }
     }
   });
@@ -33,12 +32,9 @@ describe('rule severity rationale', () => {
     expect(RULES.positiveTabindex.severity).toBe('serious');
   });
 
-  it('marks broader or narrower comparisons as partial instead of pretending equivalence', () => {
-    expect(RULES.imageName.impactReferences.every((reference) => reference.relation === 'partial')).toBe(true);
-    expect(RULES.buttonName.impactReferences.every((reference) => reference.relation === 'partial')).toBe(true);
-    expect(RULES.formFieldName.impactReferences.every((reference) => reference.relation === 'partial')).toBe(true);
-    expect(RULES.headingJump.impactReferences[0]?.relation).toBe('partial');
-    expect(RULES.headingJump.impactReferences[0]?.impact).toBe('moderate');
+  it('keeps contextual review signals independent from their base impact', () => {
+    expect(RULES.positiveTabindex.severity).toBe('serious');
     expect(RULES.headingJump.severity).toBe('minor');
+    expect(RULES.placeholderOnlyLabel.severity).toBe('moderate');
   });
 });
