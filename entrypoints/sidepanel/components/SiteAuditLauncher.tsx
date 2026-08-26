@@ -11,7 +11,20 @@ export function SiteAuditLauncher({ language }: { language: AppLanguage }) {
   const [portalTarget, setPortalTarget] = useState<Element | null>(null);
 
   useEffect(() => {
-    setPortalTarget(document.querySelector('.quick-actions'));
+    const quickActions = document.querySelector('.quick-actions');
+    if (!quickActions) return undefined;
+
+    const host = document.createElement('span');
+    host.dataset.focustraceSiteAuditHost = 'true';
+    host.style.display = 'contents';
+    const focusAction = quickActions.querySelector('.focus-walk-action');
+    quickActions.insertBefore(host, focusAction ?? null);
+    setPortalTarget(host);
+
+    return () => {
+      setPortalTarget(null);
+      host.remove();
+    };
   }, []);
 
   const open = async () => {
