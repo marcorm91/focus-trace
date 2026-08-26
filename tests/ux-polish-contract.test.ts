@@ -82,14 +82,27 @@ describe('UX polish contract', () => {
     expect(entry).toContain("spanish ? 'Encabezados' : 'Headings'");
   });
 
-  it('does not expose third-party impact-comparison links in product findings or text exports', () => {
+  it('keeps the shipped severity model independent from third-party impact-comparison content', () => {
     const guidance = source('entrypoints/sidepanel/components/FindingGuidance.tsx');
     const siteReport = source('lib/site-audit/text-report.ts');
+    const catalog = source('shared/rule-catalog.ts');
+    const severityDocs = source('docs/SEVERITY.md');
+    const auditDocs = source('docs/SEVERITY-AUDIT.md');
+    const rulesDocs = source('docs/RULES.md');
+    const readme = source('README.md');
+
     expect(guidance).not.toContain('impactReferences');
     expect(guidance).not.toContain('dequeuniversity.com');
     expect(guidance).toContain('FocusTrace asigna este impacto base de forma independiente');
     expect(siteReport).not.toContain('Comparable impact reference');
     expect(siteReport).not.toContain('Referencia de impacto comparable');
+    expect(catalog).not.toContain('impactReferences');
+    expect(catalog).not.toContain('dequeuniversity.com');
+    expect(catalog).not.toContain('axe-core');
+    expect(severityDocs).not.toContain('axe-core');
+    expect(auditDocs).not.toContain('axe-core');
+    expect(rulesDocs).not.toContain('axe-core');
+    expect(readme).not.toContain('axe-core');
   });
 
   it('keeps the impact matrix synchronized with the persisted app language', () => {
