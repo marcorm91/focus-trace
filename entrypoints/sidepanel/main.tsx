@@ -3,9 +3,11 @@ import { createRoot } from 'react-dom/client';
 import { browser } from '#imports';
 import { armReportVisualEvidencePermissionRequest } from '../../lib/report/visual-evidence';
 import { locateScanTargetInPage } from '../../lib/runtime/scan-target-overlay';
+import { SETTINGS_STORAGE_KEY } from '../../shared/i18n';
 import { normalizeUiScale, UI_SCALE_STORAGE_KEY } from '../../shared/ui-scale';
 import App from './App';
 import { ImpactMatrix } from './components/ImpactMatrix';
+import { ReportScanCompact } from './components/ReportScanCompact';
 import { openFocusedSettingsView } from './settings-focus';
 import './style.css';
 import './focus-graph.css';
@@ -21,17 +23,14 @@ import './workflow-fixes.css';
 import './heading-tree-visual.css';
 import './modern-icons.css';
 import './regression-fixes.css';
+import './final-review-polish.css';
+import './heading-text-overflow.css';
 
 const PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'];
 const root = document.getElementById('root');
 if (!root) throw new Error('FocusTrace root element was not found.');
 
 document.documentElement.dataset.ftUiScale = '100';
-void browser.storage.local.get(UI_SCALE_STORAGE_KEY).then((stored) => {
-  document.documentElement.dataset.ftUiScale = String(
-    normalizeUiScale(stored[UI_SCALE_STORAGE_KEY]),
-  );
-});
 
 async function locateCurrentOccurrence(pagerButton: HTMLButtonElement, permission: Promise<boolean>) {
   if (!(await permission)) return;
@@ -53,6 +52,24 @@ async function locateCurrentOccurrence(pagerButton: HTMLButtonElement, permissio
   });
 }
 
+function syncDynamicPolish() {
+  const spanish = document.documentElement.lang === 'es';
+  const actionLabel = spanish ? 'Destacar elemento en la página' : 'Highlight element on page';
+
+  document.querySelectorAll<HTMLButtonElement>('.finding-location > button').forEach((button) => {
+    if (button.getAttribute('aria-label') !== actionLabel) button.setAttribute('aria-label', actionLabel);
+    if (button.title !== actionLabel) button.title = actionLabel;
+  });
+
+  const note = document.querySelector<HTMLElement>('.scan-results-note p');
+  if (note) {
+    const text = spanish
+      ? 'Cada criterio se muestra una sola vez. Ábrelo para recorrer los elementos afectados. La acción </> destaca el elemento actual en la página. Chrome no permite a una extensión abrir DevTools automáticamente; para inspeccionar el DOM en vivo, abre F12 y usa Elements. Las revisiones de contraste complejo requieren verificación manual y no son fallos WCAG automáticos.'
+      : 'Each criterion is shown once. Open it to move through the affected elements. The </> action highlights the current element on the page. Chrome does not allow an extension to open DevTools automatically; open F12 and use Elements to inspect the live DOM. Complex contrast reviews require manual verification and are not automatic WCAG failures.';
+    if (note.textContent !== text) note.textContent = text;
+  }
+}
+
 // Start permission-sensitive work synchronously from the original click.
 // Browser permission APIs can lose user-gesture eligibility after awaited work.
 document.addEventListener('click', (event) => {
@@ -72,9 +89,29 @@ document.addEventListener('click', (event) => {
   }
 }, { capture: true });
 
-createRoot(root).render(
-  <React.StrictMode>
-    <App />
-    <ImpactMatrix />
-  </React.StrictMode>
-);
+const uiObserver = new MutationObserver(syncDynamicPolish);
+uiObserver.observe(root, { childList: true, subtree: true });
+const languageObserver = new MutationObserver(syncDynamicPolish);
+languageObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
+
+void (async () => {
+  try {
+    const stored = await browser.storage.local.get([UI_SCALE_STORAGE_KEY, SETTINGS_STORAGE_KEY]);
+    document.documentElement.dataset.ftUiScale = String(normalizeUiScale(stored[UI_SCALE_STORAGE_KEY]));
+    const settings = stored[SETTINGS_STORAGE_KEY] as { language?: 'en' | 'es' } | undefined;
+    if (settings?.language === 'en' || settings?.language === 'es') {
+      document.documentElement.lang = settings.language;
+    }
+  } catch {
+    // App has its own settings fallback; bootstrap should never block rendering.
+  }
+
+  createRoot(root).render(
+    <React.StrictMode>
+      <App />
+      <ImpactMatrix />
+      <ReportScanCompact />
+    </React.StrictMode>,
+  );
+  window.requestAnimationFrame(syncDynamicPolish);
+})();

@@ -78,7 +78,7 @@ async function saveScan(panel: Page, tabId: number, url: string): Promise<void> 
   }, { id: tabId, pageUrl: url });
 }
 
-test('Inspect, occurrence navigation and Review on page track the real target', async ({ context, extensionWorker }) => {
+test('Inspect, occurrence navigation and compact report track the real target', async ({ context, extensionWorker }) => {
   const inspected = await context.newPage();
   await inspected.goto(`${fixtures.origin}/scan-targets.html`);
   await expect(inspected.getByRole('button', { name: 'First target' })).toBeVisible();
@@ -91,18 +91,18 @@ test('Inspect, occurrence navigation and Review on page track the real target', 
   await expect.poll(async () => panel.locator('.section-heading p').first().textContent()).toContain('Scan target navigation fixture');
 
   const inspect = panel.getByRole('button', {
-    name: /Highlight element and inspect its DOM|Destacar elemento e inspeccionar su DOM/,
+    name: /Highlight element on page|Destacar elemento en la página/,
   }).first();
   await inspect.click();
 
   const overlay = inspected.locator('[data-focustrace-scan-highlight]');
   await expect(overlay).toBeVisible();
   await expect(overlay).toContainText('First target');
-  await expect(panel.getByText(/^(DOM fragment|Fragmento DOM)$/)).toBeVisible();
+  await expect(panel.locator('.finding-dom')).not.toBeVisible();
 
   const next = panel.getByRole('button', {
     name: /Next affected element|Siguiente elemento afectado/,
-  });
+  }).first();
   await next.click();
 
   await expect(panel.locator('.scan-occurrence-pager strong')).toHaveText(/2 (of|de) 2/);
@@ -111,30 +111,38 @@ test('Inspect, occurrence navigation and Review on page track the real target', 
 
   await panel.getByRole('button', { name: /Report|Informe/ }).click();
   await expect(panel.getByRole('heading', { level: 2, name: /Accessibility report|Informe de accesibilidad/ })).toBeVisible();
+  await expect(panel.locator('.report-compact-tabs')).toBeVisible();
+  await expect(panel.locator('.report-rule-group')).toHaveCount(1);
+  await expect(panel.locator('.report-rule-count')).toHaveText('2');
+  await expect(panel.locator('.report-group').first()).not.toBeVisible();
 
-  const findingList = panel.locator('.report-finding-list');
-  const findingCards = panel.locator('.report-finding');
-  await expect(findingCards).toHaveCount(2);
-  const cardLayout = await findingList.evaluate((list) => {
-    const listStyle = getComputedStyle(list);
-    const card = list.querySelector<HTMLElement>('.report-finding');
-    if (!card) throw new Error('Expected a report finding card.');
-    const cardStyle = getComputedStyle(card);
-    return {
-      gap: Number.parseFloat(listStyle.rowGap),
-      padding: Number.parseFloat(cardStyle.paddingTop),
-      border: Number.parseFloat(cardStyle.borderTopWidth),
-    };
-  });
-  expect(cardLayout.gap).toBeGreaterThanOrEqual(10);
-  expect(cardLayout.padding).toBeGreaterThanOrEqual(10);
-  expect(cardLayout.border).toBeGreaterThanOrEqual(1);
+  const reportSection = panel.locator('#report-analysis-title').locator('..').locator('..').locator('..');
+  const reportRule = panel.locator('.report-rule-group').first();
+  const inset = await Promise.all([reportSection.boundingBox(), reportRule.boundingBox()]);
+  expect(inset[0]).not.toBeNull();
+  expect(inset[1]).not.toBeNull();
+  expect(inset[1]!.x).toBeGreaterThan(inset[0]!.x);
+  expect(inset[1]!.x + inset[1]!.width).toBeLessThan(inset[0]!.x + inset[0]!.width);
+
+  const reportNext = panel.getByRole('button', {
+    name: /Next affected element|Siguiente elemento afectado/,
+  }).last();
+  await reportNext.click();
+  await expect(panel.locator('.report-rule-pager strong')).toHaveText(/2 (of|de) 2/);
+  await expect(overlay).toContainText('Second target');
+
+  const reportPrevious = panel.getByRole('button', {
+    name: /Previous affected element|Elemento afectado anterior/,
+  }).last();
+  await reportPrevious.click();
+  await expect(panel.locator('.report-rule-pager strong')).toHaveText(/1 (of|de) 2/);
+  await expect(overlay).toContainText('First target');
 
   const reviewOnPage = panel.getByRole('button', {
     name: /Review on page|Revisar en la página/,
   });
-  await expect(reviewOnPage).toHaveCount(2);
-  await reviewOnPage.first().click();
+  await expect(reviewOnPage).toHaveCount(1);
+  await reviewOnPage.click();
 
   await expect(overlay).toContainText('First target');
   await expect.poll(() => inspected.evaluate(() => window.scrollY)).toBeLessThan(500);

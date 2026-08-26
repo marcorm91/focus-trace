@@ -15,13 +15,15 @@ describe('UX polish contract', () => {
     expect(source('entrypoints/site-audit/index.html')).toContain('./hero-copy.ts');
   });
 
-  it('draws all H1-H6 depths with explicit visual tree connectors', () => {
-    const css = source('entrypoints/sidepanel/heading-tree-visual.css');
+  it('keeps H1-H6 hierarchy compact without the heavy pseudo-tree connectors', () => {
+    const base = source('entrypoints/sidepanel/heading-tree-visual.css');
+    const polish = source('entrypoints/sidepanel/final-review-polish.css');
     for (let level = 1; level <= 6; level += 1) {
-      expect(css).toContain(`.heading-tree-row.level-${level}`);
+      expect(base).toContain(`.heading-tree-row.level-${level}`);
     }
-    expect(css).toContain('.heading-tree-row:not(.level-1)::before');
-    expect(css).toContain('border-bottom-left-radius');
+    expect(polish).toContain('margin-inline-start: calc(var(--heading-depth) * 6px)');
+    expect(polish).toContain('.heading-tree-row::before');
+    expect(polish).toContain('display: none !important');
   });
 
   it('uses the same modern SVG-mask icon language without shrinking navigation affordances', () => {
@@ -38,8 +40,24 @@ describe('UX polish contract', () => {
     expect(css).toContain('height: 28px !important');
     expect(css).toContain('font-size: 19px !important');
 
+    const polish = source('entrypoints/sidepanel/final-review-polish.css');
+    expect(polish).toContain('.topbar-tools button > span');
+    expect(polish).toContain('width: 24px !important');
+    expect(polish).toContain('--ft-i-copy');
+    expect(polish).toContain('--ft-i-chevron-left');
+
     const entry = source('entrypoints/sidepanel/main.tsx');
-    expect(entry).toContain("import './heading-tree-visual.css';");
     expect(entry).toContain("import './modern-icons.css';");
+    expect(entry).toContain("import './final-review-polish.css';");
+  });
+
+  it('replaces the long report finding list with a filtered rule accordion surface', () => {
+    const component = source('entrypoints/sidepanel/components/ReportScanCompact.tsx');
+    const polish = source('entrypoints/sidepanel/final-review-polish.css');
+    expect(component).toContain('report-compact-tabs');
+    expect(component).toContain('ReportRuleAccordion');
+    expect(component).toContain('report-rule-pager');
+    expect(polish).toContain('.report-group');
+    expect(polish).toContain('display: none !important');
   });
 });
