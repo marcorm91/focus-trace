@@ -1,11 +1,22 @@
+:root {
+  --ft-severity-critical-aa: #b42318;
+  --ft-severity-critical-aaa: #ac2217;
+  --ft-severity-serious-aa: #a13e00;
+  --ft-severity-serious-aaa: #9a3b00;
+  --ft-severity-moderate-aa: #786500;
+  --ft-severity-moderate-aaa: #695800;
+  --ft-severity-minor-aa: #2377d4;
+  --ft-severity-minor-aaa: #1b59a0;
+}
+
 .site-impact-summary {
   display: grid;
   gap: 9px;
   margin-top: 12px;
   padding: 12px;
-  border: 1.5px solid var(--ft-site-border, #263545);
+  border: 1.5px solid var(--ft-border, #263545);
   border-radius: 9px;
-  background: var(--ft-site-surface, #fff);
+  background: var(--ft-surface, #fff);
 }
 
 .site-impact-summary > div:first-child {
@@ -18,7 +29,7 @@
 }
 
 .site-impact-summary > div:first-child small {
-  color: var(--ft-site-muted, #65717d);
+  color: var(--ft-muted, #65717d);
   font-size: 11px;
 }
 
@@ -32,10 +43,10 @@
   display: grid;
   gap: 2px;
   padding: 8px 9px;
-  border: 1px solid var(--ft-site-border-soft, #cfd5dc);
+  border: 1px solid var(--ft-border-soft, #cfd5dc);
   border-top-width: 4px;
   border-radius: 7px;
-  background: var(--ft-site-surface-subtle, #f4f6f8);
+  background: var(--ft-surface-subtle, #f4f6f8);
 }
 
 .site-impact-counts strong {
@@ -50,10 +61,10 @@
   text-transform: uppercase;
 }
 
-.site-impact-counts .severity-critical { border-top-color: var(--ft-site-danger, #b42318); }
-.site-impact-counts .severity-serious { border-top-color: #b54708; }
-.site-impact-counts .severity-moderate { border-top-color: #8a6c00; }
-.site-impact-counts .severity-minor { border-top-color: var(--ft-site-accent, #2479d8); }
+.site-impact-counts .severity-critical { border-top-color: var(--ft-severity-critical-aa); }
+.site-impact-counts .severity-serious { border-top-color: var(--ft-severity-serious-aa); }
+.site-impact-counts .severity-moderate { border-top-color: var(--ft-severity-moderate-aa); }
+.site-impact-counts .severity-minor { border-top-color: var(--ft-severity-minor-aa); }
 
 .finding-statuses {
   display: grid;
@@ -66,28 +77,41 @@
   padding: 3px 6px;
   border: 1px solid currentColor;
   border-radius: 999px;
-  background: var(--ft-site-surface, #fff);
+  background: var(--ft-surface, #fff);
 }
 
 .finding-severity.severity-critical,
-.finding-severity-context.severity-critical strong { color: var(--ft-site-danger, #b42318); }
+.finding-severity-context.severity-critical strong { color: var(--ft-severity-critical-aaa); }
 .finding-severity.severity-serious,
-.finding-severity-context.severity-serious strong { color: #a13e00; }
+.finding-severity-context.severity-serious strong { color: var(--ft-severity-serious-aaa); }
 .finding-severity.severity-moderate,
-.finding-severity-context.severity-moderate strong { color: #786500; }
+.finding-severity-context.severity-moderate strong { color: var(--ft-severity-moderate-aaa); }
 .finding-severity.severity-minor,
-.finding-severity-context.severity-minor strong { color: var(--ft-site-accent-strong, #14589f); }
+.finding-severity-context.severity-minor strong { color: var(--ft-severity-minor-aaa); }
 .finding-severity.severity-info,
-.finding-severity-context.severity-info strong { color: var(--ft-site-muted, #65717d); }
+.finding-severity-context.severity-info strong { color: var(--ft-muted, #65717d); }
 
 .finding-severity-context {
-  border-left: 4px solid var(--ft-site-border-soft, #cfd5dc);
+  border-left: 4px solid var(--ft-border-soft, #cfd5dc);
 }
 
-.finding-severity-context.severity-critical { border-left-color: var(--ft-site-danger, #b42318); }
-.finding-severity-context.severity-serious { border-left-color: #b54708; }
-.finding-severity-context.severity-moderate { border-left-color: #8a6c00; }
-.finding-severity-context.severity-minor { border-left-color: var(--ft-site-accent, #2479d8); }
+.finding-severity-context.severity-critical { border-left-color: var(--ft-severity-critical-aa); }
+.finding-severity-context.severity-serious { border-left-color: var(--ft-severity-serious-aa); }
+.finding-severity-context.severity-moderate { border-left-color: var(--ft-severity-moderate-aa); }
+.finding-severity-context.severity-minor { border-left-color: var(--ft-severity-minor-aa); }
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ft-severity-critical-aa: #ce6f67;
+    --ft-severity-critical-aaa: #de9f9a;
+    --ft-severity-serious-aa: #be7b50;
+    --ft-severity-serious-aaa: #d3a587;
+    --ft-severity-moderate-aa: #998b3e;
+    --ft-severity-moderate-aaa: #b9af7b;
+    --ft-severity-minor-aa: #448dde;
+    --ft-severity-minor-aaa: #81b2e9;
+  }
+}
 
 @media (max-width: 720px) {
   .site-impact-counts {
