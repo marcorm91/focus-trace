@@ -112,6 +112,24 @@ test('Inspect, occurrence navigation and Review on page track the real target', 
   await panel.getByRole('button', { name: /Report|Informe/ }).click();
   await expect(panel.getByRole('heading', { level: 2, name: /Accessibility report|Informe de accesibilidad/ })).toBeVisible();
 
+  const findingList = panel.locator('.report-finding-list');
+  const findingCards = panel.locator('.report-finding');
+  await expect(findingCards).toHaveCount(2);
+  const cardLayout = await findingList.evaluate((list) => {
+    const listStyle = getComputedStyle(list);
+    const card = list.querySelector<HTMLElement>('.report-finding');
+    if (!card) throw new Error('Expected a report finding card.');
+    const cardStyle = getComputedStyle(card);
+    return {
+      gap: Number.parseFloat(listStyle.rowGap),
+      padding: Number.parseFloat(cardStyle.paddingTop),
+      border: Number.parseFloat(cardStyle.borderTopWidth),
+    };
+  });
+  expect(cardLayout.gap).toBeGreaterThanOrEqual(10);
+  expect(cardLayout.padding).toBeGreaterThanOrEqual(10);
+  expect(cardLayout.border).toBeGreaterThanOrEqual(1);
+
   const reviewOnPage = panel.getByRole('button', {
     name: /Review on page|Revisar en la página/,
   });
