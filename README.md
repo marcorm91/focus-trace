@@ -8,7 +8,7 @@ The project is in active early development. Automated results are intentionally 
 
 ## What makes it different?
 
-FocusTrace combines two complementary workflows instead of treating accessibility as a single static scan.
+FocusTrace combines complementary workflows instead of treating accessibility as a single static scan.
 
 ### Full page analysis
 
@@ -27,6 +27,25 @@ FocusTrace does not use axe-core as its scanner.
 Trace records what the user did, what had focus, what changed in the page and where focus moved afterwards. Recorded evidence can be inspected as a journey, correlated interactions, a focus graph or a read-only replay.
 
 The runtime debugger can derive deterministic causal explanations for patterns such as a focused node being removed, a modal opening without receiving focus or SPA navigation leaving focus behind. These explanations describe recorded evidence; they do not turn contextual behavior into an automatic WCAG conformance claim.
+
+### Smart Site Audit
+
+Site Audit extends the same local page scanner to representative coverage of a whole same-origin site without blindly repeating the same scan across thousands of equivalent URLs.
+
+The first Site Audit workflow:
+
+- discovers same-origin URLs from `robots.txt`, sitemap files and internal links;
+- normalizes tracking noise and duplicate URL forms;
+- groups repeated route families such as `/product/:item`;
+- samples up to three representative pages per route family within a global scan budget;
+- renders each representative page in a real browser tab and runs the normal FocusTrace scanner, preserving computed CSS, contrast and rendered DOM evidence;
+- compares a coarse semantic structure fingerprint across samples;
+- distinguishes signals observed in every scanned sample from page-specific variations;
+- exports an aggregated `.txt` report or printable/PDF view.
+
+Current safety limits are 500 discovered URLs and 30 actually scanned pages per run. These limits are intentional: Site Audit is representative sampling, not a claim that every URL in a route family is identical.
+
+Runtime Trace is not automatically exercised across every Site Audit page. Authentication flows, dynamic states and complete WCAG conformance still require targeted manual/runtime testing.
 
 ## Current rule engine
 
@@ -80,18 +99,20 @@ FocusTrace intentionally keeps its production permission set narrow:
 
 | Permission | Browser | Why it is needed |
 | --- | --- | --- |
-| `activeTab` | Chrome / Edge / Firefox | Analyze the page the user explicitly activates FocusTrace on. |
-| `scripting` | Chrome / Edge / Firefox | Inject the local analysis/runtime instrumentation into the active page. |
+| `activeTab` | Chrome / Edge / Firefox | Work with the page the user explicitly activates FocusTrace on. |
+| `scripting` | Chrome / Edge / Firefox | Inject the local analysis/runtime instrumentation into pages the user has granted access to. |
 | `storage` | Chrome / Edge / Firefox | Persist extension preferences and local state. |
 | `sidePanel` | Chrome / Edge | Provide the FocusTrace debugging interface in the Chromium side panel. |
 
 Firefox uses its native sidebar manifest integration instead of requesting the Chromium-only `sidePanel` permission.
 
-Production builds do not request global host permissions. A localhost host permission is enabled only for the end-to-end test build.
+Production builds do not require permanent HTTP/HTTPS host access. HTTP and HTTPS are declared as optional host permissions and are requested from explicit user actions when FocusTrace needs page access. Site Audit requests access to the current site when the user starts the audit so representative same-origin pages can be opened and scanned. A localhost host permission is enabled only for the end-to-end test build.
 
 ## Privacy
 
-All analysis runs locally in the browser. FocusTrace does not send page content, DOM data, screenshots or recorded interactions to a FocusTrace server or third-party AI API.
+All analysis runs locally in the browser. FocusTrace does not send page content, DOM data, screenshots, Site Audit results or recorded interactions to a FocusTrace server or third-party AI API.
+
+Site Audit fetches public/site-visible discovery files such as `robots.txt` and sitemaps directly from the audited site and opens representative pages in the user's own browser profile. No external crawler service is involved.
 
 ## Try the latest development build
 
@@ -177,23 +198,3 @@ npm run release:check:full
 ```
 
 See [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md) before tagging a release or changing repository visibility.
-
-For contribution guidelines, see [`CONTRIBUTING.md`](CONTRIBUTING.md).
-
-## Security
-
-Please do not disclose security vulnerabilities through public issues. See [`SECURITY.md`](SECURITY.md) for the reporting process and security scope.
-
-Before making the repository public, the complete Git history should be scanned with a dedicated secret scanner. Current-tree review is not a substitute for historical scanning.
-
-## Important conformance note
-
-FocusTrace is an accessibility testing aid, not an automatic WCAG conformance certificate. A passing automated rule only means that the specific expectation tested by that rule passed.
-
-## License
-
-FocusTrace is released under the [MIT License](LICENSE).
-
-## Author
-
-Created by [Marco Romero](https://es.linkedin.com/in/marcorm91).
