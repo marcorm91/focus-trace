@@ -1,7 +1,12 @@
 import { defineConfig, type UserManifest } from 'wxt';
 
 const OPTIONAL_PAGE_HOST_PERMISSIONS = ['http://*/*', 'https://*/*'];
-const FIREFOX_115_OPTIONAL_HOSTS = OPTIONAL_PAGE_HOST_PERMISSIONS as unknown as NonNullable<UserManifest['optional_permissions']>;
+const OPTIONAL_VISUAL_CAPTURE_HOST_PERMISSION = '<all_urls>';
+const OPTIONAL_HOST_PERMISSIONS = [
+  ...OPTIONAL_PAGE_HOST_PERMISSIONS,
+  OPTIONAL_VISUAL_CAPTURE_HOST_PERMISSION,
+];
+const FIREFOX_115_OPTIONAL_HOSTS = OPTIONAL_HOST_PERMISSIONS as unknown as NonNullable<UserManifest['optional_permissions']>;
 const e2eHostPermissions = process.env.FOCUSTRACE_E2E === '1'
   ? ['http://127.0.0.1/*']
   : undefined;
@@ -52,7 +57,7 @@ export function manifestForBrowser(browser: string): UserManifest {
           // manifest type does not model those legacy host patterns.
           optional_permissions: FIREFOX_115_OPTIONAL_HOSTS,
         }
-      : { optional_host_permissions: OPTIONAL_PAGE_HOST_PERMISSIONS }),
+      : { optional_host_permissions: OPTIONAL_HOST_PERMISSIONS }),
     ...(e2eHostPermissions ? { host_permissions: e2eHostPermissions } : {}),
     icons,
     action: {
