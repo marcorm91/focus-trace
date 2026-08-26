@@ -1,0 +1,59 @@
+.report-component-identity {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 9px;
+  align-items: start;
+  margin: 9px 0;
+  padding: 9px 10px;
+  border: 1px solid color-mix(in srgb, var(--ft-brand) 22%, var(--ft-border));
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--ft-brand) 4%, var(--ft-surface));
+}
+
+.report-component-id {
+  min-width: 36px;
+  min-height: 28px;
+  display: grid;
+  place-items: center;
+  padding: 3px 7px;
+  border-radius: 7px;
+  background: var(--ft-brand-soft);
+  color: var(--ft-brand-strong);
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+}
+
+.report-component-identity > div {
+  min-width: 0;
+  display: grid;
+  gap: 2px;
+}
+
+.report-component-identity small,
+.report-component-identity > div > span {
+  color: var(--ft-muted);
+}
+
+.report-component-identity strong,
+.report-component-identity > div > span {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.report-component-identity.is-compact {
+  margin: 7px 0 0;
+  padding: 7px 8px;
+}
+
+@media (max-width: 420px) {
+  .report-component-identity {
+    grid-template-columns: 1fr;
+  }
+
+  .report-component-id {
+    justify-self: start;
+  }
+}
