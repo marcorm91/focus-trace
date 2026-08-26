@@ -275,32 +275,6 @@ export function ReplayView({
           <ReferenceList references={current.event.references} language={language} />
         ) : null}
       </article>
-
-      <div className="replay-chain" aria-label={tr(language, 'Nearby replay steps', 'Pasos cercanos del replay')}>
-        {steps.slice(Math.max(0, index - 2), Math.min(steps.length, index + 3)).map((step) => (
-          <button
-            type="button"
-            key={step.id}
-            title={tr(language, `Open replay step ${step.order}`, `Abrir el paso ${step.order} del replay`)}
-            className={step.id === current.id ? 'active' : ''}
-            aria-current={step.id === current.id ? 'step' : undefined}
-            disabled={recording}
-            onClick={() => setIndex(step.order - 1)}
-          >
-            <span>{step.order}</span>
-            <small>{phaseLabel(step.phase, language)}</small>
-          </button>
-        ))}
-      </div>
-
-      <div className="notice replay-scope-note">
-        <strong>{tr(language, 'Historical evidence vs current page', 'Evidencia histórica frente a página actual')}</strong>
-        <p>{tr(
-          language,
-          'Replay describes what FocusTrace recorded at that moment. A page highlight uses the current DOM, so it may be unavailable if the element was removed or the view has changed.',
-          'Replay describe lo que FocusTrace registró en ese momento. El resaltado usa el DOM actual, por lo que puede no estar disponible si el elemento se eliminó o la vista ha cambiado.',
-        )}</p>
-      </div>
     </section>
   );
 }

@@ -34,9 +34,9 @@ test('sidepanel exposes an accessible shell and keyboard order', async ({ contex
 
   await panel.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
   await panel.keyboard.press('Tab');
-  const settings = panel.getByRole('button', { name: /Open settings|Abrir ajustes/ });
-  await expect(settings).toBeFocused();
-  const focusStyle = await settings.evaluate((element) => {
+  const reset = panel.getByRole('button', { name: /Start over|Empezar de cero/ });
+  await expect(reset).toBeFocused();
+  const focusStyle = await reset.evaluate((element) => {
     const style = getComputedStyle(element);
     return { width: Number.parseFloat(style.outlineWidth), style: style.outlineStyle };
   });
@@ -44,11 +44,30 @@ test('sidepanel exposes an accessible shell and keyboard order', async ({ contex
   expect(focusStyle.style).not.toBe('none');
 
   await panel.keyboard.press('Tab');
+  await expect(panel.getByRole('button', { name: /Open settings|Abrir ajustes/ })).toBeFocused();
+  await panel.keyboard.press('Tab');
   await expect(panel.getByRole('button', { name: /Analyze this page|Analizar esta página/ })).toBeFocused();
   await panel.keyboard.press('Tab');
-  await expect(panel.getByRole('button', { name: /Walk with Tab|Recorrer con Tab/ })).toBeFocused();
+  await expect(panel.getByRole('button', { name: /Automate focus|Automatizar foco/ })).toBeFocused();
   await panel.keyboard.press('Tab');
   await expect(panel.getByRole('button', { name: /Review|Revisión/ })).toBeFocused();
+});
+
+test('default readable UI text is at least 14px', async ({ context, extensionWorker }) => {
+  const panel = await openSidepanel(context, extensionWorker);
+  const samples = [
+    panel.locator('.brand p'),
+    panel.locator('.quick-start-copy p'),
+    panel.getByRole('button', { name: /Analyze this page|Analizar esta página/ }),
+    panel.getByRole('button', { name: /Automate focus|Automatizar foco/ }),
+    panel.getByRole('button', { name: /Review|Revisión/ }),
+  ];
+
+  for (const sample of samples) {
+    await expect(sample).toBeVisible();
+    const fontSize = await sample.evaluate((element) => Number.parseFloat(getComputedStyle(element).fontSize));
+    expect(fontSize).toBeGreaterThanOrEqual(14);
+  }
 });
 
 test('sidepanel stays inside a narrow viewport and uses the product logo', async ({ context, extensionWorker }) => {

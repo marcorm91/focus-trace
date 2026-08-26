@@ -217,6 +217,7 @@ export type ExtensionMessage =
   | { type: 'FOCUSTRACE_GET_CONTENT_STATE' }
   | { type: 'FOCUSTRACE_GET_SESSION'; tabId: number }
   | { type: 'FOCUSTRACE_CLEAR_SESSION'; tabId: number }
+  | { type: 'FOCUSTRACE_RESET_TAB'; tabId: number }
   | { type: 'FOCUSTRACE_ENSURE_INJECTED'; tabId: number }
   | { type: 'FOCUSTRACE_SESSION_UPDATED'; state: SessionState }
   | { type: 'FOCUSTRACE_SET_RECORDING'; enabled: boolean; breakpoints?: RuntimeBreakpointSettings }

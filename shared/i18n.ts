@@ -43,6 +43,20 @@ export function localizedReferenceStatus(
   return labels[status];
 }
 
+export function findingCriteria(issue: Pick<ScanIssue, 'references'>): string[] {
+  const wcag = issue.references.filter((reference) => reference.type === 'WCAG');
+  const source = wcag.length ? wcag : issue.references.filter((reference) => reference.type !== 'ACT');
+  return source.map((reference) =>
+    `${reference.type} ${reference.id}${reference.level ? ` (${reference.level})` : ''}`,
+  );
+}
+
+function withCriteria(description: string, issue: ScanIssue, language: AppLanguage): string {
+  const criteria = findingCriteria(issue);
+  if (!criteria.length) return description;
+  return `${description} ${tr(language, 'Criterion/source', 'Criterio/fuente')}: ${criteria.join(' · ')}.`;
+}
+
 const RULE_TITLES_ES: Record<string, string> = {
   'FT-WCAG-001': 'La página HTML tiene un título no vacío',
   'FT-WCAG-002': 'La imagen tiene un nombre accesible o está marcada como decorativa',
@@ -137,15 +151,23 @@ export function localizedScanIssue(
   language: AppLanguage,
 ): Pick<ScanIssue, 'title' | 'description' | 'evidence'> {
   if (language === 'en') {
-    return { title: issue.title, description: issue.description, ...(issue.evidence ? { evidence: issue.evidence } : {}) };
+    return {
+      title: issue.title,
+      description: withCriteria(issue.description, issue, language),
+      ...(issue.evidence ? { evidence: issue.evidence } : {}),
+    };
   }
 
   if (issue.ruleId === 'FT-WCAG-010') {
     return {
       title: localizedRuleTitle(issue.ruleId, issue.title, language),
-      description: issue.outcome === 'fail'
-        ? `El contraste del texto renderizado es ${issue.contrast?.ratio ?? '?'}:1, por debajo del mínimo requerido de ${issue.contrast?.requiredRatio ?? '?'}:1.`
-        : 'FocusTrace no puede determinar con fiabilidad el contraste final entre el texto y su fondo. Revisa este caso manualmente en lugar de tratar un cálculo incierto como un fallo WCAG.',
+      description: withCriteria(
+        issue.outcome === 'fail'
+          ? `El contraste del texto renderizado es ${issue.contrast?.ratio ?? '?'}:1, por debajo del mínimo requerido de ${issue.contrast?.requiredRatio ?? '?'}:1.`
+          : 'FocusTrace no puede determinar con fiabilidad el contraste final entre el texto y su fondo. Revisa este caso manualmente en lugar de tratar un cálculo incierto como un fallo WCAG.',
+        issue,
+        language,
+      ),
       ...(issue.evidence ? { evidence: issue.evidence } : {}),
     };
   }
@@ -154,9 +176,13 @@ export function localizedScanIssue(
     const subject = issue.contrast?.subject ?? 'señal visual';
     return {
       title: localizedRuleTitle(issue.ruleId, issue.title, language),
-      description: issue.outcome === 'fail'
-        ? `El contraste observado para ${subject} es ${issue.contrast?.ratio ?? '?'}:1, por debajo del mínimo 3:1 exigido para la señal visual no textual evaluada.`
-        : 'La señal visual no textual medida necesita revisión. FocusTrace conserva el ratio cuando puede calcularlo, pero no marca como fallo los casos donde no puede demostrar que ese borde, relleno, estado o gráfico sea imprescindible para comprender el componente.',
+      description: withCriteria(
+        issue.outcome === 'fail'
+          ? `El contraste observado para ${subject} es ${issue.contrast?.ratio ?? '?'}:1, por debajo del mínimo 3:1 exigido para la señal visual no textual evaluada.`
+          : 'La señal visual no textual medida necesita revisión. FocusTrace conserva el ratio cuando puede calcularlo, pero no marca como fallo los casos donde no puede demostrar que ese borde, relleno, estado o gráfico sea imprescindible para comprender el componente.',
+        issue,
+        language,
+      ),
       ...(issue.evidence ? { evidence: issue.evidence } : {}),
     };
   }
@@ -164,7 +190,7 @@ export function localizedScanIssue(
   const copy = SCAN_COPY_ES[issue.ruleId];
   return {
     title: localizedRuleTitle(issue.ruleId, issue.title, language),
-    description: copy?.description ?? issue.description,
+    description: withCriteria(copy?.description ?? issue.description, issue, language),
     ...(issue.evidence ? { evidence: copy?.evidence ?? issue.evidence } : {}),
   };
 }
