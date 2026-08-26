@@ -1,6 +1,10 @@
 import { defineConfig, type UserManifest } from 'wxt';
 
-const PAGE_HOST_PERMISSIONS = ['http://*/*', 'https://*/*'];
+const OPTIONAL_PAGE_HOST_PERMISSIONS = ['http://*/*', 'https://*/*'];
+const e2eHostPermissions = process.env.FOCUSTRACE_E2E === '1'
+  ? ['http://127.0.0.1/*']
+  : undefined;
+const AUTO_RUNTIME_HOST_PERMISSIONS = new Set(OPTIONAL_PAGE_HOST_PERMISSIONS);
 
 const icons = {
   16: 'icon/16.png',
@@ -40,7 +44,10 @@ export function manifestForBrowser(browser: string): UserManifest {
     permissions: firefox
       ? ['activeTab', 'scripting', 'storage']
       : ['activeTab', 'scripting', 'storage', 'sidePanel'],
-    host_permissions: PAGE_HOST_PERMISSIONS,
+    ...(firefox
+      ? { optional_permissions: OPTIONAL_PAGE_HOST_PERMISSIONS }
+      : { optional_host_permissions: OPTIONAL_PAGE_HOST_PERMISSIONS }),
+    ...(e2eHostPermissions ? { host_permissions: e2eHostPermissions } : {}),
     icons,
     action: {
       default_title: 'Open FocusTrace',
@@ -52,4 +59,16 @@ export function manifestForBrowser(browser: string): UserManifest {
 export default defineConfig({
   modules: ['@wxt-dev/module-react'],
   manifest: ({ browser }) => manifestForBrowser(browser),
+  hooks: {
+    'build:manifestGenerated': (_wxt, manifest) => {
+      // WXT derives the runtime content-script matches as required host
+      // permissions. FocusTrace asks for web-page access from explicit user
+      // actions in the side panel instead, so keep production access optional.
+      if (!manifest.host_permissions) return;
+      manifest.host_permissions = manifest.host_permissions.filter(
+        (permission: string) => !AUTO_RUNTIME_HOST_PERMISSIONS.has(permission),
+      );
+      if (manifest.host_permissions.length === 0) delete manifest.host_permissions;
+    },
+  },
 });
