@@ -86,16 +86,20 @@ describe('Site Audit finding aggregation', () => {
       urls: ['https://shop.test/product/a', 'https://shop.test/product/b', 'https://shop.test/product/c'],
       sampleUrls: ['https://shop.test/product/a', 'https://shop.test/product/b', 'https://shop.test/product/c'],
     };
+    const first = family.urls[0]!;
+    const second = family.urls[1]!;
+    const third = family.urls[2]!;
     const pages: SiteAuditPageResult[] = [
-      { url: family.urls[0], routeFamilyId: family.id, scan: scan(family.urls[0], 'main > p:nth-of-type(2)') },
-      { url: family.urls[1], routeFamilyId: family.id, scan: scan(family.urls[1], 'main > p:nth-of-type(4)') },
-      { url: family.urls[2], routeFamilyId: family.id, scan: scan(family.urls[2], 'main > p:nth-of-type(8)') },
+      { url: first, routeFamilyId: family.id, scan: scan(first, 'main > p:nth-of-type(2)') },
+      { url: second, routeFamilyId: family.id, scan: scan(second, 'main > p:nth-of-type(4)') },
+      { url: third, routeFamilyId: family.id, scan: scan(third, 'main > p:nth-of-type(8)') },
     ];
-    const template = buildSiteAuditTemplates([family], pages)[0];
+    const template = buildSiteAuditTemplates([family], pages)[0]!;
+    const finding = template.findings[0]!;
     expect(template.findings).toHaveLength(1);
-    expect(template.findings[0].targetShape).toBe('main > p:nth-of-type(*)');
-    expect(template.findings[0].commonToTemplate).toBe(true);
-    expect(template.findings[0].sampleCount).toBe(3);
+    expect(finding.targetShape).toBe('main > p:nth-of-type(*)');
+    expect(finding.commonToTemplate).toBe(true);
+    expect(finding.sampleCount).toBe(3);
   });
 
   it('keeps page-specific findings as variations', () => {
@@ -105,14 +109,18 @@ describe('Site Audit finding aggregation', () => {
       urls: ['https://shop.test/product/a', 'https://shop.test/product/b', 'https://shop.test/product/c'],
       sampleUrls: ['https://shop.test/product/a', 'https://shop.test/product/b', 'https://shop.test/product/c'],
     };
+    const first = family.urls[0]!;
+    const second = family.urls[1]!;
+    const third = family.urls[2]!;
     const pages: SiteAuditPageResult[] = [
-      { url: family.urls[0], routeFamilyId: family.id, scan: scan(family.urls[0]) },
-      { url: family.urls[1], routeFamilyId: family.id, scan: scan(family.urls[1], undefined, false) },
-      { url: family.urls[2], routeFamilyId: family.id, scan: scan(family.urls[2], undefined, false) },
+      { url: first, routeFamilyId: family.id, scan: scan(first) },
+      { url: second, routeFamilyId: family.id, scan: scan(second, undefined, false) },
+      { url: third, routeFamilyId: family.id, scan: scan(third, undefined, false) },
     ];
-    const template = buildSiteAuditTemplates([family], pages)[0];
-    expect(template.findings[0].commonToTemplate).toBe(false);
-    expect(template.findings[0].sampleCount).toBe(1);
+    const template = buildSiteAuditTemplates([family], pages)[0]!;
+    const finding = template.findings[0]!;
+    expect(finding.commonToTemplate).toBe(false);
+    expect(finding.sampleCount).toBe(1);
     expect(normalizeTargetShape('#product-173829')).toBe('#product-*');
   });
 });
