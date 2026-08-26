@@ -20,7 +20,6 @@ function issue(overrides: Partial<ScanIssue> = {}): ScanIssue {
     }],
     contrast: {
       kind: 'text',
-      ratio: null,
       requiredRatio: 4.5,
       subject: 'text',
       reason: 'Background composition requires manual review.',
