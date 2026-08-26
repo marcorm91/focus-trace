@@ -46,7 +46,9 @@ describe('FocusTrace bilingual presentation', () => {
     };
 
     expect(humanRuntimeEventTitle(event, 'es')).toBe('El foco se movió a “Guardar”');
+    expect(localizedSeverity('critical', 'es')).toBe('crítico');
     expect(localizedSeverity('serious', 'es')).toBe('grave');
+    expect(localizedSeverity('moderate', 'es')).toBe('moderado');
     expect(localizedSeverity('minor', 'es')).toBe('leve');
     expect(event.element?.selector).toBe('#save');
   });
