@@ -2,7 +2,18 @@ import { useEffect, useMemo, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { browser } from '#imports';
 import { suggestAccessibleForeground } from '../../lib/audit/contrast';
+import {
+  componentContextLabel,
+  componentPrimaryLabel,
+  componentTypeLabel,
+  type ReportComponentIdentity,
+} from '../../lib/report/component-identity';
 import { buildSessionReportModel } from '../../lib/report/session-report';
+import {
+  readPrintableReportEvidence,
+  type PrintableReportEvidenceBundle,
+  type ReportVisualEvidence,
+} from '../../lib/report/visual-evidence';
 import { localizedScanIssue, tr, type AppLanguage } from '../../shared/i18n';
 import type {
   ExtensionMessage,
@@ -12,12 +23,14 @@ import type {
   StandardReference,
 } from '../../shared/types';
 import './style.css';
+import './visual-evidence.css';
 
 interface LoadedReport {
   session: SessionState;
   language: AppLanguage;
   generatedAt: number;
   version: string;
+  evidence?: PrintableReportEvidenceBundle;
 }
 
 function referenceLabel(reference: StandardReference): string {
@@ -82,7 +95,69 @@ function ContrastEvidence({ issue, language }: { issue: ScanIssue; language: App
   );
 }
 
-function Finding({ issue, label, language }: { issue: ScanIssue; label: string; language: AppLanguage }) {
+function PrintComponentIdentity({
+  component,
+  visual,
+  language,
+  visualRequested,
+  showVisual,
+}: {
+  component?: ReportComponentIdentity | undefined;
+  visual?: ReportVisualEvidence | undefined;
+  language: AppLanguage;
+  visualRequested: boolean;
+  showVisual: boolean;
+}) {
+  if (!component) return null;
+  const context = componentContextLabel(component);
+  return (
+    <div className="print-component-block">
+      <div className="print-component-identity">
+        <span>{component.componentId}</span>
+        <div>
+          <small>{tr(language, 'Affected element', 'Elemento afectado')} · {componentTypeLabel(component, language)}</small>
+          <strong>{componentPrimaryLabel(component)}</strong>
+          {context && <em>{context}</em>}
+        </div>
+      </div>
+      {showVisual && visual && (
+        <figure className={`print-visual-evidence tone-${visual.tone}`}>
+          <img src={visual.dataUrl} alt="" />
+          <figcaption>{tr(
+            language,
+            'Visual evidence captured from the analyzed page. The outlined area identifies the affected element.',
+            'Evidencia visual capturada de la página analizada. El recuadro identifica el elemento afectado.',
+          )}</figcaption>
+        </figure>
+      )}
+      {showVisual && visualRequested && !visual && (
+        <p className="print-visual-unavailable">{tr(
+          language,
+          'Visual evidence unavailable for this element; it may have changed, disappeared or be restricted by the browser.',
+          'Evidencia visual no disponible para este elemento; puede haber cambiado, desaparecido o estar restringido por el navegador.',
+        )}</p>
+      )}
+    </div>
+  );
+}
+
+function Finding({
+  issue,
+  label,
+  language,
+  component,
+  visual,
+  visualRequested,
+  showVisual,
+}: {
+  issue: ScanIssue;
+  label: string;
+  language: AppLanguage;
+  component?: ReportComponentIdentity | undefined;
+  visual?: ReportVisualEvidence | undefined;
+  visualRequested: boolean;
+  showVisual: boolean;
+}) {
   const copy = localizedScanIssue(issue, language);
   return (
     <article className={`print-finding tone-${issue.outcome}`}>
@@ -92,6 +167,13 @@ function Finding({ issue, label, language }: { issue: ScanIssue; label: string; 
         <span>{issue.severity}</span>
       </div>
       <h4>{copy.title}</h4>
+      <PrintComponentIdentity
+        component={component}
+        visual={visual}
+        language={language}
+        visualRequested={visualRequested}
+        showVisual={showVisual}
+      />
       <p>{copy.description}</p>
       {issue.references.length > 0 && (
         <div className="print-references" aria-label={tr(language, 'Standards references', 'Referencias normativas')}>
@@ -107,7 +189,7 @@ function Finding({ issue, label, language }: { issue: ScanIssue; label: string; 
 }
 
 function PrintableReport({ report }: { report: LoadedReport }) {
-  const { session, language, generatedAt, version } = report;
+  const { session, language, generatedAt, version, evidence } = report;
   const scan = session.scan!;
   const model = useMemo(
     () => buildSessionReportModel(scan, session.events, language),
@@ -115,6 +197,25 @@ function PrintableReport({ report }: { report: LoadedReport }) {
   );
   const highPriority = model.suggestions.filter((suggestion) => suggestion.priority === 'high').slice(0, 6);
   const headings = scan.headings ?? [];
+  const componentMap = useMemo(
+    () => new Map((evidence?.components ?? []).map((component) => [component.selector, component])),
+    [evidence?.components],
+  );
+  const visualMap = useMemo(
+    () => new Map((evidence?.visuals ?? []).map((visual) => [visual.selector, visual])),
+    [evidence?.visuals],
+  );
+  const firstVisualIssueIds = useMemo(() => {
+    const seen = new Set<string>();
+    const ids = new Set<string>();
+    for (const issue of [...scan.issues, ...scan.review, ...(scan.warnings ?? [])]) {
+      const selector = issue.targets[0];
+      if (!selector || seen.has(selector)) continue;
+      seen.add(selector);
+      ids.add(issue.id);
+    }
+    return ids;
+  }, [scan]);
   const generatedLabel = new Intl.DateTimeFormat(language === 'es' ? 'es-ES' : 'en-GB', {
     dateStyle: 'medium',
     timeStyle: 'short',
@@ -210,25 +311,29 @@ function PrintableReport({ report }: { report: LoadedReport }) {
           </div>
           {model.traceStories.length ? (
             <div className="print-trace-list">
-              {model.traceStories.map((story) => (
-                <article className={`print-trace-story tone-${story.tone}`} key={story.id}>
-                  <div className="print-trace-head">
-                    <span>{story.tone === 'handled' ? '✓' : story.tone === 'review' ? '!' : '•'}</span>
-                    <div>
-                      <small>{story.interactionNumber ? `${tr(language, 'Interaction', 'Interacción')} #${story.interactionNumber}` : tr(language, 'Runtime signal', 'Señal runtime')}</small>
-                      <strong>{story.trigger}</strong>
+              {model.traceStories.map((story) => {
+                const component = story.selector ? componentMap.get(story.selector) : undefined;
+                return (
+                  <article className={`print-trace-story tone-${story.tone}`} key={story.id}>
+                    <div className="print-trace-head">
+                      <span>{story.tone === 'handled' ? '✓' : story.tone === 'review' ? '!' : '•'}</span>
+                      <div>
+                        <small>{story.interactionNumber ? `${tr(language, 'Interaction', 'Interacción')} #${story.interactionNumber}` : tr(language, 'Runtime signal', 'Señal runtime')}</small>
+                        <strong>{story.trigger}</strong>
+                      </div>
                     </div>
-                  </div>
-                  <p className="print-chain">{story.chain.join(' → ')}</p>
-                  <div className="print-trace-result">
-                    <strong>{story.result}</strong>
-                    <p>{story.detail}</p>
-                  </div>
-                  {story.impact && <p><strong>{tr(language, 'Impact:', 'Impacto:')}</strong> {story.impact}</p>}
-                  {story.recommendation && <p><strong>{tr(language, 'Recommendation:', 'Recomendación:')}</strong> {story.recommendation}</p>}
-                  {story.references.length > 0 && <p className="print-reference-line">{story.references.map(referenceLabel).join(' · ')}</p>}
-                </article>
-              ))}
+                    <PrintComponentIdentity component={component} language={language} visualRequested={false} showVisual={false} />
+                    <p className="print-chain">{story.chain.join(' → ')}</p>
+                    <div className="print-trace-result">
+                      <strong>{story.result}</strong>
+                      <p>{story.detail}</p>
+                    </div>
+                    {story.impact && <p><strong>{tr(language, 'Impact:', 'Impacto:')}</strong> {story.impact}</p>}
+                    {story.recommendation && <p><strong>{tr(language, 'Recommendation:', 'Recomendación:')}</strong> {story.recommendation}</p>}
+                    {story.references.length > 0 && <p className="print-reference-line">{story.references.map(referenceLabel).join(' · ')}</p>}
+                  </article>
+                );
+              })}
             </div>
           ) : <p className="print-empty">{tr(language, 'No runtime trace was recorded for this report.', 'No se ha registrado una traza runtime para este informe.')}</p>}
         </section>
@@ -241,11 +346,31 @@ function PrintableReport({ report }: { report: LoadedReport }) {
               <p>{scan.rulesRun} {tr(language, 'rule families executed.', 'familias de reglas ejecutadas.')}</p>
             </div>
           </div>
+          {evidence?.visualEvidenceRequested && (
+            <p className="print-visual-summary">
+              {tr(language, 'Visual evidence', 'Evidencia visual')}: {evidence.visuals.length} {tr(language, 'component crops included', 'recortes de componentes incluidos')}
+              {evidence.visualEvidenceLimitReached ? ` · ${tr(language, 'capture limit reached', 'límite de capturas alcanzado')}` : ''}
+            </p>
+          )}
           {findingGroup(scan, language).map((group) => (
             <div className="print-finding-group" key={group.id}>
               <h3>{group.label} <span>{group.issues.length}</span></h3>
               {group.issues.length
-                ? group.issues.map((issue) => <Finding issue={issue} label={group.label} language={language} key={issue.id} />)
+                ? group.issues.map((issue) => {
+                    const selector = issue.targets[0];
+                    return (
+                      <Finding
+                        issue={issue}
+                        label={group.label}
+                        language={language}
+                        component={selector ? componentMap.get(selector) : undefined}
+                        visual={selector ? visualMap.get(selector) : undefined}
+                        visualRequested={Boolean(evidence?.visualEvidenceRequested)}
+                        showVisual={firstVisualIssueIds.has(issue.id)}
+                        key={issue.id}
+                      />
+                    );
+                  })
                 : <p className="print-empty">{tr(language, 'No findings in this group.', 'No hay hallazgos en este grupo.')}</p>}
             </div>
           ))}
@@ -262,7 +387,7 @@ function PrintableReport({ report }: { report: LoadedReport }) {
           {headings.length ? (
             <ol className="print-heading-list">
               {headings.map((heading) => (
-                <li className={heading.signals.length ? 'has-signal' : ''} key={heading.id} style={{ marginInlineStart: `${(heading.level - 1) * 14}px` }}>
+                <li className={heading.signals.length ? 'has-signal' : ''} key={heading.id} style={{ paddingInlineStart: `${(heading.level - 1) * 14}px` }}>
                   <span>H{heading.level}</span>
                   <strong>{heading.text || tr(language, 'Empty heading', 'Encabezado vacío')}</strong>
                   {heading.signals.length > 0 && <small>{heading.signals.map((signal) => headingSignalLabel(signal, language)).join(' · ')}</small>}
@@ -314,6 +439,7 @@ function App() {
     const params = new URLSearchParams(window.location.search);
     const tabId = Number(params.get('tabId'));
     const language: AppLanguage = params.get('language') === 'es' ? 'es' : 'en';
+    const evidenceToken = params.get('evidence');
     document.documentElement.lang = language;
 
     if (!Number.isInteger(tabId) || tabId < 0) {
@@ -321,18 +447,22 @@ function App() {
       return;
     }
 
-    void browser.runtime.sendMessage({
+    const sessionPromise = browser.runtime.sendMessage({
       type: 'FOCUSTRACE_GET_SESSION',
       tabId,
-    } satisfies ExtensionMessage).then((session) => {
-      const state = session as SessionState;
+    } satisfies ExtensionMessage) as Promise<SessionState>;
+    const evidencePromise = evidenceToken
+      ? readPrintableReportEvidence(evidenceToken)
+      : Promise.resolve(undefined);
+
+    void Promise.all([sessionPromise, evidencePromise]).then(([state, evidence]) => {
       if (!state.scan) {
         setError(tr(language, 'No page analysis is available for this report.', 'No hay un análisis de página disponible para este informe.'));
         return;
       }
       const generatedAt = Date.now();
       const version = browser.runtime.getManifest().version;
-      setReport({ session: state, language, generatedAt, version });
+      setReport({ session: state, language, generatedAt, version, evidence });
       let host = 'report';
       try { host = new URL(state.scan.url).hostname || 'report'; } catch { /* keep fallback */ }
       const date = new Date(generatedAt).toISOString().slice(0, 10);
