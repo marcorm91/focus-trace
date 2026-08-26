@@ -13,6 +13,7 @@ import './settings-scale.css';
 import './ui-scale.css';
 import './visual-system.css';
 import './accessibility-guardrails.css';
+import './severity.css';
 
 const root = document.getElementById('root');
 if (!root) throw new Error('FocusTrace root element was not found.');
