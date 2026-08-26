@@ -22,7 +22,7 @@ export function localizedSeverity(severity: Severity, language: AppLanguage): st
     critical: 'crítico',
     serious: 'grave',
     moderate: 'moderado',
-    minor: 'menor',
+    minor: 'leve',
     info: 'info',
   };
   return labels[severity];
