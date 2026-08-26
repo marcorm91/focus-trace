@@ -8,6 +8,7 @@ import {
   UI_SCALE_STORAGE_KEY,
   type UiScale,
 } from '../../../shared/ui-scale';
+import { closeFocusedSettingsView } from '../settings-focus';
 
 const CREATOR_LINKEDIN = 'https://es.linkedin.com/in/marcorm91';
 const REPOSITORY_URL = 'https://github.com/marcorm91/focus-trace';
@@ -23,6 +24,13 @@ export function SettingsView({
     normalizeUiScale(document.documentElement.dataset.ftUiScale ?? DEFAULT_UI_SCALE),
   );
   const version = browser.runtime.getManifest().version;
+
+  useEffect(() => {
+    document.documentElement.dataset.ftSettingsOpen = 'true';
+    return () => {
+      delete document.documentElement.dataset.ftSettingsOpen;
+    };
+  }, []);
 
   useEffect(() => {
     void browser.storage.local.get(UI_SCALE_STORAGE_KEY).then((stored) => {
@@ -41,6 +49,15 @@ export function SettingsView({
 
   return (
     <section className="panel settings-panel" aria-labelledby="settings-title">
+      <button
+        type="button"
+        className="settings-back-trigger"
+        onClick={closeFocusedSettingsView}
+      >
+        <span aria-hidden="true">←</span>
+        {tr(language, 'Back', 'Volver')}
+      </button>
+
       <div className="section-heading">
         <div>
           <h2 id="settings-title">{tr(language, 'Settings', 'Ajustes')}</h2>
