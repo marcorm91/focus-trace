@@ -46,7 +46,7 @@ function findingLines(finding: SiteAuditFindingAggregate, language: AppLanguage)
 export function buildSiteAuditTextReport(result: SiteAuditResult, language: AppLanguage): string {
   const es = language === 'es';
   const output: string[] = [
-    es ? 'FOCUSTRACE - AUDITORÍA DE SITIO' : 'FOCUSTRACE - SITE AUDIT',
+    es ? 'AUDITORÍA DE SITIO' : 'SITE AUDIT',
     '=================================',
     line(es ? 'Sitio' : 'Site', result.origin),
     line(es ? 'URLs descubiertas' : 'Discovered URLs', result.discovery.urls.length),
