@@ -23,7 +23,6 @@ import { buildSiteAuditTextReport, siteAuditFilename } from '../../lib/site-audi
 import { captureSiteAuditFindingVisual } from '../../lib/site-audit/visual-evidence';
 import { localizedScanIssue, type AppLanguage } from '../../shared/i18n';
 import './style.css';
-import './visual-system.css';
 
 function t(language: AppLanguage, en: string, es: string) {
   return language === 'es' ? es : en;
@@ -42,251 +41,116 @@ function permissionPattern(sourceUrl: string) {
   return `${url.protocol}//${url.host}/*`;
 }
 
-function normalizedExtraUrls(value: string, sourceUrl: string) {
-  const seen = new Set<string>();
-  const urls: string[] = [];
-  for (const raw of value.split(/\r?\n/)) {
-    const normalized = normalizeDiscoveredUrl(raw.trim(), sourceUrl);
-    if (!normalized || seen.has(normalized)) continue;
-    seen.add(normalized);
-    urls.push(normalized);
-  }
-  return urls;
+function downloadText(result: SiteAuditResult, language: AppLanguage) {
+  const blob = new Blob(['\uFEFF', buildSiteAuditTextReport(result, language)], { type: 'text/plain;charset=utf-8' });
+  const objectUrl = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = objectUrl;
+  anchor.download = siteAuditFilename(result);
+  anchor.click();
+  setTimeout(() => URL.revokeObjectURL(objectUrl), 0);
 }
 
-function runActionLabel(status: SiteAuditStatus, language: AppLanguage) {
-  if (status === 'discovering') return t(language, 'Discovering…', 'Descubriendo…');
-  if (status === 'scanning') return t(language, 'Scanning…', 'Analizando…');
-  if (status === 'aggregating') return t(language, 'Building report…', 'Generando informe…');
-  return t(language, 'Scan site', 'Escanear sitio');
-}
-
-function FindingCard({
-  finding,
-  language,
-  visual,
-  onCapture,
-  captureBusy,
-  captureError,
-}: {
-  finding: SiteAuditFindingAggregate;
-  language: AppLanguage;
-  visual?: string | undefined;
-  onCapture: () => void;
-  captureBusy: boolean;
-  captureError?: string | undefined;
-}) {
-  const issue = localizedScanIssue(finding.exampleIssue, language);
-  const reference = finding.references[0];
-  const component = finding.component;
-  const context = component ? componentContextLabel(component) : '';
-  const outcomeLabel = finding.outcome === 'fail'
-    ? t(language, 'Fail', 'Fallo')
-    : finding.outcome === 'review'
-      ? t(language, 'Review', 'Revisión')
-      : t(language, 'Warning', 'Aviso');
-  return (
-    <li>
-      <details className={`site-finding outcome-${finding.outcome}`}>
-        <summary>
-          <span className="finding-outcome">{outcomeLabel}</span>
-          <span className="finding-summary-copy">
-            <strong>{issue.title}</strong>
-            <small>{finding.ruleId} · {finding.sampleCount}/{finding.totalSamples} {t(language, 'samples', 'muestras')}</small>
-          </span>
-          <span className="finding-expand" aria-hidden="true">+</span>
-        </summary>
-        <div className="finding-detail">
-          <div className="finding-context-grid">
-            {component && (
-              <section className="finding-component">
-                <small>{t(language, 'Affected element', 'Elemento afectado')}</small>
-                <strong>{component.componentId} · {componentTypeLabel(component, language)}</strong>
-                <span>{componentPrimaryLabel(component)}</span>
-                {context && <em>{context}</em>}
-              </section>
-            )}
-            <section>
-              <small>{t(language, 'Representative page', 'Página representativa')}</small>
-              <a href={finding.exampleUrl} target="_blank" rel="noreferrer">{finding.exampleUrl}</a>
-            </section>
-          </div>
-          <section className="finding-explanation">
-            <small>{t(language, 'Finding', 'Hallazgo')}</small>
-            <p>{issue.description}</p>
-            {issue.evidence && <blockquote>{issue.evidence}</blockquote>}
-          </section>
-          {(issue.contrast || issue.accessibleName) && (
-            <section className="finding-structured-evidence">
-              <small>{t(language, 'Evidence', 'Evidencia')}</small>
-              {issue.contrast && (
-                <>
-                  <span>{t(language, 'Contrast', 'Contraste')}</span>
-                  <code>{issue.contrast.ratio ?? 'review'}:1 / {issue.contrast.requiredRatio}:1</code>
-                </>
-              )}
-              {issue.accessibleName && (
-                <>
-                  <span>{t(language, 'Accessible name', 'Nombre accesible')}</span>
-                  <code>{issue.accessibleName.name || '∅'}</code>
-                </>
-              )}
-            </section>
-          )}
-          <section className="finding-solution">
-            <small>{t(language, 'Suggested fix', 'Solución sugerida')}</small>
-            <p>{remediationForIssue(finding.exampleIssue, language)}</p>
-          </section>
-          <section className="finding-sample">
-            <small>{t(language, 'Coverage', 'Cobertura')}</small>
-            <span>{finding.sampleCount}/{finding.totalSamples} {t(language, 'representative samples', 'muestras representativas')}</span>
-            {finding.commonToTemplate && <strong>{t(language, 'Common to this template', 'Común a esta plantilla')}</strong>}
-            {reference && (
-              <span>{reference.type} {reference.id}{reference.level ? ` (${reference.level})` : ''}</span>
-            )}
-          </section>
-          <div className="finding-actions">
-            <a href={finding.exampleUrl} target="_blank" rel="noreferrer">{t(language, 'Open sample', 'Abrir muestra')}</a>
-            <button type="button" disabled={captureBusy} onClick={onCapture}>
-              {captureBusy
-                ? t(language, 'Capturing…', 'Capturando…')
-                : visual
-                  ? t(language, 'Refresh visual evidence', 'Actualizar evidencia visual')
-                  : t(language, 'Capture visual evidence', 'Capturar evidencia visual')}
-            </button>
-          </div>
-          {captureError && <p className="finding-capture-error" role="alert">{captureError}</p>}
-          {visual && (
-            <figure className="finding-visual-evidence">
-              <img src={visual} alt="" />
-              <figcaption>{t(
-                language,
-                'Visual evidence from the representative page. The outlined area is the element used for this finding.',
-                'Evidencia visual de la página representativa. El área resaltada corresponde al elemento usado para este hallazgo.',
-              )}</figcaption>
-            </figure>
-          )}
-        </div>
-      </details>
-    </li>
-  );
-}
-
-function SiteAuditApp() {
-  const initial = params();
+function App() {
+  const source = useMemo(params, []);
+  const { language } = source;
   const [status, setStatus] = useState<SiteAuditStatus>('idle');
+  const [progress, setProgress] = useState({ current: 0, total: 0, url: '' });
   const [result, setResult] = useState<SiteAuditResult>();
-  const [extraUrls, setExtraUrls] = useState('');
   const [error, setError] = useState<string>();
-  const [progress, setProgress] = useState({ completed: 0, total: 0, url: '' });
-  const [visuals, setVisuals] = useState<Record<string, string>>({});
-  const [captureId, setCaptureId] = useState<string>();
-  const [captureErrors, setCaptureErrors] = useState<Record<string, string>>({});
-  const cancelled = useRef(false);
+  const [extraUrls, setExtraUrls] = useState('');
+  const abortRef = useRef<AbortController | undefined>(undefined);
+  document.documentElement.lang = language;
 
-  const running = status === 'discovering' || status === 'scanning' || status === 'aggregating';
-  const score = useMemo(() => {
-    if (!result) return undefined;
-    return {
-      fail: result.templates.reduce((total, template) => total + template.failures, 0),
-      review: result.templates.reduce((total, template) => total + template.reviews, 0),
-      warning: result.templates.reduce((total, template) => total + template.warnings, 0),
-    };
-  }, [result]);
+  const validSource = useMemo(() => {
+    try {
+      const url = new URL(source.sourceUrl);
+      return ['http:', 'https:'].includes(url.protocol);
+    } catch {
+      return false;
+    }
+  }, [source.sourceUrl]);
 
   const run = async () => {
-    if (!initial.tabId || running) return;
-    setError(undefined);
+    if (!validSource) return;
+    const controller = new AbortController();
+    abortRef.current = controller;
     setResult(undefined);
-    setVisuals({});
-    setCaptureErrors({});
-    cancelled.current = false;
+    setError(undefined);
+    setStatus('discovering');
+    setProgress({ current: 0, total: 0, url: source.sourceUrl });
+
     try {
-      const originPattern = permissionPattern(initial.sourceUrl);
-      const granted = await browser.permissions.request({ origins: [originPattern] });
-      if (!granted) throw new Error(t(initial.language, 'Site access was not granted.', 'No se concedió acceso al sitio.'));
+      const granted = await browser.permissions.request({ origins: [permissionPattern(source.sourceUrl)] });
+      if (!granted) throw new Error(t(
+        language,
+        'Site Audit needs access to this site so representative pages can be discovered and scanned.',
+        'Site Audit necesita acceso a este sitio para descubrir y analizar páginas representativas.',
+      ));
 
-      setStatus('discovering');
-      const sourceLinks = await sourcePageLinks(initial.tabId).catch(() => []);
-      const discovery = await discoverSiteUrls({
-        sourceUrl: initial.sourceUrl,
-        sourcePageLinks: sourceLinks,
-      });
-      const manualUrls = normalizedExtraUrls(extraUrls, initial.sourceUrl);
-      const urls = [...discovery.urls];
-      for (const url of manualUrls) {
-        if (!urls.includes(url) && urls.length < SITE_AUDIT_MAX_DISCOVERED_URLS) urls.push(url);
+      const origin = new URL(source.sourceUrl).origin;
+      const links = source.tabId != null ? await sourcePageLinks(source.tabId, origin) : [];
+      const discovered = await discoverSiteUrls(source.sourceUrl, links);
+      const merged = new Set(discovered.urls);
+      for (const raw of extraUrls.split(/\r?\n/)) {
+        const normalized = normalizeDiscoveredUrl(raw.trim(), origin);
+        if (normalized) merged.add(normalized);
+        if (merged.size >= SITE_AUDIT_MAX_DISCOVERED_URLS) break;
       }
+      const discovery = {
+        ...discovered,
+        urls: [...merged].slice(0, SITE_AUDIT_MAX_DISCOVERED_URLS),
+        truncated: discovered.truncated || merged.size > SITE_AUDIT_MAX_DISCOVERED_URLS,
+      };
+      if (controller.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
 
-      const families = buildRouteFamilies(urls);
-      const samples = selectSiteAuditSamples(families).slice(0, SITE_AUDIT_MAX_SCANNED_PAGES);
-      const selectedUrls = samples.flatMap((family) => family.sampleUrls);
-      setProgress({ completed: 0, total: selectedUrls.length, url: selectedUrls[0] ?? '' });
+      const families = buildRouteFamilies(discovery.urls);
+      const samples = selectSiteAuditSamples(families);
       setStatus('scanning');
+      setProgress({ current: 0, total: samples.length, url: samples[0]?.url ?? '' });
+      const pages = [];
 
-      const scans = [];
-      for (let index = 0; index < selectedUrls.length; index += 1) {
-        if (cancelled.current) throw new Error(t(initial.language, 'Site audit cancelled.', 'Auditoría cancelada.'));
-        const url = selectedUrls[index];
-        setProgress({ completed: index, total: selectedUrls.length, url });
-        scans.push(await scanRepresentativePage(url, initial.language));
-        setProgress({ completed: index + 1, total: selectedUrls.length, url });
+      for (let index = 0; index < samples.length; index += 1) {
+        if (controller.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
+        const sample = samples[index]!;
+        setProgress({ current: index + 1, total: samples.length, url: sample.url });
+        pages.push(await scanRepresentativePage(sample.routeFamilyId, sample.url, controller.signal));
       }
 
-      setStatus('aggregating');
-      const templates = buildSiteAuditTemplates(families, scans);
-      setResult({
-        origin: new URL(initial.sourceUrl).origin,
+      const templates = buildSiteAuditTemplates(families, pages);
+      const next: SiteAuditResult = {
+        origin,
         generatedAt: Date.now(),
-        discovery: { ...discovery, urls },
+        discovery,
+        routeFamilies: families,
+        pages,
         templates,
-        scannedPages: scans.filter((scan) => scan.scan).length,
-        failedPages: scans.filter((scan) => !scan.scan).length,
-      });
-      setStatus('done');
+        scannedPages: pages.filter((page) => page.scan).length,
+        failedPages: pages.filter((page) => page.error).length,
+      };
+      setResult(next);
+      setStatus('complete');
     } catch (reason) {
-      const message = reason instanceof Error ? reason.message : String(reason);
-      setError(message);
-      setStatus('error');
-    }
-  };
-
-  const downloadReport = () => {
-    if (!result) return;
-    const blob = new Blob(['\uFEFF', buildSiteAuditTextReport(result, initial.language)], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = siteAuditFilename(result);
-    anchor.click();
-    URL.revokeObjectURL(url);
-  };
-
-  const captureFinding = async (finding: SiteAuditFindingAggregate) => {
-    setCaptureId(finding.id);
-    setCaptureErrors((current) => ({ ...current, [finding.id]: '' }));
-    try {
-      const visual = await captureSiteAuditFindingVisual({
-        url: finding.exampleUrl,
-        selector: finding.exampleIssue.selector,
-      });
-      setVisuals((current) => ({ ...current, [finding.id]: visual.dataUrl }));
-    } catch (reason) {
-      setCaptureErrors((current) => ({
-        ...current,
-        [finding.id]: reason instanceof Error ? reason.message : String(reason),
-      }));
+      if (reason instanceof DOMException && reason.name === 'AbortError') {
+        setStatus('cancelled');
+      } else {
+        setError(reason instanceof Error ? reason.message : String(reason));
+        setStatus('error');
+      }
     } finally {
-      setCaptureId(undefined);
+      abortRef.current = undefined;
     }
   };
 
-  if (!initial.sourceUrl) {
+  const cancel = () => abortRef.current?.abort();
+
+  if (!validSource) {
     return (
       <main className="site-audit-shell">
+        <header className="site-brand"><img src="/icon/48.png" alt="" /><strong>FocusTrace</strong></header>
         <section className="site-card site-error">
-          <h1>{t(initial.language, 'Site Audit', 'Auditoría de sitio')}</h1>
-          <p>{t(initial.language, 'No source page was provided.', 'No se ha proporcionado una página de origen.')}</p>
+          <h1>Site Audit</h1>
+          <p>{t(language, 'Open Site Audit from a normal http/https page.', 'Abre Site Audit desde una página http/https normal.')}</p>
         </section>
       </main>
     );
@@ -296,158 +160,301 @@ function SiteAuditApp() {
     <main className="site-audit-shell">
       <header className="site-brand">
         <img src="/icon/48.png" alt="" />
-        <div>
-          <strong>FocusTrace</strong>
-          <span>{t(initial.language, 'Site Audit', 'Auditoría de sitio')}</span>
-        </div>
-        <small>{t(initial.language, 'Local representative sampling', 'Muestreo representativo local')}</small>
+        <div><strong>FocusTrace</strong><span>Site Audit</span></div>
+        <small>v{browser.runtime.getManifest().version}</small>
       </header>
 
-      <section className="site-card site-hero">
+      <section className="site-hero site-card">
         <div>
-          <span className="site-kicker">{t(initial.language, 'Representative audit', 'Auditoría representativa')}</span>
-          <h1>{t(initial.language, 'Scan the site by templates, not by brute force', 'Analiza el sitio por plantillas, no por fuerza bruta')}</h1>
+          <span className="site-kicker">{t(language, 'Site-level accessibility coverage', 'Cobertura de accesibilidad del sitio')}</span>
+          <h1>{t(language, 'Scan representative templates, not thousands of duplicates', 'Analiza plantillas representativas, no miles de duplicados')}</h1>
           <p>{t(
-            initial.language,
-            'Discover routes, group structurally similar pages and audit representative samples without sending page content to external services.',
-            'Descubre rutas, agrupa páginas estructuralmente similares y audita muestras representativas sin enviar contenido de la página a servicios externos.',
+            language,
+            'Discover same-origin URLs, group repeated route families and run the real page scanner on representative samples.',
+            'Descubre URLs del mismo origen, agrupa familias de rutas repetidas y ejecuta el scanner real sobre muestras representativas.',
           )}</p>
         </div>
-        <code>{initial.sourceUrl}</code>
+        <code>{source.sourceUrl}</code>
       </section>
 
-      {!result && !running && (
+      {(status === 'idle' || status === 'cancelled' || status === 'error') && (
         <section className="site-card site-start">
-          <h2>{t(initial.language, 'Audit scope', 'Alcance de la auditoría')}</h2>
+          <h2>{t(language, 'Audit scope', 'Alcance de la auditoría')}</h2>
           <div className="site-limits">
-            <span><strong>{SITE_AUDIT_MAX_DISCOVERED_URLS}</strong>{t(initial.language, 'max discovered URLs', 'URLs máximas descubiertas')}</span>
-            <span><strong>{SITE_AUDIT_SAMPLES_PER_FAMILY}</strong>{t(initial.language, 'samples per family', 'muestras por familia')}</span>
-            <span><strong>{SITE_AUDIT_MAX_SCANNED_PAGES}</strong>{t(initial.language, 'max scanned pages', 'páginas máximas analizadas')}</span>
+            <span><strong>{SITE_AUDIT_MAX_DISCOVERED_URLS}</strong>{t(language, 'max discovered URLs', 'URLs descubiertas máx.')}</span>
+            <span><strong>{SITE_AUDIT_MAX_SCANNED_PAGES}</strong>{t(language, 'max pages scanned', 'páginas analizadas máx.')}</span>
+            <span><strong>{SITE_AUDIT_SAMPLES_PER_FAMILY}</strong>{t(language, 'samples per route family', 'muestras por familia')}</span>
           </div>
           <label className="site-extra-urls">
-            {t(initial.language, 'Optional extra URLs, one per line', 'URLs extra opcionales, una por línea')}
-            <textarea value={extraUrls} onChange={(event) => setExtraUrls(event.currentTarget.value)} rows={4} />
+            <span>{t(language, 'Additional same-site URLs (optional, one per line)', 'URLs adicionales del mismo sitio (opcional, una por línea)')}</span>
+            <textarea value={extraUrls} onChange={(event) => setExtraUrls(event.target.value)} rows={3} placeholder={`${new URL(source.sourceUrl).origin}/private-page`} />
           </label>
           <p className="site-scope-note">{t(
-            initial.language,
-            'FocusTrace samples representative routes. Dynamic states, authenticated areas and manual WCAG checks still require auditor review.',
-            'FocusTrace muestrea rutas representativas. Los estados dinámicos, áreas autenticadas y comprobaciones WCAG manuales siguen requiriendo revisión del auditor.',
+            language,
+            'Discovery checks robots.txt and sitemaps first and supplements them with internal links from the current page. Runtime Trace is not automated across the site in this version.',
+            'El descubrimiento revisa primero robots.txt y sitemaps y los complementa con enlaces internos de la página actual. En esta versión Trace runtime no se automatiza por todo el sitio.',
           )}</p>
-          <button className="site-primary" type="button" onClick={() => void run()}>{runActionLabel(status, initial.language)}</button>
           {error && <p className="site-error-message" role="alert">{error}</p>}
+          <button className="site-primary" type="button" onClick={() => void run()}>{t(language, 'Start Site Audit', 'Iniciar Site Audit')}</button>
         </section>
       )}
 
-      {running && (
-        <section className="site-card site-progress">
+      {(status === 'discovering' || status === 'scanning') && (
+        <section className="site-card site-progress" aria-live="polite">
           <span className="site-spinner" aria-hidden="true" />
           <div>
-            <h2>{runActionLabel(status, initial.language)}</h2>
-            <p>{progress.total ? `${progress.completed}/${progress.total}` : ''} {progress.url}</p>
+            <h2>{status === 'discovering' ? t(language, 'Discovering the site…', 'Descubriendo el sitio…') : t(language, 'Scanning representative pages…', 'Analizando páginas representativas…')}</h2>
+            {status === 'scanning' && <strong>{progress.current}/{progress.total}</strong>}
+            <p title={progress.url}>{progress.url}</p>
           </div>
-          <button type="button" onClick={() => { cancelled.current = true; }}>{t(initial.language, 'Cancel', 'Cancelar')}</button>
+          <button type="button" onClick={cancel}>{t(language, 'Cancel', 'Cancelar')}</button>
         </section>
       )}
 
-      {result && score && (
-        <>
-          <section className="site-card site-summary">
-            <div className="site-report-actions">
-              <div>
-                <h2>{t(initial.language, 'Site audit report', 'Informe de auditoría de sitio')}</h2>
-                <p>{result.origin}</p>
-              </div>
-              <div>
-                <button type="button" onClick={downloadReport}>{t(initial.language, 'Download .txt', 'Descargar .txt')}</button>
-                <button type="button" onClick={() => window.print()}>{t(initial.language, 'Print / PDF', 'Imprimir / PDF')}</button>
-                <button type="button" onClick={() => { setResult(undefined); setStatus('idle'); }}>{t(initial.language, 'New scan', 'Nuevo análisis')}</button>
-              </div>
-            </div>
-            <div className="site-score-grid">
-              <span><strong>{result.discovery.urls.length}</strong>{t(initial.language, 'discovered URLs', 'URLs descubiertas')}</span>
-              <span><strong>{result.templates.length}</strong>{t(initial.language, 'route families', 'familias de rutas')}</span>
-              <span><strong>{result.scannedPages}</strong>{t(initial.language, 'pages scanned', 'páginas analizadas')}</span>
-              <span><strong>{score.fail}</strong>{t(initial.language, 'failures', 'fallos')}</span>
-              <span><strong>{score.review}</strong>{t(initial.language, 'reviews', 'revisiones')}</span>
-            </div>
-            <p>{t(
-              initial.language,
-              `${result.failedPages} pages could not be audited. Findings are aggregated by representative route family.`,
-              `${result.failedPages} páginas no pudieron auditarse. Los hallazgos se agregan por familia de rutas representativa.`,
-            )}</p>
-          </section>
-
-          <section className="site-template-list" aria-label={t(initial.language, 'Route families', 'Familias de rutas')}>
-            {result.templates.map((template) => (
-              <details className="site-card site-template" key={template.id}>
-                <summary>
-                  <span className="template-id">{template.id}</span>
-                  <span className="template-title">
-                    <strong>{template.label}</strong>
-                    <small>{template.discoveredUrls.length} URLs · {template.sampledPages.length} {t(initial.language, 'samples', 'muestras')}</small>
-                  </span>
-                  <span className={`template-consistency ${template.structurallyConsistent ? 'is-consistent' : ''}`}>
-                    {template.structurallyConsistent
-                      ? t(initial.language, 'Consistent', 'Consistente')
-                      : t(initial.language, 'Variants', 'Variantes')}
-                  </span>
-                  <span className="template-counts">{template.failures} F · {template.reviews} R</span>
-                </summary>
-                <div className="template-body">
-                  <section>
-                    <h3>{t(initial.language, 'Template findings', 'Hallazgos de plantilla')}</h3>
-                    <p>{t(
-                      initial.language,
-                      'Common findings appear across every successful representative sample. Variations appear only in some pages or states.',
-                      'Los hallazgos comunes aparecen en todas las muestras representativas válidas. Las variaciones aparecen solo en algunas páginas o estados.',
-                    )}</p>
-                    {template.findings.length ? (
-                      <ul className="template-findings">
-                        {template.findings.map((finding) => (
-                          <FindingCard
-                            key={finding.id}
-                            finding={finding}
-                            language={initial.language}
-                            visual={visuals[finding.id]}
-                            captureBusy={captureId === finding.id}
-                            captureError={captureErrors[finding.id]}
-                            onCapture={() => void captureFinding(finding)}
-                          />
-                        ))}
-                      </ul>
-                    ) : (
-                      <p className="site-empty">{t(initial.language, 'No automated findings in the sampled pages.', 'No hay hallazgos automáticos en las páginas muestreadas.')}</p>
-                    )}
-                  </section>
-                  <section className="template-samples">
-                    <h3>{t(initial.language, 'Representative samples', 'Muestras representativas')}</h3>
-                    <ul>
-                      {template.sampledPages.map((page) => (
-                        <li key={page.url}>
-                          <a href={page.url} target="_blank" rel="noreferrer">{page.url}</a>
-                          {page.error && <span className="sample-error">{page.error}</span>}
-                        </li>
-                      ))}
-                    </ul>
-                  </section>
-                </div>
-              </details>
-            ))}
-          </section>
-
-          <footer className="site-card site-footer">
-            {t(
-              initial.language,
-              'Representative automated sampling does not prove complete WCAG conformance. Use the report as evidence and continue with manual and runtime review.',
-              'El muestreo automático representativo no demuestra conformidad WCAG completa. Usa el informe como evidencia y continúa con revisión manual y runtime.',
-            )}
-          </footer>
-        </>
-      )}
+      {result && status === 'complete' && <SiteAuditReport result={result} language={language} onRunAgain={() => setStatus('idle')} />}
     </main>
   );
 }
 
-const root = document.getElementById('root');
-if (!root) throw new Error('Site Audit root was not found.');
-createRoot(root).render(<SiteAuditApp />);
+function SiteAuditReport({ result, language, onRunAgain }: { result: SiteAuditResult; language: AppLanguage; onRunAgain: () => void }) {
+  const commonFindings = result.templates.reduce((total, template) => total + template.findings.filter((finding) => finding.commonToTemplate).length, 0);
+  return (
+    <>
+      <section className="site-card site-summary">
+        <div className="site-report-actions">
+          <div><span className="site-kicker">{t(language, 'Site Audit complete', 'Site Audit completado')}</span><h2>{result.origin}</h2></div>
+          <div>
+            <button type="button" onClick={() => downloadText(result, language)}>↓ {t(language, 'Download .txt', 'Descargar .txt')}</button>
+            <button type="button" onClick={() => window.print()}>▤ {t(language, 'Print / PDF', 'Imprimir / PDF')}</button>
+            <button type="button" onClick={onRunAgain}>↻ {t(language, 'Run again', 'Repetir')}</button>
+          </div>
+        </div>
+        <div className="site-score-grid">
+          <span><strong>{result.discovery.urls.length}</strong>{t(language, 'URLs discovered', 'URLs descubiertas')}</span>
+          <span><strong>{result.templates.length}</strong>{t(language, 'route families', 'familias de ruta')}</span>
+          <span><strong>{result.scannedPages}</strong>{t(language, 'pages scanned', 'páginas analizadas')}</span>
+          <span><strong>{commonFindings}</strong>{t(language, 'template-wide signals', 'señales de plantilla')}</span>
+          <span><strong>{result.failedPages}</strong>{t(language, 'scan errors', 'errores de escaneo')}</span>
+        </div>
+        <p>{t(language, `Discovery source: ${result.discovery.source}.`, `Origen del descubrimiento: ${result.discovery.source}.`)} {result.discovery.truncated && t(language, 'URL discovery hit the safety limit.', 'El descubrimiento alcanzó el límite de seguridad.')}</p>
+      </section>
+
+      <section className="site-template-list" aria-label={t(language, 'Detected route families', 'Familias de ruta detectadas')}>
+        {result.templates.map((template) => {
+          const successful = template.sampledPages.filter((page) => page.scan);
+          const fingerprints = new Set(successful.flatMap((page) => page.structure?.fingerprint ? [page.structure.fingerprint] : []));
+          const common = template.findings.filter((finding) => finding.commonToTemplate);
+          const variants = template.findings.filter((finding) => !finding.commonToTemplate);
+          const consistent = successful.length > 1 && fingerprints.size === 1;
+          return (
+            <details className="site-card site-template" key={template.id} open={template.id === 'T01'}>
+              <summary>
+                <span className="template-id">{template.id}</span>
+                <span className="template-title"><strong>{template.label}</strong><small>{template.discoveredUrls.length} {t(language, 'URLs represented', 'URLs representadas')}</small></span>
+                <span className={consistent ? 'template-consistency is-consistent' : 'template-consistency'}>
+                  {successful.length <= 1
+                    ? t(language, '1 sample', '1 muestra')
+                    : consistent
+                      ? `${successful.length}/${successful.length} ${t(language, 'same structure', 'misma estructura')}`
+                      : `${fingerprints.size} ${t(language, 'structural variants', 'variantes estructurales')}`}
+                </span>
+                <span className="template-counts">🔴 {template.failures} · 🟠 {template.reviews} · ⚠ {template.warnings}</span>
+              </summary>
+
+              <div className="template-body">
+                {common.length > 0 && (
+                  <section>
+                    <h3>{t(language, 'Common to the template samples', 'Común a las muestras de la plantilla')}</h3>
+                    <p>{t(language, 'These signals appeared on every successfully scanned sample in this family.', 'Estas señales aparecieron en todas las muestras analizadas correctamente de esta familia.')}</p>
+                    <ul className="template-findings">
+                      {common.map((finding) => (
+                        <FindingRow
+                          key={finding.key}
+                          finding={finding}
+                          page={template.sampledPages.find((page) => page.url === finding.exampleUrl)}
+                          language={language}
+                        />
+                      ))}
+                    </ul>
+                  </section>
+                )}
+
+                {variants.length > 0 && (
+                  <section>
+                    <h3>{successful.length <= 1
+                      ? t(language, 'Findings in the sampled page', 'Hallazgos de la página muestreada')
+                      : t(language, 'Variations / page-specific signals', 'Variaciones / señales específicas')}</h3>
+                    <p>{successful.length <= 1
+                      ? t(language, 'Only one representative page was scanned for this route family; these findings cannot yet be classified as template-wide.', 'Solo se ha analizado una página representativa de esta familia; estos hallazgos todavía no pueden clasificarse como comunes a toda la plantilla.')
+                      : t(language, 'These signals appeared in only part of the representative sample.', 'Estas señales aparecieron solo en una parte de la muestra representativa.')}</p>
+                    <ul className="template-findings">
+                      {variants.map((finding) => (
+                        <FindingRow
+                          key={finding.key}
+                          finding={finding}
+                          page={template.sampledPages.find((page) => page.url === finding.exampleUrl)}
+                          language={language}
+                        />
+                      ))}
+                    </ul>
+                  </section>
+                )}
+
+                {!template.findings.length && (
+                  <p className="site-empty">{t(language, 'No automated findings were produced in the sampled pages. Manual review is still required.', 'No se generaron hallazgos automáticos en las páginas muestreadas. Sigue siendo necesaria la revisión manual.')}</p>
+                )}
+
+                <section className="template-samples">
+                  <h3>{t(language, 'Representative pages', 'Páginas representativas')}</h3>
+                  <ul>{template.sampledPages.map((page) => (
+                    <li key={page.url}>
+                      <a href={page.url} target="_blank" rel="noreferrer">{page.url}</a>
+                      {page.scan
+                        ? <span>{page.scan.issues.length} F · {page.scan.review.length} R · {(page.scan.warnings ?? []).length} W</span>
+                        : <span className="sample-error">{page.error}</span>}
+                    </li>
+                  ))}</ul>
+                </section>
+              </div>
+            </details>
+          );
+        })}
+      </section>
+
+      <footer className="site-card site-footer">{t(
+        language,
+        'Template grouping is representative sampling, not proof that every URL is identical. Runtime states, authentication flows and manual WCAG review still require targeted testing.',
+        'La agrupación por plantillas utiliza muestreo representativo; no demuestra que todas las URLs sean idénticas. Los estados runtime, flujos autenticados y la revisión WCAG manual siguen requiriendo pruebas específicas.',
+      )}</footer>
+    </>
+  );
+}
+
+function FindingRow({
+  finding,
+  page,
+  language,
+}: {
+  finding: SiteAuditFindingAggregate;
+  page: SiteAuditResult['pages'][number] | undefined;
+  language: AppLanguage;
+}) {
+  const issue = localizedScanIssue(finding.exampleIssue, language);
+  const reference = finding.references[0];
+  const component = finding.component;
+  const [visual, setVisual] = useState<string>();
+  const [captureError, setCaptureError] = useState<string>();
+  const [capturing, setCapturing] = useState(false);
+
+  const capture = async () => {
+    setCaptureError(undefined);
+    setCapturing(true);
+    try {
+      setVisual(await captureSiteAuditFindingVisual(finding, page));
+    } catch {
+      setCaptureError(t(
+        language,
+        'Visual evidence could not be captured. The page or affected element may have changed or the browser may have restricted capture.',
+        'No se ha podido capturar la evidencia visual. La página o el elemento afectado puede haber cambiado, o el navegador puede haber restringido la captura.',
+      ));
+    } finally {
+      setCapturing(false);
+    }
+  };
+
+  return (
+    <li>
+      <details className={`site-finding outcome-${finding.outcome}`}>
+        <summary>
+          <span className="finding-outcome">{finding.outcome.toUpperCase()}</span>
+          <span className="finding-summary-copy">
+            <strong>{issue.title}</strong>
+            <small>
+              {finding.ruleId} · {finding.sampleCount}/{finding.totalSamples} {t(language, 'samples', 'muestras')}
+              {component ? ` · ${component.componentId}` : ''}
+            </small>
+          </span>
+          <span className="finding-expand" aria-hidden="true">＋</span>
+        </summary>
+
+        <div className="finding-detail">
+          <div className="finding-context-grid">
+            <section className="finding-component">
+              <small>{t(language, 'Affected component', 'Componente afectado')}</small>
+              {component ? (
+                <>
+                  <strong>{component.componentId} · {componentTypeLabel(component, language)}</strong>
+                  <span>{componentPrimaryLabel(component)}</span>
+                  {componentContextLabel(component) && <em>{componentContextLabel(component)}</em>}
+                </>
+              ) : (
+                <strong>{t(language, 'Element identified from recorded selector', 'Elemento identificado mediante el selector registrado')}</strong>
+              )}
+            </section>
+            <section>
+              <small>{t(language, 'Observed impact', 'Impacto observado')}</small>
+              <strong>{finding.commonToTemplate
+                ? t(language, `Observed in all ${finding.totalSamples} representative samples`, `Observado en las ${finding.totalSamples} muestras representativas`)
+                : t(language, `Observed in ${finding.sampleCount} of ${finding.totalSamples} samples`, `Observado en ${finding.sampleCount} de ${finding.totalSamples} muestras`)}</strong>
+              <span>{finding.commonToTemplate
+                ? t(language, 'Likely template/component-level issue within the sampled family.', 'Posible problema de plantilla/componente dentro de la familia muestreada.')
+                : t(language, 'May depend on page content, state or a structural variant.', 'Puede depender del contenido, del estado o de una variante estructural de la página.')}</span>
+            </section>
+          </div>
+
+          <section className="finding-explanation">
+            <small>{t(language, 'What was detected', 'Qué se ha detectado')}</small>
+            <p>{issue.description}</p>
+            {issue.evidence && <blockquote><strong>{t(language, 'Evidence', 'Evidencia')}:</strong> {issue.evidence}</blockquote>}
+          </section>
+
+          {issue.accessibleName && (
+            <section className="finding-structured-evidence">
+              <small>{t(language, 'Accessible name evidence', 'Evidencia del nombre accesible')}</small>
+              <span><b>{t(language, 'Computed name', 'Nombre calculado')}:</b> {issue.accessibleName.name || '∅'}</span>
+              <span><b>{t(language, 'Source', 'Fuente')}:</b> {issue.accessibleName.source || '—'}</span>
+            </section>
+          )}
+
+          {issue.contrast && (
+            <section className="finding-structured-evidence">
+              <small>{t(language, 'Contrast evidence', 'Evidencia de contraste')}</small>
+              <span><b>{t(language, 'Measured', 'Medido')}:</b> {issue.contrast.ratio != null ? `${issue.contrast.ratio}:1` : t(language, 'Manual review', 'Revisión manual')}</span>
+              <span><b>{t(language, 'Required', 'Requerido')}:</b> {issue.contrast.requiredRatio}:1</span>
+              {issue.contrast.foreground && <code>{issue.contrast.foreground}</code>}
+              {issue.contrast.background && <code>{issue.contrast.background}</code>}
+            </section>
+          )}
+
+          <section className="finding-solution">
+            <small>{t(language, 'Suggested fix', 'Solución sugerida')}</small>
+            <p>{remediationForIssue(finding.exampleIssue, language)}</p>
+          </section>
+
+          <section className="finding-sample">
+            <small>{t(language, 'Representative occurrence', 'Aparición representativa')}</small>
+            <a href={finding.exampleUrl} target="_blank" rel="noreferrer">{finding.exampleUrl}</a>
+            {reference && <a href={reference.url} target="_blank" rel="noreferrer">{reference.type} {reference.id}{reference.level ? ` (${reference.level})` : ''}</a>}
+          </section>
+
+          <div className="finding-actions">
+            <a className="finding-open-page" href={finding.exampleUrl} target="_blank" rel="noreferrer">↗ {t(language, 'Open sample page', 'Abrir página de muestra')}</a>
+            <button type="button" disabled={capturing} onClick={() => void capture()}>
+              {capturing ? t(language, 'Capturing…', 'Capturando…') : `▣ ${t(language, visual ? 'Refresh visual evidence' : 'Capture visual evidence', visual ? 'Actualizar evidencia visual' : 'Capturar evidencia visual')}`}
+            </button>
+          </div>
+
+          {captureError && <p className="finding-capture-error" role="alert">{captureError}</p>}
+          {visual && (
+            <figure className="finding-visual-evidence">
+              <img src={visual} alt={t(language, `Visual crop for ${issue.title}`, `Recorte visual de ${issue.title}`)} />
+              <figcaption>{t(language, 'Captured on demand from the representative page. Included when printing/saving this Site Audit as PDF.', 'Capturada bajo demanda desde la página representativa. Se incluirá al imprimir/guardar este Site Audit como PDF.')}</figcaption>
+            </figure>
+          )}
+        </div>
+      </details>
+    </li>
+  );
+}
+
+createRoot(document.getElementById('root')!).render(<App />);
