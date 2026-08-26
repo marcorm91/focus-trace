@@ -56,6 +56,74 @@ describe('runtime replay', () => {
     expect(replayTarget(finding)).toEqual(mutationTarget);
   });
 
+  it('surfaces a finding on an earlier replay step for the same interaction and target', () => {
+    const focus = event({
+      id: 'focus-1',
+      kind: 'focus',
+      interactionId: 'ix-a',
+      element: { tag: 'a', selector: '#account', name: '' },
+    });
+    const finding = event({
+      id: 'finding-1',
+      kind: 'focus-obscured',
+      interactionId: 'ix-a',
+      outcome: 'fail',
+      severity: 'serious',
+      ruleId: 'FT-RUNTIME-002',
+      title: 'Focused component is obscured',
+      detail: 'The focused target is covered.',
+      element: { tag: 'a', selector: '#account', name: '' },
+    });
+    const interaction = {
+      id: 'ix-a',
+      correlated: true,
+      startedAt: 0,
+      endedAt: 2,
+      events: [focus, finding],
+      findings: 1,
+      causes: [],
+      breakpointHits: [],
+    } satisfies RuntimeInteraction;
+
+    const replay = buildRuntimeReplay([focus, finding], [interaction]);
+
+    expect(replay[0]?.event.outcome).toBe('fail');
+    expect(replay[0]?.event.ruleId).toBe('FT-RUNTIME-002');
+    expect(replay[0]?.phase).toBe('signal');
+    expect(replay[0]?.event.title).toBe('Focused component is obscured');
+  });
+
+  it('does not borrow a finding from a different target in the same interaction', () => {
+    const focus = event({
+      id: 'focus-1',
+      kind: 'focus',
+      interactionId: 'ix-a',
+      element: { tag: 'button', selector: '#save', name: 'Save' },
+    });
+    const finding = event({
+      id: 'finding-1',
+      kind: 'focus-obscured',
+      interactionId: 'ix-a',
+      outcome: 'fail',
+      severity: 'serious',
+      element: { tag: 'button', selector: '#cancel', name: 'Cancel' },
+    });
+    const interaction = {
+      id: 'ix-a',
+      correlated: true,
+      startedAt: 0,
+      endedAt: 2,
+      events: [focus, finding],
+      findings: 1,
+      causes: [],
+      breakpointHits: [],
+    } satisfies RuntimeInteraction;
+
+    const replay = buildRuntimeReplay([focus, finding], [interaction]);
+    expect(replay[0]?.event.outcome).toBeUndefined();
+    expect(replay[0]?.phase).toBe('focus');
+  });
+
   it('reports the runtime event kinds represented in the replay', () => {
     const replay = buildRuntimeReplay([
       event({ id: 'e1', kind: 'focus' }),
