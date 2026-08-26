@@ -10,6 +10,7 @@ import {
 } from '../../../shared/ui-scale';
 
 const CREATOR_LINKEDIN = 'https://es.linkedin.com/in/marcorm91';
+const REPOSITORY_URL = 'https://github.com/marcorm91/focus-trace';
 
 export function SettingsView({
   language,
@@ -21,6 +22,7 @@ export function SettingsView({
   const [uiScale, setUiScale] = useState<UiScale>(() =>
     normalizeUiScale(document.documentElement.dataset.ftUiScale ?? DEFAULT_UI_SCALE),
   );
+  const version = browser.runtime.getManifest().version;
 
   useEffect(() => {
     void browser.storage.local.get(UI_SCALE_STORAGE_KEY).then((stored) => {
@@ -153,6 +155,17 @@ export function SettingsView({
           )}
         </p>
       </div>
+
+      <footer
+        className="settings-meta"
+        aria-label={tr(language, 'FocusTrace version and source code', 'Versión y código fuente de FocusTrace')}
+      >
+        <span>FocusTrace v{version}</span>
+        <span aria-hidden="true">·</span>
+        <a href={REPOSITORY_URL} target="_blank" rel="noreferrer">
+          GitHub <span aria-hidden="true">↗</span>
+        </a>
+      </footer>
     </section>
   );
 }

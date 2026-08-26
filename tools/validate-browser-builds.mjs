@@ -2,6 +2,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 
 const packageJson = JSON.parse(readFileSync(resolve('package.json'), 'utf8'));
+const EXPECTED_HOST_PERMISSIONS = ['http://*/*', 'https://*/*'];
 
 function readManifest(target) {
   return JSON.parse(readFileSync(resolve('.output', target, 'manifest.json'), 'utf8'));
@@ -11,9 +12,11 @@ function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-function hasNoHostPermissions(manifest) {
-  return manifest.host_permissions == null
-    || (Array.isArray(manifest.host_permissions) && manifest.host_permissions.length === 0);
+function hasExpectedHostPermissions(manifest) {
+  if (!Array.isArray(manifest.host_permissions)) return false;
+  const actual = [...manifest.host_permissions].sort();
+  const expected = [...EXPECTED_HOST_PERMISSIONS].sort();
+  return actual.length === expected.length && actual.every((permission, index) => permission === expected[index]);
 }
 
 const chrome = readManifest('chrome-mv3');
@@ -43,7 +46,10 @@ console.log(JSON.stringify({
 for (const [name, manifest] of Object.entries({ chrome, edge, firefox })) {
   assert(manifest.manifest_version === 3, `${name} must be Manifest V3`);
   assert(manifest.version === packageJson.version, `${name} version must match package.json`);
-  assert(hasNoHostPermissions(manifest), `${name} production build must not request host_permissions`);
+  assert(
+    hasExpectedHostPermissions(manifest),
+    `${name} must request exactly HTTP/HTTPS page access and no additional host permissions`,
+  );
 }
 
 for (const [name, manifest] of Object.entries({ chrome, edge })) {

@@ -50,8 +50,9 @@ body,
 }
 
 .brand-mark {
-  border-radius: 11px;
-  box-shadow: 0 6px 16px rgba(79, 70, 229, .22);
+  border-radius: 0;
+  box-shadow: none;
+  background-size: contain;
 }
 
 .about-mark {
@@ -117,6 +118,27 @@ body,
 .quick-actions .focus-walk-action > span::before {
   content: '⇥';
   font-size: 14px;
+}
+
+.settings-meta {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  align-items: center;
+  gap: 6px;
+  padding: 4px 0 2px;
+  color: var(--ft-muted);
+  font-size: 11px;
+}
+
+.settings-meta a {
+  color: var(--ft-brand-strong);
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.settings-meta a:hover {
+  text-decoration: underline;
 }
 
 @media (max-width: 520px) {
