@@ -36,6 +36,37 @@ Examples:
 
 The UI must always expose the outcome independently from severity. Color alone must not carry either meaning.
 
+## Severity color contrast
+
+AA and AAA describe the contrast of the **FocusTrace interface colors**, not the severity of a finding. A critical finding is not "AAA" and a minor finding is not "AA".
+
+FocusTrace keeps two calibrated variants for every severity hue:
+
+- **AA variant**: the closest practical equivalent to the product hue that reaches at least `4.5:1` against the standard surface. It is used for accent strokes and borders.
+- **AAA variant**: the closest practical equivalent that reaches at least `7:1`. It is used for severity text and badge labels.
+
+This lets the interface preserve visual differentiation while giving the textual severity label the stronger contrast target. Text, labels, borders and layout continue to communicate meaning independently of color.
+
+### Light surface (`#ffffff`)
+
+| Severity | AA accent | AAA text |
+| --- | --- | --- |
+| `critical` | `#b42318` | `#ac2217` |
+| `serious` | `#a13e00` | `#9a3b00` |
+| `moderate` | `#786500` | `#695800` |
+| `minor` | `#2377d4` | `#1b59a0` |
+
+### Dark surface (`#1b2530`)
+
+| Severity | AA accent | AAA text |
+| --- | --- | --- |
+| `critical` | `#ce6f67` | `#de9f9a` |
+| `serious` | `#be7b50` | `#d3a587` |
+| `moderate` | `#998b3e` | `#b9af7b` |
+| `minor` | `#448dde` | `#81b2e9` |
+
+The palette is covered by automated contrast tests so future visual changes cannot silently drop below the declared thresholds.
+
 ## Future contextual severity
 
 A future version may distinguish **base severity** from **contextual severity** when FocusTrace can collect enough evidence about task blocking, alternatives, repetition, or interaction context.
