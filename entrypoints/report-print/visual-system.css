@@ -1,0 +1,337 @@
+/* Printable report visual identity. Important declarations intentionally make
+   this stylesheet deterministic regardless of bundler CSS extraction order. */
+
+:root {
+  --ft-print-paper: #f3f1ec;
+  --ft-print-surface: #ffffff;
+  --ft-print-ink: #1f2b3a;
+  --ft-print-muted: #65717d;
+  --ft-print-accent: #2479d8;
+  --ft-print-accent-strong: #14589f;
+  --ft-print-accent-soft: #edf5fe;
+  --ft-print-border: #263545;
+  --ft-print-border-soft: #cfd5dc;
+  --ft-print-danger: #a72b22;
+  --ft-print-danger-soft: #fff1ef;
+  --ft-print-warning: #925400;
+  --ft-print-warning-soft: #fff5e7;
+  --ft-print-success: #08745b;
+  --ft-print-success-soft: #edf9f4;
+  --ft-print-mono: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
+}
+
+html,
+body,
+#root {
+  background: var(--ft-print-paper) !important;
+  color: var(--ft-print-ink) !important;
+}
+
+body {
+  background: var(--ft-print-paper) !important;
+}
+
+a {
+  color: var(--ft-print-accent-strong) !important;
+  text-underline-offset: 2px;
+}
+
+code,
+pre {
+  font-family: var(--ft-print-mono) !important;
+}
+
+.print-toolbar {
+  border-bottom: 2px solid var(--ft-print-border) !important;
+  background: rgba(255, 255, 255, .98) !important;
+  box-shadow: 0 7px 22px rgba(31, 43, 58, .09) !important;
+}
+
+.print-toolbar strong {
+  color: var(--ft-print-ink) !important;
+  font-weight: 900 !important;
+}
+
+.print-toolbar span {
+  color: var(--ft-print-muted) !important;
+}
+
+.print-toolbar button {
+  border: 2px solid var(--ft-print-border) !important;
+  border-radius: 7px !important;
+  background: var(--ft-print-ink) !important;
+  color: #fff !important;
+  box-shadow: 2px 2px 0 var(--ft-print-border) !important;
+  font-weight: 900 !important;
+}
+
+.print-toolbar button:active {
+  box-shadow: none !important;
+  transform: translate(2px, 2px);
+}
+
+.print-toolbar button:focus-visible {
+  outline: 3px solid var(--ft-print-accent) !important;
+  outline-offset: 3px !important;
+}
+
+.report-page {
+  background: var(--ft-print-surface) !important;
+  box-shadow: 0 18px 48px rgba(31, 43, 58, .13) !important;
+}
+
+.print-cover {
+  border-bottom: 3px solid var(--ft-print-border) !important;
+}
+
+.print-brand > div strong,
+.print-title-block h1,
+.print-section-title h2,
+.print-finding h4,
+.print-suggestion-list strong,
+.print-trace-head strong {
+  color: var(--ft-print-ink) !important;
+}
+
+.print-brand > div strong,
+.print-title-block h1,
+.print-section-title h2 {
+  font-weight: 900 !important;
+}
+
+.print-brand > div span,
+.print-brand > small,
+.print-section-title p,
+.print-score-grid span,
+.print-suggestion-list p,
+.print-trace-result p,
+.print-trace-story > p,
+.print-finding > p,
+.print-footer > p {
+  color: var(--ft-print-muted) !important;
+}
+
+.print-brand > small {
+  border: 1px solid var(--ft-print-border-soft) !important;
+  border-radius: 999px !important;
+}
+
+.print-title-block > p {
+  color: var(--ft-print-accent-strong) !important;
+}
+
+.print-title-block h1 {
+  letter-spacing: -.035em !important;
+}
+
+.print-context span,
+.print-score-grid > div,
+.print-category-row span,
+.print-inline-metrics span {
+  border-color: var(--ft-print-border-soft) !important;
+  border-radius: 7px !important;
+  background: #fff !important;
+}
+
+.print-context strong {
+  color: var(--ft-print-muted) !important;
+}
+
+.print-section {
+  border-bottom: 2px solid var(--ft-print-border-soft) !important;
+}
+
+.print-section-title > span {
+  border: 1px solid var(--ft-print-border) !important;
+  border-radius: 6px !important;
+  background: var(--ft-print-ink) !important;
+  color: #fff !important;
+  font-family: var(--ft-print-mono) !important;
+}
+
+.print-priority .print-section-title > span {
+  border-color: var(--ft-print-danger) !important;
+  background: var(--ft-print-danger) !important;
+  color: #fff !important;
+}
+
+.print-score-grid > div {
+  border-width: 1.5px !important;
+}
+
+.print-score-grid > div.is-fail {
+  border-color: #d99b95 !important;
+  background: var(--ft-print-danger-soft) !important;
+}
+
+.print-score-grid > div.is-review {
+  border-color: #dfb87f !important;
+  background: var(--ft-print-warning-soft) !important;
+}
+
+.print-score-grid strong {
+  color: var(--ft-print-ink) !important;
+  font-weight: 900 !important;
+}
+
+.print-category-row span,
+.print-inline-metrics span {
+  font-family: var(--ft-print-mono) !important;
+}
+
+.print-suggestion-list li {
+  border: 1px solid #dfb0aa !important;
+  border-left: 5px solid var(--ft-print-danger) !important;
+  border-radius: 7px !important;
+  background: var(--ft-print-danger-soft) !important;
+}
+
+.print-suggestion-list small {
+  color: var(--ft-print-danger) !important;
+}
+
+.print-trace-story,
+.print-finding,
+.print-heading-list li {
+  border: 1.5px solid var(--ft-print-border-soft) !important;
+  border-radius: 8px !important;
+  background: #fff !important;
+}
+
+.print-trace-story {
+  border-left: 5px solid var(--ft-print-border) !important;
+}
+
+.print-trace-story.tone-review {
+  border-left-color: var(--ft-print-warning) !important;
+  background: var(--ft-print-warning-soft) !important;
+}
+
+.print-trace-story.tone-handled {
+  border-left-color: var(--ft-print-success) !important;
+  background: var(--ft-print-success-soft) !important;
+}
+
+.print-trace-story.tone-observed {
+  border-left-color: var(--ft-print-accent) !important;
+}
+
+.print-trace-head > span {
+  border: 1px solid var(--ft-print-border) !important;
+  border-radius: 6px !important;
+  background: var(--ft-print-ink) !important;
+  color: #fff !important;
+}
+
+.print-chain,
+.print-evidence,
+.print-contrast {
+  border: 1px solid var(--ft-print-border-soft) !important;
+  border-radius: 6px !important;
+  background: #f6f7f8 !important;
+}
+
+.print-chain {
+  font-family: var(--ft-print-mono) !important;
+  color: #47525f !important;
+}
+
+.print-reference-line {
+  color: var(--ft-print-accent-strong) !important;
+}
+
+.print-finding {
+  border-left: 5px solid var(--ft-print-border) !important;
+}
+
+.print-finding.tone-fail { border-left-color: var(--ft-print-danger) !important; }
+.print-finding.tone-review { border-left-color: var(--ft-print-warning) !important; }
+.print-finding.tone-warning { border-left-color: #786500 !important; }
+
+.print-finding-group > h3 span,
+.print-finding-meta > span,
+.print-finding-meta code {
+  border: 1px solid var(--ft-print-border-soft) !important;
+  background: #fff !important;
+}
+
+.print-finding-meta code {
+  color: var(--ft-print-ink) !important;
+  font-family: var(--ft-print-mono) !important;
+}
+
+.print-references a {
+  border: 1px solid #aac9e8 !important;
+  background: var(--ft-print-accent-soft) !important;
+  color: var(--ft-print-accent-strong) !important;
+}
+
+.print-evidence {
+  border-left: 4px solid var(--ft-print-accent) !important;
+}
+
+.print-contrast-suggestion {
+  border-left-color: var(--ft-print-success) !important;
+}
+
+.print-heading-list li.has-signal {
+  border-left: 4px solid var(--ft-print-warning) !important;
+  border-color: #dfb87f !important;
+  border-left-color: var(--ft-print-warning) !important;
+  background: var(--ft-print-warning-soft) !important;
+}
+
+.print-heading-list li > span {
+  color: var(--ft-print-accent-strong) !important;
+  font-family: var(--ft-print-mono) !important;
+}
+
+.print-recommendation-list li {
+  border-bottom: 1.5px solid var(--ft-print-border-soft) !important;
+}
+
+.print-recommendation-list li > div span {
+  border: 1px solid var(--ft-print-border-soft) !important;
+  background: #fff !important;
+}
+
+.print-empty {
+  border: 1.5px dashed var(--ft-print-border-soft) !important;
+  border-radius: 7px !important;
+}
+
+.print-footer {
+  border-top: 3px solid var(--ft-print-border) !important;
+}
+
+.print-footer > p {
+  border-left: 4px solid var(--ft-print-accent) !important;
+  border-radius: 6px !important;
+  background: var(--ft-print-accent-soft) !important;
+}
+
+.print-error,
+.print-loading {
+  border: 2px solid var(--ft-print-border) !important;
+  border-radius: 10px !important;
+  box-shadow: 3px 3px 0 var(--ft-print-border) !important;
+}
+
+@media print {
+  :root,
+  html,
+  body,
+  #root {
+    background: #fff !important;
+  }
+
+  .report-page {
+    box-shadow: none !important;
+  }
+
+  .print-section,
+  .print-cover,
+  .print-footer {
+    border-color: #263545 !important;
+  }
+}
