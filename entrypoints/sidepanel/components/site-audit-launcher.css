@@ -26,6 +26,11 @@
   cursor: pointer;
 }
 
+.site-audit-launch:disabled {
+  opacity: .62;
+  cursor: default;
+}
+
 .site-audit-launch > span {
   font-size: 18px !important;
   line-height: 1;
