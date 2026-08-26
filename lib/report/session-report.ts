@@ -12,7 +12,7 @@ import {
   primaryFocusTransitionSemantic,
   type FocusTransitionSemantic,
 } from '../runtime/focus-transition-semantics';
-import type { AppLanguage } from '../../shared/i18n';
+import { localizedScanIssue, type AppLanguage } from '../../shared/i18n';
 import { scanCategoryForIssue, type ScanCategory } from '../../shared/scan-categories';
 import type {
   HeadingSignal,
@@ -189,8 +189,8 @@ function storyForInteraction(
     interactionNumber,
     trigger,
     chain,
-    result: semanticCopy?.label ?? causeCopy?.title ?? finding?.title ?? translated(language, 'Runtime signal', 'Señal runtime'),
-    detail: semanticCopy?.detail ?? causeCopy?.summary ?? finding?.detail ?? translated(
+    result: semanticCopy?.label ?? causeCopy?.title ?? (finding ? humanRuntimeEventTitle(finding, language) : undefined) ?? translated(language, 'Runtime signal', 'Señal runtime'),
+    detail: semanticCopy?.detail ?? causeCopy?.summary ?? (language === 'en' ? finding?.detail : undefined) ?? translated(
       language,
       'Review the recorded runtime evidence for this interaction.',
       'Revisa la evidencia runtime registrada para esta interacción.',
@@ -219,12 +219,14 @@ function unlinkedRuntimeStories(
       tone: 'review' as const,
       trigger: humanRuntimeEventTitle(event, language),
       chain: [humanRuntimeEventTitle(event, language)],
-      result: event.title,
-      detail: event.detail ?? translated(
-        language,
-        'Review this runtime finding in the recorded page context.',
-        'Revisa este hallazgo runtime dentro del contexto grabado de la página.',
-      ),
+      result: humanRuntimeEventTitle(event, language),
+      detail: language === 'en' && event.detail
+        ? event.detail
+        : translated(
+          language,
+          'Review this runtime finding in the recorded page context.',
+          'Revisa este hallazgo runtime dentro del contexto grabado de la página.',
+        ),
       ...(event.element?.selector ? { selector: event.element.selector } : {}),
       references: event.references ?? [],
     }));
@@ -238,7 +240,8 @@ export function buildSessionSuggestions(
   const suggestions: SessionSuggestion[] = [];
 
   for (const issue of uniqueIssues(scan?.issues ?? []).slice(0, 6)) {
-    let detail = issue.description;
+    const localized = localizedScanIssue(issue, language);
+    let detail = localized.description;
     if (issue.contrast?.foreground && issue.contrast.background) {
       const accessibleColor = suggestAccessibleForeground(
         issue.contrast.foreground,
@@ -249,8 +252,8 @@ export function buildSessionSuggestions(
         const isText = issue.contrast.kind === 'text' || issue.ruleId === 'FT-WCAG-010';
         detail = translated(
           language,
-          `${issue.description} Suggested ${isText ? 'text' : 'visual'} color: ${accessibleColor.hex} (${accessibleColor.rgb}), producing ${accessibleColor.ratio}:1 against the recorded ${isText ? 'background' : 'adjacent color'}.`,
-          `${issue.description} Color ${isText ? 'de texto' : 'visual'} sugerido: ${accessibleColor.hex} (${accessibleColor.rgb}), con un contraste de ${accessibleColor.ratio}:1 sobre ${isText ? 'el fondo' : 'el color adyacente'} registrado.`,
+          `${localized.description} Suggested ${isText ? 'text' : 'visual'} color: ${accessibleColor.hex} (${accessibleColor.rgb}), producing ${accessibleColor.ratio}:1 against the recorded ${isText ? 'background' : 'adjacent color'}.`,
+          `${localized.description} Color ${isText ? 'de texto' : 'visual'} sugerido: ${accessibleColor.hex} (${accessibleColor.rgb}), con un contraste de ${accessibleColor.ratio}:1 sobre ${isText ? 'el fondo' : 'el color adyacente'} registrado.`,
         );
       }
     }
@@ -258,18 +261,19 @@ export function buildSessionSuggestions(
       id: `analysis-${issue.ruleId}`,
       priority: 'high',
       source: 'analysis',
-      title: issue.title,
+      title: localized.title,
       detail,
     });
   }
 
   for (const issue of uniqueIssues(scan?.review ?? []).slice(0, 3)) {
+    const localized = localizedScanIssue(issue, language);
     suggestions.push({
       id: `review-${issue.ruleId}`,
       priority: 'medium',
       source: 'analysis',
-      title: issue.title,
-      detail: issue.description,
+      title: localized.title,
+      detail: localized.description,
     });
   }
 
@@ -283,14 +287,16 @@ export function buildSessionSuggestions(
       id: `focus-${event.id}`,
       priority: ['critical', 'serious'].includes(event.severity) ? 'high' : 'medium',
       source: 'focus',
-      title: event.title,
+      title: humanRuntimeEventTitle(event, language),
       detail: event.causes?.[0]
         ? explanationForCause(event.causes[0].type, language).recommendation
-        : event.detail ?? translated(
-          language,
-          'Review the focused component in the recorded page context.',
-          'Revisa el componente enfocado dentro del contexto grabado de la página.',
-        ),
+        : language === 'en' && event.detail
+          ? event.detail
+          : translated(
+            language,
+            'Review the focused component in the recorded page context.',
+            'Revisa el componente enfocado dentro del contexto grabado de la página.',
+          ),
     });
   }
 
