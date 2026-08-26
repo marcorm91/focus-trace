@@ -358,6 +358,35 @@
   line-height: 1.45;
 }
 
+.trace-first-report,
+.trace-first-report .report-section,
+.report-heading-list,
+.report-heading-list > li,
+.report-heading-list button {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.report-heading-list button {
+  grid-template-columns: 25px minmax(0, 1fr);
+  align-items: start;
+}
+
+.report-heading-list button > strong {
+  min-width: 0;
+  overflow: visible;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+.report-heading-list button > small {
+  grid-column: 2;
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
 @media (max-width: 360px) {
   .report-hero {
     display: grid;
