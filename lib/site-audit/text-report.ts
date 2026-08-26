@@ -3,12 +3,26 @@ import {
   componentPrimaryLabel,
   componentTypeLabel,
 } from '../report/component-identity';
-import { localizedScanIssue, type AppLanguage } from '../../shared/i18n';
+import { localizedScanIssue, localizedSeverity, type AppLanguage } from '../../shared/i18n';
+import { countBySeverity, severityRank } from '../../shared/severity';
 import { remediationForIssue } from './remediation';
 import type { SiteAuditFindingAggregate, SiteAuditResult } from './model';
 
 function line(title: string, value: string | number): string {
   return `${title}: ${value}`;
+}
+
+function outcomeLabel(outcome: SiteAuditFindingAggregate['outcome'], language: AppLanguage): string {
+  const es = language === 'es';
+  if (outcome === 'fail') return es ? 'FALLO' : 'FAILURE';
+  if (outcome === 'review') return es ? 'REVISIÓN' : 'REVIEW';
+  return es ? 'AVISO' : 'WARNING';
+}
+
+function sortFindings(findings: SiteAuditFindingAggregate[]): SiteAuditFindingAggregate[] {
+  return [...findings].sort(
+    (left, right) => severityRank(right.exampleIssue.severity) - severityRank(left.exampleIssue.severity),
+  );
 }
 
 function findingLines(finding: SiteAuditFindingAggregate, language: AppLanguage): string[] {
@@ -17,7 +31,8 @@ function findingLines(finding: SiteAuditFindingAggregate, language: AppLanguage)
   const reference = finding.references[0];
   const component = finding.component;
   const output = [
-    `- [${finding.outcome.toUpperCase()}] ${finding.ruleId} · ${issue.title}`,
+    `- [${outcomeLabel(finding.outcome, language)}] [${localizedSeverity(finding.exampleIssue.severity, language).toUpperCase()}] ${finding.ruleId} · ${issue.title}`,
+    `  ${line(es ? 'Impacto estimado' : 'Estimated impact', localizedSeverity(finding.exampleIssue.severity, language))}`,
     `  ${line(es ? 'Cobertura de muestra' : 'Sample coverage', `${finding.sampleCount}/${finding.totalSamples}`)}`,
     `  ${line(es ? 'Página representativa' : 'Representative page', finding.exampleUrl)}`,
   ];
@@ -55,11 +70,19 @@ export function buildSiteAuditTextReport(result: SiteAuditResult, language: AppL
     line(es ? 'Páginas no auditables' : 'Pages not scanned', result.failedPages),
     line(es ? 'Origen del descubrimiento' : 'Discovery source', result.discovery.source),
     '',
+    es
+      ? 'Nota de impacto: crítico, grave, moderado y leve son niveles de priorización de FocusTrace; no son niveles WCAG A/AA/AAA.'
+      : 'Impact note: critical, serious, moderate and minor are FocusTrace prioritization levels; they are not WCAG A/AA/AAA levels.',
+    '',
   ];
 
   for (const template of result.templates) {
     const successful = template.sampledPages.filter((page) => page.scan);
     const fingerprints = new Set(successful.flatMap((page) => page.structure?.fingerprint ? [page.structure.fingerprint] : []));
+    const failureIssues = template.findings
+      .filter((finding) => finding.outcome === 'fail')
+      .map((finding) => finding.exampleIssue);
+    const severityCounts = countBySeverity(failureIssues);
     output.push(
       `${template.id} · ${template.label}`,
       '-'.repeat(Math.min(72, template.label.length + 8)),
@@ -74,18 +97,19 @@ export function buildSiteAuditTextReport(result: SiteAuditResult, language: AppL
             : `${fingerprints.size} ${es ? 'variantes detectadas' : 'variants detected'}`,
       ),
       line(es ? 'Fallos agregados' : 'Aggregated failures', template.failures),
+      line(es ? 'Impacto de fallos' : 'Failure impact', `${localizedSeverity('critical', language)} ${severityCounts.critical} · ${localizedSeverity('serious', language)} ${severityCounts.serious} · ${localizedSeverity('moderate', language)} ${severityCounts.moderate} · ${localizedSeverity('minor', language)} ${severityCounts.minor}`),
       line(es ? 'Revisiones agregadas' : 'Aggregated reviews', template.reviews),
       line(es ? 'Avisos agregados' : 'Aggregated warnings', template.warnings),
       '',
     );
 
-    const common = template.findings.filter((finding) => finding.commonToTemplate);
+    const common = sortFindings(template.findings.filter((finding) => finding.commonToTemplate));
     if (common.length) {
       output.push(es ? 'Comunes a todas las muestras:' : 'Common to every sample:');
       common.forEach((finding) => output.push(...findingLines(finding, language), ''));
     }
 
-    const variants = template.findings.filter((finding) => !finding.commonToTemplate);
+    const variants = sortFindings(template.findings.filter((finding) => !finding.commonToTemplate));
     if (variants.length) {
       output.push(successful.length <= 1
         ? (es ? 'Hallazgos de la página muestreada:' : 'Findings in the sampled page:')
