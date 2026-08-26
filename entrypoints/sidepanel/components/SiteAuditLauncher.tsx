@@ -1,5 +1,6 @@
 import { browser } from '#imports';
 import { tr, type AppLanguage } from '../../../shared/i18n';
+import './site-audit-launcher.css';
 
 export function SiteAuditLauncher({ language }: { language: AppLanguage }) {
   const open = async () => {
