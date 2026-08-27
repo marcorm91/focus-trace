@@ -1,0 +1,22 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Component scan fixture</title>
+  <style>
+    body { margin: 0; font-family: system-ui, sans-serif; color: #111; background: #fff; }
+    main { padding: 24px; }
+    #checkout { padding: 20px; border: 2px solid #111; }
+    #outside-empty { display: inline-block; margin-top: 32px; }
+  </style>
+</head>
+<body>
+  <main>
+    <section id="checkout" aria-label="Checkout">
+      <h1>Checkout</h1>
+      <button id="inside-empty" type="button"><svg aria-hidden="true" width="16" height="16"></svg></button>
+    </section>
+    <a id="outside-empty" href="/account"><svg aria-hidden="true" width="16" height="16"></svg></a>
+  </main>
+</body>
+</html>
