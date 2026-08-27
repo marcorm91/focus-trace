@@ -26,37 +26,79 @@ function sortFindings(findings: SiteAuditFindingAggregate[]): SiteAuditFindingAg
   );
 }
 
+function unique(values: string[]): string[] {
+  return [...new Set(values.filter(Boolean))];
+}
+
 function findingLines(finding: SiteAuditFindingAggregate, language: AppLanguage): string[] {
   const es = language === 'es';
   const issue = localizedScanIssue(finding.exampleIssue, language);
-  const reference = finding.references[0];
   const component = finding.component;
   const severityRationale = localizedRuleSeverityRationale(finding.ruleId, language);
+  const targets = unique(finding.exampleIssue.targets);
+  const pages = unique(finding.pages);
   const output = [
     `- [${outcomeLabel(finding.outcome, language)}] [${localizedSeverity(finding.exampleIssue.severity, language).toUpperCase()}] ${finding.ruleId} · ${issue.title}`,
     `  ${line(es ? 'Impacto estimado' : 'Estimated impact', localizedSeverity(finding.exampleIssue.severity, language))}`,
     ...(severityRationale ? [`  ${line(es ? 'Por qué este impacto' : 'Why this impact', severityRationale)}`] : []),
     `  ${line(es ? 'Cobertura de muestra' : 'Sample coverage', `${finding.sampleCount}/${finding.totalSamples}`)}`,
     `  ${line(es ? 'Página representativa' : 'Representative page', finding.exampleUrl)}`,
+    `  ${line(es ? 'Selector representativo' : 'Representative selector', finding.exampleSelector === 'page' ? (es ? 'página completa' : 'whole page') : finding.exampleSelector)}`,
   ];
+
+  if (targets.length > 1) {
+    output.push(`  ${es ? 'Destinos detectados en la página representativa' : 'Targets detected on the representative page'}:`);
+    targets.forEach((target) => output.push(`    - ${target}`));
+  }
+
+  output.push(`  ${es ? 'Páginas donde se observó' : 'Observed on sampled pages'}:`);
+  pages.forEach((url) => output.push(`    - ${url}`));
 
   if (component) {
     output.push(
       `  ${line(es ? 'Elemento' : 'Element', `${component.componentId} · ${componentTypeLabel(component, language)} · ${componentPrimaryLabel(component)}`)}`,
     );
+    if (component.tag) output.push(`  ${line(es ? 'Etiqueta HTML' : 'HTML tag', component.tag)}`);
+    if (component.role) output.push(`  ${line(es ? 'Rol' : 'Role', component.role)}`);
     const context = componentContextLabel(component);
     if (context) output.push(`  ${line(es ? 'Contexto' : 'Context', context)}`);
   }
 
   output.push(`  ${line(es ? 'Descripción' : 'Description', issue.description)}`);
   if (issue.evidence) output.push(`  ${line(es ? 'Evidencia' : 'Evidence', issue.evidence)}`);
-  if (reference) output.push(`  ${line(es ? 'Criterio/fuente' : 'Criterion/source', `${reference.type} ${reference.id}${reference.level ? ` (${reference.level})` : ''}`)}`);
+
+  if (finding.references.length) {
+    output.push(`  ${es ? 'Criterios/fuentes' : 'Criteria/sources'}:`);
+    finding.references.forEach((reference) => {
+      output.push(`    - ${reference.type} ${reference.id}${reference.level ? ` (${reference.level})` : ''} · ${reference.label} · ${reference.url}`);
+    });
+  }
+
   if (issue.contrast) {
-    output.push(`  ${line(es ? 'Contraste' : 'Contrast', `${issue.contrast.ratio ?? 'review'}:1 / ${issue.contrast.requiredRatio}:1`)}`);
+    output.push(`  ${line(es ? 'Contraste medido' : 'Measured contrast', issue.contrast.ratio != null ? `${issue.contrast.ratio}:1` : (es ? 'revisión manual' : 'manual review'))}`);
+    output.push(`  ${line(es ? 'Contraste requerido' : 'Required contrast', `${issue.contrast.requiredRatio}:1`)}`);
+    if (issue.contrast.subject) output.push(`  ${line(es ? 'Señal medida' : 'Measured subject', issue.contrast.subject)}`);
+    if (issue.contrast.kind) output.push(`  ${line(es ? 'Tipo de contraste' : 'Contrast kind', issue.contrast.kind)}`);
+    if (issue.contrast.foreground) output.push(`  ${line(es ? 'Color frontal' : 'Foreground', issue.contrast.foreground)}`);
+    if (issue.contrast.background) output.push(`  ${line(es ? 'Fondo/adyacente' : 'Background/adjacent', issue.contrast.background)}`);
+    if (issue.contrast.fontSizePx != null) output.push(`  ${line(es ? 'Tamaño de texto' : 'Text size', `${issue.contrast.fontSizePx}px`)}`);
+    if (issue.contrast.fontWeight != null) output.push(`  ${line(es ? 'Peso de fuente' : 'Font weight', issue.contrast.fontWeight)}`);
+    if (issue.contrast.reason) output.push(`  ${line(es ? 'Contexto de medición' : 'Measurement context', issue.contrast.reason)}`);
   }
+
   if (issue.accessibleName) {
-    output.push(`  ${line(es ? 'Nombre accesible' : 'Accessible name', issue.accessibleName.name || '∅')}`);
+    output.push(`  ${line(es ? 'Nombre accesible calculado' : 'Computed accessible name', issue.accessibleName.name || '∅')}`);
+    output.push(`  ${line(es ? 'Fuente del nombre' : 'Name source', issue.accessibleName.source || '—')}`);
+    if (issue.accessibleName.role) output.push(`  ${line(es ? 'Rol calculado' : 'Computed role', issue.accessibleName.role)}`);
+    if (issue.accessibleName.candidates.length) {
+      output.push(`  ${es ? 'Fuentes de nombre inspeccionadas' : 'Inspected name sources'}:`);
+      issue.accessibleName.candidates.forEach((candidate) => {
+        const state = candidate.used ? (es ? 'utilizada' : 'used') : (es ? 'no utilizada' : 'not used');
+        output.push(`    - ${candidate.source} · ${state} · ${candidate.selector} · ${candidate.value || '∅'}`);
+      });
+    }
   }
+
   output.push(`  ${line(es ? 'Solución sugerida' : 'Suggested fix', remediationForIssue(finding.exampleIssue, language))}`);
   return output;
 }
