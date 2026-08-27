@@ -302,7 +302,7 @@ function SiteAuditReport({ result, language, onRunAgain }: { result: SiteAuditRe
                     ? t(language, '1 sample', '1 muestra')
                     : consistent
                       ? `${successful.length}/${successful.length} ${t(language, 'same structure', 'misma estructura')}`
-                      : `${fingerprints.size} ${t(language, 'structural variants', 'variantes estructurales')}`
+                      : `${fingerprints.size} ${t(language, 'structural variants', 'variantes estructurales')}`}
                 </span>
                 <span className="template-counts">🔴 {template.failures} · 🟠 {template.reviews} · ⚠ {template.warnings}</span>
               </summary>
