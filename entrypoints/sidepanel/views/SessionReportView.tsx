@@ -184,7 +184,7 @@ export function SessionReportView({
           <div className="report-export-actions">
             <button className="export-pdf-report" type="button" disabled={!scan || exportingPdf} onClick={() => void openPrintableReport()}>
               <span aria-hidden="true">▤</span>
-              {exportingPdf ? tr(language, 'Preparing PDF…', 'Preparando PDF…') : tr(language, 'Export report', 'Exportar informe')}
+              {exportingPdf ? tr(language, 'Preparing PDF…', 'Preparando PDF…') : tr(language, 'Export PDF', 'Exportar PDF')}
             </button>
             <details className="report-more-formats">
               <summary>{tr(language, 'More formats', 'Más formatos')}</summary>
