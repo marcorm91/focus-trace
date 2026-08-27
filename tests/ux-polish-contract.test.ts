@@ -15,17 +15,21 @@ describe('UX polish contract', () => {
     expect(source('entrypoints/site-audit/index.html')).toContain('./hero-copy.ts');
   });
 
-  it('keeps H1-H6 hierarchy compact without the heavy pseudo-tree connectors', () => {
+  it('keeps H1-H6 hierarchy compact and contained without clipping long headings', () => {
     const css = source('entrypoints/sidepanel/heading-tree-visual.css');
+    const view = source('entrypoints/sidepanel/views/HeadingTreeView.tsx');
     for (let level = 1; level <= 6; level += 1) {
       expect(css).toContain(`.heading-tree-row.level-${level}`);
     }
-    expect(css).toContain('margin-inline-start: calc(var(--heading-depth) * 6px)');
-    expect(css).toContain('.heading-tree .heading-tree-row::before');
-    expect(css).toContain('display: none;');
-    expect(css).toContain('white-space: nowrap;');
-    expect(css).toContain('text-overflow: ellipsis;');
+    expect(css).toContain('padding-inline-start: calc(var(--heading-depth) * 6px)');
+    expect(css).not.toContain('margin-inline-start: calc(var(--heading-depth) * 6px)');
+    expect(css).toContain('overflow-x: hidden;');
+    expect(css).toContain('grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));');
+    expect(css).toContain('overflow-wrap: anywhere;');
+    expect(css).toContain('white-space: normal;');
+    expect(css).not.toContain('text-overflow: ellipsis;');
     expect(css).not.toContain('!important');
+    expect(view).toContain("tr(language, 'H1 count', 'Cantidad de H1')");
   });
 
   it('uses one SVG-mask icon language without specificity overrides', () => {
@@ -99,12 +103,34 @@ describe('UX polish contract', () => {
     expect(scanCss).not.toContain('.finding-dom');
   });
 
-  it('keeps hover states legible and contrast metadata in a responsive 2x2 grid', () => {
+  it('keeps review accordions collapsed initially in scan and report surfaces', () => {
+    const scan = source('entrypoints/sidepanel/views/ScanView.tsx');
+    const reportScan = source('entrypoints/sidepanel/components/ReportScanCompact.tsx');
+
+    expect(scan).toContain("open={defaultOpen && first.outcome !== 'review' ? true : undefined}");
+    expect(reportScan).toContain("defaultOpen={filter !== 'review' && index === 0}");
+  });
+
+  it('wraps scan and contrast content instead of forcing horizontal overflow', () => {
+    const scanCss = source('entrypoints/sidepanel/scan-accordion.css');
+    const states = source('entrypoints/sidepanel/control-states.css');
+
+    expect(scanCss).toContain('.scan-rule-statuses');
+    expect(scanCss).toContain('flex-wrap: wrap;');
+    expect(scanCss).toContain('overflow-wrap: anywhere;');
+    expect(scanCss).toContain('grid-column: 1 / -1;');
+    expect(states).toContain('.contrast-color-value');
+    expect(states).toContain('flex-wrap: wrap;');
+    expect(states).toContain('grid-template-columns: 24px minmax(0, 1fr) 30px;');
+    expect(states).toContain('@media (max-width: 560px)');
+  });
+
+  it('keeps hover states legible and contrast metadata responsive', () => {
     const states = source('entrypoints/sidepanel/control-states.css');
     expect(states).toContain('.export-pdf-report:hover:not(:disabled)');
     expect(states).toContain('color: var(--ft-paper, Canvas);');
     expect(states).toContain('grid-template-columns: repeat(2, minmax(0, 1fr));');
-    expect(states).toContain('@media (max-width: 400px)');
+    expect(states).toContain('@media (max-width: 560px)');
     expect(states).not.toContain('!important');
   });
 
@@ -179,6 +205,7 @@ describe('UX polish contract', () => {
     expect(component).not.toContain('FOCUSTRACE_GET_SESSION');
     expect(component).not.toContain('data-focustrace-report-scan-host');
     expect(componentCss).toContain('.report-compact-scan');
+    expect(componentCss).toContain('overflow-wrap: anywhere;');
     expect(componentCss).not.toContain('!important');
 
     expect(report).toContain('<ReportScanCompact scan={scan} language={language} />');
