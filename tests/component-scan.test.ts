@@ -2,6 +2,7 @@
 
 import { describe, expect, it } from 'vitest';
 import { runFocusTraceScan } from '../lib/audit/scan';
+import { buildTextSessionReport } from '../lib/report/text-report';
 import type { ComponentScanScope } from '../shared/types';
 
 function render(body: string, head = '') {
@@ -81,5 +82,24 @@ describe('component-scoped static analysis', () => {
     expect(result.scope).toEqual({ type: 'page' });
     expect(result.headings).toHaveLength(1);
     expect(result.rulesRun).toBe(17);
+  });
+
+  it('describes the selected component and omitted document-context checks in text exports', () => {
+    render('<main><section id="checkout" aria-label="Checkout"><button id="inside"></button></section></main>');
+    const scan = runFocusTraceScan(checkoutScope());
+
+    const report = buildTextSessionReport({
+      scan,
+      events: [],
+      language: 'es',
+      generatedAt: Date.UTC(2026, 7, 27, 12, 0, 0),
+    });
+
+    expect(report).toContain('Alcance estático: Componente');
+    expect(report).toContain('Componente: Checkout');
+    expect(report).toContain('Selector del componente: #checkout');
+    expect(report).toContain('3. ANÁLISIS DE COMPONENTE');
+    expect(report).toContain('No evaluada en el alcance de componente');
+    expect(report).toContain('La evidencia runtime sigue siendo de toda la sesión');
   });
 });
