@@ -248,6 +248,7 @@ function ReportNotes({ language }: { language: AppLanguage }) {
 function PrintableReport({ report }: { report: LoadedReport }) {
   const { session, language, generatedAt, version, evidence } = report;
   const scan = session.scan!;
+  const componentScope = scan.scope?.type === 'component' ? scan.scope : undefined;
   const model = useMemo(
     () => buildSessionReportModel(scan, session.events, language),
     [language, scan, session.events],
@@ -312,6 +313,12 @@ function PrintableReport({ report }: { report: LoadedReport }) {
             <span><strong>{tr(language, 'Generated', 'Generado')}</strong>{generatedLabel}</span>
             <span><strong>{tr(language, 'Engine', 'Motor')}</strong>{scan.engine}</span>
             <span><strong>{tr(language, 'Rules executed', 'Reglas ejecutadas')}</strong>{scan.rulesRun}</span>
+            {componentScope && (
+              <span>
+                <strong>{tr(language, 'Static scope', 'Alcance estático')}</strong>
+                {tr(language, 'Component', 'Componente')} · {componentScope.label || componentScope.tag}
+              </span>
+            )}
           </div>
         </header>
 
@@ -377,7 +384,13 @@ function PrintableReport({ report }: { report: LoadedReport }) {
             <span>01</span>
             <div>
               <h2 id="runtime-title">{tr(language, 'Runtime trace', 'Traza runtime')}</h2>
-              <p>{tr(language, 'Recorded interactions, focus movement and interpreted runtime evidence.', 'Interacciones grabadas, movimiento del foco y evidencia runtime interpretada.')}</p>
+              <p>{componentScope
+                ? tr(
+                    language,
+                    'Runtime evidence remains session-wide. The selected component scope applies only to the static scan in this version.',
+                    'La evidencia runtime sigue siendo de toda la sesión. En esta versión, el componente seleccionado solo limita el análisis estático.',
+                  )
+                : tr(language, 'Recorded interactions, focus movement and interpreted runtime evidence.', 'Interacciones grabadas, movimiento del foco y evidencia runtime interpretada.')}</p>
             </div>
           </div>
           <div className="print-inline-metrics">
@@ -419,10 +432,24 @@ function PrintableReport({ report }: { report: LoadedReport }) {
           <div className="print-section-title">
             <span>02</span>
             <div>
-              <h2 id="scan-title">{tr(language, 'Full page scan', 'Barrido completo de página')}</h2>
+              <h2 id="scan-title">{componentScope
+                ? tr(language, 'Component scan', 'Análisis de componente')
+                : tr(language, 'Full page scan', 'Barrido completo de página')}</h2>
               <p>{scan.rulesRun} {tr(language, 'rule families executed.', 'familias de reglas ejecutadas.')}</p>
             </div>
           </div>
+          {componentScope && (
+            <div className="print-scan-scope">
+              <strong>{componentScope.label || componentScope.tag}</strong>
+              <span>{componentScope.tag}{componentScope.role ? ` · role=${componentScope.role}` : ''}</span>
+              <code>{componentScope.selector}</code>
+              <p>{tr(
+                language,
+                'Only applicable element-level checks were evaluated inside this DOM subtree. Page title, document language and global heading hierarchy were not evaluated as component findings.',
+                'Solo se han evaluado dentro de este subtree del DOM las comprobaciones aplicables a elementos. El título de página, el idioma del documento y la jerarquía global de encabezados no se han evaluado como hallazgos del componente.',
+              )}</p>
+            </div>
+          )}
           {evidence?.visualEvidenceRequested && (
             <p className="print-visual-summary">
               {tr(language, 'Visual evidence', 'Evidencia visual')}: {evidence.visuals.length} {tr(language, 'component crops included', 'recortes de componentes incluidos')}
@@ -458,20 +485,32 @@ function PrintableReport({ report }: { report: LoadedReport }) {
             <span>03</span>
             <div>
               <h2 id="headings-title">{tr(language, 'Heading structure', 'Estructura de encabezados')}</h2>
-              <p>{tr(language, 'H1–H6 elements captured in document order.', 'Elementos H1–H6 capturados en orden de documento.')}</p>
+              <p>{componentScope
+                ? tr(
+                    language,
+                    'Not evaluated for component scope because heading hierarchy depends on document context.',
+                    'No evaluada en el alcance de componente porque la jerarquía de encabezados depende del contexto del documento.',
+                  )
+                : tr(language, 'H1–H6 elements captured in document order.', 'Elementos H1–H6 capturados en orden de documento.')}</p>
             </div>
           </div>
-          {headings.length ? (
-            <ol className="print-heading-list">
-              {headings.map((heading) => (
-                <li className={heading.signals.length ? 'has-signal' : ''} key={heading.id} style={{ paddingInlineStart: `${(heading.level - 1) * 14}px` }}>
-                  <span>H{heading.level}</span>
-                  <strong>{heading.text || tr(language, 'Empty heading', 'Encabezado vacío')}</strong>
-                  {heading.signals.length > 0 && <small>{heading.signals.map((signal) => headingSignalLabel(signal, language)).join(' · ')}</small>}
-                </li>
-              ))}
-            </ol>
-          ) : <p className="print-empty">{tr(language, 'No headings were captured.', 'No se han capturado encabezados.')}</p>}
+          {componentScope
+            ? <p className="print-empty">{tr(
+                language,
+                'Run a full-page analysis to include the document heading outline.',
+                'Ejecuta un análisis de página completa para incluir el esquema de encabezados del documento.',
+              )}</p>
+            : headings.length ? (
+                <ol className="print-heading-list">
+                  {headings.map((heading) => (
+                    <li className={heading.signals.length ? 'has-signal' : ''} key={heading.id} style={{ paddingInlineStart: `${(heading.level - 1) * 14}px` }}>
+                      <span>H{heading.level}</span>
+                      <strong>{heading.text || tr(language, 'Empty heading', 'Encabezado vacío')}</strong>
+                      {heading.signals.length > 0 && <small>{heading.signals.map((signal) => headingSignalLabel(signal, language)).join(' · ')}</small>}
+                    </li>
+                  ))}
+                </ol>
+              ) : <p className="print-empty">{tr(language, 'No headings were captured.', 'No se han capturado encabezados.')}</p>}
         </section>
 
         <section className="print-section" aria-labelledby="recommendations-title">
