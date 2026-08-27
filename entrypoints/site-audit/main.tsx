@@ -386,8 +386,9 @@ function FindingRow({
   language: AppLanguage;
 }) {
   const issue = localizedScanIssue(finding.exampleIssue, language);
-  const reference = finding.references[0];
   const component = finding.component;
+  const targets = [...new Set(finding.exampleIssue.targets.filter(Boolean))];
+  const observedPages = [...new Set(finding.pages)];
   const [visual, setVisual] = useState<string>();
   const [captureError, setCaptureError] = useState<string>();
   const [capturing, setCapturing] = useState(false);
@@ -436,6 +437,7 @@ function FindingRow({
                 <>
                   <strong>{component.componentId} · {componentTypeLabel(component, language)}</strong>
                   <span>{componentPrimaryLabel(component)}</span>
+                  <span>{component.tag}{component.role ? ` · role=${component.role}` : ''}</span>
                   {componentContextLabel(component) && <em>{componentContextLabel(component)}</em>}
                 </>
               ) : (
@@ -462,6 +464,26 @@ function FindingRow({
             </section>
           </div>
 
+          <section className="finding-location">
+            <small>{t(language, 'Where it was found', 'Dónde se ha encontrado')}</small>
+            <div className="finding-location-primary">
+              <span><b>{t(language, 'Representative page', 'Página representativa')}:</b> <a href={finding.exampleUrl} target="_blank" rel="noreferrer">{finding.exampleUrl}</a></span>
+              <span><b>{t(language, 'Exact selector', 'Selector exacto')}:</b> <code>{finding.exampleSelector === 'page' ? t(language, 'Whole page', 'Página completa') : finding.exampleSelector}</code></span>
+            </div>
+            {targets.length > 1 && (
+              <div className="finding-targets">
+                <b>{t(language, 'Targets in the representative scan', 'Elementos detectados en el escaneo representativo')}:</b>
+                <ul>{targets.map((target) => <li key={target}><code>{target}</code></li>)}</ul>
+              </div>
+            )}
+            <div className="finding-observed-pages">
+              <b>{t(language, 'Observed on sampled pages', 'Observado en las páginas muestreadas')}:</b>
+              <ul>{observedPages.map((url) => (
+                <li key={url}><a href={url} target="_blank" rel="noreferrer">{url}</a></li>
+              ))}</ul>
+            </div>
+          </section>
+
           <section className="finding-explanation">
             <small>{t(language, 'What was detected', 'Qué se ha detectado')}</small>
             <p>{issue.description}</p>
@@ -469,20 +491,38 @@ function FindingRow({
           </section>
 
           {issue.accessibleName && (
-            <section className="finding-structured-evidence">
+            <section className="finding-structured-evidence finding-name-evidence">
               <small>{t(language, 'Accessible name evidence', 'Evidencia del nombre accesible')}</small>
               <span><b>{t(language, 'Computed name', 'Nombre calculado')}:</b> {issue.accessibleName.name || '∅'}</span>
               <span><b>{t(language, 'Source', 'Fuente')}:</b> {issue.accessibleName.source || '—'}</span>
+              {issue.accessibleName.role && <span><b>{t(language, 'Computed role', 'Rol calculado')}:</b> {issue.accessibleName.role}</span>}
+              {issue.accessibleName.candidates.length > 0 && (
+                <div className="finding-evidence-list">
+                  <b>{t(language, 'Name sources inspected', 'Fuentes de nombre inspeccionadas')}:</b>
+                  <ul>{issue.accessibleName.candidates.map((candidate, index) => (
+                    <li key={`${candidate.source}-${candidate.selector}-${index}`}>
+                      <span>{candidate.source} · {candidate.used ? t(language, 'used', 'utilizada') : t(language, 'not used', 'no utilizada')}</span>
+                      <code>{candidate.selector}</code>
+                      <em>{candidate.value || '∅'}</em>
+                    </li>
+                  ))}</ul>
+                </div>
+              )}
             </section>
           )}
 
           {issue.contrast && (
-            <section className="finding-structured-evidence">
+            <section className="finding-structured-evidence finding-contrast-evidence">
               <small>{t(language, 'Contrast evidence', 'Evidencia de contraste')}</small>
               <span><b>{t(language, 'Measured', 'Medido')}:</b> {issue.contrast.ratio != null ? `${issue.contrast.ratio}:1` : t(language, 'Manual review', 'Revisión manual')}</span>
               <span><b>{t(language, 'Required', 'Requerido')}:</b> {issue.contrast.requiredRatio}:1</span>
-              {issue.contrast.foreground && <code>{issue.contrast.foreground}</code>}
-              {issue.contrast.background && <code>{issue.contrast.background}</code>}
+              {issue.contrast.subject && <span><b>{t(language, 'Measured subject', 'Señal medida')}:</b> {issue.contrast.subject}</span>}
+              {issue.contrast.kind && <span><b>{t(language, 'Contrast kind', 'Tipo de contraste')}:</b> {issue.contrast.kind}</span>}
+              {issue.contrast.foreground && <span><b>{t(language, 'Foreground', 'Color frontal')}:</b> <code>{issue.contrast.foreground}</code></span>}
+              {issue.contrast.background && <span><b>{t(language, 'Background / adjacent', 'Fondo / adyacente')}:</b> <code>{issue.contrast.background}</code></span>}
+              {issue.contrast.fontSizePx != null && <span><b>{t(language, 'Text size', 'Tamaño de texto')}:</b> {issue.contrast.fontSizePx}px</span>}
+              {issue.contrast.fontWeight != null && <span><b>{t(language, 'Font weight', 'Peso de fuente')}:</b> {issue.contrast.fontWeight}</span>}
+              {issue.contrast.reason && <span><b>{t(language, 'Measurement context', 'Contexto de medición')}:</b> {issue.contrast.reason}</span>}
             </section>
           )}
 
@@ -491,11 +531,18 @@ function FindingRow({
             <p>{remediationForIssue(finding.exampleIssue, language)}</p>
           </section>
 
-          <section className="finding-sample">
-            <small>{t(language, 'Representative occurrence', 'Aparición representativa')}</small>
-            <a href={finding.exampleUrl} target="_blank" rel="noreferrer">{finding.exampleUrl}</a>
-            {reference && <a href={reference.url} target="_blank" rel="noreferrer">{reference.type} {reference.id}{reference.level ? ` (${reference.level})` : ''}</a>}
-          </section>
+          {finding.references.length > 0 && (
+            <section className="finding-references">
+              <small>{t(language, 'Standards references', 'Referencias normativas')}</small>
+              <ul>{finding.references.map((reference) => (
+                <li key={`${reference.type}-${reference.id}-${reference.url}`}>
+                  <a href={reference.url} target="_blank" rel="noreferrer">
+                    {reference.type} {reference.id}{reference.level ? ` (${reference.level})` : ''} · {reference.label}
+                  </a>
+                </li>
+              ))}</ul>
+            </section>
+          )}
 
           <div className="finding-actions">
             <a className="finding-open-page" href={finding.exampleUrl} target="_blank" rel="noreferrer">↗ {t(language, 'Open sample page', 'Abrir página de muestra')}</a>
