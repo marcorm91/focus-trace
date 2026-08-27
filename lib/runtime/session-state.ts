@@ -8,6 +8,16 @@ import type {
 
 export const MAX_RUNTIME_EVENTS = 500;
 
+function comparableDocumentUrl(value: string): string {
+  try {
+    const url = new URL(value);
+    url.hash = '';
+    return url.href;
+  } catch {
+    return value.split('#')[0] ?? value;
+  }
+}
+
 export function emptySessionState(tabId: number): SessionState {
   return {
     tabId,
@@ -73,4 +83,10 @@ export function updateSessionBreakpoints(
 
 export function updateSessionScan(state: SessionState, scan: ScanResult): SessionState {
   return { ...state, scan };
+}
+
+export function invalidateSessionScanForUrl(state: SessionState, url: string): SessionState {
+  if (!state.scan || comparableDocumentUrl(state.scan.url) === comparableDocumentUrl(url)) return state;
+  const { scan: _scan, ...rest } = state;
+  return rest;
 }
