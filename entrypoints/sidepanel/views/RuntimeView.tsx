@@ -6,8 +6,8 @@ import {
   outcomeLabel,
   type ExplanationLevel,
 } from '../../../lib/runtime/explanations';
-import { runtimeInteractionTitle } from '../../../lib/runtime/causality';
-import { localizedBreakpoint, localizedSeverity, tr, type AppLanguage } from '../../../shared/i18n';
+import { humanRuntimeEventDetail, runtimeEventKindLabel } from '../../../lib/runtime/runtime-presentation';
+import { localizedBreakpoint, tr, type AppLanguage } from '../../../shared/i18n';
 import type {
   RuntimeBreakpointHit,
   RuntimeBreakpointId,
@@ -154,7 +154,7 @@ function RuntimeInteractionList({
                       ? tr(language, `Interaction #${number}`, `Interacción #${number}`)
                       : tr(language, 'Background activity', 'Actividad en segundo plano')}
                   </strong>
-                  <small>{level === 'developer' ? runtimeInteractionTitle(interaction) : humanInteractionTitle(interaction, language)}</small>
+                  <small>{humanInteractionTitle(interaction, language)}</small>
                 </span>
                 <span className="interaction-summary">
                   {level === 'developer' && (
@@ -204,7 +204,9 @@ function RuntimeInteractionList({
                   <p><strong>{tr(language, 'What to review:', 'Qué revisar:')}</strong> {explanation.recommendation}</p>
                   {level !== 'simple' && <p><strong>{tr(language, 'Accessibility:', 'Accesibilidad:')}</strong> {explanation.accessibility}</p>}
                   {level === 'developer' && interaction.causes.map((item) => (
-                    <p key={`${item.type}-${item.summary}`}><code>{item.type}</code> {item.summary}</p>
+                    <p key={`${item.type}-${item.summary}`}>
+                      <code>{item.type}</code> {explanationForCause(item.type, language).summary}
+                    </p>
                   ))}
                 </div>
               )}
@@ -231,7 +233,8 @@ function RuntimeEventRow({
   level: ExplanationLevel;
   language: AppLanguage;
 }) {
-  const title = level === 'developer' ? event.title : humanRuntimeEventTitle(event, language);
+  const title = humanRuntimeEventTitle(event, language);
+  const detail = humanRuntimeEventDetail(event, language);
   return (
     <li className={`${event.outcome ? 'runtime-finding ' : ''}${level === 'simple' ? 'simple-event' : ''}`.trim()}>
       {level === 'developer' && (
@@ -239,13 +242,13 @@ function RuntimeEventRow({
       )}
       <div>
         <div className="finding-meta">
-          {event.breakpointHits?.length ? <span className="breakpoint-badge">breakpoint</span> : null}
+          {event.breakpointHits?.length ? <span className="breakpoint-badge">{tr(language, 'breakpoint', 'breakpoint')}</span> : null}
           {event.outcome && <span className={`outcome ${event.outcome}`}>{outcomeLabel(event.outcome, level, language)}</span>}
-          {level !== 'simple' && <span className={`severity ${event.severity}`}>{event.kind}</span>}
+          {level !== 'simple' && <span className={`severity ${event.severity}`}>{runtimeEventKindLabel(event.kind, language)}</span>}
           {level !== 'simple' && event.ruleId && <code>{event.ruleId}</code>}
         </div>
         <strong>{title}</strong>
-        {level !== 'simple' && event.detail && <p>{event.detail}</p>}
+        {level !== 'simple' && detail && <p>{detail}</p>}
         {level === 'developer' && event.mutation?.attribute && (
           <p className="mutation-values">
             <code>{event.mutation.attribute}</code> {JSON.stringify(event.mutation.previousValue)} →{' '}
