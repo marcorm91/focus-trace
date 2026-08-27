@@ -179,8 +179,9 @@ test('text and interface size reaches 130 percent, persists and does not overflo
 test('report opens a formatted PDF preview without exposing CSS selectors', async ({ context, extensionWorker }) => {
   const panel = await openSidepanel(context, extensionWorker);
   const longHeading = 'Instala Gas Natural y ahorra un mínimo de energía con una explicación deliberadamente larga para el informe';
+  const unbrokenHeading = 'HeadingWithoutNaturalBreakpointsThatMustNeverExpandTheFocusTraceSidepanelBeyondItsViewport';
 
-  await panel.evaluate(async ({ longHeadingText }) => {
+  await panel.evaluate(async ({ longHeadingText, unbrokenHeadingText }) => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
     if (tab?.id == null) throw new Error('Could not resolve the sidepanel test tab.');
     await chrome.runtime.sendMessage({
@@ -223,7 +224,7 @@ test('report opens a formatted PDF preview without exposing CSS selectors', asyn
           {
             id: 'heading-3',
             level: 3,
-            text: 'HeadingWithoutNaturalBreakpointsThatMustNeverExpandTheFocusTraceSidepanelBeyondItsViewport',
+            text: unbrokenHeadingText,
             selector: 'h3',
             signals: [],
           },
@@ -232,7 +233,7 @@ test('report opens a formatted PDF preview without exposing CSS selectors', asyn
         rulesRun: 17,
       },
     });
-  }, { longHeadingText: longHeading });
+  }, { longHeadingText: longHeading, unbrokenHeadingText: unbrokenHeading });
 
   await panel.setViewportSize({ width: 360, height: 800 });
   await panel.getByRole('button', { name: /Headings|Encabezados/ }).click();
@@ -241,8 +242,22 @@ test('report opens a formatted PDF preview without exposing CSS selectors', asyn
   await expect(shortHeadingLabel).not.toHaveAttribute('title', /.+/);
 
   const longHeadingLabel = panel.getByRole('button', { name: longHeading }).locator('span').first();
-  await expect.poll(() => longHeadingLabel.evaluate((element) => element.scrollWidth > element.clientWidth + 1)).toBe(true);
-  await expect(longHeadingLabel).toHaveAttribute('title', longHeading);
+  await expect(longHeadingLabel).not.toHaveAttribute('title', /.+/);
+  await expect.poll(() => longHeadingLabel.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
+  const longHeadingWraps = await longHeadingLabel.evaluate((element) => {
+    const range = document.createRange();
+    range.selectNodeContents(element);
+    return range.getClientRects().length > 1;
+  });
+  expect(longHeadingWraps).toBe(true);
+
+  const unbrokenHeadingLabel = panel.getByRole('button', { name: unbrokenHeading }).locator('span').first();
+  await expect.poll(() => unbrokenHeadingLabel.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
+
+  const headingsFit = await panel.evaluate(() =>
+    document.documentElement.scrollWidth <= document.documentElement.clientWidth,
+  );
+  expect(headingsFit).toBe(true);
 
   await panel.getByRole('button', { name: /Report|Informe/ }).click();
   const reportFits = await panel.evaluate(() =>
