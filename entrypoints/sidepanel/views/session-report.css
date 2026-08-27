@@ -68,21 +68,34 @@
 }
 
 .report-context-line {
+  min-width: 0;
   display: flex;
   flex-wrap: wrap;
-  gap: 5px 9px;
+  gap: 7px 12px;
   align-items: center;
-  padding: 0 2px;
+  padding: 9px 10px;
+  border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 12%, transparent));
+  border-radius: 8px;
+  background: var(--ft-surface, Canvas);
   color: var(--ft-muted, GrayText);
   font-size: 9px;
+  line-height: 1.4;
+}
+
+.report-context-line strong,
+.report-context-line span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .report-context-line strong {
-  max-width: 100%;
+  flex: 1 1 220px;
   color: inherit;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
+}
+
+.report-context-line span {
+  flex: 0 1 auto;
 }
 
 .report-priority {
