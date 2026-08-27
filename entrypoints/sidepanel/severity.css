@@ -99,6 +99,7 @@
 }
 
 .scan-severity-filter button {
+  min-width: 0;
   min-height: 32px;
   display: inline-flex;
   align-items: center;
@@ -111,6 +112,12 @@
   cursor: pointer;
   font-size: 9px;
   font-weight: 800;
+}
+
+.scan-severity-filter button > span {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  text-transform: capitalize;
 }
 
 .scan-severity-filter button strong {

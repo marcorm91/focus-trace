@@ -1,7 +1,7 @@
 .impact-matrix {
   display: grid;
-  gap: 14px;
-  padding: 15px;
+  gap: 16px;
+  padding: 16px;
   border: 1.5px solid var(--ft-border);
   border-radius: var(--ft-radius-md);
   background: var(--ft-surface);
@@ -19,7 +19,7 @@
   min-width: 0;
   flex: 1 1 260px;
   display: grid;
-  gap: 5px;
+  gap: 6px;
 }
 
 .impact-matrix-heading strong {
@@ -48,22 +48,23 @@
 
 .impact-matrix-scroll {
   min-width: 0;
-  overflow-x: auto;
+  overflow-x: hidden;
   border: 1px solid var(--ft-border-soft);
   border-radius: 8px;
 }
 
 .impact-matrix table {
   width: 100%;
-  min-width: 360px;
+  min-width: 0;
   border-collapse: collapse;
   table-layout: fixed;
 }
 
 .impact-matrix th,
 .impact-matrix td {
-  height: 42px;
-  padding: 8px 9px;
+  min-width: 0;
+  height: 46px;
+  padding: 10px 6px;
   border: 0;
   border-right: 1px solid var(--ft-border-faint);
   border-bottom: 1px solid var(--ft-border-faint);
@@ -85,11 +86,13 @@
   color: var(--ft-muted);
   font-size: 8.5px;
   font-weight: 900;
-  text-transform: uppercase;
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+  text-transform: capitalize;
 }
 
 .impact-matrix thead th:first-child {
-  width: 27%;
+  width: 23%;
 }
 
 .impact-matrix thead .severity-critical { border-top: 3px solid var(--ft-severity-critical-aa); color: var(--ft-severity-critical-aaa); }
@@ -129,6 +132,21 @@
 
 .impact-matrix > p {
   margin: 0;
-  padding-top: 10px;
+  padding-top: 12px;
   border-top: 1px solid var(--ft-border-faint);
+}
+
+@media (max-width: 420px) {
+  .impact-matrix {
+    padding: 13px;
+  }
+
+  .impact-matrix th,
+  .impact-matrix td {
+    padding-inline: 4px;
+  }
+
+  .impact-matrix thead th:first-child {
+    width: 21%;
+  }
 }

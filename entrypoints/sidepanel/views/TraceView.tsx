@@ -154,19 +154,18 @@ export function TraceView({
     <section className="trace-workspace" aria-labelledby="trace-title">
       <div className={`trace-hero ${recording ? 'is-recording' : ''}`}>
         <div className="trace-hero-copy">
-          <p className="eyebrow">{tr(language, 'Runtime accessibility debugger', 'Depurador de accesibilidad runtime')}</p>
-          <h2 id="trace-title">{tr(language, 'Trace what happened, not only what failed', 'Traza qué ocurrió, no solo qué falló')}</h2>
+          <h2 id="trace-title">{tr(language, 'Trace real interactions', 'Traza interacciones reales')}</h2>
           <p>
             {recording
               ? tr(
                   language,
-                  'Recording is active. Return to the page and use it normally; FocusTrace will correlate actions, focus, DOM changes and navigation.',
-                  'La grabación está activa. Vuelve a la página y úsala con normalidad; FocusTrace correlacionará acciones, foco, cambios DOM y navegación.',
+                  'Recording. Return to the page and interact normally.',
+                  'Grabando. Vuelve a la página e interactúa con normalidad.',
                 )
               : tr(
                   language,
-                  'Record a real journey to connect user actions with focus movement, dynamic DOM changes and SPA navigation.',
-                  'Graba un recorrido real para conectar las acciones del usuario con el movimiento del foco, cambios dinámicos del DOM y navegación SPA.',
+                  'Record the journey, then inspect focus, interactions and page changes.',
+                  'Graba el recorrido y después revisa foco, interacciones y cambios de página.',
                 )}
           </p>
         </div>
