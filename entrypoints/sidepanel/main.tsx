@@ -17,14 +17,12 @@ import './ux-polish.css';
 import './settings-scale.css';
 import './ui-scale.css';
 import './visual-system.css';
-import './accessibility-guardrails.css';
 import './severity.css';
 import './workflow-fixes.css';
 import './heading-tree-visual.css';
 import './modern-icons.css';
 import './regression-fixes.css';
 import './final-review-polish.css';
-import './heading-text-overflow.css';
 import './icon-followup-fixes.css';
 
 const PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'];
