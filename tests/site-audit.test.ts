@@ -1,8 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import { buildSiteAuditTemplates, normalizeTargetShape } from '../lib/site-audit/aggregate';
 import { normalizeDiscoveredUrl, robotsSitemaps, sitemapLocations } from '../lib/site-audit/discovery';
-import { SITE_AUDIT_MAX_SCANNED_PAGES, type SiteAuditPageResult, type SiteAuditRouteFamily } from '../lib/site-audit/model';
+import {
+  SITE_AUDIT_MAX_SCANNED_PAGES,
+  type SiteAuditPageResult,
+  type SiteAuditResult,
+  type SiteAuditRouteFamily,
+} from '../lib/site-audit/model';
 import { buildRouteFamilies, selectSiteAuditSamples } from '../lib/site-audit/routes';
+import { buildSiteAuditTextReport } from '../lib/site-audit/text-report';
 import type { ScanResult } from '../shared/types';
 
 function scan(url: string, selector = 'main > p:nth-of-type(2)', includeFailure = true): ScanResult {
@@ -101,6 +107,70 @@ describe('Site Audit finding aggregation', () => {
     expect(finding.targetShape).toBe(selector);
     expect(finding.commonToTemplate).toBe(true);
     expect(finding.sampleCount).toBe(3);
+  });
+
+  it('keeps exact locations and detailed evidence available to exported site reports', () => {
+    const family: SiteAuditRouteFamily = {
+      id: 'R01',
+      pattern: '/product/:item',
+      urls: ['https://shop.test/product/a', 'https://shop.test/product/b'],
+      sampleUrls: ['https://shop.test/product/a', 'https://shop.test/product/b'],
+    };
+    const first = family.urls[0]!;
+    const second = family.urls[1]!;
+    const selector = 'main > article > p.price';
+    const firstScan = scan(first, selector);
+    firstScan.issues[0] = {
+      ...firstScan.issues[0]!,
+      evidence: 'Measured 2.4:1 against the rendered background.',
+      contrast: {
+        kind: 'text',
+        subject: 'price text',
+        ratio: 2.4,
+        requiredRatio: 4.5,
+        foreground: '#777777',
+        background: '#ffffff',
+        fontSizePx: 16,
+        fontWeight: 400,
+      },
+      references: [
+        { type: 'WCAG', id: '1.4.3', label: 'Contrast (Minimum)', level: 'AA', url: 'https://www.w3.org/' },
+        { type: 'ACT', id: 'afw4f7', label: 'Text has minimum contrast', url: 'https://www.w3.org/WAI/standards-guidelines/act/rules/' },
+      ],
+    };
+    const pages: SiteAuditPageResult[] = [
+      { url: first, routeFamilyId: family.id, scan: firstScan },
+      { url: second, routeFamilyId: family.id, scan: scan(second, selector) },
+    ];
+    const template = buildSiteAuditTemplates([family], pages)[0]!;
+    const finding = template.findings[0]!;
+    expect(finding.exampleSelector).toBe(selector);
+    expect(finding.pages).toEqual([first, second]);
+
+    const result: SiteAuditResult = {
+      origin: 'https://shop.test',
+      generatedAt: 1,
+      discovery: {
+        origin: 'https://shop.test',
+        source: 'links',
+        urls: family.urls,
+        sitemapUrls: [],
+        truncated: false,
+      },
+      routeFamilies: [family],
+      pages,
+      templates: [template],
+      scannedPages: 2,
+      failedPages: 0,
+    };
+    const report = buildSiteAuditTextReport(result, 'es');
+    expect(report).toContain(`Selector representativo: ${selector}`);
+    expect(report).toContain('Páginas donde se observó:');
+    expect(report).toContain(first);
+    expect(report).toContain(second);
+    expect(report).toContain('Contraste medido: 2.4:1');
+    expect(report).toContain('WCAG 1.4.3 (AA)');
+    expect(report).toContain('ACT afw4f7');
   });
 
   it('does not conflate the same rule on different positional targets', () => {
