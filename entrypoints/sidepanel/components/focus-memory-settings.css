@@ -1,0 +1,51 @@
+.settings-memory-group {
+  display: grid;
+  gap: 12px;
+}
+
+.settings-memory-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 10px 11px;
+  border: 1px solid var(--ft-border-soft);
+  border-radius: var(--ft-radius-sm);
+  background: var(--ft-surface);
+  cursor: pointer;
+}
+
+.settings-memory-option:hover {
+  border-color: var(--ft-accent);
+}
+
+.settings-memory-option:has(input:focus-visible) {
+  outline: 3px solid var(--ft-focus);
+  outline-offset: 3px;
+}
+
+.settings-memory-option input {
+  margin-top: 3px;
+}
+
+.settings-memory-option > span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.settings-memory-option strong,
+.settings-memory-option small {
+  display: block;
+}
+
+.settings-memory-option small,
+.settings-memory-note {
+  color: var(--ft-muted);
+  line-height: 1.45;
+}
+
+.settings-memory-note {
+  margin: 0;
+  font-size: 0.82rem;
+}
