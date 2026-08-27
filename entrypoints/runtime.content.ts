@@ -76,7 +76,7 @@ export default defineContentScript({
     let hiddenFocusReported: Element | null = null;
     let focusWalkRunning = false;
     let observerActive = false;
-    let routeTimer: ReturnType<typeof setInterval> | undefined;
+    let routeTimer: number | undefined;
     const interactionTracker = new RuntimeInteractionTracker();
     const dialogs = new Map<Element, DialogState>();
 
