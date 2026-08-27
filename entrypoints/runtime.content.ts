@@ -75,12 +75,17 @@ export default defineContentScript({
     let pendingFocusIntent: 'forward' | 'backward' | 'programmatic' = 'programmatic';
     let hiddenFocusReported: Element | null = null;
     let focusWalkRunning = false;
+    let observerActive = false;
+    let routeTimer: ReturnType<typeof setInterval> | undefined;
     const interactionTracker = new RuntimeInteractionTracker();
     const dialogs = new Map<Element, DialogState>();
 
-    for (const dialog of document.querySelectorAll('dialog[open], [role="dialog"], [role="alertdialog"]')) {
-      dialogs.set(dialog, { element: dialog, trigger: null, openedAt: Date.now() });
-    }
+    const resetObservedDialogs = () => {
+      dialogs.clear();
+      for (const dialog of document.querySelectorAll('dialog[open], [role="dialog"], [role="alertdialog"]')) {
+        dialogs.set(dialog, { element: dialog, trigger: null, openedAt: Date.now() });
+      }
+    };
 
     const activeInteractionId = (timestamp = Date.now()): string | undefined =>
       interactionTracker.current(timestamp);
@@ -126,6 +131,7 @@ export default defineContentScript({
 
       if (breakpointHits.length) {
         recording = false;
+        stopInstrumentation();
         interactionTracker.reset();
       }
     };
@@ -229,6 +235,7 @@ export default defineContentScript({
       document,
       'focusin',
       (rawEvent) => {
+        if (!recording) return;
         const event = rawEvent as FocusEvent;
         if (!(event.target instanceof Element)) return;
         focusVersion += 1;
@@ -268,6 +275,7 @@ export default defineContentScript({
       document,
       'keydown',
       (rawEvent) => {
+        if (!recording) return;
         const event = rawEvent as KeyboardEvent;
         if (!['Tab', 'Enter', 'Escape', ' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
         if (event.key === 'Tab') pendingFocusIntent = event.shiftKey ? 'backward' : 'forward';
@@ -288,6 +296,7 @@ export default defineContentScript({
       document,
       'click',
       (rawEvent) => {
+        if (!recording) return;
         const event = rawEvent as MouseEvent;
         if (!(event.target instanceof Element)) return;
         const target = actionTarget(event.target);
@@ -378,14 +387,17 @@ export default defineContentScript({
           }
         }
 
-        if (!(mutation.target instanceof Element)) continue;
+        const mutationElement = mutation.target instanceof Element
+          ? mutation.target
+          : mutation.target.parentElement;
+        if (!mutationElement) continue;
 
-        const live = mutation.target.closest('[aria-live], [role="status"], [role="alert"]');
+        const live = mutationElement.closest('[aria-live], [role="status"], [role="alert"]');
         if (live) {
           emit(createLiveRegionEvent(snapshot(live), live.textContent), interactionId);
         }
 
-        if (mutation.type === 'attributes') {
+        if (mutation.type === 'attributes' && mutation.target instanceof Element) {
           const attribute = mutation.attributeName ?? '';
           const currentValue = attribute ? mutation.target.getAttribute(attribute) : null;
           const affectsLastFocused =
@@ -435,18 +447,8 @@ export default defineContentScript({
       inspectClosedDialogs();
     });
 
-    observer.observe(document.documentElement, {
-      subtree: true,
-      childList: true,
-      characterData: true,
-      attributes: true,
-      attributeOldValue: true,
-      attributeFilter: ['open', 'role', 'aria-live', 'aria-modal', 'aria-hidden', 'hidden', 'class', 'style'],
-    });
-    ctx.onInvalidated(() => observer.disconnect());
-
-    const routeTimer = ctx.setInterval(() => {
-      if (location.href === lastUrl) return;
+    const inspectRouteChange = () => {
+      if (!recording || location.href === lastUrl) return;
 
       const fromUrl = lastUrl;
       const previousTitle = lastTitle;
@@ -488,8 +490,35 @@ export default defineContentScript({
           routeInteractionId,
         );
       }, 600);
-    }, 250);
-    ctx.onInvalidated(() => clearInterval(routeTimer));
+    };
+
+    function startInstrumentation() {
+      if (!observerActive) {
+        observer.observe(document.documentElement, {
+          subtree: true,
+          childList: true,
+          characterData: true,
+          attributes: true,
+          attributeOldValue: true,
+          attributeFilter: ['open', 'role', 'aria-live', 'aria-modal', 'aria-hidden', 'hidden', 'class', 'style'],
+        });
+        observerActive = true;
+      }
+      if (routeTimer == null) routeTimer = ctx.setInterval(inspectRouteChange, 250);
+    }
+
+    function stopInstrumentation() {
+      if (observerActive) {
+        observer.disconnect();
+        observerActive = false;
+      }
+      if (routeTimer != null) {
+        clearInterval(routeTimer);
+        routeTimer = undefined;
+      }
+    }
+
+    ctx.onInvalidated(stopInstrumentation);
 
     browser.runtime.onMessage.addListener((message: ExtensionMessage | { type: 'FOCUSTRACE_PING' }) => {
       if (message.type === 'FOCUSTRACE_PING') return Promise.resolve(true);
@@ -510,6 +539,9 @@ export default defineContentScript({
         focusVersion = 0;
         hiddenFocusReported = null;
         interactionTracker.reset();
+        resetObservedDialogs();
+        if (recording) startInstrumentation();
+        else stopInstrumentation();
         return Promise.resolve({ recording, breakpoints: breakpointSettings });
       }
 
@@ -530,6 +562,9 @@ export default defineContentScript({
       lastFocused = document.activeElement instanceof Element ? document.activeElement : null;
       lastUrl = location.href;
       lastTitle = document.title;
+      resetObservedDialogs();
+      if (recording) startInstrumentation();
+      else stopInstrumentation();
     }).catch(() => undefined);
   },
 });
