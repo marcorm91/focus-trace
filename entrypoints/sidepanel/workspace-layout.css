@@ -1,11 +1,26 @@
-/* Follow-up polish from hands-on sidepanel review. Loaded last. */
+/* Sidepanel shell and view-level layout. Keep this file structural: component
+   appearance belongs to the component stylesheet, not to late override layers. */
+.app-shell {
+  position: relative;
+}
 
-/* Settings is a focused sub-view: keep the brand, remove workspace chrome. */
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  align-items: stretch;
+}
+
+.quick-actions > button {
+  min-width: 0;
+}
+
+/* Settings is a focused sub-view: keep the brand and the explicit Back action,
+   but remove the workspace chrome while the settings route is active. */
 html[data-ft-settings-open='true'] .quick-start,
 html[data-ft-settings-open='true'] .workspace-nav,
 html[data-ft-settings-open='true'] .topbar-tools,
 html[data-ft-settings-open='true'] .error {
-  display: none !important;
+  display: none;
 }
 
 html[data-ft-settings-open='true'] .topbar {
@@ -13,12 +28,17 @@ html[data-ft-settings-open='true'] .topbar {
 }
 
 .settings-back-trigger {
+  position: absolute;
+  top: 18px;
+  right: 18px;
+  z-index: 20;
   width: fit-content;
   min-height: 38px;
   display: inline-flex;
   align-items: center;
-  gap: 7px;
   justify-self: start;
+  gap: 7px;
+  margin: 0;
   padding: 7px 11px;
   border: 1.5px solid var(--ft-border);
   border-radius: var(--ft-radius-sm);
@@ -38,27 +58,25 @@ html[data-ft-settings-open='true'] .topbar {
   line-height: 1;
 }
 
-/* Use the transparent product mark directly instead of placing it on a tile. */
-.brand-mark {
-  border: 0 !important;
-  background-color: transparent !important;
-  background-size: 38px 38px !important;
-  box-shadow: none !important;
-}
-
 .suggestion-list {
-  gap: 10px !important;
+  gap: 10px;
 }
 
 .suggestion-list li {
+  padding: 11px;
   border-top: 1px solid var(--ft-border-soft);
   border-right: 1px solid var(--ft-border-soft);
   border-bottom: 1px solid var(--ft-border-soft);
-  border-radius: 0 var(--ft-radius-md) var(--ft-radius-md) 0 !important;
-  padding: 11px !important;
+  border-radius: 0 var(--ft-radius-md) var(--ft-radius-md) 0;
 }
 
-/* Keep the occurrence navigator visually associated with the highlighted target. */
-.scan-occurrence-pager {
-  margin-block: 2px 4px;
+@media (max-width: 430px) {
+  .quick-actions {
+    grid-template-columns: 1fr;
+  }
+
+  .settings-back-trigger {
+    top: 14px;
+    right: 14px;
+  }
 }

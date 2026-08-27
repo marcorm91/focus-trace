@@ -3,6 +3,7 @@ import { browser } from '#imports';
 import { locateScanTargetInPage } from '../../../lib/runtime/scan-target-overlay';
 import { localizedScanIssue, tr, type AppLanguage } from '../../../shared/i18n';
 import type { FindingOutcome, ScanIssue, ScanResult } from '../../../shared/types';
+import './report-scan-compact.css';
 
 const PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'];
 
