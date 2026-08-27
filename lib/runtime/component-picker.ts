@@ -1,6 +1,8 @@
 import type { AppLanguage } from '../../shared/i18n';
 import type { ComponentScanScope } from '../../shared/types';
 
+export const COMPONENT_SCAN_SCOPE_ATTRIBUTE = 'data-focustrace-scan-component';
+
 export interface ComponentPickerResult {
   cancelled: boolean;
   scope?: ComponentScanScope;
@@ -13,6 +15,7 @@ export interface ComponentPickerResult {
 export async function pickComponentInPage(language: AppLanguage): Promise<ComponentPickerResult> {
   document.querySelector('[data-focustrace-component-picker]')?.remove();
 
+  const scopeAttribute = 'data-focustrace-scan-component';
   const es = language === 'es';
   const selectorFor = (element: Element): string => {
     if (element.id) return `#${CSS.escape(element.id)}`;
@@ -154,16 +157,15 @@ export async function pickComponentInPage(language: AppLanguage): Promise<Compon
       const tag = candidate.tagName.toLowerCase();
       const role = candidate.getAttribute('role')?.trim();
       const label = readableLabel(candidate);
-      finish({
-        cancelled: false,
-        scope: {
-          type: 'component',
-          selector: selectorFor(candidate),
-          tag,
-          ...(role ? { role } : {}),
-          ...(label ? { label } : {}),
-        },
-      });
+      const scope: ComponentScanScope = {
+        type: 'component',
+        selector: selectorFor(candidate),
+        tag,
+        ...(role ? { role } : {}),
+        ...(label ? { label } : {}),
+      };
+      document.documentElement.setAttribute(scopeAttribute, JSON.stringify(scope));
+      finish({ cancelled: false, scope });
     };
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === 'Escape') {
