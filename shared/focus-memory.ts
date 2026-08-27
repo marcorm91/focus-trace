@@ -81,12 +81,20 @@ function normalizeVolatileTokens(value: string): string {
     .slice(0, 320);
 }
 
+function normalizeRouteSegment(segment: string): string {
+  const trimmed = segment.trim();
+  if (/^\d+$/.test(trimmed)) return ':n';
+  if (/^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(trimmed)) return ':id';
+  if (/^[0-9a-f]{16,}$/i.test(trimmed)) return ':id';
+  return normalizeVolatileTokens(trimmed);
+}
+
 function normalizedRouteFamily(url: string): string {
   try {
     const parsed = new URL(url);
     const path = parsed.pathname
       .split('/')
-      .map((segment) => normalizeVolatileTokens(segment))
+      .map(normalizeRouteSegment)
       .join('/');
     return `${parsed.origin}${path || '/'}`;
   } catch {
