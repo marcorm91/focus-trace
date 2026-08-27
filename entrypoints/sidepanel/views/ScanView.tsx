@@ -2,7 +2,6 @@ import { useEffect, useMemo, useState } from 'react';
 import { colorToHex, colorToRgb, parseCssColor, suggestAccessibleForeground } from '../../../lib/audit/contrast';
 import { reportFindingDescription } from '../../../lib/report/finding-guidance';
 import { outcomeLabel, type ExplanationLevel } from '../../../lib/runtime/explanations';
-import type { ScanTargetHighlightResult } from '../../../lib/runtime/scan-target-overlay';
 import { scanCategoryForIssue, type ScanCategory } from '../../../shared/scan-categories';
 import { countBySeverity, SEVERITY_ORDER, sortBySeverity, type SeverityFilter } from '../../../shared/severity';
 import {
@@ -12,13 +11,12 @@ import {
   type AppLanguage,
 } from '../../../shared/i18n';
 import type { FindingOutcome, ScanIssue, ScanResult, Severity } from '../../../shared/types';
-import { Empty, Metric, ReferenceList } from '../components/Common';
+import { Empty, ReferenceList } from '../components/Common';
 import { FindingGuidance } from '../components/FindingGuidance';
 import { SiteAuditLauncher } from '../components/SiteAuditLauncher';
 
 type ScanFilter = FindingOutcome;
 type ColorFormat = 'hex' | 'rgb';
-type LocateResult = ScanTargetHighlightResult | void;
 
 const CATEGORY_ORDER: ScanCategory[] = ['all', 'contrast', 'names', 'forms', 'structure', 'keyboard', 'aria', 'other'];
 const DISPLAY_SEVERITIES: Severity[] = ['critical', 'serious', 'moderate', 'minor'];
@@ -122,7 +120,7 @@ export function ScanView({
   scan?: ScanResult | undefined;
   level: ExplanationLevel;
   language: AppLanguage;
-  onLocate: (selector: string) => LocateResult | Promise<LocateResult>;
+  onLocate: (selector: string) => void | Promise<void>;
 }) {
   const [filter, setFilter] = useState<ScanFilter>('fail');
   const [category, setCategory] = useState<ScanCategory>('all');
@@ -221,22 +219,8 @@ export function ScanView({
           <p title={scan.url}>{scan.title || scan.url}</p>
         </div>
         <div className="scan-heading-actions">
-          <strong>
-            {tr(
-              language,
-              `${scan.issues.length} fail · ${scan.review.length} review · ${scanWarnings.length} warning`,
-              `${scan.issues.length} fallo · ${scan.review.length} revisión · ${scanWarnings.length} aviso`,
-            )}
-          </strong>
           <SiteAuditLauncher language={language} />
         </div>
-      </div>
-
-      <div className="metrics">
-        <Metric label={tr(language, 'Fail', 'Fallos')} value={scan.issues.length} />
-        <Metric label={tr(language, 'Review', 'Revisión')} value={scan.review.length} />
-        <Metric label={tr(language, 'Warning', 'Avisos')} value={scanWarnings.length} />
-        <Metric label={tr(language, 'Checks passed', 'Comprobaciones superadas')} value={scan.passes} />
       </div>
 
       {scan.issues.length > 0 && (
@@ -277,15 +261,6 @@ export function ScanView({
         </div>
       ) : (
         <>
-          <div className="scan-results-note">
-            <strong>{tr(language, 'Less repetition, more context', 'Menos repetición, más contexto')}</strong>
-            <p>{tr(
-              language,
-              'Each criterion is shown once. Open it to move through the affected elements. The </> action highlights the current element and opens its compact DOM fragment. Complex contrast reviews require manual verification and are not automatic WCAG failures.',
-              'Cada criterio se muestra una sola vez. Ábrelo para recorrer los elementos afectados. La acción </> destaca el elemento actual y abre su fragmento DOM compacto. Las revisiones de contraste complejo requieren verificación manual y no son fallos WCAG automáticos.',
-            )}</p>
-          </div>
-
           <div className="scan-category-filter">
             <strong>{tr(language, 'Filter by area', 'Filtrar por área')}</strong>
             <div role="group" aria-label={tr(language, 'Accessibility area', 'Área de accesibilidad')}>
@@ -397,7 +372,7 @@ function FindingRuleAccordion({
   issues: ScanIssue[];
   level: ExplanationLevel;
   language: AppLanguage;
-  onLocate: (selector: string) => LocateResult | Promise<LocateResult>;
+  onLocate: (selector: string) => void | Promise<void>;
   defaultOpen: boolean;
 }) {
   const [index, setIndex] = useState(0);
@@ -472,18 +447,13 @@ function FindingCard({
   issue: ScanIssue;
   level: ExplanationLevel;
   language: AppLanguage;
-  onLocate: (selector: string) => LocateResult | Promise<LocateResult>;
+  onLocate: (selector: string) => void | Promise<void>;
 }) {
   const copy = localizedScanIssue(issue, language);
   const description = reportFindingDescription(issue, language);
   const target = issue.targets[0];
   const [colorFormat, setColorFormat] = useState<ColorFormat>('hex');
   const [copiedKey, setCopiedKey] = useState<string>();
-  const [domSnippet, setDomSnippet] = useState<string>();
-
-  useEffect(() => {
-    setDomSnippet(undefined);
-  }, [issue.id]);
 
   const suggestion = useMemo(() => {
     if (issue.outcome !== 'fail') return undefined;
@@ -499,12 +469,6 @@ function FindingCard({
     window.setTimeout(() => setCopiedKey((current) => current === key ? undefined : current), 1200);
   };
 
-  const inspectTarget = async () => {
-    if (!target) return;
-    const result = await onLocate(target);
-    if (result && typeof result === 'object' && result.snippet) setDomSnippet(result.snippet);
-  };
-
   return (
     <article className="scan-occurrence">
       <p className="scan-occurrence-description">{description}</p>
@@ -517,20 +481,13 @@ function FindingCard({
           </div>
           <button
             type="button"
-            aria-label={tr(language, 'Highlight element and inspect its DOM', 'Destacar elemento e inspeccionar su DOM')}
-            title={tr(language, 'Highlight element and inspect its DOM', 'Destacar elemento e inspeccionar su DOM')}
-            onClick={() => void inspectTarget()}
+            aria-label={tr(language, 'Highlight element on page', 'Destacar elemento en la página')}
+            title={tr(language, 'Highlight element on page', 'Destacar elemento en la página')}
+            onClick={() => void onLocate(target)}
           >
             <span aria-hidden="true">&lt;/&gt;</span>
           </button>
         </div>
-      )}
-
-      {domSnippet && (
-        <details className="finding-dom" open>
-          <summary>{tr(language, 'DOM fragment', 'Fragmento DOM')}</summary>
-          <pre><code>{domSnippet}</code></pre>
-        </details>
       )}
 
       {issue.contrast && (

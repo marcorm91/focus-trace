@@ -1,10 +1,4 @@
-/* Workflow corrections from hands-on audit review. Loaded last on purpose. */
-
-/* The four raw scan metrics duplicate information that is already available in
-   the result tabs and impact breakdown, so keep the scan surface focused. */
-.panel:has(#scan-title) > .metrics {
-  display: none;
-}
+/* Workflow corrections from hands-on audit review. */
 
 /* Site and page analysis are peer entry points. */
 .quick-actions {

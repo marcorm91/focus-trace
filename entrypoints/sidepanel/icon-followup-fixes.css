@@ -1,35 +1,4 @@
-/* Final icon corrections from hands-on review. Loaded after modern-icons.css. */
-
-/* The generic topbar mask selector is more specific than the original per-action
-   rules, so pin each action to its own glyph at the same cascade layer. */
-.topbar-tools .reset-all-trigger > span {
-  --ft-mask: var(--ft-i-reset) !important;
-}
-
-.topbar-tools .settings-trigger > span {
-  --ft-mask: var(--ft-i-settings) !important;
-}
-
-/* This action locates/highlights the live page element; a focus/target glyph is
-   more accurate than the previous code symbol. Keep the glyph optically centred
-   and hide the old textual </> fallback. */
-.finding-location > button {
-  display: inline-grid !important;
-  place-items: center !important;
-  padding: 0 !important;
-}
-
-.finding-location > button > span {
-  display: none !important;
-}
-
-.finding-location > button::before {
-  width: 20px;
-  height: 20px;
-  margin: 0 !important;
-  -webkit-mask: var(--ft-i-focus) center / contain no-repeat !important;
-  mask: var(--ft-i-focus) center / contain no-repeat !important;
-}
+/* Follow-up control polish that remains separate from the base icon layer. */
 
 /* Copy actions are icon-only controls. Force both the button box and the mask
    itself to share the same optical centre. */
@@ -41,13 +10,6 @@
 
 .copy-color::before {
   margin: 0 auto !important;
-}
-
-/* The filters and impact matrix already carry these counts/context. Keep the
-   scan surface focused by removing the duplicated explanatory/count blocks. */
-.scan-results-note,
-.scan-heading-actions > strong {
-  display: none !important;
 }
 
 /* The four recorded text-style facts read more naturally as a compact 2x2 grid

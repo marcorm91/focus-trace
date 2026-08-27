@@ -19,7 +19,7 @@ import {
 import { buildFocusJourney } from '../../lib/runtime/focus-journey';
 import { clearHeadingOutlineInPage } from '../../lib/runtime/heading-overlay';
 import { buildPageInspectorEntries } from '../../lib/runtime/page-inspector';
-import { locateScanTargetInPage, type ScanTargetHighlightResult } from '../../lib/runtime/scan-target-overlay';
+import { locateScanTargetInPage } from '../../lib/runtime/scan-target-overlay';
 import { SETTINGS_STORAGE_KEY, tr, type AppLanguage } from '../../shared/i18n';
 import type {
   ExtensionMessage,
@@ -190,7 +190,7 @@ export default function App() {
         func: locateScanTargetInPage,
         args: [selector],
       });
-      const result = results[0]?.result as ScanTargetHighlightResult | undefined;
+      const result = results[0]?.result;
       if (!result?.found) {
         setError(tr(
           language,
@@ -198,10 +198,8 @@ export default function App() {
           'El elemento ya no está presente en la página. Vuelve a ejecutar el análisis.',
         ));
       }
-      return result;
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
-      return undefined;
     }
   }, [language, tabId]);
 

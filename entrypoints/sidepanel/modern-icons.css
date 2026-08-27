@@ -12,7 +12,6 @@
   --ft-i-site: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M3 12h18M12 3c2.5 2.5 4 5.5 4 9s-1.5 6.5-4 9M12 3c-2.5 2.5-4 5.5-4 9s1.5 6.5 4 9'/%3E%3C/svg%3E");
   --ft-i-reset: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M4 7v5h5M5.5 16a8 8 0 1 0 .8-9.5L4 9'/%3E%3C/svg%3E");
   --ft-i-settings: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='M4 7h8M16 7h4M4 17h4M12 17h8M12 4v6M8 14v6'/%3E%3C/svg%3E");
-  --ft-i-code: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='m8 9-3 3 3 3M16 9l3 3-3 3M14 5l-4 14'/%3E%3C/svg%3E");
   --ft-i-play: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Cpath fill='black' d='M8 5.5v13l11-6.5z'/%3E%3C/svg%3E");
   --ft-i-stop: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24'%3E%3Crect x='6' y='6' width='12' height='12' rx='2' fill='black'/%3E%3C/svg%3E");
 }
@@ -78,8 +77,8 @@
 .quick-actions .site-audit-launch { order: 2; }
 .quick-actions .focus-walk-action { order: 3; }
 
-.reset-all-trigger > span { --ft-mask: var(--ft-i-reset); }
-.settings-trigger > span { --ft-mask: var(--ft-i-settings); }
+.topbar-tools .reset-all-trigger > span { --ft-mask: var(--ft-i-reset); }
+.topbar-tools .settings-trigger > span { --ft-mask: var(--ft-i-settings); }
 
 .trace-record.start .trace-button-icon { --ft-mask: var(--ft-i-play); }
 .trace-record.stop .trace-button-icon { --ft-mask: var(--ft-i-stop); }
@@ -88,8 +87,15 @@
 .finding-location > button {
   position: relative;
   overflow: hidden;
+  display: inline-grid !important;
+  place-items: center !important;
+  padding: 0 !important;
   color: transparent !important;
   font-size: 0 !important;
+}
+
+.finding-location > button > span {
+  display: none !important;
 }
 
 .finding-location > button::before {
@@ -97,10 +103,10 @@
   width: 20px;
   height: 20px;
   display: block;
-  margin: auto;
+  margin: 0 !important;
   background: var(--ft-surface);
-  -webkit-mask: var(--ft-i-code) center / contain no-repeat;
-  mask: var(--ft-i-code) center / contain no-repeat;
+  -webkit-mask: var(--ft-i-focus) center / contain no-repeat;
+  mask: var(--ft-i-focus) center / contain no-repeat;
 }
 
 @media (prefers-reduced-motion: reduce) {

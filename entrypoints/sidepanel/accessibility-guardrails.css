@@ -1,6 +1,0 @@
-/* Accessibility sizing guardrails that must win the visual-system cascade. */
-.workspace-nav.tabs button > span {
-  width: 28px;
-  height: 28px;
-  font-size: 19px;
-}

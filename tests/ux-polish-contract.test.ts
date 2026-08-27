@@ -24,6 +24,8 @@ describe('UX polish contract', () => {
     expect(polish).toContain('margin-inline-start: calc(var(--heading-depth) * 6px)');
     expect(polish).toContain('.heading-tree-row::before');
     expect(polish).toContain('display: none !important');
+    expect(polish).toContain('white-space: nowrap !important');
+    expect(polish).toContain('text-overflow: ellipsis !important');
   });
 
   it('uses the same modern SVG-mask icon language without shrinking navigation affordances', () => {
@@ -39,6 +41,13 @@ describe('UX polish contract', () => {
     expect(css).toContain('width: 28px !important');
     expect(css).toContain('height: 28px !important');
     expect(css).toContain('font-size: 19px !important');
+    expect(css).toContain('.topbar-tools .reset-all-trigger > span');
+    expect(css).toContain('--ft-mask: var(--ft-i-reset)');
+    expect(css).toContain('.topbar-tools .settings-trigger > span');
+    expect(css).toContain('--ft-mask: var(--ft-i-settings)');
+    expect(css).toContain('.finding-location > button::before');
+    expect(css).toContain('-webkit-mask: var(--ft-i-focus)');
+    expect(css).not.toContain('--ft-i-code');
 
     const polish = source('entrypoints/sidepanel/final-review-polish.css');
     expect(polish).toContain('.topbar-tools button > span');
@@ -47,24 +56,36 @@ describe('UX polish contract', () => {
     expect(polish).toContain('--ft-i-chevron-left');
 
     const followup = source('entrypoints/sidepanel/icon-followup-fixes.css');
-    expect(followup).toContain('.topbar-tools .reset-all-trigger > span');
-    expect(followup).toContain('--ft-mask: var(--ft-i-reset) !important');
-    expect(followup).toContain('.topbar-tools .settings-trigger > span');
-    expect(followup).toContain('--ft-mask: var(--ft-i-settings) !important');
-    expect(followup).toContain('-webkit-mask: var(--ft-i-focus)');
+    expect(followup).toContain('.copy-color');
     expect(followup).toContain('place-items: center !important');
+    expect(followup).not.toContain('.topbar-tools .reset-all-trigger > span');
+    expect(followup).not.toContain('.finding-location > button::before');
 
     const entry = source('entrypoints/sidepanel/main.tsx');
     expect(entry).toContain("import './modern-icons.css';");
     expect(entry).toContain("import './final-review-polish.css';");
     expect(entry).toContain("import './icon-followup-fixes.css';");
+    expect(entry).not.toContain("import './accessibility-guardrails.css';");
+    expect(entry).not.toContain("import './heading-text-overflow.css';");
   });
 
-  it('keeps redundant scan summary blocks out of the visible result surface', () => {
+  it('does not keep removed scan surfaces or DOM snippets hidden in the rendered tree', () => {
+    const scan = source('entrypoints/sidepanel/views/ScanView.tsx');
+    const overlay = source('lib/runtime/scan-target-overlay.ts');
+    const workflow = source('entrypoints/sidepanel/workflow-fixes.css');
     const followup = source('entrypoints/sidepanel/icon-followup-fixes.css');
-    expect(followup).toContain('.scan-results-note');
-    expect(followup).toContain('.scan-heading-actions > strong');
-    expect(followup).toContain('display: none !important');
+
+    expect(scan).not.toContain('scan-results-note');
+    expect(scan).not.toContain('Less repetition, more context');
+    expect(scan).not.toContain('<div className="metrics">');
+    expect(scan).not.toContain('domSnippet');
+    expect(scan).not.toContain('DOM fragment');
+    expect(scan).toContain('Highlight element on page');
+    expect(overlay).not.toContain('outerHTML');
+    expect(overlay).not.toContain('snippet');
+    expect(workflow).not.toContain('.panel:has(#scan-title) > .metrics');
+    expect(followup).not.toContain('.scan-results-note');
+    expect(followup).not.toContain('.scan-heading-actions > strong');
   });
 
   it('keeps hover states legible and contrast metadata in a responsive 2x2 grid', () => {
