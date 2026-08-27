@@ -57,6 +57,8 @@ test('sidepanel exposes an accessible shell and keyboard order', async ({ contex
   await panel.keyboard.press('Tab');
   await expect(panel.getByRole('button', { name: /Analyze this page|Analizar esta página/ })).toBeFocused();
   await panel.keyboard.press('Tab');
+  await expect(panel.getByRole('button', { name: /Select component|Seleccionar componente/ })).toBeFocused();
+  await panel.keyboard.press('Tab');
   await expect(panel.getByRole('button', { name: /Analyze site|Analizar sitio/ })).toBeFocused();
   await panel.keyboard.press('Tab');
   await expect(panel.getByRole('button', { name: /Automate focus|Automatizar foco/ })).toBeFocused();
@@ -70,6 +72,7 @@ test('default readable UI text is at least 14px', async ({ context, extensionWor
     panel.locator('.brand p'),
     panel.locator('.quick-start-copy p'),
     panel.getByRole('button', { name: /Analyze this page|Analizar esta página/ }),
+    panel.getByRole('button', { name: /Select component|Seleccionar componente/ }),
     panel.getByRole('button', { name: /Analyze site|Analizar sitio/ }),
     panel.getByRole('button', { name: /Automate focus|Automatizar foco/ }),
     panel.getByRole('button', { name: /Review|Revisión/ }),
