@@ -3,6 +3,7 @@ import {
   appendRuntimeEventToSession,
   clearSessionEvents,
   emptySessionState,
+  invalidateSessionScanForUrl,
   normalizeSessionState,
   setSessionRecordingState,
   updateSessionBreakpoints,
@@ -81,6 +82,16 @@ async function restoreContentStateAfterNavigation(tabId: number, state: SessionS
   } satisfies ExtensionMessage);
 }
 
+function invalidateScanAfterNavigation(tabId: number, url: string): Promise<void> {
+  return serializeTabWrite(tabId, async () => {
+    const state = await getSession(tabId);
+    const next = invalidateSessionScanForUrl(state, url);
+    if (next === state) return;
+    await saveSession(next);
+    await broadcast(next);
+  });
+}
+
 function configurePanelAction() {
   if (import.meta.env.FIREFOX) {
     const firefoxBrowser = browser as FirefoxSidebarBrowser;
@@ -115,6 +126,10 @@ export default defineBackground(() => {
     }
 
     if (message.type === 'FOCUSTRACE_GET_SESSION') return getSession(message.tabId);
+
+    if (message.type === 'FOCUSTRACE_FLUSH_SESSION') {
+      return serializeTabWrite(message.tabId, () => getSession(message.tabId));
+    }
 
     if (message.type === 'FOCUSTRACE_CLEAR_SESSION') {
       return serializeTabWrite(message.tabId, async () => {
@@ -176,6 +191,10 @@ export default defineBackground(() => {
   });
 
   browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
+    if (changeInfo.url) {
+      void invalidateScanAfterNavigation(tabId, changeInfo.url).catch(() => undefined);
+    }
+
     if (changeInfo.status !== 'complete') return;
     void getSession(tabId)
       .then((state) => state.recording ? restoreContentStateAfterNavigation(tabId, state) : undefined)
