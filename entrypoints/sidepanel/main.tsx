@@ -8,21 +8,23 @@ import { normalizeUiScale, UI_SCALE_STORAGE_KEY } from '../../shared/ui-scale';
 import App from './App';
 import { ImpactMatrix } from './components/ImpactMatrix';
 import { openFocusedSettingsView } from './settings-focus';
+
+// Cascade order: legacy foundations -> visual system -> component ownership ->
+// interaction states -> accessibility policy. Component CSS should not need
+// !important to win normal styling decisions.
 import './style.css';
-import './focus-graph.css';
-import './scan-settings.css';
-import './scan-accordion.css';
-import './ux-polish.css';
-import './settings-scale.css';
-import './ui-scale.css';
 import './visual-system.css';
 import './severity.css';
-import './workflow-fixes.css';
+import './ux-polish.css';
+import './focus-graph.css';
+import './scan-settings.css';
+import './settings-scale.css';
+import './scan-accordion.css';
+import './workspace-layout.css';
 import './heading-tree-visual.css';
 import './modern-icons.css';
-import './regression-fixes.css';
-import './final-review-polish.css';
-import './icon-followup-fixes.css';
+import './control-states.css';
+import './ui-scale.css';
 
 const PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'];
 const root = document.getElementById('root');

@@ -1,43 +1,26 @@
-.scan-results-note {
-  display: grid;
-  gap: 4px;
-  padding: 10px 11px;
-  border: 1px solid color-mix(in srgb, #4f46e5 24%, transparent);
-  border-left: 4px solid #4f46e5;
-  border-radius: 9px;
-  background: color-mix(in srgb, #4f46e5 5%, Canvas);
-}
-
-.scan-results-note strong {
-  font-size: 11px;
-}
-
-.scan-results-note p {
-  margin: 0;
-  color: var(--ft-muted, GrayText);
-  font-size: 10px;
-  line-height: 1.45;
-}
-
+/* Scan criterion accordion and affected-element navigation. This file owns the
+   scan surface; removed legacy DOM-snippet and results-note rules stay deleted. */
 .scan-rule-list {
   display: grid;
-  gap: 8px;
+  gap: 9px;
 }
 
 .scan-rule-group {
   overflow: hidden;
-  border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 14%, transparent));
-  border-left: 4px solid #667085;
-  border-radius: 10px;
-  background: var(--ft-surface, Canvas);
+  border: 1.5px solid var(--ft-border);
+  border-left-width: 5px;
+  border-radius: var(--ft-radius-md);
+  background: var(--ft-surface);
+  box-shadow: 2px 2px 0 color-mix(in srgb, var(--ft-border) 70%, transparent);
 }
 
-.scan-rule-group.outcome-fail { border-left-color: #b42318; }
-.scan-rule-group.outcome-review { border-left-color: #b54708; }
-.scan-rule-group.outcome-warning { border-left-color: #8a6c00; }
+.scan-rule-group.outcome-fail { border-left-color: var(--ft-danger); }
+.scan-rule-group.outcome-review { border-left-color: var(--ft-warning); }
+.scan-rule-group.outcome-warning { border-left-color: #786500; }
 
 .scan-rule-group > summary {
   min-width: 0;
+  min-height: 49px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto;
   gap: 8px;
@@ -47,26 +30,30 @@
   list-style: none;
 }
 
-.scan-rule-group > summary::-webkit-details-marker { display: none; }
+.scan-rule-group > summary::-webkit-details-marker {
+  display: none;
+}
 
 .scan-rule-group[open] > summary {
-  border-bottom: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 12%, transparent));
-  background: var(--ft-surface-subtle, color-mix(in srgb, CanvasText 3%, Canvas));
+  border-bottom: 1.5px solid var(--ft-border);
+  background: var(--ft-surface-subtle);
 }
 
 .scan-rule-outcome {
   min-width: 42px;
   padding: 3px 6px;
+  border: 1px solid currentColor;
   border-radius: 999px;
+  background: transparent;
   text-align: center;
   font-size: 8.5px;
   font-weight: 900;
   text-transform: uppercase;
 }
 
-.scan-rule-outcome.fail { background: #fff0ed; color: #b42318; }
-.scan-rule-outcome.review { background: #fff4e8; color: #b54708; }
-.scan-rule-outcome.warning { background: #fff9db; color: #765d00; }
+.scan-rule-outcome.fail { color: var(--ft-danger); }
+.scan-rule-outcome.review { color: var(--ft-warning); }
+.scan-rule-outcome.warning { color: #746100; }
 
 .scan-rule-title {
   min-width: 0;
@@ -81,52 +68,65 @@
 }
 
 .scan-rule-title small {
-  color: var(--ft-muted, GrayText);
+  color: var(--ft-muted);
   font-size: 9px;
 }
 
 .scan-rule-count {
-  min-width: 25px;
+  min-width: 27px;
   padding: 3px 7px;
-  border-radius: 999px;
-  background: var(--ft-surface-subtle, color-mix(in srgb, CanvasText 9%, Canvas));
+  border: 1px solid var(--ft-border);
+  border-radius: var(--ft-radius-xs);
+  background: var(--ft-ink);
+  color: var(--ft-surface);
+  font-family: var(--ft-mono);
   text-align: center;
   font-size: 10px;
   font-weight: 900;
 }
 
 .scan-rule-chevron {
-  font-size: 14px;
-  transform: rotate(-90deg);
-  transition: transform .15s ease;
+  color: var(--ft-muted);
 }
-
-.scan-rule-group[open] .scan-rule-chevron { transform: rotate(0); }
 
 .scan-rule-body {
   display: grid;
   gap: 9px;
-  padding: 10px;
+  padding: 11px;
+  background: color-mix(in srgb, var(--ft-paper) 38%, var(--ft-surface));
 }
 
 .scan-occurrence-pager {
+  width: min(190px, 100%);
   display: grid;
   grid-template-columns: 32px minmax(0, 1fr) 32px;
   gap: 7px;
   align-items: center;
-  width: min(190px, 100%);
   margin-inline: auto;
+  margin-block: 2px 4px;
 }
 
 .scan-occurrence-pager button {
   width: 32px;
   height: 30px;
-  border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 16%, transparent));
-  border-radius: 7px;
-  background: var(--ft-surface, Canvas);
-  color: inherit;
+  border: 1.5px solid var(--ft-border);
+  border-radius: var(--ft-radius-xs);
+  background: var(--ft-surface);
+  color: var(--ft-ink);
+  box-shadow: 1px 1px 0 var(--ft-border);
   cursor: pointer;
-  font-size: 18px;
+}
+
+.scan-occurrence-pager button:hover:not(:disabled),
+.scan-occurrence-pager button:focus-visible {
+  border-color: var(--ft-accent);
+  background: var(--ft-accent-soft);
+  color: var(--ft-ink);
+}
+
+.scan-occurrence-pager button:not(:disabled):active {
+  box-shadow: none;
+  transform: translate(1px, 1px);
 }
 
 .scan-occurrence-pager button:disabled {
@@ -147,7 +147,7 @@
 
 .scan-occurrence-description {
   margin: 0;
-  color: var(--ft-text, CanvasText);
+  color: var(--ft-text);
   font-size: 11px;
   line-height: 1.5;
 }
@@ -155,80 +155,62 @@
 .finding-location {
   min-width: 0;
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 40px;
+  grid-template-columns: minmax(0, 1fr) 44px;
   gap: 7px;
   align-items: stretch;
-  border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 14%, transparent));
-  border-radius: 8px;
-  background: var(--ft-surface-subtle, color-mix(in srgb, CanvasText 3%, Canvas));
   overflow: hidden;
+  border: 1.5px solid var(--ft-border);
+  border-radius: var(--ft-radius-sm);
+  background: var(--ft-surface-subtle);
 }
 
 .finding-location > div {
   min-width: 0;
   display: grid;
   gap: 3px;
-  padding: 8px 9px;
+  padding: 9px 10px;
 }
 
 .finding-location small {
-  color: var(--ft-muted, GrayText);
+  color: var(--ft-muted);
   font-size: 9px;
   font-weight: 800;
+  letter-spacing: .045em;
+  text-transform: uppercase;
 }
 
 .finding-location code {
   min-width: 0;
   overflow: hidden;
+  border: 0;
+  background: transparent;
+  color: var(--ft-ink);
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 10px;
 }
 
-.finding-location button {
+.finding-location > button {
+  min-width: 44px;
+  min-height: 44px;
+  display: inline-grid;
+  place-items: center;
+  padding: 0;
   border: 0;
-  border-left: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 14%, transparent));
-  background: color-mix(in srgb, #7c3aed 8%, Canvas);
-  color: #5b21b6;
+  border-left: 1.5px solid var(--ft-border);
+  background: var(--ft-ink);
+  color: var(--ft-surface);
   cursor: pointer;
-  font-size: 10px;
+  font-family: var(--ft-mono);
+  font-size: 0;
   font-weight: 900;
 }
 
-.finding-location button:hover,
-.finding-location button:focus-visible {
-  background: color-mix(in srgb, #7c3aed 15%, Canvas);
-}
-
-.finding-dom {
-  overflow: hidden;
-  border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 14%, transparent));
-  border-radius: 8px;
-  background: #111827;
-  color: #f8fafc;
-}
-
-.finding-dom > summary {
-  padding: 7px 9px;
-  cursor: pointer;
-  font-size: 9.5px;
-  font-weight: 800;
-}
-
-.finding-dom pre {
-  max-height: 150px;
-  margin: 0;
-  padding: 9px;
-  overflow: auto;
-  border-top: 1px solid rgba(255,255,255,.12);
-  white-space: pre-wrap;
-  overflow-wrap: anywhere;
-}
-
-.finding-dom code {
-  color: inherit;
-  font-size: 9px;
-  line-height: 1.45;
+.finding-location > button:hover:not(:disabled),
+.finding-location > button:focus-visible {
+  border-color: var(--ft-accent-strong);
+  background: var(--ft-accent-soft);
+  color: var(--ft-ink);
 }
 
 @media (max-width: 420px) {
