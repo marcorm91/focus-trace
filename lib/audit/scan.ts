@@ -1,5 +1,5 @@
 import { RULES, type RuleDefinition } from '../../shared/rule-catalog';
-import type { FindingOutcome, HeadingSnapshot, ScanIssue, ScanResult } from '../../shared/types';
+import type { ComponentScanScope, FindingOutcome, HeadingSnapshot, ScanIssue, ScanResult } from '../../shared/types';
 import { evaluateTextContrastForElement, elementHasRenderedText } from './contrast';
 import { accessibleNameDetails, accessibleNameDiagnostics, isMarkedDecorative, isProgrammaticallyHidden, isSequentiallyFocusable, selectorFor, semanticRole } from './dom';
 import { evaluateLabelInName } from './label-in-name';
@@ -7,8 +7,18 @@ import { evaluateNonTextContrast } from './non-text-contrast';
 import { evaluateAriaAuthoringSignals, pageLanguageStatus, type AriaAuthoringSignal } from './standards-registry';
 
 interface RuleExecution { issues: ScanIssue[]; review: ScanIssue[]; warnings: ScanIssue[]; passes: number }
+type ScanRoot = Document | Element;
 const emptyExecution = (): RuleExecution => ({ issues: [], review: [], warnings: [], passes: 0 });
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+
+function scopedElements(root: ScanRoot, selector: string): Element[] {
+  const descendants = [...root.querySelectorAll(selector)];
+  return root instanceof Element && root.matches(selector) ? [root, ...descendants] : descendants;
+}
+
+function containsInScope(root: ScanRoot, element: Element): boolean {
+  return root instanceof Document || root === element || root.contains(element);
+}
 
 function finding(
   rule: RuleDefinition,
@@ -61,9 +71,9 @@ function runPageLangKnown(): RuleExecution {
   return result;
 }
 
-function runImages(): RuleExecution {
+function runImages(root: ScanRoot): RuleExecution {
   const result = emptyExecution();
-  for (const element of [...document.querySelectorAll('img, [role="img"]')]) {
+  for (const element of scopedElements(root, 'img, [role="img"]')) {
     if (isProgrammaticallyHidden(element)) continue;
     const name = accessibleNameDiagnostics(element);
     if (isMarkedDecorative(element) || name.name) { result.passes += 1; continue; }
@@ -72,9 +82,9 @@ function runImages(): RuleExecution {
   return result;
 }
 
-function runButtons(): RuleExecution {
+function runButtons(root: ScanRoot): RuleExecution {
   const result = emptyExecution();
-  for (const element of [...document.querySelectorAll('button, input, [role]')]) {
+  for (const element of scopedElements(root, 'button, input, [role]')) {
     if (element instanceof HTMLInputElement && element.type.toLowerCase() === 'image') continue;
     if (semanticRole(element) !== 'button' || isProgrammaticallyHidden(element)) continue;
     const name = accessibleNameDiagnostics(element);
@@ -85,9 +95,9 @@ function runButtons(): RuleExecution {
 }
 
 const FORM_FIELD_ROLES = new Set(['checkbox', 'combobox', 'listbox', 'menuitemcheckbox', 'menuitemradio', 'radio', 'searchbox', 'slider', 'spinbutton', 'switch', 'textbox']);
-function runFormFields(): RuleExecution {
+function runFormFields(root: ScanRoot): RuleExecution {
   const result = emptyExecution();
-  for (const element of [...document.querySelectorAll('input, select, textarea, [role]')]) {
+  for (const element of scopedElements(root, 'input, select, textarea, [role]')) {
     const role = semanticRole(element);
     if (!role || !FORM_FIELD_ROLES.has(role) || isProgrammaticallyHidden(element)) continue;
     const name = accessibleNameDiagnostics(element);
@@ -97,9 +107,9 @@ function runFormFields(): RuleExecution {
   return result;
 }
 
-function runPlaceholderOnlyLabels(): RuleExecution {
+function runPlaceholderOnlyLabels(root: ScanRoot): RuleExecution {
   const result = emptyExecution();
-  for (const element of [...document.querySelectorAll('input, textarea')]) {
+  for (const element of scopedElements(root, 'input, textarea')) {
     if (isProgrammaticallyHidden(element)) continue;
     const name = accessibleNameDetails(element);
     if (name.source !== 'placeholder' && name.source !== 'aria-placeholder') continue;
@@ -109,9 +119,9 @@ function runPlaceholderOnlyLabels(): RuleExecution {
   return result;
 }
 
-function runLinks(): RuleExecution {
+function runLinks(root: ScanRoot): RuleExecution {
   const result = emptyExecution();
-  for (const element of [...document.querySelectorAll('a, area, [role]')]) {
+  for (const element of scopedElements(root, 'a, area, [role]')) {
     if (semanticRole(element) !== 'link' || isProgrammaticallyHidden(element)) continue;
     const name = accessibleNameDiagnostics(element);
     if (name.name) { result.passes += 1; continue; }
@@ -120,9 +130,9 @@ function runLinks(): RuleExecution {
   return result;
 }
 
-function runLabelInName(): RuleExecution {
+function runLabelInName(root: ScanRoot): RuleExecution {
   const result = emptyExecution();
-  for (const evaluation of evaluateLabelInName()) {
+  for (const evaluation of evaluateLabelInName().filter((entry) => containsInScope(root, entry.element))) {
     if (evaluation.outcome === 'pass') continue;
 
     const evidence = `Visible label ${JSON.stringify(evaluation.visibleLabel)} is not contained in accessible name ${JSON.stringify(evaluation.accessibleName)}.${evaluation.reason ? ` ${evaluation.reason}` : ''}`;
@@ -137,9 +147,9 @@ function runLabelInName(): RuleExecution {
   return result;
 }
 
-function runAriaHiddenFocusable(): RuleExecution {
+function runAriaHiddenFocusable(root: ScanRoot): RuleExecution {
   const result = emptyExecution();
-  const containers = [...document.querySelectorAll('[aria-hidden]')].filter((element) => element.getAttribute('aria-hidden')?.trim().toLowerCase() === 'true');
+  const containers = scopedElements(root, '[aria-hidden]').filter((element) => element.getAttribute('aria-hidden')?.trim().toLowerCase() === 'true');
   for (const container of containers) {
     const focusable = [container, ...container.querySelectorAll('*')].find((element) => isSequentiallyFocusable(element));
     if (!focusable) { result.passes += 1; continue; }
@@ -169,9 +179,9 @@ function ariaWarningExecutions(signals: AriaAuthoringSignal[]): RuleExecution[] 
   return [deprecatedRoles, deprecatedProperties, prohibitedProperties];
 }
 
-function runPositiveTabindex(): RuleExecution {
+function runPositiveTabindex(root: ScanRoot): RuleExecution {
   const result = emptyExecution();
-  for (const element of [...document.querySelectorAll('[tabindex]')]) {
+  for (const element of scopedElements(root, '[tabindex]')) {
     const value = Number.parseInt(element.getAttribute('tabindex') ?? '', 10);
     if (!Number.isFinite(value) || value <= 0 || isProgrammaticallyHidden(element)) continue;
     result.review.push(finding(RULES.positiveTabindex, 'review', element, 'A positive tabindex changes the natural sequential focus order. Review whether the resulting order preserves meaning and operability.', `tabindex="${value}"`));
@@ -180,13 +190,15 @@ function runPositiveTabindex(): RuleExecution {
   return result;
 }
 
-function runTextContrast(): RuleExecution {
+function runTextContrast(root: ScanRoot): RuleExecution {
   const result = emptyExecution();
-  const body = document.body;
-  if (!body) { result.passes += 1; return result; }
+  const elements = root instanceof Document
+    ? document.body ? [document.body, ...document.body.querySelectorAll('*')] : []
+    : [root, ...root.querySelectorAll('*')];
+  if (!elements.length) { result.passes += 1; return result; }
 
   let applicable = 0;
-  for (const element of [body, ...body.querySelectorAll('*')]) {
+  for (const element of elements) {
     if (!elementHasRenderedText(element) || isProgrammaticallyHidden(element)) continue;
     const evaluation = evaluateTextContrastForElement(element);
     if (evaluation.status === 'inapplicable') continue;
@@ -239,9 +251,9 @@ function runTextContrast(): RuleExecution {
   return result;
 }
 
-function runNonTextContrast(): RuleExecution {
+function runNonTextContrast(root: ScanRoot): RuleExecution {
   const result = emptyExecution();
-  const evaluations = evaluateNonTextContrast();
+  const evaluations = evaluateNonTextContrast().filter(({ element }) => containsInScope(root, element));
   if (!evaluations.length) {
     result.passes += 1;
     return result;
@@ -352,20 +364,40 @@ function runHeadingJumps(): RuleExecution {
   return result;
 }
 
-export function runFocusTraceScan(): ScanResult {
-  const ariaExecutions = ariaWarningExecutions(evaluateAriaAuthoringSignals());
-  const headings = collectHeadingOutline();
-  const executions = [runPageTitle(), runPageLangPresent(), runPageLangKnown(), runImages(), runButtons(), runFormFields(), runPlaceholderOnlyLabels(), runLinks(), runLabelInName(), runAriaHiddenFocusable(), runTextContrast(), runNonTextContrast(), ...ariaExecutions, runPositiveTabindex(), runHeadingJumps()];
+export function runFocusTraceScan(scope?: ComponentScanScope): ScanResult {
+  const root = scope ? document.querySelector(scope.selector) : document;
+  if (!root) throw new Error('Selected scan component is no longer present on the page.');
+
+  const ariaSignals = evaluateAriaAuthoringSignals().filter((signal) => containsInScope(root, signal.element));
+  const ariaExecutions = ariaWarningExecutions(ariaSignals);
+  const componentExecutions = [
+    runImages(root),
+    runButtons(root),
+    runFormFields(root),
+    runPlaceholderOnlyLabels(root),
+    runLinks(root),
+    runLabelInName(root),
+    runAriaHiddenFocusable(root),
+    runTextContrast(root),
+    runNonTextContrast(root),
+    ...ariaExecutions,
+    runPositiveTabindex(root),
+  ];
+  const executions = scope
+    ? componentExecutions
+    : [runPageTitle(), runPageLangPresent(), runPageLangKnown(), ...componentExecutions, runHeadingJumps()];
+
   return {
     engine: 'FocusTrace Rules',
     standard: 'WCAG 2.2',
     url: location.href,
     title: document.title,
     scannedAt: Date.now(),
+    scope: scope ?? { type: 'page' },
     issues: executions.flatMap((execution) => execution.issues),
     review: executions.flatMap((execution) => execution.review),
     warnings: executions.flatMap((execution) => execution.warnings),
-    headings,
+    ...(scope ? {} : { headings: collectHeadingOutline() }),
     passes: executions.reduce((sum, execution) => sum + execution.passes, 0),
     rulesRun: executions.length,
   };
