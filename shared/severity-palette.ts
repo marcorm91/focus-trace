@@ -13,28 +13,28 @@ export const SEVERITY_PALETTE_BACKGROUNDS: Record<SeverityTheme, string> = {
 export const SEVERITY_PALETTE: Record<SeverityTheme, Record<SeverityPaletteLevel, SeverityColorSet>> = {
   light: {
     aa: {
-      critical: '#b42318',
-      serious: '#a13e00',
+      critical: '#b91c1c',
+      serious: '#c2410c',
       moderate: '#786500',
       minor: '#2377d4',
     },
     aaa: {
-      critical: '#ac2217',
-      serious: '#9a3b00',
+      critical: '#991b1b',
+      serious: '#9a3412',
       moderate: '#695800',
       minor: '#1b59a0',
     },
   },
   dark: {
     aa: {
-      critical: '#ce6f67',
-      serious: '#be7b50',
+      critical: '#f87171',
+      serious: '#fb923c',
       moderate: '#998b3e',
       minor: '#448dde',
     },
     aaa: {
-      critical: '#de9f9a',
-      serious: '#d3a587',
+      critical: '#fca5a5',
+      serious: '#fdba74',
       moderate: '#b9af7b',
       minor: '#81b2e9',
     },

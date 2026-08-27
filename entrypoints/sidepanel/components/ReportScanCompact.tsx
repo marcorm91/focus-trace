@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { browser } from '#imports';
 import { locateScanTargetInPage } from '../../../lib/runtime/scan-target-overlay';
-import { localizedScanIssue, tr, type AppLanguage } from '../../../shared/i18n';
+import { localizedScanIssue, localizedSeverity, tr, type AppLanguage } from '../../../shared/i18n';
 import type { FindingOutcome, ScanIssue, ScanResult } from '../../../shared/types';
 import './report-scan-compact.css';
 
@@ -69,9 +69,11 @@ function ReportRuleAccordion({
   };
 
   return (
-    <details className={`report-rule-group outcome-${first.outcome}`}>
+    <details className={`report-rule-group outcome-${first.outcome} severity-${first.severity}`}>
       <summary>
-        <span className={`report-rule-outcome ${first.outcome}`}>{outcomeLabel(first.outcome, language)}</span>
+        <span className={`severity-badge severity-${first.severity}`}>
+          {localizedSeverity(first.severity, language)}
+        </span>
         <span className="report-rule-title">
           <strong>{localizedScanIssue(first, language).title}</strong>
           <small>{first.ruleId}</small>

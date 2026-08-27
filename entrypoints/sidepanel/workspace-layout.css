@@ -63,11 +63,23 @@ html[data-ft-settings-open='true'] .topbar {
 }
 
 .suggestion-list li {
+  overflow: hidden;
   padding: 11px;
-  border-top: 1px solid var(--ft-border-soft);
-  border-right: 1px solid var(--ft-border-soft);
-  border-bottom: 1px solid var(--ft-border-soft);
-  border-radius: 0 var(--ft-radius-md) var(--ft-radius-md) 0;
+  border: 1px solid var(--ft-border-soft);
+  border-radius: var(--ft-radius-md);
+  box-shadow: inset 4px 0 0 var(--ft-border);
+}
+
+.suggestion-list li.priority-high {
+  box-shadow: inset 4px 0 0 var(--ft-danger);
+}
+
+.suggestion-list li.priority-medium {
+  box-shadow: inset 4px 0 0 var(--ft-warning);
+}
+
+.suggestion-list li.priority-low {
+  box-shadow: inset 4px 0 0 var(--ft-brand);
 }
 
 @media (max-width: 430px) {

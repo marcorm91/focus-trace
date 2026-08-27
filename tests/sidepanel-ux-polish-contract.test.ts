@@ -24,7 +24,7 @@ describe('sidepanel UX polish contract', () => {
     const report = source('entrypoints/sidepanel/components/ReportScanCompact.tsx');
 
     expect(scan).toContain('<details className={`scan-rule-group outcome-${first.outcome} severity-${first.severity}`}>');
-    expect(report).toContain('<details className={`report-rule-group outcome-${first.outcome}`}>');
+    expect(report).toContain('<details className={`report-rule-group outcome-${first.outcome} severity-${first.severity}`}>');
     expect(scan).not.toContain('defaultOpen');
     expect(report).not.toContain('defaultOpen');
     expect(scan).not.toContain('open={');
