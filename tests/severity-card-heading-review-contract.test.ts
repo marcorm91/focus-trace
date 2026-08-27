@@ -7,16 +7,10 @@ function source(path: string): string {
 }
 
 describe('severity card presentation contracts', () => {
-  it('shows severity but not duplicated outcome badges inside scan and report accordions', () => {
-    const scan = source('entrypoints/sidepanel/views/ScanView.tsx');
-    const report = source('entrypoints/sidepanel/components/ReportScanCompact.tsx');
+  it('does not keep obsolete outcome badge styles alongside severity badges', () => {
     const scanCss = source('entrypoints/sidepanel/scan-accordion.css');
     const reportCss = source('entrypoints/sidepanel/components/report-scan-compact.css');
 
-    expect(scan).toContain('severity-badge severity-${first.severity}');
-    expect(scan).not.toContain('scan-rule-outcome');
-    expect(report).toContain('severity-badge severity-${first.severity}');
-    expect(report).not.toContain('report-rule-outcome');
     expect(scanCss).not.toContain('.scan-rule-outcome');
     expect(reportCss).not.toContain('.report-rule-outcome');
   });

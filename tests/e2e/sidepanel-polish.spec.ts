@@ -19,11 +19,12 @@ async function openSidepanel(context: BrowserContext, extensionWorker: Worker) {
   return panel;
 }
 
-test('empty result tabs are disabled and finding accordions start collapsed', async ({ context, extensionWorker }) => {
+test('sidepanel controls and finding surfaces expose their intended behavior', async ({ context, extensionWorker }) => {
   const panel = await openSidepanel(context, extensionWorker);
 
   const settings = panel.locator('.settings-trigger');
   await expect(settings).toHaveAttribute('title', /Settings|Ajustes/);
+  await expect(settings).toHaveAttribute('aria-label', /Open settings|Abrir ajustes/);
 
   await panel.evaluate(async () => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -70,7 +71,10 @@ test('empty result tabs are disabled and finding accordions start collapsed', as
   await expect(scanTabs.getByRole('tab', { name: /Failures|Fallos/ })).toBeEnabled();
   await expect(scanTabs.getByRole('tab', { name: /Review|Revisión/ })).toBeDisabled();
   await expect(scanTabs.getByRole('tab', { name: /Warnings|Avisos/ })).toBeDisabled();
-  await expect(panel.locator('.scan-rule-group').first()).not.toHaveAttribute('open', '');
+  const scanFinding = panel.locator('.scan-rule-group').first();
+  await expect(scanFinding).not.toHaveAttribute('open', '');
+  await expect(scanFinding.locator('.severity-badge')).toBeVisible();
+  await expect(scanFinding.locator('.scan-rule-outcome')).toHaveCount(0);
 
   await workspace.getByRole('button', { name: /Report|Informe/ }).click();
 
@@ -78,5 +82,8 @@ test('empty result tabs are disabled and finding accordions start collapsed', as
   await expect(reportTabs.getByRole('tab', { name: /Failures|Fallos/ })).toBeEnabled();
   await expect(reportTabs.getByRole('tab', { name: /Review|Revisión/ })).toBeDisabled();
   await expect(reportTabs.getByRole('tab', { name: /Warnings|Avisos/ })).toBeDisabled();
-  await expect(panel.locator('.report-rule-group').first()).not.toHaveAttribute('open', '');
+  const reportFinding = panel.locator('.report-rule-group').first();
+  await expect(reportFinding).not.toHaveAttribute('open', '');
+  await expect(reportFinding.locator('.severity-badge')).toBeVisible();
+  await expect(reportFinding.locator('.report-rule-outcome')).toHaveCount(0);
 });
