@@ -161,7 +161,7 @@ export function ReportScanCompact({ scan, language }: { scan: ScanResult; langua
               key={issues[0]!.ruleId}
               issues={issues}
               language={language}
-              defaultOpen={index === 0}
+              defaultOpen={filter !== 'review' && index === 0}
             />
           ))}
         </div>

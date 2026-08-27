@@ -362,7 +362,10 @@ function FindingRuleAccordion({
   }, [index, issues.length]);
 
   return (
-    <details className={`scan-rule-group outcome-${first.outcome} severity-${first.severity}`} open={defaultOpen ? true : undefined}>
+    <details
+      className={`scan-rule-group outcome-${first.outcome} severity-${first.severity}`}
+      open={defaultOpen && first.outcome !== 'review' ? true : undefined}
+    >
       <summary>
         <span className="scan-rule-statuses">
           <span className={`scan-rule-outcome ${first.outcome}`}>{outcomeLabel(first.outcome, level, language)}</span>

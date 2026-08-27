@@ -1,5 +1,16 @@
 /* Scan criterion accordion and affected-element navigation. This file owns the
    scan surface; removed legacy DOM-snippet and results-note rules stay deleted. */
+.scan-rule-list,
+.scan-rule-group,
+.scan-rule-group > summary,
+.scan-rule-body,
+.scan-rule-title,
+.scan-rule-statuses,
+.scan-occurrence {
+  min-width: 0;
+  max-width: 100%;
+}
+
 .scan-rule-list {
   display: grid;
   gap: 9px;
@@ -19,7 +30,6 @@
 .scan-rule-group.outcome-warning { border-left-color: #786500; }
 
 .scan-rule-group > summary {
-  min-width: 0;
   min-height: 49px;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) auto auto;
@@ -39,6 +49,13 @@
   background: var(--ft-surface-subtle);
 }
 
+.scan-rule-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  align-items: center;
+}
+
 .scan-rule-outcome {
   min-width: 42px;
   padding: 3px 6px;
@@ -56,13 +73,20 @@
 .scan-rule-outcome.warning { color: #746100; }
 
 .scan-rule-title {
-  min-width: 0;
   display: grid;
   gap: 2px;
+  overflow-wrap: anywhere;
+}
+
+.scan-rule-title strong,
+.scan-rule-title small {
+  min-width: 0;
+  max-width: 100%;
+  overflow-wrap: anywhere;
+  white-space: normal;
 }
 
 .scan-rule-title strong {
-  overflow-wrap: anywhere;
   font-size: 11.5px;
   line-height: 1.35;
 }
@@ -93,6 +117,7 @@
   display: grid;
   gap: 9px;
   padding: 11px;
+  overflow: hidden;
   background: color-mix(in srgb, var(--ft-paper) 38%, var(--ft-surface));
 }
 
@@ -135,25 +160,29 @@
 }
 
 .scan-occurrence-pager strong {
+  min-width: 0;
   text-align: center;
+  overflow-wrap: anywhere;
   font-size: 10.5px;
 }
 
 .scan-occurrence {
-  min-width: 0;
   display: grid;
   gap: 8px;
 }
 
 .scan-occurrence-description {
+  min-width: 0;
   margin: 0;
   color: var(--ft-text);
+  overflow-wrap: anywhere;
   font-size: 11px;
   line-height: 1.5;
 }
 
 .finding-location {
   min-width: 0;
+  max-width: 100%;
   display: grid;
   grid-template-columns: minmax(0, 1fr) 44px;
   gap: 7px;
@@ -172,7 +201,9 @@
 }
 
 .finding-location small {
+  min-width: 0;
   color: var(--ft-muted);
+  overflow-wrap: anywhere;
   font-size: 9px;
   font-weight: 800;
   letter-spacing: .045em;
@@ -181,6 +212,7 @@
 
 .finding-location code {
   min-width: 0;
+  max-width: 100%;
   overflow: hidden;
   border: 0;
   background: transparent;
@@ -213,13 +245,23 @@
   color: var(--ft-ink);
 }
 
-@media (max-width: 420px) {
+@media (max-width: 520px) {
   .scan-rule-group > summary {
     grid-template-columns: minmax(0, 1fr) auto auto;
   }
 
-  .scan-rule-outcome {
+  .scan-rule-statuses {
     grid-column: 1 / -1;
-    width: fit-content;
+  }
+}
+
+@media (max-width: 380px) {
+  .scan-rule-group > summary {
+    padding-inline: 9px;
+  }
+
+  .scan-rule-count,
+  .scan-rule-chevron {
+    align-self: start;
   }
 }

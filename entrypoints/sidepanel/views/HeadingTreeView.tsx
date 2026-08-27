@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { browser } from '#imports';
 import {
   clearHeadingOutlineInPage,
@@ -6,7 +6,7 @@ import {
   type HeadingOverlayResult,
 } from '../../../lib/runtime/heading-overlay';
 import { tr, type AppLanguage } from '../../../shared/i18n';
-import type { HeadingSignal, HeadingSnapshot, ScanResult } from '../../../shared/types';
+import type { HeadingSignal, ScanResult } from '../../../shared/types';
 import { Empty } from '../components/Common';
 
 function signalLabel(signal: HeadingSignal, language: AppLanguage): string {
@@ -15,7 +15,7 @@ function signalLabel(signal: HeadingSignal, language: AppLanguage): string {
   return tr(language, 'Multiple H1', 'Varios H1');
 }
 
-function headingDetail(heading: HeadingSnapshot, language: AppLanguage): string {
+function headingDetail(heading: NonNullable<ScanResult['headings']>[number], language: AppLanguage): string {
   if (heading.signals.includes('empty')) {
     return tr(
       language,
@@ -41,35 +41,6 @@ function headingDetail(heading: HeadingSnapshot, language: AppLanguage): string 
     language,
     'No structural signals were detected for this heading.',
     'No se han detectado señales estructurales en este encabezado.',
-  );
-}
-
-function HeadingLabel({ text }: { text: string }) {
-  const ref = useRef<HTMLSpanElement>(null);
-  const [truncated, setTruncated] = useState(false);
-
-  useEffect(() => {
-    const node = ref.current;
-    if (!node) return undefined;
-
-    const measure = () => setTruncated(node.scrollWidth > node.clientWidth + 1);
-    measure();
-
-    const observer = new ResizeObserver(measure);
-    observer.observe(node);
-    window.addEventListener('resize', measure);
-    void document.fonts.ready.then(measure).catch(() => undefined);
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener('resize', measure);
-    };
-  }, [text]);
-
-  return (
-    <span ref={ref} title={truncated ? text : undefined}>
-      {text}
-    </span>
   );
 }
 
@@ -201,7 +172,7 @@ export function HeadingTreeView({
       ) : (
         <>
           <div className="heading-outline-summary" aria-label={tr(language, 'Heading summary', 'Resumen de encabezados')}>
-            <span><strong>{h1Count}</strong> H1</span>
+            <span><strong>{h1Count}</strong> {tr(language, 'H1 count', 'Cantidad de H1')}</span>
             <span><strong>{headings.length}</strong> {tr(language, 'nodes', 'nodos')}</span>
             <span><strong>{signalled}</strong> {tr(language, 'to review', 'a revisar')}</span>
           </div>
@@ -227,7 +198,7 @@ export function HeadingTreeView({
                       void onLocate(heading.selector);
                     }}
                   >
-                    <HeadingLabel text={label} />
+                    <span>{label}</span>
                     {heading.signals.length > 0 && (
                       <small>{heading.signals.map((signal) => signalLabel(signal, language)).join(' · ')}</small>
                     )}
