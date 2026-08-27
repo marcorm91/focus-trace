@@ -10,7 +10,6 @@ export interface ScanTargetHighlightOptions {
 export interface ScanTargetHighlightResult {
   found: boolean;
   selector: string;
-  snippet?: string;
 }
 
 export function clearScanTargetHighlightInPage(): { removed: boolean } {
@@ -57,11 +56,6 @@ export function locateScanTargetInPage(
       ? element.value.trim()
       : '';
     return (ariaLabel || labelledText || visible || value).slice(0, 110);
-  };
-
-  const domSnippet = (element: Element): string => {
-    const html = element.outerHTML.replace(/\s+/g, ' ').trim();
-    return html.length <= 1400 ? html : `${html.slice(0, 1397)}…`;
   };
 
   target.scrollIntoView({ block: 'center', inline: 'center', behavior: 'auto' });
@@ -183,5 +177,5 @@ export function locateScanTargetInPage(
   const durationMs = options.durationMs ?? 7000;
   if (durationMs > 0) window.setTimeout(() => overlay.remove(), durationMs);
 
-  return { found: true, selector, snippet: domSnippet(target) };
+  return { found: true, selector };
 }
