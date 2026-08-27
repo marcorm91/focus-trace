@@ -112,10 +112,11 @@ a { color: LinkText; overflow-wrap: anywhere; }
 .finding-detail { padding: 14px; display: grid; gap: 12px; background: color-mix(in srgb, CanvasText 1.5%, Canvas); }
 .finding-context-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; }
 .finding-context-grid > section,
+.finding-location,
 .finding-explanation,
 .finding-structured-evidence,
 .finding-solution,
-.finding-sample {
+.finding-references {
   min-width: 0;
   display: grid;
   gap: 5px;
@@ -125,17 +126,37 @@ a { color: LinkText; overflow-wrap: anywhere; }
   background: Canvas;
 }
 .finding-detail small { font-size: 14px; text-transform: uppercase; letter-spacing: .04em; opacity: .68; font-weight: 800; }
-.finding-detail strong, .finding-detail span, .finding-detail p, .finding-detail a, .finding-detail code, .finding-detail em, .finding-detail blockquote { font-size: 14px; }
+.finding-detail strong, .finding-detail span, .finding-detail p, .finding-detail a, .finding-detail code, .finding-detail em, .finding-detail blockquote, .finding-detail li, .finding-detail b { font-size: 14px; }
 .finding-component strong { font-size: 15px; }
 .finding-component span { font-weight: 750; overflow-wrap: anywhere; }
 .finding-component em { font-style: normal; opacity: .72; overflow-wrap: anywhere; }
+.finding-location-primary { display: grid; gap: 6px; }
+.finding-location-primary span { min-width: 0; overflow-wrap: anywhere; }
+.finding-location code,
+.finding-evidence-list code {
+  padding: 3px 5px;
+  border-radius: 5px;
+  background: color-mix(in srgb, CanvasText 5%, Canvas);
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+.finding-targets,
+.finding-observed-pages,
+.finding-evidence-list { display: grid; gap: 5px; margin-top: 5px; }
+.finding-targets ul,
+.finding-observed-pages ul,
+.finding-evidence-list ul,
+.finding-references ul { margin: 0; padding-inline-start: 20px; display: grid; gap: 5px; }
+.finding-evidence-list li { display: grid; gap: 3px; }
+.finding-evidence-list em { font-style: normal; opacity: .78; overflow-wrap: anywhere; }
 .finding-explanation p, .finding-solution p { margin: 0; line-height: 1.5; opacity: 1; }
 .finding-explanation blockquote { margin: 4px 0 0; padding: 8px 10px; border-inline-start: 3px solid color-mix(in srgb, Highlight 45%, CanvasText); background: color-mix(in srgb, CanvasText 3%, Canvas); line-height: 1.45; }
-.finding-structured-evidence { grid-template-columns: repeat(2, minmax(0, max-content)); align-items: baseline; }
-.finding-structured-evidence > small { grid-column: 1 / -1; }
+.finding-structured-evidence { grid-template-columns: repeat(2, minmax(0, 1fr)); align-items: baseline; }
+.finding-structured-evidence > small,
+.finding-structured-evidence > .finding-evidence-list { grid-column: 1 / -1; }
 .finding-structured-evidence code { padding: 4px 6px; border-radius: 6px; background: color-mix(in srgb, CanvasText 5%, Canvas); overflow-wrap: anywhere; }
 .finding-solution { border-color: color-mix(in srgb, #15803d 22%, transparent); background: color-mix(in srgb, #15803d 4%, Canvas); }
-.finding-sample a { width: fit-content; max-width: 100%; }
+.finding-references a { width: fit-content; max-width: 100%; }
 .finding-actions { display: flex; flex-wrap: wrap; gap: 8px; }
 .finding-actions a, .finding-actions button {
   min-height: 38px;
@@ -171,7 +192,9 @@ a { color: LinkText; overflow-wrap: anywhere; }
   .site-report-actions > div:last-child { justify-content: flex-start; }
   .site-template > summary { grid-template-columns: auto minmax(0, 1fr); }
   .template-consistency, .template-counts { grid-column: 2; justify-self: start; }
-  .finding-context-grid { grid-template-columns: 1fr; }
+  .finding-context-grid, .finding-structured-evidence { grid-template-columns: 1fr; }
+  .finding-structured-evidence > small,
+  .finding-structured-evidence > .finding-evidence-list { grid-column: 1; }
 }
 
 @media (max-width: 460px) {
@@ -181,7 +204,6 @@ a { color: LinkText; overflow-wrap: anywhere; }
   .template-samples li { grid-template-columns: 1fr; }
   .site-finding > summary { grid-template-columns: auto minmax(0, 1fr); }
   .finding-expand { grid-column: 2; justify-self: end; }
-  .finding-structured-evidence { grid-template-columns: 1fr; }
 }
 
 @media print {
@@ -189,12 +211,18 @@ a { color: LinkText; overflow-wrap: anywhere; }
   body { background: white; color: #111; }
   .site-audit-shell { width: 100%; max-width: none; padding: 0; }
   .site-brand, .site-hero, .site-start, .site-progress, .site-report-actions button, .site-footer, .finding-actions { display: none !important; }
-  .site-card, .site-finding { box-shadow: none; border-color: #d0d0d0; break-inside: avoid; }
+  .site-card, .site-finding { box-shadow: none; border-color: #d0d0d0; }
   .site-summary, .site-template-list { display: grid; }
-  .site-template { break-inside: auto; }
-  .site-template > summary, .site-finding > summary { pointer-events: none; }
+  .site-template, .site-finding, .finding-detail { break-inside: auto; }
+  .site-template > summary, .site-finding > summary { pointer-events: none; break-after: avoid; }
   .site-template:not([open]) > .template-body, .site-finding:not([open]) > .finding-detail { display: grid !important; }
-  .finding-detail { break-inside: avoid; }
+  .finding-context-grid > section,
+  .finding-location,
+  .finding-explanation,
+  .finding-structured-evidence,
+  .finding-solution,
+  .finding-references,
+  .finding-visual-evidence { break-inside: avoid; }
   .finding-expand { display: none; }
   .finding-visual-evidence img { max-height: 330px; }
   a { color: #111; text-decoration: none; }
