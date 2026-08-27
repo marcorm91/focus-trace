@@ -3,6 +3,7 @@ import {
   appendRuntimeEventToSession,
   clearSessionEvents,
   emptySessionState,
+  invalidateSessionScanForUrl,
   normalizeSessionState,
   setSessionRecordingState,
   updateSessionBreakpoints,
@@ -79,6 +80,16 @@ async function restoreContentStateAfterNavigation(tabId: number, state: SessionS
     enabled: state.recording,
     breakpoints: state.breakpoints,
   } satisfies ExtensionMessage);
+}
+
+function invalidateScanAfterNavigation(tabId: number, url: string): Promise<void> {
+  return serializeTabWrite(tabId, async () => {
+    const state = await getSession(tabId);
+    const next = invalidateSessionScanForUrl(state, url);
+    if (next === state) return;
+    await saveSession(next);
+    await broadcast(next);
+  });
 }
 
 function configurePanelAction() {
@@ -176,6 +187,10 @@ export default defineBackground(() => {
   });
 
   browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
+    if (changeInfo.url) {
+      void invalidateScanAfterNavigation(tabId, changeInfo.url).catch(() => undefined);
+    }
+
     if (changeInfo.status !== 'complete') return;
     void getSession(tabId)
       .then((state) => state.recording ? restoreContentStateAfterNavigation(tabId, state) : undefined)
