@@ -135,16 +135,6 @@
   transform: rotate(0) !important;
 }
 
-/* Legacy report findings stay in the DOM for the existing report model/export,
-   but the side-panel now renders one compact filtered accordion surface instead. */
-.report-group {
-  display: none !important;
-}
-
-[data-focustrace-report-scan-host] {
-  min-width: 0;
-}
-
 .report-compact-scan {
   display: grid;
   gap: 10px;
@@ -343,12 +333,6 @@
 
 .report-rule-target button:hover {
   background: var(--ft-accent-soft);
-}
-
-/* Keep legacy cards padded away from the report edges in case they are reused
-   elsewhere or the compact layer is disabled. */
-.report-finding-list {
-  padding: 10px !important;
 }
 
 /* Heading outline: keep hierarchy, but stop H5/H6 from drifting across the panel
