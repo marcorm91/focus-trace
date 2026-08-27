@@ -20,7 +20,7 @@ export function useSidepanelSession({
   onError,
   onTabSelected,
 }: {
-  onError: (message: string) => void;
+  onError: (reason: unknown) => void;
   onTabSelected: () => void;
 }): {
   tabId: number | undefined;
@@ -49,12 +49,12 @@ export function useSidepanelSession({
   useEffect(() => {
     void activeTabId()
       .then(selectTab)
-      .catch((reason) => onError(String(reason)));
+      .catch(onError);
   }, [onError, selectTab]);
 
   useEffect(() => {
     const listener = ({ tabId: nextTabId }: { tabId: number }) => {
-      void selectTab(nextTabId).catch((reason) => onError(String(reason)));
+      void selectTab(nextTabId).catch(onError);
     };
     browser.tabs.onActivated.addListener(listener);
     return () => browser.tabs.onActivated.removeListener(listener);
