@@ -71,8 +71,11 @@ async function requestPageAccess(language: AppLanguage) {
   ));
 }
 
-function waitForRuntimeFlush() {
-  return new Promise((resolve) => setTimeout(resolve, 250));
+async function waitForRuntimeFlush(tabId: number) {
+  await browser.runtime.sendMessage({
+    type: 'FOCUSTRACE_FLUSH_SESSION',
+    tabId,
+  } satisfies ExtensionMessage);
 }
 
 export default function App() {
@@ -81,11 +84,11 @@ export default function App() {
   const [language, setLanguage] = useState<AppLanguage>(defaultLanguage);
   const [tabId, setTabId] = useState<number>();
   const [session, setSession] = useState<SessionState>(EMPTY_SESSION);
-  const [scan, setScan] = useState<ScanResult>();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const [focusPathVisible, setFocusPathVisible] = useState(false);
   const [selectedFocusSelector, setSelectedFocusSelector] = useState<string>();
+  const scan = session.scan;
 
   const refresh = useCallback(async (id: number) => {
     const state = (await browser.runtime.sendMessage({
@@ -93,13 +96,11 @@ export default function App() {
       tabId: id,
     } satisfies ExtensionMessage)) as SessionState;
     setSession(state);
-    setScan(state.scan);
   }, []);
 
   const selectTab = useCallback(async (id: number) => {
     setTabId(id);
     setSession({ ...EMPTY_SESSION, tabId: id });
-    setScan(undefined);
     setFocusPathVisible(false);
     setSelectedFocusSelector(undefined);
     await refresh(id);
@@ -134,7 +135,6 @@ export default function App() {
     const listener = (message: ExtensionMessage) => {
       if (message.type !== 'FOCUSTRACE_SESSION_UPDATED' || message.state.tabId !== tabId) return;
       setSession(message.state);
-      setScan(message.state.scan);
     };
     browser.runtime.onMessage.addListener(listener);
     return () => browser.runtime.onMessage.removeListener(listener);
@@ -158,7 +158,6 @@ export default function App() {
       const result = (await browser.tabs.sendMessage(tabId, {
         type: 'FOCUSTRACE_RUN_SCAN',
       } satisfies ExtensionMessage)) as ScanResult;
-      setScan(result);
       const next = (await browser.runtime.sendMessage({
         type: 'FOCUSTRACE_SAVE_SCAN',
         tabId,
@@ -294,7 +293,7 @@ export default function App() {
         options: { delayMs: 180, maxSteps: 80 },
       } satisfies ExtensionMessage)) as FocusWalkResult;
 
-      await waitForRuntimeFlush();
+      await waitForRuntimeFlush(tabId);
       await browser.tabs.sendMessage(tabId, {
         type: 'FOCUSTRACE_SET_RECORDING',
         enabled: false,
@@ -308,7 +307,7 @@ export default function App() {
         enabled: false,
       } satisfies ExtensionMessage)) as SessionState;
       setSession(stopped);
-      await waitForRuntimeFlush();
+      await waitForRuntimeFlush(tabId);
       await refresh(tabId);
       setView('trace');
 
@@ -470,7 +469,6 @@ export default function App() {
       }).catch(() => undefined);
 
       setSession(next);
-      setScan(undefined);
       setFocusPathVisible(false);
       setSelectedFocusSelector(undefined);
       setView('scan');
