@@ -555,7 +555,7 @@ function FindingRow({
           {visual && (
             <figure className="finding-visual-evidence">
               <img src={visual} alt={t(language, `Visual crop for ${issue.title}`, `Recorte visual de ${issue.title}`)} />
-              <figcaption>{t(language, 'Captured on demand from the representative page. Included when printing/saving this Site Audit as PDF.', 'Capturada bajo demanda desde la página representativa. Se incluirá al imprimir/guardar este Site Audit as PDF.')}</figcaption>
+              <figcaption>{t(language, 'Captured on demand from the representative page. Included when printing/saving this Site Audit as PDF.', 'Capturada bajo demanda desde la página representativa. Se incluirá al imprimir/guardar este Site Audit como PDF.')}</figcaption>
             </figure>
           )}
         </div>
