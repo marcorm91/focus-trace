@@ -1,0 +1,15 @@
+/* Dark-surface severity overrides shared by interactive FocusTrace views.
+   Print/report output intentionally keeps the light token set. */
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --ft-severity-critical-aa: #f87171;
+    --ft-severity-critical-aaa: #fca5a5;
+    --ft-severity-serious-aa: #fb923c;
+    --ft-severity-serious-aaa: #fdba74;
+    --ft-severity-moderate-aa: #998b3e;
+    --ft-severity-moderate-aaa: #b9af7b;
+    --ft-severity-minor-aa: #448dde;
+    --ft-severity-minor-aaa: #81b2e9;
+  }
+}

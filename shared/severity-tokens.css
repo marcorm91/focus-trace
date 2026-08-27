@@ -1,0 +1,13 @@
+/* Shared FocusTrace severity tokens for light/print surfaces.
+   Keep values synchronized with shared/severity-palette.ts. */
+
+:root {
+  --ft-severity-critical-aa: #b91c1c;
+  --ft-severity-critical-aaa: #991b1b;
+  --ft-severity-serious-aa: #c2410c;
+  --ft-severity-serious-aaa: #9a3412;
+  --ft-severity-moderate-aa: #786500;
+  --ft-severity-moderate-aaa: #695800;
+  --ft-severity-minor-aa: #2377d4;
+  --ft-severity-minor-aaa: #1b59a0;
+}
