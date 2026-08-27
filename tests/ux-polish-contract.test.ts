@@ -73,10 +73,12 @@ describe('UX polish contract', () => {
       'entrypoints/sidepanel/modern-icons.css',
       'entrypoints/sidepanel/scan-accordion.css',
       'entrypoints/sidepanel/components/report-scan-compact.css',
+      'entrypoints/sidepanel/components/impact-matrix.css',
+      'entrypoints/sidepanel/components/site-audit-launcher.css',
     ];
 
     for (const path of ownedStyles) {
-      expect(source(path), path).not.toContain('!important');
+      expect(source(path)).not.toContain('!important');
     }
   });
 
@@ -141,12 +143,23 @@ describe('UX polish contract', () => {
     expect(readme).not.toContain('axe-core');
   });
 
-  it('keeps the impact matrix synchronized with the persisted app language', () => {
+  it('renders the impact matrix directly from ScanView without a portal or duplicate session observer', () => {
     const matrix = source('entrypoints/sidepanel/components/ImpactMatrix.tsx');
-    expect(matrix).toContain('SETTINGS_STORAGE_KEY');
-    expect(matrix).toContain('browser.storage.onChanged.addListener');
+    const matrixCss = source('entrypoints/sidepanel/components/impact-matrix.css');
+    const scan = source('entrypoints/sidepanel/views/ScanView.tsx');
+    const entry = source('entrypoints/sidepanel/main.tsx');
+
+    expect(scan).toContain('<ImpactMatrix scan={scan} language={language} />');
+    expect(scan).not.toContain('severity-impact-summary');
+    expect(matrix).not.toContain('createPortal');
+    expect(matrix).not.toContain('MutationObserver');
+    expect(matrix).not.toContain('FOCUSTRACE_GET_SESSION');
+    expect(matrix).not.toContain('SETTINGS_STORAGE_KEY');
     expect(matrix).toContain('Impacto por resultado');
     expect(matrix).toContain('Ejemplo: un salto de nivel de encabezado');
+    expect(matrixCss).not.toContain('severity-impact-summary');
+    expect(matrixCss).not.toContain('!important');
+    expect(entry).not.toContain('<ImpactMatrix />');
   });
 
   it('renders the compact report scan directly without a hidden legacy tree or portal host', () => {

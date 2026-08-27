@@ -13,13 +13,13 @@ import {
 import type { FindingOutcome, ScanIssue, ScanResult, Severity } from '../../../shared/types';
 import { Empty, ReferenceList } from '../components/Common';
 import { FindingGuidance } from '../components/FindingGuidance';
+import { ImpactMatrix } from '../components/ImpactMatrix';
 import { SiteAuditLauncher } from '../components/SiteAuditLauncher';
 
 type ScanFilter = FindingOutcome;
 type ColorFormat = 'hex' | 'rgb';
 
 const CATEGORY_ORDER: ScanCategory[] = ['all', 'contrast', 'names', 'forms', 'structure', 'keyboard', 'aria', 'other'];
-const DISPLAY_SEVERITIES: Severity[] = ['critical', 'serious', 'moderate', 'minor'];
 
 function categoryLabel(category: ScanCategory, language: AppLanguage): string {
   if (category === 'all') return tr(language, 'All findings', 'Todos');
@@ -200,7 +200,6 @@ export function ScanView({
     : currentOutcomeFindings.filter((issue) => issue.severity === severityFilter);
   const criterionGroups = groupedByCriterion(findings);
   const totalFindings = allFindings.length;
-  const failureSeverityCounts = countBySeverity(groups.fail);
   const tabs: Array<{ id: ScanFilter; label: string; count: number }> = [
     { id: 'fail', label: tr(language, 'Failures', 'Fallos'), count: categoryFilteredGroups.fail.length },
     { id: 'review', label: tr(language, 'Review', 'Revisión'), count: categoryFilteredGroups.review.length },
@@ -223,30 +222,7 @@ export function ScanView({
         </div>
       </div>
 
-      {scan.issues.length > 0 && (
-        <div className="severity-impact-summary">
-          <div>
-            <strong>{tr(language, 'Failure impact', 'Impacto de los fallos')}</strong>
-            <small>{tr(
-              language,
-              'FocusTrace impact is a prioritization aid, not a WCAG conformance level.',
-              'El impacto de FocusTrace sirve para priorizar; no es un nivel de conformidad WCAG.',
-            )}</small>
-          </div>
-          <div className="severity-impact-counts">
-            {DISPLAY_SEVERITIES.map((severity) => (
-              <span
-                className={`severity-${severity}`}
-                title={severityImpactDescription(severity, language)}
-                key={severity}
-              >
-                <strong>{failureSeverityCounts[severity]}</strong>
-                <small>{localizedSeverity(severity, language)}</small>
-              </span>
-            ))}
-          </div>
-        </div>
-      )}
+      <ImpactMatrix scan={scan} language={language} />
 
       {totalFindings === 0 ? (
         <div className="notice">

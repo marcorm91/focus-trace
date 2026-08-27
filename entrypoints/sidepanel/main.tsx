@@ -6,7 +6,6 @@ import { locateScanTargetInPage } from '../../lib/runtime/scan-target-overlay';
 import { SETTINGS_STORAGE_KEY } from '../../shared/i18n';
 import { normalizeUiScale, UI_SCALE_STORAGE_KEY } from '../../shared/ui-scale';
 import App from './App';
-import { ImpactMatrix } from './components/ImpactMatrix';
 import { openFocusedSettingsView } from './settings-focus';
 
 // Cascade order: legacy foundations -> visual system -> component ownership ->
@@ -86,7 +85,6 @@ void (async () => {
   createRoot(root).render(
     <React.StrictMode>
       <App />
-      <ImpactMatrix />
     </React.StrictMode>,
   );
 })();

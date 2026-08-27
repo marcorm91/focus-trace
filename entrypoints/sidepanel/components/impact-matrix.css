@@ -1,12 +1,3 @@
-/* Replace the old failure-only severity counter with an outcome × impact matrix. */
-.severity-impact-summary {
-  display: none !important;
-}
-
-[data-focustrace-impact-matrix-host] {
-  min-width: 0;
-}
-
 .impact-matrix {
   display: grid;
   gap: 10px;
