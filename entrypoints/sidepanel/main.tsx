@@ -7,7 +7,6 @@ import { SETTINGS_STORAGE_KEY } from '../../shared/i18n';
 import { normalizeUiScale, UI_SCALE_STORAGE_KEY } from '../../shared/ui-scale';
 import App from './App';
 import { ImpactMatrix } from './components/ImpactMatrix';
-import { ReportScanCompact } from './components/ReportScanCompact';
 import { openFocusedSettingsView } from './settings-focus';
 import './style.css';
 import './focus-graph.css';
@@ -51,30 +50,6 @@ async function locateCurrentOccurrence(pagerButton: HTMLButtonElement, permissio
   });
 }
 
-function localizedSuggestionSource(value: string, spanish: boolean): string | undefined {
-  const normalized = value.trim().toLocaleLowerCase();
-  if (normalized === 'analysis' || normalized === 'análisis') return spanish ? 'Análisis' : 'Analysis';
-  if (normalized === 'focus' || normalized === 'runtime focus' || normalized === 'foco runtime') return spanish ? 'Foco runtime' : 'Runtime focus';
-  if (normalized === 'headings' || normalized === 'encabezados') return spanish ? 'Encabezados' : 'Headings';
-  if (normalized === 'coverage' || normalized === 'cobertura') return spanish ? 'Cobertura' : 'Coverage';
-  return undefined;
-}
-
-function syncDynamicPolish() {
-  const spanish = document.documentElement.lang === 'es';
-  const actionLabel = spanish ? 'Destacar elemento en la página' : 'Highlight element on page';
-
-  document.querySelectorAll<HTMLButtonElement>('.finding-location > button').forEach((button) => {
-    if (button.getAttribute('aria-label') !== actionLabel) button.setAttribute('aria-label', actionLabel);
-    if (button.title !== actionLabel) button.title = actionLabel;
-  });
-
-  document.querySelectorAll<HTMLElement>('.report-priority-list > li > span').forEach((label) => {
-    const localized = localizedSuggestionSource(label.textContent ?? '', spanish);
-    if (localized && label.textContent !== localized) label.textContent = localized;
-  });
-}
-
 // Start permission-sensitive work synchronously from the original click.
 // Browser permission APIs can lose user-gesture eligibility after awaited work.
 document.addEventListener('click', (event) => {
@@ -94,11 +69,6 @@ document.addEventListener('click', (event) => {
   }
 }, { capture: true });
 
-const uiObserver = new MutationObserver(syncDynamicPolish);
-uiObserver.observe(root, { childList: true, subtree: true });
-const languageObserver = new MutationObserver(syncDynamicPolish);
-languageObserver.observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
-
 void (async () => {
   try {
     const stored = await browser.storage.local.get([UI_SCALE_STORAGE_KEY, SETTINGS_STORAGE_KEY]);
@@ -115,8 +85,6 @@ void (async () => {
     <React.StrictMode>
       <App />
       <ImpactMatrix />
-      <ReportScanCompact />
     </React.StrictMode>,
   );
-  window.requestAnimationFrame(syncDynamicPolish);
 })();
