@@ -6,6 +6,8 @@ FocusTrace is a local-first browser extension with its own WCAG 2.2 rule engine 
 
 The project is in active early development. Automated results are intentionally separated into deterministic failures, contextual review signals and authoring warnings so the extension does not claim certainty it cannot support.
 
+FocusTrace is free software licensed under **GNU GPL v3.0 only**. The source-code license and the FocusTrace project identity are intentionally separate; see [License and project identity](#license-and-project-identity).
+
 ## What makes it different?
 
 FocusTrace combines two complementary workflows instead of treating accessibility as a single static scan.
@@ -100,6 +102,20 @@ Production builds do not require global host permissions. HTTP/HTTPS page access
 All analysis runs locally in the browser. FocusTrace does not send page content, DOM data, screenshots or recorded interactions to a FocusTrace server or third-party AI API.
 
 Visual evidence in printable reports is optional. Screenshot crops can contain visible page content, are prepared locally for that report only and are not transmitted by FocusTrace.
+
+See [`PRIVACY.md`](PRIVACY.md) for the project privacy policy and [`SECURITY.md`](SECURITY.md) for responsible vulnerability reporting.
+
+## License and project identity
+
+FocusTrace source code is distributed under the **GNU General Public License version 3 only (`GPL-3.0-only`)**. See [`LICENSE`](LICENSE).
+
+The GPL allows users to run, study, modify and redistribute covered code under its terms. When a covered modified build is conveyed, the GPL's source-code and license obligations continue to apply.
+
+The FocusTrace name, logo and project identity are not granted by the source-code license for use in a way that implies an unofficial fork is the official FocusTrace release. Forks are welcome, but materially modified distributions should use a distinct primary name and visual identity. See [`TRADEMARKS.md`](TRADEMARKS.md).
+
+Contributions are welcome under the same project license. See [`CONTRIBUTING.md`](CONTRIBUTING.md).
+
+FocusTrace is intended to remain free to use. If voluntary sponsorship is introduced later, sponsorship should support continued development rather than silently changing the accessibility tool into a paywalled product.
 
 ## Try the latest development build
 
