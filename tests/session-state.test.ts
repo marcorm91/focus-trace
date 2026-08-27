@@ -5,6 +5,7 @@ import {
   appendRuntimeEventToSession,
   clearSessionEvents,
   emptySessionState,
+  invalidateSessionScanForUrl,
   normalizeSessionState,
   setSessionRecordingState,
   updateSessionBreakpoints,
@@ -128,5 +129,18 @@ describe('runtime session state helpers', () => {
       'focus-fell-back-to-body': false,
       'focused-element-became-hidden': false,
     });
+  });
+
+  it('invalidates stale scans when the inspected document URL changes', () => {
+    const scan = { url: 'https://example.com/account?tab=profile#heading' } as SessionState['scan'];
+    const current = session({ scan });
+
+    expect(invalidateSessionScanForUrl(current, 'https://example.com/account?tab=profile#details')).toBe(current);
+
+    const navigated = invalidateSessionScanForUrl(current, 'https://example.com/account?tab=security');
+    expect(navigated).not.toBe(current);
+    expect(navigated.scan).toBeUndefined();
+    expect(navigated.events).toBe(current.events);
+    expect(navigated.recording).toBe(current.recording);
   });
 });
