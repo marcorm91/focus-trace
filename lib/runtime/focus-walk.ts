@@ -7,6 +7,7 @@ export interface FocusWalkCandidate {
   documentOrder: number;
 }
 
+const COMPONENT_FOCUS_SCOPE_ATTRIBUTE = 'data-focustrace-focus-component';
 const FOCUSABLE_SELECTOR = [
   'a[href]',
   'area[href]',
@@ -47,8 +48,27 @@ function isVisibleFocusable(element: Element): element is HTMLElement | SVGEleme
   return element.tabIndex >= 0;
 }
 
-export function focusWalkCandidates(root: ParentNode = document): FocusWalkCandidate[] {
-  const all = [...root.querySelectorAll(FOCUSABLE_SELECTOR)];
+function activeComponentFocusRoot(): ParentNode | null {
+  const raw = document.documentElement.getAttribute(COMPONENT_FOCUS_SCOPE_ATTRIBUTE);
+  if (!raw) return document;
+
+  try {
+    const parsed = JSON.parse(raw) as { selector?: unknown };
+    if (typeof parsed.selector !== 'string' || !parsed.selector) return null;
+    return document.querySelector(parsed.selector);
+  } catch {
+    return null;
+  }
+}
+
+export function focusWalkCandidates(root?: ParentNode): FocusWalkCandidate[] {
+  const effectiveRoot = root ?? activeComponentFocusRoot();
+  if (!effectiveRoot) return [];
+
+  const descendants = [...effectiveRoot.querySelectorAll(FOCUSABLE_SELECTOR)];
+  const all = effectiveRoot instanceof Element && effectiveRoot.matches(FOCUSABLE_SELECTOR)
+    ? [effectiveRoot, ...descendants]
+    : descendants;
   const candidates = all
     .map((element, documentOrder) => ({ element, documentOrder }))
     .filter((item): item is { element: HTMLElement | SVGElement; documentOrder: number } => isVisibleFocusable(item.element));

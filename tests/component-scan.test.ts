@@ -71,17 +71,25 @@ describe('component-scoped static analysis', () => {
     expect(result.scope).toEqual(scope);
     expect(result.issues.flatMap((issue) => issue.targets)).toContain('#inside');
     expect(document.documentElement.hasAttribute('data-focustrace-scan-component')).toBe(false);
+    expect(document.documentElement.getAttribute('data-focustrace-focus-component')).toBe(
+      JSON.stringify({ selector: '#checkout' }),
+    );
   });
 
-  it('keeps normal page scans explicitly marked as page scope', () => {
+  it('keeps normal page scans explicitly marked as page scope and clears component focus scope', () => {
     render('<main><h1>Page</h1><button aria-label="Continue">Continue</button></main>', '<title>Test</title>');
     document.documentElement.lang = 'en';
+    document.documentElement.setAttribute(
+      'data-focustrace-focus-component',
+      JSON.stringify({ selector: '#checkout' }),
+    );
 
     const result = runFocusTraceScan();
 
     expect(result.scope).toEqual({ type: 'page' });
     expect(result.headings).toHaveLength(1);
     expect(result.rulesRun).toBe(17);
+    expect(document.documentElement.hasAttribute('data-focustrace-focus-component')).toBe(false);
   });
 
   it('describes the selected component and omitted document-context checks in text exports', () => {

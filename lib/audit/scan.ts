@@ -11,6 +11,7 @@ type ScanRoot = Document | Element;
 const emptyExecution = (): RuleExecution => ({ issues: [], review: [], warnings: [], passes: 0 });
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 const COMPONENT_SCAN_SCOPE_ATTRIBUTE = 'data-focustrace-scan-component';
+const COMPONENT_FOCUS_SCOPE_ATTRIBUTE = 'data-focustrace-focus-component';
 
 function scopedElements(root: ScanRoot, selector: string): Element[] {
   const descendants = [...root.querySelectorAll(selector)];
@@ -38,6 +39,17 @@ function consumePendingComponentScope(): ComponentScanScope | undefined {
   } catch {
     return undefined;
   }
+}
+
+function syncFocusWalkComponentScope(scope: ComponentScanScope | undefined) {
+  if (!scope) {
+    document.documentElement.removeAttribute(COMPONENT_FOCUS_SCOPE_ATTRIBUTE);
+    return;
+  }
+  document.documentElement.setAttribute(
+    COMPONENT_FOCUS_SCOPE_ATTRIBUTE,
+    JSON.stringify({ selector: scope.selector }),
+  );
 }
 
 function finding(
@@ -387,6 +399,7 @@ function runHeadingJumps(): RuleExecution {
 export function runFocusTraceScan(scope: ComponentScanScope | undefined = consumePendingComponentScope()): ScanResult {
   const root = scope ? document.querySelector(scope.selector) : document;
   if (!root) throw new Error('Selected scan component is no longer present on the page.');
+  syncFocusWalkComponentScope(scope);
 
   const ariaSignals = evaluateAriaAuthoringSignals().filter((signal) => containsInScope(root, signal.element));
   const ariaExecutions = ariaWarningExecutions(ariaSignals);
