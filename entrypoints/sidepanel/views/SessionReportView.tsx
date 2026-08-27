@@ -1,5 +1,12 @@
 import { useEffect, useMemo, useState } from 'react';
 import { browser } from '#imports';
+import {
+  buildAuditEvidenceBundle,
+  renderAuditEvidenceJson,
+  renderAuditEvidenceMarkdown,
+} from '../../../lib/runtime/audit-evidence';
+import { groupRuntimeInteractions } from '../../../lib/runtime/causality';
+import { buildFocusGraph } from '../../../lib/runtime/focus-graph';
 import { type ReportComponentIdentity } from '../../../lib/report/component-identity';
 import { buildSessionReportModel } from '../../../lib/report/session-report';
 import { buildTextReportFilename, buildTextSessionReport } from '../../../lib/report/text-report';
@@ -32,6 +39,25 @@ function suggestionSourceLabel(source: string, language: AppLanguage): string {
   return source;
 }
 
+function downloadFile(filename: string, content: string, mimeType: string, includeBom = false): void {
+  const parts = includeBom ? ['\uFEFF', content] : [content];
+  const blob = new Blob(parts, { type: `${mimeType};charset=utf-8` });
+  const url = URL.createObjectURL(blob);
+  const anchor = document.createElement('a');
+  anchor.href = url;
+  anchor.download = filename;
+  anchor.style.display = 'none';
+  document.body.append(anchor);
+  anchor.click();
+  anchor.remove();
+  window.setTimeout(() => URL.revokeObjectURL(url), 0);
+}
+
+function safeFilename(value: string | undefined): string {
+  const normalized = value?.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
+  return normalized || 'session';
+}
+
 export function SessionReportView({
   scan,
   events,
@@ -44,6 +70,8 @@ export function SessionReportView({
   onLocate: (selector: string) => void | Promise<void>;
 }) {
   const model = useMemo(() => buildSessionReportModel(scan, events, language), [events, language, scan]);
+  const graph = useMemo(() => buildFocusGraph(events), [events]);
+  const interactions = useMemo(() => groupRuntimeInteractions(events), [events]);
   const headings = scan?.headings ?? [];
   const focusEvents = events.filter((event) => event.kind === 'focus' && event.element);
   const highPriority = model.suggestions.filter((suggestion) => suggestion.priority === 'high').slice(0, 4);
@@ -76,16 +104,23 @@ export function SessionReportView({
   const downloadTextReport = () => {
     const generatedAt = Date.now();
     const text = buildTextSessionReport({ scan, events, language, components, generatedAt });
-    const blob = new Blob(['\uFEFF', text], { type: 'text/plain;charset=utf-8' });
-    const url = URL.createObjectURL(blob);
-    const anchor = document.createElement('a');
-    anchor.href = url;
-    anchor.download = buildTextReportFilename(scan, generatedAt);
-    anchor.style.display = 'none';
-    document.body.append(anchor);
-    anchor.click();
-    anchor.remove();
-    window.setTimeout(() => URL.revokeObjectURL(url), 0);
+    downloadFile(buildTextReportFilename(scan, generatedAt), text, 'text/plain', true);
+  };
+
+  const downloadJourneyEvidence = (format: 'markdown' | 'json') => {
+    const page = scan ? { url: scan.url, title: scan.title } : undefined;
+    const bundle = buildAuditEvidenceBundle({
+      graph,
+      interactions,
+      language,
+      ...(page ? { page } : {}),
+    });
+    const base = `focustrace-${safeFilename(scan?.title || scan?.url)}`;
+    if (format === 'markdown') {
+      downloadFile(`${base}.md`, renderAuditEvidenceMarkdown(bundle, language), 'text/markdown');
+      return;
+    }
+    downloadFile(`${base}.json`, renderAuditEvidenceJson(bundle), 'application/json');
   };
 
   const openPrintableReport = async () => {
@@ -147,14 +182,34 @@ export function SessionReportView({
             </span>
           </label>
           <div className="report-export-actions">
-            <button className="export-text-report" type="button" disabled={!scan || exportingPdf} onClick={downloadTextReport}>
-              <span aria-hidden="true">↓</span>
-              {tr(language, 'Download .txt', 'Descargar .txt')}
-            </button>
             <button className="export-pdf-report" type="button" disabled={!scan || exportingPdf} onClick={() => void openPrintableReport()}>
               <span aria-hidden="true">▤</span>
               {exportingPdf ? tr(language, 'Preparing PDF…', 'Preparando PDF…') : tr(language, 'Export PDF', 'Exportar PDF')}
             </button>
+            <details className="report-more-formats">
+              <summary>{tr(language, 'More formats', 'Más formatos')}</summary>
+              <div className="report-format-options">
+                <button className="export-text-report" type="button" disabled={!scan || exportingPdf} onClick={downloadTextReport}>
+                  <span aria-hidden="true">↓</span>
+                  {tr(language, 'Session report (.txt)', 'Informe de sesión (.txt)')}
+                </button>
+                <button type="button" disabled={graph.focusEvents === 0 || exportingPdf} onClick={() => downloadJourneyEvidence('markdown')}>
+                  <span aria-hidden="true">↓</span>
+                  {tr(language, 'Trace evidence (.md)', 'Evidencia de Trace (.md)')}
+                </button>
+                <button type="button" disabled={graph.focusEvents === 0 || exportingPdf} onClick={() => downloadJourneyEvidence('json')}>
+                  <span aria-hidden="true">↓</span>
+                  {tr(language, 'Trace evidence (.json)', 'Evidencia de Trace (.json)')}
+                </button>
+              </div>
+              <small className="report-format-note">
+                {tr(
+                  language,
+                  'TXT exports the session report. Markdown and JSON export the recorded Trace evidence.',
+                  'TXT exporta el informe de sesión. Markdown y JSON exportan la evidencia grabada de Trace.',
+                )}
+              </small>
+            </details>
           </div>
         </div>
       </div>

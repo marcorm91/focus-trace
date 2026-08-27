@@ -1,10 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import {
-  buildAuditEvidenceBundle,
-  focusArrivalTraces,
-  renderAuditEvidenceJson,
-  renderAuditEvidenceMarkdown,
-} from '../../../lib/runtime/audit-evidence';
+import { focusArrivalTraces } from '../../../lib/runtime/audit-evidence';
 import {
   explanationForCause,
   humanRuntimeEventTitle,
@@ -53,27 +48,11 @@ function focusOrderLabel(orders: number[]): string {
   return `${visible.join(' · ')}${remaining > 0 ? ` +${remaining}` : ''}`;
 }
 
-function downloadText(filename: string, content: string, mimeType: string): void {
-  const blob = new Blob([content], { type: `${mimeType};charset=utf-8` });
-  const url = URL.createObjectURL(blob);
-  const anchor = document.createElement('a');
-  anchor.href = url;
-  anchor.download = filename;
-  anchor.click();
-  URL.revokeObjectURL(url);
-}
-
-function safeFilename(value: string | undefined): string {
-  const normalized = value?.trim().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-|-$/g, '');
-  return normalized || 'session';
-}
-
 export function FocusGraphView({
   graph,
   interactions,
   level,
   language,
-  page,
   pathVisible,
   recording,
   selectedPageNodeId,
@@ -97,16 +76,6 @@ export function FocusGraphView({
     ? focusGraphObservationsForNode(graph, selectedNode.id)
     : [];
   const selectedTraces = selectedNode ? focusArrivalTraces(selectedNode, interactions, language) : [];
-
-  const exportEvidence = (format: 'markdown' | 'json') => {
-    const bundle = buildAuditEvidenceBundle({ graph, interactions, page, language });
-    const base = `focustrace-${safeFilename(page?.title)}`;
-    if (format === 'markdown') {
-      downloadText(`${base}.md`, renderAuditEvidenceMarkdown(bundle, language), 'text/markdown');
-      return;
-    }
-    downloadText(`${base}.json`, renderAuditEvidenceJson(bundle), 'application/json');
-  };
 
   if (graph.focusEvents === 0) {
     return (
@@ -153,10 +122,6 @@ export function FocusGraphView({
           <button type="button" className={filter === 'signals' ? 'active' : ''} aria-pressed={filter === 'signals'} onClick={() => setFilter('signals')}>
             {tr(language, 'Signals only', 'Solo señales')}
           </button>
-        </div>
-        <div className="graph-export" role="group" aria-label={tr(language, 'Export evidence', 'Exportar evidencia')}>
-          <button type="button" onClick={() => exportEvidence('markdown')}>Export .md</button>
-          <button type="button" onClick={() => exportEvidence('json')}>Export .json</button>
         </div>
         <button
           className="focus-path-toggle"
