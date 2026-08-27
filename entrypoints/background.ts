@@ -9,7 +9,6 @@ import {
   updateSessionBreakpoints,
   updateSessionScan,
 } from '../lib/runtime/session-state';
-import { RUNTIME_BREAKPOINT_SETTINGS_STORAGE_KEY } from '../shared/runtime-breakpoint-preferences';
 import type { ExtensionMessage, SessionState } from '../shared/types';
 
 const keyForTab = (tabId: number) => `session:${tabId}`;
@@ -144,7 +143,6 @@ export default defineBackground(() => {
 
     if (message.type === 'FOCUSTRACE_RESET_TAB') {
       return serializeTabWrite(message.tabId, async () => {
-        await browser.storage.local.remove(RUNTIME_BREAKPOINT_SETTINGS_STORAGE_KEY);
         const next = emptySessionState(message.tabId);
         await saveSession(next);
         await browser.tabs.sendMessage(message.tabId, {
