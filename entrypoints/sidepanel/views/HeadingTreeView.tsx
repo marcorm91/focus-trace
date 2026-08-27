@@ -198,7 +198,7 @@ export function HeadingTreeView({
                       void onLocate(heading.selector);
                     }}
                   >
-                    <span title={label}>{label}</span>
+                    <span>{label}</span>
                     {heading.signals.length > 0 && (
                       <small>{heading.signals.map((signal) => signalLabel(signal, language)).join(' · ')}</small>
                     )}
