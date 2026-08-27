@@ -87,11 +87,13 @@ export function useFocusTraceMemory(scan: ScanResult): FocusTraceMemoryState {
   const setEnabled = useCallback(async (nextEnabled: boolean) => {
     const stored = await browser.storage.local.get(FOCUS_MEMORY_SETTINGS_STORAGE_KEY);
     const settings = normalizeFocusMemorySettings(stored[FOCUS_MEMORY_SETTINGS_STORAGE_KEY]);
+    const nextSettings: FocusMemorySettings = {
+      ...settings,
+      enabled: nextEnabled,
+      ...(nextEnabled ? { ignoreScansAtOrBefore: Date.now() } : {}),
+    };
     await browser.storage.local.set({
-      [FOCUS_MEMORY_SETTINGS_STORAGE_KEY]: {
-        ...settings,
-        enabled: nextEnabled,
-      } satisfies FocusMemorySettings,
+      [FOCUS_MEMORY_SETTINGS_STORAGE_KEY]: nextSettings,
     });
     setRevision((value) => value + 1);
   }, []);
