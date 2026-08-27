@@ -4,6 +4,11 @@
   "private": true,
   "type": "module",
   "description": "Local-first WCAG 2.2 accessibility rule engine and runtime focus debugger.",
+  "license": "GPL-3.0-only",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/marcorm91/focus-trace.git"
+  },
   "scripts": {
     "dev": "wxt",
     "dev:firefox": "wxt -b firefox --mv3",
