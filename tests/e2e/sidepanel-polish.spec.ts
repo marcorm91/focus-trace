@@ -19,11 +19,12 @@ async function openSidepanel(context: BrowserContext, extensionWorker: Worker) {
   return panel;
 }
 
-test('empty result tabs are disabled and finding accordions start collapsed', async ({ context, extensionWorker }) => {
+test('sidepanel controls and finding surfaces expose their intended behavior', async ({ context, extensionWorker }) => {
   const panel = await openSidepanel(context, extensionWorker);
 
   const settings = panel.locator('.settings-trigger');
   await expect(settings).toHaveAttribute('title', /Settings|Ajustes/);
+  await expect(settings).toHaveAttribute('aria-label', /Open settings|Abrir ajustes/);
 
   await panel.evaluate(async () => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
