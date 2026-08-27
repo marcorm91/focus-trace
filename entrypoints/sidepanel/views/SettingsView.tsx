@@ -1,6 +1,18 @@
 import { useEffect, useState } from 'react';
 import { browser } from '#imports';
-import { tr, type AppLanguage } from '../../../shared/i18n';
+import {
+  defaultRuntimeBreakpointSettings,
+  normalizeRuntimeBreakpointSettings,
+  RUNTIME_BREAKPOINTS,
+} from '../../../lib/runtime/breakpoints';
+import { localizedBreakpoint, tr, type AppLanguage } from '../../../shared/i18n';
+import { RUNTIME_BREAKPOINT_SETTINGS_STORAGE_KEY } from '../../../shared/runtime-breakpoint-preferences';
+import type {
+  ExtensionMessage,
+  RuntimeBreakpointId,
+  RuntimeBreakpointSettings,
+  SessionState,
+} from '../../../shared/types';
 import {
   adjacentUiScale,
   DEFAULT_UI_SCALE,
@@ -8,10 +20,48 @@ import {
   UI_SCALE_STORAGE_KEY,
   type UiScale,
 } from '../../../shared/ui-scale';
+import '../breakpoint-settings.css';
 import { closeFocusedSettingsView } from '../settings-focus';
 
 const CREATOR_LINKEDIN = 'https://es.linkedin.com/in/marcorm91';
 const REPOSITORY_URL = 'https://github.com/marcorm91/focus-trace';
+
+const BREAKPOINT_SUBTITLES: Record<RuntimeBreakpointId, { en: string; es: string }> = {
+  'focused-node-removed': {
+    en: 'Detects when the element that currently owns keyboard focus is removed from the DOM, which can leave keyboard users without a predictable place to continue.',
+    es: 'Detecta cuando el elemento que tiene el foco de teclado se elimina del DOM, algo que puede dejar al usuario sin un punto predecible desde el que continuar.',
+  },
+  'focus-fell-back-to-body': {
+    en: 'Detects when focus is lost after an interaction and falls back to the document body instead of moving to a meaningful control or destination.',
+    es: 'Detecta cuando el foco se pierde tras una interacción y termina en el body del documento en lugar de moverse a un control o destino significativo.',
+  },
+  'dialog-opened-without-focus': {
+    en: 'Detects dialogs that become visible while keyboard focus stays outside, so the new context may not be obvious or immediately operable.',
+    es: 'Detecta diálogos que se muestran mientras el foco permanece fuera, por lo que el nuevo contexto puede no resultar evidente ni operable de inmediato.',
+  },
+  'modal-focus-escape': {
+    en: 'Detects focus moving outside an open modal dialog, which can let keyboard interaction reach content that should remain unavailable behind the modal.',
+    es: 'Detecta cuando el foco sale de un diálogo modal abierto y permite alcanzar con teclado contenido que debería permanecer inaccesible detrás del modal.',
+  },
+  'route-changed-without-focus-move': {
+    en: 'Detects SPA navigation where the visible view changes but focus stays in the previous context, making the new page state harder to discover by keyboard.',
+    es: 'Detecta navegación SPA en la que cambia la vista visible pero el foco permanece en el contexto anterior, dificultando descubrir el nuevo estado con teclado.',
+  },
+  'focused-element-became-hidden': {
+    en: 'Detects when the focused control, or one of its ancestors, becomes hidden while it still owns focus, leaving focus on content the user can no longer see or operate.',
+    es: 'Detecta cuando el control con foco, o uno de sus ancestros, pasa a estar oculto mientras conserva el foco, dejándolo sobre contenido que ya no se ve o no se puede operar.',
+  },
+};
+
+function breakpointSubtitle(id: RuntimeBreakpointId, language: AppLanguage): string {
+  const copy = BREAKPOINT_SUBTITLES[id];
+  return language === 'es' ? copy.es : copy.en;
+}
+
+async function activeTabId(): Promise<number | undefined> {
+  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+  return tab?.id;
+}
 
 export function SettingsView({
   language,
@@ -22,6 +72,9 @@ export function SettingsView({
 }) {
   const [uiScale, setUiScale] = useState<UiScale>(() =>
     normalizeUiScale(document.documentElement.dataset.ftUiScale ?? DEFAULT_UI_SCALE),
+  );
+  const [breakpointSettings, setBreakpointSettings] = useState<RuntimeBreakpointSettings>(
+    defaultRuntimeBreakpointSettings,
   );
   const version = browser.runtime.getManifest().version;
 
@@ -40,11 +93,62 @@ export function SettingsView({
     });
   }, []);
 
+  useEffect(() => {
+    let cancelled = false;
+
+    void (async () => {
+      const stored = await browser.storage.local.get(RUNTIME_BREAKPOINT_SETTINGS_STORAGE_KEY);
+      const saved = stored[RUNTIME_BREAKPOINT_SETTINGS_STORAGE_KEY] as Partial<RuntimeBreakpointSettings> | undefined;
+      if (saved) {
+        if (!cancelled) setBreakpointSettings(normalizeRuntimeBreakpointSettings(saved));
+        return;
+      }
+
+      const tabId = await activeTabId();
+      if (tabId == null) return;
+      const session = (await browser.runtime.sendMessage({
+        type: 'FOCUSTRACE_GET_SESSION',
+        tabId,
+      } satisfies ExtensionMessage)) as SessionState;
+      const migrated = normalizeRuntimeBreakpointSettings(session.breakpoints);
+      await browser.storage.local.set({ [RUNTIME_BREAKPOINT_SETTINGS_STORAGE_KEY]: migrated });
+      if (!cancelled) setBreakpointSettings(migrated);
+    })().catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   const updateUiScale = (direction: -1 | 1) => {
     const nextScale = adjacentUiScale(uiScale, direction);
     setUiScale(nextScale);
     document.documentElement.dataset.ftUiScale = String(nextScale);
     void browser.storage.local.set({ [UI_SCALE_STORAGE_KEY]: nextScale });
+  };
+
+  const updateBreakpoint = async (breakpointId: RuntimeBreakpointId, enabled: boolean) => {
+    const nextSettings: RuntimeBreakpointSettings = {
+      ...breakpointSettings,
+      [breakpointId]: enabled,
+    };
+    setBreakpointSettings(nextSettings);
+    await browser.storage.local.set({
+      [RUNTIME_BREAKPOINT_SETTINGS_STORAGE_KEY]: nextSettings,
+    });
+
+    const tabId = await activeTabId();
+    if (tabId == null) return;
+
+    await browser.runtime.sendMessage({
+      type: 'FOCUSTRACE_SAVE_BREAKPOINTS',
+      tabId,
+      breakpoints: nextSettings,
+    } satisfies ExtensionMessage);
+    await browser.tabs.sendMessage(tabId, {
+      type: 'FOCUSTRACE_CONFIGURE_BREAKPOINTS',
+      breakpoints: nextSettings,
+    } satisfies ExtensionMessage).catch(() => undefined);
   };
 
   return (
@@ -146,6 +250,54 @@ export function SettingsView({
             'Tamaños disponibles: 100%, 110%, 120% y 130%. La elección se conserva para futuras sesiones.',
           )}
         </small>
+      </fieldset>
+
+      <fieldset className="settings-group settings-trace-group">
+        <legend>Trace</legend>
+        <div className="settings-trace-heading">
+          <strong>{tr(language, 'Accessibility breakpoints', 'Breakpoints de accesibilidad')}</strong>
+          <span>
+            {tr(
+              language,
+              `${RUNTIME_BREAKPOINTS.filter((breakpoint) => breakpointSettings[breakpoint.id]).length}/${RUNTIME_BREAKPOINTS.length} enabled`,
+              `${RUNTIME_BREAKPOINTS.filter((breakpoint) => breakpointSettings[breakpoint.id]).length}/${RUNTIME_BREAKPOINTS.length} activados`,
+            )}
+          </span>
+        </div>
+        <p className="settings-help">
+          {tr(
+            language,
+            'Choose which deterministic runtime conditions should pause FocusTrace after their evidence has been saved. These preferences are reused across tabs until Start over resets them.',
+            'Elige qué condiciones runtime deterministas deben pausar FocusTrace después de guardar su evidencia. Estas preferencias se reutilizan entre pestañas hasta que Empezar de cero las restablece.',
+          )}
+        </p>
+
+        <div className="settings-breakpoint-list">
+          {RUNTIME_BREAKPOINTS.map((breakpoint) => {
+            const copy = localizedBreakpoint(breakpoint.id, breakpoint, language);
+            return (
+              <label key={breakpoint.id} className="settings-breakpoint-option">
+                <input
+                  type="checkbox"
+                  checked={breakpointSettings[breakpoint.id]}
+                  onChange={(event) => void updateBreakpoint(breakpoint.id, event.currentTarget.checked)}
+                />
+                <span>
+                  <strong>{copy.label}</strong>
+                  <small>{breakpointSubtitle(breakpoint.id, language)}</small>
+                </span>
+              </label>
+            );
+          })}
+        </div>
+
+        <p className="settings-breakpoint-note">
+          {tr(
+            language,
+            'A breakpoint pauses FocusTrace recording only after the triggering event is stored. It never pauses JavaScript or changes the inspected page.',
+            'Un breakpoint solo pausa la grabación de FocusTrace después de guardar el evento que lo activa. Nunca pausa JavaScript ni modifica la página inspeccionada.',
+          )}
+        </p>
       </fieldset>
 
       <section className="settings-group settings-contact" aria-labelledby="settings-contact-title">
