@@ -13,6 +13,7 @@ import {
   humanRuntimeEventTitle,
   type ExplanationLevel,
 } from '../../../lib/runtime/explanations';
+import { humanRuntimeEventDetail } from '../../../lib/runtime/runtime-presentation';
 import {
   clearScanTargetHighlightInPage,
   locateScanTargetInPage,
@@ -211,6 +212,7 @@ export function ReplayView({
   if (!current || !highlight) return null;
 
   const eventTitle = humanRuntimeEventTitle(current.event, language);
+  const eventDetail = humanRuntimeEventDetail(current.event, language);
   const causeExplanation = current.cause ? explanationForCause(current.cause.type, language) : undefined;
   const mutationTitle = mutationLabel(current.event, language);
   const targetName = current.target?.name || current.target?.role || current.target?.tag;
@@ -299,7 +301,7 @@ export function ReplayView({
           </div>
         )}
 
-        {current.event.detail && <p className="replay-detail">{current.event.detail}</p>}
+        {eventDetail && <p className="replay-detail">{eventDetail}</p>}
 
         {currentSemantics.length > 0 && (
           <section className="replay-transition-results" aria-label={tr(language, 'Transition result', 'Resultado de la transición')}>
