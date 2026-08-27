@@ -513,6 +513,7 @@ export default function App() {
             className="settings-trigger"
             type="button"
             aria-pressed={view === 'settings'}
+            title={tr(language, 'Settings', 'Ajustes')}
             aria-label={tr(language, 'Open settings', 'Abrir ajustes')}
             onClick={() => setView('settings')}
           >

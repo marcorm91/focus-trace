@@ -103,12 +103,14 @@ describe('UX polish contract', () => {
     expect(scanCss).not.toContain('.finding-dom');
   });
 
-  it('keeps review accordions collapsed initially in scan and report surfaces', () => {
+  it('keeps all finding accordions collapsed initially in scan and report surfaces', () => {
     const scan = source('entrypoints/sidepanel/views/ScanView.tsx');
     const reportScan = source('entrypoints/sidepanel/components/ReportScanCompact.tsx');
 
-    expect(scan).toContain("open={defaultOpen && first.outcome !== 'review' ? true : undefined}");
-    expect(reportScan).toContain("defaultOpen={filter !== 'review' && index === 0}");
+    expect(scan).not.toContain('defaultOpen');
+    expect(reportScan).not.toContain('defaultOpen');
+    expect(scan).not.toContain('open={');
+    expect(reportScan).not.toContain('open={');
   });
 
   it('wraps scan and contrast content instead of forcing horizontal overflow', () => {

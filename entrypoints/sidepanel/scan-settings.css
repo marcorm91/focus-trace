@@ -106,6 +106,17 @@
   line-height: 1.6;
 }
 
+.scan-filter-tabs button:disabled {
+  opacity: .45;
+  cursor: default;
+  color: var(--ft-muted, GrayText);
+}
+
+.scan-filter-tabs button:disabled strong {
+  background: transparent;
+  color: inherit;
+}
+
 .scan-filter-tabs button.active {
   border-color: var(--ft-brand, Highlight);
   background: var(--ft-brand-soft, color-mix(in srgb, Highlight 8%, Canvas));

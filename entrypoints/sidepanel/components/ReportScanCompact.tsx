@@ -46,11 +46,9 @@ async function locateReportTarget(selector: string): Promise<void> {
 function ReportRuleAccordion({
   issues,
   language,
-  defaultOpen,
 }: {
   issues: ScanIssue[];
   language: AppLanguage;
-  defaultOpen: boolean;
 }) {
   const [index, setIndex] = useState(0);
   const first = issues[0]!;
@@ -71,7 +69,7 @@ function ReportRuleAccordion({
   };
 
   return (
-    <details className={`report-rule-group outcome-${first.outcome}`} open={defaultOpen ? true : undefined}>
+    <details className={`report-rule-group outcome-${first.outcome}`}>
       <summary>
         <span className={`report-rule-outcome ${first.outcome}`}>{outcomeLabel(first.outcome, language)}</span>
         <span className="report-rule-title">
@@ -146,6 +144,7 @@ export function ReportScanCompact({ scan, language }: { scan: ScanResult; langua
             role="tab"
             aria-selected={filter === group.id}
             className={filter === group.id ? 'active' : ''}
+            disabled={group.findings.length === 0}
             onClick={() => setFilter(group.id)}
           >
             <span>{group.label}</span>
@@ -156,12 +155,11 @@ export function ReportScanCompact({ scan, language }: { scan: ScanResult; langua
 
       {ruleGroups.length ? (
         <div className="report-rule-list">
-          {ruleGroups.map((issues, index) => (
+          {ruleGroups.map((issues) => (
             <ReportRuleAccordion
               key={issues[0]!.ruleId}
               issues={issues}
               language={language}
-              defaultOpen={filter !== 'review' && index === 0}
             />
           ))}
         </div>
