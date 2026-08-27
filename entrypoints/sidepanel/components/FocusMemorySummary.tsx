@@ -13,7 +13,7 @@ import './focus-memory.css';
 function statusLabel(status: FocusMemoryStatus, language: AppLanguage): string {
   if (status === 'new') return tr(language, 'Baseline created', 'Línea base creada');
   if (status === 'open') return tr(language, 'Still reproducible', 'Sigue reproduciéndose');
-  if (status === 'fixed') return tr(language, 'Fixed since last observation', 'Corregido desde la última observación');
+  if (status === 'fixed') return tr(language, 'No longer reproduced', 'Ya no se reproduce');
   if (status === 'regressed') return tr(language, 'Regression detected', 'Regresión detectada');
   if (status === 'changed') return tr(language, 'Result changed', 'El resultado ha cambiado');
   return tr(language, 'No deterministic change', 'Sin cambios deterministas');
@@ -55,8 +55,8 @@ function comparisonDescription(comparison: FocusMemoryComparison, language: AppL
   if (comparison.status === 'fixed') {
     return tr(
       language,
-      `The deterministic failures recorded previously for ${scope} were not reproduced in the current scan. This does not by itself prove complete WCAG conformance.`,
-      `Los fallos deterministas registrados anteriormente para ${scope} no se han reproducido en el análisis actual. Esto no demuestra por sí solo un cumplimiento completo de WCAG.`,
+      `The deterministic failures recorded previously for ${scope} were not reproduced in the current scan. This is a positive historical change, but it does not by itself prove complete WCAG conformance.`,
+      `Los fallos deterministas registrados anteriormente para ${scope} no se han reproducido en el análisis actual. Es un cambio histórico positivo, pero no demuestra por sí solo un cumplimiento completo de WCAG.`,
     );
   }
 
@@ -110,32 +110,7 @@ export function FocusMemorySummary({ scan, language }: { scan: ScanResult; langu
     if (confirmed) await memory.clear();
   };
 
-  if (memory.loading) {
-    return (
-      <section className="focus-memory is-loading" aria-live="polite">
-        <strong>FocusTrace Memory</strong>
-        <p>{tr(language, 'Checking local Memory settings…', 'Comprobando los ajustes locales de Memory…')}</p>
-      </section>
-    );
-  }
-
-  if (!memory.enabled) {
-    return (
-      <section className="focus-memory is-paused" aria-live="polite">
-        <div className="focus-memory-heading">
-          <div>
-            <small>FocusTrace Memory</small>
-            <strong>{tr(language, 'Memory is off', 'Memory está desactivado')}</strong>
-          </div>
-        </div>
-        <p>{tr(
-          language,
-          'Accessibility history is disabled by default. Enable “Remember accessibility history” in Settings if you want future scans to be compared locally.',
-          'El historial de accesibilidad está deshabilitado por defecto. Activa “Recordar historial de accesibilidad” en Ajustes si quieres comparar localmente los próximos análisis.',
-        )}</p>
-      </section>
-    );
-  }
+  if (memory.loading || !memory.enabled) return null;
 
   if (memory.suppressed || !memory.comparison) {
     return (
