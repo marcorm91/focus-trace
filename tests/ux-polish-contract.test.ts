@@ -120,7 +120,8 @@ describe('UX polish contract', () => {
     expect(scanCss).toContain('.scan-rule-statuses');
     expect(scanCss).toContain('flex-wrap: wrap;');
     expect(scanCss).toContain('overflow-wrap: anywhere;');
-    expect(scanCss).toContain('grid-column: 1 / -1;');
+    expect(scanCss).toContain('grid-template-columns: auto minmax(0, 1fr) auto auto;');
+    expect(scanCss).not.toContain('grid-column: 1 / -1;');
     expect(states).toContain('.contrast-color-value');
     expect(states).toContain('flex-wrap: wrap;');
     expect(states).toContain('grid-template-columns: 24px minmax(0, 1fr) 30px;');

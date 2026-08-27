@@ -31,6 +31,14 @@ describe('heading outline', () => {
     expect(outline[2]?.signals).toContain('empty');
   });
 
+  it('marks an outline that starts below H1 for review', () => {
+    render('<main><h2>Section before title</h2><h1>Page title</h1><h2>Content</h2></main>');
+    const outline = collectHeadingOutline();
+    expect(outline[0]?.level).toBe(2);
+    expect(outline[0]?.signals).toContain('level-jump');
+    expect(outline[1]?.signals).not.toContain('level-jump');
+  });
+
   it('ignores programmatically hidden headings', () => {
     render('<main><h1>Store</h1><h2 hidden>Hidden</h2><h2>Products</h2></main>');
     expect(collectHeadingOutline().map((heading) => heading.text)).toEqual(['Store', 'Products']);

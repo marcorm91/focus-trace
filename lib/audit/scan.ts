@@ -310,7 +310,7 @@ export function collectHeadingOutline(): HeadingSnapshot[] {
     const text = heading.textContent?.replace(/\s+/g, ' ').trim() ?? '';
     const signals: HeadingSnapshot['signals'] = [];
     if (!text) signals.push('empty');
-    if (previousLevel != null && level > previousLevel + 1) signals.push('level-jump');
+    if ((index === 0 && level > 1) || (previousLevel != null && level > previousLevel + 1)) signals.push('level-jump');
     if (level === 1 && h1Count > 1) signals.push('multiple-h1');
     previousLevel = level;
 
@@ -327,6 +327,20 @@ export function collectHeadingOutline(): HeadingSnapshot[] {
 function runHeadingJumps(): RuleExecution {
   const result = emptyExecution();
   const headings = visibleHeadings();
+  const firstHeading = headings[0];
+  if (firstHeading) {
+    const firstLevel = Number(firstHeading.tagName.slice(1));
+    if (firstLevel > 1) {
+      result.review.push(finding(
+        RULES.headingJump,
+        'review',
+        firstHeading,
+        'The heading outline starts below H1. This is not automatically a WCAG failure, but it can indicate that the page hierarchy needs manual review.',
+        `Document starts with ${firstHeading.tagName} before any H1.`,
+      ));
+    }
+  }
+
   for (let index = 1; index < headings.length; index += 1) {
     const previousHeading = headings[index - 1]; const currentHeading = headings[index];
     if (!previousHeading || !currentHeading) continue;

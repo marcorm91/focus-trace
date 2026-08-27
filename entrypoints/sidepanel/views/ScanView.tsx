@@ -1,7 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { colorToHex, colorToRgb, parseCssColor, suggestAccessibleForeground } from '../../../lib/audit/contrast';
 import { reportFindingDescription } from '../../../lib/report/finding-guidance';
-import { outcomeLabel, type ExplanationLevel } from '../../../lib/runtime/explanations';
+import { type ExplanationLevel } from '../../../lib/runtime/explanations';
 import { scanCategoryForIssue, type ScanCategory } from '../../../shared/scan-categories';
 import { countBySeverity, SEVERITY_ORDER, sortBySeverity, type SeverityFilter } from '../../../shared/severity';
 import {
@@ -363,7 +363,6 @@ function FindingRuleAccordion({
     <details className={`scan-rule-group outcome-${first.outcome} severity-${first.severity}`}>
       <summary>
         <span className="scan-rule-statuses">
-          <span className={`scan-rule-outcome ${first.outcome}`}>{outcomeLabel(first.outcome, level, language)}</span>
           <span
             className={`severity-badge severity-${first.severity}`}
             title={severityImpactDescription(first.severity, language)}

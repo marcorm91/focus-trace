@@ -222,7 +222,7 @@ export function SessionReportView({
           <section className="report-section report-trace-section" aria-labelledby="report-trace-title">
             <div className="report-section-heading">
               <div>
-                <span>1</span>
+                <span>{model.traceStories.length}</span>
                 <div>
                   <h3 id="report-trace-title">{tr(language, 'Runtime trace', 'Traza runtime')}</h3>
                   <p>
@@ -301,7 +301,7 @@ export function SessionReportView({
           <section className="report-section" aria-labelledby="report-analysis-title">
             <div className="report-section-heading">
               <div>
-                <span>2</span>
+                <span>{model.failures}</span>
                 <div>
                   <h3 id="report-analysis-title">{tr(language, 'Full page scan', 'Barrido completo de página')}</h3>
                   <p>{scan.engine} · {scan.standard} · {scan.rulesRun} {tr(language, 'rule families', 'familias de reglas')}</p>
@@ -323,7 +323,7 @@ export function SessionReportView({
           <section className="report-section" aria-labelledby="report-headings-title">
             <div className="report-section-heading">
               <div>
-                <span>3</span>
+                <span>{headings.length}</span>
                 <div>
                   <h3 id="report-headings-title">{tr(language, 'Heading structure', 'Estructura de encabezados')}</h3>
                   <p>{tr(language, 'Visible H1-H6 elements in DOM order.', 'Elementos H1–H6 visibles en orden DOM.')}</p>
@@ -351,7 +351,7 @@ export function SessionReportView({
           <section className="report-section report-recommendations" aria-labelledby="report-suggestions-title">
             <div className="report-section-heading">
               <div>
-                <span>4</span>
+                <span>{model.suggestions.length}</span>
                 <div>
                   <h3 id="report-suggestions-title">{tr(language, 'Recommended next steps', 'Sugerencias de mejora')}</h3>
                   <p>{tr(language, 'Prioritized from static and runtime evidence.', 'Priorizadas a partir de evidencia estática y runtime.')}</p>

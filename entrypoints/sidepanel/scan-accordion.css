@@ -56,22 +56,6 @@
   align-items: center;
 }
 
-.scan-rule-outcome {
-  min-width: 42px;
-  padding: 3px 6px;
-  border: 1px solid currentColor;
-  border-radius: 999px;
-  background: transparent;
-  text-align: center;
-  font-size: 8.5px;
-  font-weight: 900;
-  text-transform: uppercase;
-}
-
-.scan-rule-outcome.fail { color: var(--ft-danger); }
-.scan-rule-outcome.review { color: var(--ft-warning); }
-.scan-rule-outcome.warning { color: #746100; }
-
 .scan-rule-title {
   display: grid;
   gap: 2px;
@@ -243,16 +227,6 @@
   border-color: var(--ft-accent-strong);
   background: var(--ft-accent-soft);
   color: var(--ft-ink);
-}
-
-@media (max-width: 520px) {
-  .scan-rule-group > summary {
-    grid-template-columns: minmax(0, 1fr) auto auto;
-  }
-
-  .scan-rule-statuses {
-    grid-column: 1 / -1;
-  }
 }
 
 @media (max-width: 380px) {

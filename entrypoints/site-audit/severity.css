@@ -1,8 +1,8 @@
 :root {
-  --ft-severity-critical-aa: #b42318;
-  --ft-severity-critical-aaa: #ac2217;
-  --ft-severity-serious-aa: #a13e00;
-  --ft-severity-serious-aaa: #9a3b00;
+  --ft-severity-critical-aa: #b91c1c;
+  --ft-severity-critical-aaa: #991b1b;
+  --ft-severity-serious-aa: #c2410c;
+  --ft-severity-serious-aaa: #9a3412;
   --ft-severity-moderate-aa: #786500;
   --ft-severity-moderate-aaa: #695800;
   --ft-severity-minor-aa: #2377d4;
@@ -102,10 +102,10 @@
 
 @media (prefers-color-scheme: dark) {
   :root {
-    --ft-severity-critical-aa: #ce6f67;
-    --ft-severity-critical-aaa: #de9f9a;
-    --ft-severity-serious-aa: #be7b50;
-    --ft-severity-serious-aaa: #d3a587;
+    --ft-severity-critical-aa: #f87171;
+    --ft-severity-critical-aaa: #fca5a5;
+    --ft-severity-serious-aa: #fb923c;
+    --ft-severity-serious-aaa: #fdba74;
     --ft-severity-moderate-aa: #998b3e;
     --ft-severity-moderate-aaa: #b9af7b;
     --ft-severity-minor-aa: #448dde;

@@ -56,6 +56,15 @@ describe('FocusTrace WCAG rule fixtures', () => {
     expect(result.review.map((issue) => issue.ruleId)).toContain('FT-REVIEW-003');
   });
 
+  it('reviews a heading outline that starts below H1 instead of failing it', () => {
+    render('lang="en"', '<main><h2 id="intro">Intro</h2><h1>Page title</h1><h2>Content</h2></main>');
+    const result = runFocusTraceScan();
+    const review = result.review.find((issue) => issue.ruleId === 'FT-REVIEW-002' && issue.targets.includes('#intro'));
+    expect(review?.outcome).toBe('review');
+    expect(review?.evidence).toContain('starts with H2 before any H1');
+    expect(result.issues.some((issue) => issue.ruleId === 'FT-REVIEW-002')).toBe(false);
+  });
+
   it('accepts an icon-only button named by its descendant SVG', () => {
     render(
       'lang="en"',
