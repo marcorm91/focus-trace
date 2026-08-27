@@ -1,9 +1,6 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { browser } from '#imports';
-import {
-  defaultRuntimeBreakpointSettings,
-  normalizeRuntimeBreakpointSettings,
-} from '../../lib/runtime/breakpoints';
+import { normalizeRuntimeBreakpointSettings } from '../../lib/runtime/breakpoints';
 import { groupRuntimeInteractions } from '../../lib/runtime/causality';
 import { type ExplanationLevel } from '../../lib/runtime/explanations';
 import {
@@ -20,7 +17,7 @@ import { buildFocusJourney } from '../../lib/runtime/focus-journey';
 import { clearHeadingOutlineInPage } from '../../lib/runtime/heading-overlay';
 import { buildPageInspectorEntries } from '../../lib/runtime/page-inspector';
 import { locateScanTargetInPage } from '../../lib/runtime/scan-target-overlay';
-import { SETTINGS_STORAGE_KEY, tr, type AppLanguage } from '../../shared/i18n';
+import { tr } from '../../shared/i18n';
 import type {
   ExtensionMessage,
   FocusWalkResult,
@@ -29,6 +26,9 @@ import type {
   ScanResult,
   SessionState,
 } from '../../shared/types';
+import { usePageRuntimeAccess } from './hooks/usePageRuntimeAccess';
+import { useSidepanelLanguage } from './hooks/useSidepanelLanguage';
+import { useSidepanelSession } from './hooks/useSidepanelSession';
 import { AboutView } from './views/AboutView';
 import { HeadingTreeView } from './views/HeadingTreeView';
 import { ScanView } from './views/ScanView';
@@ -37,39 +37,6 @@ import { SettingsView } from './views/SettingsView';
 import { TraceView } from './views/TraceView';
 
 type View = 'scan' | 'trace' | 'headings' | 'report' | 'about' | 'settings';
-
-const PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'];
-
-const EMPTY_SESSION: SessionState = {
-  tabId: -1,
-  recording: false,
-  events: [],
-  breakpoints: defaultRuntimeBreakpointSettings(),
-};
-
-function defaultLanguage(): AppLanguage {
-  try {
-    return browser.i18n.getUILanguage().toLowerCase().startsWith('es') ? 'es' : 'en';
-  } catch {
-    return 'en';
-  }
-}
-
-async function activeTabId() {
-  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-  if (tab?.id == null) throw new Error('No active browser tab is available.');
-  return tab.id;
-}
-
-async function requestPageAccess(language: AppLanguage) {
-  const granted = await browser.permissions.request({ origins: PAGE_ACCESS_ORIGINS });
-  if (granted) return;
-  throw new Error(tr(
-    language,
-    'FocusTrace needs access to web pages to analyze the DOM, trace focus and highlight elements. Grant page access and try again.',
-    'FocusTrace necesita acceso a las páginas web para analizar el DOM, trazar el foco y resaltar elementos. Concede el acceso y vuelve a intentarlo.',
-  ));
-}
 
 async function waitForRuntimeFlush(tabId: number) {
   await browser.runtime.sendMessage({
@@ -81,73 +48,22 @@ async function waitForRuntimeFlush(tabId: number) {
 export default function App() {
   const [view, setView] = useState<View>('scan');
   const explanationLevel: ExplanationLevel = 'developer';
-  const [language, setLanguage] = useState<AppLanguage>(defaultLanguage);
-  const [tabId, setTabId] = useState<number>();
-  const [session, setSession] = useState<SessionState>(EMPTY_SESSION);
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState<string>();
   const [focusPathVisible, setFocusPathVisible] = useState(false);
   const [selectedFocusSelector, setSelectedFocusSelector] = useState<string>();
-  const scan = session.scan;
 
-  const refresh = useCallback(async (id: number) => {
-    const state = (await browser.runtime.sendMessage({
-      type: 'FOCUSTRACE_GET_SESSION',
-      tabId: id,
-    } satisfies ExtensionMessage)) as SessionState;
-    setSession(state);
-  }, []);
-
-  const selectTab = useCallback(async (id: number) => {
-    setTabId(id);
-    setSession({ ...EMPTY_SESSION, tabId: id });
+  const { language, updateLanguage } = useSidepanelLanguage();
+  const resetFocusPathState = useCallback(() => {
     setFocusPathVisible(false);
     setSelectedFocusSelector(undefined);
-    await refresh(id);
-  }, [refresh]);
-
-  useEffect(() => {
-    void browser.storage.local.get(SETTINGS_STORAGE_KEY).then((stored) => {
-      const settings = stored[SETTINGS_STORAGE_KEY] as { language?: AppLanguage } | undefined;
-      if (settings?.language === 'en' || settings?.language === 'es') setLanguage(settings.language);
-    });
   }, []);
-
-  useEffect(() => {
-    document.documentElement.lang = language;
-  }, [language]);
-
-  useEffect(() => {
-    void activeTabId()
-      .then(selectTab)
-      .catch((reason) => setError(String(reason)));
-  }, [selectTab]);
-
-  useEffect(() => {
-    const listener = ({ tabId: nextTabId }: { tabId: number }) => {
-      void selectTab(nextTabId).catch((reason) => setError(String(reason)));
-    };
-    browser.tabs.onActivated.addListener(listener);
-    return () => browser.tabs.onActivated.removeListener(listener);
-  }, [selectTab]);
-
-  useEffect(() => {
-    const listener = (message: ExtensionMessage) => {
-      if (message.type !== 'FOCUSTRACE_SESSION_UPDATED' || message.state.tabId !== tabId) return;
-      setSession(message.state);
-    };
-    browser.runtime.onMessage.addListener(listener);
-    return () => browser.runtime.onMessage.removeListener(listener);
-  }, [tabId]);
-
-  const ensureInjected = useCallback(async () => {
-    if (tabId == null) throw new Error('No active tab selected.');
-    await requestPageAccess(language);
-    await browser.runtime.sendMessage({
-      type: 'FOCUSTRACE_ENSURE_INJECTED',
-      tabId,
-    } satisfies ExtensionMessage);
-  }, [language, tabId]);
+  const { tabId, session, setSession, refresh } = useSidepanelSession({
+    onError: setError,
+    onTabSelected: resetFocusPathState,
+  });
+  const { requestPageAccess, ensureInjected } = usePageRuntimeAccess(tabId, language);
+  const scan = session.scan;
 
   const runScan = useCallback(async () => {
     if (tabId == null) return;
@@ -170,19 +86,18 @@ export default function App() {
     } finally {
       setBusy(false);
     }
-  }, [ensureInjected, tabId]);
+  }, [ensureInjected, setSession, tabId]);
 
   const locateScanTarget = useCallback(async (selector: string) => {
     if (tabId == null) return;
     setError(undefined);
     try {
-      await requestPageAccess(language);
+      await requestPageAccess();
       await browser.scripting.executeScript({
         target: { tabId },
         func: clearFocusPathInPage,
       }).catch(() => undefined);
-      setFocusPathVisible(false);
-      setSelectedFocusSelector(undefined);
+      resetFocusPathState();
 
       const results = await browser.scripting.executeScript({
         target: { tabId },
@@ -200,12 +115,7 @@ export default function App() {
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
     }
-  }, [language, tabId]);
-
-  const updateLanguage = useCallback(async (nextLanguage: AppLanguage) => {
-    setLanguage(nextLanguage);
-    await browser.storage.local.set({ [SETTINGS_STORAGE_KEY]: { language: nextLanguage } });
-  }, []);
+  }, [language, requestPageAccess, resetFocusPathState, tabId]);
 
   const breakpointSettings = useMemo(
     () => normalizeRuntimeBreakpointSettings(session.breakpoints),
@@ -226,8 +136,7 @@ export default function App() {
           target: { tabId },
           func: clearFocusPathInPage,
         }).catch(() => undefined);
-        setFocusPathVisible(false);
-        setSelectedFocusSelector(undefined);
+        resetFocusPathState();
       }
 
       if (enabled && !resumingFromBreakpoint) {
@@ -254,7 +163,7 @@ export default function App() {
     } finally {
       setBusy(false);
     }
-  }, [breakpointSettings, ensureInjected, session.pausedByBreakpoint, session.recording, tabId]);
+  }, [breakpointSettings, ensureInjected, resetFocusPathState, session.pausedByBreakpoint, session.recording, setSession, tabId]);
 
   const runFocusWalk = useCallback(async () => {
     if (tabId == null) return;
@@ -268,8 +177,7 @@ export default function App() {
         target: { tabId },
         func: clearFocusPathInPage,
       }).catch(() => undefined);
-      setFocusPathVisible(false);
-      setSelectedFocusSelector(undefined);
+      resetFocusPathState();
 
       await browser.runtime.sendMessage({ type: 'FOCUSTRACE_CLEAR_SESSION', tabId } satisfies ExtensionMessage);
       await browser.tabs.sendMessage(tabId, {
@@ -335,7 +243,7 @@ export default function App() {
     } finally {
       setBusy(false);
     }
-  }, [breakpointSettings, ensureInjected, language, refresh, tabId]);
+  }, [breakpointSettings, ensureInjected, language, refresh, resetFocusPathState, setSession, tabId]);
 
   const setBreakpoint = useCallback(async (breakpointId: RuntimeBreakpointId, enabled: boolean) => {
     if (tabId == null) return;
@@ -362,7 +270,7 @@ export default function App() {
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
     }
-  }, [ensureInjected, session.breakpoints, tabId]);
+  }, [ensureInjected, session.breakpoints, setSession, tabId]);
 
   const interactions = useMemo(() => groupRuntimeInteractions(session.events), [session.events]);
   const focusGraph = useMemo(() => buildFocusGraph(session.events), [session.events]);
@@ -375,7 +283,7 @@ export default function App() {
     setError(undefined);
 
     try {
-      await requestPageAccess(language);
+      await requestPageAccess();
       const entries: FocusPathOverlayEntry[] = buildPageInspectorEntries(
         focusPath,
         scan,
@@ -389,8 +297,7 @@ export default function App() {
       });
       const result = results[0]?.result as FocusPathOverlayResult | undefined;
       if (!result?.found) {
-        setFocusPathVisible(false);
-        setSelectedFocusSelector(undefined);
+        resetFocusPathState();
         setError(tr(
           language,
           'The recorded focus elements are no longer present on the page.',
@@ -404,7 +311,7 @@ export default function App() {
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
     }
-  }, [focusPath, language, scan, session.events, tabId]);
+  }, [focusPath, language, requestPageAccess, resetFocusPathState, scan, session.events, tabId]);
 
   const hideFocusPath = useCallback(async () => {
     if (tabId == null) return;
@@ -414,12 +321,11 @@ export default function App() {
         target: { tabId },
         func: clearFocusPathInPage,
       });
-      setFocusPathVisible(false);
-      setSelectedFocusSelector(undefined);
+      resetFocusPathState();
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
     }
-  }, [tabId]);
+  }, [resetFocusPathState, tabId]);
 
   const toggleFocusPath = useCallback(async () => {
     if (focusPathVisible) {
@@ -469,15 +375,14 @@ export default function App() {
       }).catch(() => undefined);
 
       setSession(next);
-      setFocusPathVisible(false);
-      setSelectedFocusSelector(undefined);
+      resetFocusPathState();
       setView('scan');
     } catch (reason) {
       setError(reason instanceof Error ? reason.message : String(reason));
     } finally {
       setBusy(false);
     }
-  }, [busy, language, tabId]);
+  }, [busy, language, resetFocusPathState, setSession, tabId]);
 
   const navigation: Array<{ id: 'scan' | 'trace' | 'headings' | 'report'; label: string; icon: string }> = [
     { id: 'scan', label: tr(language, 'Review', 'Revisión'), icon: '⌕' },
