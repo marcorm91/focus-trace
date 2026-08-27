@@ -1,7 +1,7 @@
 .impact-matrix {
   display: grid;
-  gap: 10px;
-  padding: 11px;
+  gap: 14px;
+  padding: 15px;
   border: 1.5px solid var(--ft-border);
   border-radius: var(--ft-radius-md);
   background: var(--ft-surface);
@@ -11,13 +11,15 @@
   display: flex;
   align-items: start;
   justify-content: space-between;
-  gap: 10px;
+  flex-wrap: wrap;
+  gap: 12px;
 }
 
 .impact-matrix-heading > div {
   min-width: 0;
+  flex: 1 1 260px;
   display: grid;
-  gap: 3px;
+  gap: 5px;
 }
 
 .impact-matrix-heading strong {
@@ -30,12 +32,12 @@
 .impact-matrix > p {
   color: var(--ft-muted);
   font-size: 9.5px;
-  line-height: 1.45;
+  line-height: 1.55;
 }
 
 .impact-matrix-heading > span {
   flex: 0 0 auto;
-  padding: 3px 7px;
+  padding: 4px 8px;
   border: 1px solid var(--ft-border-soft);
   border-radius: 999px;
   background: var(--ft-surface-subtle);
@@ -47,27 +49,39 @@
 .impact-matrix-scroll {
   min-width: 0;
   overflow-x: auto;
+  border: 1px solid var(--ft-border-soft);
+  border-radius: 8px;
 }
 
 .impact-matrix table {
   width: 100%;
   min-width: 360px;
-  border-collapse: separate;
-  border-spacing: 4px;
+  border-collapse: collapse;
   table-layout: fixed;
 }
 
 .impact-matrix th,
 .impact-matrix td {
-  height: 34px;
-  padding: 5px 6px;
-  border: 1px solid var(--ft-border-soft);
-  border-radius: 6px;
-  background: var(--ft-surface-subtle);
+  height: 42px;
+  padding: 8px 9px;
+  border: 0;
+  border-right: 1px solid var(--ft-border-faint);
+  border-bottom: 1px solid var(--ft-border-faint);
+  background: var(--ft-surface);
   text-align: center;
 }
 
+.impact-matrix tr > :last-child {
+  border-right: 0;
+}
+
+.impact-matrix tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
 .impact-matrix thead th {
+  border-bottom-color: var(--ft-border-soft);
+  background: var(--ft-surface-subtle);
   color: var(--ft-muted);
   font-size: 8.5px;
   font-weight: 900;
@@ -76,7 +90,6 @@
 
 .impact-matrix thead th:first-child {
   width: 27%;
-  text-align: left;
 }
 
 .impact-matrix thead .severity-critical { border-top: 3px solid var(--ft-severity-critical-aa); color: var(--ft-severity-critical-aaa); }
@@ -88,40 +101,34 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 5px;
+  gap: 7px;
   color: var(--ft-text);
   font-size: 9.5px;
   text-align: left;
 }
 
 .impact-matrix tbody th strong {
+  color: var(--ft-muted);
   font-size: 11px;
+  font-variant-numeric: tabular-nums;
 }
 
 .impact-matrix td {
   color: var(--ft-faint);
   font-size: 12px;
-  font-weight: 800;
+  font-weight: 750;
   font-variant-numeric: tabular-nums;
 }
 
 .impact-matrix td.has-findings {
-  background: var(--ft-surface);
-  font-size: 15px;
-  font-weight: 950;
+  background: color-mix(in srgb, var(--ft-surface-subtle) 64%, var(--ft-surface));
+  color: var(--ft-ink);
+  font-size: 14px;
+  font-weight: 900;
 }
-
-.impact-matrix td.has-findings.severity-critical { border-color: var(--ft-severity-critical-aa); color: var(--ft-severity-critical-aaa); }
-.impact-matrix td.has-findings.severity-serious { border-color: var(--ft-severity-serious-aa); color: var(--ft-severity-serious-aaa); }
-.impact-matrix td.has-findings.severity-moderate { border-color: var(--ft-severity-moderate-aa); color: var(--ft-severity-moderate-aaa); }
-.impact-matrix td.has-findings.severity-minor { border-color: var(--ft-severity-minor-aa); color: var(--ft-severity-minor-aaa); }
-
-.impact-matrix tr.outcome-fail th { box-shadow: inset 3px 0 0 var(--ft-danger); }
-.impact-matrix tr.outcome-review th { box-shadow: inset 3px 0 0 var(--ft-warning); }
-.impact-matrix tr.outcome-warning th { box-shadow: inset 3px 0 0 var(--ft-accent); }
 
 .impact-matrix > p {
   margin: 0;
-  padding-top: 7px;
+  padding-top: 10px;
   border-top: 1px solid var(--ft-border-faint);
 }

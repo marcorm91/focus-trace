@@ -53,6 +53,17 @@
   text-align: center;
 }
 
+.report-compact-tabs button:disabled {
+  opacity: .45;
+  cursor: default;
+  color: var(--ft-muted);
+}
+
+.report-compact-tabs button:disabled strong {
+  background: transparent;
+  color: inherit;
+}
+
 .report-compact-tabs button.active {
   border-color: var(--ft-border);
   background: var(--ft-surface);

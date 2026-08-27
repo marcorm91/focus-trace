@@ -48,7 +48,7 @@ export function ImpactMatrix({ scan, language }: { scan: ScanResult; language: A
         <table>
           <thead>
             <tr>
-              <th scope="col">{tr(language, 'Result', 'Resultado')}</th>
+              <th scope="col" aria-label={tr(language, 'Result', 'Resultado')} />
               {DISPLAY_SEVERITIES.map((severity) => (
                 <th scope="col" className={`severity-${severity}`} key={severity}>
                   {localizedSeverity(severity, language)}
@@ -58,7 +58,7 @@ export function ImpactMatrix({ scan, language }: { scan: ScanResult; language: A
           </thead>
           <tbody>
             {rows.map((row) => (
-              <tr className={`outcome-${row.outcome}`} key={row.outcome}>
+              <tr key={row.outcome}>
                 <th scope="row">
                   <span>{row.label}</span>
                   <strong>{row.findings.length}</strong>
@@ -67,7 +67,7 @@ export function ImpactMatrix({ scan, language }: { scan: ScanResult; language: A
                   const count = matrix[row.outcome][severity];
                   return (
                     <td
-                      className={`${count ? 'has-findings' : 'is-empty'} severity-${severity}`}
+                      className={count ? 'has-findings' : 'is-empty'}
                       title={tr(
                         language,
                         `${row.label}: ${count} ${localizedSeverity(severity, language)} impact`,

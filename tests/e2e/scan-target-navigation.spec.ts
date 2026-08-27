@@ -100,6 +100,11 @@ test('Inspect, localized impact matrix, occurrence navigation and compact report
   await expect(impactMatrix.getByRole('row', { name: /Fallos 2/ })).toBeVisible();
   await expect(impactMatrix.getByRole('columnheader', { name: 'crítico' })).toBeVisible();
 
+  const scanRule = panel.locator('.scan-rule-group').first();
+  await expect(scanRule).not.toHaveAttribute('open', '');
+  await scanRule.locator(':scope > summary').click();
+  await expect(scanRule).toHaveAttribute('open', '');
+
   const inspect = panel.getByRole('button', {
     name: /Highlight element on page|Destacar elemento en la página/,
   }).first();
@@ -135,6 +140,10 @@ test('Inspect, localized impact matrix, occurrence navigation and compact report
   expect(inset[1]).not.toBeNull();
   expect(inset[1]!.x).toBeGreaterThan(inset[0]!.x);
   expect(inset[1]!.x + inset[1]!.width).toBeLessThan(inset[0]!.x + inset[0]!.width);
+
+  await expect(reportRule).not.toHaveAttribute('open', '');
+  await reportRule.locator(':scope > summary').click();
+  await expect(reportRule).toHaveAttribute('open', '');
 
   const reportNext = panel.getByRole('button', {
     name: /Next affected element|Siguiente elemento afectado/,

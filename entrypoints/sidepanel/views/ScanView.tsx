@@ -265,6 +265,7 @@ export function ScanView({
                 aria-selected={filter === tab.id}
                 aria-controls={`scan-panel-${tab.id}`}
                 className={filter === tab.id ? 'active' : ''}
+                disabled={tab.count === 0}
                 onClick={() => setFilter(tab.id)}
               >
                 <span>{tab.label}</span>
@@ -319,13 +320,12 @@ export function ScanView({
               </div>
             ) : (
               <div className="scan-rule-list">
-                {criterionGroups.map((issues, index) => (
+                {criterionGroups.map((issues) => (
                   <FindingRuleAccordion
                     issues={issues}
                     level={level}
                     language={language}
                     onLocate={onLocate}
-                    defaultOpen={index === 0}
                     key={issues[0]!.ruleId}
                   />
                 ))}
@@ -343,13 +343,11 @@ function FindingRuleAccordion({
   level,
   language,
   onLocate,
-  defaultOpen,
 }: {
   issues: ScanIssue[];
   level: ExplanationLevel;
   language: AppLanguage;
   onLocate: (selector: string) => void | Promise<void>;
-  defaultOpen: boolean;
 }) {
   const [index, setIndex] = useState(0);
   const first = issues[0]!;
@@ -362,10 +360,7 @@ function FindingRuleAccordion({
   }, [index, issues.length]);
 
   return (
-    <details
-      className={`scan-rule-group outcome-${first.outcome} severity-${first.severity}`}
-      open={defaultOpen && first.outcome !== 'review' ? true : undefined}
-    >
+    <details className={`scan-rule-group outcome-${first.outcome} severity-${first.severity}`}>
       <summary>
         <span className="scan-rule-statuses">
           <span className={`scan-rule-outcome ${first.outcome}`}>{outcomeLabel(first.outcome, level, language)}</span>
