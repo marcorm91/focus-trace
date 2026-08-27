@@ -176,12 +176,27 @@ export interface HeadingSnapshot {
   signals: HeadingSignal[];
 }
 
+export interface PageScanScope {
+  type: 'page';
+}
+
+export interface ComponentScanScope {
+  type: 'component';
+  selector: string;
+  tag: string;
+  role?: string;
+  label?: string;
+}
+
+export type ScanScope = PageScanScope | ComponentScanScope;
+
 export interface ScanResult {
   engine: 'FocusTrace Rules';
   standard: 'WCAG 2.2';
   url: string;
   title: string;
   scannedAt: number;
+  scope?: ScanScope;
   issues: ScanIssue[];
   review: ScanIssue[];
   warnings: ScanIssue[];
@@ -225,6 +240,6 @@ export type ExtensionMessage =
   | { type: 'FOCUSTRACE_SET_RECORDING_STATE'; tabId: number; enabled: boolean; startedAt?: number }
   | { type: 'FOCUSTRACE_CONFIGURE_BREAKPOINTS'; breakpoints: RuntimeBreakpointSettings }
   | { type: 'FOCUSTRACE_SAVE_BREAKPOINTS'; tabId: number; breakpoints: RuntimeBreakpointSettings }
-  | { type: 'FOCUSTRACE_RUN_SCAN' }
+  | { type: 'FOCUSTRACE_RUN_SCAN'; scope?: ComponentScanScope }
   | { type: 'FOCUSTRACE_RUN_FOCUS_WALK'; options?: FocusWalkOptions }
   | { type: 'FOCUSTRACE_SAVE_SCAN'; tabId: number; scan: ScanResult };
