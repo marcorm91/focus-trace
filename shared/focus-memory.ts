@@ -52,7 +52,7 @@ export interface FocusMemoryComparison {
 }
 
 export const DEFAULT_FOCUS_MEMORY_SETTINGS: FocusMemorySettings = {
-  enabled: true,
+  enabled: false,
 };
 
 export const EMPTY_FOCUS_MEMORY_STORE: FocusMemoryStore = {
@@ -173,7 +173,7 @@ export function normalizeFocusMemorySettings(value: unknown): FocusMemorySetting
   if (!value || typeof value !== 'object') return { ...DEFAULT_FOCUS_MEMORY_SETTINGS };
   const candidate = value as Partial<FocusMemorySettings>;
   return {
-    enabled: candidate.enabled !== false,
+    enabled: candidate.enabled === true,
     ...(typeof candidate.ignoreScansAtOrBefore === 'number' && Number.isFinite(candidate.ignoreScansAtOrBefore)
       ? { ignoreScansAtOrBefore: candidate.ignoreScansAtOrBefore }
       : {}),
