@@ -127,6 +127,10 @@ export default defineBackground(() => {
 
     if (message.type === 'FOCUSTRACE_GET_SESSION') return getSession(message.tabId);
 
+    if (message.type === 'FOCUSTRACE_FLUSH_SESSION') {
+      return serializeTabWrite(message.tabId, () => getSession(message.tabId));
+    }
+
     if (message.type === 'FOCUSTRACE_CLEAR_SESSION') {
       return serializeTabWrite(message.tabId, async () => {
         const current = await getSession(message.tabId);
