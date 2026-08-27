@@ -1,0 +1,78 @@
+.breakpoint-panel {
+  display: none;
+}
+
+.settings-trace-group {
+  display: grid;
+  gap: 12px;
+}
+
+.settings-trace-heading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.settings-trace-heading > strong {
+  font-size: 0.95rem;
+}
+
+.settings-trace-heading > span {
+  color: var(--muted, #5f6672);
+  font-size: 0.82rem;
+  white-space: nowrap;
+}
+
+.settings-breakpoint-list {
+  display: grid;
+  gap: 8px;
+}
+
+.settings-breakpoint-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 10px 11px;
+  border: 1px solid var(--border, #c8cbd1);
+  border-radius: var(--radius-sm, 6px);
+  background: var(--surface, #fff);
+  cursor: pointer;
+}
+
+.settings-breakpoint-option:hover {
+  border-color: var(--accent, #1769e0);
+}
+
+.settings-breakpoint-option:has(input:focus-visible) {
+  outline: 2px solid var(--focus, #1769e0);
+  outline-offset: 2px;
+}
+
+.settings-breakpoint-option input {
+  margin-top: 3px;
+}
+
+.settings-breakpoint-option > span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.settings-breakpoint-option strong,
+.settings-breakpoint-option small {
+  display: block;
+}
+
+.settings-breakpoint-option small {
+  color: var(--muted, #5f6672);
+  line-height: 1.45;
+}
+
+.settings-breakpoint-note {
+  margin: 0;
+  color: var(--muted, #5f6672);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
