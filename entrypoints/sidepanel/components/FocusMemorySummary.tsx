@@ -114,7 +114,7 @@ export function FocusMemorySummary({ scan, language }: { scan: ScanResult; langu
     return (
       <section className="focus-memory is-loading" aria-live="polite">
         <strong>FocusTrace Memory</strong>
-        <p>{tr(language, 'Comparing with local history…', 'Comparando con el historial local…')}</p>
+        <p>{tr(language, 'Checking local Memory settings…', 'Comprobando los ajustes locales de Memory…')}</p>
       </section>
     );
   }
@@ -125,17 +125,14 @@ export function FocusMemorySummary({ scan, language }: { scan: ScanResult; langu
         <div className="focus-memory-heading">
           <div>
             <small>FocusTrace Memory</small>
-            <strong>{tr(language, 'Memory paused', 'Memoria pausada')}</strong>
+            <strong>{tr(language, 'Memory is off', 'Memory está desactivado')}</strong>
           </div>
         </div>
         <p>{tr(
           language,
-          'Existing local history is kept, but new scans are not being added to it.',
-          'El historial local existente se conserva, pero los nuevos análisis no se están añadiendo.',
+          'Accessibility history is disabled by default. Enable “Remember accessibility history” in Settings if you want future scans to be compared locally.',
+          'El historial de accesibilidad está deshabilitado por defecto. Activa “Recordar historial de accesibilidad” en Ajustes si quieres comparar localmente los próximos análisis.',
         )}</p>
-        <button type="button" onClick={() => void memory.setEnabled(true)}>
-          {tr(language, 'Resume memory', 'Reanudar memoria')}
-        </button>
       </section>
     );
   }
@@ -146,13 +143,13 @@ export function FocusMemorySummary({ scan, language }: { scan: ScanResult; langu
         <div className="focus-memory-heading">
           <div>
             <small>FocusTrace Memory</small>
-            <strong>{tr(language, 'Memory cleared', 'Memoria borrada')}</strong>
+            <strong>{tr(language, 'Ready for the next scan', 'Preparado para el próximo análisis')}</strong>
           </div>
         </div>
         <p>{tr(
           language,
-          'Run another analysis when you want to create a new local baseline. This current scan will not be re-added automatically.',
-          'Ejecuta otro análisis cuando quieras crear una nueva línea base local. Este análisis actual no se volverá a añadir automáticamente.',
+          'Memory is enabled. Run another analysis to create a new local baseline; the analysis that was already open before opt-in will not be added retroactively.',
+          'Memory está activado. Ejecuta otro análisis para crear una nueva línea base local; el análisis que ya estaba abierto antes de activarlo no se añadirá de forma retroactiva.',
         )}</p>
       </section>
     );
@@ -204,9 +201,6 @@ export function FocusMemorySummary({ scan, language }: { scan: ScanResult; langu
           )}
         </small>
         <div>
-          <button type="button" onClick={() => void memory.setEnabled(false)}>
-            {tr(language, 'Pause', 'Pausar')}
-          </button>
           <button type="button" onClick={() => void clearMemory()}>
             {tr(language, 'Clear memory', 'Borrar memoria')}
           </button>
