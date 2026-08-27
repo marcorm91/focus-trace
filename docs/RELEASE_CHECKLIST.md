@@ -75,18 +75,49 @@ Firefox uses `sidebar_action` generated from the WXT sidepanel entrypoint rather
 
 Production builds must not request global host permissions. The localhost host permission used by E2E is test-only.
 
+Confirm [`PRIVACY.md`](../PRIVACY.md) still matches the actual product behavior, especially storage, optional screenshot evidence, external services and any future sponsorship integration.
+
 Before changing repository visibility, scan the **entire Git history**, not only the current tree, with a dedicated secret scanner. This repository checklist does not claim that historical commits have already been scanned. Example local tools include gitleaks or TruffleHog.
 
 Also review generated build artifacts before attaching them to a GitHub release.
 
+## Licensing and history review
+
+- Confirm the intended current project license is `GPL-3.0-only` in `LICENSE`, `README.md` and package metadata.
+- Confirm the project has the right to distribute all first-party code and assets under that license.
+- Review third-party dependencies, copied snippets, generated standards snapshots and bundled assets for compatible licenses and required attribution.
+- Review contributor history before accepting a relicense if any code was authored by people who have not granted compatible rights.
+- The repository historically contained an MIT license. Changing the current project license does not revoke permissions already granted for historical versions that were actually distributed under MIT.
+- Before making the full Git history public, decide deliberately whether to publish that historical license trail or publish a clean/squashed public history from a GPLv3-licensed release point. Do not rewrite shared history casually after public contributions begin.
+- Confirm [`TRADEMARKS.md`](../TRADEMARKS.md) matches the desired treatment of the FocusTrace name and logo and does not imply a registered mark where none has been established.
+
+A license change is a legal/project-governance decision, not merely a code-style change. If ownership or relicensing rights are unclear, resolve them before public release.
+
+## Repository privacy audit
+
+Before changing visibility:
+
+- scan all reachable Git objects for credentials, API keys, tokens, private certificates and environment files;
+- review commit author names/emails and issue/PR content for personal information you do not intend to publish;
+- review GitHub Actions logs, artifacts and release assets that may become visible or linked from a public repository;
+- verify `.gitignore` covers local environment files, keys, generated archives and test artifacts;
+- rotate any credential that has ever been committed, even if it was later removed from the current tree;
+- verify development fixtures do not contain copied customer/client data or proprietary page content.
+
 ## Public repository readiness
 
-- Confirm `README.md`, `LICENSE`, `CONTRIBUTING.md` and `SECURITY.md` reflect the release.
+- Confirm `README.md`, `LICENSE`, `CONTRIBUTING.md`, `SECURITY.md`, `PRIVACY.md` and `TRADEMARKS.md` reflect the release.
 - Confirm the README does not overclaim full WCAG conformance or browser support.
 - Confirm GitHub description, website and topics are set.
 - Add current screenshots or a short demo of Analyze and Trace.
 - Verify author/contact links.
+- Enable branch protection or an equivalent ruleset for `main`.
+- Require the relevant CI checks before merge.
 - Enable private vulnerability reporting after the repository becomes public when available.
+- Review Dependabot/security-alert settings and enable the ones appropriate for a public extension project.
+- Review issue and pull-request templates for public contributors.
+- Decide whether discussions should happen in GitHub Issues, Discussions or both.
+- Do not add a funding configuration until the actual sponsorship destination is configured and ready to receive contributions.
 
 ## Release
 
