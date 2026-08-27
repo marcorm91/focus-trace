@@ -10,6 +10,7 @@ interface RuleExecution { issues: ScanIssue[]; review: ScanIssue[]; warnings: Sc
 type ScanRoot = Document | Element;
 const emptyExecution = (): RuleExecution => ({ issues: [], review: [], warnings: [], passes: 0 });
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+const COMPONENT_SCAN_SCOPE_ATTRIBUTE = 'data-focustrace-scan-component';
 
 function scopedElements(root: ScanRoot, selector: string): Element[] {
   const descendants = [...root.querySelectorAll(selector)];
@@ -18,6 +19,25 @@ function scopedElements(root: ScanRoot, selector: string): Element[] {
 
 function containsInScope(root: ScanRoot, element: Element): boolean {
   return root instanceof Document || root === element || root.contains(element);
+}
+
+function consumePendingComponentScope(): ComponentScanScope | undefined {
+  const raw = document.documentElement.getAttribute(COMPONENT_SCAN_SCOPE_ATTRIBUTE);
+  if (!raw) return undefined;
+  document.documentElement.removeAttribute(COMPONENT_SCAN_SCOPE_ATTRIBUTE);
+  try {
+    const parsed = JSON.parse(raw) as Partial<ComponentScanScope>;
+    if (parsed.type !== 'component' || typeof parsed.selector !== 'string' || typeof parsed.tag !== 'string') return undefined;
+    return {
+      type: 'component',
+      selector: parsed.selector,
+      tag: parsed.tag,
+      ...(typeof parsed.role === 'string' && parsed.role ? { role: parsed.role } : {}),
+      ...(typeof parsed.label === 'string' && parsed.label ? { label: parsed.label } : {}),
+    };
+  } catch {
+    return undefined;
+  }
 }
 
 function finding(
@@ -364,7 +384,7 @@ function runHeadingJumps(): RuleExecution {
   return result;
 }
 
-export function runFocusTraceScan(scope?: ComponentScanScope): ScanResult {
+export function runFocusTraceScan(scope: ComponentScanScope | undefined = consumePendingComponentScope()): ScanResult {
   const root = scope ? document.querySelector(scope.selector) : document;
   if (!root) throw new Error('Selected scan component is no longer present on the page.');
 
