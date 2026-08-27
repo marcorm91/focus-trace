@@ -23,7 +23,7 @@ export async function pickComponentInPage(language: AppLanguage): Promise<Compon
     let current: Element | null = element;
     while (current && current !== document.documentElement) {
       const tag = current.tagName.toLowerCase();
-      const parent = current.parentElement;
+      const parent: HTMLElement | null = current.parentElement;
       if (!parent) {
         segments.unshift(tag);
         break;
