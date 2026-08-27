@@ -10,6 +10,7 @@ import {
   primaryFocusTransitionSemantic,
 } from '../../../lib/runtime/focus-transition-semantics';
 import { explanationForCause, humanInteractionTitle, type ExplanationLevel } from '../../../lib/runtime/explanations';
+import { focusDirectionLabel } from '../../../lib/runtime/runtime-presentation';
 import { tr, type AppLanguage } from '../../../shared/i18n';
 import type {
   ExtensionMessage,
@@ -294,6 +295,7 @@ export function TraceView({
                 const primaryCopy = primarySemantic
                   ? focusTransitionSemanticCopy(primarySemantic, language)
                   : undefined;
+                const directionLabel = focusDirectionLabel(step.direction, language);
                 const locateTitle = tr(
                   language,
                   `Locate focus step ${step.order} on the page`,
@@ -306,8 +308,8 @@ export function TraceView({
                   >
                     <span
                       className={`trace-direction direction-${step.direction}`}
-                      aria-label={step.direction}
-                      title={step.direction}
+                      aria-label={directionLabel}
+                      title={directionLabel}
                     >
                       {primarySemantic ? focusTransitionSemanticIcon(primarySemantic) : directionSymbol(step.direction)}
                     </span>

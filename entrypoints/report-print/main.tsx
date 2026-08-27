@@ -25,6 +25,7 @@ import type {
   Severity,
   StandardReference,
 } from '../../shared/types';
+import { localizedUserError } from '../../shared/user-facing-errors';
 import './style.css';
 import './visual-evidence.css';
 import './audit-guidance.css';
@@ -544,7 +545,7 @@ function App() {
       const date = new Date(generatedAt).toISOString().slice(0, 10);
       document.title = `FocusTrace-${host}-${date}`;
     }).catch((reason) => {
-      setError(reason instanceof Error ? reason.message : String(reason));
+      setError(localizedUserError(reason, language, 'report'));
     });
   }, []);
 

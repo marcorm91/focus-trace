@@ -28,6 +28,7 @@ import type {
   ScanResult,
   SessionState,
 } from '../../../shared/types';
+import { localizedUserError } from '../../../shared/user-facing-errors';
 
 type UseTraceActionsOptions = {
   tabId: number | undefined;
@@ -113,13 +114,14 @@ export function useTraceActions({
       setSession(next);
       onOpenTrace();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : String(reason));
+      setError(localizedUserError(reason, language, 'trace'));
     } finally {
       setBusy(false);
     }
   }, [
     breakpointSettings,
     ensureInjected,
+    language,
     onOpenTrace,
     resetFocusPathState,
     session.pausedByBreakpoint,
@@ -204,7 +206,7 @@ export function useTraceActions({
           enabled: false,
         } satisfies ExtensionMessage).catch(() => undefined);
       }
-      setError(reason instanceof Error ? reason.message : String(reason));
+      setError(localizedUserError(reason, language, 'focus-walk'));
     } finally {
       setBusy(false);
     }
@@ -244,9 +246,9 @@ export function useTraceActions({
       } satisfies ExtensionMessage)) as SessionState;
       setSession(next);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : String(reason));
+      setError(localizedUserError(reason, language, 'breakpoint'));
     }
-  }, [ensureInjected, session.breakpoints, setError, setSession, tabId]);
+  }, [ensureInjected, language, session.breakpoints, setError, setSession, tabId]);
 
   const interactions = useMemo(() => groupRuntimeInteractions(session.events), [session.events]);
   const focusGraph = useMemo(() => buildFocusGraph(session.events), [session.events]);
@@ -285,7 +287,7 @@ export function useTraceActions({
       setFocusPathVisible(true);
       setSelectedFocusSelector(selectedSelector);
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : String(reason));
+      setError(localizedUserError(reason, language, 'page-action'));
     }
   }, [
     focusPath,
@@ -310,9 +312,9 @@ export function useTraceActions({
       });
       resetFocusPathState();
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : String(reason));
+      setError(localizedUserError(reason, language, 'page-action'));
     }
-  }, [resetFocusPathState, setError, tabId]);
+  }, [language, resetFocusPathState, setError, tabId]);
 
   const toggleFocusPath = useCallback(async () => {
     if (focusPathVisible) {

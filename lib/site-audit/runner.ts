@@ -4,7 +4,9 @@ import {
   collectComponentIdentitiesInPage,
   reportComponentSelectors,
 } from '../report/component-identity';
+import type { AppLanguage } from '../../shared/i18n';
 import type { ExtensionMessage, ScanResult } from '../../shared/types';
+import { localizedUserError } from '../../shared/user-facing-errors';
 import type { SiteAuditPageResult, SitePageStructure } from './model';
 
 const PAGE_LOAD_TIMEOUT = 18_000;
@@ -150,10 +152,11 @@ export async function scanRepresentativePage(
     };
   } catch (reason) {
     if (reason instanceof DOMException && reason.name === 'AbortError') throw reason;
+    const language: AppLanguage = document.documentElement.lang === 'es' ? 'es' : 'en';
     return {
       url,
       routeFamilyId,
-      error: reason instanceof Error ? reason.message : String(reason),
+      error: localizedUserError(reason, language, 'site-audit-page'),
     };
   } finally {
     if (createdTabId != null) await browser.tabs.remove(createdTabId).catch(() => undefined);

@@ -10,6 +10,7 @@ import type {
   ScanResult,
   SessionState,
 } from '../../shared/types';
+import { localizedUserError } from '../../shared/user-facing-errors';
 import { usePageRuntimeAccess } from './hooks/usePageRuntimeAccess';
 import { useSidepanelLanguage } from './hooks/useSidepanelLanguage';
 import { useSidepanelSession } from './hooks/useSidepanelSession';
@@ -32,12 +33,15 @@ export default function App() {
   const [selectedFocusSelector, setSelectedFocusSelector] = useState<string>();
 
   const { language, updateLanguage } = useSidepanelLanguage();
+  const handleSessionError = useCallback((reason: unknown) => {
+    setError(localizedUserError(reason, language, 'session'));
+  }, [language]);
   const resetFocusPathState = useCallback(() => {
     setFocusPathVisible(false);
     setSelectedFocusSelector(undefined);
   }, []);
   const { tabId, session, setSession, refresh } = useSidepanelSession({
-    onError: setError,
+    onError: handleSessionError,
     onTabSelected: resetFocusPathState,
   });
   const { requestPageAccess, ensureInjected } = usePageRuntimeAccess(tabId, language);
@@ -61,11 +65,11 @@ export default function App() {
       setSession(next);
       setView('report');
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : String(reason));
+      setError(localizedUserError(reason, language, 'analysis'));
     } finally {
       setBusy(false);
     }
-  }, [ensureInjected, setSession, tabId]);
+  }, [ensureInjected, language, setSession, tabId]);
 
   const locateScanTarget = useCallback(async (selector: string) => {
     if (tabId == null) return;
@@ -92,7 +96,7 @@ export default function App() {
         ));
       }
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : String(reason));
+      setError(localizedUserError(reason, language, 'page-action'));
     }
   }, [language, requestPageAccess, resetFocusPathState, tabId]);
 
@@ -157,7 +161,7 @@ export default function App() {
       resetFocusPathState();
       setView('scan');
     } catch (reason) {
-      setError(reason instanceof Error ? reason.message : String(reason));
+      setError(localizedUserError(reason, language, 'reset'));
     } finally {
       setBusy(false);
     }
