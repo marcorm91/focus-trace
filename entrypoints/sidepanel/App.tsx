@@ -3,6 +3,7 @@ import { browser } from '#imports';
 import { type ExplanationLevel } from '../../lib/runtime/explanations';
 import { clearFocusPathInPage } from '../../lib/runtime/focus-path-overlay';
 import { clearHeadingOutlineInPage } from '../../lib/runtime/heading-overlay';
+import { pickComponentInPage, type ComponentPickerResult } from '../../lib/runtime/component-picker';
 import { locateScanTargetInPage } from '../../lib/runtime/scan-target-overlay';
 import { tr } from '../../shared/i18n';
 import type {
@@ -23,6 +24,14 @@ import { SettingsView } from './views/SettingsView';
 import { TraceView } from './views/TraceView';
 
 type View = 'scan' | 'trace' | 'headings' | 'report' | 'about' | 'settings';
+
+type NavigationItem = {
+  id: 'scan' | 'trace' | 'headings' | 'report';
+  label: string;
+  icon: string;
+  disabled?: boolean;
+  title?: string;
+};
 
 export default function App() {
   const [view, setView] = useState<View>('scan');
@@ -46,7 +55,18 @@ export default function App() {
   });
   const { requestPageAccess, ensureInjected } = usePageRuntimeAccess(tabId, language);
   const scan = session.scan;
+  const componentScan = scan?.scope?.type === 'component' ? scan.scope : undefined;
   const openTrace = useCallback(() => setView('trace'), []);
+
+  const saveScan = useCallback(async (result: ScanResult) => {
+    if (tabId == null) return;
+    const next = (await browser.runtime.sendMessage({
+      type: 'FOCUSTRACE_SAVE_SCAN',
+      tabId,
+      scan: result,
+    } satisfies ExtensionMessage)) as SessionState;
+    setSession(next);
+  }, [setSession, tabId]);
 
   const runScan = useCallback(async () => {
     if (tabId == null) return;
@@ -54,22 +74,65 @@ export default function App() {
     setError(undefined);
     try {
       await ensureInjected();
+      await browser.scripting.executeScript({
+        target: { tabId },
+        func: () => document.documentElement.removeAttribute('data-focustrace-scan-component'),
+      }).catch(() => undefined);
       const result = (await browser.tabs.sendMessage(tabId, {
         type: 'FOCUSTRACE_RUN_SCAN',
       } satisfies ExtensionMessage)) as ScanResult;
-      const next = (await browser.runtime.sendMessage({
-        type: 'FOCUSTRACE_SAVE_SCAN',
-        tabId,
-        scan: result,
-      } satisfies ExtensionMessage)) as SessionState;
-      setSession(next);
+      await saveScan(result);
       setView('report');
     } catch (reason) {
       setError(localizedUserError(reason, language, 'analysis'));
     } finally {
       setBusy(false);
     }
-  }, [ensureInjected, language, setSession, tabId]);
+  }, [ensureInjected, language, saveScan, tabId]);
+
+  const runComponentScan = useCallback(async () => {
+    if (tabId == null || session.recording) return;
+    setBusy(true);
+    setError(undefined);
+    try {
+      await ensureInjected();
+      const pickerResults = await browser.scripting.executeScript({
+        target: { tabId },
+        func: pickComponentInPage,
+        args: [language],
+      });
+      const picked = pickerResults[0]?.result as ComponentPickerResult | undefined;
+      if (!picked || picked.cancelled || !picked.scope) return;
+
+      const result = (await browser.tabs.sendMessage(tabId, {
+        type: 'FOCUSTRACE_RUN_SCAN',
+      } satisfies ExtensionMessage)) as ScanResult;
+      if (result.scope?.type !== 'component') {
+        throw new Error('FocusTrace component scope handoff failed.');
+      }
+      await saveScan(result);
+      setView('scan');
+    } catch (reason) {
+      const message = reason instanceof Error ? reason.message : String(reason);
+      if (message.includes('Selected scan component is no longer present')) {
+        setError(tr(
+          language,
+          'The selected component changed or disappeared before it could be analyzed. Select it again.',
+          'El componente seleccionado cambió o desapareció antes de poder analizarse. Vuelve a seleccionarlo.',
+        ));
+      } else if (message.includes('component scope handoff failed')) {
+        setError(tr(
+          language,
+          'FocusTrace could not keep the selected component scope. Select the component again.',
+          'FocusTrace no ha podido conservar el alcance del componente seleccionado. Vuelve a seleccionarlo.',
+        ));
+      } else {
+        setError(localizedUserError(reason, language, 'analysis'));
+      }
+    } finally {
+      setBusy(false);
+    }
+  }, [ensureInjected, language, saveScan, session.recording, tabId]);
 
   const locateScanTarget = useCallback(async (selector: string) => {
     if (tabId == null) return;
@@ -154,6 +217,8 @@ export default function App() {
         func: () => {
           document.querySelector('[data-focustrace-scan-highlight]')?.remove();
           document.querySelector('[data-focustrace-focus-walk-backdrop]')?.remove();
+          document.querySelector('[data-focustrace-component-picker]')?.remove();
+          document.documentElement.removeAttribute('data-focustrace-scan-component');
         },
       }).catch(() => undefined);
 
@@ -167,12 +232,30 @@ export default function App() {
     }
   }, [busy, language, resetFocusPathState, setSession, tabId]);
 
-  const navigation: Array<{ id: 'scan' | 'trace' | 'headings' | 'report'; label: string; icon: string }> = [
+  const navigation: NavigationItem[] = [
     { id: 'scan', label: tr(language, 'Review', 'Revisión'), icon: '⌕' },
     { id: 'trace', label: 'Trace', icon: '◎' },
-    { id: 'headings', label: tr(language, 'Headings', 'Encabezados'), icon: 'H' },
+    {
+      id: 'headings',
+      label: tr(language, 'Headings', 'Encabezados'),
+      icon: 'H',
+      disabled: Boolean(componentScan),
+      ...(componentScan
+        ? {
+            title: tr(
+              language,
+              'Heading outline is available for full-page scans.',
+              'El esquema de encabezados está disponible en análisis de página completa.',
+            ),
+          }
+        : {}),
+    },
     { id: 'report', label: tr(language, 'Report', 'Informe'), icon: '▤' },
   ];
+
+  const currentAnalysisLabel = componentScan
+    ? `${tr(language, 'Component', 'Componente')}: ${componentScan.label || componentScan.tag}`
+    : scan?.title || scan?.url;
 
   return (
     <main className="app-shell">
@@ -227,19 +310,33 @@ export default function App() {
                   'Return to the page and interact normally. Recording continues while this panel is not focused.',
                   'Vuelve a la página e interactúa con normalidad. La grabación continúa aunque este panel no tenga el foco.',
                 )
-              : scan
-                ? scan.title || scan.url
+              : currentAnalysisLabel
+                ? currentAnalysisLabel
                 : tr(
                     language,
-                    'Analyze the page or trace a real keyboard journey.',
-                    'Analiza la página o traza un recorrido real con teclado.',
+                    'Analyze the page, select a component or trace a real keyboard journey.',
+                    'Analiza la página, selecciona un componente o traza un recorrido real con teclado.',
                   )}
           </p>
         </div>
         <div className="quick-actions">
-          <button className="primary scan-action" type="button" onClick={runScan} disabled={busy || tabId == null}>
+          <button className="primary scan-action" type="button" onClick={() => void runScan()} disabled={busy || tabId == null}>
             <span aria-hidden="true">⌕</span>
             {tr(language, 'Analyze this page', 'Analizar esta página')}
+          </button>
+          <button
+            className="component-scan-action"
+            type="button"
+            title={tr(
+              language,
+              'Select a DOM region and analyze only that component.',
+              'Selecciona una región del DOM y analiza únicamente ese componente.',
+            )}
+            onClick={() => void runComponentScan()}
+            disabled={busy || tabId == null || session.recording}
+          >
+            <span aria-hidden="true">▱</span>
+            {tr(language, 'Select component', 'Seleccionar componente')}
           </button>
           <button
             className="focus-walk-action"
@@ -263,6 +360,8 @@ export default function App() {
             type="button"
             className={view === item.id ? 'active' : ''}
             aria-current={view === item.id ? 'page' : undefined}
+            disabled={item.disabled}
+            title={item.title}
             onClick={() => setView(item.id)}
           >
             <span aria-hidden="true">{item.icon}</span>
@@ -272,7 +371,14 @@ export default function App() {
       </nav>
 
       {view === 'scan' && (
-        <ScanView scan={scan} level={explanationLevel} language={language} onLocate={locateScanTarget} />
+        <ScanView
+          scan={scan}
+          level={explanationLevel}
+          language={language}
+          onLocate={locateScanTarget}
+          onAnalyzePage={runScan}
+          onSelectComponent={runComponentScan}
+        />
       )}
       {view === 'trace' && (
         <TraceView
