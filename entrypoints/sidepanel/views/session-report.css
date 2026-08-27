@@ -186,8 +186,7 @@
 }
 
 .trace-story-head small,
-.trace-story-result small,
-.report-contrast-evidence small {
+.trace-story-result small {
   color: var(--ft-muted, GrayText);
   font-size: 8px;
   font-weight: 800;
@@ -267,8 +266,7 @@
   background: var(--ft-brand-soft, color-mix(in srgb, Highlight 6%, Canvas));
 }
 
-.trace-story > button,
-.report-finding > button {
+.trace-story > button {
   min-height: 34px;
   border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 14%, transparent));
   border-radius: 8px;
@@ -300,53 +298,6 @@
 
 .report-category-summary strong {
   font-size: 10px;
-}
-
-.report-contrast-evidence {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 6px;
-  padding: 8px;
-  border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 10%, transparent));
-  border-radius: 8px;
-  background: var(--ft-surface-subtle, color-mix(in srgb, CanvasText 3%, Canvas));
-}
-
-.report-contrast-evidence > span,
-.report-color-fix {
-  min-width: 0;
-  display: grid;
-  gap: 2px;
-}
-
-.report-contrast-evidence strong {
-  font-size: 12px;
-}
-
-.report-contrast-evidence em {
-  color: var(--ft-muted, GrayText);
-  font-size: 8px;
-  font-style: normal;
-}
-
-.report-contrast-evidence code {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  font-size: 9px;
-}
-
-.report-color-fix {
-  grid-column: 1 / -1;
-  padding: 7px;
-  border-radius: 6px;
-  background: color-mix(in srgb, #08745b 8%, Canvas);
-}
-
-.report-contrast-evidence > p {
-  grid-column: 1 / -1;
-  margin: 0;
-  color: var(--ft-muted, GrayText);
-  font-size: 9px;
 }
 
 .report-scope-note {
@@ -398,14 +349,5 @@
 
   .report-scoreline {
     grid-template-columns: repeat(2, minmax(0, 1fr));
-  }
-
-  .report-contrast-evidence {
-    grid-template-columns: 1fr;
-  }
-
-  .report-color-fix,
-  .report-contrast-evidence > p {
-    grid-column: 1;
   }
 }

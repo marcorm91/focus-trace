@@ -1,6 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
 import { browser } from '#imports';
-import { suggestAccessibleForeground } from '../../../lib/audit/contrast';
 import { type ReportComponentIdentity } from '../../../lib/report/component-identity';
 import { buildSessionReportModel } from '../../../lib/report/session-report';
 import { buildTextReportFilename, buildTextSessionReport } from '../../../lib/report/text-report';
@@ -9,9 +8,10 @@ import {
   collectReportComponents,
   storePrintableReportEvidence,
 } from '../../../lib/report/visual-evidence';
-import { localizedScanIssue, tr, type AppLanguage } from '../../../shared/i18n';
-import type { HeadingSignal, RuntimeEvent, ScanIssue, ScanResult } from '../../../shared/types';
+import { tr, type AppLanguage } from '../../../shared/i18n';
+import type { HeadingSignal, RuntimeEvent, ScanResult } from '../../../shared/types';
 import { ReportComponentIdentityView } from '../components/ReportComponentIdentity';
+import { ReportScanCompact } from '../components/ReportScanCompact';
 import './session-report.css';
 import './report-export.css';
 
@@ -21,43 +21,15 @@ function headingSignalLabel(signal: HeadingSignal, language: AppLanguage): strin
   return tr(language, 'Multiple H1', 'Varios H1');
 }
 
-function findingGroup(
-  scan: ScanResult,
-  language: AppLanguage,
-): Array<{ id: string; label: string; tone: string; issues: ScanIssue[] }> {
-  return [
-    { id: 'fail', label: tr(language, 'Failures', 'Fallos'), tone: 'fail', issues: scan.issues },
-    { id: 'review', label: tr(language, 'Review', 'Revisar'), tone: 'review', issues: scan.review },
-    { id: 'warning', label: tr(language, 'Warnings', 'Avisos'), tone: 'warning', issues: scan.warnings ?? [] },
-  ];
-}
-
-function ContrastReportEvidence({ issue, language }: { issue: ScanIssue; language: AppLanguage }) {
-  if (!issue.contrast) return null;
-  const contrast = issue.contrast;
-  const suggestion = issue.outcome === 'fail' && contrast.foreground && contrast.background
-    ? suggestAccessibleForeground(contrast.foreground, contrast.background, contrast.requiredRatio)
-    : undefined;
-
-  return (
-    <div className="report-contrast-evidence">
-      <span>
-        <small>{tr(language, 'Contrast', 'Contraste')}</small>
-        <strong>{contrast.ratio != null ? `${contrast.ratio}:1` : tr(language, 'Review', 'Revisar')}</strong>
-        <em>{tr(language, `Required ${contrast.requiredRatio}:1`, `Requerido ${contrast.requiredRatio}:1`)}</em>
-      </span>
-      {contrast.foreground && <code>{contrast.foreground}</code>}
-      {contrast.background && <code>{contrast.background}</code>}
-      {suggestion && (
-        <span className="report-color-fix">
-          <small>{tr(language, 'Suggested', 'Sugerido')}</small>
-          <strong>{suggestion.hex}</strong>
-          <em>{suggestion.rgb} · {suggestion.ratio}:1</em>
-        </span>
-      )}
-      {contrast.reason && <p>{contrast.reason}</p>}
-    </div>
-  );
+function suggestionSourceLabel(source: string, language: AppLanguage): string {
+  const normalized = source.trim().toLocaleLowerCase();
+  if (normalized === 'analysis' || normalized === 'análisis') return tr(language, 'Analysis', 'Análisis');
+  if (normalized === 'focus' || normalized === 'runtime focus' || normalized === 'foco runtime') {
+    return tr(language, 'Runtime focus', 'Foco runtime');
+  }
+  if (normalized === 'headings' || normalized === 'encabezados') return tr(language, 'Headings', 'Encabezados');
+  if (normalized === 'coverage' || normalized === 'cobertura') return tr(language, 'Coverage', 'Cobertura');
+  return source;
 }
 
 export function SessionReportView({
@@ -236,7 +208,7 @@ export function SessionReportView({
               <ol className="report-priority-list">
                 {highPriority.map((suggestion) => (
                   <li key={suggestion.id}>
-                    <span>{suggestion.source}</span>
+                    <span>{suggestionSourceLabel(suggestion.source, language)}</span>
                     <strong>{suggestion.title}</strong>
                     <p>{suggestion.detail}</p>
                   </li>
@@ -345,43 +317,7 @@ export function SessionReportView({
               </div>
             )}
 
-            {findingGroup(scan, language).map((group) => (
-              <details className="report-group" key={group.id} open={group.id === 'fail' && group.issues.length > 0}>
-                <summary>
-                  <span>{group.label}</span>
-                  <strong>{group.issues.length}</strong>
-                </summary>
-                {group.issues.length ? (
-                  <div className="report-finding-list">
-                    {group.issues.map((issue) => {
-                      const copy = localizedScanIssue(issue, language);
-                      const target = issue.targets[0];
-                      const component = target ? componentMap.get(target) : undefined;
-                      return (
-                        <article className="report-finding" key={issue.id}>
-                          <div>
-                            <span className={`outcome ${group.tone}`}>{group.label}</span>
-                            <code>{issue.ruleId}</code>
-                          </div>
-                          <h4>{copy.title}</h4>
-                          <ReportComponentIdentityView component={component} language={language} />
-                          <p>{copy.description}</p>
-                          <ContrastReportEvidence issue={issue} language={language} />
-                          {copy.evidence && <p className="evidence">{copy.evidence}</p>}
-                          {target && (
-                            <button type="button" onClick={() => void onLocate(target)}>
-                              {tr(language, 'Review on page', 'Revisar en la página')}
-                            </button>
-                          )}
-                        </article>
-                      );
-                    })}
-                  </div>
-                ) : (
-                  <p className="report-empty-line">{tr(language, 'No findings in this group.', 'No hay hallazgos en este grupo.')}</p>
-                )}
-              </details>
-            ))}
+            <ReportScanCompact scan={scan} language={language} />
           </section>
 
           <section className="report-section" aria-labelledby="report-headings-title">
@@ -429,7 +365,7 @@ export function SessionReportView({
                   <li className={`priority-${suggestion.priority}`} key={suggestion.id}>
                     <div>
                       <span>{suggestion.priority === 'high' ? tr(language, 'High', 'Alta') : suggestion.priority === 'medium' ? tr(language, 'Medium', 'Media') : tr(language, 'Coverage', 'Cobertura')}</span>
-                      <small>{suggestion.source}</small>
+                      <small>{suggestionSourceLabel(suggestion.source, language)}</small>
                     </div>
                     <strong>{suggestion.title}</strong>
                     <p>{suggestion.detail}</p>

@@ -1,9 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { createPortal } from 'react-dom';
 import { browser } from '#imports';
 import { locateScanTargetInPage } from '../../../lib/runtime/scan-target-overlay';
 import { localizedScanIssue, tr, type AppLanguage } from '../../../shared/i18n';
-import type { ExtensionMessage, FindingOutcome, ScanIssue, ScanResult, SessionState } from '../../../shared/types';
+import type { FindingOutcome, ScanIssue, ScanResult } from '../../../shared/types';
 
 const PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'];
 
@@ -14,101 +13,6 @@ type ReportGroup = {
   label: string;
   findings: ScanIssue[];
 };
-
-function languageFromDocument(): AppLanguage {
-  return document.documentElement.lang === 'es' ? 'es' : 'en';
-}
-
-function useAppLanguage(): AppLanguage {
-  const [language, setLanguage] = useState<AppLanguage>(languageFromDocument);
-
-  useEffect(() => {
-    const sync = () => setLanguage(languageFromDocument());
-    const observer = new MutationObserver(sync);
-    observer.observe(document.documentElement, { attributes: true, attributeFilter: ['lang'] });
-    window.requestAnimationFrame(sync);
-    return () => observer.disconnect();
-  }, []);
-
-  return language;
-}
-
-function useActiveScan(): ScanResult | undefined {
-  const [activeTabId, setActiveTabId] = useState<number>();
-  const [scan, setScan] = useState<ScanResult>();
-
-  useEffect(() => {
-    let cancelled = false;
-
-    const load = async (tabId?: number) => {
-      let resolvedTabId = tabId;
-      if (resolvedTabId == null) {
-        const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-        resolvedTabId = tab?.id;
-      }
-      if (resolvedTabId == null || cancelled) return;
-      const state = (await browser.runtime.sendMessage({
-        type: 'FOCUSTRACE_GET_SESSION',
-        tabId: resolvedTabId,
-      } satisfies ExtensionMessage)) as SessionState;
-      if (cancelled) return;
-      setActiveTabId(resolvedTabId);
-      setScan(state.scan);
-    };
-
-    const activated = ({ tabId }: { tabId: number }) => {
-      setActiveTabId(tabId);
-      void load(tabId).catch(() => setScan(undefined));
-    };
-    const updated = (message: ExtensionMessage) => {
-      if (message.type !== 'FOCUSTRACE_SESSION_UPDATED') return;
-      if (activeTabId != null && message.state.tabId !== activeTabId) return;
-      setScan(message.state.scan);
-    };
-
-    void load().catch(() => setScan(undefined));
-    browser.tabs.onActivated.addListener(activated);
-    browser.runtime.onMessage.addListener(updated);
-    return () => {
-      cancelled = true;
-      browser.tabs.onActivated.removeListener(activated);
-      browser.runtime.onMessage.removeListener(updated);
-    };
-  }, [activeTabId]);
-
-  return scan;
-}
-
-function useReportHost(): Element | null {
-  const [host, setHost] = useState<Element | null>(null);
-
-  useEffect(() => {
-    const sync = () => {
-      const title = document.getElementById('report-analysis-title');
-      const section = title?.closest('.report-section');
-      if (!section) {
-        setHost(null);
-        return;
-      }
-
-      let target = section.querySelector('[data-focustrace-report-scan-host]');
-      if (!target) {
-        target = document.createElement('div');
-        target.setAttribute('data-focustrace-report-scan-host', 'true');
-        const firstLegacyGroup = section.querySelector('.report-group');
-        section.insertBefore(target, firstLegacyGroup ?? null);
-      }
-      setHost(target);
-    };
-
-    sync();
-    const observer = new MutationObserver(sync);
-    observer.observe(document.getElementById('root') ?? document.body, { childList: true, subtree: true });
-    return () => observer.disconnect();
-  }, []);
-
-  return host;
-}
 
 function groupedByRule(findings: ScanIssue[]): ScanIssue[][] {
   const groups = new Map<string, ScanIssue[]>();
@@ -212,32 +116,26 @@ function ReportRuleAccordion({
   );
 }
 
-export function ReportScanCompact() {
-  const language = useAppLanguage();
-  const scan = useActiveScan();
-  const host = useReportHost();
+export function ReportScanCompact({ scan, language }: { scan: ScanResult; language: AppLanguage }) {
   const [filter, setFilter] = useState<ReportFilter>('fail');
 
-  const groups = useMemo<ReportGroup[]>(() => scan ? [
+  const groups = useMemo<ReportGroup[]>(() => [
     { id: 'fail', label: outcomeLabel('fail', language), findings: scan.issues },
     { id: 'review', label: outcomeLabel('review', language), findings: scan.review },
     { id: 'warning', label: outcomeLabel('warning', language), findings: scan.warnings ?? [] },
-  ] : [], [language, scan]);
+  ], [language, scan]);
 
   useEffect(() => {
-    if (!scan) return;
     const selected = groups.find((group) => group.id === filter);
     if (selected?.findings.length) return;
     const fallback = groups.find((group) => group.findings.length > 0);
     if (fallback) setFilter(fallback.id);
-  }, [filter, groups, scan]);
-
-  if (!host || !scan) return null;
+  }, [filter, groups]);
 
   const active = groups.find((group) => group.id === filter) ?? groups[0]!;
   const ruleGroups = groupedByRule(active.findings);
 
-  return createPortal(
+  return (
     <div className="report-compact-scan">
       <div className="report-compact-tabs" role="tablist" aria-label={tr(language, 'Report finding type', 'Tipo de hallazgo del informe')}>
         {groups.map((group) => (
@@ -269,7 +167,6 @@ export function ReportScanCompact() {
       ) : (
         <p className="report-empty-line">{tr(language, 'No findings in this group.', 'No hay hallazgos en este grupo.')}</p>
       )}
-    </div>,
-    host,
+    </div>
   );
 }

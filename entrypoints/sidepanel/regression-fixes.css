@@ -46,24 +46,6 @@ html[data-ft-settings-open='true'] .topbar {
   box-shadow: none !important;
 }
 
-/* Findings and recommendations must read as separate cards, not one long block. */
-.report-finding-list {
-  gap: 10px !important;
-  padding-top: 8px !important;
-  border-top: 0 !important;
-}
-
-.report-finding {
-  padding: 12px !important;
-  border: 1.5px solid var(--ft-border-soft) !important;
-  border-radius: var(--ft-radius-md) !important;
-  background: var(--ft-surface) !important;
-}
-
-.report-finding:last-child {
-  border-bottom: 1.5px solid var(--ft-border-soft) !important;
-}
-
 .suggestion-list {
   gap: 10px !important;
 }

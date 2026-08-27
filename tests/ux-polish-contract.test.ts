@@ -96,11 +96,16 @@ describe('UX polish contract', () => {
     expect(followup).toContain('@media (max-width: 400px)');
   });
 
-  it('keeps report source labels localized instead of exposing internal source ids', () => {
+  it('localizes report source labels inside React instead of patching rendered DOM', () => {
     const entry = source('entrypoints/sidepanel/main.tsx');
-    expect(entry).toContain('localizedSuggestionSource');
-    expect(entry).toContain("spanish ? 'Análisis' : 'Analysis'");
-    expect(entry).toContain("spanish ? 'Encabezados' : 'Headings'");
+    const report = source('entrypoints/sidepanel/views/SessionReportView.tsx');
+
+    expect(report).toContain('suggestionSourceLabel');
+    expect(report).toContain("tr(language, 'Analysis', 'Análisis')");
+    expect(report).toContain("tr(language, 'Headings', 'Encabezados')");
+    expect(entry).not.toContain('localizedSuggestionSource');
+    expect(entry).not.toContain('syncDynamicPolish');
+    expect(entry).not.toContain('MutationObserver');
   });
 
   it('keeps the shipped severity model independent from third-party impact-comparison content', () => {
@@ -134,13 +139,27 @@ describe('UX polish contract', () => {
     expect(matrix).toContain('Ejemplo: un salto de nivel de encabezado');
   });
 
-  it('replaces the long report finding list with a filtered rule accordion surface', () => {
+  it('renders the compact report scan directly without a hidden legacy tree or portal host', () => {
     const component = source('entrypoints/sidepanel/components/ReportScanCompact.tsx');
+    const report = source('entrypoints/sidepanel/views/SessionReportView.tsx');
+    const entry = source('entrypoints/sidepanel/main.tsx');
     const polish = source('entrypoints/sidepanel/final-review-polish.css');
+
     expect(component).toContain('report-compact-tabs');
     expect(component).toContain('ReportRuleAccordion');
     expect(component).toContain('report-rule-pager');
-    expect(polish).toContain('.report-group');
-    expect(polish).toContain('display: none !important');
+    expect(component).toContain('scan: ScanResult');
+    expect(component).toContain('language: AppLanguage');
+    expect(component).not.toContain('createPortal');
+    expect(component).not.toContain('MutationObserver');
+    expect(component).not.toContain('FOCUSTRACE_GET_SESSION');
+    expect(component).not.toContain('data-focustrace-report-scan-host');
+
+    expect(report).toContain('<ReportScanCompact scan={scan} language={language} />');
+    expect(report).not.toContain('className="report-group"');
+    expect(report).not.toContain('className="report-finding"');
+    expect(entry).not.toContain('<ReportScanCompact />');
+    expect(polish).not.toContain('.report-group {');
+    expect(polish).not.toContain('data-focustrace-report-scan-host');
   });
 });
