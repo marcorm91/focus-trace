@@ -24,6 +24,7 @@ import { captureSiteAuditFindingVisual } from '../../lib/site-audit/visual-evide
 import { localizedScanIssue, localizedSeverity, type AppLanguage } from '../../shared/i18n';
 import { countBySeverity, severityRank } from '../../shared/severity';
 import type { FindingOutcome, Severity } from '../../shared/types';
+import { localizedUserError } from '../../shared/user-facing-errors';
 import './style.css';
 
 const DISPLAY_SEVERITIES: Severity[] = ['critical', 'serious', 'moderate', 'minor'];
@@ -150,7 +151,7 @@ function App() {
       if (reason instanceof DOMException && reason.name === 'AbortError') {
         setStatus('cancelled');
       } else {
-        setError(reason instanceof Error ? reason.message : String(reason));
+        setError(localizedUserError(reason, language, 'site-audit'));
         setStatus('error');
       }
     } finally {
