@@ -20,6 +20,7 @@ import './scan-settings.css';
 import './settings-scale.css';
 import './scan-accordion.css';
 import './workspace-layout.css';
+import './component-scan.css';
 import './heading-tree-visual.css';
 import './modern-icons.css';
 import './control-states.css';

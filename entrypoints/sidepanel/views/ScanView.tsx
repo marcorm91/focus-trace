@@ -116,11 +116,15 @@ export function ScanView({
   level,
   language,
   onLocate,
+  onAnalyzePage,
+  onSelectComponent,
 }: {
   scan?: ScanResult | undefined;
   level: ExplanationLevel;
   language: AppLanguage;
   onLocate: (selector: string) => void | Promise<void>;
+  onAnalyzePage: () => void | Promise<void>;
+  onSelectComponent: () => void | Promise<void>;
 }) {
   const [filter, setFilter] = useState<ScanFilter>('fail');
   const [category, setCategory] = useState<ScanCategory>('all');
@@ -185,8 +189,8 @@ export function ScanView({
           title={tr(language, 'No scan yet', 'Todavía no hay análisis')}
           text={tr(
             language,
-            'Choose Analyze page to run the local FocusTrace WCAG rule engine.',
-            'Pulsa Analizar página para ejecutar localmente el motor de reglas WCAG de FocusTrace.',
+            'Analyze the full page or select a component to run the local FocusTrace WCAG rule engine.',
+            'Analiza la página completa o selecciona un componente para ejecutar localmente el motor de reglas WCAG de FocusTrace.',
           )}
         />
       </>
@@ -200,6 +204,7 @@ export function ScanView({
     : currentOutcomeFindings.filter((issue) => issue.severity === severityFilter);
   const criterionGroups = groupedByCriterion(findings);
   const totalFindings = allFindings.length;
+  const componentScope = scan.scope?.type === 'component' ? scan.scope : undefined;
   const tabs: Array<{ id: ScanFilter; label: string; count: number }> = [
     { id: 'fail', label: tr(language, 'Failures', 'Fallos'), count: categoryFilteredGroups.fail.length },
     { id: 'review', label: tr(language, 'Review', 'Revisión'), count: categoryFilteredGroups.review.length },
@@ -214,13 +219,36 @@ export function ScanView({
     <section className="panel" aria-labelledby="scan-title">
       <div className="section-heading">
         <div>
-          <h2 id="scan-title">{tr(language, 'Full page scan', 'Barrido completo de página')}</h2>
-          <p title={scan.url}>{scan.title || scan.url}</p>
+          <h2 id="scan-title">
+            {componentScope
+              ? tr(language, 'Component scan', 'Análisis de componente')
+              : tr(language, 'Full page scan', 'Barrido completo de página')}
+          </h2>
+          <p title={scan.url}>{componentScope?.label || scan.title || scan.url}</p>
         </div>
         <div className="scan-heading-actions">
           <SiteAuditLauncher language={language} />
         </div>
       </div>
+
+      {componentScope && (
+        <div className="scan-scope-banner">
+          <div className="scan-scope-copy">
+            <small>{tr(language, 'Analyzing component', 'Analizando componente')}</small>
+            <strong>{componentScope.label || componentScope.tag}</strong>
+            <span>{componentScope.tag}{componentScope.role ? ` · role=${componentScope.role}` : ''}</span>
+            <code>{componentScope.selector}</code>
+          </div>
+          <div className="scan-scope-actions">
+            <button type="button" onClick={() => void onSelectComponent()}>
+              {tr(language, 'Change component', 'Cambiar componente')}
+            </button>
+            <button type="button" onClick={() => void onAnalyzePage()}>
+              {tr(language, 'Analyze full page', 'Analizar página completa')}
+            </button>
+          </div>
+        </div>
+      )}
 
       <ImpactMatrix scan={scan} language={language} />
 
@@ -228,11 +256,17 @@ export function ScanView({
         <div className="notice">
           <strong>{tr(language, 'No automated findings', 'Sin hallazgos automáticos')}</strong>
           <p>
-            {tr(
-              language,
-              'This does not mean the page conforms to WCAG 2.2. Manual testing is still needed.',
-              'Esto no significa que la página cumpla WCAG 2.2. Sigue siendo necesaria una revisión manual.',
-            )}
+            {componentScope
+              ? tr(
+                  language,
+                  'No automated findings were detected inside this component. This does not prove the component or page conforms to WCAG 2.2; manual testing is still needed.',
+                  'No se han detectado hallazgos automáticos dentro de este componente. Esto no demuestra que el componente o la página cumplan WCAG 2.2; sigue siendo necesaria una revisión manual.',
+                )
+              : tr(
+                  language,
+                  'This does not mean the page conforms to WCAG 2.2. Manual testing is still needed.',
+                  'Esto no significa que la página cumpla WCAG 2.2. Sigue siendo necesaria una revisión manual.',
+                )}
           </p>
         </div>
       ) : (

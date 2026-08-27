@@ -1,0 +1,95 @@
+.component-scan-action {
+  background: var(--ft-accent-soft) !important;
+  border-color: var(--ft-accent-strong) !important;
+  color: var(--ft-ink) !important;
+}
+
+.component-scan-action:not(:disabled):hover {
+  box-shadow: var(--ft-shadow-sm);
+}
+
+.scan-scope-banner {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 12px;
+  align-items: center;
+  padding: 12px;
+  border: 1.5px solid var(--ft-accent-strong);
+  border-radius: var(--ft-radius-md);
+  background: var(--ft-accent-soft);
+}
+
+.scan-scope-copy {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+}
+
+.scan-scope-copy small {
+  color: var(--ft-accent-strong);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: .055em;
+  text-transform: uppercase;
+}
+
+.scan-scope-copy strong {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+}
+
+.scan-scope-copy span {
+  color: var(--ft-muted);
+  font-size: 12px;
+}
+
+.scan-scope-copy code {
+  width: fit-content;
+  max-width: 100%;
+  margin-top: 3px;
+  font-size: 11px;
+}
+
+.scan-scope-actions {
+  display: grid;
+  gap: 6px;
+  align-self: stretch;
+}
+
+.scan-scope-actions button {
+  min-height: 36px;
+  padding: 6px 9px;
+  border: 1.5px solid var(--ft-border);
+  border-radius: var(--ft-radius-sm);
+  background: var(--ft-surface);
+  color: var(--ft-ink);
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.scan-scope-actions button:not(:disabled):hover {
+  background: color-mix(in srgb, var(--ft-accent) 8%, var(--ft-surface));
+}
+
+.workspace-nav button:disabled {
+  cursor: not-allowed;
+  opacity: .48;
+}
+
+@media (max-width: 520px) {
+  .scan-scope-banner {
+    grid-template-columns: 1fr;
+  }
+
+  .scan-scope-actions {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 370px) {
+  .scan-scope-actions {
+    grid-template-columns: 1fr;
+  }
+}

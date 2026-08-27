@@ -55,6 +55,38 @@ describe('focusWalkCandidates', () => {
     expect(focusWalkCandidates().map((candidate) => candidate.selector)).toEqual(['#editable', '#custom']);
   });
 
+  it('limits the automatic walk to the active component while keeping document positions global', () => {
+    render(`
+      <button id="outside">Outside</button>
+      <section id="checkout" tabindex="0">
+        <button id="inside">Inside</button>
+      </section>
+    `);
+    document.documentElement.setAttribute(
+      'data-focustrace-focus-component',
+      JSON.stringify({ selector: '#checkout' }),
+    );
+
+    expect(focusWalkCandidates().map((candidate) => candidate.selector)).toEqual([
+      '#checkout',
+      '#inside',
+    ]);
+    expect(sequentialFocusPosition(document.querySelector('#outside')!)).toEqual({
+      index: 1,
+      size: 3,
+    });
+  });
+
+  it('does not fall back to page-wide focus when the active component is stale', () => {
+    render('<button id="outside">Outside</button>');
+    document.documentElement.setAttribute(
+      'data-focustrace-focus-component',
+      JSON.stringify({ selector: '#missing-component' }),
+    );
+
+    expect(focusWalkCandidates()).toEqual([]);
+  });
+
   it('returns the one-based position and total sequential focus size', () => {
     render(`
       <button id="first">First</button>

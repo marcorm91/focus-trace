@@ -133,6 +133,7 @@ export function buildTextSessionReport({
   const model = buildSessionReportModel(scan, events, language);
   const componentMap = new Map(components.map((component) => [component.selector, component]));
   const headings = scan?.headings ?? [];
+  const componentScope = scan?.scope?.type === 'component' ? scan.scope : undefined;
   const title = lineLabel(
     language,
     'FOCUS TRACE - ACCESSIBILITY REPORT',
@@ -145,6 +146,12 @@ export function buildTextSessionReport({
     `URL: ${scan?.url ?? '—'}`,
     `${lineLabel(language, 'Generated', 'Generado')}: ${new Date(generatedAt).toISOString()}`,
     `${lineLabel(language, 'Standard', 'Estándar')}: ${scan?.standard ?? 'WCAG 2.2'}`,
+    ...(componentScope ? [
+      `${lineLabel(language, 'Static scope', 'Alcance estático')}: ${lineLabel(language, 'Component', 'Componente')}`,
+      `${lineLabel(language, 'Component', 'Componente')}: ${componentScope.label || componentScope.tag}`,
+      `${lineLabel(language, 'Component type', 'Tipo de componente')}: ${componentScope.tag}${componentScope.role ? ` · role=${componentScope.role}` : ''}`,
+      `${lineLabel(language, 'Component selector', 'Selector del componente')}: ${componentScope.selector}`,
+    ] : [`${lineLabel(language, 'Static scope', 'Alcance estático')}: ${lineLabel(language, 'Full page', 'Página completa')}`]),
   ];
 
   lines.push(...heading(lineLabel(language, 'EXECUTIVE SUMMARY', 'RESUMEN EJECUTIVO')));
@@ -158,6 +165,13 @@ export function buildTextSessionReport({
     `${lineLabel(language, 'Handled focus transitions', 'Transiciones de foco correctas')}: ${model.handledTransitions}`,
     `${lineLabel(language, 'Focus journey', 'Recorrido de foco')}: ${focusMode(events, language)} · ${model.focusSteps} ${lineLabel(language, 'steps', 'pasos')}`,
   );
+  if (componentScope) {
+    lines.push(lineLabel(
+      language,
+      'Runtime evidence remains session-wide; the selected component scope applies only to the static scan in this version.',
+      'La evidencia runtime sigue siendo de toda la sesión; en esta versión el componente seleccionado solo limita el análisis estático.',
+    ));
+  }
   if (model.categories.length) {
     lines.push('', lineLabel(language, 'Static findings by area:', 'Hallazgos estáticos por área:'));
     model.categories.forEach((category) => lines.push(`- ${category.label}: ${category.count}`));
@@ -208,10 +222,24 @@ export function buildTextSessionReport({
     });
   }
 
-  lines.push(...heading(lineLabel(language, '3. FULL PAGE SCAN', '3. BARRIDO COMPLETO DE PÁGINA')));
+  lines.push(...heading(componentScope
+    ? lineLabel(language, '3. COMPONENT SCAN', '3. ANÁLISIS DE COMPONENTE')
+    : lineLabel(language, '3. FULL PAGE SCAN', '3. BARRIDO COMPLETO DE PÁGINA')));
   if (!scan) {
     lines.push(lineLabel(language, 'The page analysis was not performed.', 'No se ha realizado el análisis de la página.'));
   } else {
+    if (componentScope) {
+      lines.push(
+        `${lineLabel(language, 'Analyzed component', 'Componente analizado')}: ${componentScope.label || componentScope.tag}`,
+        `${lineLabel(language, 'Selector', 'Selector')}: ${componentScope.selector}`,
+        lineLabel(
+          language,
+          'Only applicable element-level checks were evaluated inside this DOM subtree. Page title, document language and global heading hierarchy were excluded from component findings.',
+          'Solo se evaluaron dentro de este subtree del DOM las comprobaciones aplicables a elementos. El título de página, el idioma del documento y la jerarquía global de encabezados se excluyeron de los hallazgos del componente.',
+        ),
+        '',
+      );
+    }
     lines.push(
       `${scan.engine} · ${scan.standard} · ${scan.rulesRun} ${lineLabel(language, 'rule families', 'familias de reglas')}`,
       '',
@@ -222,7 +250,13 @@ export function buildTextSessionReport({
   }
 
   lines.push(...heading(lineLabel(language, '4. HEADING STRUCTURE', '4. ESTRUCTURA DE ENCABEZADOS')));
-  if (!scan) {
+  if (componentScope) {
+    lines.push(lineLabel(
+      language,
+      'Not evaluated for component scope because heading hierarchy depends on document context. Run a full-page analysis to include the document heading outline.',
+      'No evaluada en el alcance de componente porque la jerarquía de encabezados depende del contexto del documento. Ejecuta un análisis de página completa para incluir el esquema de encabezados.',
+    ));
+  } else if (!scan) {
     lines.push(lineLabel(language, 'The heading outline was not collected.', 'No se ha recogido el árbol de encabezados.'));
   } else if (!headings.length) {
     lines.push(lineLabel(language, 'No visible H1-H6 headings were found.', 'No se han encontrado encabezados H1–H6 visibles.'));
