@@ -1,10 +1,12 @@
 import { browser, defineBackground } from '#imports';
+import { recordFocusMemoryScan } from '../lib/focus-memory/storage';
 import {
   appendRuntimeEventToSession,
   clearSessionEvents,
   emptySessionState,
   invalidateSessionScanForUrl,
   normalizeSessionState,
+  resetSessionState,
   setSessionRecordingState,
   updateSessionBreakpoints,
   updateSessionScan,
@@ -143,7 +145,8 @@ export default defineBackground(() => {
 
     if (message.type === 'FOCUSTRACE_RESET_TAB') {
       return serializeTabWrite(message.tabId, async () => {
-        const next = emptySessionState(message.tabId);
+        const current = await getSession(message.tabId);
+        const next = resetSessionState(current, message.tabId);
         await saveSession(next);
         await browser.tabs.sendMessage(message.tabId, {
           type: 'FOCUSTRACE_SET_RECORDING',
@@ -180,6 +183,7 @@ export default defineBackground(() => {
         const state = await getSession(message.tabId);
         const next = updateSessionScan(state, message.scan);
         await saveSession(next);
+        await recordFocusMemoryScan(message.scan).catch(() => undefined);
         await broadcast(next);
         return next;
       });

@@ -10,16 +10,19 @@ FocusTrace is free software licensed under **GNU GPL v3.0 only**. The source-cod
 
 ## What makes it different?
 
-FocusTrace combines two complementary workflows instead of treating accessibility as a single static scan.
+FocusTrace combines complementary static, runtime and historical workflows instead of treating accessibility as a single scan.
 
-### Full page analysis
+### Full-page and component analysis
 
-The local rule engine evaluates observable WCAG/ARIA expectations and keeps diagnostic evidence such as accessible-name provenance and measured contrast ratios. Rules are mapped to:
+The local rule engine evaluates observable WCAG/ARIA/HTML expectations and keeps diagnostic evidence such as accessible-name provenance and measured contrast ratios. A scan can cover the whole page or a selected component subtree while preserving document-wide context where a rule requires it, such as duplicate-ID uniqueness.
+
+Rules are mapped to:
 
 - WCAG 2.2 success criteria;
 - W3C ACT Rules where an applicable testing rule exists;
 - WAI-ARIA semantics and registry data;
 - AccName / HTML-AAM naming behavior;
+- HTML authoring requirements when they are useful as non-WCAG warnings;
 - WAI-ARIA APG for runtime widget patterns.
 
 FocusTrace uses its own local rule engine and does not require a third-party accessibility scanner.
@@ -29,6 +32,14 @@ FocusTrace uses its own local rule engine and does not require a third-party acc
 Trace records what the user did, what had focus, what changed in the page and where focus moved afterwards. Recorded evidence can be inspected as a journey, correlated interactions, a focus graph or a read-only replay.
 
 The runtime debugger can derive deterministic causal explanations for patterns such as a focused node being removed, a modal opening without receiving focus or SPA navigation leaving focus behind. These explanations describe recorded evidence; they do not turn contextual behavior into an automatic WCAG conformance claim.
+
+### FocusTrace Memory
+
+FocusTrace Memory is an optional, local history for repeated page and component scans. It is **disabled by default**. When the user enables **Remember accessibility history**, FocusTrace stores compact hashed fingerprints, counts and timestamps so later scans can identify persistent failures, changes, fixes that are no longer reproduced and regressions.
+
+Memory does not store page HTML, full DOM snapshots or screenshots. History is bounded to 8 observations per page/component scope and 200 total; observations older than 90 days are pruned when Memory storage is next read. Saved history can be cleared from Settings even while Memory is disabled.
+
+Memory is diagnostic history rather than proof of WCAG conformance. See [`PRIVACY.md`](PRIVACY.md) for the storage and opt-in model.
 
 ### Site Audit
 
@@ -49,7 +60,8 @@ Current static coverage includes:
 - WCAG 1.4.3 text contrast with structured ratio/color evidence;
 - conservative WCAG 1.4.11 non-text contrast coverage for deterministic visual cues;
 - positive `tabindex`, placeholder-only labels and heading-level jumps as review signals;
-- deprecated/prohibited ARIA authoring signals as warnings.
+- deprecated/prohibited ARIA authoring signals as warnings;
+- duplicate non-empty HTML IDs as an authoring warning, without incorrectly reviving removed WCAG 2.2 SC 4.1.1.
 
 For deterministic contrast failures, FocusTrace can show HEX/RGB values, copy recorded colors and suggest a small sRGB adjustment that reaches the required ratio. Complex visual composition remains REVIEW rather than being manufactured into a false failure.
 
@@ -65,7 +77,7 @@ Runtime recording currently observes:
 
 Trace also includes a read-only replay of recorded evidence and a Trace-first report that combines static findings with runtime interaction stories and recommendations.
 
-See [`docs/RULES.md`](docs/RULES.md) for methodology, sources and limitations.
+See [`docs/RULES.md`](docs/RULES.md) for methodology, sources and limitations and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the main runtime/data boundaries.
 
 ## Browser support
 
@@ -103,7 +115,9 @@ All analysis runs locally in the browser. FocusTrace does not send page content,
 
 Visual evidence in printable reports is optional. Screenshot crops can contain visible page content, are prepared locally for that report only and are not transmitted by FocusTrace.
 
-See [`PRIVACY.md`](PRIVACY.md) for the project privacy policy and [`SECURITY.md`](SECURITY.md) for responsible vulnerability reporting.
+FocusTrace Memory is opt-in, disabled by default and stores only bounded compact local history. It can be disabled or cleared from Settings.
+
+See [`PRIVACY.md`](PRIVACY.md) for the canonical project privacy policy and [`SECURITY.md`](SECURITY.md) for responsible vulnerability reporting.
 
 ## License and project identity
 

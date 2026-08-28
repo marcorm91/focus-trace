@@ -1,9 +1,21 @@
+function selectorResolvesOnlyTo(selector: string, element: Element): boolean {
+  try {
+    const matches = document.querySelectorAll(selector);
+    return matches.length === 1 && matches[0] === element;
+  } catch {
+    return false;
+  }
+}
+
 export function selectorFor(element: Element): string {
-  if (element.id) return `#${CSS.escape(element.id)}`;
+  if (element.id) {
+    const idSelector = `#${CSS.escape(element.id)}`;
+    if (selectorResolvesOnlyTo(idSelector, element)) return idSelector;
+  }
 
   const parts: string[] = [];
   let current: Element | null = element;
-  while (current && parts.length < 4) {
+  while (current) {
     let part = current.tagName.toLowerCase();
     const parent: Element | null = current.parentElement;
     if (parent) {
@@ -12,6 +24,19 @@ export function selectorFor(element: Element): string {
       if (siblings.length > 1) part += `:nth-of-type(${siblings.indexOf(current) + 1})`;
     }
     parts.unshift(part);
+
+    const structuralSelector = parts.join(' > ');
+    if (selectorResolvesOnlyTo(structuralSelector, element)) return structuralSelector;
+
+    if (current.id) {
+      const ancestorIdSelector = `#${CSS.escape(current.id)}`;
+      if (selectorResolvesOnlyTo(ancestorIdSelector, current)) {
+        parts[0] = ancestorIdSelector;
+        const anchoredSelector = parts.join(' > ');
+        if (selectorResolvesOnlyTo(anchoredSelector, element)) return anchoredSelector;
+      }
+    }
+
     current = parent;
   }
   return parts.join(' > ');

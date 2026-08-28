@@ -1,11 +1,7 @@
 # Privacy
 
-FocusTrace is designed as a local-first browser extension.
+The canonical FocusTrace privacy policy lives at [`../PRIVACY.md`](../PRIVACY.md).
 
-- Page content, DOM snapshots and runtime events are analyzed inside the browser.
-- No OpenAI, Gemini, Claude or other paid AI APIs are required.
-- No page content is sent to FocusTrace servers in the initial product architecture.
-- Standard HTTP and HTTPS page access is optional at install time. FocusTrace asks for it from an explicit Analyze/Trace page action when local DOM inspection, runtime debugger injection or page highlighting is needed.
-- If page access is not granted, FocusTrace does not inspect that page and explains that the permission is required for the requested action.
-- Browser-internal and other restricted pages are outside the auditing scope.
-- Page access is used for local accessibility analysis; it does not change the no-upload/no-remote-processing architecture.
+This file is kept only as a stable documentation pointer so older links do not drift toward a second, outdated privacy description.
+
+Any change to data handling, permissions, FocusTrace Memory, screenshots, telemetry or external transmission must update the canonical root policy in the same pull request as the behavior change.

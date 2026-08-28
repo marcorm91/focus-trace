@@ -29,13 +29,15 @@ FocusTrace Memory is an optional local history feature for comparing accessibili
 
 When enabled, Memory stores compact local observation data such as hashed scope/finding fingerprints, result counts, rule-coverage counts and timestamps. It does not store page HTML, full DOM snapshots or screenshots as part of the Memory history.
 
-Memory is bounded automatically so it cannot grow without limit. The current limits are:
+Memory is bounded so it cannot grow without limit. The current limits are:
 
 - up to 8 observations for the same remembered page/component scope;
 - up to 200 observations across the browser profile;
-- observations older than 90 days are discarded automatically.
+- observations older than 90 days are removed the next time FocusTrace reads Memory storage.
 
-Turning Memory off stops new observations and comparisons. Existing local Memory history is retained until it expires under the retention rules or the user explicitly clears it. Enabling Memory does not retroactively add an analysis that was already open before opt-in; the next analysis becomes the first eligible observation.
+Turning Memory off stops new observations and comparisons. Existing local Memory history remains local until it is removed by the retention cleanup or the user explicitly clears it. **Clear saved history** remains available in Settings even while Memory is disabled.
+
+Enabling Memory establishes the opt-in point and does not retroactively add an analysis that was already open before opt-in. Eligible observations are persisted when a scan is saved, independently of which FocusTrace results view the user opens afterwards.
 
 Memory comparisons are diagnostic history, not a WCAG conformance claim. A previously recorded deterministic failure that is no longer reproduced can be reported as a historical change, but absence from a later scan does not by itself prove that the whole page or component conforms to WCAG.
 
