@@ -40,7 +40,8 @@
 }
 
 .settings-memory-option small,
-.settings-memory-note {
+.settings-memory-note,
+.settings-memory-actions small {
   color: var(--ft-muted);
   line-height: 1.45;
 }
@@ -48,4 +49,34 @@
 .settings-memory-note {
   margin: 0;
   font-size: 0.82rem;
+}
+
+.settings-memory-actions {
+  display: grid;
+  gap: 7px;
+  justify-items: start;
+}
+
+.settings-memory-actions button {
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1.5px solid var(--ft-border);
+  border-radius: var(--ft-radius-sm);
+  background: var(--ft-surface);
+  color: var(--ft-ink);
+  font-weight: 800;
+  box-shadow: var(--ft-shadow-sm);
+}
+
+.settings-memory-actions button:not(:disabled):hover {
+  background: var(--ft-accent-soft);
+}
+
+.settings-memory-actions button:not(:disabled):active {
+  box-shadow: none;
+  transform: translate(2px, 2px);
+}
+
+.settings-memory-actions small {
+  font-size: 0.78rem;
 }
