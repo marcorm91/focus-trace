@@ -3,7 +3,10 @@ import {
   clearFocusMemoryHistory,
   readFocusMemoryForScan,
 } from '../../../lib/focus-memory/storage';
-import type { FocusMemoryComparison } from '../../../shared/focus-memory';
+import type {
+  FocusMemoryComparison,
+  FocusMemoryFindingHistory,
+} from '../../../shared/focus-memory';
 import type { ScanResult } from '../../../shared/types';
 
 export interface FocusTraceMemoryState {
@@ -11,6 +14,7 @@ export interface FocusTraceMemoryState {
   loading: boolean;
   suppressed: boolean;
   comparison?: FocusMemoryComparison;
+  history?: FocusMemoryFindingHistory[];
   clear: () => Promise<void>;
 }
 
@@ -20,6 +24,7 @@ export function useFocusTraceMemory(scan: ScanResult): FocusTraceMemoryState {
   const [loading, setLoading] = useState(true);
   const [suppressed, setSuppressed] = useState(false);
   const [comparison, setComparison] = useState<FocusMemoryComparison>();
+  const [history, setHistory] = useState<FocusMemoryFindingHistory[]>();
 
   useEffect(() => {
     let cancelled = false;
@@ -31,6 +36,7 @@ export function useFocusTraceMemory(scan: ScanResult): FocusTraceMemoryState {
         setEnabled(state.enabled);
         setSuppressed(state.suppressed);
         setComparison(state.comparison);
+        setHistory(state.history);
         setLoading(false);
       })
       .catch(() => {
@@ -38,6 +44,7 @@ export function useFocusTraceMemory(scan: ScanResult): FocusTraceMemoryState {
           setEnabled(false);
           setSuppressed(false);
           setComparison(undefined);
+          setHistory(undefined);
           setLoading(false);
         }
       });
@@ -57,6 +64,7 @@ export function useFocusTraceMemory(scan: ScanResult): FocusTraceMemoryState {
     loading,
     suppressed,
     ...(comparison ? { comparison } : {}),
+    ...(history ? { history } : {}),
     clear,
   };
 }
