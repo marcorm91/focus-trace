@@ -67,16 +67,33 @@ describe('README language and instructions contract', () => {
     expect(instructions).toContain('Los avisos señalan riesgos de autoría HTML/ARIA');
   });
 
-  it('keeps the guide responsive and gives Instructions its own non-text icon', () => {
+  it('keeps the instructions trigger centered and the intro text untruncated', () => {
     const css = source('entrypoints/sidepanel/instructions.css');
     const entry = source('entrypoints/sidepanel/main.tsx');
 
     expect(entry).toContain("import './instructions.css';");
+    expect(css).toContain('.topbar-tools .instructions-trigger {');
+    expect(css).toContain('place-items: center;');
+    expect(css).toContain('cursor: pointer;');
     expect(css).toContain('.topbar-tools .instructions-trigger > span');
     expect(css).toContain('--ft-mask: url(');
-    expect(css).toContain('grid-template-columns: repeat(2, minmax(0, 1fr));');
-    expect(css).toContain('@media (max-width: 520px)');
+
+    const headingRule = css.slice(css.indexOf('.instructions-heading p'), css.indexOf('.instructions-start,'));
+    expect(headingRule).toContain('text-overflow: clip;');
+    expect(headingRule).toContain('white-space: normal;');
+    expect(headingRule).not.toContain('ellipsis');
+  });
+
+  it('renders the tool guide as native collapsible accordion sections', () => {
+    const instructions = source('entrypoints/sidepanel/views/InstructionsView.tsx');
+    const css = source('entrypoints/sidepanel/instructions.css');
+
+    expect(instructions).toContain('<details className="instructions-card">');
+    expect(instructions).toContain('<summary>{title}</summary>');
+    expect(instructions).toContain('className="instructions-card-body"');
     expect(css).toContain('grid-template-columns: 1fr;');
+    expect(css).toContain('.instructions-card > summary');
+    expect(css).toContain('.instructions-card[open] > summary');
     expect(css).not.toContain('!important');
   });
 });

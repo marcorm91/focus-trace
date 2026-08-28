@@ -20,10 +20,21 @@ test('instructions is a focused bilingual guide and Back restores the previous w
 
   await expect(panel.getByRole('heading', { level: 2, name: /How to use FocusTrace|Cómo usar FocusTrace/ })).toBeVisible();
   await expect(panel.getByRole('heading', { level: 3, name: /Start here|Empieza aquí/ })).toBeVisible();
-  await expect(panel.getByRole('heading', { level: 3, name: /Review|Revisión/ })).toBeVisible();
-  await expect(panel.getByRole('heading', { level: 3, name: /Site Audit|Análisis de sitio/ })).toBeVisible();
-  await expect(panel.getByRole('heading', { level: 3, name: 'Trace', exact: true })).toBeVisible();
-  await expect(panel.getByRole('heading', { level: 3, name: 'FocusTrace Memory', exact: true })).toBeVisible();
+
+  const review = panel.locator('.instructions-card > summary').filter({ hasText: /Review|Revisión/ });
+  const siteAudit = panel.locator('.instructions-card > summary').filter({ hasText: /Site Audit|Análisis de sitio/ });
+  const trace = panel.locator('.instructions-card > summary').filter({ hasText: /^Trace$/ });
+  const memory = panel.locator('.instructions-card > summary').filter({ hasText: /^FocusTrace Memory$/ });
+  await expect(review).toBeVisible();
+  await expect(siteAudit).toBeVisible();
+  await expect(trace).toBeVisible();
+  await expect(memory).toBeVisible();
+
+  const reviewCard = review.locator('..');
+  await expect(reviewCard).not.toHaveAttribute('open', '');
+  await review.click();
+  await expect(reviewCard).toHaveAttribute('open', '');
+  await expect(reviewCard.getByText(/Failures are findings|Los fallos son hallazgos/)).toBeVisible();
 
   await expect(panel.getByRole('navigation', { name: /FocusTrace sections|Secciones de FocusTrace/ })).not.toBeVisible();
   await expect(panel.getByRole('region', { name: /Page tools|Herramientas de página/ })).not.toBeVisible();

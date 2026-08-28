@@ -7,16 +7,17 @@ function source(path: string): string {
 }
 
 describe('sidepanel layout polish contract', () => {
-  it('lays out the four quick actions as 2x2 and collapses to one column', () => {
+  it('uses one row for three quick actions, 2x2 for four, and one column when narrow', () => {
     const css = source('entrypoints/sidepanel/workspace-layout.css');
+    const siteAudit = source('entrypoints/sidepanel/components/SiteAuditLauncher.tsx');
 
+    expect(css).toContain('grid-template-columns: repeat(3, minmax(0, 1fr));');
+    expect(css).toContain('.quick-actions.has-site-audit');
     expect(css).toContain('grid-template-columns: repeat(2, minmax(0, 1fr));');
-    expect(css).toContain('.quick-actions .component-scan-action { order: 1; }');
-    expect(css).toContain('.quick-actions .scan-action { order: 2; }');
-    expect(css).toContain('.quick-actions .site-audit-launch { order: 3; }');
-    expect(css).toContain('.quick-actions .focus-walk-action { order: 4; }');
-    expect(css).toContain('@media (max-width: 430px)');
+    expect(css).toContain('@media (max-width: 620px)');
     expect(css).toContain('grid-template-columns: 1fr;');
+    expect(siteAudit).toContain("quickActions.classList.add('has-site-audit')");
+    expect(siteAudit).toContain("quickActions.classList.remove('has-site-audit')");
   });
 
   it('keeps component context compact and removes duplicated actions from the rendered layout', () => {
@@ -75,18 +76,23 @@ describe('sidepanel layout polish contract', () => {
     expect(chain).not.toContain('max-width: 180px;');
   });
 
-  it('shows per-finding Memory history and keeps the retention footer concise', () => {
+  it('shows compact Memory summary chips, a disclosure chevron and tabular evidence history', () => {
     const component = source('entrypoints/sidepanel/components/FocusMemorySummary.tsx');
     const css = source('entrypoints/sidepanel/components/focus-memory.css');
 
     expect(component).toContain("tr(language, 'Finding history', 'Historial por fallo')");
-    expect(component).toContain('focus-memory-finding-timeline');
+    expect(component).toContain('focus-memory-summary-row');
+    expect(component).toContain('focus-memory-evidence-table');
+    expect(component).toContain('<table');
+    expect(component).toContain('<th scope="col">');
+    expect(component).not.toContain('focus-memory-status');
+    expect(component).not.toContain('focus-memory-finding-timeline');
     expect(component).toContain('Max ${FOCUS_MEMORY_MAX_PER_SCOPE} per scope');
     expect(component).toContain('Máx. ${FOCUS_MEMORY_MAX_PER_SCOPE} por ámbito');
-    expect(component).not.toContain('Local only · max');
-    expect(component).not.toContain('Solo local · máx.');
-    expect(css).toContain('.focus-memory-history');
-    expect(css).toContain('.focus-memory-finding.changed-now');
-    expect(css).toContain('.focus-memory-finding-timeline');
+    expect(css).toContain('.focus-memory-summary-row');
+    expect(css).toContain('.focus-memory-history > summary::after');
+    expect(css).toContain('.focus-memory-evidence-table');
+    expect(css).toContain('border-collapse: collapse;');
+    expect(css).not.toContain('.focus-memory-status');
   });
 });

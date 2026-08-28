@@ -37,17 +37,11 @@
 }
 
 .focus-memory-heading,
-.focus-memory-controls,
-.focus-memory-meta,
-.focus-memory-deltas {
+.focus-memory-controls {
   display: flex;
   align-items: center;
-  gap: 8px;
-}
-
-.focus-memory-heading,
-.focus-memory-controls {
   justify-content: space-between;
+  gap: 8px;
 }
 
 .focus-memory-heading > div {
@@ -69,23 +63,6 @@
   font-weight: 850;
 }
 
-.focus-memory-status {
-  flex: 0 0 auto;
-  padding: 3px 6px;
-  border: 1px solid currentColor;
-  border-radius: 999px;
-  color: var(--ft-muted);
-  font-family: var(--ft-mono);
-  font-size: 8px;
-  font-weight: 850;
-  letter-spacing: .045em;
-}
-
-.status-fixed .focus-memory-status { color: var(--ft-success); }
-.status-regressed .focus-memory-status,
-.status-open .focus-memory-status { color: var(--ft-danger); }
-.status-changed .focus-memory-status { color: var(--ft-warning); }
-
 .focus-memory > p {
   margin: 0;
   color: var(--ft-text);
@@ -93,32 +70,37 @@
   line-height: 1.45;
 }
 
-.focus-memory-meta,
-.focus-memory-deltas {
-  flex-wrap: wrap;
+.focus-memory-summary-row {
+  min-width: 0;
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+  flex-wrap: nowrap;
 }
 
-.focus-memory-meta span,
-.focus-memory-deltas span {
+.focus-memory-summary-row > span {
+  min-width: 0;
   padding: 4px 6px;
   border: 1px solid var(--ft-border-soft);
   border-radius: var(--ft-radius-xs);
   background: var(--ft-surface-subtle);
   color: var(--ft-muted);
   font-size: 9px;
+  line-height: 1.3;
+  white-space: nowrap;
 }
 
-.focus-memory-meta strong {
+.focus-memory-summary-row strong {
   color: var(--ft-ink);
 }
 
-.focus-memory-deltas .is-fixed {
+.focus-memory-summary-row .is-fixed {
   color: var(--ft-success);
   border-color: color-mix(in srgb, var(--ft-success) 45%, var(--ft-border-soft));
   background: var(--ft-success-soft);
 }
 
-.focus-memory-deltas .is-regressed {
+.focus-memory-summary-row .is-regressed {
   color: var(--ft-danger);
   border-color: color-mix(in srgb, var(--ft-danger) 45%, var(--ft-border-soft));
   background: var(--ft-danger-soft);
@@ -130,12 +112,34 @@
 }
 
 .focus-memory-history > summary {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: max-content minmax(0, 1fr) 10px;
+  align-items: center;
   gap: 10px;
+  list-style: none;
   cursor: pointer;
   color: var(--ft-text);
+}
+
+.focus-memory-history > summary::-webkit-details-marker {
+  display: none;
+}
+
+.focus-memory-history > summary::after {
+  content: '';
+  width: 7px;
+  height: 7px;
+  justify-self: end;
+  border-inline-end: 2px solid currentColor;
+  border-block-end: 2px solid currentColor;
+  transform: translateY(-2px) rotate(45deg);
+  transform-origin: center;
+  transition: transform 140ms ease;
+}
+
+.focus-memory-history[open] > summary::after {
+  transform: translateY(2px) rotate(225deg);
 }
 
 .focus-memory-history > summary strong {
@@ -144,9 +148,11 @@
 }
 
 .focus-memory-history > summary span {
+  min-width: 0;
   color: var(--ft-muted);
   font-size: 8.5px;
   text-align: right;
+  overflow-wrap: anywhere;
 }
 
 .focus-memory-history-list {
@@ -222,38 +228,70 @@
 .focus-memory-finding.state-new .focus-memory-finding-head > span,
 .focus-memory-finding.state-changed .focus-memory-finding-head > span { color: var(--ft-warning); }
 
-.focus-memory-finding-timeline {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(68px, 1fr));
-  gap: 5px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.focus-memory-finding-timeline li {
+.focus-memory-evidence-table-wrap {
   min-width: 0;
-  display: grid;
-  gap: 2px;
-  padding-left: 6px;
-  border-left: 2px solid var(--ft-border-soft);
+  overflow-x: auto;
+  border: 1px solid var(--ft-border-faint);
+  border-radius: var(--ft-radius-xs);
 }
 
-.focus-memory-finding-timeline li.is-present { border-left-color: var(--ft-danger); }
-.focus-memory-finding-timeline li.is-absent { border-left-color: var(--ft-success); }
-.focus-memory-finding-timeline li.is-uncertain { border-left-color: var(--ft-warning); }
+.focus-memory-evidence-table {
+  width: 100%;
+  border-collapse: collapse;
+  table-layout: fixed;
+  background: var(--ft-surface);
+}
 
-.focus-memory-finding-timeline time {
+.focus-memory-evidence-table th,
+.focus-memory-evidence-table td {
+  padding: 6px 8px;
+  border-bottom: 1px solid var(--ft-border-faint);
+  text-align: left;
+  vertical-align: middle;
+}
+
+.focus-memory-evidence-table th {
+  background: var(--ft-surface-subtle);
   color: var(--ft-muted);
-  font-size: 7.5px;
+  font-size: 8px;
+  font-weight: 800;
+  letter-spacing: .02em;
+}
+
+.focus-memory-evidence-table td {
+  color: var(--ft-text);
+  font-size: 8.5px;
+  line-height: 1.3;
+  overflow-wrap: anywhere;
+}
+
+.focus-memory-evidence-table th:first-child,
+.focus-memory-evidence-table td:first-child {
+  width: 48%;
+}
+
+.focus-memory-evidence-table tr:last-child td {
+  border-bottom: 0;
+}
+
+.focus-memory-evidence-table time {
+  color: var(--ft-muted);
   font-variant-numeric: tabular-nums;
 }
 
-.focus-memory-finding-timeline span {
-  overflow-wrap: anywhere;
-  color: var(--ft-text);
-  font-size: 8px;
-  line-height: 1.25;
+.focus-memory-evidence-table tr.is-present td:last-child {
+  color: var(--ft-danger);
+  font-weight: 700;
+}
+
+.focus-memory-evidence-table tr.is-absent td:last-child {
+  color: var(--ft-success);
+  font-weight: 700;
+}
+
+.focus-memory-evidence-table tr.is-uncertain td:last-child {
+  color: var(--ft-warning);
+  font-weight: 700;
 }
 
 .focus-memory-resolve {
@@ -320,9 +358,18 @@
   background: var(--ft-accent-soft);
 }
 
+@media (max-width: 560px) {
+  .focus-memory-summary-row {
+    flex-wrap: wrap;
+  }
+
+  .focus-memory-summary-row > span {
+    white-space: normal;
+  }
+}
+
 @media (max-width: 390px) {
-  .focus-memory-controls,
-  .focus-memory-history > summary {
+  .focus-memory-controls {
     align-items: flex-start;
     flex-direction: column;
   }
@@ -331,7 +378,18 @@
     max-width: none;
   }
 
+  .focus-memory-history > summary {
+    grid-template-columns: minmax(0, 1fr) 10px;
+  }
+
+  .focus-memory-history > summary strong,
   .focus-memory-history > summary span {
+    grid-column: 1;
     text-align: left;
+  }
+
+  .focus-memory-history > summary::after {
+    grid-column: 2;
+    grid-row: 1 / span 2;
   }
 }

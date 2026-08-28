@@ -107,6 +107,8 @@ function formatHistoryDate(timestamp: number, language: AppLanguage): string {
     day: '2-digit',
     month: 'short',
     year: '2-digit',
+    hour: '2-digit',
+    minute: '2-digit',
   }).format(new Date(timestamp));
 }
 
@@ -170,6 +172,7 @@ function FindingHistory({
       <div className="focus-memory-history-list">
         {history.map((item) => {
           const resolveHintId = `focus-memory-resolve-${item.fingerprint}`;
+          const title = findingTitle(item, language);
           return (
             <article
               className={`focus-memory-finding state-${item.state}${item.changedNow ? ' changed-now' : ''}`}
@@ -178,22 +181,37 @@ function FindingHistory({
               <div className="focus-memory-finding-head">
                 <div>
                   {item.ruleId && <code>{item.ruleId}</code>}
-                  <strong>{findingTitle(item, language)}</strong>
+                  <strong>{title}</strong>
                 </div>
                 <span>{findingStateLabel(item.state, language)}</span>
               </div>
 
-              <ol className="focus-memory-finding-timeline" aria-label={tr(language, 'Remembered observations', 'Observaciones recordadas')}>
-                {item.timeline.map((point, index) => (
-                  <li
-                    className={point.present ? 'is-present' : point.comparableToPrevious ? 'is-absent' : 'is-uncertain'}
-                    key={`${item.fingerprint}-${point.observedAt}`}
-                  >
-                    <time dateTime={new Date(point.observedAt).toISOString()}>{formatHistoryDate(point.observedAt, language)}</time>
-                    <span>{timelinePointLabel(point, index, language)}</span>
-                  </li>
-                ))}
-              </ol>
+              <div className="focus-memory-evidence-table-wrap">
+                <table
+                  className="focus-memory-evidence-table"
+                  aria-label={`${tr(language, 'Remembered observations for', 'Observaciones recordadas para')} ${title}`}
+                >
+                  <thead>
+                    <tr>
+                      <th scope="col">{tr(language, 'Observation', 'Observación')}</th>
+                      <th scope="col">{tr(language, 'Result', 'Estado')}</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {item.timeline.map((point, index) => (
+                      <tr
+                        className={point.present ? 'is-present' : point.comparableToPrevious ? 'is-absent' : 'is-uncertain'}
+                        key={`${item.fingerprint}-${point.observedAt}`}
+                      >
+                        <td>
+                          <time dateTime={new Date(point.observedAt).toISOString()}>{formatHistoryDate(point.observedAt, language)}</time>
+                        </td>
+                        <td>{timelinePointLabel(point, index, language)}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
 
               {item.state === 'resolved' && (
                 <div className="focus-memory-resolve">
@@ -269,12 +287,11 @@ export function FocusMemorySummary({ scan, language }: { scan: ScanResult; langu
           <small>FocusTrace Memory</small>
           <strong id="focus-memory-title">{statusLabel(comparison.status, language)}</strong>
         </div>
-        <span className="focus-memory-status">{comparison.status.toUpperCase()}</span>
       </div>
 
       <p>{comparisonDescription(comparison, language)}</p>
 
-      <div className="focus-memory-meta">
+      <div className="focus-memory-summary-row" aria-label={tr(language, 'Memory summary', 'Resumen de Memory')}>
         <span>
           <strong>{comparison.observedCount}</strong>{' '}
           {tr(language, 'observations', 'observaciones')}
@@ -284,18 +301,25 @@ export function FocusMemorySummary({ scan, language }: { scan: ScanResult; langu
             {tr(language, 'Previous', 'Anterior')}: <strong>{formatObservedAt(comparison.previousObservedAt, language)}</strong>
           </span>
         )}
+        {comparison.persistentFailures > 0 && (
+          <span>● <strong>{comparison.persistentFailures}</strong> {tr(language, 'still present', 'siguen presentes')}</span>
+        )}
+        {comparison.fixedFailures > 0 && (
+          <span className="is-fixed">✓ <strong>{comparison.fixedFailures}</strong> {tr(language, 'no longer reproduced', 'ya no se reproducen')}</span>
+        )}
+        {comparison.regressedFailures > 0 && (
+          <span className="is-regressed">↺ <strong>{comparison.regressedFailures}</strong> {tr(language, 'returned', 'han vuelto')}</span>
+        )}
+        {comparison.newFailures > 0 && (
+          <span>+ <strong>{comparison.newFailures}</strong> {tr(language, 'new failures', 'fallos nuevos')}</span>
+        )}
+        {comparison.reviewDelta !== 0 && (
+          <span>{comparison.reviewDelta > 0 ? '+' : ''}<strong>{comparison.reviewDelta}</strong> {tr(language, 'reviews', 'revisiones')}</span>
+        )}
+        {comparison.warningDelta !== 0 && (
+          <span>{comparison.warningDelta > 0 ? '+' : ''}<strong>{comparison.warningDelta}</strong> {tr(language, 'warnings', 'avisos')}</span>
+        )}
       </div>
-
-      {comparison.previousObservedAt != null && (
-        <div className="focus-memory-deltas" aria-label={tr(language, 'Changes since previous observation', 'Cambios desde la observación anterior')}>
-          {comparison.fixedFailures > 0 && <span className="is-fixed">✓ {comparison.fixedFailures} {tr(language, 'no longer reproduced', 'ya no se reproducen')}</span>}
-          {comparison.persistentFailures > 0 && <span>● {comparison.persistentFailures} {tr(language, 'still present', 'siguen presentes')}</span>}
-          {comparison.regressedFailures > 0 && <span className="is-regressed">↺ {comparison.regressedFailures} {tr(language, 'returned', 'han vuelto')}</span>}
-          {comparison.newFailures > 0 && <span>+ {comparison.newFailures} {tr(language, 'new failures', 'fallos nuevos')}</span>}
-          {comparison.reviewDelta !== 0 && <span>{comparison.reviewDelta > 0 ? '+' : ''}{comparison.reviewDelta} {tr(language, 'reviews', 'revisiones')}</span>}
-          {comparison.warningDelta !== 0 && <span>{comparison.warningDelta > 0 ? '+' : ''}{comparison.warningDelta} {tr(language, 'warnings', 'avisos')}</span>}
-        </div>
-      )}
 
       <FindingHistory
         history={memory.history ?? []}

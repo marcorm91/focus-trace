@@ -1,5 +1,13 @@
+.topbar-tools .instructions-trigger {
+  display: grid;
+  place-items: center;
+  cursor: pointer;
+}
+
 .topbar-tools .instructions-trigger > span {
   --ft-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='black' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Ccircle cx='12' cy='12' r='9'/%3E%3Cpath d='M9.8 9a2.4 2.4 0 1 1 3.4 2.2c-.8.4-1.2.9-1.2 1.8v.5M12 17h.01'/%3E%3C/svg%3E");
+  place-self: center;
+  margin: 0;
 }
 
 .instructions-panel {
@@ -9,6 +17,14 @@
 
 .instructions-heading {
   padding-right: 118px;
+}
+
+.instructions-heading p {
+  max-width: none;
+  overflow: visible;
+  text-overflow: clip;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .instructions-start,
@@ -23,8 +39,7 @@
   border-left: 4px solid var(--ft-brand);
 }
 
-.instructions-start h3,
-.instructions-card h3 {
+.instructions-start h3 {
   margin: 0;
   color: var(--ft-ink);
   font-size: 12px;
@@ -66,13 +81,59 @@
 
 .instructions-grid {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 10px;
+  grid-template-columns: 1fr;
+  gap: 8px;
 }
 
 .instructions-card {
   min-width: 0;
-  padding: 12px;
+  overflow: hidden;
+}
+
+.instructions-card > summary {
+  min-height: 42px;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 10px 12px;
+  color: var(--ft-ink);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 700;
+  list-style: none;
+}
+
+.instructions-card > summary::-webkit-details-marker {
+  display: none;
+}
+
+.instructions-card > summary::after {
+  content: '+';
+  width: 22px;
+  height: 22px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--ft-border-soft);
+  border-radius: 6px;
+  color: var(--ft-muted);
+  font-size: 14px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.instructions-card[open] > summary {
+  border-bottom: 1px solid var(--ft-border-soft);
+  background: var(--ft-surface-subtle);
+}
+
+.instructions-card[open] > summary::after {
+  content: '−';
+  color: var(--ft-ink);
+}
+
+.instructions-card-body {
+  padding: 0 12px 12px;
 }
 
 .instructions-card p,
@@ -84,7 +145,7 @@
 }
 
 .instructions-card p {
-  margin: 7px 0 0;
+  margin: 9px 0 0;
 }
 
 .instructions-card ul {
@@ -108,12 +169,6 @@
 
 .instructions-note p {
   margin: 4px 0 0;
-}
-
-@media (max-width: 520px) {
-  .instructions-grid {
-    grid-template-columns: 1fr;
-  }
 }
 
 @media (max-width: 430px) {

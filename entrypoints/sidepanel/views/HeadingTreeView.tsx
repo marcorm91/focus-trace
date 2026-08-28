@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import { browser } from '#imports';
 import {
   clearHeadingOutlineInPage,
@@ -85,6 +85,7 @@ async function activeTabId(): Promise<number> {
 
 function HeadingBranch({
   node,
+  depth,
   language,
   selectedId,
   collapsedIds,
@@ -92,6 +93,7 @@ function HeadingBranch({
   onToggle,
 }: {
   node: HeadingTreeNode;
+  depth: number;
   language: AppLanguage;
   selectedId?: string;
   collapsedIds: Set<string>;
@@ -103,42 +105,46 @@ function HeadingBranch({
   const expanded = hasChildren && !collapsedIds.has(heading.id);
   const selectedHeading = heading.id === selectedId;
   const label = heading.text || tr(language, 'Empty heading', 'Encabezado vacío');
+  const rowStyle = { '--heading-depth': depth } as CSSProperties;
 
   return (
     <div
       className={`heading-tree-branch level-${heading.level} ${heading.signals.length ? 'has-signal' : ''}`}
       role="treeitem"
-      aria-level={heading.level}
+      aria-level={depth + 1}
       aria-selected={selectedHeading}
       aria-expanded={hasChildren ? expanded : undefined}
     >
-      <div className={`heading-tree-row level-${heading.level} ${heading.signals.length ? 'has-signal' : ''}`}>
-        <span className="heading-level" aria-hidden="true">H{heading.level}</span>
-        <div className={`heading-node-row ${hasChildren ? 'has-children' : ''}`}>
+      <div
+        className={`heading-tree-row level-${heading.level} ${heading.signals.length ? 'has-signal' : ''}`}
+        style={rowStyle}
+      >
+        {hasChildren ? (
           <button
             type="button"
-            className="heading-node"
-            onClick={() => onSelect(heading)}
+            className="heading-branch-toggle"
+            aria-expanded={expanded}
+            aria-label={expanded
+              ? tr(language, `Collapse heading branch: ${label}`, `Contraer rama de encabezado: ${label}`)
+              : tr(language, `Expand heading branch: ${label}`, `Expandir rama de encabezado: ${label}`)}
+            onClick={() => onToggle(heading.id)}
           >
-            <span>{label}</span>
-            {heading.signals.length > 0 && (
-              <small>{heading.signals.map((signal) => signalLabel(signal, language)).join(' · ')}</small>
-            )}
+            <span aria-hidden="true">{expanded ? '−' : '+'}</span>
           </button>
-          {hasChildren && (
-            <button
-              type="button"
-              className="heading-branch-toggle"
-              aria-expanded={expanded}
-              aria-label={expanded
-                ? tr(language, `Collapse heading branch: ${label}`, `Contraer rama de encabezado: ${label}`)
-                : tr(language, `Expand heading branch: ${label}`, `Expandir rama de encabezado: ${label}`)}
-              onClick={() => onToggle(heading.id)}
-            >
-              <span aria-hidden="true">{expanded ? '−' : '+'}</span>
-            </button>
+        ) : (
+          <span className="heading-branch-toggle-spacer" aria-hidden="true" />
+        )}
+        <span className="heading-level" aria-hidden="true">H{heading.level}</span>
+        <button
+          type="button"
+          className="heading-node"
+          onClick={() => onSelect(heading)}
+        >
+          <span>{label}</span>
+          {heading.signals.length > 0 && (
+            <small>{heading.signals.map((signal) => signalLabel(signal, language)).join(' · ')}</small>
           )}
-        </div>
+        </button>
       </div>
 
       {hasChildren && expanded && (
@@ -146,6 +152,7 @@ function HeadingBranch({
           {children.map((child) => (
             <HeadingBranch
               node={child}
+              depth={depth + 1}
               language={language}
               selectedId={selectedId}
               collapsedIds={collapsedIds}
@@ -185,8 +192,6 @@ export function HeadingTreeView({
   }, [headings]);
 
   useEffect(() => {
-    // A fresh scan always starts fully expanded. From there each branch can be
-    // collapsed independently without changing the state of sibling branches.
     setCollapsedIds(new Set());
   }, [scan?.scannedAt]);
 
@@ -334,6 +339,7 @@ export function HeadingTreeView({
             {headingForest.map((node) => (
               <HeadingBranch
                 node={node}
+                depth={0}
                 language={language}
                 selectedId={selectedId}
                 collapsedIds={collapsedIds}

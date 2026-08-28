@@ -9,10 +9,12 @@ function InstructionCard({
   children: React.ReactNode;
 }) {
   return (
-    <section className="instructions-card">
-      <h3>{title}</h3>
-      {children}
-    </section>
+    <details className="instructions-card">
+      <summary>{title}</summary>
+      <div className="instructions-card-body">
+        {children}
+      </div>
+    </details>
   );
 }
 

@@ -44,7 +44,32 @@ describe('heading review and tree UX', () => {
     expect(css).toContain('.heading-tree-branch');
     expect(css).toContain('.heading-tree-children');
     expect(css).toContain('.heading-branch-toggle');
-    expect(css).toContain('.heading-node-row.has-children');
     expect(css).not.toContain('text-overflow: ellipsis');
+  });
+
+  it('indents by real tree depth instead of the H1-H6 rank', () => {
+    const view = source('entrypoints/sidepanel/views/HeadingTreeView.tsx');
+    const css = source('entrypoints/sidepanel/heading-tree-visual.css');
+
+    expect(view).toContain('depth: number;');
+    expect(view).toContain("const rowStyle = { '--heading-depth': depth } as CSSProperties;");
+    expect(view).toContain('aria-level={depth + 1}');
+    expect(view).toContain('depth={depth + 1}');
+    expect(view).toContain('depth={0}');
+    expect(css).toContain('padding-inline-start: calc(var(--heading-depth) * 10px);');
+    expect(css).not.toContain('.heading-tree-row.level-2 { --heading-depth: 1; }');
+  });
+
+  it('uses a neutral level gradient, semibold labels and compact left branch toggles', () => {
+    const css = source('entrypoints/sidepanel/heading-tree-visual.css');
+    const view = source('entrypoints/sidepanel/views/HeadingTreeView.tsx');
+
+    expect(css).toContain('--heading-level-tone:');
+    expect(css).toContain('.heading-tree-row.level-6');
+    expect(css).toContain('font-weight: 600;');
+    expect(css).toContain('grid-template-columns: 22px 32px minmax(0, 1fr);');
+    expect(css).toContain('width: 22px;');
+    expect(view).toContain('className="heading-branch-toggle-spacer"');
+    expect(view.indexOf('className="heading-branch-toggle"')).toBeLessThan(view.indexOf('className="heading-level"'));
   });
 });
