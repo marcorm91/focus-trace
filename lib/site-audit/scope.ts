@@ -9,6 +9,7 @@ export type SiteAuditInputMode = 'automatic' | 'manual';
 
 export interface ManualSiteAuditSelection {
   urls: string[];
+  totalValid: number;
   invalid: string[];
   duplicateCount: number;
   truncated: boolean;
@@ -61,6 +62,7 @@ export function parseManualSiteAuditUrls(
   const allUrls = [...seen];
   return {
     urls: allUrls.slice(0, limit),
+    totalValid: allUrls.length,
     invalid,
     duplicateCount,
     truncated: allUrls.length > limit,
@@ -91,5 +93,8 @@ export function selectManualSiteAuditSamples(
 
   return urls
     .slice(0, SITE_AUDIT_MAX_SCANNED_PAGES)
-    .map((url) => ({ routeFamilyId: familyForUrl.get(url) ?? families[0]?.id ?? 'R01', url }));
+    .flatMap((url) => {
+      const routeFamilyId = familyForUrl.get(url);
+      return routeFamilyId ? [{ routeFamilyId, url }] : [];
+    });
 }
