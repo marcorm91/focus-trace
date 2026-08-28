@@ -1,0 +1,120 @@
+.instructions-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.instructions-heading {
+  padding-right: 118px;
+}
+
+.instructions-start,
+.instructions-card {
+  border: 1px solid var(--ft-border-soft);
+  border-radius: var(--ft-radius-md);
+  background: var(--ft-surface);
+}
+
+.instructions-start {
+  padding: 13px;
+  border-left: 4px solid var(--ft-brand);
+}
+
+.instructions-start h3,
+.instructions-card h3 {
+  margin: 0;
+  color: var(--ft-ink);
+  font-size: 12px;
+  font-weight: 850;
+}
+
+.instructions-start ol {
+  display: grid;
+  gap: 9px;
+  margin: 10px 0 0;
+  padding-left: 22px;
+}
+
+.instructions-start li {
+  padding-left: 3px;
+}
+
+.instructions-start li::marker {
+  color: var(--ft-brand);
+  font-weight: 850;
+}
+
+.instructions-start li strong,
+.instructions-start li span {
+  display: block;
+}
+
+.instructions-start li strong {
+  color: var(--ft-text);
+  font-size: 10px;
+}
+
+.instructions-start li span {
+  margin-top: 2px;
+  color: var(--ft-muted);
+  font-size: 9px;
+  line-height: 1.45;
+}
+
+.instructions-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.instructions-card {
+  min-width: 0;
+  padding: 12px;
+}
+
+.instructions-card p,
+.instructions-card li,
+.instructions-note p {
+  color: var(--ft-text);
+  font-size: 9.5px;
+  line-height: 1.5;
+}
+
+.instructions-card p {
+  margin: 7px 0 0;
+}
+
+.instructions-card ul {
+  display: grid;
+  gap: 5px;
+  margin: 8px 0 0;
+  padding-left: 18px;
+}
+
+.instructions-card li::marker {
+  color: var(--ft-brand);
+}
+
+.instructions-note {
+  margin: 0;
+}
+
+.instructions-note strong {
+  color: var(--ft-ink);
+}
+
+.instructions-note p {
+  margin: 4px 0 0;
+}
+
+@media (max-width: 520px) {
+  .instructions-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 430px) {
+  .instructions-heading {
+    padding-right: 0;
+    padding-top: 44px;
+  }
+}
