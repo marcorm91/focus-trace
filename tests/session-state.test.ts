@@ -7,6 +7,7 @@ import {
   emptySessionState,
   invalidateSessionScanForUrl,
   normalizeSessionState,
+  resetSessionState,
   setSessionRecordingState,
   updateSessionBreakpoints,
 } from '../lib/runtime/session-state';
@@ -102,6 +103,28 @@ describe('runtime session state helpers', () => {
       element: { tag: 'button', selector: '#fresh-start', name: 'Fresh start' },
     }));
     expect(buildFocusJourney(restarted.events).steps[0]?.order).toBe(1);
+  });
+
+  it('starts over without discarding configured breakpoint preferences', () => {
+    const configured = {
+      ...emptySessionState(7).breakpoints,
+      'focused-node-removed': true,
+      'modal-focus-escape': true,
+    };
+    const current = session({
+      startedAt: 1234,
+      events: [event('1')],
+      scan: { url: 'https://example.com/' } as SessionState['scan'],
+      breakpoints: configured,
+    });
+
+    const reset = resetSessionState(current);
+
+    expect(reset.recording).toBe(false);
+    expect(reset.events).toEqual([]);
+    expect(reset.scan).toBeUndefined();
+    expect(reset.startedAt).toBeUndefined();
+    expect(reset.breakpoints).toEqual(configured);
   });
 
   it('starts recording from a clean pause state and normalizes saved breakpoints', () => {
