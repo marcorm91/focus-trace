@@ -39,7 +39,7 @@ export type RuntimeBreakpointId =
 export type RuntimeBreakpointSettings = Record<RuntimeBreakpointId, boolean>;
 
 export interface StandardReference {
-  type: 'WCAG' | 'ACT' | 'WAI-ARIA' | 'WAI-ARIA APG';
+  type: 'HTML' | 'WCAG' | 'ACT' | 'WAI-ARIA' | 'WAI-ARIA APG';
   id: string;
   label: string;
   url: string;
