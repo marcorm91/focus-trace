@@ -28,18 +28,19 @@ describe('heading review and tree UX', () => {
     expect(locationRule).toContain('white-space: normal;');
   });
 
-  it('builds independent heading branches that start expanded and expose global controls', () => {
+  it('builds independent heading branches collapsed by default and exposes global controls', () => {
     const view = source('entrypoints/sidepanel/views/HeadingTreeView.tsx');
     const css = source('entrypoints/sidepanel/heading-tree-visual.css');
 
     expect(view).toContain('function buildHeadingForest');
-    expect(view).toContain('const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set())');
-    expect(view).toContain('setCollapsedIds(new Set())');
+    expect(view).toContain('const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set(collapsibleIds))');
+    expect(view).toContain('setCollapsedIds(new Set(collapsibleIds))');
     expect(view).toContain('aria-expanded={hasChildren ? expanded : undefined}');
     expect(view).toContain('className="heading-branch-toggle"');
     expect(view).toContain("'Expand all', 'Expandir todo'");
     expect(view).toContain("'Collapse all', 'Contraer todo'");
     expect(view).toContain('role="group"');
+    expect(view).not.toContain('className="heading-selection"');
 
     expect(css).toContain('.heading-tree-branch');
     expect(css).toContain('.heading-tree-children');

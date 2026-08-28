@@ -22,35 +22,6 @@ function signalLabel(signal: HeadingSignal, language: AppLanguage): string {
   return tr(language, 'Multiple H1', 'Varios H1');
 }
 
-function headingDetail(heading: HeadingSnapshot, language: AppLanguage): string {
-  if (heading.signals.includes('empty')) {
-    return tr(
-      language,
-      'This heading has no visible text. Review whether it should be removed or named.',
-      'Este encabezado no tiene texto visible. Revisa si debe eliminarse o recibir contenido.',
-    );
-  }
-  if (heading.signals.includes('level-jump')) {
-    return tr(
-      language,
-      'The outline skips a heading level before this node. Review the content hierarchy.',
-      'El esquema salta un nivel antes de este nodo. Revisa la jerarquía del contenido.',
-    );
-  }
-  if (heading.signals.includes('multiple-h1')) {
-    return tr(
-      language,
-      'There is more than one H1. Review the document structure; this is not treated as an automatic WCAG failure.',
-      'Hay más de un H1. Revisa la estructura del documento; no se trata como un fallo WCAG automático.',
-    );
-  }
-  return tr(
-    language,
-    'No structural signals were detected for this heading.',
-    'No se han detectado señales estructurales en este encabezado.',
-  );
-}
-
 function buildHeadingForest(headings: HeadingSnapshot[]): HeadingTreeNode[] {
   const roots: HeadingTreeNode[] = [];
   const stack: HeadingTreeNode[] = [];
@@ -180,7 +151,7 @@ export function HeadingTreeView({
   const headingForest = useMemo(() => buildHeadingForest(headings), [headings]);
   const collapsibleIds = useMemo(() => branchIds(headingForest), [headingForest]);
   const [selectedId, setSelectedId] = useState<string>();
-  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set());
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set(collapsibleIds));
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [overlayResult, setOverlayResult] = useState<HeadingOverlayResult>();
   const [overlayError, setOverlayError] = useState<string>();
@@ -192,8 +163,8 @@ export function HeadingTreeView({
   }, [headings]);
 
   useEffect(() => {
-    setCollapsedIds(new Set());
-  }, [scan?.scannedAt]);
+    setCollapsedIds(new Set(collapsibleIds));
+  }, [collapsibleIds, scan?.scannedAt]);
 
   useEffect(() => () => {
     void activeTabId()
@@ -257,7 +228,6 @@ export function HeadingTreeView({
     );
   }
 
-  const selected = headings.find((heading) => heading.id === selectedId);
   const signalled = headings.filter((heading) => heading.signals.length > 0).length;
   const h1Count = headings.filter((heading) => heading.level === 1).length;
   const allCollapsed = collapsibleIds.length > 0 && collapsibleIds.every((id) => collapsedIds.has(id));
@@ -349,16 +319,6 @@ export function HeadingTreeView({
               />
             ))}
           </div>
-
-          {selected && (
-            <div className="heading-selection" aria-live="polite">
-              <div>
-                <span>H{selected.level}</span>
-                <strong>{selected.text || tr(language, 'Empty heading', 'Encabezado vacío')}</strong>
-              </div>
-              <p>{headingDetail(selected, language)}</p>
-            </div>
-          )}
         </>
       )}
     </section>
