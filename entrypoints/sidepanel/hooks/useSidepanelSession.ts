@@ -30,7 +30,7 @@ export function useSidepanelSession({
 } {
   const [tabId, setTabId] = useState<number>();
   const [session, setSession] = useState<SessionState>(EMPTY_SESSION);
-  const selectedTabRef = useRef<number>();
+  const selectedTabRef = useRef<number | undefined>(undefined);
 
   const refresh = useCallback(async (id: number) => {
     const state = (await browser.runtime.sendMessage({
