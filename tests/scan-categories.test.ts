@@ -13,5 +13,6 @@ describe('scan categories', () => {
     expect(scanCategoryForRule('FT-REVIEW-002')).toBe('structure');
     expect(scanCategoryForRule('FT-REVIEW-001')).toBe('keyboard');
     expect(scanCategoryForRule('FT-WARN-003')).toBe('aria');
+    expect(scanCategoryForRule('FT-WARN-004')).toBe('structure');
   });
 });

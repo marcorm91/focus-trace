@@ -52,6 +52,9 @@ export function remediationForIssue(issue: ScanIssue, language: AppLanguage): st
   if (issue.ruleId === 'FT-WARN-002' || issue.ruleId === 'FT-WARN-003') return t(language,
     'Remove or replace the deprecated/prohibited ARIA attribute according to the role semantics instead of relying on unsupported authoring.',
     'Elimina o sustituye el atributo ARIA obsoleto/prohibido según la semántica del rol, en lugar de depender de un marcado no compatible.');
+  if (issue.ruleId === 'FT-WARN-004') return t(language,
+    'Give every element a unique non-empty id and update all for, aria-labelledby, aria-describedby, aria-controls, aria-owns, aria-activedescendant, headers or href references that point to any renamed identifier.',
+    'Asigna a cada elemento un id no vacío y único, y actualiza todas las referencias for, aria-labelledby, aria-describedby, aria-controls, aria-owns, aria-activedescendant, headers o href que apunten a cualquier identificador renombrado.');
   if (issue.ruleId === 'FT-REVIEW-001') return t(language,
     'Prefer natural DOM order with tabindex="0" only where needed. Avoid positive tabindex values unless a documented interaction pattern genuinely requires them.',
     'Prioriza el orden natural del DOM con tabindex="0" solo donde sea necesario. Evita tabindex positivos salvo que un patrón de interacción documentado los requiera realmente.');

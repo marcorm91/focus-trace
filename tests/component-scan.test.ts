@@ -40,6 +40,24 @@ describe('component-scoped static analysis', () => {
     expect(result.issues.some((issue) => issue.ruleId === 'FT-WCAG-005')).toBe(false);
   });
 
+  it('detects a document-wide duplicate id when one occurrence is inside the selected component', () => {
+    render(`
+      <main>
+        <section id="checkout" aria-label="Checkout">
+          <button id="shared-id" aria-label="Pay">Pay</button>
+        </section>
+        <div id="shared-id">Outside duplicate</div>
+      </main>
+    `);
+
+    const result = runFocusTraceScan(checkoutScope());
+    const warnings = result.warnings.filter((issue) => issue.ruleId === 'FT-WARN-004');
+
+    expect(warnings).toHaveLength(1);
+    expect(warnings[0]?.evidence).toContain('used by 2 elements');
+    expect(warnings[0]?.targets[0]).toContain('shared-id');
+  });
+
   it('does not run page-global title, language or heading-outline checks for a component', () => {
     render(`
       <main>
@@ -88,7 +106,7 @@ describe('component-scoped static analysis', () => {
 
     expect(result.scope).toEqual({ type: 'page' });
     expect(result.headings).toHaveLength(1);
-    expect(result.rulesRun).toBe(17);
+    expect(result.rulesRun).toBe(18);
     expect(document.documentElement.hasAttribute('data-focustrace-focus-component')).toBe(false);
   });
 
