@@ -52,7 +52,7 @@ async function syncBreakpointPreferencesToTab(
     type: 'FOCUSTRACE_SAVE_BREAKPOINTS',
     tabId,
     breakpoints,
-  } satisfies ExtensionMessage));
+  } satisfies ExtensionMessage);
   await browser.tabs.sendMessage(tabId, {
     type: 'FOCUSTRACE_CONFIGURE_BREAKPOINTS',
     breakpoints,
