@@ -74,4 +74,19 @@ describe('sidepanel layout polish contract', () => {
     expect(chain).not.toContain('white-space: nowrap;');
     expect(chain).not.toContain('max-width: 180px;');
   });
+
+  it('shows per-finding Memory history and keeps the retention footer concise', () => {
+    const component = source('entrypoints/sidepanel/components/FocusMemorySummary.tsx');
+    const css = source('entrypoints/sidepanel/components/focus-memory.css');
+
+    expect(component).toContain("tr(language, 'Finding history', 'Historial por fallo')");
+    expect(component).toContain('focus-memory-finding-timeline');
+    expect(component).toContain('Max ${FOCUS_MEMORY_MAX_PER_SCOPE} per scope');
+    expect(component).toContain('Máx. ${FOCUS_MEMORY_MAX_PER_SCOPE} por ámbito');
+    expect(component).not.toContain('Local only · max');
+    expect(component).not.toContain('Solo local · máx.');
+    expect(css).toContain('.focus-memory-history');
+    expect(css).toContain('.focus-memory-finding.changed-now');
+    expect(css).toContain('.focus-memory-finding-timeline');
+  });
 });
