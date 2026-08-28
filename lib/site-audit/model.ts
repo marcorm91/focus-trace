@@ -9,7 +9,7 @@ export type SiteAuditStatus = 'idle' | 'discovering' | 'scanning' | 'complete' |
 
 export interface SiteAuditDiscovery {
   origin: string;
-  source: 'sitemap' | 'robots+sitemap' | 'links' | 'mixed';
+  source: 'sitemap' | 'robots+sitemap' | 'links' | 'mixed' | 'manual';
   urls: string[];
   sitemapUrls: string[];
   truncated: boolean;

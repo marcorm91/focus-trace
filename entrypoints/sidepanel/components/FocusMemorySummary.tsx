@@ -1,4 +1,6 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { browser } from '#imports';
+import { locateScanTargetInPage } from '../../../lib/runtime/scan-target-overlay';
 import {
   FOCUS_MEMORY_MAX_OBSERVATIONS,
   FOCUS_MEMORY_MAX_PER_SCOPE,
@@ -21,6 +23,8 @@ import { useFocusTraceMemory } from '../hooks/useFocusTraceMemory';
 import './focus-memory.css';
 
 type FindingHistoryMode = 'list' | 'step';
+
+const PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'];
 
 interface FocusMemorySnapshotFile {
   format: 'focustrace-memory-baseline';
@@ -166,6 +170,42 @@ function timelinePointLabel(
   return tr(language, 'Not observed', 'No detectado');
 }
 
+function currentFindingSelectors(scan: ScanResult): Map<string, string> {
+  const selectors = new Map<string, string>();
+
+  for (const issue of scan.issues) {
+    const selector = issue.targets.find((target) => target.trim().length > 0)?.trim();
+    if (!selector) continue;
+
+    const observation = buildFocusMemoryObservation({ ...scan, issues: [issue] });
+    const fingerprint = observation.failureDetails?.[0]?.fingerprint ?? observation.failureFingerprints[0];
+    if (fingerprint) selectors.set(fingerprint, selector);
+  }
+
+  return selectors;
+}
+
+async function locateMemoryFindingInPage(selector: string, label: string): Promise<boolean> {
+  const granted = await browser.permissions.request({ origins: PAGE_ACCESS_ORIGINS }).catch(() => false);
+  if (!granted) return false;
+
+  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+  if (tab?.id == null || !tab.url || !/^https?:/i.test(tab.url)) return false;
+
+  const results = await browser.scripting.executeScript({
+    target: { tabId: tab.id },
+    func: locateScanTargetInPage,
+    args: [selector, {
+      tone: 'fail',
+      label,
+      focusTarget: false,
+      durationMs: 10000,
+    }],
+  });
+
+  return Boolean(results[0]?.result?.found);
+}
+
 function snapshotForScan(scan: ScanResult): FocusMemorySnapshotFile {
   const observation = buildFocusMemoryObservation(scan);
   return {
@@ -253,10 +293,14 @@ function parsedSnapshot(value: unknown): FocusMemorySnapshotFile {
 function FindingHistoryItem({
   item,
   language,
+  selector,
+  onLocate,
   onResolve,
 }: {
   item: FocusMemoryFindingHistory;
   language: AppLanguage;
+  selector?: string;
+  onLocate: (item: FocusMemoryFindingHistory, selector: string) => void | Promise<void>;
   onResolve: (item: FocusMemoryFindingHistory) => Promise<boolean>;
 }) {
   const resolveHintId = `focus-memory-resolve-${item.fingerprint}`;
@@ -267,7 +311,18 @@ function FindingHistoryItem({
       <div className="focus-memory-finding-head">
         <div>
           {item.ruleId && <code>{item.ruleId}</code>}
-          <strong>{title}</strong>
+          {selector ? (
+            <button
+              className="focus-memory-finding-link"
+              type="button"
+              title={tr(language, 'Locate this finding on the page', 'Localizar este fallo en la página')}
+              onClick={() => void onLocate(item, selector)}
+            >
+              {title}
+            </button>
+          ) : (
+            <strong>{title}</strong>
+          )}
         </div>
         <span>{findingStateLabel(item.state, language)}</span>
       </div>
@@ -332,11 +387,15 @@ function FindingHistory({
   history,
   comparison,
   language,
+  selectors,
+  onLocate,
   onResolve,
 }: {
   history: FocusMemoryFindingHistory[];
   comparison: FocusMemoryComparison;
   language: AppLanguage;
+  selectors: Map<string, string>;
+  onLocate: (item: FocusMemoryFindingHistory, selector: string) => void | Promise<void>;
   onResolve: (item: FocusMemoryFindingHistory) => Promise<boolean>;
 }) {
   const [mode, setMode] = useState<FindingHistoryMode>('list');
@@ -352,6 +411,18 @@ function FindingHistory({
     : history.filter((item) => item.changedNow).length;
   const currentItem = history[activeIndex] ?? history[0];
   const visibleHistory = mode === 'step' && currentItem ? [currentItem] : history;
+
+  const locateItem = (item: FocusMemoryFindingHistory | undefined) => {
+    if (!item) return;
+    const selector = selectors.get(item.fingerprint);
+    if (selector) void onLocate(item, selector);
+  };
+
+  const selectWalkthroughItem = (index: number) => {
+    const nextIndex = Math.min(Math.max(index, 0), history.length - 1);
+    setActiveIndex(nextIndex);
+    locateItem(history[nextIndex]);
+  };
 
   return (
     <details className="focus-memory-history">
@@ -384,9 +455,12 @@ function FindingHistory({
           <button
             type="button"
             aria-pressed={mode === 'step'}
-            onClick={() => setMode('step')}
+            onClick={() => {
+              setMode('step');
+              locateItem(currentItem);
+            }}
           >
-            {tr(language, 'One by one', 'Uno a uno')}
+            {tr(language, 'Walkthrough', 'Recorrido')}
           </button>
         </div>
 
@@ -396,7 +470,7 @@ function FindingHistory({
               type="button"
               disabled={activeIndex === 0}
               aria-label={tr(language, 'Previous finding', 'Fallo anterior')}
-              onClick={() => setActiveIndex((current) => Math.max(0, current - 1))}
+              onClick={() => selectWalkthroughItem(activeIndex - 1)}
             >
               ‹
             </button>
@@ -407,7 +481,7 @@ function FindingHistory({
               type="button"
               disabled={activeIndex >= history.length - 1}
               aria-label={tr(language, 'Next finding', 'Fallo siguiente')}
-              onClick={() => setActiveIndex((current) => Math.min(history.length - 1, current + 1))}
+              onClick={() => selectWalkthroughItem(activeIndex + 1)}
             >
               ›
             </button>
@@ -420,6 +494,8 @@ function FindingHistory({
           <FindingHistoryItem
             item={item}
             language={language}
+            selector={selectors.get(item.fingerprint)}
+            onLocate={onLocate}
             onResolve={onResolve}
             key={item.fingerprint}
           />
@@ -434,10 +510,13 @@ export function FocusMemorySummary({ scan, language }: { scan: ScanResult; langu
   const importInputRef = useRef<HTMLInputElement>(null);
   const [importedBaseline, setImportedBaseline] = useState<ImportedBaselineComparison>();
   const [importError, setImportError] = useState<string>();
+  const [locateError, setLocateError] = useState<string>();
+  const selectors = useMemo(() => currentFindingSelectors(scan), [scan]);
 
   useEffect(() => {
     setImportedBaseline(undefined);
     setImportError(undefined);
+    setLocateError(undefined);
     if (importInputRef.current) importInputRef.current.value = '';
   }, [scan.scannedAt]);
 
@@ -448,6 +527,27 @@ export function FocusMemorySummary({ scan, language }: { scan: ScanResult; langu
       '¿Borrar FocusTrace Memory? Se eliminarán todas las comparaciones de análisis recordadas en este perfil del navegador. El análisis actual seguirá abierto.',
     ));
     if (confirmed) await memory.clear();
+  };
+
+  const locateFinding = async (item: FocusMemoryFindingHistory, selector: string) => {
+    setLocateError(undefined);
+    try {
+      const label = item.ruleId ? `FocusTrace · ${item.ruleId}` : 'FocusTrace Memory';
+      const found = await locateMemoryFindingInPage(selector, label);
+      if (!found) {
+        setLocateError(tr(
+          language,
+          'FocusTrace could not highlight the current element. Check page access or run the analysis again if the page changed.',
+          'FocusTrace no ha podido resaltar el elemento actual. Comprueba el acceso a la página o vuelve a ejecutar el análisis si la página ha cambiado.',
+        ));
+      }
+    } catch {
+      setLocateError(tr(
+        language,
+        'FocusTrace could not highlight the current element. Check page access and try again.',
+        'FocusTrace no ha podido resaltar el elemento actual. Comprueba el acceso a la página y vuelve a intentarlo.',
+      ));
+    }
   };
 
   const compareImportedSnapshot = async (file: File) => {
@@ -527,6 +627,9 @@ export function FocusMemorySummary({ scan, language }: { scan: ScanResult; langu
           <small>FocusTrace Memory</small>
           <strong id="focus-memory-title">{statusLabel(comparison.status, language)}</strong>
         </div>
+        <button className="focus-memory-clear" type="button" onClick={() => void clearMemory()}>
+          {tr(language, 'Clear memory', 'Borrar memoria')}
+        </button>
       </div>
 
       <p>{comparisonDescription(comparison, language)}</p>
@@ -586,11 +689,14 @@ export function FocusMemorySummary({ scan, language }: { scan: ScanResult; langu
       )}
 
       {importError && <p className="focus-memory-import-error" role="alert">{importError}</p>}
+      {locateError && <p className="focus-memory-locate-error" role="status">{locateError}</p>}
 
       <FindingHistory
         history={memory.history ?? []}
         comparison={comparison}
         language={language}
+        selectors={selectors}
+        onLocate={locateFinding}
         onResolve={(item) => memory.resolveFinding(item.fingerprint, item.ruleId)}
       />
 
@@ -618,9 +724,6 @@ export function FocusMemorySummary({ scan, language }: { scan: ScanResult; langu
           </button>
           <button type="button" onClick={() => importInputRef.current?.click()}>
             {tr(language, 'Compare JSON', 'Comparar JSON')}
-          </button>
-          <button type="button" onClick={() => void clearMemory()}>
-            {tr(language, 'Clear memory', 'Borrar memoria')}
           </button>
         </div>
       </div>
