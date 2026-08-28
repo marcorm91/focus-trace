@@ -31,6 +31,7 @@ import './modern-icons.css';
 import './control-states.css';
 import './ui-scale.css';
 import './requested-polish.css';
+import './memory-walkthrough-polish.css';
 
 const PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'];
 const root = document.getElementById('root');
