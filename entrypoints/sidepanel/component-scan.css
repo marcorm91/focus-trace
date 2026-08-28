@@ -8,11 +8,18 @@
   box-shadow: var(--ft-shadow-sm);
 }
 
+/* The active page/component is already summarized in the quick-start area.
+   Component scans keep the section heading compact instead of repeating a
+   potentially long accessible label above the component context. */
+.panel[aria-labelledby='scan-title']:has(.scan-scope-banner) #scan-title + p {
+  display: none;
+}
+
 .scan-scope-banner {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 12px;
-  align-items: center;
+  align-items: start;
   padding: 12px;
   border: 1.5px solid var(--ft-accent-strong);
   border-radius: var(--ft-radius-md);
@@ -22,21 +29,22 @@
 .scan-scope-copy {
   min-width: 0;
   display: grid;
-  gap: 3px;
+  gap: 4px;
 }
 
 .scan-scope-copy small {
   color: var(--ft-accent-strong);
-  font-size: 10px;
+  font-size: 11px;
   font-weight: 900;
+  line-height: 1.25;
   letter-spacing: .055em;
   text-transform: uppercase;
 }
 
+/* The selected component label can be very long and is already exposed in the
+   quick-start summary. Keep the technical identity here: tag/role + selector. */
 .scan-scope-copy strong {
-  min-width: 0;
-  overflow-wrap: anywhere;
-  font-size: 14px;
+  display: none;
 }
 
 .scan-scope-copy span {
@@ -52,14 +60,14 @@
 }
 
 .scan-scope-actions {
-  display: grid;
-  gap: 6px;
-  align-self: stretch;
+  display: flex;
+  align-items: flex-start;
+  align-self: start;
 }
 
 .scan-scope-actions button {
   min-height: 36px;
-  padding: 6px 9px;
+  padding: 6px 10px;
   border: 1.5px solid var(--ft-border);
   border-radius: var(--ft-radius-sm);
   background: var(--ft-surface);
@@ -67,6 +75,13 @@
   font-size: 12px;
   font-weight: 800;
   cursor: pointer;
+  white-space: nowrap;
+}
+
+/* Full-page analysis already has a primary action in the quick-start grid.
+   Component context only needs the local "change component" action. */
+.scan-scope-actions button + button {
+  display: none;
 }
 
 .scan-scope-actions button:not(:disabled):hover {
@@ -78,18 +93,17 @@
   opacity: .48;
 }
 
-@media (max-width: 520px) {
+@media (max-width: 430px) {
   .scan-scope-banner {
     grid-template-columns: 1fr;
   }
 
-  .scan-scope-actions {
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+  .scan-scope-actions,
+  .scan-scope-actions button {
+    width: 100%;
   }
-}
 
-@media (max-width: 370px) {
-  .scan-scope-actions {
-    grid-template-columns: 1fr;
+  .scan-scope-actions button {
+    white-space: normal;
   }
 }
