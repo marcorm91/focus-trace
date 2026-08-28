@@ -102,8 +102,13 @@
 }
 
 .report-more-formats {
+  position: relative;
   min-width: min(100%, 220px);
   max-width: 320px;
+}
+
+.report-more-formats[open] {
+  z-index: 30;
 }
 
 .report-more-formats > summary {
@@ -126,9 +131,18 @@
 }
 
 .report-format-options {
+  position: absolute;
+  z-index: 31;
+  inset-block-start: calc(100% + 6px);
+  inset-inline-end: 0;
+  width: min(320px, calc(100vw - 36px));
   display: grid;
   gap: 6px;
-  margin-top: 6px;
+  padding: 8px;
+  border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 16%, transparent));
+  border-radius: 10px;
+  background: var(--ft-surface, Canvas);
+  box-shadow: 0 10px 26px color-mix(in srgb, CanvasText 18%, transparent);
 }
 
 .report-format-options button {
@@ -136,12 +150,18 @@
   justify-content: flex-start;
 }
 
+/* Keep the helper available to assistive technology without giving the open
+   details element extra visual height below the absolute format popover. */
 .report-format-note {
-  display: block;
-  margin-top: 7px;
-  color: GrayText;
-  font-size: 10px;
-  line-height: 1.4;
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 @media (max-width: 720px) {
