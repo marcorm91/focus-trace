@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState, type Dispatch, type SetStateAction } from 'react';
+import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateAction } from 'react';
 import { browser } from '#imports';
 import { defaultRuntimeBreakpointSettings } from '../../../lib/runtime/breakpoints';
 import type { ExtensionMessage, SessionState } from '../../../shared/types';
@@ -30,16 +30,19 @@ export function useSidepanelSession({
 } {
   const [tabId, setTabId] = useState<number>();
   const [session, setSession] = useState<SessionState>(EMPTY_SESSION);
+  const selectedTabRef = useRef<number>();
 
   const refresh = useCallback(async (id: number) => {
     const state = (await browser.runtime.sendMessage({
       type: 'FOCUSTRACE_GET_SESSION',
       tabId: id,
     } satisfies ExtensionMessage)) as SessionState;
+    if (selectedTabRef.current !== id) return;
     setSession(state);
   }, []);
 
   const selectTab = useCallback(async (id: number) => {
+    selectedTabRef.current = id;
     setTabId(id);
     setSession({ ...EMPTY_SESSION, tabId: id });
     onTabSelected();
@@ -62,12 +65,12 @@ export function useSidepanelSession({
 
   useEffect(() => {
     const listener = (message: ExtensionMessage) => {
-      if (message.type !== 'FOCUSTRACE_SESSION_UPDATED' || message.state.tabId !== tabId) return;
+      if (message.type !== 'FOCUSTRACE_SESSION_UPDATED' || message.state.tabId !== selectedTabRef.current) return;
       setSession(message.state);
     };
     browser.runtime.onMessage.addListener(listener);
     return () => browser.runtime.onMessage.removeListener(listener);
-  }, [tabId]);
+  }, []);
 
   return { tabId, session, setSession, refresh };
 }
