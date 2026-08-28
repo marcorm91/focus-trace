@@ -2,7 +2,7 @@ import { useMemo, useRef, useState } from 'react';
 import { createRoot } from 'react-dom/client';
 import { browser } from '#imports';
 import { buildSiteAuditTemplates } from '../../lib/site-audit/aggregate';
-import { discoverSiteUrls, normalizeDiscoveredUrl } from '../../lib/site-audit/discovery';
+import { discoverSiteUrls } from '../../lib/site-audit/discovery';
 import {
   componentContextLabel,
   componentPrimaryLabel,
@@ -12,12 +12,20 @@ import {
   SITE_AUDIT_MAX_DISCOVERED_URLS,
   SITE_AUDIT_MAX_SCANNED_PAGES,
   SITE_AUDIT_SAMPLES_PER_FAMILY,
+  type SiteAuditDiscovery,
   type SiteAuditFindingAggregate,
   type SiteAuditResult,
   type SiteAuditStatus,
 } from '../../lib/site-audit/model';
 import { remediationForIssue } from '../../lib/site-audit/remediation';
 import { buildRouteFamilies, selectSiteAuditSamples } from '../../lib/site-audit/routes';
+import {
+  manualSiteAuditDiscovery,
+  normalizeSiteAuditRoot,
+  parseManualSiteAuditUrls,
+  selectManualSiteAuditSamples,
+  type SiteAuditInputMode,
+} from '../../lib/site-audit/scope';
 import { scanRepresentativePage, sourcePageLinks } from '../../lib/site-audit/runner';
 import { buildSiteAuditTextReport, siteAuditFilename } from '../../lib/site-audit/text-report';
 import { captureSiteAuditFindingVisual } from '../../lib/site-audit/visual-evidence';
@@ -26,6 +34,7 @@ import { countBySeverity, severityRank } from '../../shared/severity';
 import type { FindingOutcome, Severity } from '../../shared/types';
 import { localizedUserError } from '../../shared/user-facing-errors';
 import './style.css';
+import './scope-tabs.css';
 
 const DISPLAY_SEVERITIES: Severity[] = ['critical', 'serious', 'moderate', 'minor'];
 
@@ -71,58 +80,109 @@ function downloadText(result: SiteAuditResult, language: AppLanguage) {
 function App() {
   const source = useMemo(params, []);
   const { language } = source;
+  const sourceMeta = useMemo(() => {
+    try {
+      const url = new URL(source.sourceUrl);
+      if (!['http:', 'https:'].includes(url.protocol)) throw new Error('invalid protocol');
+      return {
+        valid: true,
+        origin: url.origin,
+        protocol: url.protocol,
+        root: `${url.origin}/`,
+      };
+    } catch {
+      return { valid: false, origin: '', protocol: 'https:', root: '' };
+    }
+  }, [source.sourceUrl]);
+  const [mode, setMode] = useState<SiteAuditInputMode>('automatic');
+  const [rootUrl, setRootUrl] = useState(sourceMeta.root);
+  const [manualUrls, setManualUrls] = useState('');
   const [status, setStatus] = useState<SiteAuditStatus>('idle');
   const [progress, setProgress] = useState({ current: 0, total: 0, url: '' });
   const [result, setResult] = useState<SiteAuditResult>();
   const [error, setError] = useState<string>();
-  const [extraUrls, setExtraUrls] = useState('');
   const abortRef = useRef<AbortController | undefined>(undefined);
   document.documentElement.lang = language;
 
-  const validSource = useMemo(() => {
-    try {
-      const url = new URL(source.sourceUrl);
-      return ['http:', 'https:'].includes(url.protocol);
-    } catch {
-      return false;
-    }
-  }, [source.sourceUrl]);
+  const manualSelection = useMemo(
+    () => parseManualSiteAuditUrls(manualUrls, sourceMeta.origin),
+    [manualUrls, sourceMeta.origin],
+  );
 
   const run = async () => {
-    if (!validSource) return;
+    if (!sourceMeta.valid) return;
+
+    const normalizedRoot = mode === 'automatic'
+      ? normalizeSiteAuditRoot(rootUrl, sourceMeta.protocol)
+      : sourceMeta.root;
+
+    if (!normalizedRoot) {
+      setError(t(
+        language,
+        'Enter a valid http/https parent domain before starting the automatic audit.',
+        'Introduce un dominio padre http/https válido antes de iniciar la auditoría automática.',
+      ));
+      return;
+    }
+
+    if (mode === 'manual' && manualSelection.invalid.length > 0) {
+      setError(t(
+        language,
+        `There are ${manualSelection.invalid.length} invalid or out-of-site URLs. Remove them before starting the audit.`,
+        `Hay ${manualSelection.invalid.length} URL no válidas o ajenas al sitio. Elimínalas antes de iniciar la auditoría.`,
+      ));
+      return;
+    }
+
+    if (mode === 'manual' && manualSelection.urls.length === 0) {
+      setError(t(
+        language,
+        'Add at least one URL from this site before starting the manual selection audit.',
+        'Añade al menos una URL de este sitio antes de iniciar el análisis por selección manual.',
+      ));
+      return;
+    }
+
     const controller = new AbortController();
     abortRef.current = controller;
     setResult(undefined);
     setError(undefined);
-    setStatus('discovering');
-    setProgress({ current: 0, total: 0, url: source.sourceUrl });
+
+    const origin = new URL(normalizedRoot).origin;
+    const isManual = mode === 'manual';
+    setStatus(isManual ? 'scanning' : 'discovering');
+    setProgress({
+      current: 0,
+      total: isManual ? manualSelection.urls.length : 0,
+      url: isManual ? manualSelection.urls[0] ?? normalizedRoot : normalizedRoot,
+    });
 
     try {
-      const granted = await browser.permissions.request({ origins: [permissionPattern(source.sourceUrl)] });
+      const granted = await browser.permissions.request({ origins: [permissionPattern(normalizedRoot)] });
       if (!granted) throw new Error(t(
         language,
-        'Site Audit needs access to this site so representative pages can be discovered and scanned.',
-        'Site Audit necesita acceso a este sitio para descubrir y analizar páginas representativas.',
+        'Site Audit needs access to this site so its pages can be discovered or scanned.',
+        'Site Audit necesita acceso a este sitio para poder descubrir o analizar sus páginas.',
       ));
 
-      const origin = new URL(source.sourceUrl).origin;
-      const links = source.tabId != null ? await sourcePageLinks(source.tabId, origin) : [];
-      const discovered = await discoverSiteUrls(source.sourceUrl, links);
-      const merged = new Set(discovered.urls);
-      for (const raw of extraUrls.split(/\r?\n/)) {
-        const normalized = normalizeDiscoveredUrl(raw.trim(), origin);
-        if (normalized) merged.add(normalized);
-        if (merged.size >= SITE_AUDIT_MAX_DISCOVERED_URLS) break;
+      let discovery: SiteAuditDiscovery;
+      if (isManual) {
+        discovery = manualSiteAuditDiscovery(origin, manualSelection);
+      } else {
+        setRootUrl(normalizedRoot);
+        const currentTabMatchesOrigin = sourceMeta.origin === origin;
+        const links = currentTabMatchesOrigin && source.tabId != null
+          ? await sourcePageLinks(source.tabId, origin)
+          : [];
+        discovery = await discoverSiteUrls(normalizedRoot, links);
       }
-      const discovery = {
-        ...discovered,
-        urls: [...merged].slice(0, SITE_AUDIT_MAX_DISCOVERED_URLS),
-        truncated: discovered.truncated || merged.size > SITE_AUDIT_MAX_DISCOVERED_URLS,
-      };
+
       if (controller.signal.aborted) throw new DOMException('Cancelled', 'AbortError');
 
       const families = buildRouteFamilies(discovery.urls);
-      const samples = selectSiteAuditSamples(families);
+      const samples = isManual
+        ? selectManualSiteAuditSamples(families, discovery.urls)
+        : selectSiteAuditSamples(families);
       setStatus('scanning');
       setProgress({ current: 0, total: samples.length, url: samples[0]?.url ?? '' });
       const pages = [];
@@ -161,7 +221,7 @@ function App() {
 
   const cancel = () => abortRef.current?.abort();
 
-  if (!validSource) {
+  if (!sourceMeta.valid) {
     return (
       <main className="site-audit-shell">
         <header className="site-brand"><img src="/icon/48.png" alt="" /><strong>FocusTrace</strong></header>
@@ -184,35 +244,138 @@ function App() {
       <section className="site-hero site-card">
         <div>
           <span className="site-kicker">{t(language, 'Site-level accessibility coverage', 'Cobertura de accesibilidad del sitio')}</span>
-          <h1>{t(language, 'Scan representative templates, not thousands of duplicates', 'Analiza plantillas representativas, no miles de duplicados')}</h1>
+          <h1>{t(language, 'Audit the whole site or only the pages you choose', 'Audita todo el sitio o solo las páginas que elijas')}</h1>
           <p>{t(
             language,
-            'Discover same-origin URLs, group repeated route families and run the real page scanner on representative samples.',
-            'Descubre URLs del mismo origen, agrupa familias de rutas repetidas y ejecuta el scanner real sobre muestras representativas.',
+            'Use automatic discovery from the parent domain, or provide an exact list of same-site URLs and let FocusTrace scan only those pages.',
+            'Usa el descubrimiento automático desde el dominio padre o indica una lista exacta de URLs del mismo sitio para que FocusTrace analice solo esas páginas.',
           )}</p>
         </div>
-        <code>{source.sourceUrl}</code>
+        <code>{sourceMeta.origin}</code>
       </section>
 
       {(status === 'idle' || status === 'cancelled' || status === 'error') && (
         <section className="site-card site-start">
           <h2>{t(language, 'Audit scope', 'Alcance de la auditoría')}</h2>
-          <div className="site-limits">
-            <span><strong>{SITE_AUDIT_MAX_DISCOVERED_URLS}</strong>{t(language, 'max discovered URLs', 'URLs descubiertas máx.')}</span>
-            <span><strong>{SITE_AUDIT_MAX_SCANNED_PAGES}</strong>{t(language, 'max pages scanned', 'páginas analizadas máx.')}</span>
-            <span><strong>{SITE_AUDIT_SAMPLES_PER_FAMILY}</strong>{t(language, 'samples per route family', 'muestras por familia')}</span>
+
+          <div className="site-scope-tabs" role="tablist" aria-label={t(language, 'Site Audit mode', 'Modo de Site Audit')}>
+            <button
+              id="site-scope-tab-automatic"
+              type="button"
+              role="tab"
+              aria-selected={mode === 'automatic'}
+              aria-controls="site-scope-panel-automatic"
+              onClick={() => {
+                setMode('automatic');
+                setError(undefined);
+              }}
+            >
+              {t(language, 'Automatic', 'Automático')}
+            </button>
+            <button
+              id="site-scope-tab-manual"
+              type="button"
+              role="tab"
+              aria-selected={mode === 'manual'}
+              aria-controls="site-scope-panel-manual"
+              onClick={() => {
+                setMode('manual');
+                setError(undefined);
+              }}
+            >
+              {t(language, 'Manual URLs', 'URLs manuales')}
+            </button>
           </div>
-          <label className="site-extra-urls">
-            <span>{t(language, 'Additional same-site URLs (optional, one per line)', 'URLs adicionales del mismo sitio (opcional, una por línea)')}</span>
-            <textarea value={extraUrls} onChange={(event) => setExtraUrls(event.target.value)} rows={3} placeholder={`${new URL(source.sourceUrl).origin}/private-page`} />
-          </label>
+
+          {mode === 'automatic' ? (
+            <div
+              id="site-scope-panel-automatic"
+              className="site-scope-panel"
+              role="tabpanel"
+              aria-labelledby="site-scope-tab-automatic"
+            >
+              <label className="site-domain-field">
+                <span>{t(language, 'Parent domain to audit', 'Dominio padre a analizar')}</span>
+                <input
+                  type="text"
+                  inputMode="url"
+                  value={rootUrl}
+                  onChange={(event) => setRootUrl(event.target.value)}
+                  placeholder="https://www.example.com/"
+                />
+                <small>{t(
+                  language,
+                  'You can enter a domain with or without https://. FocusTrace always starts discovery from its root.',
+                  'Puedes indicar el dominio con o sin https://. FocusTrace siempre inicia el descubrimiento desde su raíz.',
+                )}</small>
+              </label>
+              <div className="site-limits">
+                <span><strong>{SITE_AUDIT_MAX_DISCOVERED_URLS}</strong>{t(language, 'max discovered URLs', 'URLs descubiertas máx.')}</span>
+                <span><strong>{SITE_AUDIT_MAX_SCANNED_PAGES}</strong>{t(language, 'max pages scanned', 'páginas analizadas máx.')}</span>
+                <span><strong>{SITE_AUDIT_SAMPLES_PER_FAMILY}</strong>{t(language, 'samples per route family', 'muestras por familia')}</span>
+              </div>
+              <p className="site-mode-description">{t(
+                language,
+                'FocusTrace checks robots.txt and sitemaps, supplements discovery with internal links when available, groups repeated route families and automatically scans representative pages.',
+                'FocusTrace revisa robots.txt y sitemaps, complementa el descubrimiento con enlaces internos cuando están disponibles, agrupa familias de rutas repetidas y analiza automáticamente páginas representativas.',
+              )}</p>
+            </div>
+          ) : (
+            <div
+              id="site-scope-panel-manual"
+              className="site-scope-panel"
+              role="tabpanel"
+              aria-labelledby="site-scope-tab-manual"
+            >
+              <label className="site-manual-urls">
+                <span>{t(language, 'URLs to audit, one per line', 'URLs a analizar, una por línea')}</span>
+                <textarea
+                  value={manualUrls}
+                  onChange={(event) => setManualUrls(event.target.value)}
+                  rows={7}
+                  placeholder={`${sourceMeta.origin}/\n${sourceMeta.origin}/productos\n${sourceMeta.origin}/contacto`}
+                />
+                <small>{t(
+                  language,
+                  `Only URLs from ${sourceMeta.origin} are accepted. Relative paths such as /contact are also valid.`,
+                  `Solo se aceptan URLs de ${sourceMeta.origin}. También puedes usar rutas relativas como /contacto.`,
+                )}</small>
+              </label>
+              <div className="site-manual-summary" aria-live="polite">
+                <span><strong>{manualSelection.totalValid}</strong> {t(language, 'valid URLs', 'URLs válidas')}</span>
+                {manualSelection.duplicateCount > 0 && (
+                  <span><strong>{manualSelection.duplicateCount}</strong> {t(language, 'duplicates ignored', 'duplicadas ignoradas')}</span>
+                )}
+                {manualSelection.invalid.length > 0 && (
+                  <span><strong>{manualSelection.invalid.length}</strong> {t(language, 'invalid / out of site', 'no válidas / fuera del sitio')}</span>
+                )}
+              </div>
+              {manualSelection.truncated && (
+                <p className="site-manual-warning">{t(
+                  language,
+                  `The safety limit is ${SITE_AUDIT_MAX_SCANNED_PAGES} pages. FocusTrace will scan the first ${SITE_AUDIT_MAX_SCANNED_PAGES} valid URLs in the list.`,
+                  `El límite de seguridad es de ${SITE_AUDIT_MAX_SCANNED_PAGES} páginas. FocusTrace analizará las primeras ${SITE_AUDIT_MAX_SCANNED_PAGES} URLs válidas de la lista.`,
+                )}</p>
+              )}
+              <p className="site-mode-description">{t(
+                language,
+                'FocusTrace will automatically scan exactly the selected URLs. It will not discover or add other pages from the site.',
+                'FocusTrace analizará automáticamente exactamente las URLs seleccionadas. No descubrirá ni añadirá otras páginas del sitio.',
+              )}</p>
+            </div>
+          )}
+
           <p className="site-scope-note">{t(
             language,
-            'Discovery checks robots.txt and sitemaps first and supplements them with internal links from the current page. Runtime Trace is not automated across the site in this version.',
-            'El descubrimiento revisa primero robots.txt y sitemaps y los complementa con enlaces internos de la página actual. En esta versión Trace runtime no se automatiza por todo el sitio.',
+            'Runtime Trace is not automated across the site in this version; Site Audit runs the page accessibility scanner on the chosen scope.',
+            'En esta versión Trace runtime no se automatiza por todo el sitio; Site Audit ejecuta el scanner de accesibilidad de página sobre el alcance elegido.',
           )}</p>
           {error && <p className="site-error-message" role="alert">{error}</p>}
-          <button className="site-primary" type="button" onClick={() => void run()}>{t(language, 'Start Site Audit', 'Iniciar Site Audit')}</button>
+          <button className="site-primary" type="button" onClick={() => void run()}>
+            {mode === 'automatic'
+              ? t(language, 'Start automatic audit', 'Iniciar análisis automático')
+              : t(language, 'Scan selected URLs', 'Analizar URLs seleccionadas')}
+          </button>
         </section>
       )}
 
@@ -220,7 +383,11 @@ function App() {
         <section className="site-card site-progress" aria-live="polite">
           <span className="site-spinner" aria-hidden="true" />
           <div>
-            <h2>{status === 'discovering' ? t(language, 'Discovering the site…', 'Descubriendo el sitio…') : t(language, 'Scanning representative pages…', 'Analizando páginas representativas…')}</h2>
+            <h2>{status === 'discovering'
+              ? t(language, 'Discovering the site…', 'Descubriendo el sitio…')
+              : mode === 'manual'
+                ? t(language, 'Scanning selected pages…', 'Analizando páginas seleccionadas…')
+                : t(language, 'Scanning representative pages…', 'Analizando páginas representativas…')}</h2>
             {status === 'scanning' && <strong>{progress.current}/{progress.total}</strong>}
             <p title={progress.url}>{progress.url}</p>
           </div>
@@ -241,6 +408,7 @@ function SiteAuditReport({ result, language, onRunAgain }: { result: SiteAuditRe
       .map((finding) => finding.exampleIssue),
   );
   const failureSeverityCounts = countBySeverity(failureSignals);
+  const manualScope = result.discovery.source === 'manual';
 
   return (
     <>
@@ -254,7 +422,7 @@ function SiteAuditReport({ result, language, onRunAgain }: { result: SiteAuditRe
           </div>
         </div>
         <div className="site-score-grid">
-          <span><strong>{result.discovery.urls.length}</strong>{t(language, 'URLs discovered', 'URLs descubiertas')}</span>
+          <span><strong>{result.discovery.urls.length}</strong>{manualScope ? t(language, 'URLs selected', 'URLs seleccionadas') : t(language, 'URLs discovered', 'URLs descubiertas')}</span>
           <span><strong>{result.templates.length}</strong>{t(language, 'route families', 'familias de ruta')}</span>
           <span><strong>{result.scannedPages}</strong>{t(language, 'pages scanned', 'páginas analizadas')}</span>
           <span><strong>{commonFindings}</strong>{t(language, 'template-wide signals', 'señales de plantilla')}</span>
@@ -282,7 +450,13 @@ function SiteAuditReport({ result, language, onRunAgain }: { result: SiteAuditRe
           </div>
         )}
 
-        <p>{t(language, `Discovery source: ${result.discovery.source}.`, `Origen del descubrimiento: ${result.discovery.source}.`)} {result.discovery.truncated && t(language, 'URL discovery hit the safety limit.', 'El descubrimiento alcanzó el límite de seguridad.')}</p>
+        <p>{manualScope
+          ? t(language, 'Scope source: manually selected URLs.', 'Origen del alcance: URLs seleccionadas manualmente.')
+          : t(language, `Discovery source: ${result.discovery.source}.`, `Origen del descubrimiento: ${result.discovery.source}.`)} {result.discovery.truncated && t(
+            language,
+            manualScope ? 'The selected URL list hit the safety limit.' : 'URL discovery hit the safety limit.',
+            manualScope ? 'La lista de URLs seleccionadas alcanzó el límite de seguridad.' : 'El descubrimiento de URLs alcanzó el límite de seguridad.',
+          )}</p>
       </section>
 
       <section className="site-template-list" aria-label={t(language, 'Detected route families', 'Familias de ruta detectadas')}>
@@ -351,7 +525,7 @@ function SiteAuditReport({ result, language, onRunAgain }: { result: SiteAuditRe
                 )}
 
                 <section className="template-samples">
-                  <h3>{t(language, 'Representative pages', 'Páginas representativas')}</h3>
+                  <h3>{manualScope ? t(language, 'Selected pages', 'Páginas seleccionadas') : t(language, 'Representative pages', 'Páginas representativas')}</h3>
                   <ul>{template.sampledPages.map((page) => (
                     <li key={page.url}>
                       <a href={page.url} target="_blank" rel="noreferrer">{page.url}</a>
@@ -369,8 +543,12 @@ function SiteAuditReport({ result, language, onRunAgain }: { result: SiteAuditRe
 
       <footer className="site-card site-footer">{t(
         language,
-        'Template grouping is representative sampling, not proof that every URL is identical. Runtime states, authentication flows and manual WCAG review still require targeted testing.',
-        'La agrupación por plantillas utiliza muestreo representativo; no demuestra que todas las URLs sean idénticas. Los estados runtime, flujos autenticados y la revisión WCAG manual siguen requiriendo pruebas específicas.',
+        manualScope
+          ? 'Manual URL mode scans every selected page up to the safety limit and still groups results by route family. Runtime states, authentication flows and manual WCAG review still require targeted testing.'
+          : 'Template grouping is representative sampling, not proof that every URL is identical. Runtime states, authentication flows and manual WCAG review still require targeted testing.',
+        manualScope
+          ? 'El modo de URLs manuales analiza cada página seleccionada hasta el límite de seguridad y mantiene la agrupación por familias de ruta. Los estados runtime, flujos autenticados y la revisión WCAG manual siguen requiriendo pruebas específicas.'
+          : 'La agrupación por plantillas utiliza muestreo representativo; no demuestra que todas las URLs sean idénticas. Los estados runtime, flujos autenticados y la revisión WCAG manual siguen requiriendo pruebas específicas.',
       )}</footer>
     </>
   );
