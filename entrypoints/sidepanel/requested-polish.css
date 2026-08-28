@@ -1,0 +1,307 @@
+/* FocusTrace UI consistency requested after the component-scan and Memory passes.
+   This layer is intentionally loaded last: it owns cross-view consistency rather
+   than individual component structure. */
+
+/* Quick actions: keep one neutral treatment and a predictable reading order. */
+.quick-actions .scan-action { order: 1; }
+.quick-actions .component-scan-action { order: 2; }
+.quick-actions .site-audit-launch { order: 3; }
+.quick-actions .focus-walk-action { order: 4; }
+
+.quick-actions button,
+.quick-actions .site-audit-launch,
+.quick-actions .primary,
+.quick-actions .scan-action {
+  border-color: var(--ft-border);
+  background: var(--ft-surface);
+  color: var(--ft-ink);
+  box-shadow: var(--ft-shadow-sm);
+  font-weight: 600;
+}
+
+.quick-actions button:not(:disabled):hover,
+.quick-actions .site-audit-launch:not(:disabled):hover,
+.quick-actions .primary:not(:disabled):hover,
+.quick-actions .scan-action:not(:disabled):hover {
+  border-color: var(--ft-border);
+  background: var(--ft-surface-subtle);
+  color: var(--ft-ink);
+}
+
+/* The interface uses flat surfaces. Gradients are deliberately removed from
+   the workspace and from runtime states while preserving their semantic tone. */
+body {
+  background: var(--ft-paper);
+  background-image: none;
+}
+
+.trace-hero {
+  background: var(--ft-surface);
+  background-image: none;
+}
+
+.trace-hero.is-recording {
+  background: var(--ft-danger-soft);
+  background-image: none;
+}
+
+.replay-event.has-cause {
+  background: color-mix(in srgb, var(--ft-warning-soft) 42%, var(--ft-surface));
+  background-image: none;
+}
+
+.session-console.live,
+.manual-focus-controls.is-recording {
+  background: var(--ft-danger-soft);
+  background-image: none;
+}
+
+.session-console.paused {
+  background: var(--ft-warning-soft);
+  background-image: none;
+}
+
+/* Trace inspector navigation follows the same tab language as the rest of the
+   workspace instead of looking like a four-button segmented control. */
+.trace-workspace .trace-mode-switcher {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0;
+  padding: 0;
+  border: 0;
+  border-bottom: 1px solid var(--ft-border-soft);
+  border-radius: 0;
+  background: transparent;
+}
+
+.trace-workspace .trace-mode-switcher button {
+  min-height: 44px;
+  gap: 6px;
+  padding: 8px 7px;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ft-muted);
+  box-shadow: none;
+  font-weight: 600;
+}
+
+.trace-workspace .trace-mode-switcher button:hover:not(:disabled) {
+  background: var(--ft-surface-subtle);
+  color: var(--ft-ink);
+}
+
+.trace-workspace .trace-mode-switcher button.active {
+  border-bottom-color: var(--ft-accent);
+  background: transparent;
+  color: var(--ft-ink);
+  box-shadow: none;
+  font-weight: 600;
+}
+
+.trace-workspace .trace-mode-switcher button span,
+.trace-workspace .trace-mode-switcher .trace-tab-icon,
+.trace-workspace .trace-mode-switcher .trace-tab-label {
+  background: transparent;
+}
+
+.trace-workspace .trace-mode-switcher .trace-tab-count {
+  border: 1px solid var(--ft-border-soft);
+  background: var(--ft-surface-subtle);
+  color: var(--ft-muted);
+}
+
+/* Make H1-H6 visually distinct. The foreground switches at the midpoint so a
+   dark swatch never carries dark text (and the same logic adapts to dark mode). */
+.heading-tree-row.level-1 {
+  --heading-level-tone: var(--ft-ink);
+  --heading-level-foreground: var(--ft-surface);
+}
+
+.heading-tree-row.level-2 {
+  --heading-level-tone: color-mix(in srgb, var(--ft-ink) 80%, var(--ft-surface));
+  --heading-level-foreground: var(--ft-surface);
+}
+
+.heading-tree-row.level-3 {
+  --heading-level-tone: color-mix(in srgb, var(--ft-ink) 60%, var(--ft-surface));
+  --heading-level-foreground: var(--ft-surface);
+}
+
+.heading-tree-row.level-4 {
+  --heading-level-tone: color-mix(in srgb, var(--ft-ink) 42%, var(--ft-surface));
+  --heading-level-foreground: var(--ft-ink);
+}
+
+.heading-tree-row.level-5 {
+  --heading-level-tone: color-mix(in srgb, var(--ft-ink) 24%, var(--ft-surface));
+  --heading-level-foreground: var(--ft-ink);
+}
+
+.heading-tree-row.level-6 {
+  --heading-level-tone: color-mix(in srgb, var(--ft-ink) 10%, var(--ft-surface));
+  --heading-level-foreground: var(--ft-ink);
+}
+
+/* FocusTrace Memory: list / one-by-one history switch and portable baseline. */
+.focus-memory-history-toolbar {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-top: 9px;
+}
+
+.focus-memory-history-mode,
+.focus-memory-history-pager {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.focus-memory-history-mode {
+  padding-bottom: 1px;
+  border-bottom: 1px solid var(--ft-border-faint);
+}
+
+.focus-memory-history-mode button,
+.focus-memory-history-pager button {
+  min-height: 30px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--ft-muted);
+  font-weight: 600;
+}
+
+.focus-memory-history-mode button {
+  border-bottom: 2px solid transparent;
+}
+
+.focus-memory-history-mode button[aria-pressed='true'] {
+  border-bottom-color: var(--ft-accent);
+  color: var(--ft-ink);
+}
+
+.focus-memory-history-mode button:hover:not(:disabled),
+.focus-memory-history-pager button:hover:not(:disabled) {
+  background: var(--ft-surface-subtle);
+  color: var(--ft-ink);
+}
+
+.focus-memory-history-pager {
+  gap: 8px;
+}
+
+.focus-memory-history-pager button {
+  width: 32px;
+  min-width: 32px;
+  padding: 0;
+  border: 1px solid var(--ft-border-soft);
+  border-radius: var(--ft-radius-xs);
+  color: var(--ft-ink);
+  font-size: 16px;
+}
+
+.focus-memory-history-pager strong {
+  min-width: 56px;
+  color: var(--ft-ink);
+  font-size: 9px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+}
+
+.focus-memory-history-list.is-step {
+  border-top: 0;
+}
+
+.focus-memory-history-list.is-step .focus-memory-finding {
+  padding-inline: 0;
+  border-bottom: 0;
+}
+
+.focus-memory-imported-comparison {
+  display: grid;
+  gap: 7px;
+  padding: 9px 10px;
+  border: 1px solid var(--ft-border-soft);
+  border-left: 4px solid var(--ft-accent);
+  border-radius: var(--ft-radius-xs);
+  background: var(--ft-surface-subtle);
+}
+
+.focus-memory-imported-comparison > div:first-child {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 5px 10px;
+}
+
+.focus-memory-imported-comparison strong {
+  color: var(--ft-ink);
+  font-size: 10px;
+}
+
+.focus-memory-imported-comparison time,
+.focus-memory-imported-comparison small {
+  color: var(--ft-muted);
+  font-size: 8.5px;
+}
+
+.focus-memory-imported-comparison p {
+  margin: 0;
+  color: var(--ft-text);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+.focus-memory-imported-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.focus-memory-imported-counts span {
+  padding: 3px 5px;
+  border: 1px solid var(--ft-border-faint);
+  border-radius: var(--ft-radius-xs);
+  background: var(--ft-surface);
+  color: var(--ft-muted);
+  font-size: 8px;
+}
+
+.focus-memory-import-error {
+  margin: 0;
+  padding: 7px 8px;
+  border-left: 3px solid var(--ft-danger);
+  background: var(--ft-danger-soft);
+  color: var(--ft-danger);
+  font-size: 9px;
+}
+
+.focus-memory-controls > div {
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+
+@media (max-width: 440px) {
+  .trace-workspace .trace-mode-switcher {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .focus-memory-history-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .focus-memory-history-mode,
+  .focus-memory-history-pager {
+    justify-content: center;
+  }
+}
