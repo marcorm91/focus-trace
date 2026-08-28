@@ -470,7 +470,7 @@ function PrintableReport({ report }: { report: LoadedReport }) {
                         component={selector ? componentMap.get(selector) : undefined}
                         visual={selector ? visualMap.get(selector) : undefined}
                         visualRequested={Boolean(evidence?.visualEvidenceRequested)}
-                        showVisual={firstVisualIssueIds.has(issue.id)}
+                        showVisual={Boolean(selector) || firstVisualIssueIds.has(issue.id)}
                         key={issue.id}
                       />
                     );
