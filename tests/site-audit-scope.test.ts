@@ -61,6 +61,7 @@ describe('Site Audit scope modes', () => {
 
   it('renders separate accessible tabs for automatic and manual URL audits', () => {
     const app = source('entrypoints/site-audit/main.tsx');
+    const scope = source('lib/site-audit/scope.ts');
     const css = source('entrypoints/site-audit/scope-tabs.css');
 
     expect(app).toContain("type SiteAuditInputMode");
@@ -69,7 +70,7 @@ describe('Site Audit scope modes', () => {
     expect(app).toContain('role="tablist"');
     expect(app).toContain('role="tabpanel"');
     expect(app).toContain('selectManualSiteAuditSamples');
-    expect(app).toContain("source: 'manual'");
+    expect(scope).toContain("source: 'manual'");
     expect(css).toContain('.site-scope-tabs');
     expect(css).toContain("button[aria-selected='true']");
   });
