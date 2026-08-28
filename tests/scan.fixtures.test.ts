@@ -164,6 +164,19 @@ describe('FocusTrace WCAG rule fixtures', () => {
     });
   });
 
+  it('reports every repeated low-contrast text element as a separate finding', () => {
+    render(
+      'lang="en"',
+      '<main><h1>Contrast</h1><section id="stats"><p>32 warehouses</p><p>36 provinces</p><p>650 routes</p></section></main>',
+      'html,body{background:#fff;color:#000;font-size:16px} #stats p{color:rgb(245,166,35);background:#fff;font-size:16px;font-weight:400}',
+    );
+    const result = runFocusTraceScan();
+    const contrast = result.issues.filter((issue) => issue.ruleId === 'FT-WCAG-010');
+
+    expect(contrast).toHaveLength(3);
+    expect(new Set(contrast.flatMap((issue) => issue.targets)).size).toBe(3);
+  });
+
   it('sends complex gradient contrast to review instead of fail', () => {
     render(
       'lang="en"',

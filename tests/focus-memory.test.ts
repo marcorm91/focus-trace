@@ -255,6 +255,41 @@ describe('FocusTrace Memory', () => {
     expect(observation.scopeKey).toMatch(/^scope-/);
   });
 
+  it('keeps repeated sibling failures distinct after structural selector normalization', () => {
+    const repeatedFailures = [
+      failure('FT-WCAG-010', '#stats > p:nth-of-type(1)'),
+      failure('FT-WCAG-010', '#stats > p:nth-of-type(2)'),
+      failure('FT-WCAG-010', '#stats > p:nth-of-type(3)'),
+    ];
+    const firstScan = scan({ scannedAt: 1_000, failures: repeatedFailures });
+    const observation = buildFocusMemoryObservation(firstScan);
+    const legacySingleFinding = buildFocusMemoryObservation(
+      scan({ scannedAt: 500, failures: [repeatedFailures[0]!] }),
+    );
+
+    expect(observation.failCount).toBe(3);
+    expect(observation.failureFingerprints).toHaveLength(3);
+    expect(new Set(observation.failureFingerprints).size).toBe(3);
+    expect(observation.failureFingerprints[0]).toBe(legacySingleFinding.failureFingerprints[0]);
+    expect(observation.failureDetails?.map((item) => item.ruleId)).toEqual([
+      'FT-WCAG-010',
+      'FT-WCAG-010',
+      'FT-WCAG-010',
+    ]);
+    expect(JSON.stringify(observation)).not.toContain('#stats');
+
+    const first = recordFocusMemoryObservation(undefined, firstScan, 1_000);
+    const second = recordFocusMemoryObservation(
+      first.store,
+      scan({ scannedAt: 2_000, failures: repeatedFailures }),
+      2_000,
+    );
+
+    expect(second.comparison.persistentFailures).toBe(3);
+    expect(second.history).toHaveLength(3);
+    expect(second.history.every((item) => item.state === 'present')).toBe(true);
+  });
+
   it('caps history per scope, globally and by age', () => {
     let store: FocusMemoryStore | undefined;
     for (let index = 1; index <= FOCUS_MEMORY_MAX_PER_SCOPE + 4; index += 1) {

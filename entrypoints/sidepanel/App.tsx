@@ -83,7 +83,7 @@ export default function App() {
         type: 'FOCUSTRACE_RUN_SCAN',
       } satisfies ExtensionMessage)) as ScanResult;
       await saveScan(result);
-      setView('report');
+      setView('scan');
     } catch (reason) {
       setError(localizedUserError(reason, language, 'analysis'));
     } finally {
