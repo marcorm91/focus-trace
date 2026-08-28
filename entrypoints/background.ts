@@ -6,6 +6,7 @@ import {
   emptySessionState,
   invalidateSessionScanForUrl,
   normalizeSessionState,
+  resetSessionState,
   setSessionRecordingState,
   updateSessionBreakpoints,
   updateSessionScan,
@@ -145,10 +146,7 @@ export default defineBackground(() => {
     if (message.type === 'FOCUSTRACE_RESET_TAB') {
       return serializeTabWrite(message.tabId, async () => {
         const current = await getSession(message.tabId);
-        const next: SessionState = {
-          ...emptySessionState(message.tabId),
-          breakpoints: current.breakpoints,
-        };
+        const next = resetSessionState(current, message.tabId);
         await saveSession(next);
         await browser.tabs.sendMessage(message.tabId, {
           type: 'FOCUSTRACE_SET_RECORDING',
