@@ -39,4 +39,26 @@ describe('sidepanel layout polish contract', () => {
     expect(css).toContain('font-size: 9.5px;');
     expect(css).not.toContain('!important');
   });
+
+  it('presents summary metrics as flat information instead of button-like cards', () => {
+    const css = source('entrypoints/sidepanel/information-summaries.css');
+    const entry = source('entrypoints/sidepanel/main.tsx');
+
+    expect(entry).toContain("import './information-summaries.css';");
+    expect(css).toContain('.report-scoreline > div');
+    expect(css).toContain('.focus-journey-summary > span');
+    expect(css).toContain('.heading-outline-summary > span');
+    expect(css).toContain('.report-coverage > div');
+    expect(css).toContain('.metric,');
+    expect(css).toContain('border: 0;');
+    expect(css).toContain('border-radius: 0;');
+    expect(css).toContain('background: transparent;');
+    expect(css).toContain('box-shadow: none;');
+    expect(css).toContain('cursor: default;');
+    expect(css).toContain('.report-inline-summary > span');
+    expect(css).toContain('.report-category-summary > span');
+    expect(css).not.toContain(':hover');
+    expect(css).not.toContain('cursor: pointer');
+    expect(css).not.toContain('!important');
+  });
 });
