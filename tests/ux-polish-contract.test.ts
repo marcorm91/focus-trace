@@ -21,14 +21,15 @@ describe('UX polish contract', () => {
     for (let level = 1; level <= 6; level += 1) {
       expect(css).toContain(`.heading-tree-row.level-${level}`);
     }
-    expect(css).toContain('padding-inline-start: calc(var(--heading-depth) * 6px)');
-    expect(css).not.toContain('margin-inline-start: calc(var(--heading-depth) * 6px)');
+    expect(css).toContain('padding-inline-start: calc(var(--heading-depth) * 10px)');
+    expect(css).not.toContain('margin-inline-start: calc(var(--heading-depth)');
     expect(css).toContain('overflow-x: hidden;');
     expect(css).toContain('grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));');
     expect(css).toContain('overflow-wrap: anywhere;');
     expect(css).toContain('white-space: normal;');
     expect(css).not.toContain('text-overflow: ellipsis;');
     expect(css).not.toContain('!important');
+    expect(view).toContain("const rowStyle = { '--heading-depth': depth } as CSSProperties;");
     expect(view).toContain("tr(language, 'H1 count', 'Cantidad de H1')");
   });
 
