@@ -25,6 +25,7 @@ import './scan-accordion.css';
 import './workspace-layout.css';
 import './component-scan.css';
 import './heading-tree-visual.css';
+import './information-summaries.css';
 import './modern-icons.css';
 import './control-states.css';
 import './ui-scale.css';
