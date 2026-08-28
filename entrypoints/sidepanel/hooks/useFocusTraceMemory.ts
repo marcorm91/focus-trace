@@ -1,10 +1,10 @@
 import { useCallback, useEffect, useState } from 'react';
-import type { FocusMemoryComparison } from '../../../shared/focus-memory';
-import type { ScanResult } from '../../../shared/types';
 import {
   clearFocusMemoryHistory,
   readFocusMemoryForScan,
-} from '../focus-memory-storage';
+} from '../../../lib/focus-memory/storage';
+import type { FocusMemoryComparison } from '../../../shared/focus-memory';
+import type { ScanResult } from '../../../shared/types';
 
 export interface FocusTraceMemoryState {
   enabled: boolean;
