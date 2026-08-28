@@ -34,17 +34,21 @@ describe('stable DOM selectors', () => {
     expect(document.querySelector(secondSelector)).toBe(second);
   });
 
-  it('uses a unique ancestor id to keep a structural selector compact', () => {
+  it('keeps structural selectors unique in repeated nested markup', () => {
     document.body.innerHTML = `
-      <main id="app">
+      <div>
         <section><button id="duplicate">First</button></section>
         <section><button id="duplicate">Second</button></section>
-      </main>
+      </div>
+      <div>
+        <section><button>Other first</button></section>
+        <section><button>Other second</button></section>
+      </div>
     `;
     const second = document.querySelectorAll('#duplicate')[1];
     const selector = selectorFor(second!);
 
-    expect(selector.startsWith('#app >')).toBe(true);
+    expect(document.querySelectorAll(selector)).toHaveLength(1);
     expect(document.querySelector(selector)).toBe(second);
   });
 });
