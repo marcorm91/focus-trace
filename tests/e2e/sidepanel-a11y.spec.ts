@@ -243,10 +243,10 @@ test('report opens a formatted PDF preview without exposing CSS selectors', asyn
   await panel.setViewportSize({ width: 360, height: 800 });
   await panel.getByRole('button', { name: /Headings|Encabezados/ }).click();
 
-  const shortHeadingLabel = panel.getByRole('button', { name: 'Checkout' }).locator('span').first();
+  const shortHeadingLabel = panel.getByRole('button', { name: 'Checkout', exact: true }).locator('span').first();
   await expect(shortHeadingLabel).not.toHaveAttribute('title', /.+/);
 
-  const longHeadingLabel = panel.getByRole('button', { name: longHeading }).locator('span').first();
+  const longHeadingLabel = panel.getByRole('button', { name: longHeading, exact: true }).locator('span').first();
   await expect(longHeadingLabel).not.toHaveAttribute('title', /.+/);
   await expect(longHeadingLabel).toHaveText(longHeading);
   await expect.poll(() => longHeadingLabel.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
@@ -255,7 +255,7 @@ test('report opens a formatted PDF preview without exposing CSS selectors', asyn
     return style.textOverflow !== 'ellipsis' && style.whiteSpace === 'normal';
   })).toBe(true);
 
-  const unbrokenHeadingLabel = panel.getByRole('button', { name: unbrokenHeading }).locator('span').first();
+  const unbrokenHeadingLabel = panel.getByRole('button', { name: unbrokenHeading, exact: true }).locator('span').first();
   await expect(unbrokenHeadingLabel).toHaveText(unbrokenHeading);
   await expect.poll(() => unbrokenHeadingLabel.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
 
