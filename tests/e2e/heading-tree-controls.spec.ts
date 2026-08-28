@@ -40,10 +40,10 @@ test('heading branches start expanded and can be collapsed independently', async
         warnings: [],
         headings: [
           { id: 'h-main', level: 1, text: 'Main heading', selector: '#main-heading', signals: [] },
-          { id: 'h-section', level: 2, text: 'First section', selector: '#first-section', signals: [] },
-          { id: 'h-detail', level: 3, text: 'Long detail heading that must stay fully readable without an ellipsis', selector: '#detail-heading', signals: [] },
+          { id: 'h-first', level: 2, text: 'First section', selector: '#first-section', signals: [] },
+          { id: 'h-first-detail', level: 3, text: 'Long detail heading that must stay fully readable without an ellipsis', selector: '#first-detail', signals: [] },
           { id: 'h-second', level: 2, text: 'Second section', selector: '#second-section', signals: [] },
-          { id: 'h-other', level: 1, text: 'Other root', selector: '#other-root', signals: ['multiple-h1'] },
+          { id: 'h-second-detail', level: 3, text: 'Second section detail', selector: '#second-detail', signals: [] },
         ],
         passes: 5,
         rulesRun: 1,
@@ -53,28 +53,40 @@ test('heading branches start expanded and can be collapsed independently', async
 
   await panel.getByRole('button', { name: /Headings|Encabezados/ }).click();
 
-  const childHeading = panel.getByRole('button', { name: 'First section', exact: true });
-  const otherRoot = panel.getByRole('button', { name: 'Other root', exact: true });
-  await expect(childHeading).toBeVisible();
-  await expect(otherRoot).toBeVisible();
+  const firstDetail = panel.getByRole('button', { name: 'Long detail heading that must stay fully readable without an ellipsis', exact: true });
+  const secondSection = panel.getByRole('button', { name: 'Second section', exact: true });
+  const secondDetail = panel.getByRole('button', { name: 'Second section detail', exact: true });
+  await expect(firstDetail).toBeVisible();
+  await expect(secondSection).toBeVisible();
+  await expect(secondDetail).toBeVisible();
+
+  const firstToggle = panel.getByRole('button', { name: /Collapse heading branch: First section|Contraer rama de encabezado: First section/ });
+  await expect(firstToggle).toHaveAttribute('aria-expanded', 'true');
+  await firstToggle.click();
+
+  await expect(panel.getByRole('button', { name: 'Long detail heading that must stay fully readable without an ellipsis', exact: true })).toHaveCount(0);
+  await expect(secondSection).toBeVisible();
+  await expect(secondDetail).toBeVisible();
+  await expect(panel.getByRole('button', { name: /Expand heading branch: First section|Expandir rama de encabezado: First section/ })).toHaveAttribute('aria-expanded', 'false');
+
+  await panel.getByRole('button', { name: /Expand heading branch: First section|Expandir rama de encabezado: First section/ }).click();
+  await expect(firstDetail).toBeVisible();
 
   const mainToggle = panel.getByRole('button', { name: /Collapse heading branch: Main heading|Contraer rama de encabezado: Main heading/ });
-  await expect(mainToggle).toHaveAttribute('aria-expanded', 'true');
   await mainToggle.click();
-
   await expect(panel.getByRole('button', { name: 'First section', exact: true })).toHaveCount(0);
-  await expect(otherRoot).toBeVisible();
-  await expect(panel.getByRole('button', { name: /Expand heading branch: Main heading|Expandir rama de encabezado: Main heading/ })).toHaveAttribute('aria-expanded', 'false');
+  await expect(panel.getByRole('button', { name: 'Second section', exact: true })).toHaveCount(0);
 
   await panel.getByRole('button', { name: /Expand heading branch: Main heading|Expandir rama de encabezado: Main heading/ }).click();
   await expect(panel.getByRole('button', { name: 'First section', exact: true })).toBeVisible();
-  await expect(panel.getByText('Long detail heading that must stay fully readable without an ellipsis', { exact: true })).toBeVisible();
+  await expect(panel.getByRole('button', { name: 'Second section', exact: true })).toBeVisible();
 
   await panel.getByRole('button', { name: /Collapse all|Contraer todo/ }).click();
   await expect(panel.getByRole('button', { name: 'First section', exact: true })).toHaveCount(0);
-  await expect(otherRoot).toBeVisible();
+  await expect(panel.getByRole('button', { name: 'Main heading', exact: true })).toBeVisible();
 
   await panel.getByRole('button', { name: /Expand all|Expandir todo/ }).click();
   await expect(panel.getByRole('button', { name: 'First section', exact: true })).toBeVisible();
-  await expect(panel.getByText('Long detail heading that must stay fully readable without an ellipsis', { exact: true })).toBeVisible();
+  await expect(panel.getByRole('button', { name: 'Second section detail', exact: true })).toBeVisible();
+  await expect(firstDetail).toBeVisible();
 });
