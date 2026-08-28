@@ -14,6 +14,7 @@ export function SiteAuditLauncher({ language }: { language: AppLanguage }) {
     const quickActions = document.querySelector('.quick-actions');
     if (!quickActions) return undefined;
 
+    quickActions.classList.add('has-site-audit');
     const host = document.createElement('span');
     host.dataset.focustraceSiteAuditHost = 'true';
     host.style.display = 'contents';
@@ -24,6 +25,7 @@ export function SiteAuditLauncher({ language }: { language: AppLanguage }) {
     return () => {
       setPortalTarget(null);
       host.remove();
+      quickActions.classList.remove('has-site-audit');
     };
   }, []);
 
