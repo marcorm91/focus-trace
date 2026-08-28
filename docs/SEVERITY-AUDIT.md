@@ -1,6 +1,6 @@
 # FocusTrace severity audit
 
-Audit date: 2026-08-26
+Audit date: 2026-08-28
 
 This document records the rule-by-rule review behind the base severity values in `shared/rule-catalog.ts`.
 
@@ -12,11 +12,11 @@ For each rule we reviewed:
 
 1. the user barrier that the FocusTrace rule can actually demonstrate or flag;
 2. whether the result is a deterministic `fail`, a `review`, or a `warning`;
-3. the applicable W3C / ACT / WAI-ARIA / APG references attached to the rule;
+3. the applicable W3C / ACT / WAI-ARIA / APG / HTML references attached to the rule;
 4. whether the rule can block a task, substantially hinder it, create a meaningful difficulty, or normally remain localized;
 5. whether the detected evidence is strong enough to justify the base impact without pretending to know page context that FocusTrace has not observed.
 
-External standards references describe accessibility requirements and expected behavior. They do not define FocusTrace severity scores. The severity mapping is owned and maintained by FocusTrace.
+External standards references describe accessibility or authoring requirements and expected behavior. They do not define FocusTrace severity scores. The severity mapping is owned and maintained by FocusTrace.
 
 ## Changes from the previous catalog
 
@@ -45,6 +45,7 @@ External standards references describe accessibility requirements and expected b
 | `FT-WARN-001` Deprecated ARIA role | minor | warning | Usually a limited immediate barrier; primarily an authoring and compatibility risk. |
 | `FT-WARN-002` Deprecated ARIA property | minor | warning | Deprecation alone does not prove the current interaction is blocked. |
 | `FT-WARN-003` Prohibited ARIA property | serious | warning | Important semantics or state may be ignored or exposed incorrectly. |
+| `FT-WARN-004` Duplicate HTML id | moderate | warning | Duplicate identifiers can break ID-based relationships, navigation or scripted lookup, but duplication alone does not prove an accessibility barrier. |
 | `FT-REVIEW-001` Positive tabindex | serious | review | It can substantially disrupt sequential focus, but the final order still needs contextual review. |
 | `FT-REVIEW-002` Heading level jump | minor | review | FocusTrace only detects a skip signal; a skip alone does not prove a misleading document hierarchy. |
 | `FT-REVIEW-003` Placeholder-only label | moderate | review | The field has a computed name, but the visible cue can disappear while typing. |
