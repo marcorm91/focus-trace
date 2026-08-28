@@ -24,7 +24,6 @@ export interface PrintableReportEvidenceBundle {
 }
 
 export const REPORT_EVIDENCE_STORAGE_PREFIX = 'focustrace:report-evidence:';
-const MAX_VISUAL_EVIDENCE = 24;
 const VISUAL_CAPTURE_HOST_PERMISSION = '<all_urls>';
 let pendingVisualCapturePermission: Promise<boolean> | undefined;
 
@@ -241,14 +240,13 @@ export async function captureReportVisualEvidence(
 
     const evidenceSelectors = reportEvidenceSelectors(scan, events);
     const eligible = components.filter((component) => evidenceSelectors.has(component.selector));
-    const selected = eligible.slice(0, MAX_VISUAL_EVIDENCE);
     const original = await browser.scripting.executeScript({ target: { tabId }, func: readScrollPositionInPage })
       .then((results) => results[0]?.result)
       .catch(() => undefined);
     const visuals: ReportVisualEvidence[] = [];
 
     try {
-      for (const component of selected) {
+      for (const component of eligible) {
         const metrics = await browser.scripting.executeScript({
           target: { tabId },
           func: prepareCaptureTargetInPage,
@@ -278,7 +276,7 @@ export async function captureReportVisualEvidence(
       }
     }
 
-    return { visuals, limitReached: eligible.length > MAX_VISUAL_EVIDENCE };
+    return { visuals, limitReached: false };
   } finally {
     // Screenshot access is intentionally scoped to this export operation.
     await releaseVisualCapturePermission();
