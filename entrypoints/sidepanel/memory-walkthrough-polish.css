@@ -1,0 +1,179 @@
+/* Final UI polish for the quick actions, topbar controls and FocusTrace Memory walkthrough. */
+
+/* Keep every primary page action visually equivalent at rest. */
+.quick-actions button,
+.quick-actions .primary,
+.quick-actions .scan-action,
+.quick-actions .component-scan-action,
+.quick-actions .focus-walk-action,
+.quick-actions .site-audit-launch,
+.quick-actions .site-audit-launcher button {
+  border-color: var(--ft-border);
+  background: var(--ft-surface);
+  color: var(--ft-ink);
+  box-shadow: var(--ft-shadow-sm);
+}
+
+.quick-actions button:not(:disabled):hover,
+.quick-actions .primary:not(:disabled):hover,
+.quick-actions .scan-action:not(:disabled):hover,
+.quick-actions .component-scan-action:not(:disabled):hover,
+.quick-actions .focus-walk-action:not(:disabled):hover,
+.quick-actions .site-audit-launch:not(:disabled):hover,
+.quick-actions .site-audit-launcher button:not(:disabled):hover {
+  border-color: var(--ft-border);
+  background: var(--ft-accent-soft);
+  color: var(--ft-ink);
+}
+
+/* Settings follows the same light-blue hover language as Instructions and reset. */
+.topbar-tools .reset-all-trigger:not(:disabled):hover,
+.topbar-tools .instructions-trigger:not(:disabled):hover,
+.topbar-tools .settings-trigger:not(:disabled):hover {
+  border-color: var(--ft-border);
+  background: var(--ft-accent-soft);
+}
+
+/* Move the destructive Memory action to the section heading. */
+.focus-memory-heading {
+  align-items: flex-start;
+}
+
+.focus-memory-heading .focus-memory-clear {
+  flex: 0 0 auto;
+  min-height: 30px;
+  padding: 5px 8px;
+  border: 1px solid var(--ft-border-soft);
+  border-radius: var(--ft-radius-xs);
+  background: var(--ft-surface);
+  color: var(--ft-danger);
+  box-shadow: none;
+  font-size: 9px;
+  font-weight: 800;
+}
+
+.focus-memory-heading .focus-memory-clear:not(:disabled):hover {
+  border-color: var(--ft-border);
+  background: var(--ft-accent-soft);
+  color: var(--ft-danger);
+}
+
+/* The history switch remains tab-like, but the content no longer touches its rule. */
+.focus-memory-history-toolbar {
+  margin-top: 12px;
+  padding-bottom: 2px;
+}
+
+.focus-memory-history-mode {
+  padding-bottom: 0;
+  border-bottom: 0;
+}
+
+.focus-memory-history-list,
+.focus-memory-history-list.is-step {
+  gap: 10px;
+  margin-top: 12px;
+  border-top: 0;
+}
+
+.focus-memory-history-list.is-step {
+  margin-top: 14px;
+}
+
+/* Each historical finding is a distinct card rather than one continuous block. */
+.focus-memory-finding,
+.focus-memory-history-list.is-step .focus-memory-finding {
+  gap: 8px;
+  padding: 10px;
+  border: 1px solid var(--ft-border-soft);
+  border-left: 4px solid var(--ft-border-soft);
+  border-radius: var(--ft-radius-xs);
+  background: var(--ft-surface);
+}
+
+.focus-memory-finding:last-child {
+  border-bottom: 1px solid var(--ft-border-soft);
+}
+
+.focus-memory-finding.changed-now {
+  padding-left: 10px;
+}
+
+.focus-memory-finding.state-present {
+  border-left-color: var(--ft-danger);
+  background: color-mix(in srgb, var(--ft-danger-soft) 28%, var(--ft-surface));
+}
+
+.focus-memory-finding.state-new,
+.focus-memory-finding.state-changed {
+  border-left-color: var(--ft-warning);
+  background: color-mix(in srgb, var(--ft-warning-soft) 34%, var(--ft-surface));
+}
+
+.focus-memory-finding.state-regressed,
+.focus-memory-finding.state-regressed.changed-now {
+  border-left-color: var(--ft-danger);
+  background: color-mix(in srgb, var(--ft-danger-soft) 46%, var(--ft-surface));
+}
+
+.focus-memory-finding.state-resolved,
+.focus-memory-finding.state-resolved.changed-now {
+  border-left-color: var(--ft-success);
+  background: color-mix(in srgb, var(--ft-success-soft) 42%, var(--ft-surface));
+}
+
+/* Current findings become explicit page-locate actions without looking like large buttons. */
+.focus-memory-finding-link {
+  width: fit-content;
+  max-width: 100%;
+  min-height: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  color: var(--ft-text);
+  box-shadow: none;
+  font: inherit;
+  font-size: 10px;
+  font-weight: 800;
+  line-height: 1.35;
+  text-align: left;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.focus-memory-finding-link:not(:disabled):hover {
+  background: transparent;
+  color: var(--ft-accent-strong);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.focus-memory-finding-link:not(:disabled):active {
+  transform: none;
+}
+
+.focus-memory-locate-error {
+  margin: 0;
+  padding: 7px 8px;
+  border-left: 3px solid var(--ft-warning);
+  background: var(--ft-warning-soft);
+  color: var(--ft-text);
+  font-size: 9px;
+  line-height: 1.4;
+}
+
+/* Footer is now reserved for retention metadata and portable baseline actions. */
+.focus-memory-controls > div {
+  justify-content: flex-end;
+}
+
+@media (max-width: 440px) {
+  .focus-memory-heading {
+    align-items: stretch;
+  }
+
+  .focus-memory-heading .focus-memory-clear {
+    align-self: start;
+  }
+}
