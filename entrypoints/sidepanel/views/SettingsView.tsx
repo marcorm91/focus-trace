@@ -20,6 +20,7 @@ import {
   UI_SCALE_STORAGE_KEY,
   type UiScale,
 } from '../../../shared/ui-scale';
+import { FocusMemorySettings } from '../components/FocusMemorySettings';
 import '../breakpoint-settings.css';
 import { closeFocusedSettingsView } from '../settings-focus';
 
@@ -299,6 +300,8 @@ export function SettingsView({
           )}
         </p>
       </fieldset>
+
+      <FocusMemorySettings language={language} />
 
       <section className="settings-group settings-contact" aria-labelledby="settings-contact-title">
         <h3 id="settings-contact-title">{tr(language, 'Contact', 'Contacto')}</h3>

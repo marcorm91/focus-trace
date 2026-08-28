@@ -23,6 +23,22 @@ FocusTrace does not intentionally send inspected-page content, DOM evidence, scr
 
 Session data and preferences may be stored using browser extension storage so the product can preserve state and user settings. Browser storage is controlled by the browser profile and browser platform.
 
+## FocusTrace Memory
+
+FocusTrace Memory is an optional local history feature for comparing accessibility observations over time. It is **disabled by default after installation** and does not begin remembering scan history until the user explicitly enables **Remember accessibility history** in Settings.
+
+When enabled, Memory stores compact local observation data such as hashed scope/finding fingerprints, result counts, rule-coverage counts and timestamps. It does not store page HTML, full DOM snapshots or screenshots as part of the Memory history.
+
+Memory is bounded automatically so it cannot grow without limit. The current limits are:
+
+- up to 8 observations for the same remembered page/component scope;
+- up to 200 observations across the browser profile;
+- observations older than 90 days are discarded automatically.
+
+Turning Memory off stops new observations and comparisons. Existing local Memory history is retained until it expires under the retention rules or the user explicitly clears it. Enabling Memory does not retroactively add an analysis that was already open before opt-in; the next analysis becomes the first eligible observation.
+
+Memory comparisons are diagnostic history, not a WCAG conformance claim. A previously recorded deterministic failure that is no longer reproduced can be reported as a historical change, but absence from a later scan does not by itself prove that the whole page or component conforms to WCAG.
+
 ## Visual evidence
 
 Visual evidence in printable reports is optional and user initiated. When requested, FocusTrace may temporarily request the browser permission required to capture the visible page.
