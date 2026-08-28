@@ -140,10 +140,12 @@ function FindingHistory({
   history,
   comparison,
   language,
+  onResolve,
 }: {
   history: FocusMemoryFindingHistory[];
   comparison: FocusMemoryComparison;
   language: AppLanguage;
+  onResolve: (item: FocusMemoryFindingHistory) => Promise<boolean>;
 }) {
   if (!history.length) return null;
   const changedCount = comparison.previousObservedAt == null
@@ -166,32 +168,61 @@ function FindingHistory({
       </summary>
 
       <div className="focus-memory-history-list">
-        {history.map((item) => (
-          <article
-            className={`focus-memory-finding state-${item.state}${item.changedNow ? ' changed-now' : ''}`}
-            key={item.fingerprint}
-          >
-            <div className="focus-memory-finding-head">
-              <div>
-                {item.ruleId && <code>{item.ruleId}</code>}
-                <strong>{findingTitle(item, language)}</strong>
+        {history.map((item) => {
+          const resolveHintId = `focus-memory-resolve-${item.fingerprint}`;
+          return (
+            <article
+              className={`focus-memory-finding state-${item.state}${item.changedNow ? ' changed-now' : ''}`}
+              key={item.fingerprint}
+            >
+              <div className="focus-memory-finding-head">
+                <div>
+                  {item.ruleId && <code>{item.ruleId}</code>}
+                  <strong>{findingTitle(item, language)}</strong>
+                </div>
+                <span>{findingStateLabel(item.state, language)}</span>
               </div>
-              <span>{findingStateLabel(item.state, language)}</span>
-            </div>
 
-            <ol className="focus-memory-finding-timeline" aria-label={tr(language, 'Remembered observations', 'Observaciones recordadas')}>
-              {item.timeline.map((point, index) => (
-                <li
-                  className={point.present ? 'is-present' : point.comparableToPrevious ? 'is-absent' : 'is-uncertain'}
-                  key={`${item.fingerprint}-${point.observedAt}`}
-                >
-                  <time dateTime={new Date(point.observedAt).toISOString()}>{formatHistoryDate(point.observedAt, language)}</time>
-                  <span>{timelinePointLabel(point, index, language)}</span>
-                </li>
-              ))}
-            </ol>
-          </article>
-        ))}
+              <ol className="focus-memory-finding-timeline" aria-label={tr(language, 'Remembered observations', 'Observaciones recordadas')}>
+                {item.timeline.map((point, index) => (
+                  <li
+                    className={point.present ? 'is-present' : point.comparableToPrevious ? 'is-absent' : 'is-uncertain'}
+                    key={`${item.fingerprint}-${point.observedAt}`}
+                  >
+                    <time dateTime={new Date(point.observedAt).toISOString()}>{formatHistoryDate(point.observedAt, language)}</time>
+                    <span>{timelinePointLabel(point, index, language)}</span>
+                  </li>
+                ))}
+              </ol>
+
+              {item.state === 'resolved' && (
+                <div className="focus-memory-resolve">
+                  <label>
+                    <input
+                      type="checkbox"
+                      aria-describedby={resolveHintId}
+                      onChange={(event) => {
+                        const checkbox = event.currentTarget;
+                        if (!checkbox.checked) return;
+                        void onResolve(item).then((resolved) => {
+                          if (!resolved && checkbox.isConnected) checkbox.checked = false;
+                        });
+                      }}
+                    />
+                    <span>{tr(language, 'Mark as resolved', 'Marcar como solucionado')}</span>
+                  </label>
+                  <small id={resolveHintId}>
+                    {tr(
+                      language,
+                      'Removes the detailed local history for this fixed finding. FocusTrace keeps only a minimal fingerprint so it can identify a future regression.',
+                      'Elimina el historial local detallado de este fallo corregido. FocusTrace conserva solo una huella mínima para identificar una futura regresión.',
+                    )}
+                  </small>
+                </div>
+              )}
+            </article>
+          );
+        })}
       </div>
     </details>
   );
@@ -266,7 +297,12 @@ export function FocusMemorySummary({ scan, language }: { scan: ScanResult; langu
         </div>
       )}
 
-      <FindingHistory history={memory.history ?? []} comparison={comparison} language={language} />
+      <FindingHistory
+        history={memory.history ?? []}
+        comparison={comparison}
+        language={language}
+        onResolve={(item) => memory.resolveFinding(item.fingerprint, item.ruleId)}
+      />
 
       <div className="focus-memory-controls">
         <small>
