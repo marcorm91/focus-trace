@@ -22,8 +22,8 @@ test('instructions is a focused bilingual guide and Back restores the previous w
   await expect(panel.getByRole('heading', { level: 3, name: /Start here|Empieza aquí/ })).toBeVisible();
   await expect(panel.getByRole('heading', { level: 3, name: /Review|Revisión/ })).toBeVisible();
   await expect(panel.getByRole('heading', { level: 3, name: /Site Audit|Análisis de sitio/ })).toBeVisible();
-  await expect(panel.getByRole('heading', { level: 3, name: 'Trace' })).toBeVisible();
-  await expect(panel.getByRole('heading', { level: 3, name: 'FocusTrace Memory' })).toBeVisible();
+  await expect(panel.getByRole('heading', { level: 3, name: 'Trace', exact: true })).toBeVisible();
+  await expect(panel.getByRole('heading', { level: 3, name: 'FocusTrace Memory', exact: true })).toBeVisible();
 
   await expect(panel.getByRole('navigation', { name: /FocusTrace sections|Secciones de FocusTrace/ })).not.toBeVisible();
   await expect(panel.getByRole('region', { name: /Page tools|Herramientas de página/ })).not.toBeVisible();
