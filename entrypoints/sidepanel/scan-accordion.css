@@ -197,12 +197,12 @@
 .finding-location code {
   min-width: 0;
   max-width: 100%;
-  overflow: hidden;
+  overflow: visible;
   border: 0;
   background: transparent;
   color: var(--ft-ink);
-  text-overflow: ellipsis;
-  white-space: nowrap;
+  overflow-wrap: anywhere;
+  white-space: normal;
   font-size: 10px;
 }
 
