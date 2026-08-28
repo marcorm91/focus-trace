@@ -149,19 +149,38 @@ function findingFingerprint(issue: ScanIssue): string {
   return `finding-${hashFingerprint(`${issue.ruleId}|${targets}`)}`;
 }
 
+/**
+ * Builds one compact descriptor per deterministic failure.
+ *
+ * Structural selectors deliberately normalize nth-child/nth-of-type positions so
+ * Memory survives ordinary list reordering. That normalization can make repeated
+ * siblings share the same base fingerprint, though, so later occurrences receive
+ * a deterministic ordinal suffix before hashing. The first occurrence keeps the
+ * legacy fingerprint, preserving existing Memory continuity where possible.
+ */
+export function focusMemoryFailureDescriptors(
+  scan: Pick<ScanResult, 'issues'>,
+): FocusMemoryFailureDescriptor[] {
+  const occurrences = new Map<string, number>();
+
+  return scan.issues.map((issue) => {
+    const baseFingerprint = findingFingerprint(issue);
+    const occurrence = occurrences.get(baseFingerprint) ?? 0;
+    occurrences.set(baseFingerprint, occurrence + 1);
+
+    return {
+      fingerprint: occurrence === 0
+        ? baseFingerprint
+        : `finding-${hashFingerprint(`${baseFingerprint}|occurrence:${occurrence + 1}`)}`,
+      ruleId: issue.ruleId,
+    };
+  });
+}
+
 export function buildFocusMemoryObservation(scan: ScanResult): FocusMemoryObservation {
   const scopeKey = focusMemoryScopeKey(scan);
-  const allFailureFingerprints = scan.issues.map(findingFingerprint);
-  const descriptorMap = new Map<string, FocusMemoryFailureDescriptor>();
-
-  for (const issue of scan.issues) {
-    const fingerprint = findingFingerprint(issue);
-    if (!descriptorMap.has(fingerprint)) {
-      descriptorMap.set(fingerprint, { fingerprint, ruleId: issue.ruleId });
-    }
-  }
-
-  const failureDetails = [...descriptorMap.values()].slice(0, FOCUS_MEMORY_MAX_FAILURE_FINGERPRINTS);
+  const allFailureDetails = focusMemoryFailureDescriptors(scan);
+  const failureDetails = allFailureDetails.slice(0, FOCUS_MEMORY_MAX_FAILURE_FINGERPRINTS);
   const failureFingerprints = failureDetails.map((item) => item.fingerprint);
 
   return {
@@ -175,7 +194,7 @@ export function buildFocusMemoryObservation(scan: ScanResult): FocusMemoryObserv
     warningCount: scan.warnings?.length ?? 0,
     failureFingerprints,
     failureDetails,
-    failuresTruncated: allFailureFingerprints.length > FOCUS_MEMORY_MAX_FAILURE_FINGERPRINTS,
+    failuresTruncated: allFailureDetails.length > FOCUS_MEMORY_MAX_FAILURE_FINGERPRINTS,
   };
 }
 

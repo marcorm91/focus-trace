@@ -6,6 +6,7 @@ import {
   FOCUS_MEMORY_MAX_PER_SCOPE,
   FOCUS_MEMORY_RETENTION_DAYS,
   buildFocusMemoryObservation,
+  focusMemoryFailureDescriptors,
   focusMemoryScopeKey,
   normalizeFocusMemoryStore,
   recordFocusMemoryObservation,
@@ -172,13 +173,13 @@ function timelinePointLabel(
 
 function currentFindingSelectors(scan: ScanResult): Map<string, string> {
   const selectors = new Map<string, string>();
+  const descriptors = focusMemoryFailureDescriptors(scan);
 
-  for (const issue of scan.issues) {
+  for (const [index, issue] of scan.issues.entries()) {
     const selector = issue.targets.find((target) => target.trim().length > 0)?.trim();
     if (!selector) continue;
 
-    const observation = buildFocusMemoryObservation({ ...scan, issues: [issue] });
-    const fingerprint = observation.failureDetails?.[0]?.fingerprint ?? observation.failureFingerprints[0];
+    const fingerprint = descriptors[index]?.fingerprint;
     if (fingerprint) selectors.set(fingerprint, selector);
   }
 

@@ -87,6 +87,7 @@ describe('requested FocusTrace UI polish', () => {
     expect(component).toContain("tr(language, 'Previous finding', 'Fallo anterior')");
     expect(component).toContain("tr(language, 'Next finding', 'Fallo siguiente')");
     expect(component).toContain('currentFindingSelectors(scan)');
+    expect(component).toContain('focusMemoryFailureDescriptors(scan)');
     expect(component).toContain('locateMemoryFindingInPage');
     expect(component).toContain('focus-memory-finding-link');
     expect(component).toContain('focusTarget: false');
@@ -110,5 +111,13 @@ describe('requested FocusTrace UI polish', () => {
     expect(component).toContain("tr(language, 'Compare JSON', 'Comparar JSON')");
     expect(component).toContain("throw new Error('scope-mismatch')");
     expect(component).toContain("throw new Error('not-older')");
+  });
+
+  it('opens Review after a full-page analysis instead of jumping to Report', () => {
+    const app = source('entrypoints/sidepanel/App.tsx');
+    const fullPageScan = app.slice(app.indexOf('const runScan'), app.indexOf('const runComponentScan'));
+
+    expect(fullPageScan).toContain("setView('scan');");
+    expect(fullPageScan).not.toContain("setView('report');");
   });
 });
