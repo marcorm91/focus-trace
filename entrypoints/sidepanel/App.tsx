@@ -18,12 +18,13 @@ import { useSidepanelSession } from './hooks/useSidepanelSession';
 import { useTraceActions } from './hooks/useTraceActions';
 import { AboutView } from './views/AboutView';
 import { HeadingTreeView } from './views/HeadingTreeView';
+import { InstructionsView } from './views/InstructionsView';
 import { ScanView } from './views/ScanView';
 import { SessionReportView } from './views/SessionReportView';
 import { SettingsView } from './views/SettingsView';
 import { TraceView } from './views/TraceView';
 
-type View = 'scan' | 'trace' | 'headings' | 'report' | 'about' | 'settings';
+type View = 'scan' | 'trace' | 'headings' | 'report' | 'about' | 'instructions' | 'settings';
 
 type NavigationItem = {
   id: 'scan' | 'trace' | 'headings' | 'report';
@@ -279,6 +280,16 @@ export default function App() {
             <span aria-hidden="true">↻</span>
           </button>
           <button
+            className="instructions-trigger"
+            type="button"
+            aria-pressed={view === 'instructions'}
+            title={tr(language, 'Instructions', 'Instrucciones')}
+            aria-label={tr(language, 'Open instructions', 'Abrir instrucciones')}
+            onClick={() => setView('instructions')}
+          >
+            <span aria-hidden="true">?</span>
+          </button>
+          <button
             className="settings-trigger"
             type="button"
             aria-pressed={view === 'settings'}
@@ -410,6 +421,7 @@ export default function App() {
         <SessionReportView scan={scan} events={session.events} language={language} onLocate={locateScanTarget} />
       )}
       {view === 'about' && <AboutView language={language} />}
+      {view === 'instructions' && <InstructionsView language={language} />}
       {view === 'settings' && <SettingsView language={language} onLanguageChange={updateLanguage} />}
     </main>
   );

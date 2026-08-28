@@ -9,13 +9,20 @@ import { tr, type AppLanguage } from '../../../shared/i18n';
 import type { HeadingSignal, ScanResult } from '../../../shared/types';
 import { Empty } from '../components/Common';
 
+type HeadingSnapshot = NonNullable<ScanResult['headings']>[number];
+
+type HeadingTreeNode = {
+  heading: HeadingSnapshot;
+  children: HeadingTreeNode[];
+};
+
 function signalLabel(signal: HeadingSignal, language: AppLanguage): string {
   if (signal === 'empty') return tr(language, 'Empty heading', 'Encabezado vacío');
   if (signal === 'level-jump') return tr(language, 'Skipped level', 'Salto de nivel');
   return tr(language, 'Multiple H1', 'Varios H1');
 }
 
-function headingDetail(heading: NonNullable<ScanResult['headings']>[number], language: AppLanguage): string {
+function headingDetail(heading: HeadingSnapshot, language: AppLanguage): string {
   if (heading.signals.includes('empty')) {
     return tr(
       language,
@@ -44,10 +51,113 @@ function headingDetail(heading: NonNullable<ScanResult['headings']>[number], lan
   );
 }
 
+function buildHeadingForest(headings: HeadingSnapshot[]): HeadingTreeNode[] {
+  const roots: HeadingTreeNode[] = [];
+  const stack: HeadingTreeNode[] = [];
+
+  for (const heading of headings) {
+    const node: HeadingTreeNode = { heading, children: [] };
+    while (stack.length > 0 && stack[stack.length - 1]!.heading.level >= heading.level) {
+      stack.pop();
+    }
+
+    const parent = stack[stack.length - 1];
+    if (parent) parent.children.push(node);
+    else roots.push(node);
+    stack.push(node);
+  }
+
+  return roots;
+}
+
+function branchIds(nodes: HeadingTreeNode[]): string[] {
+  return nodes.flatMap((node) => [
+    ...(node.children.length > 0 ? [node.heading.id] : []),
+    ...branchIds(node.children),
+  ]);
+}
+
 async function activeTabId(): Promise<number> {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   if (tab?.id == null) throw new Error('No active browser tab is available.');
   return tab.id;
+}
+
+function HeadingBranch({
+  node,
+  language,
+  selectedId,
+  collapsedIds,
+  onSelect,
+  onToggle,
+}: {
+  node: HeadingTreeNode;
+  language: AppLanguage;
+  selectedId?: string;
+  collapsedIds: Set<string>;
+  onSelect: (heading: HeadingSnapshot) => void;
+  onToggle: (headingId: string) => void;
+}) {
+  const { heading, children } = node;
+  const hasChildren = children.length > 0;
+  const expanded = hasChildren && !collapsedIds.has(heading.id);
+  const selectedHeading = heading.id === selectedId;
+  const label = heading.text || tr(language, 'Empty heading', 'Encabezado vacío');
+
+  return (
+    <div
+      className={`heading-tree-branch level-${heading.level} ${heading.signals.length ? 'has-signal' : ''}`}
+      role="treeitem"
+      aria-level={heading.level}
+      aria-selected={selectedHeading}
+      aria-expanded={hasChildren ? expanded : undefined}
+    >
+      <div className={`heading-tree-row level-${heading.level} ${heading.signals.length ? 'has-signal' : ''}`}>
+        <span className="heading-level" aria-hidden="true">H{heading.level}</span>
+        <div className={`heading-node-row ${hasChildren ? 'has-children' : ''}`}>
+          <button
+            type="button"
+            className="heading-node"
+            onClick={() => onSelect(heading)}
+          >
+            <span>{label}</span>
+            {heading.signals.length > 0 && (
+              <small>{heading.signals.map((signal) => signalLabel(signal, language)).join(' · ')}</small>
+            )}
+          </button>
+          {hasChildren && (
+            <button
+              type="button"
+              className="heading-branch-toggle"
+              aria-expanded={expanded}
+              aria-label={expanded
+                ? tr(language, `Collapse heading branch: ${label}`, `Contraer rama de encabezado: ${label}`)
+                : tr(language, `Expand heading branch: ${label}`, `Expandir rama de encabezado: ${label}`)}
+              onClick={() => onToggle(heading.id)}
+            >
+              <span aria-hidden="true">{expanded ? '−' : '+'}</span>
+            </button>
+          )}
+        </div>
+      </div>
+
+      {hasChildren && expanded && (
+        <div className="heading-tree-children" role="group">
+          {children.map((child) => (
+            <HeadingBranch
+              node={child}
+              language={language}
+              selectedId={selectedId}
+              collapsedIds={collapsedIds}
+              onSelect={onSelect}
+              onToggle={onToggle}
+              key={child.heading.id}
+            />
+          ))}
+        </div>
+      )}
+    </div>
+  );
 }
 
 export function HeadingTreeView({
@@ -60,7 +170,10 @@ export function HeadingTreeView({
   onLocate: (selector: string) => void | Promise<void>;
 }) {
   const headings = useMemo(() => scan?.headings ?? [], [scan?.headings]);
+  const headingForest = useMemo(() => buildHeadingForest(headings), [headings]);
+  const collapsibleIds = useMemo(() => branchIds(headingForest), [headingForest]);
   const [selectedId, setSelectedId] = useState<string>();
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set());
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [overlayResult, setOverlayResult] = useState<HeadingOverlayResult>();
   const [overlayError, setOverlayError] = useState<string>();
@@ -70,6 +183,12 @@ export function HeadingTreeView({
       current && headings.some((heading) => heading.id === current) ? current : undefined,
     );
   }, [headings]);
+
+  useEffect(() => {
+    // A fresh scan always starts fully expanded. From there each branch can be
+    // collapsed independently without changing the state of sibling branches.
+    setCollapsedIds(new Set());
+  }, [scan?.scannedAt]);
 
   useEffect(() => () => {
     void activeTabId()
@@ -106,6 +225,20 @@ export function HeadingTreeView({
     }
   };
 
+  const toggleBranch = (headingId: string) => {
+    setCollapsedIds((current) => {
+      const next = new Set(current);
+      if (next.has(headingId)) next.delete(headingId);
+      else next.add(headingId);
+      return next;
+    });
+  };
+
+  const selectHeading = (heading: HeadingSnapshot) => {
+    setSelectedId(heading.id);
+    void onLocate(heading.selector);
+  };
+
   if (!scan) {
     return (
       <Empty
@@ -122,6 +255,7 @@ export function HeadingTreeView({
   const selected = headings.find((heading) => heading.id === selectedId);
   const signalled = headings.filter((heading) => heading.signals.length > 0).length;
   const h1Count = headings.filter((heading) => heading.level === 1).length;
+  const allCollapsed = collapsibleIds.length > 0 && collapsibleIds.every((id) => collapsedIds.has(id));
 
   return (
     <section className="panel heading-outline-panel" aria-labelledby="heading-outline-title">
@@ -177,35 +311,37 @@ export function HeadingTreeView({
             <span><strong>{signalled}</strong> {tr(language, 'to review', 'a revisar')}</span>
           </div>
 
+          {collapsibleIds.length > 0 && (
+            <div className="heading-tree-controls" role="group" aria-label={tr(language, 'Heading tree display', 'Visualización del árbol de encabezados')}>
+              <button
+                type="button"
+                disabled={collapsedIds.size === 0}
+                onClick={() => setCollapsedIds(new Set())}
+              >
+                {tr(language, 'Expand all', 'Expandir todo')}
+              </button>
+              <button
+                type="button"
+                disabled={allCollapsed}
+                onClick={() => setCollapsedIds(new Set(collapsibleIds))}
+              >
+                {tr(language, 'Collapse all', 'Contraer todo')}
+              </button>
+            </div>
+          )}
+
           <div className="heading-tree" role="tree" aria-label={tr(language, 'Page heading tree', 'Árbol de encabezados de la página')}>
-            {headings.map((heading) => {
-              const selectedHeading = heading.id === selectedId;
-              const label = heading.text || tr(language, 'Empty heading', 'Encabezado vacío');
-              return (
-                <div
-                  className={`heading-tree-row level-${heading.level} ${heading.signals.length ? 'has-signal' : ''}`}
-                  role="treeitem"
-                  aria-level={heading.level}
-                  aria-selected={selectedHeading}
-                  key={heading.id}
-                >
-                  <span className="heading-level" aria-hidden="true">H{heading.level}</span>
-                  <button
-                    type="button"
-                    className="heading-node"
-                    onClick={() => {
-                      setSelectedId(heading.id);
-                      void onLocate(heading.selector);
-                    }}
-                  >
-                    <span>{label}</span>
-                    {heading.signals.length > 0 && (
-                      <small>{heading.signals.map((signal) => signalLabel(signal, language)).join(' · ')}</small>
-                    )}
-                  </button>
-                </div>
-              );
-            })}
+            {headingForest.map((node) => (
+              <HeadingBranch
+                node={node}
+                language={language}
+                selectedId={selectedId}
+                collapsedIds={collapsedIds}
+                onSelect={selectHeading}
+                onToggle={toggleBranch}
+                key={node.heading.id}
+              />
+            ))}
           </div>
 
           {selected && (

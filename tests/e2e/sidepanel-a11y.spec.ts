@@ -53,6 +53,8 @@ test('sidepanel exposes an accessible shell and keyboard order', async ({ contex
   expect(focusStyle.style).not.toBe('none');
 
   await panel.keyboard.press('Tab');
+  await expect(panel.getByRole('button', { name: /Open instructions|Abrir instrucciones/ })).toBeFocused();
+  await panel.keyboard.press('Tab');
   await expect(panel.getByRole('button', { name: /Open settings|Abrir ajustes/ })).toBeFocused();
   await panel.keyboard.press('Tab');
   await expect(panel.getByRole('button', { name: /Analyze this page|Analizar esta página/ })).toBeFocused();

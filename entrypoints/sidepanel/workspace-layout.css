@@ -19,16 +19,16 @@
 .quick-actions .site-audit-launch { order: 3; }
 .quick-actions .focus-walk-action { order: 4; }
 
-/* Settings is a focused sub-view: keep the brand and the explicit Back action,
-   but remove the workspace chrome while the settings route is active. */
-html[data-ft-settings-open='true'] .quick-start,
-html[data-ft-settings-open='true'] .workspace-nav,
-html[data-ft-settings-open='true'] .topbar-tools,
-html[data-ft-settings-open='true'] .error {
+/* Settings and instructions are focused sub-views: keep the brand and the
+   explicit Back action, but remove workspace chrome while either route is active. */
+html[data-ft-focused-subview-open] .quick-start,
+html[data-ft-focused-subview-open] .workspace-nav,
+html[data-ft-focused-subview-open] .topbar-tools,
+html[data-ft-focused-subview-open] .error {
   display: none;
 }
 
-html[data-ft-settings-open='true'] .topbar {
+html[data-ft-focused-subview-open] .topbar {
   margin-bottom: 14px;
 }
 

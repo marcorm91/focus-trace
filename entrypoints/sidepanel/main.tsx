@@ -9,7 +9,7 @@ import { RUNTIME_BREAKPOINT_SETTINGS_STORAGE_KEY } from '../../shared/runtime-br
 import type { ExtensionMessage, RuntimeBreakpointSettings } from '../../shared/types';
 import { normalizeUiScale, UI_SCALE_STORAGE_KEY } from '../../shared/ui-scale';
 import App from './App';
-import { openFocusedSettingsView } from './settings-focus';
+import { openFocusedInstructionsView, openFocusedSettingsView } from './settings-focus';
 
 // Cascade order: legacy foundations -> visual system -> component ownership ->
 // interaction states -> accessibility policy. Component CSS should not need
@@ -26,6 +26,7 @@ import './workspace-layout.css';
 import './component-scan.css';
 import './heading-tree-visual.css';
 import './information-summaries.css';
+import './instructions.css';
 import './modern-icons.css';
 import './control-states.css';
 import './ui-scale.css';
@@ -91,6 +92,10 @@ document.addEventListener('click', (event) => {
 
   if (target.closest('.settings-trigger')) {
     openFocusedSettingsView();
+  }
+
+  if (target.closest('.instructions-trigger')) {
+    openFocusedInstructionsView();
   }
 
   const pagerButton = target.closest('.scan-occurrence-pager button') as HTMLButtonElement | null;

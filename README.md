@@ -1,3 +1,5 @@
+<p align="right"><strong>English</strong> · <a href="./README.es.md">Español</a></p>
+
 # FocusTrace
 
 **Debug accessibility focus like you debug JavaScript.**

@@ -1,0 +1,82 @@
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
+import { describe, expect, it } from 'vitest';
+
+function source(path: string): string {
+  return readFileSync(resolve(process.cwd(), path), 'utf8');
+}
+
+describe('README language and instructions contract', () => {
+  it('provides a visible English/Spanish README switcher in both documents', () => {
+    const english = source('README.md');
+    const spanish = source('README.es.md');
+
+    expect(english).toContain('<strong>English</strong>');
+    expect(english).toContain('href="./README.es.md"');
+    expect(spanish).toContain('href="./README.md"');
+    expect(spanish).toContain('<strong>Español</strong>');
+    expect(spanish).toContain('## ¿Qué lo hace diferente?');
+    expect(spanish).toContain('## Privacidad');
+  });
+
+  it('places Instructions between reset and settings in the topbar', () => {
+    const app = source('entrypoints/sidepanel/App.tsx');
+    const resetIndex = app.indexOf('className="reset-all-trigger"');
+    const instructionsIndex = app.indexOf('className="instructions-trigger"');
+    const settingsIndex = app.indexOf('className="settings-trigger"');
+
+    expect(resetIndex).toBeGreaterThan(-1);
+    expect(instructionsIndex).toBeGreaterThan(resetIndex);
+    expect(settingsIndex).toBeGreaterThan(instructionsIndex);
+    expect(app).toContain("tr(language, 'Instructions', 'Instrucciones')");
+    expect(app).toContain("view === 'instructions'");
+    expect(app).toContain('<InstructionsView language={language} />');
+  });
+
+  it('uses the same focused Back pattern as Settings and restores the workspace tab', () => {
+    const focus = source('entrypoints/sidepanel/settings-focus.ts');
+    const layout = source('entrypoints/sidepanel/workspace-layout.css');
+    const instructions = source('entrypoints/sidepanel/views/InstructionsView.tsx');
+
+    expect(focus).toContain("type FocusedSubview = 'settings' | 'instructions'");
+    expect(focus).toContain('openFocusedInstructionsView');
+    expect(focus).toContain('closeFocusedInstructionsView');
+    expect(focus).toContain('ftFocusedSubviewReturn');
+    expect(layout).toContain("html[data-ft-focused-subview-open]");
+    expect(instructions).toContain('className="settings-back-trigger"');
+    expect(instructions).toContain("tr(language, 'Back', 'Volver')");
+  });
+
+  it('documents the main workflows and result semantics in both interface languages', () => {
+    const instructions = source('entrypoints/sidepanel/views/InstructionsView.tsx');
+
+    expect(instructions).toContain("'How to use FocusTrace', 'Cómo usar FocusTrace'");
+    expect(instructions).toContain("'Start here', 'Empieza aquí'");
+    expect(instructions).toContain("'Review', 'Revisión'");
+    expect(instructions).toContain("'Analyze a component', 'Analizar un componente'");
+    expect(instructions).toContain("'Site Audit', 'Análisis de sitio'");
+    expect(instructions).toContain('title="Trace"');
+    expect(instructions).toContain("'Automate focus', 'Automatizar foco'");
+    expect(instructions).toContain("'Headings', 'Encabezados'");
+    expect(instructions).toContain("'Report', 'Informe'");
+    expect(instructions).toContain('title="FocusTrace Memory"');
+    expect(instructions).toContain("'Settings and privacy', 'Ajustes y privacidad'");
+    expect(instructions).toContain('Failures are findings FocusTrace can determine');
+    expect(instructions).toContain('Las revisiones necesitan contexto humano');
+    expect(instructions).toContain('Warnings highlight risky HTML/ARIA authoring');
+    expect(instructions).toContain('Los avisos señalan riesgos de autoría HTML/ARIA');
+  });
+
+  it('keeps the guide responsive and gives Instructions its own non-text icon', () => {
+    const css = source('entrypoints/sidepanel/instructions.css');
+    const entry = source('entrypoints/sidepanel/main.tsx');
+
+    expect(entry).toContain("import './instructions.css';");
+    expect(css).toContain('.topbar-tools .instructions-trigger > span');
+    expect(css).toContain('--ft-mask: url(');
+    expect(css).toContain('grid-template-columns: repeat(2, minmax(0, 1fr));');
+    expect(css).toContain('@media (max-width: 520px)');
+    expect(css).toContain('grid-template-columns: 1fr;');
+    expect(css).not.toContain('!important');
+  });
+});

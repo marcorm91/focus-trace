@@ -19,6 +19,45 @@
   background: color-mix(in srgb, #08745b 6%, Canvas);
 }
 
+.finding-guidance .finding-heading-context {
+  gap: 7px;
+  border-color: color-mix(in srgb, var(--ft-warning, #8a4f00) 45%, var(--ft-border, transparent));
+  border-left: 4px solid var(--ft-warning, #8a4f00);
+  background: color-mix(in srgb, var(--ft-warning-soft, #fff4d6) 55%, var(--ft-surface, Canvas));
+}
+
+.finding-heading-context > div {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 34px minmax(0, 1fr);
+  gap: 8px;
+  align-items: start;
+}
+
+.finding-heading-context > div > span {
+  min-width: 34px;
+  min-height: 30px;
+  display: grid;
+  place-items: center;
+  border: 1.5px solid var(--ft-border, CanvasText);
+  border-radius: 7px;
+  background: var(--ft-ink, CanvasText);
+  color: var(--ft-surface, Canvas);
+  font-family: var(--ft-mono, monospace);
+  font-size: 11px;
+  font-weight: 900;
+}
+
+.finding-heading-context strong {
+  min-width: 0;
+  max-width: 100%;
+  color: var(--ft-text, CanvasText);
+  font-size: 14px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
 .finding-guidance small {
   color: var(--ft-muted, GrayText);
   font-size: 14px;
