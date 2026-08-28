@@ -30,6 +30,7 @@ import './instructions.css';
 import './modern-icons.css';
 import './control-states.css';
 import './ui-scale.css';
+import './requested-polish.css';
 
 const PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'];
 const root = document.getElementById('root');
@@ -51,7 +52,7 @@ async function syncBreakpointPreferencesToTab(
     type: 'FOCUSTRACE_SAVE_BREAKPOINTS',
     tabId,
     breakpoints,
-  } satisfies ExtensionMessage);
+  } satisfies ExtensionMessage));
   await browser.tabs.sendMessage(tabId, {
     type: 'FOCUSTRACE_CONFIGURE_BREAKPOINTS',
     breakpoints,
