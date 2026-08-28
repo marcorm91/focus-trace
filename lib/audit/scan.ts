@@ -1,7 +1,9 @@
+import { DUPLICATE_ID_RULE } from '../../shared/html-authoring-rules';
 import { RULES, type RuleDefinition } from '../../shared/rule-catalog';
 import type { ComponentScanScope, FindingOutcome, HeadingSnapshot, ScanIssue, ScanResult } from '../../shared/types';
 import { evaluateTextContrastForElement, elementHasRenderedText } from './contrast';
 import { accessibleNameDetails, accessibleNameDiagnostics, isMarkedDecorative, isProgrammaticallyHidden, isSequentiallyFocusable, selectorFor, semanticRole } from './dom';
+import { evaluateDuplicateIds } from './duplicate-ids';
 import { evaluateLabelInName } from './label-in-name';
 import { evaluateNonTextContrast } from './non-text-contrast';
 import { evaluateAriaAuthoringSignals, pageLanguageStatus, type AriaAuthoringSignal } from './standards-registry';
@@ -187,6 +189,22 @@ function runAriaHiddenFocusable(root: ScanRoot): RuleExecution {
     if (!focusable) { result.passes += 1; continue; }
     result.issues.push(finding(RULES.ariaHiddenFocusable, 'fail', focusable, 'An element hidden from assistive technologies remains in sequential keyboard focus navigation.', `Focusable element is inside ${selectorFor(container)} with aria-hidden="true".`));
   }
+  return result;
+}
+
+function runDuplicateIds(root: ScanRoot): RuleExecution {
+  const result = emptyExecution();
+  const signals = evaluateDuplicateIds(root);
+  for (const signal of signals) {
+    result.warnings.push(finding(
+      DUPLICATE_ID_RULE,
+      'warning',
+      signal.element,
+      'This id value is used by more than one element in the document. HTML requires non-empty IDs to be unique; duplicate identifiers can make ID-based relationships or navigation resolve unpredictably.',
+      `id=${JSON.stringify(signal.id)} is used by ${signal.occurrences} elements in this document.`,
+    ));
+  }
+  if (!signals.length) result.passes += 1;
   return result;
 }
 
@@ -411,6 +429,7 @@ export function runFocusTraceScan(scope: ComponentScanScope | undefined = consum
     runLinks(root),
     runLabelInName(root),
     runAriaHiddenFocusable(root),
+    runDuplicateIds(root),
     runTextContrast(root),
     runNonTextContrast(root),
     ...ariaExecutions,
