@@ -27,7 +27,7 @@ Session data and preferences may be stored using browser extension storage so th
 
 FocusTrace Memory is an optional local history feature for comparing accessibility observations over time. It is **disabled by default after installation** and does not begin remembering scan history until the user explicitly enables **Remember accessibility history** in Settings.
 
-When enabled, Memory stores compact local observation data such as hashed scope/finding fingerprints, result counts, rule-coverage counts and timestamps. It does not store page HTML, full DOM snapshots or screenshots as part of the Memory history.
+When enabled, Memory stores compact local observation data such as hashed scope/finding fingerprints, generic FocusTrace rule identifiers, result counts, rule-coverage counts and timestamps. The rule identifier lets the interface describe which known finding changed across remembered observations without storing the failing selector. Memory does not store page HTML, full DOM snapshots, failing selectors or screenshots as part of the history.
 
 Memory is bounded so it cannot grow without limit. The current limits are:
 
