@@ -1,32 +1,11 @@
-/* FocusTrace UI consistency requested after the component-scan and Memory passes.
-   This layer is intentionally loaded last: it owns cross-view consistency rather
-   than individual component structure. */
+/* Cross-view visual policy for surfaces shared by several workspaces. Structural
+   ownership stays in component styles; index.css assigns this file to policy. */
 
 /* Quick actions: keep one neutral treatment and a predictable reading order. */
 .quick-actions .scan-action { order: 1; }
 .quick-actions .component-scan-action { order: 2; }
 .quick-actions .site-audit-launch { order: 3; }
 .quick-actions .focus-walk-action { order: 4; }
-
-.quick-actions button,
-.quick-actions .site-audit-launch,
-.quick-actions .primary,
-.quick-actions .scan-action {
-  border-color: var(--ft-border);
-  background: var(--ft-surface);
-  color: var(--ft-ink);
-  box-shadow: var(--ft-shadow-sm);
-  font-weight: 600;
-}
-
-.quick-actions button:not(:disabled):hover,
-.quick-actions .site-audit-launch:not(:disabled):hover,
-.quick-actions .primary:not(:disabled):hover,
-.quick-actions .scan-action:not(:disabled):hover {
-  border-color: var(--ft-border);
-  background: var(--ft-surface-subtle);
-  color: var(--ft-ink);
-}
 
 /* The interface uses flat surfaces. Gradients are deliberately removed from
    the workspace and from runtime states while preserving their semantic tone. */
@@ -210,7 +189,7 @@ body {
 .focus-memory-history-pager strong {
   min-width: 56px;
   color: var(--ft-ink);
-  font-size: 9px;
+  font-size: 14px;
   font-variant-numeric: tabular-nums;
   text-align: center;
 }
@@ -245,19 +224,19 @@ body {
 
 .focus-memory-imported-comparison strong {
   color: var(--ft-ink);
-  font-size: 10px;
+  font-size: 14px;
 }
 
 .focus-memory-imported-comparison time,
 .focus-memory-imported-comparison small {
   color: var(--ft-muted);
-  font-size: 8.5px;
+  font-size: 14px;
 }
 
 .focus-memory-imported-comparison p {
   margin: 0;
   color: var(--ft-text);
-  font-size: 9px;
+  font-size: 14px;
   line-height: 1.4;
 }
 
@@ -273,7 +252,7 @@ body {
   border-radius: var(--ft-radius-xs);
   background: var(--ft-surface);
   color: var(--ft-muted);
-  font-size: 8px;
+  font-size: 14px;
 }
 
 .focus-memory-import-error {
@@ -282,7 +261,7 @@ body {
   border-left: 3px solid var(--ft-danger);
   background: var(--ft-danger-soft);
   color: var(--ft-danger);
-  font-size: 9px;
+  font-size: 14px;
 }
 
 .focus-memory-controls > div {

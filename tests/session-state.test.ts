@@ -167,4 +167,16 @@ describe('runtime session state helpers', () => {
     expect(navigated.events).toBe(current.events);
     expect(navigated.recording).toBe(current.recording);
   });
+
+  it('invalidates stale scans for hash-router navigation but not ordinary anchors', () => {
+    const hashRouteScan = { url: 'https://example.com/#/account' } as SessionState['scan'];
+    const hashRouteState = session({ scan: hashRouteScan });
+
+    const navigated = invalidateSessionScanForUrl(hashRouteState, 'https://example.com/#/settings');
+    expect(navigated.scan).toBeUndefined();
+
+    const anchorScan = { url: 'https://example.com/help#intro' } as SessionState['scan'];
+    const anchorState = session({ scan: anchorScan });
+    expect(invalidateSessionScanForUrl(anchorState, 'https://example.com/help#examples')).toBe(anchorState);
+  });
 });

@@ -1,0 +1,5 @@
+.print-toolbar button:focus-visible,
+a:focus-visible {
+  outline: 3px solid var(--ft-print-accent);
+  outline-offset: 3px;
+}

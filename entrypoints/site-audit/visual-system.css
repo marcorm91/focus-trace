@@ -69,14 +69,6 @@ textarea {
   color: var(--ft-text);
 }
 
-button:focus-visible,
-a:focus-visible,
-textarea:focus-visible,
-summary:focus-visible {
-  outline: 3px solid var(--ft-accent) !important;
-  outline-offset: 3px !important;
-}
-
 button {
   transition: transform .11s ease, box-shadow .11s ease, background-color .11s ease, border-color .11s ease;
 }
@@ -317,7 +309,7 @@ textarea {
 .finding-outcome {
   border: 1px solid currentColor;
   border-radius: 999px;
-  background: transparent !important;
+  background: transparent;
   font-size: 11px;
 }
 
@@ -433,16 +425,6 @@ textarea {
   }
 }
 
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: .01ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: .01ms !important;
-  }
-}
-
 @media print {
   :root {
     --ft-paper: #fff;
@@ -454,11 +436,11 @@ textarea {
     --ft-border-soft: #cfd5dc;
   }
 
-  body { background: #fff !important; }
+  body { background: #fff; }
   .site-card,
   .site-template,
   .site-finding,
   .finding-visual-evidence {
-    box-shadow: none !important;
+    box-shadow: none;
   }
 }

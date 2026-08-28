@@ -1,5 +1,5 @@
-/* Printable report visual identity. Important declarations intentionally make
-   this stylesheet deterministic regardless of bundler CSS extraction order. */
+/* Printable report visual identity. Cascade layers in index.css keep this
+   theme deterministic regardless of bundler CSS extraction order. */
 
 :root {
   --ft-print-paper: #f3f1ec;
@@ -23,65 +23,60 @@
 html,
 body,
 #root {
-  background: var(--ft-print-paper) !important;
-  color: var(--ft-print-ink) !important;
+  background: var(--ft-print-paper);
+  color: var(--ft-print-ink);
 }
 
 body {
-  background: var(--ft-print-paper) !important;
+  background: var(--ft-print-paper);
 }
 
 a {
-  color: var(--ft-print-accent-strong) !important;
+  color: var(--ft-print-accent-strong);
   text-underline-offset: 2px;
 }
 
 code,
 pre {
-  font-family: var(--ft-print-mono) !important;
+  font-family: var(--ft-print-mono);
 }
 
 .print-toolbar {
-  border-bottom: 2px solid var(--ft-print-border) !important;
-  background: rgba(255, 255, 255, .98) !important;
-  box-shadow: 0 7px 22px rgba(31, 43, 58, .09) !important;
+  border-bottom: 2px solid var(--ft-print-border);
+  background: rgba(255, 255, 255, .98);
+  box-shadow: 0 7px 22px rgba(31, 43, 58, .09);
 }
 
 .print-toolbar strong {
-  color: var(--ft-print-ink) !important;
-  font-weight: 900 !important;
+  color: var(--ft-print-ink);
+  font-weight: 900;
 }
 
 .print-toolbar span {
-  color: var(--ft-print-muted) !important;
+  color: var(--ft-print-muted);
 }
 
 .print-toolbar button {
-  border: 2px solid var(--ft-print-border) !important;
-  border-radius: 7px !important;
-  background: var(--ft-print-ink) !important;
-  color: #fff !important;
-  box-shadow: 2px 2px 0 var(--ft-print-border) !important;
-  font-weight: 900 !important;
+  border: 2px solid var(--ft-print-border);
+  border-radius: 7px;
+  background: var(--ft-print-ink);
+  color: #fff;
+  box-shadow: 2px 2px 0 var(--ft-print-border);
+  font-weight: 900;
 }
 
 .print-toolbar button:active {
-  box-shadow: none !important;
+  box-shadow: none;
   transform: translate(2px, 2px);
 }
 
-.print-toolbar button:focus-visible {
-  outline: 3px solid var(--ft-print-accent) !important;
-  outline-offset: 3px !important;
-}
-
 .report-page {
-  background: var(--ft-print-surface) !important;
-  box-shadow: 0 18px 48px rgba(31, 43, 58, .13) !important;
+  background: var(--ft-print-surface);
+  box-shadow: 0 18px 48px rgba(31, 43, 58, .13);
 }
 
 .print-cover {
-  border-bottom: 3px solid var(--ft-print-border) !important;
+  border-bottom: 3px solid var(--ft-print-border);
 }
 
 .print-brand > div strong,
@@ -90,13 +85,13 @@ pre {
 .print-finding h4,
 .print-suggestion-list strong,
 .print-trace-head strong {
-  color: var(--ft-print-ink) !important;
+  color: var(--ft-print-ink);
 }
 
 .print-brand > div strong,
 .print-title-block h1,
 .print-section-title h2 {
-  font-weight: 900 !important;
+  font-weight: 900;
 }
 
 .print-brand > div span,
@@ -108,213 +103,213 @@ pre {
 .print-trace-story > p,
 .print-finding > p,
 .print-footer > p {
-  color: var(--ft-print-muted) !important;
+  color: var(--ft-print-muted);
 }
 
 .print-brand > small {
-  border: 1px solid var(--ft-print-border-soft) !important;
-  border-radius: 999px !important;
+  border: 1px solid var(--ft-print-border-soft);
+  border-radius: 999px;
 }
 
 .print-title-block > p {
-  color: var(--ft-print-accent-strong) !important;
+  color: var(--ft-print-accent-strong);
 }
 
 .print-title-block h1 {
-  letter-spacing: -.035em !important;
+  letter-spacing: -.035em;
 }
 
 .print-context span,
 .print-score-grid > div,
 .print-category-row span,
 .print-inline-metrics span {
-  border-color: var(--ft-print-border-soft) !important;
-  border-radius: 7px !important;
-  background: #fff !important;
+  border-color: var(--ft-print-border-soft);
+  border-radius: 7px;
+  background: #fff;
 }
 
 .print-context strong {
-  color: var(--ft-print-muted) !important;
+  color: var(--ft-print-muted);
 }
 
 .print-section {
-  border-bottom: 2px solid var(--ft-print-border-soft) !important;
+  border-bottom: 2px solid var(--ft-print-border-soft);
 }
 
 .print-section-title > span {
-  border: 1px solid var(--ft-print-border) !important;
-  border-radius: 6px !important;
-  background: var(--ft-print-ink) !important;
-  color: #fff !important;
-  font-family: var(--ft-print-mono) !important;
+  border: 1px solid var(--ft-print-border);
+  border-radius: 6px;
+  background: var(--ft-print-ink);
+  color: #fff;
+  font-family: var(--ft-print-mono);
 }
 
 .print-priority .print-section-title > span {
-  border-color: var(--ft-print-danger) !important;
-  background: var(--ft-print-danger) !important;
-  color: #fff !important;
+  border-color: var(--ft-print-danger);
+  background: var(--ft-print-danger);
+  color: #fff;
 }
 
 .print-score-grid > div {
-  border-width: 1.5px !important;
+  border-width: 1.5px;
 }
 
 .print-score-grid > div.is-fail {
-  border-color: #d99b95 !important;
-  background: var(--ft-print-danger-soft) !important;
+  border-color: #d99b95;
+  background: var(--ft-print-danger-soft);
 }
 
 .print-score-grid > div.is-review {
-  border-color: #dfb87f !important;
-  background: var(--ft-print-warning-soft) !important;
+  border-color: #dfb87f;
+  background: var(--ft-print-warning-soft);
 }
 
 .print-score-grid strong {
-  color: var(--ft-print-ink) !important;
-  font-weight: 900 !important;
+  color: var(--ft-print-ink);
+  font-weight: 900;
 }
 
 .print-category-row span,
 .print-inline-metrics span {
-  font-family: var(--ft-print-mono) !important;
+  font-family: var(--ft-print-mono);
 }
 
 .print-suggestion-list li {
-  border: 1px solid #dfb0aa !important;
-  border-left: 5px solid var(--ft-print-danger) !important;
-  border-radius: 7px !important;
-  background: var(--ft-print-danger-soft) !important;
+  border: 1px solid #dfb0aa;
+  border-left: 5px solid var(--ft-print-danger);
+  border-radius: 7px;
+  background: var(--ft-print-danger-soft);
 }
 
 .print-suggestion-list small {
-  color: var(--ft-print-danger) !important;
+  color: var(--ft-print-danger);
 }
 
 .print-trace-story,
 .print-finding,
 .print-heading-list li {
-  border: 1.5px solid var(--ft-print-border-soft) !important;
-  border-radius: 8px !important;
-  background: #fff !important;
+  border: 1.5px solid var(--ft-print-border-soft);
+  border-radius: 8px;
+  background: #fff;
 }
 
 .print-trace-story {
-  border-left: 5px solid var(--ft-print-border) !important;
+  border-left: 5px solid var(--ft-print-border);
 }
 
 .print-trace-story.tone-review {
-  border-left-color: var(--ft-print-warning) !important;
-  background: var(--ft-print-warning-soft) !important;
+  border-left-color: var(--ft-print-warning);
+  background: var(--ft-print-warning-soft);
 }
 
 .print-trace-story.tone-handled {
-  border-left-color: var(--ft-print-success) !important;
-  background: var(--ft-print-success-soft) !important;
+  border-left-color: var(--ft-print-success);
+  background: var(--ft-print-success-soft);
 }
 
 .print-trace-story.tone-observed {
-  border-left-color: var(--ft-print-accent) !important;
+  border-left-color: var(--ft-print-accent);
 }
 
 .print-trace-head > span {
-  border: 1px solid var(--ft-print-border) !important;
-  border-radius: 6px !important;
-  background: var(--ft-print-ink) !important;
-  color: #fff !important;
+  border: 1px solid var(--ft-print-border);
+  border-radius: 6px;
+  background: var(--ft-print-ink);
+  color: #fff;
 }
 
 .print-chain,
 .print-evidence,
 .print-contrast {
-  border: 1px solid var(--ft-print-border-soft) !important;
-  border-radius: 6px !important;
-  background: #f6f7f8 !important;
+  border: 1px solid var(--ft-print-border-soft);
+  border-radius: 6px;
+  background: #f6f7f8;
 }
 
 .print-chain {
-  font-family: var(--ft-print-mono) !important;
-  color: #47525f !important;
+  font-family: var(--ft-print-mono);
+  color: #47525f;
 }
 
 .print-reference-line {
-  color: var(--ft-print-accent-strong) !important;
+  color: var(--ft-print-accent-strong);
 }
 
 .print-finding {
-  border-left: 5px solid var(--ft-print-border) !important;
+  border-left: 5px solid var(--ft-print-border);
 }
 
-.print-finding.tone-fail { border-left-color: var(--ft-print-danger) !important; }
-.print-finding.tone-review { border-left-color: var(--ft-print-warning) !important; }
-.print-finding.tone-warning { border-left-color: #786500 !important; }
+.print-finding.tone-fail { border-left-color: var(--ft-print-danger); }
+.print-finding.tone-review { border-left-color: var(--ft-print-warning); }
+.print-finding.tone-warning { border-left-color: #786500; }
 
 .print-finding-group > h3 span,
 .print-finding-meta > span,
 .print-finding-meta code {
-  border: 1px solid var(--ft-print-border-soft) !important;
-  background: #fff !important;
+  border: 1px solid var(--ft-print-border-soft);
+  background: #fff;
 }
 
 .print-finding-meta code {
-  color: var(--ft-print-ink) !important;
-  font-family: var(--ft-print-mono) !important;
+  color: var(--ft-print-ink);
+  font-family: var(--ft-print-mono);
 }
 
 .print-references a {
-  border: 1px solid #aac9e8 !important;
-  background: var(--ft-print-accent-soft) !important;
-  color: var(--ft-print-accent-strong) !important;
+  border: 1px solid #aac9e8;
+  background: var(--ft-print-accent-soft);
+  color: var(--ft-print-accent-strong);
 }
 
 .print-evidence {
-  border-left: 4px solid var(--ft-print-accent) !important;
+  border-left: 4px solid var(--ft-print-accent);
 }
 
 .print-contrast-suggestion {
-  border-left-color: var(--ft-print-success) !important;
+  border-left-color: var(--ft-print-success);
 }
 
 .print-heading-list li.has-signal {
-  border-left: 4px solid var(--ft-print-warning) !important;
-  border-color: #dfb87f !important;
-  border-left-color: var(--ft-print-warning) !important;
-  background: var(--ft-print-warning-soft) !important;
+  border-left: 4px solid var(--ft-print-warning);
+  border-color: #dfb87f;
+  border-left-color: var(--ft-print-warning);
+  background: var(--ft-print-warning-soft);
 }
 
 .print-heading-list li > span {
-  color: var(--ft-print-accent-strong) !important;
-  font-family: var(--ft-print-mono) !important;
+  color: var(--ft-print-accent-strong);
+  font-family: var(--ft-print-mono);
 }
 
 .print-recommendation-list li {
-  border-bottom: 1.5px solid var(--ft-print-border-soft) !important;
+  border-bottom: 1.5px solid var(--ft-print-border-soft);
 }
 
 .print-recommendation-list li > div span {
-  border: 1px solid var(--ft-print-border-soft) !important;
-  background: #fff !important;
+  border: 1px solid var(--ft-print-border-soft);
+  background: #fff;
 }
 
 .print-empty {
-  border: 1.5px dashed var(--ft-print-border-soft) !important;
-  border-radius: 7px !important;
+  border: 1.5px dashed var(--ft-print-border-soft);
+  border-radius: 7px;
 }
 
 .print-footer {
-  border-top: 3px solid var(--ft-print-border) !important;
+  border-top: 3px solid var(--ft-print-border);
 }
 
 .print-footer > p {
-  border-left: 4px solid var(--ft-print-accent) !important;
-  border-radius: 6px !important;
-  background: var(--ft-print-accent-soft) !important;
+  border-left: 4px solid var(--ft-print-accent);
+  border-radius: 6px;
+  background: var(--ft-print-accent-soft);
 }
 
 .print-error,
 .print-loading {
-  border: 2px solid var(--ft-print-border) !important;
-  border-radius: 10px !important;
-  box-shadow: 3px 3px 0 var(--ft-print-border) !important;
+  border: 2px solid var(--ft-print-border);
+  border-radius: 10px;
+  box-shadow: 3px 3px 0 var(--ft-print-border);
 }
 
 @media print {
@@ -322,16 +317,16 @@ pre {
   html,
   body,
   #root {
-    background: #fff !important;
+    background: #fff;
   }
 
   .report-page {
-    box-shadow: none !important;
+    box-shadow: none;
   }
 
   .print-section,
   .print-cover,
   .print-footer {
-    border-color: #263545 !important;
+    border-color: #263545;
   }
 }

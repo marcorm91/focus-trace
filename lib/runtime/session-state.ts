@@ -11,10 +11,17 @@ export const MAX_RUNTIME_EVENTS = 500;
 function comparableDocumentUrl(value: string): string {
   try {
     const url = new URL(value);
-    url.hash = '';
+    // Ordinary fragments identify a position inside the same document, while
+    // hash-router fragments identify a different rendered SPA view. Preserve
+    // only route-shaped hashes so an anchor jump keeps the current scan and a
+    // #/route navigation invalidates stale evidence.
+    if (!/^#!?\//.test(url.hash)) url.hash = '';
     return url.href;
   } catch {
-    return value.split('#')[0] ?? value;
+    const hashIndex = value.indexOf('#');
+    if (hashIndex < 0) return value;
+    const hash = value.slice(hashIndex);
+    return /^#!?\//.test(hash) ? value : value.slice(0, hashIndex);
   }
 }
 

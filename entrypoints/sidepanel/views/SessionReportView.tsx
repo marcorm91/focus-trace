@@ -19,8 +19,6 @@ import { tr, type AppLanguage } from '../../../shared/i18n';
 import type { HeadingSignal, RuntimeEvent, ScanResult } from '../../../shared/types';
 import { ReportComponentIdentityView } from '../components/ReportComponentIdentity';
 import { ReportScanCompact } from '../components/ReportScanCompact';
-import './session-report.css';
-import './report-export.css';
 
 function headingSignalLabel(signal: HeadingSignal, language: AppLanguage): string {
   if (signal === 'empty') return tr(language, 'Empty', 'Vacío');

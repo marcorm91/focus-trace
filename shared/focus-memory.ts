@@ -28,6 +28,7 @@ export interface FocusMemoryObservation {
   scopeType: 'page' | 'component';
   observedAt: number;
   rulesRun: number;
+  ruleIds?: string[];
   failCount: number;
   reviewCount: number;
   warningCount: number;
@@ -117,7 +118,13 @@ function normalizedRouteFamily(url: string): string {
       .split('/')
       .map(normalizeRouteSegment)
       .join('/');
-    return `${parsed.origin}${path || '/'}`;
+    const hashRoute = /^#!?\//.test(parsed.hash)
+      ? parsed.hash.replace(/^#!/, '#').slice(1)
+        .split('/')
+        .map(normalizeRouteSegment)
+        .join('/')
+      : '';
+    return `${parsed.origin}${path || '/'}${hashRoute ? `#${hashRoute}` : ''}`;
   } catch {
     return normalizeVolatileTokens(url);
   }
@@ -189,6 +196,9 @@ export function buildFocusMemoryObservation(scan: ScanResult): FocusMemoryObserv
     scopeType: scan.scope?.type === 'component' ? 'component' : 'page',
     observedAt: scan.scannedAt,
     rulesRun: scan.rulesRun,
+    ...(scan.ruleResults?.length
+      ? { ruleIds: scan.ruleResults.map((result) => result.ruleId).sort() }
+      : {}),
     failCount: scan.issues.length,
     reviewCount: scan.review.length,
     warningCount: scan.warnings?.length ?? 0,
@@ -216,6 +226,8 @@ function isObservation(value: unknown): value is FocusMemoryObservation {
     && typeof candidate.observedAt === 'number'
     && Number.isFinite(candidate.observedAt)
     && typeof candidate.rulesRun === 'number'
+    && (candidate.ruleIds == null
+      || (Array.isArray(candidate.ruleIds) && candidate.ruleIds.every((item) => typeof item === 'string')))
     && typeof candidate.failCount === 'number'
     && typeof candidate.reviewCount === 'number'
     && typeof candidate.warningCount === 'number'
@@ -275,7 +287,11 @@ function observationsAreComparable(
   previous: FocusMemoryObservation,
   current: FocusMemoryObservation,
 ): boolean {
-  return previous.rulesRun === current.rulesRun
+  const sameCoverage = previous.ruleIds && current.ruleIds
+    ? previous.ruleIds.length === current.ruleIds.length
+      && previous.ruleIds.every((ruleId, index) => ruleId === current.ruleIds?.[index])
+    : previous.rulesRun === current.rulesRun;
+  return sameCoverage
     && !previous.failuresTruncated
     && !current.failuresTruncated;
 }
@@ -381,7 +397,10 @@ function compareObservation(
   const previousFailures = new Set(previous.failureFingerprints);
   const olderFailures = new Set(previousHistory.slice(1).flatMap((item) => item.failureFingerprints));
   const partial = current.failuresTruncated || previous.failuresTruncated;
-  const compatibleCoverage = current.rulesRun === previous.rulesRun;
+  const compatibleCoverage = previous.ruleIds && current.ruleIds
+    ? previous.ruleIds.length === current.ruleIds.length
+      && previous.ruleIds.every((ruleId, index) => ruleId === current.ruleIds?.[index])
+    : current.rulesRun === previous.rulesRun;
 
   const persistentFailures = [...currentFailures].filter((key) => previousFailures.has(key)).length;
   const fixedFailures = [...previousFailures].filter((key) => !currentFailures.has(key)).length;

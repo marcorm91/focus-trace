@@ -49,7 +49,7 @@
   color: var(--ft-ink);
   box-shadow: 1px 1px 0 var(--ft-border);
   cursor: pointer;
-  font-size: 10.5px;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -149,7 +149,7 @@
   background: var(--heading-level-tone);
   color: var(--heading-level-foreground);
   font-family: var(--ft-mono);
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 650;
 }
 
@@ -203,7 +203,7 @@
   min-width: 0;
   max-width: 100%;
   color: var(--ft-text);
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 600;
   line-height: 1.35;
   overflow-wrap: anywhere;
@@ -219,7 +219,7 @@
   border-radius: 999px;
   background: var(--ft-danger-soft);
   color: var(--ft-danger);
-  font-size: 9.5px;
+  font-size: 14px;
   font-weight: 650;
   line-height: 1.2;
   letter-spacing: .01em;
@@ -251,7 +251,7 @@
   color: var(--ft-muted);
   box-shadow: none;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 650;
   line-height: 1;
 }
@@ -299,3 +299,4 @@
     flex: 1 1 120px;
   }
 }
+

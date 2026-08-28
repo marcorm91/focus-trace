@@ -2,6 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { browser } from '#imports';
 import { armReportVisualEvidencePermissionRequest } from '../../lib/report/visual-evidence';
+import { requestActivePageAccess, type WebPageTab } from '../../lib/extension/page-access';
 import { normalizeRuntimeBreakpointSettings } from '../../lib/runtime/breakpoints';
 import { locateScanTargetInPage } from '../../lib/runtime/scan-target-overlay';
 import { SETTINGS_STORAGE_KEY } from '../../shared/i18n';
@@ -11,30 +12,8 @@ import { normalizeUiScale, UI_SCALE_STORAGE_KEY } from '../../shared/ui-scale';
 import App from './App';
 import { openFocusedInstructionsView, openFocusedSettingsView } from './settings-focus';
 
-// Cascade order: legacy foundations -> visual system -> component ownership ->
-// interaction states -> accessibility policy. Component CSS should not need
-// !important to win normal styling decisions.
-import './style.css';
-import './visual-system.css';
-import './severity.css';
-import './ux-polish.css';
-import './focus-graph.css';
-import './scan-settings.css';
-import './settings-scale.css';
-import './scan-accordion.css';
-import './workspace-layout.css';
-import './component-scan.css';
-import './heading-tree-visual.css';
-import './information-summaries.css';
-import './instructions.css';
-import './modern-icons.css';
-import './control-states.css';
-import './ui-scale.css';
-import './requested-polish.css';
-import './memory-walkthrough-polish.css';
-import './final-ui-corrections.css';
+import './index.css';
 
-const PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'];
 const root = document.getElementById('root');
 if (!root) throw new Error('FocusTrace root element was not found.');
 
@@ -65,8 +44,12 @@ browser.tabs.onActivated.addListener(({ tabId }) => {
   void syncBreakpointPreferencesToTab(tabId).catch(() => undefined);
 });
 
-async function locateCurrentOccurrence(pagerButton: HTMLButtonElement, permission: Promise<boolean>) {
-  if (!(await permission)) return;
+async function locateCurrentOccurrence(
+  pagerButton: HTMLButtonElement,
+  pageAccess: Promise<WebPageTab | undefined>,
+) {
+  const tab = await pageAccess;
+  if (!tab) return;
 
   // React updates the selected finding in the bubble phase. Read the selector on
   // the next frame so the page highlight always follows the newly selected item.
@@ -74,9 +57,6 @@ async function locateCurrentOccurrence(pagerButton: HTMLButtonElement, permissio
   const rule = pagerButton.closest('.scan-rule-group');
   const selector = rule?.querySelector('.finding-location code')?.textContent?.trim();
   if (!selector) return;
-
-  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-  if (tab?.id == null || !tab.url || !/^https?:/i.test(tab.url)) return;
 
   await browser.scripting.executeScript({
     target: { tabId: tab.id },
@@ -103,8 +83,8 @@ document.addEventListener('click', (event) => {
 
   const pagerButton = target.closest('.scan-occurrence-pager button') as HTMLButtonElement | null;
   if (pagerButton && !pagerButton.disabled) {
-    const permission = browser.permissions.request({ origins: PAGE_ACCESS_ORIGINS }).catch(() => false);
-    void locateCurrentOccurrence(pagerButton, permission).catch(() => undefined);
+    const pageAccess = requestActivePageAccess().catch(() => undefined);
+    void locateCurrentOccurrence(pagerButton, pageAccess).catch(() => undefined);
   }
 }, { capture: true });
 

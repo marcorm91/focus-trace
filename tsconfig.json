@@ -4,6 +4,9 @@
     "jsx": "react-jsx",
     "strict": true,
     "noEmit": true,
+    "noFallthroughCasesInSwitch": true,
+    "noUnusedLocals": true,
+    "noUnusedParameters": true,
     "resolveJsonModule": true
   }
 }

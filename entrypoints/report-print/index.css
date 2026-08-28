@@ -1,0 +1,8 @@
+@layer foundation, components, theme, accessibility;
+
+@import url('./style.css') layer(foundation);
+@import url('./visual-evidence.css') layer(components);
+@import url('./audit-guidance.css') layer(components);
+@import url('./visual-system.css') layer(theme);
+@import url('./severity.css') layer(theme);
+@import url('./accessibility.css') layer(accessibility);

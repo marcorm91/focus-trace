@@ -7,17 +7,15 @@ function source(path: string): string {
 }
 
 describe('sidepanel layout polish contract', () => {
-  it('uses one row for three quick actions, 2x2 for four, and one column when narrow', () => {
+  it('renders four composed quick actions as 2x2 and one column when narrow', () => {
     const css = source('entrypoints/sidepanel/workspace-layout.css');
     const siteAudit = source('entrypoints/sidepanel/components/SiteAuditLauncher.tsx');
 
-    expect(css).toContain('grid-template-columns: repeat(3, minmax(0, 1fr));');
-    expect(css).toContain('.quick-actions.has-site-audit');
     expect(css).toContain('grid-template-columns: repeat(2, minmax(0, 1fr));');
     expect(css).toContain('@media (max-width: 620px)');
     expect(css).toContain('grid-template-columns: 1fr;');
-    expect(siteAudit).toContain("quickActions.classList.add('has-site-audit')");
-    expect(siteAudit).toContain("quickActions.classList.remove('has-site-audit')");
+    expect(siteAudit).not.toContain('createPortal');
+    expect(siteAudit).not.toContain('document.querySelector');
   });
 
   it('keeps component context compact and removes duplicated actions from the rendered layout', () => {
@@ -37,7 +35,7 @@ describe('sidepanel layout polish contract', () => {
     expect(css).toContain('background: var(--ft-danger-soft);');
     expect(css).toContain('color: var(--ft-danger);');
     expect(css).toContain('box-shadow: inset 4px 0 0 var(--ft-danger);');
-    expect(css).toContain('font-size: 9.5px;');
+    expect(css).toContain('font-size: 14px;');
     expect(css).not.toContain('!important');
   });
 
@@ -45,7 +43,7 @@ describe('sidepanel layout polish contract', () => {
     const css = source('entrypoints/sidepanel/information-summaries.css');
     const entry = source('entrypoints/sidepanel/main.tsx');
 
-    expect(entry).toContain("import './information-summaries.css';");
+    expect(entry).toContain("import './index.css';");
     expect(css).toContain('.report-scoreline > div');
     expect(css).toContain('.focus-journey-summary > span');
     expect(css).toContain('.heading-outline-summary > span');
@@ -78,17 +76,18 @@ describe('sidepanel layout polish contract', () => {
 
   it('shows compact Memory summary chips, a disclosure chevron and tabular evidence history', () => {
     const component = source('entrypoints/sidepanel/components/FocusMemorySummary.tsx');
+    const history = source('entrypoints/sidepanel/components/FocusMemoryHistory.tsx');
     const css = source('entrypoints/sidepanel/components/focus-memory.css');
 
-    expect(component).toContain("tr(language, 'Finding history', 'Historial por fallo')");
+    expect(history).toContain("tr(language, 'Finding history', 'Historial por fallo')");
     expect(component).toContain('focus-memory-summary-row');
-    expect(component).toContain('focus-memory-evidence-table');
-    expect(component).toContain('<table');
-    expect(component).toContain('<th scope="col">');
+    expect(history).toContain('focus-memory-evidence-table');
+    expect(history).toContain('<table');
+    expect(history).toContain('<th scope="col">');
     expect(component).not.toContain('focus-memory-status');
     expect(component).not.toContain('focus-memory-finding-timeline');
-    expect(component).toContain('Max ${FOCUS_MEMORY_MAX_PER_SCOPE} per scope');
-    expect(component).toContain('Máx. ${FOCUS_MEMORY_MAX_PER_SCOPE} por ámbito');
+    expect(component).toContain('${FOCUS_MEMORY_MAX_FAILURE_FINGERPRINTS} failure details per scan');
+    expect(component).toContain('${FOCUS_MEMORY_MAX_FAILURE_FINGERPRINTS} detalles de fallo por análisis');
     expect(css).toContain('.focus-memory-summary-row');
     expect(css).toContain('.focus-memory-history > summary::after');
     expect(css).toContain('.focus-memory-evidence-table');

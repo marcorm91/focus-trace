@@ -11,7 +11,7 @@ import {
   updateSessionBreakpoints,
   updateSessionScan,
 } from '../lib/runtime/session-state';
-import type { ExtensionMessage, SessionState } from '../shared/types';
+import type { ExtensionMessage, SaveScanResponse, SessionState } from '../shared/types';
 
 const keyForTab = (tabId: number) => `session:${tabId}`;
 const tabWriteQueues = new Map<number, Promise<unknown>>();
@@ -183,9 +183,17 @@ export default defineBackground(() => {
         const state = await getSession(message.tabId);
         const next = updateSessionScan(state, message.scan);
         await saveSession(next);
-        await recordFocusMemoryScan(message.scan).catch(() => undefined);
+        let warning: SaveScanResponse['warning'];
+        try {
+          await recordFocusMemoryScan(message.scan);
+        } catch {
+          warning = 'focus-memory-write-failed';
+        }
         await broadcast(next);
-        return next;
+        return {
+          state: next,
+          ...(warning ? { warning } : {}),
+        } satisfies SaveScanResponse;
       });
     }
 

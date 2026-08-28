@@ -1,0 +1,31 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>Contrast coverage fixture</title>
+    <style>
+      html, body { background: rgb(255, 255, 255); color: rgb(0, 0, 0); font: 16px/1.5 sans-serif; }
+      input, textarea, select, #generated::before {
+        color: rgb(190, 190, 190);
+        background: rgb(255, 255, 255);
+        font-size: 16px;
+        font-weight: 400;
+      }
+      input::placeholder { color: rgb(190, 190, 190); opacity: 1; }
+      #generated::before { content: "Generated status"; }
+      #css-icon { width: 32px; height: 32px; border: 0; background-image: url("missing-menu-icon.svg"); }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Contrast coverage</h1>
+      <label>Query <input id="query" value="Warehouses"></label>
+      <label>Filter <input id="filter" placeholder="Type a value"></label>
+      <label>Notes <textarea id="notes">Routes</textarea></label>
+      <label>Province <select id="province"><option selected>Sevilla</option></select></label>
+      <p id="generated"></p>
+      <button id="css-icon" aria-label="Open menu"></button>
+      <canvas id="chart" role="img" aria-label="Sales chart"></canvas>
+    </main>
+  </body>
+</html>

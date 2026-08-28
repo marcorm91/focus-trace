@@ -49,7 +49,7 @@
   border: 1px solid var(--border, #d8dde6);
   border-radius: 12px;
   background: var(--panel, #fff);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .trace-metrics strong {
@@ -121,12 +121,12 @@
   height: 24px;
   border-radius: 50%;
   background: rgba(65, 84, 255, 0.12);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .trace-flow button span {
   overflow: hidden;
-  font-size: 12px;
+  font-size: 14px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -191,7 +191,7 @@
   height: 28px;
   border-radius: 50%;
   background: rgba(65, 84, 255, 0.1);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -232,7 +232,7 @@
   border: 0;
   border-radius: 9px;
   background: transparent;
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .trace-mode-switcher button.active {
@@ -249,7 +249,7 @@
   padding: 0 5px;
   border-radius: 999px;
   background: rgba(196, 107, 0, 0.12);
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .trace-inspector > .panel,
@@ -272,6 +272,7 @@
   }
 
   .trace-mode-switcher button {
-    font-size: 12px;
+    font-size: 14px;
   }
 }
+

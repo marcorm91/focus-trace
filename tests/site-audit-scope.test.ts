@@ -65,8 +65,8 @@ describe('Site Audit scope modes', () => {
     const css = source('entrypoints/site-audit/scope-tabs.css');
 
     expect(app).toContain("type SiteAuditInputMode");
-    expect(app).toContain("t(language, 'Automatic', 'Automático')");
-    expect(app).toContain("t(language, 'Manual URLs', 'URLs manuales')");
+    expect(app).toContain("tr(language, 'Automatic', 'Automático')");
+    expect(app).toContain("tr(language, 'Manual URLs', 'URLs manuales')");
     expect(app).toContain('role="tablist"');
     expect(app).toContain('role="tabpanel"');
     expect(app).toContain('selectManualSiteAuditSamples');

@@ -45,6 +45,7 @@
 
 .ui-scale-note {
   color: var(--ft-muted, GrayText);
-  font-size: 9px;
+  font-size: 14px;
   line-height: 1.4;
 }
+

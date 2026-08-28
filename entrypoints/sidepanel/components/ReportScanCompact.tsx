@@ -1,11 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { browser } from '#imports';
+import { requestActivePageAccess } from '../../../lib/extension/page-access';
 import { locateScanTargetInPage } from '../../../lib/runtime/scan-target-overlay';
 import { localizedScanIssue, localizedSeverity, tr, type AppLanguage } from '../../../shared/i18n';
 import type { FindingOutcome, ScanIssue, ScanResult } from '../../../shared/types';
-import './report-scan-compact.css';
-
-const PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'];
 
 type ReportFilter = FindingOutcome;
 
@@ -32,10 +30,8 @@ function outcomeLabel(outcome: FindingOutcome, language: AppLanguage): string {
 }
 
 async function locateReportTarget(selector: string): Promise<void> {
-  const permission = await browser.permissions.request({ origins: PAGE_ACCESS_ORIGINS }).catch(() => false);
-  if (!permission) return;
-  const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-  if (tab?.id == null || !tab.url || !/^https?:/i.test(tab.url)) return;
+  const tab = await requestActivePageAccess().catch(() => undefined);
+  if (!tab) return;
   await browser.scripting.executeScript({
     target: { tabId: tab.id },
     func: locateScanTargetInPage,

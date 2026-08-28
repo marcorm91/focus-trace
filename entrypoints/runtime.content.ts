@@ -327,7 +327,7 @@ export default defineContentScript({
     };
 
     const inspectClosedDialogs = () => {
-      for (const [dialog, state] of [...dialogs.entries()]) {
+      for (const [dialog, state] of Array.from(dialogs.entries())) {
         if (isDialogOpen(dialog)) continue;
         dialogs.delete(dialog);
         const interactionId = activeInteractionId();

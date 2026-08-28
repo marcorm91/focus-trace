@@ -1,46 +1,14 @@
-import { useEffect, useState } from 'react';
-import { createPortal } from 'react-dom';
+import { useState } from 'react';
 import { browser } from '#imports';
 import { tr, type AppLanguage } from '../../../shared/i18n';
-import './site-audit-launcher.css';
-
-const PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'];
 
 export function SiteAuditLauncher({ language }: { language: AppLanguage }) {
   const [opening, setOpening] = useState(false);
-  const [portalTarget, setPortalTarget] = useState<Element | null>(null);
-
-  useEffect(() => {
-    const quickActions = document.querySelector('.quick-actions');
-    if (!quickActions) return undefined;
-
-    quickActions.classList.add('has-site-audit');
-    const host = document.createElement('span');
-    host.dataset.focustraceSiteAuditHost = 'true';
-    host.style.display = 'contents';
-    const focusAction = quickActions.querySelector('.focus-walk-action');
-    quickActions.insertBefore(host, focusAction ?? null);
-    setPortalTarget(host);
-
-    return () => {
-      setPortalTarget(null);
-      host.remove();
-      quickActions.classList.remove('has-site-audit');
-    };
-  }, []);
 
   const open = async () => {
     if (opening) return;
     setOpening(true);
     try {
-      // Reuse an existing grant. Requesting optional permissions again after an
-      // awaited call can lose the browser's user-gesture eligibility.
-      const alreadyGranted = await browser.permissions.contains({ origins: PAGE_ACCESS_ORIGINS });
-      if (!alreadyGranted) {
-        const granted = await browser.permissions.request({ origins: PAGE_ACCESS_ORIGINS });
-        if (!granted) return;
-      }
-
       const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
       if (tab?.id == null || !tab.url || !/^https?:/i.test(tab.url)) return;
       const query = new URLSearchParams({
@@ -54,7 +22,7 @@ export function SiteAuditLauncher({ language }: { language: AppLanguage }) {
     }
   };
 
-  const button = (
+  return (
     <button
       className="site-audit-launch"
       type="button"
@@ -68,6 +36,4 @@ export function SiteAuditLauncher({ language }: { language: AppLanguage }) {
         : tr(language, 'Analyze site', 'Analizar sitio')}
     </button>
   );
-
-  return portalTarget ? createPortal(button, portalTarget) : null;
 }

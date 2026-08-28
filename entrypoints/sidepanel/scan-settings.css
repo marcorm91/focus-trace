@@ -29,7 +29,7 @@
 
 .scan-category-filter > strong {
   color: var(--ft-muted, GrayText);
-  font-size: 10px;
+  font-size: 14px;
   letter-spacing: .05em;
   text-transform: uppercase;
 }
@@ -54,7 +54,7 @@
   background: var(--ft-surface, Canvas);
   color: inherit;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 14px;
 }
 
 .scan-category-filter button strong {
@@ -62,7 +62,7 @@
   padding: 1px 5px;
   border-radius: 999px;
   background: var(--ft-surface-subtle, color-mix(in srgb, CanvasText 9%, Canvas));
-  font-size: 9px;
+  font-size: 14px;
 }
 
 .scan-category-filter button.active {
@@ -94,7 +94,7 @@
   background: transparent;
   color: inherit;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .scan-filter-tabs button strong {
@@ -102,7 +102,7 @@
   padding: 1px 5px;
   border-radius: 999px;
   background: var(--ft-surface-subtle, color-mix(in srgb, CanvasText 9%, Canvas));
-  font-size: 10px;
+  font-size: 14px;
   line-height: 1.6;
 }
 
@@ -132,7 +132,7 @@
   padding: 22px 12px;
   text-align: center;
   color: GrayText;
-  font-size: 12px;
+  font-size: 14px;
   border: 1px dashed color-mix(in srgb, CanvasText 20%, transparent);
   border-radius: 9px;
 }
@@ -175,7 +175,7 @@
 .contrast-ratio > span,
 .contrast-evidence dt {
   color: var(--ft-muted, GrayText);
-  font-size: 9px;
+  font-size: 14px;
   letter-spacing: .04em;
   text-transform: uppercase;
 }
@@ -187,7 +187,7 @@
 
 .contrast-ratio small {
   color: var(--ft-muted, GrayText);
-  font-size: 9px;
+  font-size: 14px;
 }
 
 .contrast-format {
@@ -209,7 +209,7 @@
   background: transparent;
   color: inherit;
   cursor: pointer;
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 800;
 }
 
@@ -239,7 +239,7 @@
   gap: 6px;
   margin: 0;
   overflow-wrap: anywhere;
-  font-size: 10px;
+  font-size: 14px;
 }
 
 .contrast-evidence code {
@@ -276,7 +276,7 @@
   background: var(--ft-surface, Canvas);
   color: inherit;
   cursor: pointer;
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 800;
 }
 
@@ -306,12 +306,12 @@
 }
 
 .contrast-suggestion > div:first-child strong {
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .contrast-suggestion > div:first-child small {
   color: var(--ft-muted, GrayText);
-  font-size: 9px;
+  font-size: 14px;
 }
 
 .contrast-suggestion-value {
@@ -323,20 +323,20 @@
 }
 
 .contrast-suggestion-value code {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 750;
 }
 
 .contrast-suggestion > p {
   color: var(--ft-muted, GrayText);
-  font-size: 9px;
+  font-size: 14px;
   line-height: 1.35;
 }
 
 .contrast-evidence > p {
   grid-column: 1 / -1;
   color: var(--ft-muted, GrayText);
-  font-size: 10px;
+  font-size: 14px;
 }
 
 .locate-finding {
@@ -352,7 +352,7 @@
   background: var(--ft-surface, ButtonFace);
   color: var(--ft-text, ButtonText);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -376,14 +376,14 @@
 
 .settings-group legend {
   padding: 0 4px;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 800;
 }
 
 .settings-help {
   margin: 0 0 3px;
   color: var(--ft-muted, GrayText);
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .language-option {
@@ -412,17 +412,17 @@
 }
 
 .language-option strong {
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .language-option small {
   color: var(--ft-muted, GrayText);
-  font-size: 10px;
+  font-size: 14px;
 }
 
 .settings-contact h3 {
   margin: 0;
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .settings-contact-link {
@@ -436,7 +436,7 @@
   padding: 8px 10px;
   color: LinkText;
   text-decoration: none;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 800;
 }
 
@@ -459,7 +459,7 @@
 .name-computation > summary {
   padding: 9px 10px;
   cursor: pointer;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 800;
 }
 
@@ -479,14 +479,14 @@
 
 .name-computation dt {
   color: var(--ft-muted, GrayText);
-  font-size: 10px;
+  font-size: 14px;
 }
 
 .name-computation dd {
   min-width: 0;
   margin: 0;
   overflow-wrap: anywhere;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 650;
 }
 
@@ -498,7 +498,7 @@
 }
 
 .name-candidates > strong {
-  font-size: 10px;
+  font-size: 14px;
   text-transform: uppercase;
   letter-spacing: .05em;
 }
@@ -518,7 +518,7 @@
   border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 10%, transparent));
   border-radius: 7px;
   background: var(--ft-surface, Canvas);
-  font-size: 10px;
+  font-size: 14px;
 }
 
 .name-candidates li.used {
@@ -535,7 +535,7 @@
 
 .name-candidates b {
   color: var(--ft-success, #08745b);
-  font-size: 8px;
+  font-size: 14px;
   text-transform: uppercase;
 }
 
@@ -584,3 +584,35 @@
     width: 100%;
   }
 }
+.scan-coverage-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.scan-coverage-summary > div {
+  min-width: 0;
+  padding: 8px;
+  border-left: 3px solid var(--ft-border-soft);
+  background: var(--ft-surface-subtle);
+}
+
+.scan-coverage-summary dt {
+  color: var(--ft-muted);
+  font-size: 14px;
+}
+
+.scan-coverage-summary dd {
+  margin: 3px 0 0;
+  color: var(--ft-ink);
+  font-size: 18px;
+  font-weight: 800;
+}
+
+@media (max-width: 520px) {
+  .scan-coverage-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+

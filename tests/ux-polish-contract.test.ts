@@ -58,10 +58,10 @@ describe('UX polish contract', () => {
   });
 
   it('keeps patch layers removed from the sidepanel cascade', () => {
-    const entry = source('entrypoints/sidepanel/main.tsx');
-    expect(entry).toContain("import './workspace-layout.css';");
-    expect(entry).toContain("import './control-states.css';");
-    expect(entry).toContain("import './modern-icons.css';");
+    const entry = source('entrypoints/sidepanel/index.css');
+    expect(entry).toContain("url('./workspace-layout.css') layer(layout)");
+    expect(entry).toContain("url('./control-states.css') layer(policy)");
+    expect(entry).toContain("url('./modern-icons.css') layer(components)");
     expect(entry).not.toContain("import './workflow-fixes.css';");
     expect(entry).not.toContain("import './regression-fixes.css';");
     expect(entry).not.toContain("import './final-review-polish.css';");
@@ -198,7 +198,7 @@ describe('UX polish contract', () => {
     const report = source('entrypoints/sidepanel/views/SessionReportView.tsx');
     const entry = source('entrypoints/sidepanel/main.tsx');
 
-    expect(component).toContain("import './report-scan-compact.css';");
+    expect(entry).toContain("import './index.css';");
     expect(component).toContain('report-compact-tabs');
     expect(component).toContain('ReportRuleAccordion');
     expect(component).toContain('report-rule-pager');

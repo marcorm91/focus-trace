@@ -8,6 +8,7 @@ import {
   evaluateTextContrastForElement,
   parseCssColor,
   suggestAccessibleForeground,
+  textContrastSubjectsForElement,
   textContrastRequirement,
 } from '../lib/audit/contrast';
 
@@ -89,5 +90,49 @@ describe('text contrast', () => {
     expect(result.status).toBe('pass');
     expect(result.ratio).toBeCloseTo(21, 2);
     expect(result.background).toBe('rgb(0, 0, 0)');
+  });
+
+  it('recognizes form values, selected options and placeholders as rendered text', () => {
+    render(`
+      <input id="value" value="Visible value">
+      <input id="placeholder" placeholder="Visible placeholder">
+      <textarea id="textarea">Visible textarea</textarea>
+      <select id="select"><option selected>Visible option</option></select>
+    `);
+
+    expect(textContrastSubjectsForElement(document.querySelector('#value')!)).toEqual([
+      { subject: 'input value' },
+    ]);
+    expect(textContrastSubjectsForElement(document.querySelector('#placeholder')!)).toEqual([
+      { subject: 'placeholder', pseudo: '::placeholder' },
+    ]);
+    expect(textContrastSubjectsForElement(document.querySelector('#textarea')!)).toEqual([
+      { subject: 'textarea value' },
+    ]);
+    expect(textContrastSubjectsForElement(document.querySelector('#select')!)).toEqual([
+      { subject: 'selected option' },
+    ]);
+  });
+
+  it('keeps unresolved computed text colors as review evidence', () => {
+    render('<p id="system">System color</p>');
+    const element = document.querySelector('#system')!;
+    const base = getComputedStyle(element);
+    const unresolved = new Proxy(base, {
+      get(target, property, receiver) {
+        if (property === 'color') return 'CanvasText';
+        return Reflect.get(target, property, receiver);
+      },
+    });
+    const original = window.getComputedStyle;
+    window.getComputedStyle = (() => unresolved) as typeof window.getComputedStyle;
+    try {
+      const result = evaluateTextContrastForElement(element);
+      expect(result.status).toBe('review');
+      expect(result.reason).toContain('CanvasText');
+      expect(result.requiredRatio).toBe(4.5);
+    } finally {
+      window.getComputedStyle = original;
+    }
   });
 });

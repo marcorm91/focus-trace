@@ -5,7 +5,6 @@ import {
   type ReportComponentIdentity,
 } from '../../../lib/report/component-identity';
 import { tr, type AppLanguage } from '../../../shared/i18n';
-import './report-component-identity.css';
 
 export function ReportComponentIdentityView({
   component,

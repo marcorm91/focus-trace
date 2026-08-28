@@ -1,6 +1,5 @@
 import { browser } from '#imports';
 import { localeFor, tr, type AppLanguage } from '../../../shared/i18n';
-import '../about.css';
 
 const VERSION_DATE = '2026-08-24';
 const CREATOR_NAME = 'Marco Romero';

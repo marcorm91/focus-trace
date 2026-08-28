@@ -17,7 +17,7 @@ function alphaOrdinal(value) {
 
 function alphaSubtag(value, length) {
   let remaining = value;
-  const chars = new Array(length);
+  const chars = Array.from({ length });
   for (let index = length - 1; index >= 0; index -= 1) {
     chars[index] = String.fromCharCode(97 + (remaining % 26));
     remaining = Math.floor(remaining / 26);

@@ -22,7 +22,6 @@ import {
 import { localeFor, tr, type AppLanguage } from '../../../shared/i18n';
 import type { RuntimeEvent, RuntimeInteraction } from '../../../shared/types';
 import { Empty, ReferenceList } from '../components/Common';
-import './replay.css';
 
 function phaseLabel(phase: RuntimeReplayPhase, language: AppLanguage): string {
   if (phase === 'trigger') return tr(language, 'Trigger', 'Acción');

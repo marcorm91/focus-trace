@@ -131,7 +131,7 @@
 .report-rule-title small {
   color: var(--ft-muted);
   font-family: var(--ft-mono);
-  font-size: 10px;
+  font-size: 14px;
 }
 
 .report-rule-count {
@@ -248,3 +248,4 @@
     width: 100%;
   }
 }
+

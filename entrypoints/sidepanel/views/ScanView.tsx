@@ -14,7 +14,6 @@ import type { FindingOutcome, ScanIssue, ScanResult, Severity } from '../../../s
 import { Empty, ReferenceList } from '../components/Common';
 import { FindingGuidance } from '../components/FindingGuidance';
 import { ImpactMatrix } from '../components/ImpactMatrix';
-import { SiteAuditLauncher } from '../components/SiteAuditLauncher';
 
 type ScanFilter = FindingOutcome;
 type ColorFormat = 'hex' | 'rgb';
@@ -183,17 +182,14 @@ export function ScanView({
 
   if (!scan) {
     return (
-      <>
-        <div className="site-audit-entry"><SiteAuditLauncher language={language} /></div>
-        <Empty
-          title={tr(language, 'No scan yet', 'Todavía no hay análisis')}
-          text={tr(
-            language,
-            'Analyze the full page or select a component to run the local FocusTrace WCAG rule engine.',
-            'Analiza la página completa o selecciona un componente para ejecutar localmente el motor de reglas WCAG de FocusTrace.',
-          )}
-        />
-      </>
+      <Empty
+        title={tr(language, 'No scan yet', 'Todavía no hay análisis')}
+        text={tr(
+          language,
+          'Analyze the full page or select a component to run the local FocusTrace WCAG rule engine.',
+          'Analiza la página completa o selecciona un componente para ejecutar localmente el motor de reglas WCAG de FocusTrace.',
+        )}
+      />
     );
   }
 
@@ -214,6 +210,14 @@ export function ScanView({
     candidate === 'all' || (categoryCounts.get(candidate) ?? 0) > 0,
   );
   const visibleSeverityFilters = SEVERITY_ORDER.filter((severity) => severityCounts[severity] > 0);
+  const coverage = (scan.ruleResults ?? []).reduce(
+    (summary, rule) => ({
+      applicableRules: summary.applicableRules + (rule.applicable > 0 ? 1 : 0),
+      applicableChecks: summary.applicableChecks + rule.applicable,
+      passedChecks: summary.passedChecks + rule.passed,
+    }),
+    { applicableRules: 0, applicableChecks: 0, passedChecks: 0 },
+  );
 
   return (
     <section className="panel" aria-labelledby="scan-title">
@@ -226,10 +230,16 @@ export function ScanView({
           </h2>
           <p title={scan.url}>{componentScope?.label || scan.title || scan.url}</p>
         </div>
-        <div className="scan-heading-actions">
-          <SiteAuditLauncher language={language} />
-        </div>
       </div>
+
+      {scan.ruleResults && (
+        <dl className="scan-coverage-summary" aria-label={tr(language, 'Automated scan coverage', 'Cobertura del análisis automático')}>
+          <div><dt>{tr(language, 'Rule families', 'Familias de reglas')}</dt><dd>{scan.rulesRun}</dd></div>
+          <div><dt>{tr(language, 'Applicable families', 'Familias aplicables')}</dt><dd>{coverage.applicableRules}</dd></div>
+          <div><dt>{tr(language, 'Checks evaluated', 'Comprobaciones evaluadas')}</dt><dd>{coverage.applicableChecks}</dd></div>
+          <div><dt>{tr(language, 'Checks passed', 'Comprobaciones superadas')}</dt><dd>{coverage.passedChecks}</dd></div>
+        </dl>
+      )}
 
       {componentScope && (
         <div className="scan-scope-banner">

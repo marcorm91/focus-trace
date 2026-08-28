@@ -113,7 +113,7 @@ export function visibleTextLabel(element: Element): string {
 export function evaluateLabelInName(): LabelInNameEvaluation[] {
   const evaluations: LabelInNameEvaluation[] = [];
 
-  for (const element of [...document.querySelectorAll('button, a[href], [role]')]) {
+  for (const element of document.querySelectorAll('button, a[href], [role]')) {
     const role = semanticRole(element);
     if (!role || !NAME_FROM_CONTENT_WIDGET_ROLES.has(role)) continue;
     if (isProgrammaticallyHidden(element)) continue;

@@ -36,13 +36,15 @@ describe('README language and instructions contract', () => {
   it('uses the same focused Back pattern as Settings and restores the workspace tab', () => {
     const focus = source('entrypoints/sidepanel/settings-focus.ts');
     const layout = source('entrypoints/sidepanel/workspace-layout.css');
+    const policy = source('entrypoints/sidepanel/shared-control-policy.css');
     const instructions = source('entrypoints/sidepanel/views/InstructionsView.tsx');
 
     expect(focus).toContain("type FocusedSubview = 'settings' | 'instructions'");
     expect(focus).toContain('openFocusedInstructionsView');
     expect(focus).toContain('closeFocusedInstructionsView');
     expect(focus).toContain('ftFocusedSubviewReturn');
-    expect(layout).toContain("html[data-ft-focused-subview-open]");
+    expect(policy).toContain("html[data-ft-focused-subview-open]");
+    expect(layout).toContain('.settings-back-trigger');
     expect(instructions).toContain('className="settings-back-trigger"');
     expect(instructions).toContain("tr(language, 'Back', 'Volver')");
   });
@@ -69,9 +71,9 @@ describe('README language and instructions contract', () => {
 
   it('keeps the instructions trigger centered and the intro text untruncated', () => {
     const css = source('entrypoints/sidepanel/instructions.css');
-    const entry = source('entrypoints/sidepanel/main.tsx');
+    const entry = source('entrypoints/sidepanel/index.css');
 
-    expect(entry).toContain("import './instructions.css';");
+    expect(entry).toContain("url('./instructions.css') layer(components)");
     expect(css).toContain('.topbar-tools .instructions-trigger {');
     expect(css).toContain('place-items: center;');
     expect(css).toContain('cursor: pointer;');
