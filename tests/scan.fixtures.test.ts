@@ -4,6 +4,7 @@ import { readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { runFocusTraceScan } from '../lib/audit/scan';
+import { localizedScanIssue } from '../shared/i18n';
 
 function loadFixture(name: 'pass' | 'fail') {
   const path = resolve(process.cwd(), 'tests', 'fixtures', `${name}.html`);
@@ -23,7 +24,7 @@ describe('FocusTrace WCAG rule fixtures', () => {
   it('produces no findings for the passing fixture', () => {
     loadFixture('pass');
     const result = runFocusTraceScan();
-    expect(result.rulesRun).toBe(17);
+    expect(result.rulesRun).toBe(18);
     expect(result.issues).toEqual([]);
     expect(result.review).toEqual([]);
     expect(result.warnings).toEqual([]);
@@ -116,6 +117,34 @@ describe('FocusTrace WCAG rule fixtures', () => {
     render('lang="en"', '<main><h1>Test</h1><div id="alert" role="alert" aria-disabled="true">Notice</div></main>');
     const result = runFocusTraceScan();
     expect(result.warnings.map((issue) => issue.ruleId)).toContain('FT-WARN-002');
+  });
+
+  it('reports every occurrence of a duplicate non-empty HTML id as an authoring warning', () => {
+    render(
+      'lang="en"',
+      '<main><h1>Test</h1><section id="account">First</section><section id="account">Second</section></main>',
+    );
+    const result = runFocusTraceScan();
+    const duplicates = result.warnings.filter((issue) => issue.ruleId === 'FT-WARN-004');
+
+    expect(duplicates).toHaveLength(2);
+    expect(duplicates.every((issue) => issue.outcome === 'warning')).toBe(true);
+    expect(duplicates.every((issue) => issue.evidence?.includes('id="account" is used by 2 elements'))).toBe(true);
+    expect(duplicates[0]?.references[0]).toMatchObject({ type: 'HTML', id: 'id' });
+    expect(result.issues.some((issue) => issue.ruleId === 'FT-WARN-004')).toBe(false);
+
+    const spanish = localizedScanIssue(duplicates[0]!, 'es');
+    expect(spanish.title).toBe('Se utiliza un id HTML duplicado');
+    expect(spanish.description).toContain('más de un elemento');
+  });
+
+  it('does not warn for unique or empty id attributes', () => {
+    render(
+      'lang="en"',
+      '<main><h1>Test</h1><section id="account">Account</section><section id="">Anonymous</section></main>',
+    );
+    const result = runFocusTraceScan();
+    expect(result.warnings.some((issue) => issue.ruleId === 'FT-WARN-004')).toBe(false);
   });
 
   it('adds low text contrast to the same full-page scan with structured evidence', () => {
