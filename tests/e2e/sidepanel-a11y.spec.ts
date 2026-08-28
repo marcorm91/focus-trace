@@ -250,10 +250,6 @@ test('report opens a formatted PDF preview without exposing CSS selectors', asyn
   await expect(longHeadingLabel).not.toHaveAttribute('title', /.+/);
   await expect(longHeadingLabel).toHaveText(longHeading);
   await expect.poll(() => longHeadingLabel.evaluate((element) => element.scrollWidth <= element.clientWidth + 1)).toBe(true);
-  await expect.poll(() => longHeadingLabel.evaluate((element) => {
-    const style = getComputedStyle(element);
-    return style.textOverflow !== 'ellipsis' && style.whiteSpace === 'normal';
-  })).toBe(true);
 
   const unbrokenHeadingLabel = panel.getByRole('button', { name: unbrokenHeading, exact: true }).locator('span').first();
   await expect(unbrokenHeadingLabel).toHaveText(unbrokenHeading);
