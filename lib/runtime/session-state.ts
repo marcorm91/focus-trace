@@ -58,6 +58,13 @@ export function clearSessionEvents(state: SessionState, tabId = state.tabId): Se
   };
 }
 
+export function resetSessionState(state: SessionState, tabId = state.tabId): SessionState {
+  return {
+    ...emptySessionState(tabId),
+    breakpoints: normalizeRuntimeBreakpointSettings(state.breakpoints),
+  };
+}
+
 export function setSessionRecordingState(
   state: SessionState,
   enabled: boolean,
