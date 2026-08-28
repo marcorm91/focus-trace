@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { defaultRuntimeBreakpointSettings } from '../lib/runtime/breakpoints';
 import { buildFocusJourney } from '../lib/runtime/focus-journey';
 import {
   MAX_RUNTIME_EVENTS,
@@ -87,7 +88,7 @@ describe('runtime session state helpers', () => {
         label: 'Modal escape',
         summary: 'Focus escaped a modal.',
       },
-      breakpoints: emptySessionState(7).breakpoints,
+      breakpoints: defaultRuntimeBreakpointSettings(),
     });
 
     const next = clearSessionEvents(current);
@@ -107,7 +108,7 @@ describe('runtime session state helpers', () => {
 
   it('starts over without discarding configured breakpoint preferences', () => {
     const configured = {
-      ...emptySessionState(7).breakpoints,
+      ...defaultRuntimeBreakpointSettings(),
       'focused-node-removed': true,
       'modal-focus-escape': true,
     };
