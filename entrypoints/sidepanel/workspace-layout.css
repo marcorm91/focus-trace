@@ -10,14 +10,14 @@
   align-items: stretch;
 }
 
-.quick-actions > button {
-  min-width: 0;
+.quick-actions.has-site-audit {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
-.quick-actions .scan-action { order: 1; }
-.quick-actions .component-scan-action { order: 2; }
-.quick-actions .site-audit-launch { order: 3; }
-.quick-actions .focus-walk-action { order: 4; }
+.quick-actions > button,
+.quick-actions > [data-focustrace-site-audit-host] > button {
+  min-width: 0;
+}
 
 /* Settings and instructions are focused sub-views: keep the brand and the
    explicit Back action, but remove workspace chrome while either route is active. */
@@ -88,7 +88,8 @@ html[data-ft-focused-subview-open] .topbar {
 }
 
 @media (max-width: 620px) {
-  .quick-actions {
+  .quick-actions,
+  .quick-actions.has-site-audit {
     grid-template-columns: 1fr;
   }
 }
