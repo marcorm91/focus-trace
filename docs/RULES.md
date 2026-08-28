@@ -10,6 +10,7 @@ FocusTrace implements its own local analysis engine and maps each rule to the st
 4. **WAI-ARIA APG** is used for runtime widget patterns such as modal-dialog focus behavior and remains informative guidance.
 5. **AccName** and **HTML-AAM** guide accessible-name precedence and host-language fallbacks.
 6. **IANA Language Subtag Registry** supplies the primary language subtags used by the ACT rule behind `FT-WCAG-009`.
+7. **HTML Living Standard** supplies host-language authoring requirements that are useful to report as warnings when they are not, by themselves, a WCAG 2.2 failure.
 
 ## Outcomes
 
@@ -23,7 +24,7 @@ FocusTrace found a signal that can indicate an accessibility problem but final j
 
 ### WARNING
 
-FocusTrace found an authoring or standards-maintenance risk that should be fixed or reviewed but is not automatically represented as a WCAG failure. Current examples include deprecated or prohibited ARIA usage sourced from the local WAI-ARIA registry.
+FocusTrace found an authoring or standards-maintenance risk that should be fixed or reviewed but is not automatically represented as a WCAG failure. Current examples include deprecated/prohibited ARIA usage and duplicate HTML identifiers.
 
 ### PASS
 
@@ -116,6 +117,14 @@ The scan consumes `generated/aria-registry.json` instead of maintaining role/pro
 
 These are `WARNING`, not `FAIL`. Unknown roles/attributes, required ARIA properties, context/owned-element requirements and value validation are planned as separate conformance rules so each can be mapped to the appropriate ACT expectation.
 
+## HTML authoring warnings
+
+`FT-WARN-004` reports a non-empty HTML `id` that occurs more than once in the document. The HTML Living Standard requires an identifier value to be unique within its tree.
+
+The duplicate itself is reported as `WARNING`, not as a WCAG 2.2 failure. WCAG 2.2 removed Success Criterion 4.1.1 Parsing, so FocusTrace does not revive the old generic duplicate-ID failure. A duplicate identifier can still contribute to a separate WCAG failure when concrete evidence shows that it breaks an applicable relationship or name computation; that effect must be evaluated by the corresponding accessibility rule rather than inferred from duplication alone.
+
+Component-scoped scans still evaluate identifier uniqueness against the whole document, while reporting only duplicate occurrences inside the selected component. See [`DUPLICATE_IDS.md`](DUPLICATE_IDS.md) for the detailed behavior and remediation model.
+
 ## Runtime causality
 
 Runtime recording assigns a stable `interactionId` to user-driven keyboard and pointer activity. Subsequent focus changes, relevant DOM mutations, dialog lifecycle events and SPA route changes inherit that interaction while they remain inside a bounded correlation window.
@@ -158,6 +167,7 @@ A causal classification explains the recorded chain; the linked runtime WCAG/APG
 | FT-WARN-001 Deprecated ARIA role | WARNING/PASS | WAI-ARIA registry |
 | FT-WARN-002 Deprecated ARIA property for role | WARNING/PASS | WAI-ARIA registry |
 | FT-WARN-003 Prohibited ARIA property for role | WARNING/PASS | WAI-ARIA registry |
+| FT-WARN-004 Duplicate HTML id | WARNING/PASS | HTML Living Standard |
 | FT-REVIEW-001 Positive tabindex | REVIEW | WCAG 2.4.3 |
 | FT-REVIEW-002 Heading-level jump | REVIEW | WCAG 1.3.1 / 2.4.6 |
 | FT-REVIEW-003 Placeholder-only form label | REVIEW | WCAG 3.3.2 |
@@ -184,6 +194,7 @@ A causal classification explains the recorded chain; the linked runtime WCAG/APG
 - `FT-WCAG-010` covers DOM text with deterministically resolvable computed foreground/background colors. Images of text, pseudo-element text and complex visual composition remain outside deterministic FAIL coverage.
 - `FT-WCAG-011` does not programmatically exercise every hover, pressed, checked or focus state. Multi-color graphics, CSS pseudo-element icons, complex shadows, images/canvas and contextual “required visual information” decisions remain REVIEW/manual territory.
 - ARIA warnings currently operate on recognized explicit role tokens; native implicit-role validation is a later layer.
+- Duplicate IDs are authoring warnings; FocusTrace does not infer a WCAG failure unless a separate rule can demonstrate the resulting accessibility effect.
 - Runtime causality uses bounded temporal correlation and intentionally records only accessibility-relevant mutations, not every DOM change.
 - Runtime focus-obscured detection intentionally returns REVIEW because exact 2.4.11 evaluation has edge cases.
 - SPA focus movement and dialog restoration can have workflow-specific exceptions, so those findings remain REVIEW.
