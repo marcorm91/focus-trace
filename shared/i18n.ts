@@ -72,6 +72,7 @@ const RULE_TITLES_ES: Record<string, string> = {
   'FT-WARN-001': 'Se utiliza un rol ARIA obsoleto',
   'FT-WARN-002': 'El estado o propiedad ARIA está obsoleto para este rol',
   'FT-WARN-003': 'El estado o propiedad ARIA está prohibido para este rol',
+  'FT-WARN-004': 'Se utiliza un id HTML duplicado',
   'FT-REVIEW-001': 'Un tabindex positivo puede crear un orden de foco inesperado',
   'FT-REVIEW-002': 'Los niveles de encabezado se saltan un nivel',
   'FT-REVIEW-003': 'El campo de formulario depende del placeholder como nombre accesible',
@@ -134,6 +135,9 @@ const SCAN_COPY_ES: Record<string, { description: string; evidence?: string }> =
   },
   'FT-WARN-003': {
     description: 'Este estado o propiedad ARIA figura como prohibido para el rol explícito resuelto. Revisa la semántica utilizada.',
+  },
+  'FT-WARN-004': {
+    description: 'El mismo valor id se utiliza en más de un elemento del documento. HTML exige que los IDs no vacíos sean únicos; los identificadores duplicados pueden hacer que relaciones basadas en ID o la navegación se resuelvan de forma impredecible.',
   },
   'FT-REVIEW-001': {
     description: 'Un tabindex positivo modifica el orden secuencial natural del foco. Revisa si el orden resultante conserva el significado y la operabilidad.',
