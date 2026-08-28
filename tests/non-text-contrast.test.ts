@@ -65,6 +65,29 @@ describe('non-text contrast', () => {
     expect(finding?.evaluation.ratio).toBeLessThan(3);
   });
 
+  it('keeps icon-only CSS graphics as explicit review instead of dropping them', () => {
+    render('<button id="css-icon" aria-label="Menu" style="border:0;background-image:url(menu.svg)"></button>');
+    const finding = evaluateNonTextContrast().find((item) => item.element.id === 'css-icon');
+
+    expect(finding?.evaluation).toMatchObject({
+      status: 'review',
+      kind: 'graphic',
+      subject: 'CSS graphic',
+    });
+    expect(finding?.evaluation.reason).toContain('background image');
+  });
+
+  it('keeps canvas graphics in manual non-text contrast review', () => {
+    render('<canvas id="chart" role="img" aria-label="Sales chart"></canvas>');
+    const finding = evaluateNonTextContrast().find((item) => item.element.id === 'chart');
+
+    expect(finding?.evaluation).toMatchObject({
+      status: 'review',
+      kind: 'graphic',
+      subject: 'canvas graphic',
+    });
+  });
+
   it('integrates WCAG 1.4.11 into the normal full-page scan', () => {
     render('<button id="icon" aria-label="Settings" style="background:#fff;border:0"><svg viewBox="0 0 10 10"><path style="fill:rgb(170,170,170)" d="M0 0h10v10H0z"/></svg></button>');
     const scan = runFocusTraceScan();

@@ -25,6 +25,40 @@ test('sidepanel controls and finding surfaces expose their intended behavior', a
   const settings = panel.locator('.settings-trigger');
   await expect(settings).toHaveAttribute('title', /Settings|Ajustes/);
   await expect(settings).toHaveAttribute('aria-label', /Open settings|Abrir ajustes/);
+  const workspace = panel.getByRole('navigation', { name: /FocusTrace sections|Secciones de FocusTrace/ });
+
+  const quickActions = panel.locator('.quick-actions > button, .quick-actions .site-audit-launch');
+  expect(await quickActions.count()).toBeGreaterThanOrEqual(4);
+  const restingQuickStyles = await quickActions.evaluateAll((buttons) => buttons.map((button) => {
+    const style = getComputedStyle(button);
+    return `${style.backgroundColor}|${style.color}|${style.borderColor}`;
+  }));
+  expect(new Set(restingQuickStyles).size).toBe(1);
+
+  const firstQuickAction = quickActions.first();
+  const restingBackground = await firstQuickAction.evaluate((button) => getComputedStyle(button).backgroundColor);
+  const expectedHoverBackground = await panel.locator('.app-shell').evaluate((shell) => {
+    const probe = document.createElement('span');
+    probe.style.backgroundColor = 'var(--ft-accent-soft)';
+    shell.append(probe);
+    const color = getComputedStyle(probe).backgroundColor;
+    probe.remove();
+    return color;
+  });
+  await firstQuickAction.hover();
+  await expect(firstQuickAction).toHaveCSS('background-color', expectedHoverBackground);
+  expect(expectedHoverBackground).not.toBe(restingBackground);
+  await settings.hover();
+  await expect(settings).toHaveCSS('background-color', expectedHoverBackground);
+
+  await workspace.getByRole('button', { name: 'Trace' }).click();
+  const traceControls = panel.locator('.trace-hero-actions .trace-record, .trace-hero-actions .trace-reset');
+  expect(await traceControls.count()).toBeGreaterThanOrEqual(2);
+  const traceStyles = await traceControls.evaluateAll((buttons) => buttons.map((button) => {
+    const style = getComputedStyle(button);
+    return `${style.backgroundColor}|${style.borderColor}`;
+  }));
+  expect(new Set(traceStyles).size).toBe(1);
 
   await panel.evaluate(async () => {
     const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
@@ -64,7 +98,6 @@ test('sidepanel controls and finding surfaces expose their intended behavior', a
     });
   });
 
-  const workspace = panel.getByRole('navigation', { name: /FocusTrace sections|Secciones de FocusTrace/ });
   await workspace.getByRole('button', { name: /Review|Revisión/ }).click();
 
   const scanTabs = panel.locator('.scan-filter-tabs');

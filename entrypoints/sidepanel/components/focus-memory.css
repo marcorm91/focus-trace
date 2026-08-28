@@ -51,7 +51,7 @@
 
 .focus-memory-heading small {
   font-family: var(--ft-mono);
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 800;
   letter-spacing: .055em;
   text-transform: uppercase;
@@ -59,14 +59,14 @@
 
 .focus-memory-heading strong {
   color: var(--ft-ink);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 850;
 }
 
 .focus-memory > p {
   margin: 0;
   color: var(--ft-text);
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1.45;
 }
 
@@ -85,7 +85,7 @@
   border-radius: var(--ft-radius-xs);
   background: var(--ft-surface-subtle);
   color: var(--ft-muted);
-  font-size: 9px;
+  font-size: 14px;
   line-height: 1.3;
   white-space: nowrap;
 }
@@ -143,14 +143,14 @@
 }
 
 .focus-memory-history > summary strong {
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 850;
 }
 
 .focus-memory-history > summary span {
   min-width: 0;
   color: var(--ft-muted);
-  font-size: 8.5px;
+  font-size: 14px;
   text-align: right;
   overflow-wrap: anywhere;
 }
@@ -205,21 +205,21 @@
   padding: 0;
   background: transparent;
   color: var(--ft-muted);
-  font-size: 8px;
+  font-size: 14px;
 }
 
 .focus-memory-finding-head strong {
   min-width: 0;
   overflow-wrap: anywhere;
   color: var(--ft-text);
-  font-size: 10px;
+  font-size: 14px;
   line-height: 1.35;
 }
 
 .focus-memory-finding-head > span {
   flex: 0 0 auto;
   color: var(--ft-muted);
-  font-size: 8.5px;
+  font-size: 14px;
   font-weight: 800;
 }
 
@@ -253,14 +253,14 @@
 .focus-memory-evidence-table th {
   background: var(--ft-surface-subtle);
   color: var(--ft-muted);
-  font-size: 8px;
+  font-size: 14px;
   font-weight: 800;
   letter-spacing: .02em;
 }
 
 .focus-memory-evidence-table td {
   color: var(--ft-text);
-  font-size: 8.5px;
+  font-size: 14px;
   line-height: 1.3;
   overflow-wrap: anywhere;
 }
@@ -308,7 +308,7 @@
   gap: 7px;
   width: fit-content;
   color: var(--ft-text);
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 800;
   cursor: pointer;
 }
@@ -322,7 +322,7 @@
 
 .focus-memory-resolve small {
   color: var(--ft-muted);
-  font-size: 8px;
+  font-size: 14px;
   line-height: 1.35;
 }
 
@@ -333,7 +333,7 @@
 
 .focus-memory-controls > small {
   max-width: 64%;
-  font-size: 8.5px;
+  font-size: 14px;
   line-height: 1.35;
 }
 
@@ -349,7 +349,7 @@
   border-radius: var(--ft-radius-xs);
   background: var(--ft-surface);
   color: var(--ft-text);
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 800;
 }
 
@@ -393,3 +393,4 @@
     grid-row: 1 / span 2;
   }
 }
+

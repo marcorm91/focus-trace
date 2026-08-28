@@ -33,6 +33,7 @@ function scan({
   rulesRun = 18,
   reviewCount = 0,
   warningCount = 0,
+  ruleIds,
 }: {
   scannedAt: number;
   url?: string;
@@ -40,6 +41,7 @@ function scan({
   rulesRun?: number;
   reviewCount?: number;
   warningCount?: number;
+  ruleIds?: string[];
 }): ScanResult {
   return {
     engine: 'FocusTrace Rules',
@@ -58,6 +60,18 @@ function scan({
       outcome: 'warning' as const,
     })),
     headings: [],
+    ...(ruleIds
+      ? {
+          ruleResults: ruleIds.map((ruleId) => ({
+            ruleId,
+            applicable: 0,
+            passed: 0,
+            failures: 0,
+            reviews: 0,
+            warnings: 0,
+          })),
+        }
+      : {}),
     passes: 0,
     rulesRun,
   };
@@ -221,6 +235,32 @@ describe('FocusTrace Memory', () => {
     expect(changedCoverage.comparison.compatibleCoverage).toBe(false);
   });
 
+  it('compares rule identities instead of trusting only the rule count', () => {
+    const first = recordFocusMemoryObservation(
+      undefined,
+      scan({
+        scannedAt: 1_000,
+        failures: [failure('FT-WCAG-003', '#save')],
+        rulesRun: 2,
+        ruleIds: ['FT-WCAG-003', 'FT-WCAG-004'],
+      }),
+      1_000,
+    );
+    const changedCoverage = recordFocusMemoryObservation(
+      first.store,
+      scan({
+        scannedAt: 2_000,
+        failures: [],
+        rulesRun: 2,
+        ruleIds: ['FT-WCAG-003', 'FT-WCAG-010'],
+      }),
+      2_000,
+    );
+
+    expect(changedCoverage.comparison.status).toBe('changed');
+    expect(changedCoverage.comparison.compatibleCoverage).toBe(false);
+  });
+
   it('normalizes volatile route and selector tokens when identifying a component', () => {
     const first = componentScan(
       1_000,
@@ -234,6 +274,16 @@ describe('FocusTrace Memory', () => {
     );
 
     expect(focusMemoryScopeKey(first)).toBe(focusMemoryScopeKey(second));
+  });
+
+  it('separates hash-router views while ignoring ordinary document anchors', () => {
+    const account = scan({ scannedAt: 1_000, url: 'https://example.test/#/account' });
+    const settings = scan({ scannedAt: 2_000, url: 'https://example.test/#/settings' });
+    const intro = scan({ scannedAt: 3_000, url: 'https://example.test/help#intro' });
+    const examples = scan({ scannedAt: 4_000, url: 'https://example.test/help#examples' });
+
+    expect(focusMemoryScopeKey(account)).not.toBe(focusMemoryScopeKey(settings));
+    expect(focusMemoryScopeKey(intro)).toBe(focusMemoryScopeKey(examples));
   });
 
   it('stores compact hashes and generic rule ids instead of raw URLs and failing selectors', () => {

@@ -111,7 +111,7 @@ button { font: inherit; }
 .print-trace-result { display: grid; gap: 3px; }
 .print-trace-result strong { font-size: 11.5px; }
 .print-trace-result p, .print-trace-story > p { margin: 0; color: #475467; font-size: 10.5px; line-height: 1.48; }
-.print-reference-line { color: #3d35d5 !important; font-weight: 700; }
+.print-reference-line { color: #3d35d5; font-weight: 700; }
 
 .print-finding-group { display: grid; gap: 8px; }
 .print-finding-group > h3 { display: flex; align-items: center; gap: 7px; margin: 2px 0 0; font-size: 14px; }
@@ -169,8 +169,8 @@ button { font: inherit; }
 @page { size: A4; margin: 13mm 12mm 14mm; }
 
 @media print {
-  :root, body { background: #fff !important; }
-  .print-toolbar { display: none !important; }
+  :root, body { background: #fff; }
+  .print-toolbar { display: none; }
   .report-page { width: auto; margin: 0; padding: 0; box-shadow: none; }
   .print-cover, .print-section, .print-finding, .print-trace-story, .print-suggestion-list li, .print-recommendation-list li, .print-heading-list li {
     break-inside: avoid;
@@ -180,3 +180,4 @@ button { font: inherit; }
   a { color: #2f2a8f; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
+

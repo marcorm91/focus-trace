@@ -102,6 +102,7 @@
   .site-impact-summary,
   .site-impact-counts > span,
   .finding-severity {
-    box-shadow: none !important;
+    box-shadow: none;
   }
 }
+

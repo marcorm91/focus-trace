@@ -117,6 +117,32 @@ function owningInteractiveControl(element: Element): Element | undefined {
   return undefined;
 }
 
+function cssGraphicReason(element: Element): string | undefined {
+  const style = getComputedStyle(element);
+  const maskImage = style.getPropertyValue('mask-image')
+    || style.getPropertyValue('-webkit-mask-image');
+  if (maskImage && maskImage !== 'none') return 'The control uses a CSS mask as its identifying visual cue.';
+  if (style.backgroundImage && style.backgroundImage !== 'none') {
+    return 'The control uses a CSS background image or gradient as its identifying visual cue.';
+  }
+
+  if (!navigator.userAgent.toLowerCase().includes('jsdom')) {
+    for (const pseudo of ['::before', '::after'] as const) {
+      const pseudoStyle = getComputedStyle(element, pseudo);
+      const content = pseudoStyle.content?.trim();
+      const pseudoMask = pseudoStyle.getPropertyValue('mask-image')
+        || pseudoStyle.getPropertyValue('-webkit-mask-image');
+      if ((content && content !== 'none' && content !== 'normal' && content !== '""')
+        || (pseudoMask && pseudoMask !== 'none')
+        || (pseudoStyle.backgroundImage && pseudoStyle.backgroundImage !== 'none')) {
+        return `The control uses ${pseudo} generated content as its identifying visual cue.`;
+      }
+    }
+  }
+
+  return undefined;
+}
+
 function simpleSvgColor(svg: SVGElement): { color?: RgbaColor; reason?: string; subject?: string } {
   const shapes = [...svg.querySelectorAll(SVG_SHAPES)];
   const targets: Element[] = shapes.length ? shapes : [svg];
@@ -361,7 +387,7 @@ function evaluateObservedFocusIndicator(element: Element): NonTextContrastEvalua
 
 export function evaluateNonTextContrast(): NonTextContrastFinding[] {
   const findings: NonTextContrastFinding[] = [];
-  const controls = [...document.querySelectorAll('button, input, select, textarea, [role]')]
+  const controls = Array.from(document.querySelectorAll('button, input, select, textarea, [role]'))
     .filter((element) => isInteractiveContainer(element));
 
   for (const control of controls) {
@@ -380,14 +406,44 @@ export function evaluateNonTextContrast(): NonTextContrastFinding[] {
           };
       findings.push({ element: control, evaluation });
     } else {
+      const cssGraphic = !visibleTextOutsideSvg(control) ? cssGraphicReason(control) : undefined;
+      if (cssGraphic) {
+        findings.push({
+          element: control,
+          evaluation: {
+            status: 'review',
+            kind: 'graphic',
+            subject: 'CSS graphic',
+            requiredRatio: REQUIRED_RATIO,
+            reason: `${cssGraphic} FocusTrace cannot reduce generated or image-based graphics to one reliable color ratio.`,
+          },
+        });
+        continue;
+      }
       const boundary = evaluateUiBoundary(control);
       if (boundary) findings.push({ element: control, evaluation: boundary });
     }
   }
 
-  for (const svg of [...document.querySelectorAll<SVGElement>('svg[role="img"]')]) {
+  for (const svg of document.querySelectorAll<SVGElement>('svg[role="img"]')) {
     if (owningInteractiveControl(svg)) continue;
     findings.push({ element: svg, evaluation: evaluateGraphic(svg) });
+  }
+
+  for (const graphic of document.querySelectorAll<HTMLElement>('[role="img"]:not(svg)')) {
+    if (owningInteractiveControl(graphic)) continue;
+    const reason = graphic instanceof HTMLCanvasElement ? undefined : cssGraphicReason(graphic);
+    if (!(graphic instanceof HTMLCanvasElement) && !reason) continue;
+    findings.push({
+      element: graphic,
+      evaluation: {
+        status: 'review',
+        kind: 'graphic',
+        subject: graphic instanceof HTMLCanvasElement ? 'canvas graphic' : 'CSS graphic',
+        requiredRatio: REQUIRED_RATIO,
+        reason: `${reason ?? 'The graphic is rendered as canvas pixels.'} FocusTrace cannot reduce it to a reliable computed-style contrast ratio. Review required graphical objects and their adjacent colors manually.`,
+      },
+    });
   }
 
   const active = document.activeElement;

@@ -17,7 +17,7 @@ export const test = base.extend<{
   context: BrowserContext;
   extensionWorker: Worker;
 }>({
-  context: async ({}, use) => {
+  context: async ({ browserName: _browserName }, use) => {
     const context = await chromium.launchPersistentContext('', {
       channel: 'chromium',
       headless: process.env.FOCUSTRACE_E2E_HEADFUL !== '1',

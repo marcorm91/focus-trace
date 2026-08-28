@@ -47,14 +47,14 @@
 .print-impact-counts .severity-minor { border-top-color: var(--ft-severity-minor-aa); }
 
 .print-severity {
-  border: 1px solid currentColor !important;
+  border: 1px solid currentColor;
 }
 
-.print-severity.severity-critical { color: var(--ft-severity-critical-aaa) !important; }
-.print-severity.severity-serious { color: var(--ft-severity-serious-aaa) !important; }
-.print-severity.severity-moderate { color: var(--ft-severity-moderate-aaa) !important; }
-.print-severity.severity-minor { color: var(--ft-severity-minor-aaa) !important; }
-.print-severity.severity-info { color: var(--ft-print-muted, #65717d) !important; }
+.print-severity.severity-critical { color: var(--ft-severity-critical-aaa); }
+.print-severity.severity-serious { color: var(--ft-severity-serious-aaa); }
+.print-severity.severity-moderate { color: var(--ft-severity-moderate-aaa); }
+.print-severity.severity-minor { color: var(--ft-severity-minor-aaa); }
+.print-severity.severity-info { color: var(--ft-print-muted, #65717d); }
 
 @media (max-width: 680px) {
   .print-impact-counts {
@@ -67,3 +67,4 @@
     break-inside: avoid;
   }
 }
+

@@ -71,13 +71,13 @@
 }
 
 .scan-rule-title strong {
-  font-size: 11.5px;
+  font-size: 14px;
   line-height: 1.35;
 }
 
 .scan-rule-title small {
   color: var(--ft-muted);
-  font-size: 9px;
+  font-size: 14px;
 }
 
 .scan-rule-count {
@@ -89,7 +89,7 @@
   color: var(--ft-surface);
   font-family: var(--ft-mono);
   text-align: center;
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 900;
 }
 
@@ -147,7 +147,7 @@
   min-width: 0;
   text-align: center;
   overflow-wrap: anywhere;
-  font-size: 10.5px;
+  font-size: 14px;
 }
 
 .scan-occurrence {
@@ -160,7 +160,7 @@
   margin: 0;
   color: var(--ft-text);
   overflow-wrap: anywhere;
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1.5;
 }
 
@@ -188,7 +188,7 @@
   min-width: 0;
   color: var(--ft-muted);
   overflow-wrap: anywhere;
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 800;
   letter-spacing: .045em;
   text-transform: uppercase;
@@ -203,7 +203,7 @@
   color: var(--ft-ink);
   overflow-wrap: anywhere;
   white-space: normal;
-  font-size: 10px;
+  font-size: 14px;
 }
 
 .finding-location > button {
@@ -239,3 +239,4 @@
     align-self: start;
   }
 }
+

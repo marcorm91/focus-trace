@@ -5,7 +5,6 @@ import { DUPLICATE_ID_RULE } from '../../../shared/html-authoring-rules';
 import { localizedSeverity, tr, type AppLanguage } from '../../../shared/i18n';
 import { localizedRuleSeverityRationale } from '../../../shared/rule-catalog';
 import type { ScanIssue } from '../../../shared/types';
-import './finding-guidance.css';
 
 const HEADING_JUMP_RULE_ID = 'FT-REVIEW-002';
 

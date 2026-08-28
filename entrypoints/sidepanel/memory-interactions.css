@@ -1,37 +1,12 @@
-/* Final UI polish for the quick actions, topbar controls and FocusTrace Memory walkthrough. */
+/* FocusTrace Memory history, resolution and walkthrough interaction states. */
 
-/* Keep every primary page action visually equivalent at rest. */
-.quick-actions button,
-.quick-actions .primary,
-.quick-actions .scan-action,
-.quick-actions .component-scan-action,
-.quick-actions .focus-walk-action,
-.quick-actions .site-audit-launch,
-.quick-actions .site-audit-launcher button {
-  border-color: var(--ft-border);
-  background: var(--ft-surface);
-  color: var(--ft-ink);
-  box-shadow: var(--ft-shadow-sm);
-}
-
-.quick-actions button:not(:disabled):hover,
-.quick-actions .primary:not(:disabled):hover,
-.quick-actions .scan-action:not(:disabled):hover,
-.quick-actions .component-scan-action:not(:disabled):hover,
-.quick-actions .focus-walk-action:not(:disabled):hover,
-.quick-actions .site-audit-launch:not(:disabled):hover,
-.quick-actions .site-audit-launcher button:not(:disabled):hover {
-  border-color: var(--ft-border);
-  background: var(--ft-accent-soft);
-  color: var(--ft-ink);
-}
-
-/* Settings follows the same light-blue hover language as Instructions and reset. */
-.topbar-tools .reset-all-trigger:not(:disabled):hover,
-.topbar-tools .instructions-trigger:not(:disabled):hover,
-.topbar-tools .settings-trigger:not(:disabled):hover {
-  border-color: var(--ft-border);
-  background: var(--ft-accent-soft);
+.focus-memory-history-list:not(.is-step) {
+  max-height: min(54vh, 540px);
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 5px;
+  scrollbar-gutter: stable;
+  overscroll-behavior: contain;
 }
 
 /* Move the destructive Memory action to the section heading. */
@@ -48,7 +23,7 @@
   background: var(--ft-surface);
   color: var(--ft-danger);
   box-shadow: none;
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 800;
 }
 
@@ -127,26 +102,27 @@
   width: fit-content;
   max-width: 100%;
   min-height: 0;
-  padding: 0;
+  margin: -3px -5px;
+  padding: 3px 5px;
   border: 0;
-  border-radius: 0;
+  border-radius: var(--ft-radius-xs);
   background: transparent;
   color: var(--ft-text);
   box-shadow: none;
   font: inherit;
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 800;
   line-height: 1.35;
   text-align: left;
   overflow-wrap: anywhere;
+  text-decoration: none;
   cursor: pointer;
 }
 
 .focus-memory-finding-link:not(:disabled):hover {
-  background: transparent;
-  color: var(--ft-accent-strong);
-  text-decoration: underline;
-  text-underline-offset: 2px;
+  background: var(--ft-accent-soft);
+  color: var(--ft-text);
+  text-decoration: none;
 }
 
 .focus-memory-finding-link:not(:disabled):active {
@@ -159,7 +135,7 @@
   border-left: 3px solid var(--ft-warning);
   background: var(--ft-warning-soft);
   color: var(--ft-text);
-  font-size: 9px;
+  font-size: 14px;
   line-height: 1.4;
 }
 
@@ -175,5 +151,11 @@
 
   .focus-memory-heading .focus-memory-clear {
     align-self: start;
+  }
+}
+
+@media (max-width: 520px) {
+  .focus-memory-history-list:not(.is-step) {
+    max-height: min(50vh, 460px);
   }
 }

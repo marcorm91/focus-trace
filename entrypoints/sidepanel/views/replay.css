@@ -23,7 +23,7 @@
   padding: 5px 8px;
   border: 1px solid var(--border, #d8dde6);
   border-radius: 999px;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
   white-space: nowrap;
 }
@@ -67,7 +67,7 @@
 .replay-scrubber {
   display: grid;
   gap: 6px;
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -126,7 +126,7 @@
   padding: 3px 6px;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.045);
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -151,7 +151,7 @@
 
 .replay-target > div > span,
 .replay-target small {
-  font-size: 11px;
+  font-size: 14px;
   opacity: 0.7;
 }
 
@@ -165,7 +165,7 @@
   padding: 4px 7px;
   border-radius: 999px;
   background: rgba(0, 0, 0, 0.05);
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -185,7 +185,7 @@
 .replay-value-change {
   overflow-wrap: anywhere;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .replay-cause {
@@ -231,7 +231,7 @@
 
 .replay-chain button small {
   overflow: hidden;
-  font-size: 9px;
+  font-size: 14px;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -249,3 +249,4 @@
     padding-inline: 8px;
   }
 }
+

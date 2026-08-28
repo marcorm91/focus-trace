@@ -11,7 +11,6 @@ import {
   FOCUS_MEMORY_RETENTION_DAYS,
 } from '../../../shared/focus-memory';
 import { tr, type AppLanguage } from '../../../shared/i18n';
-import './focus-memory-settings.css';
 
 export function FocusMemorySettings({ language }: { language: AppLanguage }) {
   const [enabled, setEnabled] = useState(DEFAULT_FOCUS_MEMORY_SETTINGS.enabled);

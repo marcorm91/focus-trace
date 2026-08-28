@@ -26,9 +26,7 @@ import type {
   StandardReference,
 } from '../../shared/types';
 import { localizedUserError } from '../../shared/user-facing-errors';
-import './style.css';
-import './visual-evidence.css';
-import './audit-guidance.css';
+import './index.css';
 
 interface LoadedReport {
   session: SessionState;

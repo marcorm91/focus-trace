@@ -9,13 +9,14 @@ function source(path: string): string {
 describe('FocusTrace Memory resolved finding UI', () => {
   it('offers an explicit checkbox only for findings no longer reproduced', () => {
     const component = source('entrypoints/sidepanel/components/FocusMemorySummary.tsx');
+    const history = source('entrypoints/sidepanel/components/FocusMemoryHistory.tsx');
     const css = source('entrypoints/sidepanel/components/focus-memory.css');
 
-    expect(component).toContain("item.state === 'resolved'");
-    expect(component).toContain('type="checkbox"');
-    expect(component).toContain("'Mark as resolved', 'Marcar como solucionado'");
+    expect(history).toContain("item.state === 'resolved'");
+    expect(history).toContain('type="checkbox"');
+    expect(history).toContain("'Mark as resolved', 'Marcar como solucionado'");
     expect(component).toContain('memory.resolveFinding(item.fingerprint, item.ruleId)');
-    expect(component).toContain('keeps only a minimal fingerprint');
+    expect(history).toContain('keeps only a minimal fingerprint');
     expect(css).toContain('.focus-memory-resolve');
     expect(css).toContain(".focus-memory-resolve input[type='checkbox']");
   });

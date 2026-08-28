@@ -44,7 +44,7 @@
   background: var(--ft-ink, CanvasText);
   color: var(--ft-surface, Canvas);
   font-family: var(--ft-mono, monospace);
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 900;
 }
 
@@ -87,12 +87,12 @@
   justify-content: space-between;
   gap: 8px;
   cursor: pointer;
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 850;
 }
 
 .finding-guidance-severity > summary strong {
-  font-size: 11px;
+  font-size: 14px;
   text-transform: uppercase;
 }
 
@@ -112,7 +112,8 @@
   width: fit-content;
   max-width: 100%;
   color: var(--ft-accent-strong, LinkText);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 750;
   overflow-wrap: anywhere;
 }
+

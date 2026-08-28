@@ -21,7 +21,6 @@ import {
   type UiScale,
 } from '../../../shared/ui-scale';
 import { FocusMemorySettings } from '../components/FocusMemorySettings';
-import '../breakpoint-settings.css';
 import { closeFocusedSettingsView } from '../settings-focus';
 
 const CREATOR_LINKEDIN = 'https://es.linkedin.com/in/marcorm91';

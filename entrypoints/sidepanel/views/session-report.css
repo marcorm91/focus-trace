@@ -21,7 +21,7 @@
 .report-hero p {
   margin-top: 5px;
   color: var(--ft-muted, GrayText);
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1.45;
 }
 
@@ -29,7 +29,7 @@
   display: block;
   margin-bottom: 4px;
   color: var(--ft-muted, GrayText);
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 800;
   letter-spacing: .08em;
   text-transform: uppercase;
@@ -58,7 +58,7 @@
 
 .report-scoreline span {
   color: var(--ft-muted, GrayText);
-  font-size: 9px;
+  font-size: 14px;
   line-height: 1.25;
 }
 
@@ -78,7 +78,7 @@
   border-radius: 8px;
   background: var(--ft-surface, Canvas);
   color: var(--ft-muted, GrayText);
-  font-size: 9px;
+  font-size: 14px;
   line-height: 1.4;
 }
 
@@ -122,20 +122,20 @@
 
 .report-priority-list li > span {
   color: var(--ft-muted, GrayText);
-  font-size: 8px;
+  font-size: 14px;
   font-weight: 800;
   letter-spacing: .05em;
   text-transform: uppercase;
 }
 
 .report-priority-list li > strong {
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .report-priority-list li > p {
   margin: 0;
   color: var(--ft-muted, GrayText);
-  font-size: 10px;
+  font-size: 14px;
   line-height: 1.45;
 }
 
@@ -178,7 +178,7 @@
   place-items: center;
   border-radius: 999px;
   background: var(--ft-surface-subtle, color-mix(in srgb, CanvasText 7%, Canvas));
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 900;
 }
 
@@ -201,7 +201,7 @@
 .trace-story-head small,
 .trace-story-result small {
   color: var(--ft-muted, GrayText);
-  font-size: 8px;
+  font-size: 14px;
   font-weight: 800;
   letter-spacing: .05em;
   text-transform: uppercase;
@@ -210,7 +210,7 @@
 .trace-story-head strong {
   min-width: 0;
   overflow-wrap: anywhere;
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .trace-story-chain {
@@ -233,7 +233,7 @@
   flex: 0 0 auto;
   padding-top: 5px;
   color: var(--ft-muted, GrayText);
-  font-size: 9px;
+  font-size: 14px;
 }
 
 .trace-story-chain em {
@@ -244,7 +244,7 @@
   border-radius: 8px;
   overflow-wrap: anywhere;
   white-space: normal;
-  font-size: 9px;
+  font-size: 14px;
   font-style: normal;
   line-height: 1.4;
 }
@@ -258,7 +258,7 @@
 }
 
 .trace-story-result strong {
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .trace-story-result p,
@@ -266,7 +266,7 @@
 .trace-story-recommendation,
 .trace-story-references {
   margin: 0;
-  font-size: 10px;
+  font-size: 14px;
   line-height: 1.45;
 }
 
@@ -290,7 +290,7 @@
   background: var(--ft-surface, ButtonFace);
   color: inherit;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 800;
 }
 
@@ -310,11 +310,11 @@
   padding: 5px 8px;
   border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 12%, transparent));
   border-radius: 999px;
-  font-size: 9px;
+  font-size: 14px;
 }
 
 .report-category-summary strong {
-  font-size: 10px;
+  font-size: 14px;
 }
 
 .report-scope-note {
@@ -322,7 +322,7 @@
   padding: 10px;
   border-top: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 10%, transparent));
   color: var(--ft-muted, GrayText);
-  font-size: 9px;
+  font-size: 14px;
   line-height: 1.45;
 }
 
@@ -368,3 +368,4 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+

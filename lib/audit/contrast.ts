@@ -17,6 +17,13 @@ export interface TextContrastEvaluation {
   reason?: string;
 }
 
+export type TextContrastPseudo = '::before' | '::after' | '::placeholder';
+
+export interface TextContrastSubject {
+  subject: 'text' | 'input value' | 'textarea value' | 'selected option' | 'placeholder' | 'generated text';
+  pseudo?: TextContrastPseudo;
+}
+
 export interface AccessibleColorSuggestion {
   hex: string;
   rgb: string;
@@ -260,21 +267,46 @@ export function effectiveBackground(element: Element): { color?: RgbaColor; reas
   return { color: result };
 }
 
-export function evaluateTextContrastForElement(element: Element): TextContrastEvaluation {
-  const style = getComputedStyle(element);
+export function evaluateTextContrastForElement(
+  element: Element,
+  pseudo?: TextContrastPseudo,
+): TextContrastEvaluation {
+  // jsdom does not implement pseudo-element computed styles. Falling back to
+  // the host control keeps unit tests deterministic; real extension contexts
+  // always ask the browser for the actual ::placeholder style.
+  const style = pseudo && !navigator.userAgent.toLowerCase().includes('jsdom')
+    ? getComputedStyle(element, pseudo)
+    : getComputedStyle(element);
   if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') {
     return { status: 'inapplicable' };
   }
 
-  const foreground = parseCssColor(style.color);
-  // Browsers normally resolve computed colors to rgb/rgba. If an environment leaves
-  // a system color keyword unresolved, do not manufacture a conformance result.
-  if (!foreground) return { status: 'inapplicable', reason: `Text color ${JSON.stringify(style.color)} could not be resolved.` };
-
   const fontSizePx = Number.parseFloat(style.fontSize);
-  if (!Number.isFinite(fontSizePx) || fontSizePx <= 0) return { status: 'inapplicable' };
   const fontWeight = numericFontWeight(style.fontWeight);
+  if (!Number.isFinite(fontSizePx) || fontSizePx <= 0) {
+    return {
+      status: 'review',
+      requiredRatio: 4.5,
+      fontWeight,
+      reason: `Text size ${JSON.stringify(style.fontSize)} could not be resolved.`,
+    };
+  }
   const requirement = textContrastRequirement(fontSizePx, fontWeight);
+
+  const foreground = parseCssColor(style.color);
+  // Computed colors normally serialize to rgb/rgba. Preserve unresolved system
+  // colors and future color syntaxes as review evidence instead of silently
+  // dropping visible text from the scan.
+  if (!foreground) {
+    return {
+      status: 'review',
+      requiredRatio: requirement.requiredRatio,
+      fontSizePx,
+      fontWeight,
+      largeText: requirement.largeText,
+      reason: `Text color ${JSON.stringify(style.color)} could not be resolved.`,
+    };
+  }
 
   const complexOnText = complexVisualReason(style);
   if (complexOnText) {
@@ -302,10 +334,29 @@ export function evaluateTextContrastForElement(element: Element): TextContrastEv
     };
   }
 
+  let resolvedBackground = backgroundResult.color;
+  if (pseudo) {
+    const pseudoBackground = parseCssColor(style.backgroundColor);
+    if (!pseudoBackground) {
+      return {
+        status: 'review',
+        requiredRatio: requirement.requiredRatio,
+        foreground: colorLabel(foreground),
+        fontSizePx,
+        fontWeight,
+        largeText: requirement.largeText,
+        reason: `Pseudo-element background ${JSON.stringify(style.backgroundColor)} could not be resolved.`,
+      };
+    }
+    if (pseudoBackground.a > 0) {
+      resolvedBackground = compositeColor(pseudoBackground, resolvedBackground);
+    }
+  }
+
   const renderedForeground = foreground.a < 0.999
-    ? compositeColor(foreground, backgroundResult.color)
+    ? compositeColor(foreground, resolvedBackground)
     : foreground;
-  const ratio = contrastRatio(renderedForeground, backgroundResult.color);
+  const ratio = contrastRatio(renderedForeground, resolvedBackground);
   const roundedRatio = Number(ratio.toFixed(2));
 
   return {
@@ -313,18 +364,82 @@ export function evaluateTextContrastForElement(element: Element): TextContrastEv
     ratio: roundedRatio,
     requiredRatio: requirement.requiredRatio,
     foreground: colorLabel(renderedForeground),
-    background: colorLabel(backgroundResult.color),
+    background: colorLabel(resolvedBackground),
     fontSizePx,
     fontWeight,
     largeText: requirement.largeText,
   };
 }
 
-export function elementHasRenderedText(element: Element): boolean {
-  if ([...element.childNodes].some((node) => node.nodeType === Node.TEXT_NODE && Boolean(node.textContent?.trim()))) return true;
+const TEXT_VALUE_INPUT_TYPES = new Set([
+  'date',
+  'datetime-local',
+  'email',
+  'month',
+  'number',
+  'password',
+  'search',
+  'tel',
+  'text',
+  'time',
+  'url',
+  'week',
+]);
+
+function hasDirectRenderedText(element: Element): boolean {
+  if (
+    element instanceof HTMLInputElement
+    || element instanceof HTMLTextAreaElement
+    || element instanceof HTMLSelectElement
+    || element instanceof HTMLOptionElement
+  ) return false;
+
+  return [...element.childNodes].some(
+    (node) => node.nodeType === Node.TEXT_NODE && Boolean(node.textContent?.trim()),
+  );
+}
+
+/**
+ * Returns every independently styled text surface rendered by an element.
+ * Form values are not DOM text nodes, and placeholders use their own pseudo
+ * style, so treating them explicitly prevents visible copy from disappearing
+ * from contrast coverage.
+ */
+export function textContrastSubjectsForElement(element: Element): TextContrastSubject[] {
+  const subjects: TextContrastSubject[] = [];
+  if (hasDirectRenderedText(element)) subjects.push({ subject: 'text' });
+
   if (element instanceof HTMLInputElement) {
     const type = element.type.toLowerCase();
-    return ['button', 'submit', 'reset'].includes(type) && Boolean(element.value.trim());
+    if (['button', 'submit', 'reset'].includes(type) && element.value.trim()) {
+      subjects.push({ subject: 'input value' });
+    } else if (TEXT_VALUE_INPUT_TYPES.has(type)) {
+      if (element.value.trim()) subjects.push({ subject: 'input value' });
+      else if (element.placeholder.trim()) subjects.push({ subject: 'placeholder', pseudo: '::placeholder' });
+    }
+  } else if (element instanceof HTMLTextAreaElement) {
+    if (element.value.trim()) subjects.push({ subject: 'textarea value' });
+    else if (element.placeholder.trim()) subjects.push({ subject: 'placeholder', pseudo: '::placeholder' });
+  } else if (element instanceof HTMLSelectElement) {
+    const selectedText = [...element.selectedOptions]
+      .map((option) => option.textContent?.trim() ?? '')
+      .filter(Boolean)
+      .join(' ');
+    if (selectedText) subjects.push({ subject: 'selected option' });
   }
-  return false;
+
+  if (!navigator.userAgent.toLowerCase().includes('jsdom')) {
+    for (const pseudo of ['::before', '::after'] as const) {
+      const style = getComputedStyle(element, pseudo);
+      const content = style.content?.trim();
+      if (!content || content === 'none' || content === 'normal' || content === '""' || content === "''") continue;
+      subjects.push({ subject: 'generated text', pseudo });
+    }
+  }
+
+  return subjects;
+}
+
+export function elementHasRenderedText(element: Element): boolean {
+  return textContrastSubjectsForElement(element).length > 0;
 }

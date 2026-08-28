@@ -8,6 +8,7 @@ import { locateScanTargetInPage } from '../../lib/runtime/scan-target-overlay';
 import { tr } from '../../shared/i18n';
 import type {
   ExtensionMessage,
+  SaveScanResponse,
   ScanResult,
   SessionState,
 } from '../../shared/types';
@@ -16,6 +17,7 @@ import { usePageRuntimeAccess } from './hooks/usePageRuntimeAccess';
 import { useSidepanelLanguage } from './hooks/useSidepanelLanguage';
 import { useSidepanelSession } from './hooks/useSidepanelSession';
 import { useTraceActions } from './hooks/useTraceActions';
+import { SiteAuditLauncher } from './components/SiteAuditLauncher';
 import { AboutView } from './views/AboutView';
 import { HeadingTreeView } from './views/HeadingTreeView';
 import { InstructionsView } from './views/InstructionsView';
@@ -61,13 +63,21 @@ export default function App() {
 
   const saveScan = useCallback(async (result: ScanResult) => {
     if (tabId == null) return;
-    const next = (await browser.runtime.sendMessage({
+    const response = (await browser.runtime.sendMessage({
       type: 'FOCUSTRACE_SAVE_SCAN',
       tabId,
       scan: result,
-    } satisfies ExtensionMessage)) as SessionState;
+    } satisfies ExtensionMessage)) as SaveScanResponse | SessionState;
+    const next = 'state' in response ? response.state : response;
     setSession(next);
-  }, [setSession, tabId]);
+    if ('warning' in response && response.warning === 'focus-memory-write-failed') {
+      setError(tr(
+        language,
+        'The analysis was saved, but FocusTrace Memory could not record this observation.',
+        'El análisis se ha guardado, pero FocusTrace Memory no ha podido registrar esta observación.',
+      ));
+    }
+  }, [language, setSession, tabId]);
 
   const runScan = useCallback(async () => {
     if (tabId == null) return;
@@ -349,6 +359,7 @@ export default function App() {
             <span aria-hidden="true">▱</span>
             {tr(language, 'Select component', 'Seleccionar componente')}
           </button>
+          <SiteAuditLauncher language={language} />
           <button
             className="focus-walk-action"
             type="button"

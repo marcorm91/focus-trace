@@ -28,8 +28,11 @@ describe('FocusTrace WCAG rule fixtures', () => {
     expect(result.issues).toEqual([]);
     expect(result.review).toEqual([]);
     expect(result.warnings).toEqual([]);
-    // passes counts successful rule/target evaluations, not only rule definitions.
-    expect(result.passes).toBeGreaterThanOrEqual(result.rulesRun);
+    expect(result.ruleResults).toHaveLength(result.rulesRun);
+    expect(new Set(result.ruleResults?.map((rule) => rule.ruleId)).size).toBe(result.rulesRun);
+    expect(result.passes).toBe(result.ruleResults?.reduce((sum, rule) => sum + rule.passed, 0));
+    expect(result.ruleResults?.every((rule) =>
+      rule.applicable === rule.passed + rule.failures + rule.reviews + rule.warnings)).toBe(true);
   });
 
   it('produces the expected deterministic failures and review signals', () => {
@@ -175,6 +178,28 @@ describe('FocusTrace WCAG rule fixtures', () => {
 
     expect(contrast).toHaveLength(3);
     expect(new Set(contrast.flatMap((issue) => issue.targets)).size).toBe(3);
+  });
+
+  it('includes visible form values, textarea content, selected options and placeholders in contrast coverage', () => {
+    render(
+      'lang="en"',
+      `<main><h1>Form contrast</h1>
+        <label>Search <input id="query" value="Warehouses"></label>
+        <label>Notes <textarea id="notes">Routes</textarea></label>
+        <label>Province <select id="province"><option selected>Sevilla</option></select></label>
+        <label>Filter <input id="filter" placeholder="Type a value"></label>
+      </main>`,
+      'html,body{background:#fff;color:#000;font-size:16px} input,textarea,select{color:rgb(190,190,190);background:#fff;font-size:16px;font-weight:400} input::placeholder{color:rgb(190,190,190)}',
+    );
+    const result = runFocusTraceScan();
+    const formContrast = result.issues.filter((issue) => issue.ruleId === 'FT-WCAG-010');
+
+    expect(formContrast.map((issue) => issue.targets[0])).toEqual(
+      expect.arrayContaining(['#query', '#notes', '#province', '#filter']),
+    );
+    expect(formContrast.map((issue) => issue.contrast?.subject)).toEqual(
+      expect.arrayContaining(['input value', 'textarea value', 'selected option', 'placeholder']),
+    );
   });
 
   it('sends complex gradient contrast to review instead of fail', () => {

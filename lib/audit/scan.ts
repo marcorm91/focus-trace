@@ -1,16 +1,22 @@
 import { DUPLICATE_ID_RULE } from '../../shared/html-authoring-rules';
 import { RULES, type RuleDefinition } from '../../shared/rule-catalog';
 import type { ComponentScanScope, FindingOutcome, HeadingSnapshot, ScanIssue, ScanResult } from '../../shared/types';
-import { evaluateTextContrastForElement, elementHasRenderedText } from './contrast';
+import { evaluateTextContrastForElement, textContrastSubjectsForElement } from './contrast';
 import { accessibleNameDetails, accessibleNameDiagnostics, isMarkedDecorative, isProgrammaticallyHidden, isSequentiallyFocusable, selectorFor, semanticRole } from './dom';
 import { evaluateDuplicateIds } from './duplicate-ids';
 import { evaluateLabelInName } from './label-in-name';
 import { evaluateNonTextContrast } from './non-text-contrast';
 import { evaluateAriaAuthoringSignals, pageLanguageStatus, type AriaAuthoringSignal } from './standards-registry';
 
-interface RuleExecution { issues: ScanIssue[]; review: ScanIssue[]; warnings: ScanIssue[]; passes: number }
+interface RuleExecution {
+  rule: RuleDefinition;
+  issues: ScanIssue[];
+  review: ScanIssue[];
+  warnings: ScanIssue[];
+  passes: number;
+}
 type ScanRoot = Document | Element;
-const emptyExecution = (): RuleExecution => ({ issues: [], review: [], warnings: [], passes: 0 });
+const emptyExecution = (rule: RuleDefinition): RuleExecution => ({ rule, issues: [], review: [], warnings: [], passes: 0 });
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 const COMPONENT_SCAN_SCOPE_ATTRIBUTE = 'data-focustrace-scan-component';
 const COMPONENT_FOCUS_SCOPE_ATTRIBUTE = 'data-focustrace-focus-component';
@@ -79,7 +85,7 @@ function finding(
 }
 
 function runPageTitle(): RuleExecution {
-  const result = emptyExecution();
+  const result = emptyExecution(RULES.pageTitle);
   const titles = [...document.documentElement.querySelectorAll('title')].filter((title) => title.namespaceURI === 'http://www.w3.org/1999/xhtml');
   const first = titles[0];
   if (!first || !first.textContent?.trim()) result.issues.push(finding(RULES.pageTitle, 'fail', 'html', 'The first HTML <title> is missing or contains only whitespace.', `document.title = ${JSON.stringify(document.title)}`));
@@ -88,7 +94,7 @@ function runPageTitle(): RuleExecution {
 }
 
 function runPageLangPresent(): RuleExecution {
-  const result = emptyExecution();
+  const result = emptyExecution(RULES.pageLangPresent);
   const status = pageLanguageStatus();
   if (!status.applicable) return result;
   if (status.present) result.passes += 1;
@@ -97,7 +103,7 @@ function runPageLangPresent(): RuleExecution {
 }
 
 function runPageLangKnown(): RuleExecution {
-  const result = emptyExecution();
+  const result = emptyExecution(RULES.pageLangKnown);
   const status = pageLanguageStatus();
   if (!status.applicable || !status.present) return result;
   if (status.knownPrimary) result.passes += 1;
@@ -106,7 +112,7 @@ function runPageLangKnown(): RuleExecution {
 }
 
 function runImages(root: ScanRoot): RuleExecution {
-  const result = emptyExecution();
+  const result = emptyExecution(RULES.imageName);
   for (const element of scopedElements(root, 'img, [role="img"]')) {
     if (isProgrammaticallyHidden(element)) continue;
     const name = accessibleNameDiagnostics(element);
@@ -117,7 +123,7 @@ function runImages(root: ScanRoot): RuleExecution {
 }
 
 function runButtons(root: ScanRoot): RuleExecution {
-  const result = emptyExecution();
+  const result = emptyExecution(RULES.buttonName);
   for (const element of scopedElements(root, 'button, input, [role]')) {
     if (element instanceof HTMLInputElement && element.type.toLowerCase() === 'image') continue;
     if (semanticRole(element) !== 'button' || isProgrammaticallyHidden(element)) continue;
@@ -130,7 +136,7 @@ function runButtons(root: ScanRoot): RuleExecution {
 
 const FORM_FIELD_ROLES = new Set(['checkbox', 'combobox', 'listbox', 'menuitemcheckbox', 'menuitemradio', 'radio', 'searchbox', 'slider', 'spinbutton', 'switch', 'textbox']);
 function runFormFields(root: ScanRoot): RuleExecution {
-  const result = emptyExecution();
+  const result = emptyExecution(RULES.formFieldName);
   for (const element of scopedElements(root, 'input, select, textarea, [role]')) {
     const role = semanticRole(element);
     if (!role || !FORM_FIELD_ROLES.has(role) || isProgrammaticallyHidden(element)) continue;
@@ -142,19 +148,18 @@ function runFormFields(root: ScanRoot): RuleExecution {
 }
 
 function runPlaceholderOnlyLabels(root: ScanRoot): RuleExecution {
-  const result = emptyExecution();
+  const result = emptyExecution(RULES.placeholderOnlyLabel);
   for (const element of scopedElements(root, 'input, textarea')) {
     if (isProgrammaticallyHidden(element)) continue;
     const name = accessibleNameDetails(element);
     if (name.source !== 'placeholder' && name.source !== 'aria-placeholder') continue;
     result.review.push(finding(RULES.placeholderOnlyLabel, 'review', element, 'The control has a programmatically computed name, but that name comes only from placeholder text. Review whether a persistent visible label or instruction identifies the field for all users.', `Accessible name ${JSON.stringify(name.name)} is sourced from ${name.source}.`));
   }
-  if (!result.review.length) result.passes += 1;
   return result;
 }
 
 function runLinks(root: ScanRoot): RuleExecution {
-  const result = emptyExecution();
+  const result = emptyExecution(RULES.linkName);
   for (const element of scopedElements(root, 'a, area, [role]')) {
     if (semanticRole(element) !== 'link' || isProgrammaticallyHidden(element)) continue;
     const name = accessibleNameDiagnostics(element);
@@ -165,9 +170,12 @@ function runLinks(root: ScanRoot): RuleExecution {
 }
 
 function runLabelInName(root: ScanRoot): RuleExecution {
-  const result = emptyExecution();
+  const result = emptyExecution(RULES.labelInName);
   for (const evaluation of evaluateLabelInName().filter((entry) => containsInScope(root, entry.element))) {
-    if (evaluation.outcome === 'pass') continue;
+    if (evaluation.outcome === 'pass') {
+      result.passes += 1;
+      continue;
+    }
 
     const evidence = `Visible label ${JSON.stringify(evaluation.visibleLabel)} is not contained in accessible name ${JSON.stringify(evaluation.accessibleName)}.${evaluation.reason ? ` ${evaluation.reason}` : ''}`;
     if (evaluation.outcome === 'warning') {
@@ -177,12 +185,11 @@ function runLabelInName(root: ScanRoot): RuleExecution {
 
     result.issues.push(finding(RULES.labelInName, 'fail', evaluation.element, 'The control has visible text, but that visible label is not contained in the accessible name used by assistive technology and speech input.', evidence));
   }
-  if (!result.issues.length && !result.warnings.length) result.passes += 1;
   return result;
 }
 
 function runAriaHiddenFocusable(root: ScanRoot): RuleExecution {
-  const result = emptyExecution();
+  const result = emptyExecution(RULES.ariaHiddenFocusable);
   const containers = scopedElements(root, '[aria-hidden]').filter((element) => element.getAttribute('aria-hidden')?.trim().toLowerCase() === 'true');
   for (const container of containers) {
     const focusable = [container, ...container.querySelectorAll('*')].find((element) => isSequentiallyFocusable(element));
@@ -193,7 +200,7 @@ function runAriaHiddenFocusable(root: ScanRoot): RuleExecution {
 }
 
 function runDuplicateIds(root: ScanRoot): RuleExecution {
-  const result = emptyExecution();
+  const result = emptyExecution(DUPLICATE_ID_RULE);
   const signals = evaluateDuplicateIds(root);
   for (const signal of signals) {
     result.warnings.push(finding(
@@ -204,14 +211,13 @@ function runDuplicateIds(root: ScanRoot): RuleExecution {
       `id=${JSON.stringify(signal.id)} is used by ${signal.occurrences} elements in this document.`,
     ));
   }
-  if (!signals.length) result.passes += 1;
   return result;
 }
 
 function ariaWarningExecutions(signals: AriaAuthoringSignal[]): RuleExecution[] {
-  const deprecatedRoles = emptyExecution();
-  const deprecatedProperties = emptyExecution();
-  const prohibitedProperties = emptyExecution();
+  const deprecatedRoles = emptyExecution(RULES.deprecatedAriaRole);
+  const deprecatedProperties = emptyExecution(RULES.deprecatedAriaProperty);
+  const prohibitedProperties = emptyExecution(RULES.prohibitedAriaProperty);
 
   for (const signal of signals) {
     if (signal.kind === 'deprecated-role') {
@@ -223,91 +229,84 @@ function ariaWarningExecutions(signals: AriaAuthoringSignal[]): RuleExecution[] 
     }
   }
 
-  if (!deprecatedRoles.warnings.length) deprecatedRoles.passes += 1;
-  if (!deprecatedProperties.warnings.length) deprecatedProperties.passes += 1;
-  if (!prohibitedProperties.warnings.length) prohibitedProperties.passes += 1;
   return [deprecatedRoles, deprecatedProperties, prohibitedProperties];
 }
 
 function runPositiveTabindex(root: ScanRoot): RuleExecution {
-  const result = emptyExecution();
+  const result = emptyExecution(RULES.positiveTabindex);
   for (const element of scopedElements(root, '[tabindex]')) {
     const value = Number.parseInt(element.getAttribute('tabindex') ?? '', 10);
     if (!Number.isFinite(value) || value <= 0 || isProgrammaticallyHidden(element)) continue;
     result.review.push(finding(RULES.positiveTabindex, 'review', element, 'A positive tabindex changes the natural sequential focus order. Review whether the resulting order preserves meaning and operability.', `tabindex="${value}"`));
   }
-  if (!result.review.length) result.passes += 1;
   return result;
 }
 
 function runTextContrast(root: ScanRoot): RuleExecution {
-  const result = emptyExecution();
+  const result = emptyExecution(RULES.textContrast);
   const elements = root instanceof Document
     ? document.body ? [document.body, ...document.body.querySelectorAll('*')] : []
     : [root, ...root.querySelectorAll('*')];
-  if (!elements.length) { result.passes += 1; return result; }
+  if (!elements.length) return result;
 
-  let applicable = 0;
   for (const element of elements) {
-    if (!elementHasRenderedText(element) || isProgrammaticallyHidden(element)) continue;
-    const evaluation = evaluateTextContrastForElement(element);
-    if (evaluation.status === 'inapplicable') continue;
-    applicable += 1;
+    if (isProgrammaticallyHidden(element)) continue;
+    const subjects = textContrastSubjectsForElement(element);
+    for (const subject of subjects) {
+      const evaluation = evaluateTextContrastForElement(element, subject.pseudo);
+      if (evaluation.status === 'inapplicable') continue;
 
-    const contrast: ScanIssue['contrast'] = {
-      kind: 'text',
-      subject: 'text',
-      requiredRatio: evaluation.requiredRatio ?? 4.5,
-      ...(evaluation.ratio != null ? { ratio: evaluation.ratio } : {}),
-      ...(evaluation.foreground ? { foreground: evaluation.foreground } : {}),
-      ...(evaluation.background ? { background: evaluation.background } : {}),
-      ...(evaluation.fontSizePx != null ? { fontSizePx: evaluation.fontSizePx } : {}),
-      ...(evaluation.fontWeight != null ? { fontWeight: evaluation.fontWeight } : {}),
-      ...(evaluation.largeText != null ? { largeText: evaluation.largeText } : {}),
-      ...(evaluation.reason ? { reason: evaluation.reason } : {}),
-    };
+      const contrast: ScanIssue['contrast'] = {
+        kind: 'text',
+        subject: subject.subject,
+        requiredRatio: evaluation.requiredRatio ?? 4.5,
+        ...(evaluation.ratio != null ? { ratio: evaluation.ratio } : {}),
+        ...(evaluation.foreground ? { foreground: evaluation.foreground } : {}),
+        ...(evaluation.background ? { background: evaluation.background } : {}),
+        ...(evaluation.fontSizePx != null ? { fontSizePx: evaluation.fontSizePx } : {}),
+        ...(evaluation.fontWeight != null ? { fontWeight: evaluation.fontWeight } : {}),
+        ...(evaluation.largeText != null ? { largeText: evaluation.largeText } : {}),
+        ...(evaluation.reason ? { reason: evaluation.reason } : {}),
+      };
 
-    if (evaluation.status === 'pass') {
-      result.passes += 1;
-      continue;
-    }
+      if (evaluation.status === 'pass') {
+        result.passes += 1;
+        continue;
+      }
 
-    if (evaluation.status === 'fail') {
-      const evidence = `Contrast ${evaluation.ratio}:1; required ${evaluation.requiredRatio}:1; foreground ${evaluation.foreground}; background ${evaluation.background}; font ${evaluation.fontSizePx}px / ${evaluation.fontWeight}.`;
-      result.issues.push(finding(
+      if (evaluation.status === 'fail') {
+        const evidence = `${subject.subject}: contrast ${evaluation.ratio}:1; required ${evaluation.requiredRatio}:1; foreground ${evaluation.foreground}; background ${evaluation.background}; font ${evaluation.fontSizePx}px / ${evaluation.fontWeight}.`;
+        result.issues.push(finding(
+          RULES.textContrast,
+          'fail',
+          element,
+          `Rendered ${subject.subject} contrast is ${evaluation.ratio}:1, below the required ${evaluation.requiredRatio}:1 for ${evaluation.largeText ? 'large' : 'normal'} text.`,
+          evidence,
+          undefined,
+          contrast,
+        ));
+        continue;
+      }
+
+      result.review.push(finding(
         RULES.textContrast,
-        'fail',
+        'review',
         element,
-        `Rendered text contrast is ${evaluation.ratio}:1, below the required ${evaluation.requiredRatio}:1 for ${evaluation.largeText ? 'large' : 'normal'} text.`,
-        evidence,
+        `FocusTrace could not determine the rendered ${subject.subject}/background contrast reliably. Review this text manually instead of treating an uncertain visual calculation as a WCAG failure.`,
+        `${evaluation.reason ?? 'Rendered colors could not be resolved reliably.'} Required ratio: ${evaluation.requiredRatio}:1 for ${evaluation.largeText ? 'large' : 'normal'} text.`,
         undefined,
         contrast,
       ));
-      continue;
     }
-
-    result.review.push(finding(
-      RULES.textContrast,
-      'review',
-      element,
-      'FocusTrace could not determine the rendered text/background contrast reliably. Review this text manually instead of treating an uncertain visual calculation as a WCAG failure.',
-      `${evaluation.reason ?? 'Rendered colors could not be resolved reliably.'} Required ratio: ${evaluation.requiredRatio}:1 for ${evaluation.largeText ? 'large' : 'normal'} text.`,
-      undefined,
-      contrast,
-    ));
   }
 
-  if (applicable === 0) result.passes += 1;
   return result;
 }
 
 function runNonTextContrast(root: ScanRoot): RuleExecution {
-  const result = emptyExecution();
+  const result = emptyExecution(RULES.nonTextContrast);
   const evaluations = evaluateNonTextContrast().filter(({ element }) => containsInScope(root, element));
-  if (!evaluations.length) {
-    result.passes += 1;
-    return result;
-  }
+  if (!evaluations.length) return result;
 
   for (const { element, evaluation } of evaluations) {
     if (isProgrammaticallyHidden(element) || evaluation.status === 'inapplicable') continue;
@@ -387,7 +386,7 @@ export function collectHeadingOutline(): HeadingSnapshot[] {
 }
 
 function runHeadingJumps(): RuleExecution {
-  const result = emptyExecution();
+  const result = emptyExecution(RULES.headingJump);
   const headings = visibleHeadings();
   const firstHeading = headings[0];
   if (firstHeading) {
@@ -400,6 +399,8 @@ function runHeadingJumps(): RuleExecution {
         'The heading outline starts below H1. This is not automatically a WCAG failure, but it can indicate that the page hierarchy needs manual review.',
         `Document starts with ${firstHeading.tagName} before any H1.`,
       ));
+    } else {
+      result.passes += 1;
     }
   }
 
@@ -407,10 +408,12 @@ function runHeadingJumps(): RuleExecution {
     const previousHeading = headings[index - 1]; const currentHeading = headings[index];
     if (!previousHeading || !currentHeading) continue;
     const previous = Number(previousHeading.tagName.slice(1)); const current = Number(currentHeading.tagName.slice(1));
-    if (current <= previous + 1) continue;
+    if (current <= previous + 1) {
+      result.passes += 1;
+      continue;
+    }
     result.review.push(finding(RULES.headingJump, 'review', currentHeading, 'A skipped heading level is not automatically a WCAG failure, but it can indicate that structure or relationships need manual review.', `${previousHeading.tagName} → ${currentHeading.tagName}`));
   }
-  if (!result.review.length) result.passes += 1;
   return result;
 }
 
@@ -450,6 +453,17 @@ export function runFocusTraceScan(scope: ComponentScanScope | undefined = consum
     review: executions.flatMap((execution) => execution.review),
     warnings: executions.flatMap((execution) => execution.warnings),
     ...(scope ? {} : { headings: collectHeadingOutline() }),
+    ruleResults: executions.map((execution) => ({
+      ruleId: execution.rule.id,
+      applicable: execution.passes
+        + execution.issues.length
+        + execution.review.length
+        + execution.warnings.length,
+      passed: execution.passes,
+      failures: execution.issues.length,
+      reviews: execution.review.length,
+      warnings: execution.warnings.length,
+    })),
     passes: executions.reduce((sum, execution) => sum + execution.passes, 0),
     rulesRun: executions.length,
   };

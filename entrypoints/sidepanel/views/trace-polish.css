@@ -88,7 +88,7 @@
 
 .trace-button-icon {
   flex: 0 0 auto;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1;
 }
 
@@ -119,7 +119,7 @@
   grid-column: 4;
   content: '⌄';
   color: var(--ft-muted);
-  font-size: 13px;
+  font-size: 14px;
   transition: transform .16s ease;
 }
 
@@ -160,7 +160,7 @@
 
 .trace-accordion-copy small {
   color: var(--ft-muted);
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 700;
   letter-spacing: .06em;
   text-transform: uppercase;
@@ -168,7 +168,7 @@
 
 .trace-accordion-copy strong {
   color: var(--ft-text);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .trace-accordion-count {
@@ -180,7 +180,7 @@
   border: 1px solid var(--ft-border);
   border-radius: 999px;
   color: var(--ft-muted);
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 800;
 }
 
@@ -208,7 +208,7 @@
   min-width: 0;
   margin: 0;
   color: var(--ft-muted);
-  font-size: 10px;
+  font-size: 14px;
   line-height: 1.45;
 }
 
@@ -224,7 +224,7 @@
   color: var(--ft-text);
   padding: 6px 9px;
   cursor: pointer;
-  font-size: 10px;
+  font-size: 14px;
   font-weight: 700;
 }
 
@@ -257,7 +257,7 @@
   border-radius: 8px;
   background: var(--ft-surface-subtle);
   color: var(--ft-muted);
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .trace-step-button {
@@ -301,7 +301,7 @@
   border-radius: 50%;
   background: var(--ft-brand-soft);
   color: var(--ft-brand-strong);
-  font-size: 11px;
+  font-size: 14px;
 }
 
 .trace-step-copy {
@@ -319,13 +319,13 @@
 }
 
 .trace-step-copy > span {
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 750;
 }
 
 .trace-step-copy > small {
   color: var(--ft-muted);
-  font-size: 9px;
+  font-size: 14px;
 }
 
 .trace-interaction-strip {
@@ -368,7 +368,7 @@
 .trace-cause-body p {
   margin: 0 0 7px;
   color: var(--ft-muted);
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1.45;
 }
 
@@ -475,3 +475,4 @@
     display: inline;
   }
 }
+

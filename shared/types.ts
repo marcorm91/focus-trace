@@ -190,6 +190,15 @@ export interface ComponentScanScope {
 
 export type ScanScope = PageScanScope | ComponentScanScope;
 
+export interface ScanRuleResult {
+  ruleId: string;
+  applicable: number;
+  passed: number;
+  failures: number;
+  reviews: number;
+  warnings: number;
+}
+
 export interface ScanResult {
   engine: 'FocusTrace Rules';
   standard: 'WCAG 2.2';
@@ -201,6 +210,7 @@ export interface ScanResult {
   review: ScanIssue[];
   warnings: ScanIssue[];
   headings?: HeadingSnapshot[];
+  ruleResults?: ScanRuleResult[];
   passes: number;
   rulesRun: number;
 }
@@ -225,6 +235,11 @@ export interface SessionState {
   breakpoints?: RuntimeBreakpointSettings;
   pausedByBreakpoint?: RuntimeBreakpointHit;
   scan?: ScanResult;
+}
+
+export interface SaveScanResponse {
+  state: SessionState;
+  warning?: 'focus-memory-write-failed';
 }
 
 export type ExtensionMessage =

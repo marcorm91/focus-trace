@@ -14,46 +14,43 @@ html[data-ft-ui-scale='130'] {
   --ft-ui-scale: 1.3;
 }
 
-/*
- * FocusTrace is a dense debugging surface, but no readable UI copy should drop
- * below 14px. Existing component styles still control weight, spacing and color;
- * this final cascade layer only establishes the minimum readable size.
- */
-.app-shell * {
-  font-size: max(14px, 1em) !important;
+/* Readable component copy now owns an explicit 14px minimum. The app root only
+ * establishes the inherited baseline; decorative marks remain explicit below. */
+.app-shell {
+  font-size: 14px;
 }
 
 .app-shell h1 {
-  font-size: 22px !important;
+  font-size: 22px;
 }
 
 .app-shell h2,
 .app-shell .contrast-ratio strong,
 .app-shell .report-scoreline strong,
 .app-shell .trace-metrics strong {
-  font-size: 20px !important;
+  font-size: 20px;
 }
 
 .app-shell h3 {
-  font-size: 18px !important;
+  font-size: 18px;
 }
 
 .app-shell h4,
 .app-shell .metric > strong {
-  font-size: 16px !important;
+  font-size: 16px;
 }
 
 /* Decorative marks intentionally carry no text. */
 .app-shell .brand-mark,
 .app-shell .about-mark {
-  font-size: 0 !important;
+  font-size: 0;
 }
 
 /* Workspace navigation glyphs are visual icons, not readable copy. Keep them
  * deliberately larger than the 14px text floor so Review/Trace remain easy to
  * recognize at narrow side-panel widths. */
 .app-shell .workspace-nav.tabs button > span {
-  font-size: 20px !important;
+  font-size: 20px;
 }
 
 /*

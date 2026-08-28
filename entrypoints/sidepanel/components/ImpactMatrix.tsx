@@ -3,7 +3,6 @@ import { localizedSeverity, tr, type AppLanguage } from '../../../shared/i18n';
 import { countByOutcomeAndSeverity } from '../../../shared/severity';
 import type { FindingOutcome, ScanIssue, ScanResult, Severity } from '../../../shared/types';
 import { FocusMemorySummary } from './FocusMemorySummary';
-import './impact-matrix.css';
 
 const DISPLAY_SEVERITIES: Severity[] = ['critical', 'serious', 'moderate', 'minor'];
 

@@ -210,12 +210,12 @@ a { color: LinkText; overflow-wrap: anywhere; }
   :root { color-scheme: light; }
   body { background: white; color: #111; }
   .site-audit-shell { width: 100%; max-width: none; padding: 0; }
-  .site-brand, .site-hero, .site-start, .site-progress, .site-report-actions button, .site-footer, .finding-actions { display: none !important; }
+  .site-brand, .site-hero, .site-start, .site-progress, .site-report-actions button, .site-footer, .finding-actions { display: none; }
   .site-card, .site-finding { box-shadow: none; border-color: #d0d0d0; }
   .site-summary, .site-template-list { display: grid; }
   .site-template, .site-finding, .finding-detail { break-inside: auto; }
   .site-template > summary, .site-finding > summary { pointer-events: none; break-after: avoid; }
-  .site-template:not([open]) > .template-body, .site-finding:not([open]) > .finding-detail { display: grid !important; }
+  .site-template:not([open]) > .template-body, .site-finding:not([open]) > .finding-detail { display: grid; }
   .finding-context-grid > section,
   .finding-location,
   .finding-explanation,
@@ -227,3 +227,4 @@ a { color: LinkText; overflow-wrap: anywhere; }
   .finding-visual-evidence img { max-height: 330px; }
   a { color: #111; text-decoration: none; }
 }
+

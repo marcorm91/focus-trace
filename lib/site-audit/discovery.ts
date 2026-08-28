@@ -23,7 +23,7 @@ export function normalizeDiscoveredUrl(value: string, origin: string): string | 
     const expected = new URL(origin);
     if (url.origin !== expected.origin) return undefined;
     url.hash = '';
-    for (const key of [...url.searchParams.keys()]) {
+    for (const key of Array.from(url.searchParams.keys())) {
       if (TRACKING_QUERY_KEYS.has(key.toLowerCase())) url.searchParams.delete(key);
     }
     url.searchParams.sort();

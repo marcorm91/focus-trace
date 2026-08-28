@@ -13,7 +13,7 @@ const PAGE_LOAD_TIMEOUT = 18_000;
 
 export function collectInternalLinksInPage(origin: string): string[] {
   const urls = new Set<string>();
-  for (const anchor of [...document.querySelectorAll('a[href]')]) {
+  for (const anchor of document.querySelectorAll('a[href]')) {
     if (!(anchor instanceof HTMLAnchorElement)) continue;
     try {
       const url = new URL(anchor.href, location.href);

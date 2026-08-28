@@ -24,14 +24,14 @@
 
 .impact-matrix-heading strong {
   color: var(--ft-ink);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 900;
 }
 
 .impact-matrix-heading small,
 .impact-matrix > p {
   color: var(--ft-muted);
-  font-size: 9.5px;
+  font-size: 14px;
   line-height: 1.55;
 }
 
@@ -42,7 +42,7 @@
   border-radius: 999px;
   background: var(--ft-surface-subtle);
   color: var(--ft-muted);
-  font-size: 9px;
+  font-size: 14px;
   font-weight: 800;
 }
 
@@ -84,7 +84,7 @@
   border-bottom-color: var(--ft-border-soft);
   background: var(--ft-surface-subtle);
   color: var(--ft-muted);
-  font-size: 8.5px;
+  font-size: 14px;
   font-weight: 900;
   line-height: 1.2;
   overflow-wrap: anywhere;
@@ -106,19 +106,19 @@
   justify-content: space-between;
   gap: 7px;
   color: var(--ft-text);
-  font-size: 9.5px;
+  font-size: 14px;
   text-align: left;
 }
 
 .impact-matrix tbody th strong {
   color: var(--ft-muted);
-  font-size: 11px;
+  font-size: 14px;
   font-variant-numeric: tabular-nums;
 }
 
 .impact-matrix td {
   color: var(--ft-faint);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 750;
   font-variant-numeric: tabular-nums;
 }
@@ -150,3 +150,4 @@
     width: 21%;
   }
 }
+

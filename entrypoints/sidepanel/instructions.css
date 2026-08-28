@@ -42,7 +42,7 @@
 .instructions-start h3 {
   margin: 0;
   color: var(--ft-ink);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 850;
 }
 
@@ -69,13 +69,13 @@
 
 .instructions-start li strong {
   color: var(--ft-text);
-  font-size: 10px;
+  font-size: 14px;
 }
 
 .instructions-start li span {
   margin-top: 2px;
   color: var(--ft-muted);
-  font-size: 9px;
+  font-size: 14px;
   line-height: 1.45;
 }
 
@@ -99,7 +99,7 @@
   padding: 10px 12px;
   color: var(--ft-ink);
   cursor: pointer;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   list-style: none;
 }
@@ -140,7 +140,7 @@
 .instructions-card li,
 .instructions-note p {
   color: var(--ft-text);
-  font-size: 9.5px;
+  font-size: 14px;
   line-height: 1.5;
 }
 
@@ -177,3 +177,4 @@
     padding-top: 44px;
   }
 }
+

@@ -103,7 +103,7 @@ export function parseActRule(markdown, source = {}) {
 }
 
 async function mapLimit(items, limit, mapper) {
-  const results = new Array(items.length);
+  const results = Array.from({ length: items.length });
   let cursor = 0;
 
   async function worker() {
