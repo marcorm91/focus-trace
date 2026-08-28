@@ -256,6 +256,38 @@
   line-height: 1.25;
 }
 
+.focus-memory-resolve {
+  display: grid;
+  gap: 4px;
+  padding: 7px 8px;
+  border-left: 3px solid var(--ft-success);
+  background: color-mix(in srgb, var(--ft-success-soft) 62%, transparent);
+}
+
+.focus-memory-resolve label {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: fit-content;
+  color: var(--ft-text);
+  font-size: 9px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.focus-memory-resolve input[type='checkbox'] {
+  width: 14px;
+  height: 14px;
+  margin: 0;
+  accent-color: var(--ft-success);
+}
+
+.focus-memory-resolve small {
+  color: var(--ft-muted);
+  font-size: 8px;
+  line-height: 1.35;
+}
+
 .focus-memory-controls {
   padding-top: 8px;
   border-top: 1px solid var(--ft-border-faint);
