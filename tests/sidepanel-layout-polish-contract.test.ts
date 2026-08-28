@@ -61,4 +61,17 @@ describe('sidepanel layout polish contract', () => {
     expect(css).not.toContain('cursor: pointer');
     expect(css).not.toContain('!important');
   });
+
+  it('shows the complete runtime trace chain without horizontal scrolling or ellipsis', () => {
+    const css = source('entrypoints/sidepanel/views/session-report.css');
+    const chain = css.slice(css.indexOf('.trace-story-chain {'), css.indexOf('.trace-story-result {'));
+
+    expect(chain).toContain('flex-wrap: wrap;');
+    expect(chain).toContain('overflow-wrap: anywhere;');
+    expect(chain).toContain('white-space: normal;');
+    expect(chain).not.toContain('overflow-x: auto;');
+    expect(chain).not.toContain('text-overflow: ellipsis;');
+    expect(chain).not.toContain('white-space: nowrap;');
+    expect(chain).not.toContain('max-width: 180px;');
+  });
 });
