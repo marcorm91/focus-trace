@@ -14,8 +14,8 @@
   min-width: 0;
 }
 
-.quick-actions .component-scan-action { order: 1; }
-.quick-actions .scan-action { order: 2; }
+.quick-actions .scan-action { order: 1; }
+.quick-actions .component-scan-action { order: 2; }
 .quick-actions .site-audit-launch { order: 3; }
 .quick-actions .focus-walk-action { order: 4; }
 
