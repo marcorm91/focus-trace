@@ -13,7 +13,7 @@ async function openSidepanel(context: BrowserContext, extensionWorker: Worker) {
 test('instructions is a focused bilingual guide and Back restores the previous workspace tab', async ({ context, extensionWorker }) => {
   const panel = await openSidepanel(context, extensionWorker);
 
-  await panel.getByRole('button', { name: 'Trace' }).click();
+  await panel.getByRole('button', { name: 'Trace', exact: true }).click();
   await expect(panel.getByRole('button', { name: /Start trace|Iniciar traza/ })).toBeVisible();
 
   await panel.getByRole('button', { name: /Open instructions|Abrir instrucciones/ }).click();
@@ -34,6 +34,6 @@ test('instructions is a focused bilingual guide and Back restores the previous w
   await back.click();
 
   await expect(panel.getByRole('navigation', { name: /FocusTrace sections|Secciones de FocusTrace/ })).toBeVisible();
-  await expect(panel.getByRole('button', { name: 'Trace' })).toHaveAttribute('aria-current', 'page');
+  await expect(panel.getByRole('button', { name: 'Trace', exact: true })).toHaveAttribute('aria-current', 'page');
   await expect(panel.getByRole('button', { name: /Start trace|Iniciar traza/ })).toBeVisible();
 });
