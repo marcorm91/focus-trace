@@ -30,7 +30,7 @@ function scan({
   scannedAt,
   url = 'https://example.test/account/123',
   failures = [],
-  rulesRun = 17,
+  rulesRun = 18,
   reviewCount = 0,
   warningCount = 0,
 }: {
@@ -160,12 +160,12 @@ describe('FocusTrace Memory', () => {
   it('normalizes volatile route and selector tokens when identifying a component', () => {
     const first = componentScan(
       1_000,
-      'https://example.test/users/123',
+      'https://example.test/users/12',
       '#users > section:nth-child(12) > div[data-row="12345"]',
     );
     const second = componentScan(
       2_000,
-      'https://example.test/users/456',
+      'https://example.test/users/43',
       '#users > section:nth-child(47) > div[data-row="98765"]',
     );
 
