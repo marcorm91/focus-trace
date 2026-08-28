@@ -6,7 +6,7 @@
 
 .quick-actions {
   display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
+  grid-template-columns: repeat(3, minmax(0, 1fr));
   align-items: stretch;
 }
 
@@ -87,11 +87,13 @@ html[data-ft-focused-subview-open] .topbar {
   box-shadow: inset 4px 0 0 var(--ft-brand);
 }
 
-@media (max-width: 430px) {
+@media (max-width: 620px) {
   .quick-actions {
     grid-template-columns: 1fr;
   }
+}
 
+@media (max-width: 430px) {
   .settings-back-trigger {
     top: 14px;
     right: 14px;
