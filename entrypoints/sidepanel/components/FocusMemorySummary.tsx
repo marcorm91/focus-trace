@@ -3,9 +3,13 @@ import {
   FOCUS_MEMORY_MAX_PER_SCOPE,
   FOCUS_MEMORY_RETENTION_DAYS,
   type FocusMemoryComparison,
+  type FocusMemoryFindingHistory,
+  type FocusMemoryFindingState,
+  type FocusMemoryFindingTimelinePoint,
   type FocusMemoryStatus,
 } from '../../../shared/focus-memory';
-import { localeFor, tr, type AppLanguage } from '../../../shared/i18n';
+import { localeFor, localizedRuleTitle, tr, type AppLanguage } from '../../../shared/i18n';
+import { ruleDefinitionForId } from '../../../shared/rule-catalog';
 import type { ScanResult } from '../../../shared/types';
 import { useFocusTraceMemory } from '../hooks/useFocusTraceMemory';
 import './focus-memory.css';
@@ -98,6 +102,132 @@ function formatObservedAt(timestamp: number, language: AppLanguage): string {
   }).format(new Date(timestamp));
 }
 
+function formatHistoryDate(timestamp: number, language: AppLanguage): string {
+  return new Intl.DateTimeFormat(localeFor(language), {
+    day: '2-digit',
+    month: 'short',
+    year: '2-digit',
+  }).format(new Date(timestamp));
+}
+
+function findingStateLabel(state: FocusMemoryFindingState, language: AppLanguage): string {
+  if (state === 'new') return tr(language, 'New', 'Nuevo');
+  if (state === 'present') return tr(language, 'Still present', 'Sigue presente');
+  if (state === 'resolved') return tr(language, 'Not reproduced', 'Ya no se reproduce');
+  if (state === 'regressed') return tr(language, 'Returned', 'Ha vuelto');
+  return tr(language, 'Coverage changed', 'Cobertura distinta');
+}
+
+function findingTitle(item: FocusMemoryFindingHistory, language: AppLanguage): string {
+  if (!item.ruleId) return tr(language, 'Historical finding', 'Hallazgo histórico');
+  const fallback = ruleDefinitionForId(item.ruleId)?.title ?? item.ruleId;
+  return localizedRuleTitle(item.ruleId, fallback, language);
+}
+
+function timelinePointLabel(
+  point: FocusMemoryFindingTimelinePoint,
+  index: number,
+  language: AppLanguage,
+): string {
+  if (point.present) return tr(language, 'Present', 'Presente');
+  if (index > 0 && !point.comparableToPrevious) {
+    return tr(language, 'Not comparable', 'No comparable');
+  }
+  return tr(language, 'Not observed', 'No detectado');
+}
+
+function FindingHistory({
+  history,
+  comparison,
+  language,
+  onResolve,
+}: {
+  history: FocusMemoryFindingHistory[];
+  comparison: FocusMemoryComparison;
+  language: AppLanguage;
+  onResolve: (item: FocusMemoryFindingHistory) => Promise<boolean>;
+}) {
+  if (!history.length) return null;
+  const changedCount = comparison.previousObservedAt == null
+    ? 0
+    : history.filter((item) => item.changedNow).length;
+
+  return (
+    <details className="focus-memory-history">
+      <summary>
+        <strong>{tr(language, 'Finding history', 'Historial por fallo')}</strong>
+        <span>
+          {changedCount > 0
+            ? tr(
+                language,
+                `${changedCount} changed in this scan`,
+                `${changedCount} ${changedCount === 1 ? 'ha cambiado' : 'han cambiado'} en este análisis`,
+              )
+            : tr(language, 'No finding changes in this scan', 'Sin cambios de fallo en este análisis')}
+        </span>
+      </summary>
+
+      <div className="focus-memory-history-list">
+        {history.map((item) => {
+          const resolveHintId = `focus-memory-resolve-${item.fingerprint}`;
+          return (
+            <article
+              className={`focus-memory-finding state-${item.state}${item.changedNow ? ' changed-now' : ''}`}
+              key={item.fingerprint}
+            >
+              <div className="focus-memory-finding-head">
+                <div>
+                  {item.ruleId && <code>{item.ruleId}</code>}
+                  <strong>{findingTitle(item, language)}</strong>
+                </div>
+                <span>{findingStateLabel(item.state, language)}</span>
+              </div>
+
+              <ol className="focus-memory-finding-timeline" aria-label={tr(language, 'Remembered observations', 'Observaciones recordadas')}>
+                {item.timeline.map((point, index) => (
+                  <li
+                    className={point.present ? 'is-present' : point.comparableToPrevious ? 'is-absent' : 'is-uncertain'}
+                    key={`${item.fingerprint}-${point.observedAt}`}
+                  >
+                    <time dateTime={new Date(point.observedAt).toISOString()}>{formatHistoryDate(point.observedAt, language)}</time>
+                    <span>{timelinePointLabel(point, index, language)}</span>
+                  </li>
+                ))}
+              </ol>
+
+              {item.state === 'resolved' && (
+                <div className="focus-memory-resolve">
+                  <label>
+                    <input
+                      type="checkbox"
+                      aria-describedby={resolveHintId}
+                      onChange={(event) => {
+                        const checkbox = event.currentTarget;
+                        if (!checkbox.checked) return;
+                        void onResolve(item).then((resolved) => {
+                          if (!resolved && checkbox.isConnected) checkbox.checked = false;
+                        });
+                      }}
+                    />
+                    <span>{tr(language, 'Mark as resolved', 'Marcar como solucionado')}</span>
+                  </label>
+                  <small id={resolveHintId}>
+                    {tr(
+                      language,
+                      'Removes the detailed local history for this fixed finding. FocusTrace keeps only a minimal fingerprint so it can identify a future regression.',
+                      'Elimina el historial local detallado de este fallo corregido. FocusTrace conserva solo una huella mínima para identificar una futura regresión.',
+                    )}
+                  </small>
+                </div>
+              )}
+            </article>
+          );
+        })}
+      </div>
+    </details>
+  );
+}
+
 export function FocusMemorySummary({ scan, language }: { scan: ScanResult; language: AppLanguage }) {
   const memory = useFocusTraceMemory(scan);
 
@@ -167,12 +297,19 @@ export function FocusMemorySummary({ scan, language }: { scan: ScanResult; langu
         </div>
       )}
 
+      <FindingHistory
+        history={memory.history ?? []}
+        comparison={comparison}
+        language={language}
+        onResolve={(item) => memory.resolveFinding(item.fingerprint, item.ruleId)}
+      />
+
       <div className="focus-memory-controls">
         <small>
           {tr(
             language,
-            `Local only · max ${FOCUS_MEMORY_MAX_PER_SCOPE} per scope · ${FOCUS_MEMORY_MAX_OBSERVATIONS} total · ${FOCUS_MEMORY_RETENTION_DAYS} days`,
-            `Solo local · máx. ${FOCUS_MEMORY_MAX_PER_SCOPE} por ámbito · ${FOCUS_MEMORY_MAX_OBSERVATIONS} en total · ${FOCUS_MEMORY_RETENTION_DAYS} días`,
+            `Max ${FOCUS_MEMORY_MAX_PER_SCOPE} per scope · ${FOCUS_MEMORY_MAX_OBSERVATIONS} total · ${FOCUS_MEMORY_RETENTION_DAYS} days`,
+            `Máx. ${FOCUS_MEMORY_MAX_PER_SCOPE} por ámbito · ${FOCUS_MEMORY_MAX_OBSERVATIONS} en total · ${FOCUS_MEMORY_RETENTION_DAYS} días`,
           )}
         </small>
         <div>

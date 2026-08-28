@@ -6,13 +6,18 @@
 
 .quick-actions {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(2, minmax(0, 1fr));
   align-items: stretch;
 }
 
 .quick-actions > button {
   min-width: 0;
 }
+
+.quick-actions .component-scan-action { order: 1; }
+.quick-actions .scan-action { order: 2; }
+.quick-actions .site-audit-launch { order: 3; }
+.quick-actions .focus-walk-action { order: 4; }
 
 /* Settings is a focused sub-view: keep the brand and the explicit Back action,
    but remove the workspace chrome while the settings route is active. */

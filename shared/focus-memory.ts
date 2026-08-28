@@ -10,10 +10,16 @@ export const FOCUS_MEMORY_MAX_FAILURE_FINGERPRINTS = 120;
 const RETENTION_MS = FOCUS_MEMORY_RETENTION_DAYS * 24 * 60 * 60 * 1000;
 
 export type FocusMemoryStatus = 'new' | 'open' | 'fixed' | 'regressed' | 'changed' | 'unchanged';
+export type FocusMemoryFindingState = 'new' | 'present' | 'resolved' | 'regressed' | 'changed';
 
 export interface FocusMemorySettings {
   enabled: boolean;
   ignoreScansAtOrBefore?: number;
+}
+
+export interface FocusMemoryFailureDescriptor {
+  fingerprint: string;
+  ruleId: string;
 }
 
 export interface FocusMemoryObservation {
@@ -26,6 +32,7 @@ export interface FocusMemoryObservation {
   reviewCount: number;
   warningCount: number;
   failureFingerprints: string[];
+  failureDetails?: FocusMemoryFailureDescriptor[];
   failuresTruncated: boolean;
 }
 
@@ -49,6 +56,20 @@ export interface FocusMemoryComparison {
   warningDelta: number;
   compatibleCoverage: boolean;
   partial: boolean;
+}
+
+export interface FocusMemoryFindingTimelinePoint {
+  observedAt: number;
+  present: boolean;
+  comparableToPrevious: boolean;
+}
+
+export interface FocusMemoryFindingHistory {
+  fingerprint: string;
+  ruleId?: string;
+  state: FocusMemoryFindingState;
+  changedNow: boolean;
+  timeline: FocusMemoryFindingTimelinePoint[];
 }
 
 export const DEFAULT_FOCUS_MEMORY_SETTINGS: FocusMemorySettings = {
@@ -131,8 +152,17 @@ function findingFingerprint(issue: ScanIssue): string {
 export function buildFocusMemoryObservation(scan: ScanResult): FocusMemoryObservation {
   const scopeKey = focusMemoryScopeKey(scan);
   const allFailureFingerprints = scan.issues.map(findingFingerprint);
-  const failureFingerprints = [...new Set(allFailureFingerprints)]
-    .slice(0, FOCUS_MEMORY_MAX_FAILURE_FINGERPRINTS);
+  const descriptorMap = new Map<string, FocusMemoryFailureDescriptor>();
+
+  for (const issue of scan.issues) {
+    const fingerprint = findingFingerprint(issue);
+    if (!descriptorMap.has(fingerprint)) {
+      descriptorMap.set(fingerprint, { fingerprint, ruleId: issue.ruleId });
+    }
+  }
+
+  const failureDetails = [...descriptorMap.values()].slice(0, FOCUS_MEMORY_MAX_FAILURE_FINGERPRINTS);
+  const failureFingerprints = failureDetails.map((item) => item.fingerprint);
 
   return {
     id: `${scopeKey}:${scan.scannedAt}`,
@@ -144,13 +174,23 @@ export function buildFocusMemoryObservation(scan: ScanResult): FocusMemoryObserv
     reviewCount: scan.review.length,
     warningCount: scan.warnings?.length ?? 0,
     failureFingerprints,
+    failureDetails,
     failuresTruncated: allFailureFingerprints.length > FOCUS_MEMORY_MAX_FAILURE_FINGERPRINTS,
   };
+}
+
+function isFailureDescriptor(value: unknown): value is FocusMemoryFailureDescriptor {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Partial<FocusMemoryFailureDescriptor>;
+  return typeof candidate.fingerprint === 'string' && typeof candidate.ruleId === 'string';
 }
 
 function isObservation(value: unknown): value is FocusMemoryObservation {
   if (!value || typeof value !== 'object') return false;
   const candidate = value as Partial<FocusMemoryObservation>;
+  const detailsValid = candidate.failureDetails == null
+    || (Array.isArray(candidate.failureDetails) && candidate.failureDetails.every(isFailureDescriptor));
+
   return typeof candidate.id === 'string'
     && typeof candidate.scopeKey === 'string'
     && (candidate.scopeType === 'page' || candidate.scopeType === 'component')
@@ -162,6 +202,7 @@ function isObservation(value: unknown): value is FocusMemoryObservation {
     && typeof candidate.warningCount === 'number'
     && Array.isArray(candidate.failureFingerprints)
     && candidate.failureFingerprints.every((item) => typeof item === 'string')
+    && detailsValid
     && typeof candidate.failuresTruncated === 'boolean';
 }
 
@@ -209,6 +250,90 @@ export function pruneFocusMemoryObservations(
   }
 
   return kept;
+}
+
+function observationsAreComparable(
+  previous: FocusMemoryObservation,
+  current: FocusMemoryObservation,
+): boolean {
+  return previous.rulesRun === current.rulesRun
+    && !previous.failuresTruncated
+    && !current.failuresTruncated;
+}
+
+export function buildFocusMemoryFindingHistory(
+  observations: FocusMemoryObservation[],
+): FocusMemoryFindingHistory[] {
+  if (!observations.length) return [];
+
+  const ordered = [...observations].sort((left, right) => left.observedAt - right.observedAt);
+  const fingerprints = new Set(ordered.flatMap((observation) => observation.failureFingerprints));
+  const descriptors = new Map<string, FocusMemoryFailureDescriptor>();
+
+  for (const observation of [...ordered].reverse()) {
+    for (const descriptor of observation.failureDetails ?? []) {
+      if (!descriptors.has(descriptor.fingerprint)) {
+        descriptors.set(descriptor.fingerprint, descriptor);
+      }
+    }
+  }
+
+  const current = ordered.at(-1);
+  if (!current) return [];
+  const previous = ordered.at(-2);
+  const currentFailures = new Set(current.failureFingerprints);
+  const previousFailures = new Set(previous?.failureFingerprints ?? []);
+  const olderFailures = new Set(ordered.slice(0, -2).flatMap((observation) => observation.failureFingerprints));
+  const currentComparable = previous ? observationsAreComparable(previous, current) : true;
+
+  const history = [...fingerprints].map((fingerprint): FocusMemoryFindingHistory => {
+    const currentPresent = currentFailures.has(fingerprint);
+    const previousPresent = previousFailures.has(fingerprint);
+    const seenEarlier = olderFailures.has(fingerprint);
+    let state: FocusMemoryFindingState = currentPresent ? 'present' : 'resolved';
+
+    if (!previous) {
+      state = currentPresent ? 'new' : 'resolved';
+    } else if (currentPresent && previousPresent) {
+      state = 'present';
+    } else if (currentPresent && !previousPresent) {
+      state = seenEarlier ? (currentComparable ? 'regressed' : 'changed') : 'new';
+    } else if (!currentPresent && previousPresent) {
+      state = currentComparable ? 'resolved' : 'changed';
+    }
+
+    const timeline = ordered.map((observation, index): FocusMemoryFindingTimelinePoint => ({
+      observedAt: observation.observedAt,
+      present: observation.failureFingerprints.includes(fingerprint),
+      comparableToPrevious: index === 0
+        ? true
+        : observationsAreComparable(ordered[index - 1]!, observation),
+    }));
+
+    const descriptor = descriptors.get(fingerprint);
+    return {
+      fingerprint,
+      ...(descriptor ? { ruleId: descriptor.ruleId } : {}),
+      state,
+      changedNow: previous ? currentPresent !== previousPresent : currentPresent,
+      timeline,
+    };
+  });
+
+  const statePriority: Record<FocusMemoryFindingState, number> = {
+    regressed: 0,
+    new: 1,
+    resolved: 2,
+    changed: 3,
+    present: 4,
+  };
+
+  return history.sort((left, right) => {
+    if (left.changedNow !== right.changedNow) return left.changedNow ? -1 : 1;
+    const stateDifference = statePriority[left.state] - statePriority[right.state];
+    if (stateDifference !== 0) return stateDifference;
+    return (left.ruleId ?? left.fingerprint).localeCompare(right.ruleId ?? right.fingerprint);
+  });
 }
 
 function compareObservation(
@@ -284,21 +409,27 @@ export function recordFocusMemoryObservation(
   value: unknown,
   scan: ScanResult,
   now = Date.now(),
-): { store: FocusMemoryStore; comparison: FocusMemoryComparison } {
+): {
+  store: FocusMemoryStore;
+  comparison: FocusMemoryComparison;
+  history: FocusMemoryFindingHistory[];
+} {
   const store = normalizeFocusMemoryStore(value);
   const current = buildFocusMemoryObservation(scan);
   const existing = store.observations.filter((observation) => observation.id !== current.id);
-  const history = existing
+  const previousHistory = existing
     .filter((observation) => observation.scopeKey === current.scopeKey)
     .sort((left, right) => right.observedAt - left.observedAt);
-  const comparison = compareObservation(current, history);
+  const comparison = compareObservation(current, previousHistory);
   const observations = pruneFocusMemoryObservations([...existing, current], now);
+  const scopeHistory = observations.filter((observation) => observation.scopeKey === current.scopeKey);
 
   return {
     store: { version: 1, observations },
     comparison: {
       ...comparison,
-      observedCount: observations.filter((observation) => observation.scopeKey === current.scopeKey).length,
+      observedCount: scopeHistory.length,
     },
+    history: buildFocusMemoryFindingHistory(scopeHistory),
   };
 }

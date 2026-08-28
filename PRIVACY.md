@@ -27,15 +27,17 @@ Session data and preferences may be stored using browser extension storage so th
 
 FocusTrace Memory is an optional local history feature for comparing accessibility observations over time. It is **disabled by default after installation** and does not begin remembering scan history until the user explicitly enables **Remember accessibility history** in Settings.
 
-When enabled, Memory stores compact local observation data such as hashed scope/finding fingerprints, result counts, rule-coverage counts and timestamps. It does not store page HTML, full DOM snapshots or screenshots as part of the Memory history.
+When enabled, Memory stores compact local observation data such as hashed scope/finding fingerprints, generic FocusTrace rule identifiers, result counts, rule-coverage counts and timestamps. The rule identifier lets the interface describe which known finding changed across remembered observations without storing the failing selector. Memory does not store page HTML, full DOM snapshots, failing selectors or screenshots as part of the history.
 
-Memory is bounded so it cannot grow without limit. The current limits are:
+Memory is bounded so it cannot grow without limit. The current observation limits are:
 
 - up to 8 observations for the same remembered page/component scope;
 - up to 200 observations across the browser profile;
 - observations older than 90 days are removed the next time FocusTrace reads Memory storage.
 
-Turning Memory off stops new observations and comparisons. Existing local Memory history remains local until it is removed by the retention cleanup or the user explicitly clears it. **Clear saved history** remains available in Settings even while Memory is disabled.
+When a finding is no longer reproduced, the user can explicitly mark it as resolved. FocusTrace then removes that finding from the detailed remembered observations so it no longer appears in the normal finding history. To recognize the same finding if it returns later, FocusTrace keeps only a compact resolved marker containing the hashed scope/finding identity, the generic FocusTrace rule identifier when known, and the resolution timestamp. Resolved markers do not contain the failing selector, page text, HTML or DOM snapshots. They are also pruned after 90 days and capped at 200 compact markers.
+
+Turning Memory off stops new observations and comparisons. Existing local Memory history remains local until it is removed by the retention cleanup or the user explicitly clears it. **Clear saved history** remains available in Settings even while Memory is disabled and clears both observation history and resolved markers.
 
 Enabling Memory establishes the opt-in point and does not retroactively add an analysis that was already open before opt-in. Eligible observations are persisted when a scan is saved, independently of which FocusTrace results view the user opens afterwards.
 

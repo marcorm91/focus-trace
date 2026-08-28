@@ -1,0 +1,89 @@
+/* Informational totals should read as data, not as clickable controls.
+   Keep them flat, text-first and free of hover/press affordances. */
+.metric,
+.heading-outline-summary > span,
+.report-coverage > div,
+.focus-journey-summary > span,
+.report-scoreline > div {
+  position: relative;
+  min-width: 0;
+  padding: 8px 10px 8px 12px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  text-align: left;
+  cursor: default;
+}
+
+.metric::before,
+.heading-outline-summary > span::before,
+.report-coverage > div::before,
+.focus-journey-summary > span::before,
+.report-scoreline > div::before {
+  position: absolute;
+  inset: 6px auto 6px 0;
+  width: 2px;
+  border-radius: 999px;
+  background: var(--ft-border-soft);
+  content: '';
+}
+
+.metric strong,
+.heading-outline-summary strong,
+.report-coverage strong,
+.focus-journey-summary strong,
+.report-scoreline strong {
+  font-variant-numeric: tabular-nums;
+}
+
+.report-scoreline > div.is-alert,
+.focus-journey-summary > span.has-warning {
+  border: 0;
+  background: transparent;
+}
+
+.report-scoreline > div.is-alert::before {
+  width: 3px;
+  background: var(--ft-danger);
+}
+
+.focus-journey-summary > span.has-warning::before {
+  width: 3px;
+  background: var(--ft-warning);
+}
+
+.report-scoreline > div.is-alert strong {
+  color: var(--ft-danger);
+}
+
+.focus-journey-summary > span.has-warning strong {
+  color: var(--ft-warning);
+}
+
+/* Small inline summaries are metadata, not chips or pill buttons. */
+.report-inline-summary,
+.report-category-summary {
+  gap: 5px 10px;
+}
+
+.report-inline-summary > span,
+.report-category-summary > span {
+  position: relative;
+  padding: 0 10px 0 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: default;
+}
+
+.report-inline-summary > span:not(:last-child)::after,
+.report-category-summary > span:not(:last-child)::after {
+  position: absolute;
+  top: 20%;
+  right: 0;
+  width: 1px;
+  height: 60%;
+  background: var(--ft-border-soft);
+  content: '';
+}

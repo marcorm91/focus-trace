@@ -141,6 +141,70 @@ describe('FocusTrace Memory', () => {
     expect(regressed.comparison.regressedFailures).toBe(1);
   });
 
+  it('keeps a per-finding timeline across remembered observations', () => {
+    const first = recordFocusMemoryObservation(
+      undefined,
+      scan({
+        scannedAt: 1_000,
+        failures: [
+          failure('FT-WCAG-003', '#save'),
+          failure('FT-WCAG-004', '#email'),
+        ],
+      }),
+      1_000,
+    );
+    const second = recordFocusMemoryObservation(
+      first.store,
+      scan({ scannedAt: 2_000, failures: [failure('FT-WCAG-003', '#save')] }),
+      2_000,
+    );
+    const resolvedEmail = second.history.find((item) => item.ruleId === 'FT-WCAG-004');
+
+    expect(resolvedEmail?.state).toBe('resolved');
+    expect(resolvedEmail?.changedNow).toBe(true);
+    expect(resolvedEmail?.timeline.map((point) => point.present)).toEqual([true, false]);
+
+    const third = recordFocusMemoryObservation(
+      second.store,
+      scan({
+        scannedAt: 3_000,
+        failures: [
+          failure('FT-WCAG-003', '#save'),
+          failure('FT-WCAG-004', '#email'),
+        ],
+      }),
+      3_000,
+    );
+    const regressedEmail = third.history.find((item) => item.ruleId === 'FT-WCAG-004');
+    const persistentSave = third.history.find((item) => item.ruleId === 'FT-WCAG-003');
+
+    expect(regressedEmail?.state).toBe('regressed');
+    expect(regressedEmail?.changedNow).toBe(true);
+    expect(regressedEmail?.timeline.map((point) => point.present)).toEqual([true, false, true]);
+    expect(persistentSave?.state).toBe('present');
+    expect(persistentSave?.changedNow).toBe(false);
+    expect(persistentSave?.timeline.map((point) => point.present)).toEqual([true, true, true]);
+  });
+
+  it('keeps per-finding history conservative when rule coverage changes', () => {
+    const first = recordFocusMemoryObservation(
+      undefined,
+      scan({ scannedAt: 1_000, failures: [failure('FT-WCAG-003', '#save')], rulesRun: 17 }),
+      1_000,
+    );
+    const changedCoverage = recordFocusMemoryObservation(
+      first.store,
+      scan({ scannedAt: 2_000, failures: [], rulesRun: 18 }),
+      2_000,
+    );
+    const history = changedCoverage.history.find((item) => item.ruleId === 'FT-WCAG-003');
+
+    expect(changedCoverage.comparison.status).toBe('changed');
+    expect(changedCoverage.comparison.compatibleCoverage).toBe(false);
+    expect(history?.state).toBe('changed');
+    expect(history?.timeline.at(-1)?.comparableToPrevious).toBe(false);
+  });
+
   it('does not claim FIXED or REGRESSED when rule coverage changes', () => {
     const first = recordFocusMemoryObservation(
       undefined,
@@ -172,7 +236,7 @@ describe('FocusTrace Memory', () => {
     expect(focusMemoryScopeKey(first)).toBe(focusMemoryScopeKey(second));
   });
 
-  it('stores compact hashes instead of raw URLs and failing selectors', () => {
+  it('stores compact hashes and generic rule ids instead of raw URLs and failing selectors', () => {
     const result = scan({
       scannedAt: 1_000,
       url: 'https://private.example.test/customer/987654',
@@ -184,6 +248,10 @@ describe('FocusTrace Memory', () => {
     expect(serialized).not.toContain('private.example.test');
     expect(serialized).not.toContain('customer-secret-button');
     expect(observation.failureFingerprints[0]).toMatch(/^finding-/);
+    expect(observation.failureDetails?.[0]).toEqual({
+      fingerprint: observation.failureFingerprints[0],
+      ruleId: 'FT-WCAG-003',
+    });
     expect(observation.scopeKey).toMatch(/^scope-/);
   });
 
