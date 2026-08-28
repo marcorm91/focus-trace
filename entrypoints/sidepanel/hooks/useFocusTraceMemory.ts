@@ -1,6 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import {
   clearFocusMemoryHistory,
+  markFocusMemoryFindingResolved,
   readFocusMemoryForScan,
 } from '../../../lib/focus-memory/storage';
 import type {
@@ -15,6 +16,7 @@ export interface FocusTraceMemoryState {
   suppressed: boolean;
   comparison?: FocusMemoryComparison;
   history?: FocusMemoryFindingHistory[];
+  resolveFinding: (fingerprint: string, ruleId?: string) => Promise<boolean>;
   clear: () => Promise<void>;
 }
 
@@ -54,6 +56,12 @@ export function useFocusTraceMemory(scan: ScanResult): FocusTraceMemoryState {
     };
   }, [revision, scan]);
 
+  const resolveFinding = useCallback(async (fingerprint: string, ruleId?: string) => {
+    const resolved = await markFocusMemoryFindingResolved(scan, fingerprint, ruleId);
+    if (resolved) setRevision((value) => value + 1);
+    return resolved;
+  }, [scan]);
+
   const clear = useCallback(async () => {
     await clearFocusMemoryHistory();
     setRevision((value) => value + 1);
@@ -65,6 +73,7 @@ export function useFocusTraceMemory(scan: ScanResult): FocusTraceMemoryState {
     suppressed,
     ...(comparison ? { comparison } : {}),
     ...(history ? { history } : {}),
+    resolveFinding,
     clear,
   };
 }
