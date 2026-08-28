@@ -1,12 +1,16 @@
-/* Compact visual hierarchy for the DOM-order heading outline. The semantic
-   treeitem order and aria-level remain unchanged; indentation is deliberately
-   shallow so H5/H6 never drift outside the sidepanel. */
+/* Compact visual hierarchy for the DOM-order heading outline. Branches are
+   expanded by default and can be collapsed independently without truncating
+   heading text or pushing deep H5/H6 content outside the sidepanel. */
 .heading-outline-panel,
 .heading-overlay-toggle,
 .heading-overlay-toggle > span,
 .heading-outline-summary,
 .heading-outline-summary > span,
+.heading-tree-controls,
 .heading-tree,
+.heading-tree-branch,
+.heading-tree-children,
+.heading-node-row,
 .heading-selection {
   min-width: 0;
   max-width: 100%;
@@ -30,6 +34,38 @@
   overflow-wrap: anywhere;
 }
 
+.heading-tree-controls {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 6px;
+}
+
+.heading-tree-controls button {
+  min-height: 34px;
+  padding: 6px 9px;
+  border: 1.5px solid var(--ft-border);
+  border-radius: var(--ft-radius-xs);
+  background: var(--ft-surface);
+  color: var(--ft-ink);
+  box-shadow: 1px 1px 0 var(--ft-border);
+  cursor: pointer;
+  font-size: 10.5px;
+  font-weight: 800;
+}
+
+.heading-tree-controls button:hover:not(:disabled),
+.heading-tree-controls button:focus-visible {
+  border-color: var(--ft-accent-strong);
+  background: var(--ft-accent-soft);
+}
+
+.heading-tree-controls button:disabled {
+  opacity: .42;
+  cursor: default;
+  box-shadow: none;
+}
+
 .heading-tree {
   position: relative;
   width: 100%;
@@ -37,6 +73,13 @@
   gap: 7px;
   padding: 4px 0;
   overflow-x: hidden;
+}
+
+.heading-tree-branch,
+.heading-tree-children {
+  width: 100%;
+  display: grid;
+  gap: 7px;
 }
 
 .heading-tree .heading-tree-row {
@@ -99,6 +142,17 @@
   box-shadow: inset 3px 0 0 var(--ft-danger);
 }
 
+.heading-node-row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 6px;
+  align-items: start;
+}
+
+.heading-node-row.has-children {
+  grid-template-columns: minmax(0, 1fr) 34px;
+}
+
 .heading-tree-row .heading-node {
   min-width: 0;
   max-width: 100%;
@@ -107,7 +161,7 @@
   align-content: center;
   gap: 2px;
   padding: 7px 9px;
-  overflow: hidden;
+  overflow: visible;
   border: 1px solid var(--ft-border-soft);
   border-radius: var(--ft-radius-sm);
   background: var(--ft-surface);
@@ -121,7 +175,7 @@
   background: var(--ft-accent-soft);
 }
 
-.heading-tree-row[aria-selected='true'] .heading-node {
+.heading-tree-branch[aria-selected='true'] > .heading-tree-row .heading-node {
   border-color: var(--ft-accent-strong);
   box-shadow: inset 3px 0 0 var(--ft-accent);
 }
@@ -132,7 +186,7 @@
   box-shadow: inset 4px 0 0 var(--ft-danger);
 }
 
-.heading-tree-row.has-signal[aria-selected='true'] .heading-node {
+.heading-tree-branch.has-signal[aria-selected='true'] > .heading-tree-row .heading-node {
   border-color: var(--ft-danger);
   box-shadow: inset 4px 0 0 var(--ft-danger);
 }
@@ -169,6 +223,36 @@
   color: var(--ft-danger);
 }
 
+.heading-branch-toggle {
+  width: 34px;
+  min-width: 34px;
+  height: 34px;
+  min-height: 34px;
+  display: grid;
+  place-items: center;
+  padding: 0;
+  border: 1.5px solid var(--ft-border);
+  border-radius: var(--ft-radius-sm);
+  background: var(--ft-surface);
+  color: var(--ft-ink);
+  box-shadow: 1px 1px 0 var(--ft-border);
+  cursor: pointer;
+  font-size: 18px;
+  font-weight: 800;
+  line-height: 1;
+}
+
+.heading-branch-toggle:hover,
+.heading-branch-toggle:focus-visible {
+  border-color: var(--ft-accent-strong);
+  background: var(--ft-accent-soft);
+}
+
+.heading-branch-toggle:active {
+  box-shadow: none;
+  transform: translate(1px, 1px);
+}
+
 .heading-selection {
   overflow: hidden;
   border-left: 4px solid var(--ft-accent);
@@ -186,5 +270,13 @@
 
   .heading-outline-summary {
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+  }
+
+  .heading-tree-controls {
+    justify-content: stretch;
+  }
+
+  .heading-tree-controls button {
+    flex: 1 1 120px;
   }
 }
