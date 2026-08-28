@@ -32,6 +32,7 @@ import './control-states.css';
 import './ui-scale.css';
 import './requested-polish.css';
 import './memory-walkthrough-polish.css';
+import './final-ui-corrections.css';
 
 const PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'];
 const root = document.getElementById('root');

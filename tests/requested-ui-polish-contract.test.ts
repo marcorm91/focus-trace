@@ -9,7 +9,8 @@ function source(path: string): string {
 describe('requested FocusTrace UI polish', () => {
   it('keeps quick actions neutral, semibold and in the requested order', () => {
     const css = source('entrypoints/sidepanel/requested-polish.css');
-    const finalCss = source('entrypoints/sidepanel/memory-walkthrough-polish.css');
+    const finalCss = source('entrypoints/sidepanel/final-ui-corrections.css');
+    const componentCss = source('entrypoints/sidepanel/component-scan.css');
     const app = source('entrypoints/sidepanel/App.tsx');
 
     expect(app.indexOf('scan-action')).toBeLessThan(app.indexOf('component-scan-action'));
@@ -17,25 +18,25 @@ describe('requested FocusTrace UI polish', () => {
     expect(css).toContain('.quick-actions .component-scan-action { order: 2; }');
     expect(css).toContain('.quick-actions .site-audit-launch { order: 3; }');
     expect(css).toContain('.quick-actions .focus-walk-action { order: 4; }');
-    expect(css).toContain('background: var(--ft-surface);');
     expect(css).toContain('font-weight: 600;');
-    expect(finalCss).toContain('.quick-actions .primary,');
+    expect(finalCss).toContain('.app-shell .quick-start .quick-actions > button');
     expect(finalCss).toContain('background: var(--ft-surface);');
     expect(finalCss).toContain('background: var(--ft-accent-soft);');
+    expect(componentCss).not.toContain('!important');
   });
 
-  it('loads the final cross-view polish after the existing sidepanel cascade', () => {
+  it('loads the authoritative correction layer after the existing sidepanel cascade', () => {
     const entry = source('entrypoints/sidepanel/main.tsx');
     expect(entry.indexOf("import './requested-polish.css';")).toBeGreaterThan(entry.indexOf("import './ui-scale.css';"));
     expect(entry.indexOf("import './memory-walkthrough-polish.css';")).toBeGreaterThan(entry.indexOf("import './requested-polish.css';"));
+    expect(entry.indexOf("import './final-ui-corrections.css';")).toBeGreaterThan(entry.indexOf("import './memory-walkthrough-polish.css';"));
   });
 
   it('uses the same light-blue hover language for reset, Instructions and Settings', () => {
-    const css = source('entrypoints/sidepanel/memory-walkthrough-polish.css');
+    const css = source('entrypoints/sidepanel/final-ui-corrections.css');
 
-    expect(css).toContain('.topbar-tools .reset-all-trigger:not(:disabled):hover');
-    expect(css).toContain('.topbar-tools .instructions-trigger:not(:disabled):hover');
-    expect(css).toContain('.topbar-tools .settings-trigger:not(:disabled):hover');
+    expect(css).toContain('.app-shell .topbar .topbar-tools > button:not(:disabled):hover');
+    expect(css).toContain(".settings-trigger[aria-pressed='true']:not(:disabled):hover");
     expect(css).toContain('background: var(--ft-accent-soft);');
   });
 
@@ -52,6 +53,17 @@ describe('requested FocusTrace UI polish', () => {
     expect(css).toContain('box-shadow: none;');
   });
 
+  it('presents Trace session controls as normal neutral FocusTrace actions', () => {
+    const css = source('entrypoints/sidepanel/final-ui-corrections.css');
+
+    expect(css).toContain('.trace-hero .trace-hero-actions');
+    expect(css).toContain('border-top: 1px solid var(--ft-border-faint);');
+    expect(css).toContain('.trace-hero .trace-record');
+    expect(css).toContain('.trace-hero .trace-reset');
+    expect(css).toContain('background: var(--ft-surface);');
+    expect(css).toContain('background: var(--ft-accent-soft);');
+  });
+
   it('makes heading level tones more distinct and switches foreground at mid-scale', () => {
     const css = source('entrypoints/sidepanel/requested-polish.css');
 
@@ -64,9 +76,10 @@ describe('requested FocusTrace UI polish', () => {
     expect(css).toContain('--heading-level-foreground: var(--ft-ink);');
   });
 
-  it('offers list and walkthrough Memory history plus dated JSON baseline comparison', () => {
+  it('keeps Memory list compact, removes link-like hover styling and preserves walkthrough navigation', () => {
     const component = source('entrypoints/sidepanel/components/FocusMemorySummary.tsx');
     const css = source('entrypoints/sidepanel/memory-walkthrough-polish.css');
+    const finalCss = source('entrypoints/sidepanel/final-ui-corrections.css');
 
     expect(component).toContain("type FindingHistoryMode = 'list' | 'step';");
     expect(component).toContain("tr(language, 'List', 'Lista')");
@@ -83,6 +96,12 @@ describe('requested FocusTrace UI polish', () => {
     expect(css).toContain('.focus-memory-finding.state-regressed');
     expect(css).toContain('.focus-memory-finding.state-resolved');
     expect(css).toContain('.focus-memory-history-list.is-step');
+    expect(finalCss).toContain('.focus-memory-history-list:not(.is-step)');
+    expect(finalCss).toContain('overflow-y: auto;');
+    expect(finalCss).toContain('max-height: min(54vh, 540px);');
+    expect(finalCss).toContain('.focus-memory-finding-link:not(:disabled):hover');
+    expect(finalCss).toContain('text-decoration: none;');
+    expect(finalCss).toContain('cursor: pointer;');
     expect(component).toContain("format: 'focustrace-memory-baseline'");
     expect(component).toContain('exportedAt: new Date().toISOString()');
     expect(component).toContain('analyzedAt: new Date(scan.scannedAt).toISOString()');
