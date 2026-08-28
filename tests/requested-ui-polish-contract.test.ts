@@ -9,6 +9,7 @@ function source(path: string): string {
 describe('requested FocusTrace UI polish', () => {
   it('keeps quick actions neutral, semibold and in the requested order', () => {
     const css = source('entrypoints/sidepanel/requested-polish.css');
+    const finalCss = source('entrypoints/sidepanel/memory-walkthrough-polish.css');
     const app = source('entrypoints/sidepanel/App.tsx');
 
     expect(app.indexOf('scan-action')).toBeLessThan(app.indexOf('component-scan-action'));
@@ -18,11 +19,24 @@ describe('requested FocusTrace UI polish', () => {
     expect(css).toContain('.quick-actions .focus-walk-action { order: 4; }');
     expect(css).toContain('background: var(--ft-surface);');
     expect(css).toContain('font-weight: 600;');
+    expect(finalCss).toContain('.quick-actions .primary,');
+    expect(finalCss).toContain('background: var(--ft-surface);');
+    expect(finalCss).toContain('background: var(--ft-accent-soft);');
   });
 
-  it('loads the cross-view polish after the existing sidepanel cascade', () => {
+  it('loads the final cross-view polish after the existing sidepanel cascade', () => {
     const entry = source('entrypoints/sidepanel/main.tsx');
     expect(entry.indexOf("import './requested-polish.css';")).toBeGreaterThan(entry.indexOf("import './ui-scale.css';"));
+    expect(entry.indexOf("import './memory-walkthrough-polish.css';")).toBeGreaterThan(entry.indexOf("import './requested-polish.css';"));
+  });
+
+  it('uses the same light-blue hover language for reset, Instructions and Settings', () => {
+    const css = source('entrypoints/sidepanel/memory-walkthrough-polish.css');
+
+    expect(css).toContain('.topbar-tools .reset-all-trigger:not(:disabled):hover');
+    expect(css).toContain('.topbar-tools .instructions-trigger:not(:disabled):hover');
+    expect(css).toContain('.topbar-tools .settings-trigger:not(:disabled):hover');
+    expect(css).toContain('background: var(--ft-accent-soft);');
   });
 
   it('uses flat runtime surfaces and a tab-style Trace inspector switcher', () => {
@@ -50,14 +64,25 @@ describe('requested FocusTrace UI polish', () => {
     expect(css).toContain('--heading-level-foreground: var(--ft-ink);');
   });
 
-  it('offers list and one-by-one Memory history plus dated JSON baseline comparison', () => {
+  it('offers list and walkthrough Memory history plus dated JSON baseline comparison', () => {
     const component = source('entrypoints/sidepanel/components/FocusMemorySummary.tsx');
+    const css = source('entrypoints/sidepanel/memory-walkthrough-polish.css');
 
     expect(component).toContain("type FindingHistoryMode = 'list' | 'step';");
     expect(component).toContain("tr(language, 'List', 'Lista')");
-    expect(component).toContain("tr(language, 'One by one', 'Uno a uno')");
+    expect(component).toContain("tr(language, 'Walkthrough', 'Recorrido')");
     expect(component).toContain("tr(language, 'Previous finding', 'Fallo anterior')");
     expect(component).toContain("tr(language, 'Next finding', 'Fallo siguiente')");
+    expect(component).toContain('currentFindingSelectors(scan)');
+    expect(component).toContain('locateMemoryFindingInPage');
+    expect(component).toContain('focus-memory-finding-link');
+    expect(component).toContain('focusTarget: false');
+    expect(component).toContain("className=\"focus-memory-clear\"");
+    expect(component.indexOf('className="focus-memory-clear"')).toBeLessThan(component.indexOf('className="focus-memory-controls"'));
+    expect(css).toContain('.focus-memory-finding.state-present');
+    expect(css).toContain('.focus-memory-finding.state-regressed');
+    expect(css).toContain('.focus-memory-finding.state-resolved');
+    expect(css).toContain('.focus-memory-history-list.is-step');
     expect(component).toContain("format: 'focustrace-memory-baseline'");
     expect(component).toContain('exportedAt: new Date().toISOString()');
     expect(component).toContain('analyzedAt: new Date(scan.scannedAt).toISOString()');
