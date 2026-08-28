@@ -7,6 +7,7 @@ import {
   pruneFocusMemoryObservations,
   recordFocusMemoryObservation,
   type FocusMemoryComparison,
+  type FocusMemoryFindingHistory,
   type FocusMemorySettings,
 } from '../../shared/focus-memory';
 import type { ScanResult } from '../../shared/types';
@@ -16,6 +17,7 @@ export interface FocusMemoryViewState {
   suppressed: boolean;
   hasHistory: boolean;
   comparison?: FocusMemoryComparison;
+  history?: FocusMemoryFindingHistory[];
 }
 
 let memoryAccessQueue: Promise<unknown> = Promise.resolve();
@@ -102,11 +104,13 @@ export function readFocusMemoryForScan(scan: ScanResult): Promise<FocusMemoryVie
       };
     }
 
+    const result = recordFocusMemoryObservation(store, scan);
     return {
       enabled: true,
       suppressed: false,
       hasHistory: store.observations.length > 0,
-      comparison: recordFocusMemoryObservation(store, scan).comparison,
+      comparison: result.comparison,
+      history: result.history,
     };
   });
 }
