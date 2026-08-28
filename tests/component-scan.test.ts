@@ -55,7 +55,12 @@ describe('component-scoped static analysis', () => {
 
     expect(warnings).toHaveLength(1);
     expect(warnings[0]?.evidence).toContain('used by 2 elements');
-    expect(warnings[0]?.targets[0]).toContain('shared-id');
+
+    const target = warnings[0]?.targets[0];
+    expect(target).toBeTruthy();
+    expect(target).not.toBe('#shared-id');
+    expect(document.querySelectorAll(target!)).toHaveLength(1);
+    expect(document.querySelector(target!)).toBe(document.querySelector('#checkout button'));
   });
 
   it('does not run page-global title, language or heading-outline checks for a component', () => {
