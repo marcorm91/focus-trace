@@ -96,8 +96,11 @@ export class RuntimeInteractionTracker {
   }
 
   reset(): void {
+    // Reset only the currently correlated action. The sequence intentionally
+    // keeps increasing for the lifetime of this content-script instance so a
+    // breakpoint pause/resume can never reuse an interactionId that is still
+    // present in the session.
     this.active = null;
-    this.sequence = 0;
   }
 }
 
