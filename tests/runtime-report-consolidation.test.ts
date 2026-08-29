@@ -82,4 +82,59 @@ describe('runtime report consolidation', () => {
     expect(model.runtimeOccurrences).toBe(2);
     expect(model.traceStories).toHaveLength(2);
   });
+
+  it('preserves distinct runtime findings produced by the same interaction', () => {
+    const interactionId = 'ix-dialog-open';
+    const events: RuntimeEvent[] = [
+      {
+        id: 'trigger',
+        timestamp: 100,
+        kind: 'click',
+        severity: 'info',
+        title: 'Click → Open settings',
+        interactionId,
+        element: { tag: 'button', selector: '#open-settings', name: 'Open settings' },
+      },
+      {
+        id: 'dialog-focus',
+        timestamp: 150,
+        kind: 'dialog-open',
+        severity: 'serious',
+        title: 'Dialog opened while focus remained outside',
+        interactionId,
+        outcome: 'review',
+        ruleId: 'FT-APG-001',
+        element: { tag: 'div', role: 'dialog', selector: '#settings-dialog' },
+        causes: [{
+          type: 'DIALOG_OPENED_WITHOUT_FOCUS',
+          confidence: 'deterministic',
+          summary: 'A dialog opened but focus was not established inside it.',
+        }],
+        references: [],
+      },
+      {
+        id: 'dialog-name',
+        timestamp: 200,
+        kind: 'aria-widget',
+        severity: 'serious',
+        title: 'Opened dialog has no accessible name',
+        interactionId,
+        outcome: 'review',
+        ruleId: 'FT-APG-007',
+        element: { tag: 'div', role: 'dialog', selector: '#settings-dialog' },
+        references: [],
+      },
+    ];
+
+    const model = buildSessionReportModel(undefined, events, 'en');
+
+    expect(model.runtimeFindings).toBe(2);
+    expect(model.runtimeOccurrences).toBe(2);
+    expect(model.traceStories).toHaveLength(2);
+    expect(model.traceStories.map((story) => story.result)).toEqual(expect.arrayContaining([
+      'The dialog opened but focus stayed outside it',
+      'Opened dialog has no accessible name',
+    ]));
+    expect(model.traceStories.every((story) => story.interactionNumber === 1)).toBe(true);
+  });
 });
