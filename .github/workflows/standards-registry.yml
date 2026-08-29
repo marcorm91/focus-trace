@@ -9,8 +9,13 @@ on:
       - 'tools/act-sync.mjs'
       - 'tools/aria-sync.mjs'
       - 'tools/language-sync.mjs'
+      - 'tools/wcag-sync.mjs'
+      - 'tools/html-sync.mjs'
+      - 'tools/specs-sync.mjs'
+      - 'tools/*-diff.mjs'
       - 'tools/standards-sync.mjs'
       - 'tools/standards-utils.mjs'
+      - 'tools/standards-validate.mjs'
       - '.github/workflows/standards-registry.yml'
 
 permissions:
@@ -25,7 +30,7 @@ concurrency:
 jobs:
   sync:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
@@ -36,24 +41,36 @@ jobs:
           node-version: 22
 
       - name: Preserve current snapshots
+        shell: bash
         run: |
           cp generated/act-catalog.json /tmp/act-before.json
           cp generated/aria-registry.json /tmp/aria-before.json
           cp generated/language-subtags.json /tmp/language-before.json
+          cp generated/wcag-catalog.json /tmp/wcag-before.json
+          cp generated/html-obsolete-catalog.json /tmp/html-before.json
+          cp generated/standards-sources.json /tmp/sources-before.json
 
       - name: Sync public standards registries
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node tools/standards-sync.mjs
 
-      - name: Validate generated registries
+      - name: Validate generated registries and cross-links
         run: node tools/standards-validate.mjs
 
       - name: Detect registry changes
         id: changes
         shell: bash
         run: |
-          if git diff --quiet -- generated/act-catalog.json generated/aria-registry.json generated/language-subtags.json; then
+          FILES=(
+            generated/act-catalog.json
+            generated/aria-registry.json
+            generated/language-subtags.json
+            generated/wcag-catalog.json
+            generated/html-obsolete-catalog.json
+            generated/standards-sources.json
+          )
+          if git diff --quiet -- "${FILES[@]}"; then
             echo 'changed=false' >> "$GITHUB_OUTPUT"
           else
             echo 'changed=true' >> "$GITHUB_OUTPUT"
@@ -61,6 +78,9 @@ jobs:
               /tmp/act-before.json generated/act-catalog.json \
               /tmp/aria-before.json generated/aria-registry.json \
               /tmp/language-before.json generated/language-subtags.json \
+              /tmp/wcag-before.json generated/wcag-catalog.json \
+              /tmp/html-before.json generated/html-obsolete-catalog.json \
+              /tmp/sources-before.json generated/standards-sources.json \
               > /tmp/standards-report.md
             cat /tmp/standards-report.md >> "$GITHUB_STEP_SUMMARY"
           fi
@@ -71,7 +91,8 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add generated/act-catalog.json generated/aria-registry.json generated/language-subtags.json
+          git add generated/act-catalog.json generated/aria-registry.json generated/language-subtags.json \
+            generated/wcag-catalog.json generated/html-obsolete-catalog.json generated/standards-sources.json
           git commit -m 'chore: sync standards registries'
           git push origin "HEAD:${GITHUB_REF_NAME}"
 
@@ -85,7 +106,8 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git checkout -B "$BRANCH"
-          git add generated/act-catalog.json generated/aria-registry.json generated/language-subtags.json
+          git add generated/act-catalog.json generated/aria-registry.json generated/language-subtags.json \
+            generated/wcag-catalog.json generated/html-obsolete-catalog.json generated/standards-sources.json
           git commit -m 'chore: sync standards registries'
           git push origin "$BRANCH" --force
 
