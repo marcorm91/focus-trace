@@ -76,6 +76,11 @@ const RULE_TITLES_ES: Record<string, string> = {
   'FT-REVIEW-001': 'Un tabindex positivo puede crear un orden de foco inesperado',
   'FT-REVIEW-002': 'Los niveles de encabezado se saltan un nivel',
   'FT-REVIEW-003': 'El campo de formulario depende del placeholder como nombre accesible',
+  'FT-REVIEW-004': 'La página expone un landmark principal',
+  'FT-REVIEW-005': 'Varios landmarks principales requieren revisión estructural',
+  'FT-REVIEW-006': 'Una interacción de tipo botón debería priorizar la semántica nativa de button',
+  'FT-REVIEW-007': 'Una navegación de tipo enlace debería priorizar la semántica nativa de enlace',
+  'FT-REVIEW-008': 'Un elemento interactivo genérico requiere revisión semántica',
   'FT-RUNTIME-001': 'El elemento con foco se eliminó durante la interacción',
   'FT-RUNTIME-002': 'El componente con foco puede estar completamente oculto por otro contenido',
   'FT-RUNTIME-003': 'La ruta SPA cambió sin actualizar el título del documento',
@@ -147,6 +152,21 @@ const SCAN_COPY_ES: Record<string, { description: string; evidence?: string }> =
   },
   'FT-REVIEW-003': {
     description: 'El control tiene un nombre calculado programáticamente, pero procede únicamente del placeholder. Revisa si existe una etiqueta visible y persistente.',
+  },
+  'FT-REVIEW-004': {
+    description: 'La página no expone un elemento <main> visible ni un landmark role="main". Revisa si el contenido principal debe identificarse mediante un landmark principal para facilitar orientación y navegación.',
+  },
+  'FT-REVIEW-005': {
+    description: 'La página expone más de un landmark principal. Revisa si debe existir una única región principal o si las regiones múltiples son realmente necesarias y están claramente diferenciadas.',
+  },
+  'FT-REVIEW-006': {
+    description: 'Este elemento parece ejecutar una acción con semántica de botón. Prioriza <button type="button"> cuando sea posible; role="button" debe quedar como alternativa cuando no pueda utilizarse el elemento nativo y requiere reproducir correctamente teclado y foco.',
+  },
+  'FT-REVIEW-007': {
+    description: 'Este elemento parece realizar navegación con semántica de enlace. Prioriza <a href="…"> para conservar el comportamiento nativo del navegador y de las tecnologías de asistencia; usa role="link" solo cuando no sea posible utilizar un enlace nativo.',
+  },
+  'FT-REVIEW-008': {
+    description: 'FocusTrace ha detectado interacción sobre un elemento genérico, pero no puede determinar si representa una acción, navegación u otro widget. Revisa la intención antes de asignar semántica y prioriza el elemento HTML nativo correspondiente cuando exista.',
   },
 };
 
