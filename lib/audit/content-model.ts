@@ -81,7 +81,7 @@ function isValidDescriptionSequence(elements: Element[]): boolean {
 function evaluateRequiredContexts(root: ScanRoot, signals: StructuralHtmlSignal[]) {
   for (const element of scopedElements(root, 'li')) {
     if (!['UL', 'OL', 'MENU'].includes(element.parentElement?.tagName ?? '')) {
-      add(signals, 'parent-context', element, `<li> requires a direct <ul>, <ol> or <menu> parent; current parent is <${tag(element.parentElement)}>.'`);
+      add(signals, 'parent-context', element, `<li> requires a direct <ul>, <ol> or <menu> parent; current parent is <${tag(element.parentElement)}>.`);
     }
   }
 
