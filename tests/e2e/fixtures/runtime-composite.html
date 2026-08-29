@@ -45,6 +45,7 @@
     virtualTree.addEventListener('keydown', (event) => {
       if (event.key !== 'ArrowDown') return;
       virtualTree.setAttribute('aria-activedescendant', 'virtual-two');
+      virtualTree.classList.add('virtual-focus-moved');
     });
   </script>
 </body>
