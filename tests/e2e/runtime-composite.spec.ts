@@ -30,7 +30,7 @@ test('records composite widget reviews and virtual focus without inflating findi
   const virtualFocus = session.events.find((event) => event.kind === 'virtual-focus' && event.element?.selector === '#virtual-two');
   const virtualKey = session.events.find((event) =>
     event.kind === 'keydown'
-    && event.key === 'ArrowDown'
+    && event.title === 'Key: ArrowDown'
     && event.element?.selector === '#virtual-tree');
   expect(virtualFocus).toMatchObject({
     severity: 'info',
@@ -38,6 +38,7 @@ test('records composite widget reviews and virtual focus without inflating findi
   });
   expect(virtualFocus?.outcome).toBeUndefined();
   expect(virtualFocus?.ruleId).toBeUndefined();
+  expect(virtualKey).toBeDefined();
   expect(virtualFocus?.interactionId).toBe(virtualKey?.interactionId);
 
   const dynamicVirtualTree = page.getByRole('tree', { name: 'Dynamic files' });
@@ -54,12 +55,13 @@ test('records composite widget reviews and virtual focus without inflating findi
     event.kind === 'virtual-focus' && event.element?.selector === '#dynamic-two');
   const dynamicVirtualKey = session.events.find((event) =>
     event.kind === 'keydown'
-    && event.key === 'ArrowDown'
+    && event.title === 'Key: ArrowDown'
     && event.element?.selector === '#dynamic-virtual-tree');
   expect(dynamicVirtualFocus).toMatchObject({
     severity: 'info',
     element: { role: 'treeitem', selector: '#dynamic-two' },
   });
+  expect(dynamicVirtualKey).toBeDefined();
   expect(dynamicVirtualFocus?.interactionId).toBe(dynamicVirtualKey?.interactionId);
 
   const brokenParent = page.getByRole('treeitem', { name: /Parent/ });
