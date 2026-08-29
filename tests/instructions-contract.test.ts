@@ -69,6 +69,24 @@ describe('README language and instructions contract', () => {
     expect(instructions).toContain('Los avisos señalan riesgos de autoría HTML/ARIA');
   });
 
+  it('explains FocusTrace identifiers, outcomes and report terminology in the product and repo', () => {
+    const instructions = source('entrypoints/sidepanel/views/InstructionsView.tsx');
+    const css = source('entrypoints/sidepanel/instructions.css');
+    const convention = source('docs/RULE_IDENTIFIERS.md');
+
+    expect(instructions).toContain("'Rule legend and identifiers', 'Leyenda de reglas e identificadores'");
+    for (const prefix of ['FT-WCAG-###', 'FT-WARN-###', 'FT-REVIEW-###', 'FT-RUNTIME-###', 'FT-RUNTIME-ARIA-###', 'FT-APG-###']) {
+      expect(instructions).toContain(`<code>${prefix}</code>`);
+      expect(convention).toContain(`\`${prefix}\``);
+    }
+    expect(instructions).toContain("'Prefix, result and severity are different things.', 'Prefijo, resultado y severidad son cosas distintas.'");
+    expect(instructions).toContain("'Finding vs occurrence.', 'Hallazgo vs ocurrencia.'");
+    expect(convention).toContain('Do **not** introduce a new prefix just because a new feature or component exists.');
+    expect(convention).toContain('Tree/Grid runtime work should continue using `FT-RUNTIME-ARIA`');
+    expect(css).toContain('.instructions-legend');
+    expect(css).toContain('grid-template-columns: minmax(126px, max-content) minmax(0, 1fr);');
+  });
+
   it('keeps the instructions trigger centered and the intro text untruncated', () => {
     const css = source('entrypoints/sidepanel/instructions.css');
     const entry = source('entrypoints/sidepanel/index.css');
