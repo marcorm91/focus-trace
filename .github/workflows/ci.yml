@@ -15,7 +15,7 @@ concurrency:
 jobs:
   build:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
       - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020 # v4
@@ -23,11 +23,14 @@ jobs:
           node-version: 22
           cache: npm
       - run: npm ci --no-audit --no-fund
-      - name: Bootstrap IANA language snapshot when empty
+      - name: Bootstrap standards snapshots when empty
         shell: bash
         run: |
-          if grep -q '"languages": 0' generated/language-subtags.json; then
-            npm run language:sync
+          if grep -q '"languages": 0' generated/language-subtags.json \
+            || grep -q '"active": 0' generated/wcag-catalog.json \
+            || grep -q '"obsoleteElements": 0' generated/html-obsolete-catalog.json \
+            || grep -q '"sources": 0' generated/standards-sources.json; then
+            npm run standards:sync
           fi
       - run: npm run standards:validate
       - run: npm run check
@@ -37,12 +40,18 @@ jobs:
       - run: npm run build:edge
       - run: npm run build:firefox
       - run: npm run validate:builds
-      - name: Preserve bootstrapped language registry
+      - name: Preserve bootstrapped standards registries
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
         with:
-          name: language-subtags
-          path: generated/language-subtags.json
+          name: standards-registries
+          path: |
+            generated/act-catalog.json
+            generated/aria-registry.json
+            generated/language-subtags.json
+            generated/wcag-catalog.json
+            generated/html-obsolete-catalog.json
+            generated/standards-sources.json
           if-no-files-found: error
           retention-days: 1
 
