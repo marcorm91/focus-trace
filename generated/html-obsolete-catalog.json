@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "authority": "WHATWG",
+    "specification": "HTML Living Standard",
+    "url": "https://html.spec.whatwg.org/multipage/obsolete.html",
+    "snapshotLabel": "",
+    "obsoleteSectionHash": ""
+  },
+  "summary": {
+    "obsoleteElements": 0,
+    "obsoleteAttributePairs": 0,
+    "obsoleteButConformingWarnings": 0
+  },
+  "obsoleteElements": [],
+  "obsoleteAttributePairs": []
+}
