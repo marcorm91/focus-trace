@@ -192,7 +192,7 @@
   background: var(--ft-surface-subtle);
   color: var(--ft-ink);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 700;
   overflow-wrap: anywhere;
 }
