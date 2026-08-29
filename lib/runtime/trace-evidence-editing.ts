@@ -18,6 +18,16 @@ function focusWalkIntervals(events: RuntimeEvent[]): FocusWalkInterval[] {
     if (event.kind === 'focus-walk-end' && startedAt != null) {
       intervals.push({ startedAt, endedAt: event.timestamp });
       startedAt = undefined;
+      continue;
+    }
+    if (startedAt != null && event.breakpointHits?.length) {
+      // A breakpoint stops runtime instrumentation immediately, so the normal
+      // focus-walk-end event cannot be persisted. Treat the breakpoint event
+      // as the effective end of the automatic interval. Otherwise a manual
+      // Trace resumed afterwards would be incorrectly classified as automatic
+      // and its interactions could not be removed by the user.
+      intervals.push({ startedAt, endedAt: event.timestamp });
+      startedAt = undefined;
     }
   }
 
