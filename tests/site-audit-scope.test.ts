@@ -59,16 +59,22 @@ describe('Site Audit scope modes', () => {
     expect(discovery.urls).toEqual(urls);
   });
 
-  it('renders separate accessible tabs for automatic and manual URL audits', () => {
+  it('renders complete roving tabs for automatic and manual URL audits', () => {
     const app = source('entrypoints/site-audit/main.tsx');
     const scope = source('lib/site-audit/scope.ts');
     const css = source('entrypoints/site-audit/scope-tabs.css');
 
     expect(app).toContain("type SiteAuditInputMode");
-    expect(app).toContain("tr(language, 'Automatic', 'Automático')");
-    expect(app).toContain("tr(language, 'Manual URLs', 'URLs manuales')");
+    expect(app).toContain('useRovingTabs');
+    expect(app).toContain("scopeTabProps('automatic')");
+    expect(app).toContain("scopeTabProps('manual')");
     expect(app).toContain('role="tablist"');
-    expect(app).toContain('role="tabpanel"');
+    expect(app).toContain('aria-controls="site-scope-panel-automatic"');
+    expect(app).toContain('aria-controls="site-scope-panel-manual"');
+    expect(app).toContain('id="site-scope-panel-automatic"');
+    expect(app).toContain('id="site-scope-panel-manual"');
+    expect(app).toContain("hidden={mode !== 'automatic'}");
+    expect(app).toContain("hidden={mode !== 'manual'}");
     expect(app).toContain('selectManualSiteAuditSamples');
     expect(scope).toContain("source: 'manual'");
     expect(css).toContain('.site-scope-tabs');
