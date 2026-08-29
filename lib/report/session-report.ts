@@ -36,6 +36,14 @@ export interface SessionSuggestion {
 
 export type ReportTraceTone = 'review' | 'handled' | 'observed';
 
+export interface ReportTraceOccurrence {
+  id: string;
+  timestamp: number;
+  interactionNumber?: number;
+  trigger: string;
+  chain: string[];
+}
+
 export interface ReportTraceStory {
   id: string;
   tone: ReportTraceTone;
@@ -48,6 +56,10 @@ export interface ReportTraceStory {
   recommendation?: string;
   selector?: string;
   references: StandardReference[];
+  occurrenceCount: number;
+  firstDetectedAt: number;
+  lastDetectedAt: number;
+  occurrences: ReportTraceOccurrence[];
 }
 
 export interface ReportCategorySummary {
@@ -62,6 +74,7 @@ export interface SessionReportModel {
   reviews: number;
   warnings: number;
   runtimeFindings: number;
+  runtimeOccurrences: number;
   causalInteractions: number;
   transitionReviews: number;
   handledTransitions: number;
@@ -71,6 +84,11 @@ export interface SessionReportModel {
   categories: ReportCategorySummary[];
   traceStories: ReportTraceStory[];
   suggestions: SessionSuggestion[];
+}
+
+interface ReportTraceCandidate {
+  identityKey: string;
+  story: ReportTraceStory;
 }
 
 function translated(language: AppLanguage, english: string, spanish: string): string {
@@ -152,12 +170,40 @@ function uniqueStrings(values: string[]): string[] {
   return result;
 }
 
-function storyForInteraction(
+function mergeReferences(left: StandardReference[], right: StandardReference[]): StandardReference[] {
+  const result = [...left];
+  const seen = new Set(left.map((reference) => `${reference.type}|${reference.id}|${reference.url}`));
+  for (const reference of right) {
+    const key = `${reference.type}|${reference.id}|${reference.url}`;
+    if (seen.has(key)) continue;
+    seen.add(key);
+    result.push(reference);
+  }
+  return result;
+}
+
+function semanticIdentityContext(
+  semantic: FocusTransitionSemantic | undefined,
+  selector: string | undefined,
+): string {
+  if (!semantic) return selector ?? 'session';
+  if (semantic.kind === 'loop-detected' && semantic.cycle?.length) return semantic.cycle.join('>');
+  if (semantic.kind === 'unexpected-jump') {
+    return `${semantic.from?.selector ?? 'unknown'}>${semantic.to?.selector ?? 'unknown'}`;
+  }
+  if (semantic.dialog?.selector) return semantic.dialog.selector;
+  if (['focus-restored', 'focus-not-restored'].includes(semantic.kind) && semantic.trigger?.selector) {
+    return semantic.trigger.selector;
+  }
+  return selector ?? 'session';
+}
+
+function candidateForInteraction(
   interaction: RuntimeInteraction,
   interactionNumber: number,
   semantics: FocusTransitionSemantic[],
   language: AppLanguage,
-): ReportTraceStory | undefined {
+): ReportTraceCandidate | undefined {
   const matchingSemantics = semantics.filter((semantic) => semantic.interactionId === interaction.id);
   const semantic = primaryFocusTransitionSemantic(matchingSemantics);
   const cause = interaction.causes[0];
@@ -182,54 +228,119 @@ function storyForInteraction(
     ?? semantic?.from?.selector
     ?? finding?.element?.selector
     ?? interaction.trigger?.element?.selector;
-
-  return {
-    id: `interaction-story-${interaction.id}`,
-    tone,
+  const timestamp = interaction.startedAt;
+  const occurrence: ReportTraceOccurrence = {
+    id: interaction.id,
+    timestamp,
     interactionNumber,
     trigger,
     chain,
-    result: semanticCopy?.label ?? causeCopy?.title ?? (finding ? humanRuntimeEventTitle(finding, language) : undefined) ?? translated(language, 'Runtime signal', 'Señal runtime'),
-    detail: semanticCopy?.detail ?? causeCopy?.summary ?? (language === 'en' ? finding?.detail : undefined) ?? translated(
-      language,
-      'Review the recorded runtime evidence for this interaction.',
-      'Revisa la evidencia runtime registrada para esta interacción.',
-    ),
-    ...(causeCopy?.impact ? { impact: causeCopy.impact } : {}),
-    ...(causeCopy?.recommendation
-      ? { recommendation: causeCopy.recommendation }
-      : recommendationForSemantic(semantic, language)
-        ? { recommendation: recommendationForSemantic(semantic, language)! }
-        : {}),
-    ...(selector ? { selector } : {}),
-    references: referenceSource,
+  };
+  const identityKey = [
+    `semantic:${semantic?.kind ?? 'none'}`,
+    `rule:${finding?.ruleId ?? 'none'}`,
+    `cause:${cause?.type ?? 'none'}`,
+    `context:${semanticIdentityContext(semantic, selector)}`,
+  ].join('|');
+
+  return {
+    identityKey,
+    story: {
+      id: `interaction-story-${interaction.id}`,
+      tone,
+      interactionNumber,
+      trigger,
+      chain,
+      result: semanticCopy?.label ?? causeCopy?.title ?? (finding ? humanRuntimeEventTitle(finding, language) : undefined) ?? translated(language, 'Runtime signal', 'Señal runtime'),
+      detail: semanticCopy?.detail ?? causeCopy?.summary ?? (language === 'en' ? finding?.detail : undefined) ?? translated(
+        language,
+        'Review the recorded runtime evidence for this interaction.',
+        'Revisa la evidencia runtime registrada para esta interacción.',
+      ),
+      ...(causeCopy?.impact ? { impact: causeCopy.impact } : {}),
+      ...(causeCopy?.recommendation
+        ? { recommendation: causeCopy.recommendation }
+        : recommendationForSemantic(semantic, language)
+          ? { recommendation: recommendationForSemantic(semantic, language)! }
+          : {}),
+      ...(selector ? { selector } : {}),
+      references: referenceSource,
+      occurrenceCount: 1,
+      firstDetectedAt: timestamp,
+      lastDetectedAt: timestamp,
+      occurrences: [occurrence],
+    },
   };
 }
 
-function unlinkedRuntimeStories(
+function unlinkedRuntimeCandidates(
   events: RuntimeEvent[],
   representedInteractionIds: Set<string>,
   language: AppLanguage,
-): ReportTraceStory[] {
+): ReportTraceCandidate[] {
   return events
     .filter((event) => event.outcome != null)
     .filter((event) => !event.interactionId || !representedInteractionIds.has(event.interactionId))
-    .map((event) => ({
-      id: `event-story-${event.id}`,
-      tone: 'review' as const,
-      trigger: humanRuntimeEventTitle(event, language),
-      chain: [humanRuntimeEventTitle(event, language)],
-      result: humanRuntimeEventTitle(event, language),
-      detail: language === 'en' && event.detail
-        ? event.detail
-        : translated(
-          language,
-          'Review this runtime finding in the recorded page context.',
-          'Revisa este hallazgo runtime dentro del contexto grabado de la página.',
-        ),
-      ...(event.element?.selector ? { selector: event.element.selector } : {}),
-      references: event.references ?? [],
-    }));
+    .map((event) => {
+      const trigger = humanRuntimeEventTitle(event, language);
+      const chain = [trigger];
+      const selector = event.element?.selector;
+      const cause = event.causes?.[0];
+      const occurrence: ReportTraceOccurrence = {
+        id: event.id,
+        timestamp: event.timestamp,
+        trigger,
+        chain,
+      };
+      return {
+        identityKey: [
+          `event:${event.kind}`,
+          `rule:${event.ruleId ?? 'none'}`,
+          `cause:${cause?.type ?? 'none'}`,
+          `context:${selector ?? 'session'}`,
+        ].join('|'),
+        story: {
+          id: `event-story-${event.id}`,
+          tone: 'review' as const,
+          trigger,
+          chain,
+          result: trigger,
+          detail: language === 'en' && event.detail
+            ? event.detail
+            : translated(
+              language,
+              'Review this runtime finding in the recorded page context.',
+              'Revisa este hallazgo runtime dentro del contexto grabado de la página.',
+            ),
+          ...(selector ? { selector } : {}),
+          references: event.references ?? [],
+          occurrenceCount: 1,
+          firstDetectedAt: event.timestamp,
+          lastDetectedAt: event.timestamp,
+          occurrences: [occurrence],
+        },
+      };
+    });
+}
+
+function consolidateTraceCandidates(candidates: ReportTraceCandidate[]): ReportTraceStory[] {
+  const grouped = new Map<string, ReportTraceStory>();
+  for (const candidate of candidates) {
+    const existing = grouped.get(candidate.identityKey);
+    if (!existing) {
+      grouped.set(candidate.identityKey, { ...candidate.story, occurrences: [...candidate.story.occurrences] });
+      continue;
+    }
+
+    const occurrences = [...existing.occurrences, ...candidate.story.occurrences]
+      .sort((left, right) => left.timestamp - right.timestamp);
+    existing.occurrences = occurrences;
+    existing.occurrenceCount = occurrences.length;
+    existing.firstDetectedAt = occurrences[0]?.timestamp ?? existing.firstDetectedAt;
+    existing.lastDetectedAt = occurrences.at(-1)?.timestamp ?? existing.lastDetectedAt;
+    existing.references = mergeReferences(existing.references, candidate.story.references);
+  }
+  return [...grouped.values()];
 }
 
 export function buildSessionSuggestions(
@@ -373,16 +484,17 @@ export function buildSessionReportModel(
   const journey = buildFocusJourney(events);
   const transitionSemantics = buildFocusTransitionSemantics(events, interactions, journey);
   const representedInteractionIds = new Set<string>();
-  const traceStories: ReportTraceStory[] = [];
+  const traceCandidates: ReportTraceCandidate[] = [];
 
   interactions.forEach((interaction, index) => {
     if (!interaction.correlated) return;
-    const story = storyForInteraction(interaction, index + 1, transitionSemantics, language);
-    if (!story) return;
+    const candidate = candidateForInteraction(interaction, index + 1, transitionSemantics, language);
+    if (!candidate) return;
     representedInteractionIds.add(interaction.id);
-    traceStories.push(story);
+    traceCandidates.push(candidate);
   });
-  traceStories.push(...unlinkedRuntimeStories(events, representedInteractionIds, language));
+  traceCandidates.push(...unlinkedRuntimeCandidates(events, representedInteractionIds, language));
+  const traceStories = consolidateTraceCandidates(traceCandidates);
 
   const allStaticFindings = scan
     ? [...scan.issues, ...scan.review, ...(scan.warnings ?? [])]
@@ -404,7 +516,8 @@ export function buildSessionReportModel(
     failures: scan?.issues.length ?? 0,
     reviews: scan?.review.length ?? 0,
     warnings: scan?.warnings?.length ?? 0,
-    runtimeFindings: events.filter((event) => event.outcome != null).length,
+    runtimeFindings: traceStories.filter((story) => story.tone === 'review').length,
+    runtimeOccurrences: traceCandidates.filter((candidate) => candidate.story.tone === 'review').length,
     causalInteractions: interactions.filter((interaction) => interaction.causes.length > 0).length,
     transitionReviews: transitionSemantics.filter((semantic) => semantic.tone === 'review').length,
     handledTransitions: transitionSemantics.filter((semantic) => semantic.tone === 'positive').length,

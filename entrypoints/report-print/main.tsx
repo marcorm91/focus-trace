@@ -331,7 +331,7 @@ function PrintableReport({ report }: { report: LoadedReport }) {
             <div className={model.failures ? 'is-fail' : ''}><strong>{model.failures}</strong><span>{tr(language, 'Failures', 'Fallos')}</span></div>
             <div><strong>{model.reviews}</strong><span>{tr(language, 'Review', 'Revisión')}</span></div>
             <div><strong>{model.warnings}</strong><span>{tr(language, 'Warnings', 'Avisos')}</span></div>
-            <div className={model.runtimeFindings ? 'is-review' : ''}><strong>{model.runtimeFindings}</strong><span>Runtime</span></div>
+            <div className={model.runtimeFindings ? 'is-review' : ''}><strong>{model.runtimeFindings}</strong><span>{tr(language, 'Runtime findings', 'Hallazgos runtime')}</span></div>
             <div><strong>{model.focusSteps}</strong><span>{tr(language, 'Focus steps', 'Pasos de foco')}</span></div>
           </div>
           <div className="print-category-row">
@@ -392,6 +392,8 @@ function PrintableReport({ report }: { report: LoadedReport }) {
             </div>
           </div>
           <div className="print-inline-metrics">
+            <span><strong>{model.runtimeFindings}</strong> {tr(language, 'runtime findings', 'hallazgos runtime')}</span>
+            <span><strong>{model.runtimeOccurrences}</strong> {tr(language, 'occurrences', 'ocurrencias')}</span>
             <span><strong>{model.focusSteps}</strong> {tr(language, 'focus steps', 'pasos de foco')}</span>
             <span><strong>{model.transitionReviews}</strong> {tr(language, 'to review', 'a revisar')}</span>
             <span><strong>{model.handledTransitions}</strong> {tr(language, 'handled', 'gestionadas')}</span>
@@ -401,16 +403,33 @@ function PrintableReport({ report }: { report: LoadedReport }) {
             <div className="print-trace-list">
               {model.traceStories.map((story) => {
                 const component = story.selector ? componentMap.get(story.selector) : undefined;
+                const firstOccurrence = story.occurrences[0];
+                const lastOccurrence = story.occurrences.at(-1);
                 return (
                   <article className={`print-trace-story tone-${story.tone}`} key={story.id}>
                     <div className="print-trace-head">
                       <span>{story.tone === 'handled' ? '✓' : story.tone === 'review' ? '!' : '•'}</span>
                       <div>
-                        <small>{story.interactionNumber ? `${tr(language, 'Interaction', 'Interacción')} #${story.interactionNumber}` : tr(language, 'Runtime signal', 'Señal runtime')}</small>
+                        <small>
+                          {story.interactionNumber
+                            ? `${tr(language, 'Interaction', 'Interacción')} #${story.interactionNumber}`
+                            : tr(language, 'Runtime signal', 'Señal runtime')}
+                          {story.occurrenceCount > 1
+                            ? ` · ${story.occurrenceCount} ${tr(language, 'occurrences', 'ocurrencias')}`
+                            : ''}
+                        </small>
                         <strong>{story.trigger}</strong>
                       </div>
                     </div>
                     <PrintComponentIdentity component={component} language={language} visualRequested={false} showVisual={false} />
+                    {story.occurrenceCount > 1 && (
+                      <p>
+                        <strong>{tr(language, 'Occurrence range:', 'Rango de ocurrencias:')}</strong>{' '}
+                        {firstOccurrence?.interactionNumber && lastOccurrence?.interactionNumber
+                          ? `${tr(language, 'interaction', 'interacción')} #${firstOccurrence.interactionNumber} → #${lastOccurrence.interactionNumber}`
+                          : `${story.occurrenceCount} ${tr(language, 'recorded signals', 'señales registradas')}`}
+                      </p>
+                    )}
                     <p className="print-chain">{story.chain.join(' → ')}</p>
                     <div className="print-trace-result">
                       <strong>{story.result}</strong>

@@ -223,7 +223,7 @@ export function SessionReportView({
         </div>
         <div className={model.runtimeFindings ? 'is-alert' : ''}>
           <strong>{model.runtimeFindings}</strong>
-          <span>{tr(language, 'runtime', 'runtime')}</span>
+          <span>{tr(language, 'runtime findings', 'hallazgos runtime')}</span>
         </div>
         <div>
           <strong>{model.focusSteps}</strong>
@@ -290,6 +290,8 @@ export function SessionReportView({
             </div>
 
             <div className="report-inline-summary">
+              <span><strong>{model.runtimeFindings}</strong> {tr(language, 'runtime findings', 'hallazgos runtime')}</span>
+              <span><strong>{model.runtimeOccurrences}</strong> {tr(language, 'occurrences', 'ocurrencias')}</span>
               <span><strong>{model.focusSteps}</strong> {tr(language, 'focus steps', 'pasos de foco')}</span>
               <span><strong>{model.transitionReviews}</strong> {tr(language, 'transition reviews', 'transiciones a revisar')}</span>
               <span><strong>{model.handledTransitions}</strong> {tr(language, 'handled', 'correctas')}</span>
@@ -305,7 +307,14 @@ export function SessionReportView({
                       <div className="trace-story-head">
                         <span>{story.tone === 'handled' ? '✓' : story.tone === 'review' ? '⚠' : '•'}</span>
                         <div>
-                          <small>{story.interactionNumber ? `${tr(language, 'Interaction', 'Interacción')} #${story.interactionNumber}` : tr(language, 'Runtime signal', 'Señal runtime')}</small>
+                          <small>
+                            {story.interactionNumber
+                              ? `${tr(language, 'Interaction', 'Interacción')} #${story.interactionNumber}`
+                              : tr(language, 'Runtime signal', 'Señal runtime')}
+                            {story.occurrenceCount > 1
+                              ? ` · ${story.occurrenceCount} ${tr(language, 'occurrences', 'ocurrencias')}`
+                              : ''}
+                          </small>
                           <strong>{story.trigger}</strong>
                         </div>
                       </div>
@@ -333,6 +342,25 @@ export function SessionReportView({
                         <p className="trace-story-references">
                           {story.references.map((reference) => `${reference.type} ${reference.id}`).join(' · ')}
                         </p>
+                      )}
+                      {story.occurrenceCount > 1 && (
+                        <details className="trace-story-occurrences">
+                          <summary>{tr(
+                            language,
+                            `View ${story.occurrenceCount} occurrences`,
+                            `Ver ${story.occurrenceCount} ocurrencias`,
+                          )}</summary>
+                          <ol>
+                            {story.occurrences.map((occurrence) => (
+                              <li key={occurrence.id}>
+                                <strong>{occurrence.interactionNumber
+                                  ? `${tr(language, 'Interaction', 'Interacción')} #${occurrence.interactionNumber}`
+                                  : tr(language, 'Runtime signal', 'Señal runtime')}</strong>
+                                <span>{occurrence.chain.join(' → ')}</span>
+                              </li>
+                            ))}
+                          </ol>
+                        </details>
                       )}
                       {story.selector && (
                         <button type="button" onClick={() => void onLocate(story.selector!)}>

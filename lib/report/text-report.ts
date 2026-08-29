@@ -160,6 +160,7 @@ export function buildTextSessionReport({
     `${lineLabel(language, 'Static reviews', 'Revisiones estáticas')}: ${model.reviews}`,
     `${lineLabel(language, 'Authoring warnings', 'Avisos de autoría')}: ${model.warnings}`,
     `${lineLabel(language, 'Runtime findings', 'Hallazgos runtime')}: ${model.runtimeFindings}`,
+    `${lineLabel(language, 'Runtime occurrences', 'Ocurrencias runtime')}: ${model.runtimeOccurrences}`,
     `${lineLabel(language, 'Causal interactions', 'Interacciones causales')}: ${model.causalInteractions}`,
     `${lineLabel(language, 'Focus transition reviews', 'Transiciones de foco a revisar')}: ${model.transitionReviews}`,
     `${lineLabel(language, 'Handled focus transitions', 'Transiciones de foco correctas')}: ${model.handledTransitions}`,
@@ -209,6 +210,9 @@ export function buildTextSessionReport({
       lines.push(
         `${index + 1}. [${tone}] ${story.interactionNumber ? `${lineLabel(language, 'Interaction', 'Interacción')} #${story.interactionNumber} · ` : ''}${story.trigger}`,
         ...componentLines(component, language),
+        ...(story.occurrenceCount > 1
+          ? [`   ${lineLabel(language, 'Occurrences', 'Ocurrencias')}: ${story.occurrenceCount}`]
+          : []),
         `   ${lineLabel(language, 'Trace', 'Traza')}: ${story.chain.join(' → ')}`,
         `   ${lineLabel(language, 'Result', 'Resultado')}: ${story.result}`,
         `   ${story.detail}`,
