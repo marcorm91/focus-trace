@@ -39,6 +39,13 @@ const ARROW_CONSUMING_ROLES = new Set([
   'menubar',
   'tab',
 ]);
+const ARROW_CONSUMING_ANCESTOR_SELECTOR = [
+  '[role="radiogroup"]',
+  '[role="menu"]',
+  '[role="menubar"]',
+  '[role="listbox"]',
+  '[role="toolbar"]',
+].join(', ');
 
 const ARIA_EXPANDED_REFERENCE: StandardReference = {
   type: 'WAI-ARIA',
@@ -133,11 +140,30 @@ function compositeForTarget(target: Element): Element | undefined {
     .find((candidate) => accessibilityOwns(candidate, target));
 }
 
+function nativeRadioGroupUsesArrows(target: Element): boolean {
+  if (!(target instanceof HTMLInputElement) || target.type.toLowerCase() !== 'radio' || !target.name) return false;
+  return [...document.querySelectorAll('input[type="radio"]')].some((candidate) =>
+    candidate instanceof HTMLInputElement
+    && candidate !== target
+    && candidate.name === target.name
+    && candidate.form === target.form);
+}
+
 function targetConsumesArrowKeys(target: Element, composite: Element): boolean {
   if (target === composite) return false;
   const role = semanticRole(target);
   if (role && ARROW_CONSUMING_ROLES.has(role)) return true;
-  if (target.matches('input, textarea, select')) return true;
+  if (nativeRadioGroupUsesArrows(target)) return true;
+
+  const arrowWidget = target.closest(ARROW_CONSUMING_ANCESTOR_SELECTOR);
+  if (arrowWidget && arrowWidget !== composite && accessibilityOwns(composite, arrowWidget)) return true;
+
+  if (target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) return true;
+  if (target instanceof HTMLInputElement) {
+    const type = target.type.toLowerCase();
+    if (['button', 'submit', 'reset', 'checkbox', 'image'].includes(type)) return false;
+    return true;
+  }
   return target.getAttribute('contenteditable')?.trim().toLowerCase() === 'true';
 }
 
