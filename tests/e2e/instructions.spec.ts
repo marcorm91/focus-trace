@@ -44,7 +44,7 @@ test('instructions is a focused bilingual guide and Back restores the previous w
   await expect(legendCard.getByText('FT-WCAG-###', { exact: true })).toBeVisible();
   await expect(legendCard.getByText('FT-RUNTIME-ARIA-###', { exact: true })).toBeVisible();
   await expect(legendCard.getByText('FT-APG-###', { exact: true })).toBeVisible();
-  await expect(legendCard.getByText(/Prefix, result and severity|Prefijo, resultado y severidad/)).toBeVisible();
+  await expect(legendCard.getByText(/Family, result and severity|Familia, resultado y severidad/)).toBeVisible();
   await expect(legendCard.getByText(/Finding vs occurrence|Hallazgo vs ocurrencia/)).toBeVisible();
 
   await expect(panel.getByRole('navigation', { name: /FocusTrace sections|Secciones de FocusTrace/ })).not.toBeVisible();
