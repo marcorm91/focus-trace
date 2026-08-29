@@ -54,7 +54,6 @@ describe('standards registry coverage', () => {
 
   it('monitors every standards family directly used by FocusTrace', () => {
     const ids = new Set(sourcesRegistry.sources.map((source) => source.id));
-    expect(ids).toEqual(expect.objectContaining ? ids : ids);
     for (const required of ['wcag22', 'html', 'html-obsolete', 'wai-aria', 'accname', 'html-aam', 'core-aam', 'apg', 'mime-sniff', 'iana-language-subtags']) {
       expect(ids.has(required), `Missing monitored source ${required}`).toBe(true);
     }
