@@ -34,10 +34,36 @@ test('records composite widget reviews and virtual focus without inflating findi
           const mutation = mutations.find((candidate) => candidate.attributeName === 'aria-activedescendant');
           if (!mutation || !(mutation.target instanceof Element)) return;
           const active = document.activeElement;
+          const activeId = mutation.target.getAttribute('aria-activedescendant');
+          const virtual = activeId ? document.getElementById(activeId) : null;
           owner.dataset.ftMutationTargetStrict = String(active === mutation.target);
           owner.dataset.ftMutationTargetSameNode = String(
             active instanceof Element && active.isSameNode(mutation.target),
           );
+          owner.dataset.ftVirtualExists = String(virtual instanceof Element);
+          owner.dataset.ftOwnerContainsVirtual = String(
+            virtual instanceof Element && mutation.target.contains(virtual),
+          );
+          owner.dataset.ftVirtualConnected = String(virtual?.isConnected === true);
+          owner.dataset.ftVirtualDisplay = virtual ? getComputedStyle(virtual).display : 'missing';
+          owner.dataset.ftVirtualVisibility = virtual ? getComputedStyle(virtual).visibility : 'missing';
+
+          void chrome.runtime.sendMessage({
+            type: 'FOCUSTRACE_EVENT',
+            event: {
+              id: `diagnostic-${Date.now()}`,
+              timestamp: Date.now(),
+              kind: 'virtual-focus',
+              severity: 'info',
+              title: 'Diagnostic virtual focus transport',
+              element: {
+                tag: 'div',
+                role: 'treeitem',
+                selector: '#diagnostic-virtual-focus',
+                name: 'Diagnostic',
+              },
+            },
+          });
           observer.disconnect();
         });
         observer.observe(owner, {
@@ -58,6 +84,17 @@ test('records composite widget reviews and virtual focus without inflating findi
   await expect(virtualTree).toHaveAttribute('data-ft-key-target-strict', 'true');
   await expect(virtualTree).toHaveAttribute('data-ft-mutation-target-strict', 'true');
   await expect(virtualTree).toHaveAttribute('data-ft-mutation-target-same-node', 'true');
+  await expect(virtualTree).toHaveAttribute('data-ft-virtual-exists', 'true');
+  await expect(virtualTree).toHaveAttribute('data-ft-owner-contains-virtual', 'true');
+  await expect(virtualTree).toHaveAttribute('data-ft-virtual-connected', 'true');
+  await expect(virtualTree).toHaveAttribute('data-ft-virtual-display', 'block');
+  await expect(virtualTree).toHaveAttribute('data-ft-virtual-visibility', 'visible');
+
+  await waitForSession(
+    extensionWorker,
+    tabId,
+    (state) => state.events.some((event) => event.element?.selector === '#diagnostic-virtual-focus'),
+  );
 
   let session = await waitForSession(
     extensionWorker,
