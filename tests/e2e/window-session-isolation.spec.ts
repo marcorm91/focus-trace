@@ -19,7 +19,7 @@ test('tabs in separate browser windows retain independent FocusTrace session sta
   const secondPage = await context.newPage();
   await secondPage.goto(`${fixtures.origin}/component-scan.html?window=two`);
 
-  const [firstTab, secondTab] = await extensionWorker.evaluate(async (urls) => {
+  const resolvedTabs = await extensionWorker.evaluate(async (urls) => {
     const chromeApi = (globalThis as any).chrome;
     const tabs = await chromeApi.tabs.query({});
     return urls.map((url: string) => {
@@ -28,6 +28,10 @@ test('tabs in separate browser windows retain independent FocusTrace session sta
       return { id: tab.id as number, windowId: tab.windowId as number };
     });
   }, [firstPage.url(), secondPage.url()]);
+
+  const firstTab = resolvedTabs[0];
+  const secondTab = resolvedTabs[1];
+  if (!firstTab || !secondTab) throw new Error('Expected two browser tabs for multi-window isolation test.');
 
   const secondWindow = await extensionWorker.evaluate(async (tabId) => {
     const chromeApi = (globalThis as any).chrome;
