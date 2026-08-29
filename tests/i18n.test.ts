@@ -27,6 +27,25 @@ describe('FocusTrace bilingual presentation', () => {
     expect(issue.targets[0]).toBe('#hero-image');
   });
 
+  it('localizes structural HTML semantic findings', () => {
+    const issue: ScanIssue = {
+      id: 'issue-structural',
+      ruleId: 'FT-WARN-008',
+      title: 'HTML element is used outside its required semantic context',
+      description: 'This native HTML element is outside a required semantic context.',
+      evidence: '<li> requires a direct <ul>, <ol> or <menu> parent.',
+      severity: 'moderate',
+      outcome: 'warning',
+      targets: ['#orphan'],
+      references: [],
+    };
+
+    const spanish = localizedScanIssue(issue, 'es');
+    expect(spanish.title).toContain('contexto semántico requerido');
+    expect(spanish.description).toContain('HTML nativo');
+    expect(spanish.evidence).toContain('<li>');
+  });
+
   it('keeps English as the default explanation language', () => {
     expect(explanationForCause('FOCUSED_NODE_REMOVED').title).toBe('Focus was lost after an element disappeared');
     expect(outcomeLabel('fail', 'simple')).toBe('issue');

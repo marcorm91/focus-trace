@@ -73,14 +73,103 @@ export function validateLanguageRegistry(registry) {
   return true;
 }
 
+export function validateWcagCatalog(catalog) {
+  assert(catalog.schemaVersion >= 1, 'WCAG catalog schemaVersion must be >= 1.');
+  assert(Array.isArray(catalog.criteria), 'WCAG criteria must be an array.');
+  assert(catalog.criteria.length >= 80, 'WCAG catalog unexpectedly contains fewer than 80 success criteria.');
+  const ids = new Set();
+  for (const criterion of catalog.criteria) {
+    assert(/^\d+\.\d+\.\d+$/.test(criterion.id), `Invalid WCAG criterion id: ${criterion.id}.`);
+    assert(!ids.has(criterion.id), `Duplicate WCAG criterion id: ${criterion.id}.`);
+    ids.add(criterion.id);
+    assert(criterion.title && criterion.url, `WCAG ${criterion.id} must have title and url.`);
+    assert(['active', 'removed'].includes(criterion.status), `WCAG ${criterion.id} has invalid status.`);
+    if (criterion.status === 'active') assert(['A', 'AA', 'AAA'].includes(criterion.level), `WCAG ${criterion.id} has invalid level.`);
+    assert(/^[a-f0-9]{64}$/.test(criterion.logicHash), `WCAG ${criterion.id} has invalid logicHash.`);
+  }
+  const active = catalog.criteria.filter((criterion) => criterion.status === 'active');
+  const removed = catalog.criteria.filter((criterion) => criterion.status === 'removed');
+  const byLevel = {
+    A: active.filter((criterion) => criterion.level === 'A').length,
+    AA: active.filter((criterion) => criterion.level === 'AA').length,
+    AAA: active.filter((criterion) => criterion.level === 'AAA').length,
+  };
+  assert(catalog.summary.active === active.length, 'WCAG summary.active does not match criteria.');
+  assert(catalog.summary.removed === removed.length, 'WCAG summary.removed does not match criteria.');
+  assert(catalog.summary.total === catalog.criteria.length, 'WCAG summary.total does not match criteria length.');
+  assert(catalog.summary.A === byLevel.A, 'WCAG summary.A does not match active criteria.');
+  assert(catalog.summary.AA === byLevel.AA, 'WCAG summary.AA does not match active criteria.');
+  assert(catalog.summary.AAA === byLevel.AAA, 'WCAG summary.AAA does not match active criteria.');
+  assert(byLevel.A + byLevel.AA + byLevel.AAA === active.length, 'Every active WCAG criterion must have exactly one conformance level.');
+  return true;
+}
+
+export function validateHtmlObsoleteCatalog(catalog) {
+  assert(catalog.schemaVersion >= 1, 'HTML obsolete catalog schemaVersion must be >= 1.');
+  assert(Array.isArray(catalog.obsoleteElements), 'HTML obsoleteElements must be an array.');
+  assert(catalog.obsoleteElements.length >= 29, 'HTML obsolete element catalog unexpectedly contains fewer than 29 entries.');
+  assert(new Set(catalog.obsoleteElements).size === catalog.obsoleteElements.length, 'HTML obsolete element catalog contains duplicates.');
+  assert(Array.isArray(catalog.obsoleteAttributePairs), 'HTML obsoleteAttributePairs must be an array.');
+  assert(catalog.obsoleteAttributePairs.length >= 80, 'HTML obsolete attribute catalog unexpectedly contains fewer than 80 pairs.');
+  const pairs = new Set();
+  for (const pair of catalog.obsoleteAttributePairs) {
+    assert(pair.attribute && pair.element, 'Every HTML obsolete attribute pair needs attribute and element.');
+    const key = `${pair.attribute}|${pair.element}`;
+    assert(!pairs.has(key), `Duplicate HTML obsolete attribute pair: ${key}.`);
+    pairs.add(key);
+  }
+  assert(/^[a-f0-9]{64}$/.test(catalog.source.obsoleteSectionHash), 'HTML obsoleteSectionHash is invalid.');
+  assert(catalog.summary.obsoleteElements === catalog.obsoleteElements.length, 'HTML obsolete element summary is inconsistent.');
+  assert(catalog.summary.obsoleteAttributePairs === catalog.obsoleteAttributePairs.length, 'HTML obsolete attribute summary is inconsistent.');
+  assert(catalog.summary.obsoleteButConformingWarnings >= 8, 'HTML obsolete-but-conforming warning count is unexpectedly low.');
+  return true;
+}
+
+export function validateStandardsSources(registry) {
+  assert(registry.schemaVersion >= 1, 'Standards source registry schemaVersion must be >= 1.');
+  assert(Array.isArray(registry.sources), 'Standards sources must be an array.');
+  assert(registry.sources.length >= 10, 'Standards source monitor unexpectedly contains fewer than 10 sources.');
+  const ids = new Set();
+  for (const source of registry.sources) {
+    assert(source.id && source.url && source.authority && source.role, 'Every monitored specification needs id, url, authority and role.');
+    assert(!ids.has(source.id), `Duplicate monitored specification id: ${source.id}.`);
+    ids.add(source.id);
+    assert(['normative', 'informative'].includes(source.role), `Specification ${source.id} has invalid role.`);
+    assert(/^[a-f0-9]{64}$/.test(source.contentHash), `Specification ${source.id} has invalid contentHash.`);
+  }
+  assert(registry.summary.sources === registry.sources.length, 'Standards source summary is inconsistent.');
+  assert(registry.summary.normative + registry.summary.informative === registry.sources.length, 'Standards source role summary is inconsistent.');
+  return true;
+}
+
+export function validateCrossRegistryLinks(actCatalog, wcagCatalog) {
+  const wcagIds = new Set(wcagCatalog.criteria.map((criterion) => criterion.id));
+  for (const rule of actCatalog.rules) {
+    for (const criterion of rule.wcag) {
+      assert(wcagIds.has(criterion), `ACT ${rule.id} references WCAG ${criterion}, which is missing from the WCAG catalog.`);
+    }
+  }
+  return true;
+}
+
 if (import.meta.url === `file://${process.argv[1]}`) {
   const [
     actPath = 'generated/act-catalog.json',
     ariaPath = 'generated/aria-registry.json',
     languagePath = 'generated/language-subtags.json',
+    wcagPath = 'generated/wcag-catalog.json',
+    htmlPath = 'generated/html-obsolete-catalog.json',
+    sourcesPath = 'generated/standards-sources.json',
   ] = process.argv.slice(2);
-  validateActCatalog(await load(actPath));
-  validateAriaRegistry(await load(ariaPath));
-  validateLanguageRegistry(await load(languagePath));
-  console.log('Standards registries are valid.');
+  const [act, aria, language, wcag, html, sources] = await Promise.all([
+    load(actPath), load(ariaPath), load(languagePath), load(wcagPath), load(htmlPath), load(sourcesPath),
+  ]);
+  validateActCatalog(act);
+  validateAriaRegistry(aria);
+  validateLanguageRegistry(language);
+  validateWcagCatalog(wcag);
+  validateHtmlObsoleteCatalog(html);
+  validateStandardsSources(sources);
+  validateCrossRegistryLinks(act, wcag);
+  console.log('Standards registries are valid and cross-references are consistent.');
 }

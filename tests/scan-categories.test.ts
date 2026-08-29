@@ -15,4 +15,28 @@ describe('scan categories', () => {
     expect(scanCategoryForRule('FT-WARN-003')).toBe('aria');
     expect(scanCategoryForRule('FT-WARN-004')).toBe('structure');
   });
+
+  it('keeps structural and interactive semantics in the same review area', () => {
+    for (const ruleId of [
+      'FT-REVIEW-004',
+      'FT-REVIEW-005',
+      'FT-REVIEW-006',
+      'FT-REVIEW-007',
+      'FT-REVIEW-008',
+      'FT-REVIEW-009',
+      'FT-REVIEW-010',
+    ]) expect(scanCategoryForRule(ruleId)).toBe('structure');
+  });
+
+  it('keeps HTML authoring and content-model warnings inside Semantics', () => {
+    for (const ruleId of [
+      'FT-WARN-005',
+      'FT-WARN-006',
+      'FT-WARN-007',
+      'FT-WARN-008',
+      'FT-WARN-009',
+      'FT-WARN-010',
+      'FT-WARN-011',
+    ]) expect(scanCategoryForRule(ruleId)).toBe('structure');
+  });
 });
