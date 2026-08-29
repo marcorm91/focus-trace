@@ -11,6 +11,7 @@ import {
   removeSessionInteraction,
   resetSessionState,
   setSessionRecordingState,
+  trimRuntimeEvents,
   updateSessionBreakpoints,
 } from '../lib/runtime/session-state';
 import type { RuntimeBreakpointHit, RuntimeEvent, SessionState } from '../shared/types';
@@ -73,6 +74,40 @@ describe('runtime session state helpers', () => {
     expect(next.events).toHaveLength(MAX_RUNTIME_EVENTS);
     expect(next.events[0]?.id).toBe('2');
     expect(next.events.at(-1)?.id).toBe('999');
+  });
+
+  it('moves the retention boundary backwards instead of splitting a correlated interaction', () => {
+    const events = Array.from({ length: MAX_RUNTIME_EVENTS + 10 }, (_, index) => {
+      const id = String(index + 1);
+      return event(id, {
+        timestamp: index + 1,
+        ...(index >= 5 && index <= 14 ? { interactionId: 'ix-boundary' } : {}),
+      });
+    });
+
+    const trimmed = trimRuntimeEvents(events);
+
+    expect(trimmed[0]?.id).toBe('6');
+    expect(trimmed.filter((item) => item.interactionId === 'ix-boundary')).toHaveLength(10);
+    expect(trimmed.length).toBeGreaterThan(MAX_RUNTIME_EVENTS);
+  });
+
+  it('keeps an automatic focus walk complete when the retention boundary lands inside it', () => {
+    const events: RuntimeEvent[] = [];
+    for (let index = 1; index <= 8; index += 1) events.push(event(String(index), { timestamp: index }));
+    events.push(event('9', { timestamp: 9, kind: 'focus-walk-start' }));
+    for (let index = 10; index <= 20; index += 1) {
+      events.push(event(String(index), { timestamp: index, interactionId: `walk-${index}` }));
+    }
+    events.push(event('21', { timestamp: 21, kind: 'focus-walk-end' }));
+    for (let index = 22; index <= 520; index += 1) events.push(event(String(index), { timestamp: index }));
+
+    const trimmed = trimRuntimeEvents(events);
+
+    expect(trimmed[0]?.kind).toBe('focus-walk-start');
+    expect(trimmed.some((item) => item.kind === 'focus-walk-end')).toBe(true);
+    expect(trimmed.some((item) => item.id === '10')).toBe(true);
+    expect(trimmed.length).toBeGreaterThan(MAX_RUNTIME_EVENTS);
   });
 
   it('resets runtime evidence without losing scan or breakpoint settings', () => {
