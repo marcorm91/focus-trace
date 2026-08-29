@@ -12,7 +12,11 @@ export type AriaWidgetProbe =
   | { kind: 'expanded-control'; control: Element }
   | { kind: 'tab-activation'; tab: Element }
   | { kind: 'menu-open-focus'; trigger: Element; menu: Element }
-  | { kind: 'menu-escape'; menu: Element; trigger?: Element };
+  | { kind: 'menu-escape'; menu: Element; trigger?: Element }
+  | { kind: 'combobox-popup'; combobox: Element }
+  | { kind: 'active-descendant'; owner: Element }
+  | { kind: 'combobox-escape'; combobox: Element; popup?: Element }
+  | { kind: 'listbox-selection'; listbox: Element };
 
 const ARIA_EXPANDED_REFERENCE: StandardReference = {
   type: 'WAI-ARIA',
@@ -27,6 +31,30 @@ const ARIA_SELECTED_REFERENCE: StandardReference = {
   id: 'aria-selected',
   label: 'WAI-ARIA aria-selected',
   url: 'https://www.w3.org/TR/wai-aria-1.2/#aria-selected',
+  status: 'normative',
+};
+
+const ARIA_ACTIVEDESCENDANT_REFERENCE: StandardReference = {
+  type: 'WAI-ARIA',
+  id: 'aria-activedescendant',
+  label: 'WAI-ARIA aria-activedescendant',
+  url: 'https://www.w3.org/TR/wai-aria-1.2/#aria-activedescendant',
+  status: 'normative',
+};
+
+const ARIA_COMBOBOX_REFERENCE: StandardReference = {
+  type: 'WAI-ARIA',
+  id: 'combobox',
+  label: 'WAI-ARIA combobox role',
+  url: 'https://www.w3.org/TR/wai-aria-1.2/#combobox',
+  status: 'normative',
+};
+
+const ARIA_HASPOPUP_REFERENCE: StandardReference = {
+  type: 'WAI-ARIA',
+  id: 'aria-haspopup',
+  label: 'WAI-ARIA aria-haspopup',
+  url: 'https://www.w3.org/TR/wai-aria-1.2/#aria-haspopup',
   status: 'normative',
 };
 
@@ -54,6 +82,25 @@ const APG_DIALOG_REFERENCE: StandardReference = {
   status: 'informative',
 };
 
+const APG_COMBOBOX_REFERENCE: StandardReference = {
+  type: 'WAI-ARIA APG',
+  id: 'combobox',
+  label: 'Combobox Pattern',
+  url: 'https://www.w3.org/WAI/ARIA/apg/patterns/combobox/',
+  status: 'informative',
+};
+
+const APG_LISTBOX_REFERENCE: StandardReference = {
+  type: 'WAI-ARIA APG',
+  id: 'listbox',
+  label: 'Listbox Pattern',
+  url: 'https://www.w3.org/WAI/ARIA/apg/patterns/listbox/',
+  status: 'informative',
+};
+
+const COMBOBOX_POPUP_ROLES = new Set(['listbox', 'tree', 'grid', 'dialog']);
+const ACTIVE_DESCENDANT_POPUP_ROLES = new Set(['listbox', 'tree', 'grid']);
+
 function ids(value: string | null): string[] {
   return value?.trim().split(/\s+/).filter(Boolean) ?? [];
 }
@@ -62,6 +109,17 @@ function controlledElements(control: Element): Element[] {
   return ids(control.getAttribute('aria-controls'))
     .map((id) => document.getElementById(id))
     .filter((element): element is HTMLElement => element != null);
+}
+
+function ariaOwnedElements(owner: Element): Element[] {
+  return ids(owner.getAttribute('aria-owns'))
+    .map((id) => document.getElementById(id))
+    .filter((element): element is HTMLElement => element != null);
+}
+
+function ownsElement(owner: Element, candidate: Element): boolean {
+  if (owner.contains(candidate)) return true;
+  return ariaOwnedElements(owner).some((owned) => owned === candidate || owned.contains(candidate));
 }
 
 function isAvailable(element: Element): boolean {
@@ -76,6 +134,11 @@ function activationAction(action: RuntimeWidgetAction): boolean {
 function menuActivationAction(action: RuntimeWidgetAction): boolean {
   if (activationAction(action)) return true;
   return action.kind === 'keydown' && (action.key === 'ArrowDown' || action.key === 'ArrowUp');
+}
+
+function widgetNavigationAction(action: RuntimeWidgetAction): boolean {
+  if (action.kind === 'click') return true;
+  return ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Enter', ' ', 'Escape'].includes(action.key);
 }
 
 function controlledMenu(trigger: Element): Element | undefined {
@@ -93,6 +156,45 @@ function menuTrigger(menu: Element): Element | undefined {
 
 function tabPanel(tab: Element): Element | undefined {
   return controlledElements(tab).find((element) => semanticRole(element) === 'tabpanel');
+}
+
+function controlledComboboxPopup(combobox: Element): Element | undefined {
+  return controlledElements(combobox).find((element) => COMBOBOX_POPUP_ROLES.has(semanticRole(element) ?? ''));
+}
+
+function listboxForElement(element: Element): Element | undefined {
+  const ancestor = element.closest('[role="listbox"]');
+  if (ancestor) return ancestor;
+  return [...document.querySelectorAll('[role="listbox"][aria-owns]')]
+    .find((candidate) => ownsElement(candidate, element));
+}
+
+function expectedComboboxPopupRole(combobox: Element): string {
+  const hasPopup = combobox.getAttribute('aria-haspopup')?.trim().toLowerCase();
+  if (!hasPopup) return 'listbox';
+  if (hasPopup === 'true') return 'menu';
+  return hasPopup;
+}
+
+function activeDescendantTarget(owner: Element): Element | undefined {
+  const id = owner.getAttribute('aria-activedescendant')?.trim();
+  if (!id) return undefined;
+  return document.getElementById(id) ?? undefined;
+}
+
+function validActiveDescendantRelationship(owner: Element, active: Element): boolean {
+  if (ownsElement(owner, active)) return true;
+  if (!['combobox', 'textbox', 'searchbox'].includes(semanticRole(owner) ?? '')) return false;
+  return controlledElements(owner).some((controlled) => {
+    const role = semanticRole(controlled);
+    return ACTIVE_DESCENDANT_POPUP_ROLES.has(role ?? '') && ownsElement(controlled, active);
+  });
+}
+
+function listboxSelectedOptions(listbox: Element): Element[] {
+  return [...listbox.querySelectorAll('[role="option"]')].filter((option) =>
+    option.getAttribute('aria-selected')?.trim().toLowerCase() === 'true'
+      || option.getAttribute('aria-checked')?.trim().toLowerCase() === 'true');
 }
 
 function pendingFinding(input: {
@@ -134,6 +236,25 @@ export function captureAriaWidgetProbes(
   const menu = controlledMenu(target);
   if (menu && menuActivationAction(action) && action.kind === 'keydown') {
     probes.push({ kind: 'menu-open-focus', trigger: target, menu });
+  }
+
+  if (role === 'combobox' && widgetNavigationAction(action)) {
+    probes.push({ kind: 'combobox-popup', combobox: target });
+    if (target.hasAttribute('aria-activedescendant')) {
+      probes.push({ kind: 'active-descendant', owner: target });
+    }
+    if (action.kind === 'keydown' && action.key === 'Escape') {
+      const popup = controlledComboboxPopup(target);
+      probes.push({ kind: 'combobox-escape', combobox: target, ...(popup ? { popup } : {}) });
+    }
+  }
+
+  const listbox = role === 'listbox' ? target : listboxForElement(target);
+  if (listbox && widgetNavigationAction(action)) {
+    probes.push({ kind: 'listbox-selection', listbox });
+    if (listbox.hasAttribute('aria-activedescendant')) {
+      probes.push({ kind: 'active-descendant', owner: listbox });
+    }
   }
 
   if (action.kind === 'keydown' && action.key === 'Escape') {
@@ -254,6 +375,132 @@ function evaluateMenuEscape(menu: Element, trigger?: Element): PendingRuntimeEve
   });
 }
 
+function evaluateComboboxPopup(combobox: Element): PendingRuntimeEvent | undefined {
+  if (!combobox.isConnected || semanticRole(combobox) !== 'combobox') return undefined;
+  if (combobox.getAttribute('aria-expanded')?.trim().toLowerCase() !== 'true') return undefined;
+
+  const controlled = controlledElements(combobox);
+  if (!controlled.length) {
+    return pendingFinding({
+      ruleId: 'FT-RUNTIME-ARIA-003',
+      title: 'Expanded combobox has no controlled popup',
+      detail: `The expanded combobox ${selectorFor(combobox)} does not resolve aria-controls to a popup element.`,
+      severity: 'serious',
+      outcome: 'warning',
+      element: combobox,
+      references: [ARIA_COMBOBOX_REFERENCE],
+    });
+  }
+
+  const popup = controlled[0]!;
+  const popupRole = semanticRole(popup);
+  if (!popupRole || !COMBOBOX_POPUP_ROLES.has(popupRole)) {
+    return pendingFinding({
+      ruleId: 'FT-RUNTIME-ARIA-003',
+      title: 'Combobox controls an invalid popup role',
+      detail: `The expanded combobox ${selectorFor(combobox)} controls ${selectorFor(popup)}, whose role is ${popupRole ?? 'not exposed'}. WAI-ARIA requires a listbox, tree, grid, or dialog popup.`,
+      severity: 'serious',
+      outcome: 'warning',
+      element: combobox,
+      references: [ARIA_COMBOBOX_REFERENCE],
+    });
+  }
+
+  const expectedRole = expectedComboboxPopupRole(combobox);
+  if (expectedRole !== popupRole) {
+    return pendingFinding({
+      ruleId: 'FT-RUNTIME-ARIA-004',
+      title: 'Combobox popup role does not match aria-haspopup',
+      detail: `The combobox ${selectorFor(combobox)} exposes aria-haspopup as ${expectedRole}, but its controlled popup ${selectorFor(popup)} has role ${popupRole}.`,
+      severity: 'serious',
+      outcome: 'warning',
+      element: combobox,
+      references: [ARIA_COMBOBOX_REFERENCE, ARIA_HASPOPUP_REFERENCE],
+    });
+  }
+
+  return undefined;
+}
+
+function evaluateActiveDescendant(owner: Element): PendingRuntimeEvent | undefined {
+  if (!owner.isConnected || document.activeElement !== owner) return undefined;
+  const activeId = owner.getAttribute('aria-activedescendant')?.trim();
+  if (!activeId) return undefined;
+  const active = activeDescendantTarget(owner);
+
+  if (!active) {
+    return pendingFinding({
+      ruleId: 'FT-RUNTIME-ARIA-005',
+      title: 'aria-activedescendant points to a missing element',
+      detail: `${selectorFor(owner)} reports aria-activedescendant="${activeId}", but no element with that ID exists after the interaction.`,
+      severity: 'serious',
+      outcome: 'warning',
+      element: owner,
+      references: [ARIA_ACTIVEDESCENDANT_REFERENCE],
+    });
+  }
+
+  if (!validActiveDescendantRelationship(owner, active)) {
+    return pendingFinding({
+      ruleId: 'FT-RUNTIME-ARIA-005',
+      title: 'aria-activedescendant points outside the owned widget',
+      detail: `${selectorFor(owner)} points aria-activedescendant to ${selectorFor(active)}, but that element is neither owned by the focused widget nor by an eligible controlled popup.`,
+      severity: 'serious',
+      outcome: 'warning',
+      element: owner,
+      references: [ARIA_ACTIVEDESCENDANT_REFERENCE],
+    });
+  }
+
+  if (!isAvailable(active)) {
+    return pendingFinding({
+      ruleId: 'FT-APG-008',
+      title: 'Active descendant is programmatically hidden',
+      detail: `${selectorFor(owner)} points to ${selectorFor(active)} as the active descendant, but that element is programmatically hidden after the interaction.`,
+      severity: 'moderate',
+      outcome: 'review',
+      element: owner,
+      references: [ARIA_ACTIVEDESCENDANT_REFERENCE, APG_COMBOBOX_REFERENCE, APG_LISTBOX_REFERENCE],
+    });
+  }
+
+  return undefined;
+}
+
+function evaluateComboboxEscape(combobox: Element, popup?: Element): PendingRuntimeEvent | undefined {
+  if (!combobox.isConnected || semanticRole(combobox) !== 'combobox') return undefined;
+  const expanded = combobox.getAttribute('aria-expanded')?.trim().toLowerCase() === 'true';
+  const popupAvailable = popup?.isConnected === true && isAvailable(popup);
+  if (!expanded && !popupAvailable) return undefined;
+
+  return pendingFinding({
+    ruleId: 'FT-APG-009',
+    title: 'Escape did not dismiss the combobox popup',
+    detail: `Escape was pressed on ${selectorFor(combobox)}, but the combobox still reports an open popup after the interaction.`,
+    severity: 'moderate',
+    outcome: 'review',
+    element: combobox,
+    references: [APG_COMBOBOX_REFERENCE],
+  });
+}
+
+function evaluateListboxSelection(listbox: Element): PendingRuntimeEvent | undefined {
+  if (!listbox.isConnected || semanticRole(listbox) !== 'listbox') return undefined;
+  if (listbox.getAttribute('aria-multiselectable')?.trim().toLowerCase() === 'true') return undefined;
+  const selected = listboxSelectedOptions(listbox);
+  if (selected.length <= 1) return undefined;
+
+  return pendingFinding({
+    ruleId: 'FT-APG-010',
+    title: 'Single-select listbox exposes multiple selected options',
+    detail: `${selectorFor(listbox)} is not marked aria-multiselectable="true", but ${selected.length} options expose a selected or checked state after the interaction.`,
+    severity: 'moderate',
+    outcome: 'review',
+    element: listbox,
+    references: [ARIA_SELECTED_REFERENCE, APG_LISTBOX_REFERENCE],
+  });
+}
+
 export function evaluateAriaWidgetProbe(probe: AriaWidgetProbe): PendingRuntimeEvent | undefined {
   switch (probe.kind) {
     case 'expanded-control':
@@ -264,6 +511,14 @@ export function evaluateAriaWidgetProbe(probe: AriaWidgetProbe): PendingRuntimeE
       return evaluateMenuOpenFocus(probe.trigger, probe.menu);
     case 'menu-escape':
       return evaluateMenuEscape(probe.menu, probe.trigger);
+    case 'combobox-popup':
+      return evaluateComboboxPopup(probe.combobox);
+    case 'active-descendant':
+      return evaluateActiveDescendant(probe.owner);
+    case 'combobox-escape':
+      return evaluateComboboxEscape(probe.combobox, probe.popup);
+    case 'listbox-selection':
+      return evaluateListboxSelection(probe.listbox);
   }
 }
 
