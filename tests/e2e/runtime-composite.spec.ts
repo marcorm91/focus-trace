@@ -97,6 +97,16 @@ test('records composite widget reviews and virtual focus without inflating findi
     (state) => state.events.some((event) => event.element?.selector === '#diagnostic-virtual-focus'),
   );
 
+  await waitForSession(
+    extensionWorker,
+    tabId,
+    (state) => state.events.some((event) =>
+      event.kind === 'dom-mutation'
+      && event.element?.selector === '#virtual-tree'
+      && event.mutation?.kind === 'attribute-changed'
+      && event.mutation.attribute === 'class'),
+  );
+
   let session = await waitForSession(
     extensionWorker,
     tabId,
