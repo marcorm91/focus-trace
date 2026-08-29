@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState, type Dispatch, type SetStateA
 import { browser } from '#imports';
 import { defaultRuntimeBreakpointSettings } from '../../../lib/runtime/breakpoints';
 import type { ExtensionMessage, SessionState } from '../../../shared/types';
+import { activationBelongsToPanelWindow } from './window-session';
 
 const EMPTY_SESSION: SessionState = {
   tabId: -1,
@@ -10,10 +11,10 @@ const EMPTY_SESSION: SessionState = {
   breakpoints: defaultRuntimeBreakpointSettings(),
 };
 
-async function activeTabId() {
+async function activeTabForCurrentWindow() {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-  if (tab?.id == null) throw new Error('No active browser tab is available.');
-  return tab.id;
+  if (tab?.id == null || tab.windowId == null) throw new Error('No active browser tab is available.');
+  return { tabId: tab.id, windowId: tab.windowId };
 }
 
 export function useSidepanelSession({
@@ -31,6 +32,7 @@ export function useSidepanelSession({
   const [tabId, setTabId] = useState<number>();
   const [session, setSession] = useState<SessionState>(EMPTY_SESSION);
   const selectedTabRef = useRef<number | undefined>(undefined);
+  const panelWindowRef = useRef<number | undefined>(undefined);
 
   const refresh = useCallback(async (id: number) => {
     const state = (await browser.runtime.sendMessage({
@@ -50,13 +52,17 @@ export function useSidepanelSession({
   }, [onTabSelected, refresh]);
 
   useEffect(() => {
-    void activeTabId()
-      .then(selectTab)
+    void activeTabForCurrentWindow()
+      .then(({ tabId: activeTabId, windowId }) => {
+        panelWindowRef.current = windowId;
+        return selectTab(activeTabId);
+      })
       .catch(onError);
   }, [onError, selectTab]);
 
   useEffect(() => {
-    const listener = ({ tabId: nextTabId }: { tabId: number }) => {
+    const listener = ({ tabId: nextTabId, windowId }: { tabId: number; windowId: number }) => {
+      if (!activationBelongsToPanelWindow(panelWindowRef.current, windowId)) return;
       void selectTab(nextTabId).catch(onError);
     };
     browser.tabs.onActivated.addListener(listener);
