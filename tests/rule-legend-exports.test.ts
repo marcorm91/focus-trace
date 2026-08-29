@@ -9,7 +9,7 @@ import {
 import { buildFocusGraph } from '../lib/runtime/focus-graph';
 import { groupRuntimeInteractions } from '../lib/runtime/causality';
 import { ruleLegendCopy } from '../shared/rule-legend';
-import type { ScanResult } from '../shared/types';
+import type { RuntimeEvent, ScanResult } from '../shared/types';
 
 function source(path: string): string {
   return readFileSync(resolve(process.cwd(), path), 'utf8');
@@ -58,7 +58,7 @@ describe('rule legend exports', () => {
   });
 
   it('places the same legend before the Markdown evidence summary', () => {
-    const events = [];
+    const events: RuntimeEvent[] = [];
     const bundle = buildAuditEvidenceBundle({
       graph: buildFocusGraph(events),
       interactions: groupRuntimeInteractions(events),
