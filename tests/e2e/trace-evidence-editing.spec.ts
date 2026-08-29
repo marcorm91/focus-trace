@@ -1,4 +1,3 @@
-import type { SessionState } from '../../shared/types';
 import { expect, startRecording, test, waitForSession } from './support/extension';
 import { startFixtureServer, type FixtureServer } from './support/fixture-server';
 
@@ -12,7 +11,7 @@ test.afterAll(async () => {
   await fixtures.close();
 });
 
-test('removes one manual interaction and all correlated evidence while preserving the rest of Trace', async ({ page, extensionWorker }) => {
+test('removes one manual interaction and all correlated evidence while preserving the rest of Trace', async ({ page, context, extensionWorker }) => {
   await page.goto(`${fixtures.origin}/runtime-aria.html`);
   const tabId = await startRecording(extensionWorker, page);
 
@@ -32,7 +31,10 @@ test('removes one manual interaction and all correlated evidence while preservin
   expect(keptId).toBeTruthy();
   expect(session.events.some((event) => event.interactionId === removedId && event.outcome != null)).toBe(true);
 
-  await extensionWorker.evaluate(async ({ id, interactionId }) => {
+  const extensionId = new URL(extensionWorker.url()).hostname;
+  const panel = await context.newPage();
+  await panel.goto(`chrome-extension://${extensionId}/sidepanel.html`);
+  await panel.evaluate(async ({ id, interactionId }) => {
     const chromeApi = (globalThis as any).chrome;
     await chromeApi.tabs.sendMessage(id, { type: 'FOCUSTRACE_SET_RECORDING', enabled: false });
     await chromeApi.runtime.sendMessage({
@@ -56,5 +58,5 @@ test('removes one manual interaction and all correlated evidence while preservin
   expect(session.events.some((event) => event.interactionId === removedId)).toBe(false);
   expect(session.events.some((event) => event.interactionId === keptId)).toBe(true);
   expect(session.events.length).toBeGreaterThan(0);
-  expect((session as SessionState).recording).toBe(false);
+  expect(session.recording).toBe(false);
 });
