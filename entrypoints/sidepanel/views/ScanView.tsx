@@ -23,9 +23,9 @@ const CATEGORY_ORDER: ScanCategory[] = ['all', 'contrast', 'names', 'forms', 'st
 function categoryLabel(category: ScanCategory, language: AppLanguage): string {
   if (category === 'all') return tr(language, 'All findings', 'Todos');
   if (category === 'contrast') return tr(language, 'Contrast', 'Contraste');
-  if (category === 'names') return tr(language, 'Names & semantics', 'Nombres y semántica');
+  if (category === 'names') return tr(language, 'Accessible names', 'Nombres accesibles');
   if (category === 'forms') return tr(language, 'Forms', 'Formularios');
-  if (category === 'structure') return tr(language, 'Structure', 'Estructura');
+  if (category === 'structure') return tr(language, 'Semantics', 'Semántica');
   if (category === 'keyboard') return tr(language, 'Keyboard', 'Teclado');
   if (category === 'aria') return 'ARIA';
   return tr(language, 'Other', 'Otros');
