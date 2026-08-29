@@ -1,5 +1,5 @@
 import { defaultRuntimeBreakpointSettings, normalizeRuntimeBreakpointSettings } from './breakpoints';
-import { isManualTraceInteractionId } from './trace-evidence-editing';
+import { focusWalkIntervals, isManualTraceInteractionId } from './trace-evidence-editing';
 import type {
   RuntimeBreakpointSettings,
   RuntimeEvent,
@@ -26,6 +26,49 @@ function comparableDocumentUrl(value: string): string {
   }
 }
 
+export function trimRuntimeEvents(
+  events: RuntimeEvent[],
+  maxEvents = MAX_RUNTIME_EVENTS,
+): RuntimeEvent[] {
+  if (events.length <= maxEvents) return events;
+
+  const intervals = focusWalkIntervals(events);
+  let start = Math.max(0, events.length - maxEvents);
+
+  // The retention limit is a target, not permission to corrupt evidence. Move
+  // the cut backwards until it no longer lands inside either a correlated
+  // interaction or an automatic focus-walk interval. A single large semantic
+  // unit may therefore temporarily make the retained list slightly exceed the
+  // target, which is preferable to changing the meaning of the Trace.
+  while (start > 0) {
+    const boundary = events[start];
+    if (!boundary) break;
+    let nextStart = start;
+
+    if (boundary.interactionId) {
+      const firstInteractionEvent = events.findIndex(
+        (candidate) => candidate.interactionId === boundary.interactionId,
+      );
+      if (firstInteractionEvent >= 0) nextStart = Math.min(nextStart, firstInteractionEvent);
+    }
+
+    const interval = intervals.find(
+      (candidate) => boundary.timestamp >= candidate.startedAt && boundary.timestamp <= candidate.endedAt,
+    );
+    if (interval) {
+      const focusWalkStart = events.findIndex(
+        (candidate) => candidate.kind === 'focus-walk-start' && candidate.timestamp === interval.startedAt,
+      );
+      if (focusWalkStart >= 0) nextStart = Math.min(nextStart, focusWalkStart);
+    }
+
+    if (nextStart === start) break;
+    start = nextStart;
+  }
+
+  return events.slice(start);
+}
+
 export function emptySessionState(tabId: number): SessionState {
   return {
     tabId,
@@ -47,7 +90,7 @@ export function appendRuntimeEventToSession(state: SessionState, event: RuntimeE
   return {
     ...state,
     recording: firstBreakpointHit ? false : state.recording,
-    events: [...state.events, event].slice(-MAX_RUNTIME_EVENTS),
+    events: trimRuntimeEvents([...state.events, event]),
     ...(firstBreakpointHit ? { pausedByBreakpoint: firstBreakpointHit } : {}),
   };
 }
