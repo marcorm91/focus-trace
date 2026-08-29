@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { browser } from '#imports';
 import { requestActivePageAccess } from '../../../lib/extension/page-access';
 import { locateScanTargetInPage } from '../../../lib/runtime/scan-target-overlay';
+import { useRovingTabs } from '../../../lib/ui/roving-tabs';
 import { localizedScanIssue, localizedSeverity, tr, type AppLanguage } from '../../../shared/i18n';
 import type { FindingOutcome, ScanIssue, ScanResult } from '../../../shared/types';
 
@@ -121,6 +122,11 @@ export function ReportScanCompact({ scan, language }: { scan: ScanResult; langua
     { id: 'review', label: outcomeLabel('review', language), findings: scan.review },
     { id: 'warning', label: outcomeLabel('warning', language), findings: scan.warnings ?? [] },
   ], [language, scan]);
+  const reportTabProps = useRovingTabs({
+    options: groups.map((group) => ({ id: group.id, disabled: group.findings.length === 0 })),
+    selected: filter,
+    onSelect: setFilter,
+  });
 
   useEffect(() => {
     const selected = groups.find((group) => group.id === filter);
@@ -138,11 +144,14 @@ export function ReportScanCompact({ scan, language }: { scan: ScanResult; langua
         {groups.map((group) => (
           <button
             key={group.id}
+            id={`report-compact-tab-${group.id}`}
             type="button"
             role="tab"
             aria-selected={filter === group.id}
+            aria-controls={`report-compact-panel-${group.id}`}
             className={filter === group.id ? 'active' : ''}
             disabled={group.findings.length === 0}
+            {...reportTabProps(group.id)}
             onClick={() => setFilter(group.id)}
           >
             <span>{group.label}</span>
@@ -151,19 +160,31 @@ export function ReportScanCompact({ scan, language }: { scan: ScanResult; langua
         ))}
       </div>
 
-      {ruleGroups.length ? (
-        <div className="report-rule-list">
-          {ruleGroups.map((issues) => (
-            <ReportRuleAccordion
-              key={issues[0]!.ruleId}
-              issues={issues}
-              language={language}
-            />
-          ))}
+      {groups.map((group) => (
+        <div
+          key={`panel-${group.id}`}
+          id={`report-compact-panel-${group.id}`}
+          role="tabpanel"
+          aria-labelledby={`report-compact-tab-${group.id}`}
+          hidden={filter !== group.id}
+        >
+          {filter === group.id && (
+            ruleGroups.length ? (
+              <div className="report-rule-list">
+                {ruleGroups.map((issues) => (
+                  <ReportRuleAccordion
+                    key={issues[0]!.ruleId}
+                    issues={issues}
+                    language={language}
+                  />
+                ))}
+              </div>
+            ) : (
+              <p className="report-empty-line">{tr(language, 'No findings in this group.', 'No hay hallazgos en este grupo.')}</p>
+            )
+          )}
         </div>
-      ) : (
-        <p className="report-empty-line">{tr(language, 'No findings in this group.', 'No hay hallazgos en este grupo.')}</p>
-      )}
+      ))}
     </div>
   );
 }
