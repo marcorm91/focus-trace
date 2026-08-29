@@ -5,6 +5,9 @@ import {
   MULTIPLE_MAIN_LANDMARKS_RULE,
   NATIVE_BUTTON_SEMANTICS_RULE,
   NATIVE_LINK_SEMANTICS_RULE,
+  OBSOLETE_BUT_CONFORMING_HTML_RULE,
+  OBSOLETE_HTML_ATTRIBUTE_RULE,
+  OBSOLETE_HTML_ELEMENT_RULE,
 } from '../../shared/html-authoring-rules';
 import { RULES, type RuleDefinition } from '../../shared/rule-catalog';
 import type { ComponentScanScope, FindingOutcome, HeadingSnapshot, ScanIssue, ScanResult } from '../../shared/types';
@@ -13,6 +16,7 @@ import { accessibleNameDetails, accessibleNameDiagnostics, isMarkedDecorative, i
 import { evaluateDuplicateIds } from './duplicate-ids';
 import { evaluateLabelInName } from './label-in-name';
 import { evaluateNonTextContrast } from './non-text-contrast';
+import { evaluateObsoleteHtml } from './obsolete-html';
 import { evaluateInteractiveSemantics, mainLandmarkCandidates } from './semantics';
 import { evaluateAriaAuthoringSignals, pageLanguageStatus, type AriaAuthoringSignal } from './standards-registry';
 
@@ -220,6 +224,45 @@ function runDuplicateIds(root: ScanRoot): RuleExecution {
     ));
   }
   return result;
+}
+
+function runObsoleteHtml(root: ScanRoot): RuleExecution[] {
+  const elements = emptyExecution(OBSOLETE_HTML_ELEMENT_RULE);
+  const attributes = emptyExecution(OBSOLETE_HTML_ATTRIBUTE_RULE);
+  const legacy = emptyExecution(OBSOLETE_BUT_CONFORMING_HTML_RULE);
+
+  for (const signal of evaluateObsoleteHtml(root)) {
+    const evidence = `${signal.detail} Suggested modernization: ${signal.replacement}`;
+    if (signal.kind === 'obsolete-element') {
+      elements.warnings.push(finding(
+        OBSOLETE_HTML_ELEMENT_RULE,
+        'warning',
+        signal.element,
+        `The page uses the obsolete HTML element ${signal.feature}. The HTML Living Standard classifies it as entirely obsolete and non-conforming for authors.`,
+        evidence,
+      ));
+      continue;
+    }
+    if (signal.kind === 'obsolete-attribute') {
+      attributes.warnings.push(finding(
+        OBSOLETE_HTML_ATTRIBUTE_RULE,
+        'warning',
+        signal.element,
+        `The page uses the obsolete HTML authoring feature ${signal.feature}. Current HTML classifies this attribute usage as non-conforming.`,
+        evidence,
+      ));
+      continue;
+    }
+    legacy.warnings.push(finding(
+      OBSOLETE_BUT_CONFORMING_HTML_RULE,
+      'warning',
+      signal.element,
+      `The page uses ${signal.feature}, an obsolete legacy feature that current HTML still accepts only with a conformance-checker warning.`,
+      evidence,
+    ));
+  }
+
+  return [elements, attributes, legacy];
 }
 
 function runMainLandmarkPresence(): RuleExecution {
@@ -522,6 +565,7 @@ export function runFocusTraceScan(scope: ComponentScanScope | undefined = consum
     runLabelInName(root),
     runAriaHiddenFocusable(root),
     runDuplicateIds(root),
+    ...runObsoleteHtml(root),
     ...runInteractiveSemantics(root),
     runTextContrast(root),
     runNonTextContrast(root),
