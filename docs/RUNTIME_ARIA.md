@@ -7,12 +7,13 @@ Rule IDs in this document are FocusTrace product identifiers. See [`RULE_IDENTIF
 ## Execution model
 
 1. Trace records the real keyboard or pointer interaction.
-2. FocusTrace captures the relevant widget relationship before the page handles the action.
-3. Real `aria-activedescendant` mutations correlated with that interaction are recorded immediately as informational virtual-focus evidence when the resulting relationship is valid.
-4. After a short stabilization delay, FocusTrace checks the resulting ARIA state, controlled content, ownership relationships and focus destination.
-5. A deterministic state mismatch is emitted as a runtime `warning`.
-6. A behavior described by an APG pattern but requiring author/context judgement is emitted as `review`.
-7. Runtime findings flow into the consolidated session report. Repeated occurrences are counted but do not create duplicate report cards.
+2. FocusTrace captures the relevant widget relationship around the observed action.
+3. Real `aria-activedescendant` mutations retain their exact previous value from the `MutationRecord` and are correlated with the interaction after the browser finishes dispatching the action across page and extension worlds.
+4. A valid correlated active-descendant transition is recorded as informational virtual-focus evidence; it is not treated as DOM focus movement or as a finding.
+5. After a short stabilization delay, FocusTrace checks the resulting ARIA state, controlled content, ownership relationships and focus destination.
+6. A deterministic state mismatch is emitted as a runtime `warning`.
+7. A behavior described by an APG pattern but requiring author/context judgement is emitted as `review`.
+8. Runtime findings flow into the consolidated session report. Repeated occurrences are counted but do not create duplicate report cards.
 
 Raw Trace Markdown/JSON evidence remains chronological. Runtime conclusions use the stabilized state; virtual-focus evidence follows the observed ARIA state transition rather than inventing a DOM focus move.
 
@@ -47,7 +48,9 @@ FocusTrace supports both common composite focus-management strategies instead of
 - **DOM focus / roving tabindex** — focus moves among managed treeitems, rows or cells while normally only one managed item participates in the page tab sequence.
 - **Virtual focus / `aria-activedescendant`** — DOM focus remains on the composite owner while `aria-activedescendant` identifies the active item.
 
-When a valid `aria-activedescendant` value changes during a recorded interaction, the existing runtime `MutationObserver` records the observed state transition as an informational `virtual-focus` event. The 320 ms stabilization pass is still used for warnings and reviews, but it is not used to fabricate positive virtual-focus movement.
+When a valid `aria-activedescendant` value changes during a recorded interaction, the existing runtime `MutationObserver` retains the exact old value and processes the transition after the keyboard dispatch has completed. This matters in Chromium because page handlers and isolated extension listeners can be observed in an order where the ARIA mutation callback becomes visible before the content-script interaction tracker has assigned its ID. Deferring correlation by one task preserves the real previous ARIA value while attaching the evidence to the keyboard interaction that caused it.
+
+The 320 ms stabilization pass is still used for warnings and reviews, but it is not used to fabricate positive virtual-focus movement.
 
 A virtual-focus event:
 
@@ -59,6 +62,8 @@ A virtual-focus event:
 - does **not** increase Tab forward/backward/wrap/jump metrics in Focus Journey.
 
 Observing the ARIA mutation also means FocusTrace can capture the first interaction that adds `aria-activedescendant`; the attribute does not need to exist before the key is pressed. The final ownership relationship is checked again after stabilization so frameworks can finish inserting or re-parenting the active item.
+
+WAI-ARIA permits `aria-activedescendant` on more role families than this release interprets at runtime. Positive virtual-focus evidence is intentionally limited to the owner patterns currently modeled by FocusTrace: combobox, textbox/searchbox, listbox, tree, grid and treegrid. Other role/property authoring remains covered by the static ARIA validator until its runtime interaction pattern is implemented; FocusTrace does not label an unmodeled pattern as correct merely because the ID reference resolves.
 
 The existing `FT-RUNTIME-ARIA-005` relationship rule is reused for Tree/Grid/Treegrid. A new component-specific prefix such as `FT-TREE` or `FT-GRID` is intentionally not introduced.
 
@@ -113,6 +118,7 @@ This follows the APG distinction between grid-navigation mode and interacting wi
 - Combobox popup validation accepts the implicit `listbox` value when `aria-haspopup` is omitted.
 - Active-descendant review is deliberately skipped during Escape dismissal.
 - Composite roving-tabindex review is skipped when the composite is using `aria-activedescendant`; the two strategies are both valid.
+- Positive virtual-focus evidence is emitted only for runtime owner families implemented by this release; unsupported roles are not inferred as correct runtime patterns.
 - Grid arrow reviews are suppressed only when the focused editing/nested-widget context owns those arrow keys; generic input elements are not all treated the same.
 - The current Trace keyboard recorder evaluates the arrow keys, Enter, Space and Escape used by these runtime checks. Home/End behavior is not reported by this release and absence of that evidence is not treated as a failure.
 - Grid vertical expectations currently use the observed row/cell order. Irregular or virtualized grids with explicit `aria-colindex`, omitted columns or spans remain a future specialization rather than being promoted to a deterministic failure in this release.
