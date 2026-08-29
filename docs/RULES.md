@@ -24,7 +24,7 @@ FocusTrace found a signal that can indicate an accessibility problem but final j
 
 ### WARNING
 
-FocusTrace found an authoring or standards-maintenance risk that should be fixed or reviewed but is not automatically represented as a WCAG failure. Current examples include deprecated/prohibited ARIA usage and duplicate HTML identifiers.
+FocusTrace found an authoring or standards-maintenance risk that should be fixed or reviewed but is not automatically represented as a WCAG failure. Current examples include deprecated/prohibited ARIA usage, duplicate HTML identifiers, obsolete HTML and invalid native content-model relationships.
 
 ### PASS
 
@@ -125,9 +125,11 @@ The duplicate itself is reported as `WARNING`, not as a WCAG 2.2 failure. WCAG 2
 
 Component-scoped scans still evaluate identifier uniqueness against the whole document, while reporting only duplicate occurrences inside the selected component. See [`DUPLICATE_IDS.md`](DUPLICATE_IDS.md) for the detailed behavior and remediation model.
 
+Obsolete HTML authoring is covered by `FT-WARN-005`, `FT-WARN-006` and `FT-WARN-007`. Native structural/content-model conformance is covered by `FT-WARN-008` through `FT-WARN-011`. See [`STRUCTURAL_HTML.md`](STRUCTURAL_HTML.md) for the detailed parent/child models, interaction constraints, landmark review and the live-DOM/browser-repair boundary.
+
 ## Semantic HTML review
 
-Semantic authoring is shown in the **Semantics** area of Review. FocusTrace intentionally keeps these checks as `REVIEW`: the DOM can provide strong signals about likely intent, but the tool must not claim a WCAG failure when product intent or interaction context is still required.
+Semantic authoring is shown in the **Semantics** area of Review. FocusTrace separates deterministic HTML authoring warnings from contextual semantic review: invalid native content-model relationships are `WARNING`, while intent-dependent guidance remains `REVIEW`.
 
 `FT-REVIEW-004` checks whether a full-page scan exposes a visible native `<main>` or `role="main"` landmark. A missing main landmark is review guidance, not an automatic WCAG failure.
 
@@ -138,6 +140,8 @@ Interactive semantic inference is intentionally conservative:
 - `FT-REVIEW-006` is used when the evidence is button-like. Strong signals include explicit `role="button"`; medium-confidence signals include button states such as `aria-expanded`, `aria-pressed` or `aria-haspopup`. The recommended native element is `<button type="button">`. `role="button"` is shown only as a fallback because ARIA does not add the native keyboard and focus behavior of a real button.
 - `FT-REVIEW-007` is used when the evidence is link/navigation-like. Explicit `role="link"` is high confidence; recognizable navigation handlers such as `location`, `window.open`, History API navigation or common router navigation calls are medium-confidence signals. The recommended native element is `<a href="…">`; `role="link"` is only a fallback.
 - `FT-REVIEW-008` is used for generic click interaction where FocusTrace cannot safely distinguish action, navigation or another widget. No native element is recommended until the intended behavior is reviewed.
+- `FT-REVIEW-009` reviews visible `section` / `article` elements that have neither a heading belonging to that sectioning element nor a computed accessible name. It does **not** require an `article` to be nested in `section`; standalone articles are valid HTML.
+- `FT-REVIEW-010` reviews repeated navigation, complementary and search landmarks whose accessible names are missing or duplicated.
 
 Native buttons and native links are not reported merely for being interactive. Elements with another explicit widget role, such as `role="tab"`, are also not reinterpreted as buttons or links by this heuristic; those patterns need their own role-specific rules.
 
@@ -186,6 +190,13 @@ A causal classification explains the recorded chain; the linked runtime WCAG/APG
 | FT-WARN-002 Deprecated ARIA property for role | WARNING/PASS | WAI-ARIA registry |
 | FT-WARN-003 Prohibited ARIA property for role | WARNING/PASS | WAI-ARIA registry |
 | FT-WARN-004 Duplicate HTML id | WARNING/PASS | HTML Living Standard |
+| FT-WARN-005 Entirely obsolete HTML element | WARNING | HTML Living Standard |
+| FT-WARN-006 Obsolete non-conforming HTML attribute | WARNING | HTML Living Standard |
+| FT-WARN-007 Obsolete-but-conforming HTML feature | WARNING | HTML Living Standard |
+| FT-WARN-008 Element outside required native parent/ancestor context | WARNING | HTML Living Standard |
+| FT-WARN-009 Native HTML content-model/group/order violation | WARNING | HTML Living Standard |
+| FT-WARN-010 Conflicting nested interactive/label structure | WARNING | HTML Living Standard |
+| FT-WARN-011 Invalid native main hierarchy | WARNING | HTML Living Standard |
 | FT-REVIEW-001 Positive tabindex | REVIEW | WCAG 2.4.3 |
 | FT-REVIEW-002 Heading-level jump | REVIEW | WCAG 1.3.1 / 2.4.6 |
 | FT-REVIEW-003 Placeholder-only form label | REVIEW | WCAG 3.3.2 |
@@ -194,6 +205,8 @@ A causal classification explains the recorded chain; the linked runtime WCAG/APG
 | FT-REVIEW-006 Button-like custom interaction | REVIEW | HTML Living Standard · WAI-ARIA APG |
 | FT-REVIEW-007 Link-like custom interaction | REVIEW | HTML Living Standard · WAI-ARIA APG |
 | FT-REVIEW-008 Ambiguous generic interaction | REVIEW | WAI-ARIA APG |
+| FT-REVIEW-009 Unidentified section/article structure | REVIEW | HTML Living Standard |
+| FT-REVIEW-010 Repeated landmarks without distinguishable names | REVIEW | WAI-ARIA APG |
 
 ## Runtime rules
 
@@ -216,11 +229,6 @@ A causal classification explains the recorded chain; the linked runtime WCAG/APG
 - `FT-WCAG-009` checks the ACT primary-language expectation, not full BCP 47 syntax/semantics.
 - `FT-WCAG-010` covers DOM text with deterministically resolvable computed foreground/background colors. Images of text, pseudo-element text and complex visual composition remain outside deterministic FAIL coverage.
 - `FT-WCAG-011` does not programmatically exercise every hover, pressed, checked or focus state. Multi-color graphics, CSS pseudo-element icons, complex shadows, images/canvas and contextual “required visual information” decisions remain REVIEW/manual territory.
-- ARIA warnings currently operate on recognized explicit role tokens; native implicit-role validation is a later layer.
-- Duplicate IDs are authoring warnings; FocusTrace does not infer a WCAG failure unless a separate rule can demonstrate the resulting accessibility effect.
-- Semantic interaction inference currently relies on observable host-element signals such as roles, inline/element click handlers and ARIA widget states. Framework listeners with no observable element-level signal can require manual review.
-- Semantic inference does not reinterpret elements that already expose another explicit widget role; role-specific pattern validation remains a separate layer.
-- Runtime causality uses bounded temporal correlation and intentionally records only accessibility-relevant mutations, not every DOM change.
-- Runtime focus-obscured detection intentionally returns REVIEW because exact 2.4.11 evaluation has edge cases.
-- SPA focus movement and dialog restoration can have workflow-specific exceptions, so those findings remain REVIEW.
-- No automated result is a full WCAG 2.2 conformance claim.
+- Structural HTML checks operate on the parsed live DOM. Browser parser repair can normalize invalid source before FocusTrace runs; the tool does not infer source-level errors that are no longer observable. See [`STRUCTURAL_HTML.md`](STRUCTURAL_HTML.md).
+- Automated static checks are intentionally narrower than the corresponding full WCAG success criteria.
+- Runtime findings are evidence from the observed interaction, not proof that every possible path was exercised.
