@@ -39,4 +39,17 @@ describe('scan categories', () => {
       'FT-WARN-011',
     ]) expect(scanCategoryForRule(ruleId)).toBe('structure');
   });
+
+  it('keeps advanced ARIA validation inside the ARIA area', () => {
+    for (const ruleId of [
+      'FT-WARN-012',
+      'FT-WARN-013',
+      'FT-WARN-014',
+      'FT-WARN-015',
+      'FT-WARN-016',
+      'FT-WARN-017',
+      'FT-WARN-018',
+      'FT-WARN-019',
+    ]) expect(scanCategoryForRule(ruleId)).toBe('aria');
+  });
 });
