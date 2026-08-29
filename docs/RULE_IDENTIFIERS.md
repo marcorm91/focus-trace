@@ -92,7 +92,7 @@ Do **not** introduce a new prefix just because a new feature or component exists
 Before introducing one:
 
 1. document its meaning and allowed outcomes in this file;
-2. add it to the user-facing legend in `InstructionsView` if users can encounter the identifier;
+2. register its bilingual user-facing copy in `shared/rule-legend.ts` if users can encounter the identifier;
 3. add contract tests for the nomenclature;
 4. ensure reports/exports do not imply the prefix is an external standard identifier.
 
@@ -114,4 +114,5 @@ A finding observed five times remains one report finding with five occurrences. 
 - `docs/RULES.md` documents rule methodology and coverage.
 - `docs/RUNTIME_ARIA.md` applies this policy to runtime ARIA/APG rules and points future widget work back here.
 - this file defines identifier/naming policy;
+- `shared/rule-legend.ts` is the bilingual presentation source shared by Instructions, printable/PDF reports, TXT reports and Markdown Trace evidence;
 - user-facing **Instructions → Rule legend and identifiers** explains the same concepts in product language.
