@@ -237,7 +237,7 @@ export function evaluateObsoleteHtml(root: ScanRoot): ObsoleteHtmlSignal[] {
       });
     }
 
-    for (const attribute of [...element.attributes]) {
+    for (const attribute of element.attributes) {
       const conforming = obsoleteButConformingSignal(element, attribute);
       if (conforming) {
         signals.push(conforming);
