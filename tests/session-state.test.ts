@@ -8,6 +8,7 @@ import {
   emptySessionState,
   invalidateSessionScanForUrl,
   normalizeSessionState,
+  removeSessionInteraction,
   resetSessionState,
   setSessionRecordingState,
   updateSessionBreakpoints,
@@ -104,6 +105,71 @@ describe('runtime session state helpers', () => {
       element: { tag: 'button', selector: '#fresh-start', name: 'Fresh start' },
     }));
     expect(buildFocusJourney(restarted.events).steps[0]?.order).toBe(1);
+  });
+
+  it('removes a complete manual Trace interaction while preserving scan, breakpoints and unrelated evidence', () => {
+    const scan = { url: 'https://example.com/' } as SessionState['scan'];
+    const breakpoints = defaultRuntimeBreakpointSettings();
+    const current = session({
+      recording: false,
+      scan,
+      breakpoints,
+      events: [
+        event('10', { timestamp: 10, kind: 'click', interactionId: 'manual-a' }),
+        event('11', { timestamp: 11, interactionId: 'manual-a' }),
+        event('12', { timestamp: 12, kind: 'aria-widget', interactionId: 'manual-a', outcome: 'warning', ruleId: 'FT-RUNTIME-ARIA-003' }),
+        event('20', { timestamp: 20, kind: 'keydown', interactionId: 'manual-b' }),
+        event('21', { timestamp: 21, interactionId: 'manual-b' }),
+      ],
+    });
+
+    const next = removeSessionInteraction(current, 'manual-a');
+
+    expect(next).not.toBe(current);
+    expect(next.events.map((item) => item.id)).toEqual(['20', '21']);
+    expect(next.scan).toBe(scan);
+    expect(next.breakpoints).toBe(breakpoints);
+    expect(next.recording).toBe(false);
+  });
+
+  it('clears a breakpoint pause when its manual interaction is removed', () => {
+    const current = session({
+      recording: false,
+      events: [event('10', { timestamp: 10, kind: 'keydown', interactionId: 'manual-a' })],
+      pausedByBreakpoint: {
+        breakpointId: 'modal-focus-escape',
+        causeType: 'MODAL_FOCUS_ESCAPE',
+        eventId: '10',
+        timestamp: 10,
+        label: 'Modal escape',
+        summary: 'Focus escaped a modal.',
+        interactionId: 'manual-a',
+      },
+    });
+
+    const next = removeSessionInteraction(current, 'manual-a');
+    expect(next.events).toEqual([]);
+    expect(next.pausedByBreakpoint).toBeUndefined();
+  });
+
+  it('does not edit Trace evidence while recording or delete automatic focus-walk interactions', () => {
+    const manualWhileRecording = session({
+      recording: true,
+      events: [event('10', { timestamp: 10, kind: 'click', interactionId: 'manual-a' })],
+    });
+    expect(removeSessionInteraction(manualWhileRecording, 'manual-a')).toBe(manualWhileRecording);
+
+    const automatic = session({
+      recording: false,
+      events: [
+        event('1', { timestamp: 1, kind: 'focus-walk-start' }),
+        event('2', { timestamp: 2, kind: 'focus', interactionId: 'walk-a' }),
+        event('3', { timestamp: 3, kind: 'keydown', interactionId: 'walk-a' }),
+        event('4', { timestamp: 4, kind: 'focus-walk-end' }),
+      ],
+    });
+    expect(removeSessionInteraction(automatic, 'walk-a')).toBe(automatic);
+    expect(automatic.events).toHaveLength(4);
   });
 
   it('starts over without discarding configured breakpoint preferences', () => {
