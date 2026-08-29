@@ -39,13 +39,13 @@ export function parseWcagCatalog(html, source = {}) {
   for (const match of html.matchAll(sectionPattern)) {
     const attrs = match[1] ?? '';
     const body = match[2] ?? '';
-    const text = textContent(body);
-    const numberMatch = text.match(/Success Criterion\s+(\d+\.\d+\.\d+)\b/i);
-    if (!numberMatch?.[1]) continue;
-
-    const id = attribute(attrs, 'id');
     const headingMatch = body.match(/<h[1-6]\b[^>]*>([\s\S]*?)<\/h[1-6]>/i);
     const heading = textContent(headingMatch?.[1] ?? '');
+    const numberMatch = heading.match(/^Success Criterion\s+(\d+\.\d+\.\d+)\b/i);
+    if (!numberMatch?.[1]) continue;
+
+    const text = textContent(body);
+    const id = attribute(attrs, 'id');
     const title = heading
       .replace(new RegExp(`^Success Criterion\\s+${numberMatch[1]}\\s*`, 'i'), '')
       .trim();
@@ -65,12 +65,19 @@ export function parseWcagCatalog(html, source = {}) {
   }
 
   const unique = new Map();
-  for (const criterion of criteria) unique.set(criterion.id, criterion);
+  for (const criterion of criteria) {
+    if (unique.has(criterion.id)) throw new Error(`WCAG parser found duplicate success criterion ${criterion.id}.`);
+    unique.set(criterion.id, criterion);
+  }
   const sorted = [...unique.values()].sort((a, b) => a.id.localeCompare(b.id, undefined, { numeric: true }));
   const active = sorted.filter((criterion) => criterion.status === 'active');
 
   if (active.length < 80) {
     throw new Error(`WCAG parser found only ${active.length} active success criteria; expected at least 80.`);
+  }
+  const invalidLevel = active.find((criterion) => !['A', 'AA', 'AAA'].includes(criterion.level));
+  if (invalidLevel) {
+    throw new Error(`WCAG parser could not resolve the level for ${invalidLevel.id} ${invalidLevel.title}.`);
   }
 
   return {
