@@ -23,6 +23,18 @@ describe('runtime causality', () => {
     expect(createRuntimeInteractionId('page', 36)).toBe('ix-page-10');
   });
 
+  it('never reuses an interaction id after the active correlation is reset', () => {
+    const tracker = new RuntimeInteractionTracker('page', () => 1000);
+    const beforePause = tracker.begin('keyboard', '#before', 'Enter');
+
+    tracker.reset();
+
+    const afterResume = tracker.begin('keyboard', '#after', 'Enter');
+    expect(beforePause).toBe('ix-page-1');
+    expect(afterResume).toBe('ix-page-2');
+    expect(afterResume).not.toBe(beforePause);
+  });
+
   it('reuses click interactions only for the same pointer or keyboard activation target', () => {
     expect(
       shouldReuseClickInteraction({
