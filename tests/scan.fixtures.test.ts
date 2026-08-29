@@ -24,7 +24,7 @@ describe('FocusTrace WCAG rule fixtures', () => {
   it('produces no findings for the passing fixture', () => {
     loadFixture('pass');
     const result = runFocusTraceScan();
-    expect(result.rulesRun).toBe(18);
+    expect(result.rulesRun).toBe(23);
     expect(result.issues).toEqual([]);
     expect(result.review).toEqual([]);
     expect(result.warnings).toEqual([]);
@@ -58,6 +58,42 @@ describe('FocusTrace WCAG rule fixtures', () => {
     const result = runFocusTraceScan();
     expect(result.issues.some((issue) => issue.ruleId === 'FT-WCAG-004')).toBe(false);
     expect(result.review.map((issue) => issue.ruleId)).toContain('FT-REVIEW-003');
+  });
+
+  it('reviews missing and repeated main landmarks without promoting them to WCAG failures', () => {
+    render('lang="en"', '<h1>Page without main</h1>');
+    let result = runFocusTraceScan();
+    expect(result.review.map((issue) => issue.ruleId)).toContain('FT-REVIEW-004');
+    expect(result.issues.map((issue) => issue.ruleId)).not.toContain('FT-REVIEW-004');
+
+    render('lang="en"', '<main id="primary"><h1>One</h1></main><div id="secondary" role="main" aria-label="Secondary"></div>');
+    result = runFocusTraceScan();
+    const multiple = result.review.filter((issue) => issue.ruleId === 'FT-REVIEW-005');
+    expect(multiple).toHaveLength(2);
+    expect(multiple.map((issue) => issue.targets[0])).toEqual(expect.arrayContaining(['#primary', '#secondary']));
+  });
+
+  it('adds native-semantics recommendations to Review and keeps ambiguous interaction manual', () => {
+    render(
+      'lang="en"',
+      `<main><h1>Actions</h1>
+        <div id="open" role="button" tabindex="0">Open modal</div>
+        <div id="products" onclick="window.location.href='/products'">Products</div>
+        <div id="card" onclick="selectCard()">Select card</div>
+      </main>`,
+    );
+    const result = runFocusTraceScan();
+
+    const button = result.review.find((issue) => issue.ruleId === 'FT-REVIEW-006');
+    const link = result.review.find((issue) => issue.ruleId === 'FT-REVIEW-007');
+    const generic = result.review.find((issue) => issue.ruleId === 'FT-REVIEW-008');
+
+    expect(button?.targets).toEqual(['#open']);
+    expect(button?.evidence).toContain('Recommended native element: <button type="button">');
+    expect(link?.targets).toEqual(['#products']);
+    expect(link?.evidence).toContain('Recommended native element: <a href="…">');
+    expect(generic?.targets).toEqual(['#card']);
+    expect(generic?.evidence).toContain('recommendation withheld');
   });
 
   it('reviews a heading outline that starts below H1 instead of failing it', () => {
