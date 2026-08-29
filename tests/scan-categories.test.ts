@@ -23,4 +23,10 @@ describe('scan categories', () => {
     expect(scanCategoryForRule('FT-REVIEW-007')).toBe('structure');
     expect(scanCategoryForRule('FT-REVIEW-008')).toBe('structure');
   });
+
+  it('keeps obsolete HTML authoring warnings inside Semantics', () => {
+    expect(scanCategoryForRule('FT-WARN-005')).toBe('structure');
+    expect(scanCategoryForRule('FT-WARN-006')).toBe('structure');
+    expect(scanCategoryForRule('FT-WARN-007')).toBe('structure');
+  });
 });
