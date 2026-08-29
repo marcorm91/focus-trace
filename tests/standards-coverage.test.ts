@@ -3,6 +3,7 @@ import actCatalog from '../generated/act-catalog.json';
 import htmlCatalog from '../generated/html-obsolete-catalog.json';
 import sourcesRegistry from '../generated/standards-sources.json';
 import wcagCatalog from '../generated/wcag-catalog.json';
+import { ADVANCED_ARIA_RULES } from '../shared/aria-authoring-rules';
 import {
   DUPLICATE_ID_RULE,
   GENERIC_INTERACTIVE_SEMANTICS_RULE,
@@ -32,7 +33,7 @@ const HTML_RULES: RuleDefinition[] = [
   ...STRUCTURAL_HTML_RULES,
 ];
 
-const ALL_RULES: RuleDefinition[] = [...Object.values(RULES), ...HTML_RULES];
+const ALL_RULES: RuleDefinition[] = [...Object.values(RULES), ...HTML_RULES, ...ADVANCED_ARIA_RULES];
 
 describe('standards registry coverage', () => {
   it('keeps every FocusTrace WCAG and ACT reference resolvable against current upstream catalogs', () => {
