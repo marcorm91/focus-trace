@@ -186,6 +186,7 @@ export default function App() {
     toggleFocusPath,
     selectFocusPoint,
     clearFocusSelection,
+    deleteTraceInteraction,
   } = useTraceActions({
     tabId,
     session,
@@ -423,6 +424,7 @@ export default function App() {
           onSelectStep={selectFocusPoint}
           onClearSelection={clearFocusSelection}
           onBreakpointChange={setBreakpoint}
+          onDeleteInteraction={deleteTraceInteraction}
         />
       )}
       {view === 'headings' && (
