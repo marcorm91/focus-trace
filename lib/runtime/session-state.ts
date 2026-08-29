@@ -1,4 +1,5 @@
 import { defaultRuntimeBreakpointSettings, normalizeRuntimeBreakpointSettings } from './breakpoints';
+import { isManualTraceInteractionId } from './trace-evidence-editing';
 import type {
   RuntimeBreakpointSettings,
   RuntimeEvent,
@@ -66,7 +67,7 @@ export function clearSessionEvents(state: SessionState, tabId = state.tabId): Se
 }
 
 export function removeSessionInteraction(state: SessionState, interactionId: string): SessionState {
-  if (state.recording || !interactionId) return state;
+  if (state.recording || !isManualTraceInteractionId(state.events, interactionId)) return state;
   const nextEvents = state.events.filter((event) => event.interactionId !== interactionId);
   if (nextEvents.length === state.events.length) return state;
 
