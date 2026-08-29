@@ -17,7 +17,7 @@ test('records composite widget reviews and virtual focus without inflating findi
   await expect(page.getByRole('heading', { name: 'Runtime composite widgets' })).toBeVisible();
   const tabId = await startRecording(extensionWorker, page);
 
-  const virtualTree = page.getByRole('tree', { name: 'Files' });
+  const virtualTree = page.getByRole('tree', { name: 'Files', exact: true });
   await virtualTree.focus();
   await page.keyboard.press('ArrowDown');
 
