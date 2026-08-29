@@ -85,7 +85,9 @@ describe('README language and instructions contract', () => {
     expect(convention).toContain('Do **not** introduce a new prefix just because a new feature or component exists.');
     expect(convention).toContain('Tree/Grid runtime work should continue using `FT-RUNTIME-ARIA`');
     expect(convention).toContain('Accessibility Tree or assistive-technology observations');
+    expect(convention).toContain('`docs/RUNTIME_ARIA.md` applies this policy');
     expect(runtimeAria).toContain('[`RULE_IDENTIFIERS.md`](RULE_IDENTIFIERS.md)');
+    expect(runtimeAria).toContain('Future widget work should follow the registered identifier families');
     expect(css).toContain('.instructions-legend');
     expect(css).toContain('grid-template-columns: minmax(126px, max-content) minmax(0, 1fr);');
   });
