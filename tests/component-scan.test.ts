@@ -112,7 +112,7 @@ describe('component-scoped static analysis', () => {
 
     expect(result.scope).toEqual({ type: 'page' });
     expect(result.headings).toHaveLength(1);
-    expect(result.rulesRun).toBe(26);
+    expect(result.rulesRun).toBe(32);
     expect(document.documentElement.hasAttribute('data-focustrace-focus-component')).toBe(false);
   });
 
