@@ -81,8 +81,8 @@ export function FocusView({
             {journey.steps.length
               ? tr(
                   language,
-                  'Read the journey from top to bottom. Connectors show movement; semantic labels explain what that movement meant.',
-                  'Lee el recorrido de arriba abajo. Las conexiones muestran el movimiento y las etiquetas semánticas explican qué significó.',
+                  'Read the journey from top to bottom. It includes DOM focus and virtual focus observed through aria-activedescendant.',
+                  'Lee el recorrido de arriba abajo. Incluye el foco DOM y el foco virtual observado mediante aria-activedescendant.',
                 )
               : tr(
                   language,
@@ -104,8 +104,8 @@ export function FocusView({
             {recording
               ? tr(
                   language,
-                  'Return to the page and navigate with Tab or Shift+Tab. Both directions will be recorded.',
-                  'Vuelve a la página y navega con Tab o Shift+Tab. Se registrarán ambas direcciones.',
+                  'Return to the page and navigate naturally. Tab movement and supported composite-widget arrow navigation will be recorded.',
+                  'Vuelve a la página y navega con normalidad. Se registrarán el movimiento con Tab y la navegación compatible con flechas dentro de widgets compuestos.',
                 )
               : tr(
                   language,
@@ -134,6 +134,7 @@ export function FocusView({
             <span><strong>{journey.forward + journey.wraps}</strong>{tr(language, 'Forward', 'Avances')}</span>
             <span><strong>{journey.backward}</strong>{tr(language, 'Backward', 'Retrocesos')}</span>
             <span><strong>{journey.repeated}</strong>{tr(language, 'Repeated', 'Repetidos')}</span>
+            {journey.virtual > 0 && <span><strong>{journey.virtual}</strong>{tr(language, 'Virtual', 'Virtuales')}</span>}
           </div>
 
           {semantics.length > 0 && (
@@ -177,13 +178,15 @@ export function FocusView({
               const selected = step.element.selector === selectedSelector;
               const name = step.element.name || tr(language, 'Unnamed component', 'Componente sin nombre');
               const role = step.element.role ?? step.element.tag;
-              const position = step.element.tabOrderIndex != null && step.element.tabOrderSize != null
-                ? tr(
-                    language,
-                    `Tab position ${step.element.tabOrderIndex} of ${step.element.tabOrderSize}`,
-                    `Posición Tab ${step.element.tabOrderIndex} de ${step.element.tabOrderSize}`,
-                  )
-                : tr(language, 'Tab position unavailable', 'Posición Tab no disponible');
+              const position = step.mode === 'virtual'
+                ? tr(language, 'Virtual focus · aria-activedescendant', 'Foco virtual · aria-activedescendant')
+                : step.element.tabOrderIndex != null && step.element.tabOrderSize != null
+                  ? tr(
+                      language,
+                      `Tab position ${step.element.tabOrderIndex} of ${step.element.tabOrderSize}`,
+                      `Posición Tab ${step.element.tabOrderIndex} de ${step.element.tabOrderSize}`,
+                    )
+                  : tr(language, 'Tab position unavailable', 'Posición Tab no disponible');
               const stepSemantics = focusTransitionSemanticsForEvent(semantics, step.id);
               const primarySemantic = primaryFocusTransitionSemantic(stepSemantics);
               const primaryCopy = primarySemantic
@@ -192,7 +195,7 @@ export function FocusView({
 
               return (
                 <li
-                  className={`journey-step direction-${step.direction}${primarySemantic ? ` semantic-${primarySemantic.tone}` : ''}`}
+                  className={`journey-step direction-${step.direction}${primarySemantic ? ` semantic-${primarySemantic.tone}` : ''}${step.mode === 'virtual' ? ' virtual-focus-step' : ''}`}
                   key={step.id}
                 >
                   {step.direction !== 'start' && (
@@ -253,8 +256,7 @@ export function FocusView({
           )}
           {expanded && journey.steps.length > 12 && (
             <button className="show-full-journey" type="button" onClick={() => setExpanded(false)}>
-              {tr(language, 'Show first 12 steps', 'Mostrar los primeros 12 pasos')}
-            </button>
+              {tr(language, 'Show first 12 steps', 'Mostrar los primeros 12 pasos')}</button>
           )}
         </>
       ) : (
