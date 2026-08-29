@@ -112,5 +112,6 @@ A finding observed five times remains one report finding with five occurrences. 
 ## Source of truth
 
 - `docs/RULES.md` documents rule methodology and coverage.
+- `docs/RUNTIME_ARIA.md` applies this policy to runtime ARIA/APG rules and points future widget work back here.
 - this file defines identifier/naming policy;
 - user-facing **Instructions → Rule legend and identifiers** explains the same concepts in product language.
