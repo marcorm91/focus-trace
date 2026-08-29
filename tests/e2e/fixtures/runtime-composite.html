@@ -1,0 +1,65 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Runtime composite widgets</title>
+</head>
+<body>
+  <main>
+    <h1>Runtime composite widgets</h1>
+
+    <section>
+      <h2>Virtual focus tree</h2>
+      <div id="virtual-tree" role="tree" tabindex="0" aria-label="Files" aria-activedescendant="virtual-one">
+        <div id="virtual-one" role="treeitem">One</div>
+        <div id="virtual-two" role="treeitem">Two</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Dynamic virtual focus tree</h2>
+      <div id="dynamic-virtual-tree" role="tree" tabindex="0" aria-label="Dynamic files">
+        <div id="dynamic-one" role="treeitem">Dynamic one</div>
+        <div id="dynamic-two" role="treeitem">Dynamic two</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Broken roving tree</h2>
+      <div id="broken-tree" role="tree" aria-label="Broken files">
+        <div id="broken-parent" role="treeitem" tabindex="0" aria-expanded="false">
+          Parent
+          <div id="broken-group" role="group">
+            <div id="broken-child" role="treeitem" tabindex="-1">Child</div>
+          </div>
+        </div>
+        <div id="broken-sibling" role="treeitem" tabindex="0">Sibling</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Broken grid navigation</h2>
+      <div id="broken-grid" role="grid" aria-label="Schedule">
+        <div role="row">
+          <div id="grid-a1" role="gridcell" tabindex="0">A1</div>
+          <div id="grid-a2" role="gridcell" tabindex="-1">A2</div>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const virtualTree = document.querySelector('#virtual-tree');
+    virtualTree.addEventListener('keydown', (event) => {
+      if (event.key !== 'ArrowDown') return;
+      virtualTree.setAttribute('aria-activedescendant', 'virtual-two');
+    });
+
+    const dynamicVirtualTree = document.querySelector('#dynamic-virtual-tree');
+    dynamicVirtualTree.addEventListener('keydown', (event) => {
+      if (event.key !== 'ArrowDown') return;
+      dynamicVirtualTree.setAttribute('aria-activedescendant', 'dynamic-two');
+    });
+  </script>
+</body>
+</html>

@@ -13,6 +13,7 @@ export interface FocusJourneyStep {
   order: number;
   event: RuntimeEvent;
   element: ElementSnapshot;
+  mode: 'dom' | 'virtual';
   direction: FocusJourneyDirection;
   distance?: number;
 }
@@ -24,6 +25,7 @@ export interface FocusJourney {
   repeated: number;
   wraps: number;
   jumps: number;
+  virtual: number;
 }
 
 function movementDirection(
@@ -66,7 +68,7 @@ function movementDirection(
 export function buildFocusJourney(events: RuntimeEvent[]): FocusJourney {
   const focusEvents = events.filter(
     (event): event is RuntimeEvent & { element: ElementSnapshot } =>
-      event.kind === 'focus' && event.element != null,
+      (event.kind === 'focus' || event.kind === 'virtual-focus') && event.element != null,
   );
   const steps: FocusJourneyStep[] = [];
 
@@ -81,17 +83,20 @@ export function buildFocusJourney(events: RuntimeEvent[]): FocusJourney {
       order: index + 1,
       event,
       element: event.element,
+      mode: event.kind === 'virtual-focus' ? 'virtual' : 'dom',
       direction: movement.direction,
       ...(movement.distance != null ? { distance: movement.distance } : {}),
     });
   }
 
+  const domSteps = steps.filter((step) => step.mode === 'dom');
   return {
     steps,
-    forward: steps.filter((step) => step.direction === 'forward').length,
-    backward: steps.filter((step) => step.direction === 'backward').length,
-    repeated: steps.filter((step) => step.direction === 'repeat').length,
-    wraps: steps.filter((step) => step.direction === 'wrap').length,
-    jumps: steps.filter((step) => step.direction === 'jump').length,
+    forward: domSteps.filter((step) => step.direction === 'forward').length,
+    backward: domSteps.filter((step) => step.direction === 'backward').length,
+    repeated: domSteps.filter((step) => step.direction === 'repeat').length,
+    wraps: domSteps.filter((step) => step.direction === 'wrap').length,
+    jumps: domSteps.filter((step) => step.direction === 'jump').length,
+    virtual: steps.filter((step) => step.mode === 'virtual').length,
   };
 }

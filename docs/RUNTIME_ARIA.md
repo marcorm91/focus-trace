@@ -7,13 +7,15 @@ Rule IDs in this document are FocusTrace product identifiers. See [`RULE_IDENTIF
 ## Execution model
 
 1. Trace records the real keyboard or pointer interaction.
-2. FocusTrace captures the relevant widget relationship before the page handles the action.
-3. After a short stabilization delay, FocusTrace checks the resulting ARIA state, controlled content and focus destination.
-4. A deterministic state mismatch is emitted as a runtime `warning`.
-5. A behavior described by an APG pattern but requiring author/context judgement is emitted as `review`.
-6. The runtime finding flows into the consolidated session report. Repeated occurrences are counted but do not create duplicate report cards.
+2. FocusTrace captures the relevant widget relationship around the observed action.
+3. Real `aria-activedescendant` mutations retain their exact previous value from the `MutationRecord` and are correlated with the interaction after the browser finishes dispatching the action across page and extension worlds.
+4. A valid correlated active-descendant transition is recorded as informational virtual-focus evidence; it is not treated as DOM focus movement or as a finding.
+5. After a short stabilization delay, FocusTrace checks the resulting ARIA state, controlled content, ownership relationships and focus destination.
+6. A deterministic state mismatch is emitted as a runtime `warning`.
+7. A behavior described by an APG pattern but requiring author/context judgement is emitted as `review`.
+8. Runtime findings flow into the consolidated session report. Repeated occurrences are counted but do not create duplicate report cards.
 
-Raw Trace Markdown/JSON evidence remains chronological and lossless.
+Raw Trace Markdown/JSON evidence remains chronological. Runtime conclusions use the stabilized state; virtual-focus evidence follows the observed ARIA state transition rather than inventing a DOM focus move.
 
 ## Rules
 
@@ -27,24 +29,81 @@ Raw Trace Markdown/JSON evidence remains chronological and lossless.
 | `FT-APG-007` | Dialog | Review | A dynamically observed dialog opens without an accessible name. |
 | `FT-RUNTIME-ARIA-003` | Combobox | Warning | An expanded combobox does not resolve `aria-controls` to an allowed popup role (`listbox`, `tree`, `grid`, `dialog`). |
 | `FT-RUNTIME-ARIA-004` | Combobox | Warning | The resolved popup role does not match the combobox `aria-haspopup` value; omitted `aria-haspopup` correctly implies `listbox`. |
-| `FT-RUNTIME-ARIA-005` | Combobox / Listbox | Warning | `aria-activedescendant` is missing or is outside the ownership/control relationship allowed by WAI-ARIA. |
-| `FT-APG-008` | Combobox / Listbox | Review | A valid active descendant is programmatically hidden after widget navigation. |
+| `FT-RUNTIME-ARIA-005` | Combobox / Listbox / Tree / Grid / Treegrid | Warning | `aria-activedescendant` is missing or is outside the ownership/control relationship allowed by WAI-ARIA. |
+| `FT-APG-008` | Combobox / Listbox / Tree / Grid / Treegrid | Review | A valid active descendant is programmatically hidden after widget navigation. |
 | `FT-APG-009` | Combobox | Review | Escape is pressed while the popup is open but the popup remains exposed after stabilization. |
 | `FT-APG-010` | Listbox | Review | A single-select listbox exposes multiple selected or checked options after interaction. |
+| `FT-RUNTIME-ARIA-006` | Tree | Warning | A parent treeitem exposes `aria-expanded` that contradicts the programmatic availability of its child `group`. |
+| `FT-APG-011` | Tree / Grid / Treegrid | Review | A composite using roving tabindex exposes more than one managed item with `tabindex="0"` after interaction. |
+| `FT-APG-012` | Tree | Review | Arrow navigation does not move to, expand or collapse the item expected by the observed Tree pattern. |
+| `FT-APG-013` | Grid / Treegrid | Review | Arrow navigation does not move to the expected row/cell or update the expected treegrid row state. |
+| `FT-APG-014` | Tree | Review | A single-select tree exposes multiple selected or checked treeitems after interaction. |
 
 Existing dialog runtime rules continue to cover initial focus, modal focus escape and focus restoration (`FT-APG-001` to `FT-APG-003`).
+
+## Composite widget focus model
+
+FocusTrace supports both common composite focus-management strategies instead of requiring one implementation technique:
+
+- **DOM focus / roving tabindex** — focus moves among managed treeitems, rows or cells while normally only one managed item participates in the page tab sequence.
+- **Virtual focus / `aria-activedescendant`** — DOM focus remains on the composite owner while `aria-activedescendant` identifies the active item.
+
+When a valid `aria-activedescendant` value changes during a recorded interaction, the existing runtime `MutationObserver` retains the exact old value and processes the transition after the keyboard dispatch has completed. This matters in Chromium because page handlers and isolated extension listeners can be observed in an order where the ARIA mutation callback becomes visible before the content-script interaction tracker has assigned its ID. Deferring correlation by one task preserves the real previous ARIA value while attaching the evidence to the keyboard interaction that caused it.
+
+The 320 ms stabilization pass is still used for warnings and reviews, but it is not used to fabricate positive virtual-focus movement.
+
+A virtual-focus event:
+
+- appears in Trace as part of the real interaction chain;
+- appears as a focus destination in Journey and Graph;
+- can be located on the inspected page like other observed focus destinations;
+- has severity `info` and no finding outcome;
+- does **not** increase runtime finding counts or create an additional report problem;
+- does **not** increase Tab forward/backward/wrap/jump metrics in Focus Journey.
+
+Observing the ARIA mutation also means FocusTrace can capture the first interaction that adds `aria-activedescendant`; the attribute does not need to exist before the key is pressed. The final ownership relationship is checked again after stabilization so frameworks can finish inserting or re-parenting the active item.
+
+WAI-ARIA permits `aria-activedescendant` on more role families than this release interprets at runtime. Positive virtual-focus evidence is intentionally limited to the owner patterns currently modeled by FocusTrace: combobox, textbox/searchbox, listbox, tree, grid and treegrid. Other role/property authoring remains covered by the static ARIA validator until its runtime interaction pattern is implemented; FocusTrace does not label an unmodeled pattern as correct merely because the ID reference resolves.
+
+The existing `FT-RUNTIME-ARIA-005` relationship rule is reused for Tree/Grid/Treegrid. A new component-specific prefix such as `FT-TREE` or `FT-GRID` is intentionally not introduced.
 
 ## Combobox and listbox relationship model
 
 `aria-activedescendant` validation understands both physical and logical ownership:
 
 - DOM descendants;
-- `aria-owns` relationships;
+- recursive `aria-owns` relationships;
 - active items owned by a `listbox`, `tree` or `grid` controlled by a focused combobox/textbox/searchbox.
 
 The evaluator skips active-descendant review during Escape dismissal so a temporarily residual reference is not treated as a false positive while the popup closes.
 
 Listbox selection also includes options logically owned through `aria-owns`. Multiselect listboxes (`aria-multiselectable="true"`) are accepted when they expose multiple selected options.
+
+## Tree behavior
+
+Tree checks observe the orientation and current active-item strategy before deriving an expectation:
+
+- vertical Tree: Up/Down moves among visible treeitems, Right expands or enters children, Left collapses or moves to the parent;
+- horizontal Tree: the APG axis mapping is respected instead of hard-coding vertical arrows;
+- hidden child groups are removed from the visible traversal sequence;
+- nested or external child groups connected with `aria-owns` participate in the accessibility ownership model;
+- multi-selection is accepted only when the Tree explicitly exposes `aria-multiselectable="true"`.
+
+`FT-RUNTIME-ARIA-006` is reserved for the deterministic state contradiction between `aria-expanded` and the child group. Keyboard expectations remain `FT-APG-012` reviews because application context and interaction design still require human judgement.
+
+## Grid and treegrid behavior
+
+Grid checks are deliberately conservative:
+
+- Right/Left can be reviewed between adjacent managed cells;
+- Up/Down can be reviewed between corresponding cells in adjacent rows;
+- row-focused Treegrid can review Up/Down row movement and Right/Left expand/collapse behavior;
+- ambiguous Treegrid first-cell Left behavior is not forced because row-focus support is optional;
+- when editing text or a nested arrow-key widget is active, FocusTrace does not attribute that arrow key to the outer Grid;
+- nested radiogroups, menus, menubars, listboxes and toolbars are treated as owning their arrow navigation while focus is inside them;
+- controls that normally do **not** use arrow keys, such as checkboxes and input buttons, do not automatically suppress Grid navigation checks merely because they are implemented with `<input>`.
+
+This follows the APG distinction between grid-navigation mode and interacting with content inside a cell, reducing both false positives and false negatives.
 
 ## Precision boundaries
 
@@ -58,6 +117,11 @@ Listbox selection also includes options logically owned through `aria-owns`. Mul
 - Dialog naming is checked after a short delay so frameworks can finish inserting labels for dynamically opened dialogs.
 - Combobox popup validation accepts the implicit `listbox` value when `aria-haspopup` is omitted.
 - Active-descendant review is deliberately skipped during Escape dismissal.
+- Composite roving-tabindex review is skipped when the composite is using `aria-activedescendant`; the two strategies are both valid.
+- Positive virtual-focus evidence is emitted only for runtime owner families implemented by this release; unsupported roles are not inferred as correct runtime patterns.
+- Grid arrow reviews are suppressed only when the focused editing/nested-widget context owns those arrow keys; generic input elements are not all treated the same.
+- The current Trace keyboard recorder evaluates the arrow keys, Enter, Space and Escape used by these runtime checks. Home/End behavior is not reported by this release and absence of that evidence is not treated as a failure.
+- Grid vertical expectations currently use the observed row/cell order. Irregular or virtualized grids with explicit `aria-colindex`, omitted columns or spans remain a future specialization rather than being promoted to a deterministic failure in this release.
 
 ## Standards
 

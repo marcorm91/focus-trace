@@ -168,7 +168,11 @@ export default defineContentScript({
       ctx.setTimeout(() => {
         if (!recording) return;
         for (const probe of probes) {
-          emitAriaWidgetFinding(evaluateAriaWidgetProbe(probe), interactionId);
+          const finding = evaluateAriaWidgetProbe(probe);
+          // Virtual focus is chronological evidence, so it is emitted from the
+          // actual aria-activedescendant mutation instead of this stabilized pass.
+          if (finding?.kind === 'virtual-focus') continue;
+          emitAriaWidgetFinding(finding, interactionId);
         }
       }, 320);
     };
@@ -395,6 +399,7 @@ export default defineContentScript({
     const observer = new MutationObserver((mutations) => {
       if (!recording) return;
       const interactionId = activeInteractionId();
+      const virtualFocusOwners = new Set<Element>();
 
       if (lastFocused && lastFocused !== document.body && !lastFocused.isConnected) {
         const removed = snapshot(lastFocused);
@@ -442,12 +447,50 @@ export default defineContentScript({
         }
 
         if (mutation.type === 'attributes' && mutation.target instanceof Element) {
+          const attributeTarget = mutation.target;
           const attribute = mutation.attributeName ?? '';
-          const currentValue = attribute ? mutation.target.getAttribute(attribute) : null;
+          const currentValue = attribute ? attributeTarget.getAttribute(attribute) : null;
           const affectsLastFocused =
             lastFocused != null &&
             lastFocused !== document.body &&
-            (mutation.target === lastFocused || mutation.target.contains(lastFocused));
+            (attributeTarget === lastFocused || attributeTarget.contains(lastFocused));
+
+          if (
+            attribute === 'aria-activedescendant'
+            && !virtualFocusOwners.has(attributeTarget)
+          ) {
+            virtualFocusOwners.add(attributeTarget);
+            const beforeId = mutation.oldValue?.trim() || undefined;
+
+            // In Chromium an isolated-world MutationObserver can run before the
+            // content-script keydown listener has created the interaction. Defer
+            // one task so the real keyboard event is correlated first, while the
+            // MutationRecord still supplies the exact previous ARIA state.
+            ctx.setTimeout(() => {
+              if (!recording || !attributeTarget.isConnected) return;
+              const correlatedInteractionId = activeInteractionId();
+              if (!correlatedInteractionId) return;
+
+              const virtualFocus = evaluateAriaWidgetProbe({
+                kind: 'active-descendant-transition',
+                owner: attributeTarget,
+                ...(beforeId ? { beforeId } : {}),
+              });
+              if (virtualFocus?.kind === 'virtual-focus') {
+                emit(virtualFocus, correlatedInteractionId);
+              }
+
+              // Frameworks can insert/re-parent the active item in the same render.
+              // Validate the final ownership relationship after the normal window.
+              ctx.setTimeout(() => {
+                if (!recording || !attributeTarget.isConnected) return;
+                emitAriaWidgetFinding(
+                  evaluateAriaWidgetProbe({ kind: 'active-descendant', owner: attributeTarget }),
+                  correlatedInteractionId,
+                );
+              }, 320);
+            }, 0);
+          }
 
           if (
             affectsLastFocused &&
@@ -456,7 +499,7 @@ export default defineContentScript({
             emitMutation(
               {
                 kind: 'attribute-changed',
-                target: snapshot(mutation.target),
+                target: snapshot(attributeTarget),
                 attribute,
                 previousValue: mutation.oldValue,
                 currentValue,
@@ -482,8 +525,8 @@ export default defineContentScript({
             }
           }
 
-          if (attribute === 'open' && mutation.target.matches('dialog') && isDialogOpen(mutation.target)) {
-            registerDialog(mutation.target, interactionId);
+          if (attribute === 'open' && attributeTarget.matches('dialog') && isDialogOpen(attributeTarget)) {
+            registerDialog(attributeTarget, interactionId);
           }
         }
       }
@@ -544,7 +587,17 @@ export default defineContentScript({
           characterData: true,
           attributes: true,
           attributeOldValue: true,
-          attributeFilter: ['open', 'role', 'aria-live', 'aria-modal', 'aria-hidden', 'hidden', 'class', 'style'],
+          attributeFilter: [
+            'open',
+            'role',
+            'aria-live',
+            'aria-modal',
+            'aria-hidden',
+            'aria-activedescendant',
+            'hidden',
+            'class',
+            'style',
+          ],
         });
         observerActive = true;
       }

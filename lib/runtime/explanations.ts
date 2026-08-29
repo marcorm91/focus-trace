@@ -136,6 +136,8 @@ function ariaWidgetEventTitle(event: RuntimeEvent, language: AppLanguage): strin
       return tr(language, 'Combobox popup role does not match aria-haspopup', 'El rol del popup del combobox no coincide con aria-haspopup');
     case 'FT-RUNTIME-ARIA-005':
       return tr(language, 'aria-activedescendant does not identify a valid active item', 'aria-activedescendant no identifica un elemento activo válido');
+    case 'FT-RUNTIME-ARIA-006':
+      return tr(language, 'Tree expanded state does not match its child group', 'El estado expandido del árbol no coincide con su grupo de hijos');
     case 'FT-APG-004':
       return tr(language, 'Activated tab did not become selected', 'La pestaña activada no pasó a estar seleccionada');
     case 'FT-APG-005':
@@ -150,6 +152,14 @@ function ariaWidgetEventTitle(event: RuntimeEvent, language: AppLanguage): strin
       return tr(language, 'Escape did not dismiss the combobox popup', 'Escape no cerró el popup del combobox');
     case 'FT-APG-010':
       return tr(language, 'Single-select listbox exposes multiple selected options', 'El listbox de selección única expone varias opciones seleccionadas');
+    case 'FT-APG-011':
+      return tr(language, 'Composite widget exposes multiple roving tab stops', 'El widget compuesto expone varios puntos de tabulación roving');
+    case 'FT-APG-012':
+      return tr(language, 'Tree arrow navigation did not match the expected behavior', 'La navegación con flechas del árbol no coincide con el comportamiento esperado');
+    case 'FT-APG-013':
+      return tr(language, 'Grid arrow navigation did not match the expected behavior', 'La navegación con flechas del grid no coincide con el comportamiento esperado');
+    case 'FT-APG-014':
+      return tr(language, 'Single-select tree exposes multiple selected items', 'El árbol de selección única expone varios elementos seleccionados');
     default:
       return event.title;
   }
@@ -161,6 +171,10 @@ export function humanRuntimeEventTitle(event: RuntimeEvent, language: AppLanguag
   switch (event.kind) {
     case 'focus':
       return target ? tr(language, `Focus moved to ${target}`, `El foco se movió a ${target}`) : tr(language, 'Focus moved', 'El foco se movió');
+    case 'virtual-focus':
+      return target
+        ? tr(language, `Virtual focus moved to ${target}`, `El foco virtual se movió a ${target}`)
+        : tr(language, 'Virtual focus moved', 'El foco virtual se movió');
     case 'focus-walk-start':
       return tr(language, 'Automatic focus simulation started', 'Ha empezado la simulación automática de foco');
     case 'focus-walk-end':

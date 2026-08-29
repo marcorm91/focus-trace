@@ -4,6 +4,7 @@ export type ConformanceLevel = 'A' | 'AA' | 'AAA';
 
 export type RuntimeEventKind =
   | 'focus'
+  | 'virtual-focus'
   | 'keydown'
   | 'click'
   | 'route'

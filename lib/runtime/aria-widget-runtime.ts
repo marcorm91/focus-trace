@@ -1,4 +1,11 @@
 import { accessibleName, isProgrammaticallyHidden, semanticRole, selectorFor } from '../audit/dom';
+import { accessibilityOwns, ariaOwnedElements } from './aria-ownership';
+import {
+  captureCompositeWidgetProbes,
+  evaluateCompositeWidgetProbe,
+  isCompositeWidgetProbe,
+  type CompositeWidgetProbe,
+} from './composite-widget-runtime';
 import { snapshot } from './page-inspection';
 import type { RuntimeEvent, StandardReference } from '../../shared/types';
 
@@ -15,8 +22,10 @@ export type AriaWidgetProbe =
   | { kind: 'menu-escape'; menu: Element; trigger?: Element }
   | { kind: 'combobox-popup'; combobox: Element }
   | { kind: 'active-descendant'; owner: Element }
+  | { kind: 'active-descendant-transition'; owner: Element; beforeId?: string }
   | { kind: 'combobox-escape'; combobox: Element; popup?: Element }
-  | { kind: 'listbox-selection'; listbox: Element };
+  | { kind: 'listbox-selection'; listbox: Element }
+  | CompositeWidgetProbe;
 
 const ARIA_EXPANDED_REFERENCE: StandardReference = {
   type: 'WAI-ARIA',
@@ -98,8 +107,42 @@ const APG_LISTBOX_REFERENCE: StandardReference = {
   status: 'informative',
 };
 
+const APG_TREE_REFERENCE: StandardReference = {
+  type: 'WAI-ARIA APG',
+  id: 'treeview',
+  label: 'Tree View Pattern',
+  url: 'https://www.w3.org/WAI/ARIA/apg/patterns/treeview/',
+  status: 'informative',
+};
+
+const APG_GRID_REFERENCE: StandardReference = {
+  type: 'WAI-ARIA APG',
+  id: 'grid',
+  label: 'Grid Pattern',
+  url: 'https://www.w3.org/WAI/ARIA/apg/patterns/grid/',
+  status: 'informative',
+};
+
+const APG_TREEGRID_REFERENCE: StandardReference = {
+  type: 'WAI-ARIA APG',
+  id: 'treegrid',
+  label: 'Treegrid Pattern',
+  url: 'https://www.w3.org/WAI/ARIA/apg/patterns/treegrid/',
+  status: 'informative',
+};
+
 const COMBOBOX_POPUP_ROLES = new Set(['listbox', 'tree', 'grid', 'dialog']);
 const ACTIVE_DESCENDANT_POPUP_ROLES = new Set(['listbox', 'tree', 'grid']);
+const ACTIVE_DESCENDANT_COMPOSITE_ROLES = new Set(['tree', 'grid', 'treegrid']);
+const ACTIVE_DESCENDANT_RUNTIME_OWNER_ROLES = new Set([
+  'combobox',
+  'textbox',
+  'searchbox',
+  'listbox',
+  'tree',
+  'grid',
+  'treegrid',
+]);
 
 function ids(value: string | null): string[] {
   return value?.trim().split(/\s+/).filter(Boolean) ?? [];
@@ -109,17 +152,6 @@ function controlledElements(control: Element): Element[] {
   return ids(control.getAttribute('aria-controls'))
     .map((id) => document.getElementById(id))
     .filter((element): element is HTMLElement => element != null);
-}
-
-function ariaOwnedElements(owner: Element): Element[] {
-  return ids(owner.getAttribute('aria-owns'))
-    .map((id) => document.getElementById(id))
-    .filter((element): element is HTMLElement => element != null);
-}
-
-function ownsElement(owner: Element, candidate: Element): boolean {
-  if (owner.contains(candidate)) return true;
-  return ariaOwnedElements(owner).some((owned) => owned === candidate || owned.contains(candidate));
 }
 
 function isAvailable(element: Element): boolean {
@@ -170,7 +202,7 @@ function listboxForElement(element: Element): Element | undefined {
   const ancestor = element.closest('[role="listbox"]');
   if (ancestor) return ancestor;
   return [...document.querySelectorAll('[role="listbox"][aria-owns]')]
-    .find((candidate) => ownsElement(candidate, element));
+    .find((candidate) => accessibilityOwns(candidate, element));
 }
 
 function expectedComboboxPopupRole(combobox: Element): string {
@@ -186,13 +218,27 @@ function activeDescendantTarget(owner: Element): Element | undefined {
   return document.getElementById(id) ?? undefined;
 }
 
+function supportedActiveDescendantOwner(owner: Element): boolean {
+  return ACTIVE_DESCENDANT_RUNTIME_OWNER_ROLES.has(semanticRole(owner) ?? '');
+}
+
 function validActiveDescendantRelationship(owner: Element, active: Element): boolean {
-  if (ownsElement(owner, active)) return true;
+  if (!supportedActiveDescendantOwner(owner)) return false;
+  if (accessibilityOwns(owner, active)) return true;
   if (!['combobox', 'textbox', 'searchbox'].includes(semanticRole(owner) ?? '')) return false;
   return controlledElements(owner).some((controlled) => {
     const role = semanticRole(controlled);
-    return ACTIVE_DESCENDANT_POPUP_ROLES.has(role ?? '') && ownsElement(controlled, active);
+    return ACTIVE_DESCENDANT_POPUP_ROLES.has(role ?? '') && accessibilityOwns(controlled, active);
   });
+}
+
+function activeDescendantPatternReferences(owner: Element): StandardReference[] {
+  const role = semanticRole(owner);
+  if (role === 'tree') return [ARIA_ACTIVEDESCENDANT_REFERENCE, APG_TREE_REFERENCE];
+  if (role === 'grid') return [ARIA_ACTIVEDESCENDANT_REFERENCE, APG_GRID_REFERENCE];
+  if (role === 'treegrid') return [ARIA_ACTIVEDESCENDANT_REFERENCE, APG_TREEGRID_REFERENCE];
+  if (role === 'listbox') return [ARIA_ACTIVEDESCENDANT_REFERENCE, APG_LISTBOX_REFERENCE];
+  return [ARIA_ACTIVEDESCENDANT_REFERENCE, APG_COMBOBOX_REFERENCE, APG_LISTBOX_REFERENCE];
 }
 
 function listboxOptions(listbox: Element): Element[] {
@@ -231,6 +277,21 @@ function pendingFinding(input: {
   };
 }
 
+function pushActiveDescendantProbes(
+  probes: AriaWidgetProbe[],
+  owner: Element,
+  action: RuntimeWidgetAction,
+): void {
+  if (
+    !supportedActiveDescendantOwner(owner)
+    || !owner.hasAttribute('aria-activedescendant')
+    || !activeDescendantAction(action)
+  ) return;
+  const beforeId = owner.getAttribute('aria-activedescendant')?.trim() || undefined;
+  probes.push({ kind: 'active-descendant', owner });
+  probes.push({ kind: 'active-descendant-transition', owner, ...(beforeId ? { beforeId } : {}) });
+}
+
 export function captureAriaWidgetProbes(
   target: Element,
   action: RuntimeWidgetAction,
@@ -258,9 +319,7 @@ export function captureAriaWidgetProbes(
 
   if (comboboxInteraction) {
     probes.push({ kind: 'combobox-popup', combobox: target });
-    if (target.hasAttribute('aria-activedescendant') && activeDescendantAction(action)) {
-      probes.push({ kind: 'active-descendant', owner: target });
-    }
+    pushActiveDescendantProbes(probes, target, action);
     if (action.kind === 'keydown' && action.key === 'Escape') {
       const popup = controlledComboboxPopup(target);
       probes.push({ kind: 'combobox-escape', combobox: target, ...(popup ? { popup } : {}) });
@@ -270,9 +329,11 @@ export function captureAriaWidgetProbes(
   const listbox = role === 'listbox' ? target : listboxForElement(target);
   if (listbox && activeDescendantAction(action)) {
     probes.push({ kind: 'listbox-selection', listbox });
-    if (listbox.hasAttribute('aria-activedescendant')) {
-      probes.push({ kind: 'active-descendant', owner: listbox });
-    }
+    pushActiveDescendantProbes(probes, listbox, action);
+  }
+
+  if (ACTIVE_DESCENDANT_COMPOSITE_ROLES.has(role ?? '')) {
+    pushActiveDescendantProbes(probes, target, action);
   }
 
   if (action.kind === 'keydown' && action.key === 'Escape') {
@@ -287,6 +348,7 @@ export function captureAriaWidgetProbes(
     }
   }
 
+  probes.push(...captureCompositeWidgetProbes(target, action));
   return probes;
 }
 
@@ -442,7 +504,7 @@ function evaluateComboboxPopup(combobox: Element): PendingRuntimeEvent | undefin
 }
 
 function evaluateActiveDescendant(owner: Element): PendingRuntimeEvent | undefined {
-  if (!owner.isConnected || document.activeElement !== owner) return undefined;
+  if (!owner.isConnected || document.activeElement !== owner || !supportedActiveDescendantOwner(owner)) return undefined;
   const activeId = owner.getAttribute('aria-activedescendant')?.trim();
   if (!activeId) return undefined;
   const active = activeDescendantTarget(owner);
@@ -479,11 +541,31 @@ function evaluateActiveDescendant(owner: Element): PendingRuntimeEvent | undefin
       severity: 'moderate',
       outcome: 'review',
       element: owner,
-      references: [ARIA_ACTIVEDESCENDANT_REFERENCE, APG_COMBOBOX_REFERENCE, APG_LISTBOX_REFERENCE],
+      references: activeDescendantPatternReferences(owner),
     });
   }
 
   return undefined;
+}
+
+function evaluateActiveDescendantTransition(
+  owner: Element,
+  beforeId?: string,
+): PendingRuntimeEvent | undefined {
+  if (!owner.isConnected || document.activeElement !== owner || !supportedActiveDescendantOwner(owner)) return undefined;
+  const afterId = owner.getAttribute('aria-activedescendant')?.trim();
+  if (!afterId || afterId === beforeId) return undefined;
+  const active = document.getElementById(afterId);
+  if (!active || !validActiveDescendantRelationship(owner, active) || !isAvailable(active)) return undefined;
+
+  return {
+    kind: 'virtual-focus',
+    severity: 'info',
+    title: 'Virtual focus moved',
+    detail: `aria-activedescendant changed${beforeId ? ` from ${beforeId}` : ''} to ${afterId} while DOM focus remained on ${selectorFor(owner)}.`,
+    element: snapshot(active),
+    references: [ARIA_ACTIVEDESCENDANT_REFERENCE],
+  };
 }
 
 function evaluateComboboxEscape(combobox: Element, popup?: Element): PendingRuntimeEvent | undefined {
@@ -521,6 +603,8 @@ function evaluateListboxSelection(listbox: Element): PendingRuntimeEvent | undef
 }
 
 export function evaluateAriaWidgetProbe(probe: AriaWidgetProbe): PendingRuntimeEvent | undefined {
+  if (isCompositeWidgetProbe(probe)) return evaluateCompositeWidgetProbe(probe);
+
   switch (probe.kind) {
     case 'expanded-control':
       return evaluateExpandedControl(probe.control);
@@ -534,6 +618,8 @@ export function evaluateAriaWidgetProbe(probe: AriaWidgetProbe): PendingRuntimeE
       return evaluateComboboxPopup(probe.combobox);
     case 'active-descendant':
       return evaluateActiveDescendant(probe.owner);
+    case 'active-descendant-transition':
+      return evaluateActiveDescendantTransition(probe.owner, probe.beforeId);
     case 'combobox-escape':
       return evaluateComboboxEscape(probe.combobox, probe.popup);
     case 'listbox-selection':
