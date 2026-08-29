@@ -141,6 +141,10 @@ function widgetNavigationAction(action: RuntimeWidgetAction): boolean {
   return ['ArrowDown', 'ArrowUp', 'ArrowLeft', 'ArrowRight', 'Enter', ' ', 'Escape'].includes(action.key);
 }
 
+function activeDescendantAction(action: RuntimeWidgetAction): boolean {
+  return widgetNavigationAction(action) && !(action.kind === 'keydown' && action.key === 'Escape');
+}
+
 function controlledMenu(trigger: Element): Element | undefined {
   return controlledElements(trigger).find((element) => semanticRole(element) === 'menu');
 }
@@ -191,8 +195,17 @@ function validActiveDescendantRelationship(owner: Element, active: Element): boo
   });
 }
 
+function listboxOptions(listbox: Element): Element[] {
+  const direct = [...listbox.querySelectorAll('[role="option"]')];
+  const owned = ariaOwnedElements(listbox).flatMap((root) => {
+    const nested = [...root.querySelectorAll('[role="option"]')];
+    return semanticRole(root) === 'option' ? [root, ...nested] : nested;
+  });
+  return [...new Set([...direct, ...owned])];
+}
+
 function listboxSelectedOptions(listbox: Element): Element[] {
-  return [...listbox.querySelectorAll('[role="option"]')].filter((option) =>
+  return listboxOptions(listbox).filter((option) =>
     option.getAttribute('aria-selected')?.trim().toLowerCase() === 'true'
       || option.getAttribute('aria-checked')?.trim().toLowerCase() === 'true');
 }
@@ -224,8 +237,13 @@ export function captureAriaWidgetProbes(
 ): AriaWidgetProbe[] {
   const probes: AriaWidgetProbe[] = [];
   const role = semanticRole(target);
+  const comboboxInteraction = role === 'combobox' && widgetNavigationAction(action);
 
-  if (activationAction(action) && target.hasAttribute('aria-expanded') && controlledElements(target).length) {
+  if (
+    (activationAction(action) || comboboxInteraction)
+    && target.hasAttribute('aria-expanded')
+    && controlledElements(target).length
+  ) {
     probes.push({ kind: 'expanded-control', control: target });
   }
 
@@ -238,9 +256,9 @@ export function captureAriaWidgetProbes(
     probes.push({ kind: 'menu-open-focus', trigger: target, menu });
   }
 
-  if (role === 'combobox' && widgetNavigationAction(action)) {
+  if (comboboxInteraction) {
     probes.push({ kind: 'combobox-popup', combobox: target });
-    if (target.hasAttribute('aria-activedescendant')) {
+    if (target.hasAttribute('aria-activedescendant') && activeDescendantAction(action)) {
       probes.push({ kind: 'active-descendant', owner: target });
     }
     if (action.kind === 'keydown' && action.key === 'Escape') {
@@ -250,7 +268,7 @@ export function captureAriaWidgetProbes(
   }
 
   const listbox = role === 'listbox' ? target : listboxForElement(target);
-  if (listbox && widgetNavigationAction(action)) {
+  if (listbox && activeDescendantAction(action)) {
     probes.push({ kind: 'listbox-selection', listbox });
     if (listbox.hasAttribute('aria-activedescendant')) {
       probes.push({ kind: 'active-descendant', owner: listbox });
@@ -392,13 +410,13 @@ function evaluateComboboxPopup(combobox: Element): PendingRuntimeEvent | undefin
     });
   }
 
-  const popup = controlled[0]!;
-  const popupRole = semanticRole(popup);
-  if (!popupRole || !COMBOBOX_POPUP_ROLES.has(popupRole)) {
+  const popup = controlledComboboxPopup(combobox);
+  if (!popup) {
+    const roles = controlled.map((element) => semanticRole(element) ?? 'not exposed').join(', ');
     return pendingFinding({
       ruleId: 'FT-RUNTIME-ARIA-003',
       title: 'Combobox controls an invalid popup role',
-      detail: `The expanded combobox ${selectorFor(combobox)} controls ${selectorFor(popup)}, whose role is ${popupRole ?? 'not exposed'}. WAI-ARIA requires a listbox, tree, grid, or dialog popup.`,
+      detail: `The expanded combobox ${selectorFor(combobox)} controls content with role ${roles}. WAI-ARIA requires a listbox, tree, grid, or dialog popup.`,
       severity: 'serious',
       outcome: 'warning',
       element: combobox,
@@ -406,6 +424,7 @@ function evaluateComboboxPopup(combobox: Element): PendingRuntimeEvent | undefin
     });
   }
 
+  const popupRole = semanticRole(popup)!;
   const expectedRole = expectedComboboxPopupRole(combobox);
   if (expectedRole !== popupRole) {
     return pendingFinding({
