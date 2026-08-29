@@ -76,6 +76,74 @@ export function InstructionsView({ language }: { language: AppLanguage }) {
           </ul>
         </InstructionCard>
 
+        <InstructionCard title={tr(language, 'Rule legend and identifiers', 'Leyenda de reglas e identificadores')}>
+          <p>
+            {tr(
+              language,
+              'FocusTrace uses stable internal identifiers so the same rule can be recognized in Review, Trace, reports, exports and Memory. Every internal rule identifier starts with FT, meaning FocusTrace.',
+              'FocusTrace usa identificadores internos estables para reconocer la misma regla en Revisión, Trace, informes, exportaciones y Memory. Todo identificador interno de regla empieza por FT, que significa FocusTrace.',
+            )}
+          </p>
+          <dl className="instructions-legend">
+            <div>
+              <dt><code>FT-WCAG-###</code></dt>
+              <dd>{tr(language, 'FocusTrace rule directly mapped to a WCAG success criterion. The rule still evaluates only the evidence described by that rule; it does not prove the whole criterion.', 'Regla de FocusTrace vinculada directamente a un criterio de conformidad WCAG. La regla solo evalúa la evidencia definida por esa comprobación; no demuestra por sí sola todo el criterio.')}</dd>
+            </div>
+            <div>
+              <dt><code>FT-WARN-###</code></dt>
+              <dd>{tr(language, 'Deterministic HTML, ARIA or authoring warning that should be corrected or reviewed, without automatically claiming a WCAG failure.', 'Aviso determinista de HTML, ARIA o autoría que debe corregirse o revisarse, sin afirmar automáticamente un incumplimiento WCAG.')}</dd>
+            </div>
+            <div>
+              <dt><code>FT-REVIEW-###</code></dt>
+              <dd>{tr(language, 'Contextual signal that needs human judgement before it can be treated as an accessibility failure.', 'Señal contextual que necesita criterio humano antes de poder tratarse como un fallo de accesibilidad.')}</dd>
+            </div>
+            <div>
+              <dt><code>FT-RUNTIME-###</code></dt>
+              <dd>{tr(language, 'Deterministic or diagnostic rule based on behavior observed while Trace is recording, such as focus or dynamic page changes.', 'Regla determinista o diagnóstica basada en comportamiento observado mientras Trace está grabando, como cambios de foco o de contenido dinámico.')}</dd>
+            </div>
+            <div>
+              <dt><code>FT-RUNTIME-ARIA-###</code></dt>
+              <dd>{tr(language, 'Runtime contradiction in ARIA state or relationships observed after real interaction, for example an invalid active descendant or a popup state that does not match the rendered widget.', 'Contradicción runtime en estados o relaciones ARIA observada tras una interacción real, por ejemplo un descendiente activo inválido o un estado de popup que no coincide con el widget renderizado.')}</dd>
+            </div>
+            <div>
+              <dt><code>FT-APG-###</code></dt>
+              <dd>{tr(language, 'Behavior reviewed against a WAI-ARIA Authoring Practices pattern. APG is informative guidance, so these findings remain contextual reviews unless independent normative evidence proves more.', 'Comportamiento revisado frente a un patrón de WAI-ARIA Authoring Practices. APG es una guía informativa, por lo que estos hallazgos permanecen como revisiones contextuales salvo que exista evidencia normativa independiente.')}</dd>
+            </div>
+          </dl>
+          <p>
+            <strong>{tr(language, 'The number is internal.', 'El número es interno.')}</strong>{' '}
+            {tr(
+              language,
+              'For example, 010 in FT-APG-010 is the FocusTrace sequence number for that family; it is not a WCAG, WAI-ARIA or APG rule number.',
+              'Por ejemplo, 010 en FT-APG-010 es el número de secuencia interno de FocusTrace para esa familia; no es un número oficial de WCAG, WAI-ARIA ni APG.',
+            )}
+          </p>
+          <p>
+            <strong>{tr(language, 'Prefix, result and severity are different things.', 'Prefijo, resultado y severidad son cosas distintas.')}</strong>{' '}
+            {tr(
+              language,
+              'The prefix identifies the rule family and evidence model. FAIL, WARNING, REVIEW and PASS describe the conclusion for the measured evidence. Critical, Serious, Moderate and Minor describe impact or priority; they are not WCAG conformance levels and do not change the confidence of the evidence.',
+              'El prefijo identifica la familia de regla y el modelo de evidencia. FAIL, WARNING, REVIEW y PASS describen la conclusión sobre la evidencia medida. Critical, Serious, Moderate y Minor describen impacto o prioridad; no son niveles de conformidad WCAG ni cambian la confianza de la evidencia.',
+            )}
+          </p>
+          <p>
+            <strong>{tr(language, 'External references stay separate.', 'Las referencias externas se mantienen separadas.')}</strong>{' '}
+            {tr(
+              language,
+              'Identifiers such as WCAG 2.4.3, ACT 2ee8b8 or WAI-ARIA aria-expanded come from the relevant standards. An FT identifier is always a FocusTrace identifier that points to those sources when applicable.',
+              'Identificadores como WCAG 2.4.3, ACT 2ee8b8 o WAI-ARIA aria-expanded pertenecen a sus respectivos estándares. Un identificador FT siempre es un identificador de FocusTrace que enlaza esas fuentes cuando corresponde.',
+            )}
+          </p>
+          <p>
+            <strong>{tr(language, 'Finding vs occurrence.', 'Hallazgo vs ocurrencia.')}</strong>{' '}
+            {tr(
+              language,
+              'A finding is one consolidated problem for a rule and affected context. An occurrence is each time Trace observed that same problem. Five occurrences can therefore appear as one finding with a count of five instead of five repeated report cards.',
+              'Un hallazgo es un problema consolidado para una regla y un contexto afectado. Una ocurrencia es cada vez que Trace observó ese mismo problema. Por eso cinco ocurrencias pueden aparecer como un único hallazgo con contador cinco, en lugar de cinco tarjetas repetidas en el informe.',
+            )}
+          </p>
+        </InstructionCard>
+
         <InstructionCard title={tr(language, 'Analyze a component', 'Analizar un componente')}>
           <p>{tr(language, 'Choose a DOM region directly on the inspected page and run the rule engine only for that component scope.', 'Selecciona una región del DOM directamente en la página inspeccionada y ejecuta el motor de reglas solo para ese ámbito de componente.')}</p>
           <p>{tr(language, 'Document-wide context is still used where the rule requires it, for example when checking whether an HTML id is actually unique.', 'El contexto global del documento se sigue usando cuando una regla lo necesita, por ejemplo para comprobar si un id HTML es realmente único.')}</p>
