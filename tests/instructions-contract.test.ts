@@ -67,21 +67,24 @@ describe('README language and instructions contract', () => {
     expect(instructions).toContain('Las revisiones necesitan contexto humano');
     expect(instructions).toContain('Warnings highlight risky HTML/ARIA authoring');
     expect(instructions).toContain('Los avisos señalan riesgos de autoría HTML/ARIA');
+    expect(instructions).toContain('After stopping a manual Trace, you can remove a mistaken interaction.');
+    expect(instructions).toContain('La leyenda de reglas se incluye al principio de las exportaciones PDF, TXT y Markdown');
   });
 
-  it('explains FocusTrace identifiers, outcomes and report terminology in the product and repo', () => {
+  it('explains FocusTrace identifiers, outcomes and report terminology from one shared source', () => {
     const instructions = source('entrypoints/sidepanel/views/InstructionsView.tsx');
+    const legend = source('shared/rule-legend.ts');
     const css = source('entrypoints/sidepanel/instructions.css');
     const convention = source('docs/RULE_IDENTIFIERS.md');
     const runtimeAria = source('docs/RUNTIME_ARIA.md');
 
-    expect(instructions).toContain("'Rule legend and identifiers', 'Leyenda de reglas e identificadores'");
+    expect(instructions).toContain("ruleLegendCopy(language)");
     for (const prefix of ['FT-WCAG-###', 'FT-WARN-###', 'FT-REVIEW-###', 'FT-RUNTIME-###', 'FT-RUNTIME-ARIA-###', 'FT-APG-###']) {
-      expect(instructions).toContain(`<code>${prefix}</code>`);
+      expect(legend).toContain(`pattern: '${prefix}'`);
       expect(convention).toContain(`\`${prefix}\``);
     }
-    expect(instructions).toContain("'Prefix, result and severity are different things.', 'Prefijo, resultado y severidad son cosas distintas.'");
-    expect(instructions).toContain("'Finding vs occurrence.', 'Hallazgo vs ocurrencia.'");
+    expect(legend).toContain("'Family, result and severity are different.'");
+    expect(legend).toContain("'Finding vs occurrence.'");
     expect(convention).toContain('Do **not** introduce a new prefix just because a new feature or component exists.');
     expect(convention).toContain('Tree/Grid runtime work should continue using `FT-RUNTIME-ARIA`');
     expect(convention).toContain('Accessibility Tree or assistive-technology observations');
