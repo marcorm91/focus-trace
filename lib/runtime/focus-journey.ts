@@ -89,13 +89,14 @@ export function buildFocusJourney(events: RuntimeEvent[]): FocusJourney {
     });
   }
 
+  const domSteps = steps.filter((step) => step.mode === 'dom');
   return {
     steps,
-    forward: steps.filter((step) => step.direction === 'forward').length,
-    backward: steps.filter((step) => step.direction === 'backward').length,
-    repeated: steps.filter((step) => step.direction === 'repeat').length,
-    wraps: steps.filter((step) => step.direction === 'wrap').length,
-    jumps: steps.filter((step) => step.direction === 'jump').length,
+    forward: domSteps.filter((step) => step.direction === 'forward').length,
+    backward: domSteps.filter((step) => step.direction === 'backward').length,
+    repeated: domSteps.filter((step) => step.direction === 'repeat').length,
+    wraps: domSteps.filter((step) => step.direction === 'wrap').length,
+    jumps: domSteps.filter((step) => step.direction === 'jump').length,
     virtual: steps.filter((step) => step.mode === 'virtual').length,
   };
 }
