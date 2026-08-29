@@ -4,14 +4,880 @@
     "authority": "WHATWG",
     "specification": "HTML Living Standard",
     "url": "https://html.spec.whatwg.org/multipage/obsolete.html",
-    "snapshotLabel": "",
-    "obsoleteSectionHash": ""
+    "approvedSnapshotDate": "2026-08-28",
+    "snapshotLabel": "28 August 2026",
+    "lastModified": "Fri, 28 Aug 2026 06:43:45 GMT",
+    "etag": "W/\"6a912e21-2abb9\"",
+    "obsoleteSectionHash": "76c0930222e764b008dda9e378ed9d6abb577b1e1b83592fe4bdb4778f3cc337"
   },
   "summary": {
-    "obsoleteElements": 0,
-    "obsoleteAttributePairs": 0,
-    "obsoleteButConformingWarnings": 0
+    "obsoleteElements": 29,
+    "obsoleteAttributePairs": 208,
+    "obsoleteButConformingWarnings": 8
   },
-  "obsoleteElements": [],
-  "obsoleteAttributePairs": []
+  "obsoleteElements": [
+    "acronym",
+    "applet",
+    "basefont",
+    "bgsound",
+    "big",
+    "blink",
+    "center",
+    "dir",
+    "font",
+    "frame",
+    "frameset",
+    "isindex",
+    "keygen",
+    "listing",
+    "marquee",
+    "menuitem",
+    "multicol",
+    "nextid",
+    "nobr",
+    "noembed",
+    "noframes",
+    "param",
+    "plaintext",
+    "rb",
+    "rtc",
+    "spacer",
+    "strike",
+    "tt",
+    "xmp"
+  ],
+  "obsoleteAttributePairs": [
+    {
+      "attribute": "abbr",
+      "element": "td"
+    },
+    {
+      "attribute": "accept",
+      "element": "form"
+    },
+    {
+      "attribute": "align",
+      "element": "caption"
+    },
+    {
+      "attribute": "align",
+      "element": "col"
+    },
+    {
+      "attribute": "align",
+      "element": "div"
+    },
+    {
+      "attribute": "align",
+      "element": "embed"
+    },
+    {
+      "attribute": "align",
+      "element": "h1"
+    },
+    {
+      "attribute": "align",
+      "element": "h2"
+    },
+    {
+      "attribute": "align",
+      "element": "h3"
+    },
+    {
+      "attribute": "align",
+      "element": "h4"
+    },
+    {
+      "attribute": "align",
+      "element": "h5"
+    },
+    {
+      "attribute": "align",
+      "element": "h6"
+    },
+    {
+      "attribute": "align",
+      "element": "hr"
+    },
+    {
+      "attribute": "align",
+      "element": "iframe"
+    },
+    {
+      "attribute": "align",
+      "element": "img"
+    },
+    {
+      "attribute": "align",
+      "element": "input"
+    },
+    {
+      "attribute": "align",
+      "element": "legend"
+    },
+    {
+      "attribute": "align",
+      "element": "object"
+    },
+    {
+      "attribute": "align",
+      "element": "p"
+    },
+    {
+      "attribute": "align",
+      "element": "table"
+    },
+    {
+      "attribute": "align",
+      "element": "tbody"
+    },
+    {
+      "attribute": "align",
+      "element": "td"
+    },
+    {
+      "attribute": "align",
+      "element": "tfoot"
+    },
+    {
+      "attribute": "align",
+      "element": "th"
+    },
+    {
+      "attribute": "align",
+      "element": "thead"
+    },
+    {
+      "attribute": "align",
+      "element": "tr"
+    },
+    {
+      "attribute": "alink",
+      "element": "body"
+    },
+    {
+      "attribute": "allowtransparency",
+      "element": "iframe"
+    },
+    {
+      "attribute": "archive",
+      "element": "object"
+    },
+    {
+      "attribute": "axis",
+      "element": "td"
+    },
+    {
+      "attribute": "axis",
+      "element": "th"
+    },
+    {
+      "attribute": "background",
+      "element": "body"
+    },
+    {
+      "attribute": "background",
+      "element": "table"
+    },
+    {
+      "attribute": "background",
+      "element": "tbody"
+    },
+    {
+      "attribute": "background",
+      "element": "td"
+    },
+    {
+      "attribute": "background",
+      "element": "tfoot"
+    },
+    {
+      "attribute": "background",
+      "element": "th"
+    },
+    {
+      "attribute": "background",
+      "element": "thead"
+    },
+    {
+      "attribute": "background",
+      "element": "tr"
+    },
+    {
+      "attribute": "bgcolor",
+      "element": "body"
+    },
+    {
+      "attribute": "bgcolor",
+      "element": "table"
+    },
+    {
+      "attribute": "bgcolor",
+      "element": "td"
+    },
+    {
+      "attribute": "bgcolor",
+      "element": "th"
+    },
+    {
+      "attribute": "bgcolor",
+      "element": "tr"
+    },
+    {
+      "attribute": "border",
+      "element": "input"
+    },
+    {
+      "attribute": "border",
+      "element": "object"
+    },
+    {
+      "attribute": "border",
+      "element": "table"
+    },
+    {
+      "attribute": "bordercolor",
+      "element": "table"
+    },
+    {
+      "attribute": "bottommargin",
+      "element": "body"
+    },
+    {
+      "attribute": "cellpadding",
+      "element": "table"
+    },
+    {
+      "attribute": "cellspacing",
+      "element": "table"
+    },
+    {
+      "attribute": "char",
+      "element": "col"
+    },
+    {
+      "attribute": "char",
+      "element": "tbody"
+    },
+    {
+      "attribute": "char",
+      "element": "td"
+    },
+    {
+      "attribute": "char",
+      "element": "tfoot"
+    },
+    {
+      "attribute": "char",
+      "element": "th"
+    },
+    {
+      "attribute": "char",
+      "element": "thead"
+    },
+    {
+      "attribute": "char",
+      "element": "tr"
+    },
+    {
+      "attribute": "charoff",
+      "element": "col"
+    },
+    {
+      "attribute": "charoff",
+      "element": "tbody"
+    },
+    {
+      "attribute": "charoff",
+      "element": "td"
+    },
+    {
+      "attribute": "charoff",
+      "element": "tfoot"
+    },
+    {
+      "attribute": "charoff",
+      "element": "th"
+    },
+    {
+      "attribute": "charoff",
+      "element": "thead"
+    },
+    {
+      "attribute": "charoff",
+      "element": "tr"
+    },
+    {
+      "attribute": "charset",
+      "element": "a"
+    },
+    {
+      "attribute": "charset",
+      "element": "link"
+    },
+    {
+      "attribute": "classid",
+      "element": "object"
+    },
+    {
+      "attribute": "clear",
+      "element": "br"
+    },
+    {
+      "attribute": "code",
+      "element": "object"
+    },
+    {
+      "attribute": "codebase",
+      "element": "object"
+    },
+    {
+      "attribute": "codetype",
+      "element": "object"
+    },
+    {
+      "attribute": "color",
+      "element": "hr"
+    },
+    {
+      "attribute": "compact",
+      "element": "dl"
+    },
+    {
+      "attribute": "compact",
+      "element": "menu"
+    },
+    {
+      "attribute": "compact",
+      "element": "ol"
+    },
+    {
+      "attribute": "compact",
+      "element": "ul"
+    },
+    {
+      "attribute": "contextmenu",
+      "element": "*"
+    },
+    {
+      "attribute": "coords",
+      "element": "a"
+    },
+    {
+      "attribute": "datafld",
+      "element": "a"
+    },
+    {
+      "attribute": "datafld",
+      "element": "button"
+    },
+    {
+      "attribute": "datafld",
+      "element": "div"
+    },
+    {
+      "attribute": "datafld",
+      "element": "fieldset"
+    },
+    {
+      "attribute": "datafld",
+      "element": "frame"
+    },
+    {
+      "attribute": "datafld",
+      "element": "iframe"
+    },
+    {
+      "attribute": "datafld",
+      "element": "img"
+    },
+    {
+      "attribute": "datafld",
+      "element": "input"
+    },
+    {
+      "attribute": "datafld",
+      "element": "label"
+    },
+    {
+      "attribute": "datafld",
+      "element": "legend"
+    },
+    {
+      "attribute": "datafld",
+      "element": "marquee"
+    },
+    {
+      "attribute": "datafld",
+      "element": "object"
+    },
+    {
+      "attribute": "datafld",
+      "element": "select"
+    },
+    {
+      "attribute": "datafld",
+      "element": "span"
+    },
+    {
+      "attribute": "datafld",
+      "element": "textarea"
+    },
+    {
+      "attribute": "dataformatas",
+      "element": "button"
+    },
+    {
+      "attribute": "dataformatas",
+      "element": "div"
+    },
+    {
+      "attribute": "dataformatas",
+      "element": "input"
+    },
+    {
+      "attribute": "dataformatas",
+      "element": "label"
+    },
+    {
+      "attribute": "dataformatas",
+      "element": "legend"
+    },
+    {
+      "attribute": "dataformatas",
+      "element": "marquee"
+    },
+    {
+      "attribute": "dataformatas",
+      "element": "object"
+    },
+    {
+      "attribute": "dataformatas",
+      "element": "option"
+    },
+    {
+      "attribute": "dataformatas",
+      "element": "select"
+    },
+    {
+      "attribute": "dataformatas",
+      "element": "span"
+    },
+    {
+      "attribute": "dataformatas",
+      "element": "table"
+    },
+    {
+      "attribute": "datapagesize",
+      "element": "table"
+    },
+    {
+      "attribute": "datasrc",
+      "element": "a"
+    },
+    {
+      "attribute": "datasrc",
+      "element": "button"
+    },
+    {
+      "attribute": "datasrc",
+      "element": "div"
+    },
+    {
+      "attribute": "datasrc",
+      "element": "frame"
+    },
+    {
+      "attribute": "datasrc",
+      "element": "iframe"
+    },
+    {
+      "attribute": "datasrc",
+      "element": "img"
+    },
+    {
+      "attribute": "datasrc",
+      "element": "input"
+    },
+    {
+      "attribute": "datasrc",
+      "element": "label"
+    },
+    {
+      "attribute": "datasrc",
+      "element": "legend"
+    },
+    {
+      "attribute": "datasrc",
+      "element": "marquee"
+    },
+    {
+      "attribute": "datasrc",
+      "element": "object"
+    },
+    {
+      "attribute": "datasrc",
+      "element": "option"
+    },
+    {
+      "attribute": "datasrc",
+      "element": "select"
+    },
+    {
+      "attribute": "datasrc",
+      "element": "span"
+    },
+    {
+      "attribute": "datasrc",
+      "element": "table"
+    },
+    {
+      "attribute": "datasrc",
+      "element": "textarea"
+    },
+    {
+      "attribute": "declare",
+      "element": "object"
+    },
+    {
+      "attribute": "dropzone",
+      "element": "*"
+    },
+    {
+      "attribute": "event",
+      "element": "script"
+    },
+    {
+      "attribute": "for",
+      "element": "script"
+    },
+    {
+      "attribute": "frame",
+      "element": "table"
+    },
+    {
+      "attribute": "frameborder",
+      "element": "iframe"
+    },
+    {
+      "attribute": "framespacing",
+      "element": "iframe"
+    },
+    {
+      "attribute": "height",
+      "element": "table"
+    },
+    {
+      "attribute": "height",
+      "element": "tbody"
+    },
+    {
+      "attribute": "height",
+      "element": "td"
+    },
+    {
+      "attribute": "height",
+      "element": "tfoot"
+    },
+    {
+      "attribute": "height",
+      "element": "th"
+    },
+    {
+      "attribute": "height",
+      "element": "thead"
+    },
+    {
+      "attribute": "height",
+      "element": "tr"
+    },
+    {
+      "attribute": "hreflang",
+      "element": "area"
+    },
+    {
+      "attribute": "hspace",
+      "element": "embed"
+    },
+    {
+      "attribute": "hspace",
+      "element": "iframe"
+    },
+    {
+      "attribute": "hspace",
+      "element": "img"
+    },
+    {
+      "attribute": "hspace",
+      "element": "input"
+    },
+    {
+      "attribute": "hspace",
+      "element": "object"
+    },
+    {
+      "attribute": "ismap",
+      "element": "input"
+    },
+    {
+      "attribute": "label",
+      "element": "menu"
+    },
+    {
+      "attribute": "leftmargin",
+      "element": "body"
+    },
+    {
+      "attribute": "link",
+      "element": "body"
+    },
+    {
+      "attribute": "longdesc",
+      "element": "iframe"
+    },
+    {
+      "attribute": "longdesc",
+      "element": "img"
+    },
+    {
+      "attribute": "lowsrc",
+      "element": "img"
+    },
+    {
+      "attribute": "manifest",
+      "element": "html"
+    },
+    {
+      "attribute": "marginheight",
+      "element": "body"
+    },
+    {
+      "attribute": "marginheight",
+      "element": "iframe"
+    },
+    {
+      "attribute": "marginwidth",
+      "element": "body"
+    },
+    {
+      "attribute": "marginwidth",
+      "element": "iframe"
+    },
+    {
+      "attribute": "methods",
+      "element": "a"
+    },
+    {
+      "attribute": "methods",
+      "element": "link"
+    },
+    {
+      "attribute": "name",
+      "element": "embed"
+    },
+    {
+      "attribute": "name",
+      "element": "img"
+    },
+    {
+      "attribute": "name",
+      "element": "option"
+    },
+    {
+      "attribute": "nohref",
+      "element": "area"
+    },
+    {
+      "attribute": "noshade",
+      "element": "hr"
+    },
+    {
+      "attribute": "nowrap",
+      "element": "td"
+    },
+    {
+      "attribute": "nowrap",
+      "element": "th"
+    },
+    {
+      "attribute": "onshow",
+      "element": "*"
+    },
+    {
+      "attribute": "profile",
+      "element": "head"
+    },
+    {
+      "attribute": "rev",
+      "element": "a"
+    },
+    {
+      "attribute": "rev",
+      "element": "link"
+    },
+    {
+      "attribute": "rightmargin",
+      "element": "body"
+    },
+    {
+      "attribute": "rules",
+      "element": "table"
+    },
+    {
+      "attribute": "scheme",
+      "element": "meta"
+    },
+    {
+      "attribute": "scope",
+      "element": "td"
+    },
+    {
+      "attribute": "scrolling",
+      "element": "iframe"
+    },
+    {
+      "attribute": "shape",
+      "element": "a"
+    },
+    {
+      "attribute": "size",
+      "element": "hr"
+    },
+    {
+      "attribute": "standby",
+      "element": "object"
+    },
+    {
+      "attribute": "summary",
+      "element": "table"
+    },
+    {
+      "attribute": "target",
+      "element": "link"
+    },
+    {
+      "attribute": "text",
+      "element": "body"
+    },
+    {
+      "attribute": "topmargin",
+      "element": "body"
+    },
+    {
+      "attribute": "type",
+      "element": "area"
+    },
+    {
+      "attribute": "type",
+      "element": "li"
+    },
+    {
+      "attribute": "type",
+      "element": "menu"
+    },
+    {
+      "attribute": "type",
+      "element": "ul"
+    },
+    {
+      "attribute": "typemustmatch",
+      "element": "object"
+    },
+    {
+      "attribute": "urn",
+      "element": "a"
+    },
+    {
+      "attribute": "urn",
+      "element": "link"
+    },
+    {
+      "attribute": "usemap",
+      "element": "input"
+    },
+    {
+      "attribute": "usemap",
+      "element": "object"
+    },
+    {
+      "attribute": "valign",
+      "element": "col"
+    },
+    {
+      "attribute": "valign",
+      "element": "tbody"
+    },
+    {
+      "attribute": "valign",
+      "element": "td"
+    },
+    {
+      "attribute": "valign",
+      "element": "tfoot"
+    },
+    {
+      "attribute": "valign",
+      "element": "th"
+    },
+    {
+      "attribute": "valign",
+      "element": "thead"
+    },
+    {
+      "attribute": "valign",
+      "element": "tr"
+    },
+    {
+      "attribute": "version",
+      "element": "html"
+    },
+    {
+      "attribute": "vlink",
+      "element": "body"
+    },
+    {
+      "attribute": "vspace",
+      "element": "embed"
+    },
+    {
+      "attribute": "vspace",
+      "element": "iframe"
+    },
+    {
+      "attribute": "vspace",
+      "element": "img"
+    },
+    {
+      "attribute": "vspace",
+      "element": "input"
+    },
+    {
+      "attribute": "vspace",
+      "element": "object"
+    },
+    {
+      "attribute": "width",
+      "element": "col"
+    },
+    {
+      "attribute": "width",
+      "element": "hr"
+    },
+    {
+      "attribute": "width",
+      "element": "pre"
+    },
+    {
+      "attribute": "width",
+      "element": "table"
+    },
+    {
+      "attribute": "width",
+      "element": "td"
+    },
+    {
+      "attribute": "width",
+      "element": "th"
+    }
+  ]
 }

@@ -1,9 +1,151 @@
 {
   "schemaVersion": 1,
   "summary": {
-    "sources": 0,
-    "normative": 0,
-    "informative": 0
+    "sources": 15,
+    "normative": 9,
+    "informative": 6
   },
-  "sources": []
+  "sources": [
+    {
+      "id": "accname",
+      "label": "Accessible Name and Description Computation 1.2",
+      "authority": "W3C",
+      "url": "https://www.w3.org/TR/accname-1.2/",
+      "role": "normative",
+      "contentHash": "8c96f695d0b5d65f9362a9d1546b02e6dec27ea8c551baf4302c382babde5433",
+      "lastModified": "Thu, 27 Aug 2026 07:21:50 GMT"
+    },
+    {
+      "id": "apg",
+      "label": "ARIA Authoring Practices Guide",
+      "authority": "W3C",
+      "url": "https://www.w3.org/WAI/ARIA/apg/",
+      "role": "informative",
+      "contentHash": "c5a6d654942b42e6ed32b612dbbd51401f48893e3e006c14a7cbd957ee665ab1",
+      "lastModified": "Fri, 28 Aug 2026 17:32:58 GMT"
+    },
+    {
+      "id": "core-aam",
+      "label": "Core Accessibility API Mappings 1.2",
+      "authority": "W3C",
+      "url": "https://www.w3.org/TR/core-aam-1.2/",
+      "role": "normative",
+      "contentHash": "6cfbd5a2371c156aeac12f3e1c59401a67305da35770126a27d243087e71135e",
+      "lastModified": "Thu, 27 Aug 2026 07:20:29 GMT"
+    },
+    {
+      "id": "html",
+      "label": "HTML Living Standard",
+      "authority": "WHATWG",
+      "url": "https://html.spec.whatwg.org/multipage/",
+      "role": "normative",
+      "contentHash": "31e7b6cfc5b31f1a5e39653d0e44f9d4c80a871fbc8f39f0eb80d0540d6cc1aa",
+      "etag": "W/\"6a912e1f-25c4d\"",
+      "lastModified": "Fri, 28 Aug 2026 06:43:43 GMT"
+    },
+    {
+      "id": "html-aam",
+      "label": "HTML Accessibility API Mappings 1.0",
+      "authority": "W3C",
+      "url": "https://www.w3.org/TR/html-aam-1.0/",
+      "role": "normative",
+      "contentHash": "c823185492e53d1a148c47b4ee63c309e37700e9196f9b50036db650e18ef353",
+      "lastModified": "Thu, 27 Aug 2026 07:23:51 GMT"
+    },
+    {
+      "id": "html-obsolete",
+      "label": "HTML obsolete features",
+      "authority": "WHATWG",
+      "url": "https://html.spec.whatwg.org/multipage/obsolete.html",
+      "role": "normative",
+      "contentHash": "d0c424cd447a4813e3d84162ae723cba8ef3112cc3a17935aac04e40290c2ba1",
+      "etag": "W/\"6a912e21-2abb9\"",
+      "lastModified": "Fri, 28 Aug 2026 06:43:45 GMT"
+    },
+    {
+      "id": "iana-language-subtags",
+      "label": "IANA Language Subtag Registry",
+      "authority": "IANA",
+      "url": "https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry",
+      "role": "normative",
+      "contentHash": "8e0e05797e40b81769674e802b28de5b2c80361eda0c98b908f3b1906dc7d716",
+      "fallbackUrl": "https://raw.githubusercontent.com/Masterain98/IANA-BCP47/main/src/iana_bcp47/language-subtag-registry.txt",
+      "lastModified": "Mon, 10 Aug 2026 23:36:24 GMT"
+    },
+    {
+      "id": "mime-sniff",
+      "label": "MIME Sniffing Living Standard",
+      "authority": "WHATWG",
+      "url": "https://mimesniff.spec.whatwg.org/",
+      "role": "normative",
+      "contentHash": "96a7f6cfaeb2a04cad0e91dec66c580a76bf467cda531614985c4ec1279751dc",
+      "etag": "W/\"6a5a2b82-3c002\"",
+      "lastModified": "Fri, 17 Jul 2026 13:17:54 GMT"
+    },
+    {
+      "id": "wai-aria",
+      "label": "WAI-ARIA editor draft",
+      "authority": "W3C",
+      "url": "https://w3c.github.io/aria/",
+      "role": "normative",
+      "contentHash": "583b6a980f29e9676b7afa53ffa2af2ee11b00f0f33141f44fd428da6cd04c40",
+      "etag": "W/\"6a8fe61a-1cb238\"",
+      "lastModified": "Thu, 27 Aug 2026 07:24:10 GMT"
+    },
+    {
+      "id": "wcag2-changelog",
+      "label": "WCAG 2 supporting-documents changelog",
+      "authority": "W3C",
+      "url": "https://www.w3.org/WAI/standards-guidelines/wcag/changelog/",
+      "role": "informative",
+      "contentHash": "b43494fd640824abe6b51c6d874a04f3f80a56abded4e9ff3c265647289dd347",
+      "lastModified": "Fri, 28 Aug 2026 17:32:59 GMT"
+    },
+    {
+      "id": "wcag22",
+      "label": "WCAG 2.2",
+      "authority": "W3C",
+      "url": "https://www.w3.org/TR/WCAG22/",
+      "role": "normative",
+      "contentHash": "de93b68540ecacbd6771b626cddebc23ea2c1ca25dad7749b2e9dba4205bd953",
+      "lastModified": "Thu, 12 Dec 2024 10:36:22 GMT"
+    },
+    {
+      "id": "wcag22-editor-draft",
+      "label": "WCAG 2.2 Editor Draft",
+      "authority": "W3C",
+      "url": "https://w3c.github.io/wcag/guidelines/22/",
+      "role": "informative",
+      "contentHash": "50047cf00ab25f0029def9a271e3e213b7d26c68817f040149e80d3fefc78ba3",
+      "etag": "W/\"6a91c0b9-7c9aa\"",
+      "lastModified": "Fri, 28 Aug 2026 17:09:13 GMT"
+    },
+    {
+      "id": "wcag22-errata",
+      "label": "WCAG 2.2 Errata",
+      "authority": "W3C",
+      "url": "https://www.w3.org/WAI/WCAG22/errata/",
+      "role": "informative",
+      "contentHash": "6e6bdb09bc4b1c2c0e6a6e3f18aed873c54466614f900132a2a5c2bae516dd7d",
+      "lastModified": "Fri, 28 Aug 2026 17:37:39 GMT"
+    },
+    {
+      "id": "wcag22-techniques",
+      "label": "Techniques for WCAG 2.2",
+      "authority": "W3C",
+      "url": "https://www.w3.org/WAI/WCAG22/Techniques/",
+      "role": "informative",
+      "contentHash": "47736176caade8887dc6e6847adc683860ba858d65ecf843e1ea41d05dc51f89",
+      "lastModified": "Thu, 06 Aug 2026 06:18:26 GMT"
+    },
+    {
+      "id": "wcag22-understanding",
+      "label": "Understanding WCAG 2.2",
+      "authority": "W3C",
+      "url": "https://www.w3.org/WAI/WCAG22/Understanding/",
+      "role": "informative",
+      "contentHash": "ebc83aebb62c845eb524e6e35abfb52b8c48eac7456b2052280cc2b4d1b88e72",
+      "lastModified": "Thu, 02 Jul 2026 10:07:49 GMT"
+    }
+  ]
 }
