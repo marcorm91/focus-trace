@@ -89,6 +89,7 @@ export interface SessionReportModel {
 interface ReportTraceCandidate {
   identityKey: string;
   story: ReportTraceStory;
+  representedEventIds: string[];
 }
 
 function translated(language: AppLanguage, english: string, spanish: string): string {
@@ -245,6 +246,7 @@ function candidateForInteraction(
 
   return {
     identityKey,
+    representedEventIds: finding ? [finding.id] : [],
     story: {
       id: `interaction-story-${interaction.id}`,
       tone,
@@ -275,20 +277,26 @@ function candidateForInteraction(
 
 function unlinkedRuntimeCandidates(
   events: RuntimeEvent[],
-  representedInteractionIds: Set<string>,
+  representedEventIds: Set<string>,
+  interactionsById: Map<string, RuntimeInteraction>,
+  interactionNumbers: Map<string, number>,
   language: AppLanguage,
 ): ReportTraceCandidate[] {
   return events
     .filter((event) => event.outcome != null)
-    .filter((event) => !event.interactionId || !representedInteractionIds.has(event.interactionId))
+    .filter((event) => !representedEventIds.has(event.id))
     .map((event) => {
-      const trigger = humanRuntimeEventTitle(event, language);
-      const chain = [trigger];
+      const interaction = event.interactionId ? interactionsById.get(event.interactionId) : undefined;
+      const interactionNumber = event.interactionId ? interactionNumbers.get(event.interactionId) : undefined;
+      const eventTitle = humanRuntimeEventTitle(event, language);
+      const trigger = interaction ? humanInteractionTitle(interaction, language) : eventTitle;
+      const chain = interaction ? uniqueStrings([trigger, eventTitle]) : [eventTitle];
       const selector = event.element?.selector;
       const cause = event.causes?.[0];
       const occurrence: ReportTraceOccurrence = {
         id: event.id,
         timestamp: event.timestamp,
+        ...(interactionNumber != null ? { interactionNumber } : {}),
         trigger,
         chain,
       };
@@ -299,12 +307,14 @@ function unlinkedRuntimeCandidates(
           `cause:${cause?.type ?? 'none'}`,
           `context:${selector ?? 'session'}`,
         ].join('|'),
+        representedEventIds: [event.id],
         story: {
           id: `event-story-${event.id}`,
           tone: 'review' as const,
+          ...(interactionNumber != null ? { interactionNumber } : {}),
           trigger,
           chain,
-          result: trigger,
+          result: eventTitle,
           detail: language === 'en' && event.detail
             ? event.detail
             : translated(
@@ -483,17 +493,25 @@ export function buildSessionReportModel(
   const interactions = groupRuntimeInteractions(events);
   const journey = buildFocusJourney(events);
   const transitionSemantics = buildFocusTransitionSemantics(events, interactions, journey);
-  const representedInteractionIds = new Set<string>();
+  const representedEventIds = new Set<string>();
   const traceCandidates: ReportTraceCandidate[] = [];
+  const interactionsById = new Map(interactions.map((interaction) => [interaction.id, interaction]));
+  const interactionNumbers = new Map(interactions.map((interaction, index) => [interaction.id, index + 1]));
 
   interactions.forEach((interaction, index) => {
     if (!interaction.correlated) return;
     const candidate = candidateForInteraction(interaction, index + 1, transitionSemantics, language);
     if (!candidate) return;
-    representedInteractionIds.add(interaction.id);
+    candidate.representedEventIds.forEach((eventId) => representedEventIds.add(eventId));
     traceCandidates.push(candidate);
   });
-  traceCandidates.push(...unlinkedRuntimeCandidates(events, representedInteractionIds, language));
+  traceCandidates.push(...unlinkedRuntimeCandidates(
+    events,
+    representedEventIds,
+    interactionsById,
+    interactionNumbers,
+    language,
+  ));
   const traceStories = consolidateTraceCandidates(traceCandidates);
 
   const allStaticFindings = scan
