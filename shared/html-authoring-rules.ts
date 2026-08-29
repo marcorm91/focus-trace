@@ -33,6 +33,14 @@ const htmlLinkReference: StandardReference = {
   url: 'https://html.spec.whatwg.org/multipage/links.html#links-created-by-a-and-area-elements',
 };
 
+const htmlObsoleteReference: StandardReference = {
+  type: 'HTML',
+  id: 'obsolete',
+  label: 'HTML Living Standard · Obsolete features',
+  status: 'normative',
+  url: 'https://html.spec.whatwg.org/multipage/obsolete.html',
+};
+
 const ariaAuthoringReference: StandardReference = {
   type: 'WAI-ARIA APG',
   id: 'read-me-first',
@@ -58,6 +66,39 @@ export const DUPLICATE_ID_RULE: RuleDefinition = {
     es: 'Los IDs duplicados son un error de autoría HTML y pueden hacer que etiquetas, referencias ARIA por ID, enlaces de fragmento o búsquedas mediante scripts se resuelvan de forma impredecible, pero el duplicado por sí solo no demuestra un incumplimiento WCAG.',
   },
   references: [htmlIdReference],
+};
+
+export const OBSOLETE_HTML_ELEMENT_RULE: RuleDefinition = {
+  id: 'FT-WARN-005',
+  title: 'Entirely obsolete HTML element is used',
+  severity: 'moderate',
+  severityRationale: {
+    en: 'Entirely obsolete HTML elements are non-conforming authoring features and can preserve legacy behavior or semantics that are harder to maintain and reason about, although their presence alone is not a WCAG failure.',
+    es: 'Los elementos HTML totalmente obsoletos son características de autoría no conformes y pueden mantener comportamientos o semánticas heredadas más difíciles de mantener y analizar, aunque su presencia por sí sola no supone un fallo WCAG.',
+  },
+  references: [htmlObsoleteReference],
+};
+
+export const OBSOLETE_HTML_ATTRIBUTE_RULE: RuleDefinition = {
+  id: 'FT-WARN-006',
+  title: 'Obsolete non-conforming HTML attribute is used',
+  severity: 'minor',
+  severityRationale: {
+    en: 'An obsolete attribute is a current HTML authoring error and often reflects presentation or legacy behavior that belongs in modern markup, CSS or script, but it does not necessarily create an accessibility barrier by itself.',
+    es: 'Un atributo obsoleto es un error de autoría en HTML actual y suele reflejar presentación o comportamiento heredado que debe trasladarse a marcado moderno, CSS o JavaScript, pero no crea necesariamente una barrera de accesibilidad por sí solo.',
+  },
+  references: [htmlObsoleteReference],
+};
+
+export const OBSOLETE_BUT_CONFORMING_HTML_RULE: RuleDefinition = {
+  id: 'FT-WARN-007',
+  title: 'Obsolete but conforming HTML feature is used',
+  severity: 'minor',
+  severityRationale: {
+    en: 'HTML still permits this legacy feature only so conformance checkers can distinguish old vestigial markup from a hard conformance error; authors are expected to remove or modernize it.',
+    es: 'HTML todavía permite esta característica heredada para que los validadores distingan marcado residual antiguo de un error de conformidad estricto; se espera que los autores la eliminen o modernicen.',
+  },
+  references: [htmlObsoleteReference],
 };
 
 export const MAIN_LANDMARK_RULE: RuleDefinition = {
