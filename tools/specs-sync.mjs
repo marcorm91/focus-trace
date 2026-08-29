@@ -6,8 +6,11 @@ const DEFAULT_OUTPUT = 'generated/standards-sources.json';
 
 export const MONITORED_SPECS = [
   { id: 'wcag22', label: 'WCAG 2.2', authority: 'W3C', url: 'https://www.w3.org/TR/WCAG22/', role: 'normative' },
+  { id: 'wcag22-errata', label: 'WCAG 2.2 Errata', authority: 'W3C', url: 'https://www.w3.org/WAI/WCAG22/errata/', role: 'informative' },
+  { id: 'wcag22-editor-draft', label: 'WCAG 2.2 Editor Draft', authority: 'W3C', url: 'https://w3c.github.io/wcag/guidelines/22/', role: 'informative' },
   { id: 'wcag22-understanding', label: 'Understanding WCAG 2.2', authority: 'W3C', url: 'https://www.w3.org/WAI/WCAG22/Understanding/', role: 'informative' },
   { id: 'wcag22-techniques', label: 'Techniques for WCAG 2.2', authority: 'W3C', url: 'https://www.w3.org/WAI/WCAG22/Techniques/', role: 'informative' },
+  { id: 'wcag2-changelog', label: 'WCAG 2 supporting-documents changelog', authority: 'W3C', url: 'https://www.w3.org/WAI/standards-guidelines/wcag/changelog/', role: 'informative' },
   { id: 'html', label: 'HTML Living Standard', authority: 'WHATWG', url: 'https://html.spec.whatwg.org/multipage/', role: 'normative' },
   { id: 'html-obsolete', label: 'HTML obsolete features', authority: 'WHATWG', url: 'https://html.spec.whatwg.org/multipage/obsolete.html', role: 'normative' },
   { id: 'wai-aria', label: 'WAI-ARIA editor draft', authority: 'W3C', url: 'https://w3c.github.io/aria/', role: 'normative' },
