@@ -134,6 +134,15 @@ const APG_TREEGRID_REFERENCE: StandardReference = {
 const COMBOBOX_POPUP_ROLES = new Set(['listbox', 'tree', 'grid', 'dialog']);
 const ACTIVE_DESCENDANT_POPUP_ROLES = new Set(['listbox', 'tree', 'grid']);
 const ACTIVE_DESCENDANT_COMPOSITE_ROLES = new Set(['tree', 'grid', 'treegrid']);
+const ACTIVE_DESCENDANT_RUNTIME_OWNER_ROLES = new Set([
+  'combobox',
+  'textbox',
+  'searchbox',
+  'listbox',
+  'tree',
+  'grid',
+  'treegrid',
+]);
 
 function ids(value: string | null): string[] {
   return value?.trim().split(/\s+/).filter(Boolean) ?? [];
@@ -209,7 +218,12 @@ function activeDescendantTarget(owner: Element): Element | undefined {
   return document.getElementById(id) ?? undefined;
 }
 
+function supportedActiveDescendantOwner(owner: Element): boolean {
+  return ACTIVE_DESCENDANT_RUNTIME_OWNER_ROLES.has(semanticRole(owner) ?? '');
+}
+
 function validActiveDescendantRelationship(owner: Element, active: Element): boolean {
+  if (!supportedActiveDescendantOwner(owner)) return false;
   if (accessibilityOwns(owner, active)) return true;
   if (!['combobox', 'textbox', 'searchbox'].includes(semanticRole(owner) ?? '')) return false;
   return controlledElements(owner).some((controlled) => {
@@ -268,7 +282,11 @@ function pushActiveDescendantProbes(
   owner: Element,
   action: RuntimeWidgetAction,
 ): void {
-  if (!owner.hasAttribute('aria-activedescendant') || !activeDescendantAction(action)) return;
+  if (
+    !supportedActiveDescendantOwner(owner)
+    || !owner.hasAttribute('aria-activedescendant')
+    || !activeDescendantAction(action)
+  ) return;
   const beforeId = owner.getAttribute('aria-activedescendant')?.trim() || undefined;
   probes.push({ kind: 'active-descendant', owner });
   probes.push({ kind: 'active-descendant-transition', owner, ...(beforeId ? { beforeId } : {}) });
@@ -486,7 +504,7 @@ function evaluateComboboxPopup(combobox: Element): PendingRuntimeEvent | undefin
 }
 
 function evaluateActiveDescendant(owner: Element): PendingRuntimeEvent | undefined {
-  if (!owner.isConnected || document.activeElement !== owner) return undefined;
+  if (!owner.isConnected || document.activeElement !== owner || !supportedActiveDescendantOwner(owner)) return undefined;
   const activeId = owner.getAttribute('aria-activedescendant')?.trim();
   if (!activeId) return undefined;
   const active = activeDescendantTarget(owner);
@@ -534,7 +552,7 @@ function evaluateActiveDescendantTransition(
   owner: Element,
   beforeId?: string,
 ): PendingRuntimeEvent | undefined {
-  if (!owner.isConnected || document.activeElement !== owner) return undefined;
+  if (!owner.isConnected || document.activeElement !== owner || !supportedActiveDescendantOwner(owner)) return undefined;
   const afterId = owner.getAttribute('aria-activedescendant')?.trim();
   if (!afterId || afterId === beforeId) return undefined;
   const active = document.getElementById(afterId);
