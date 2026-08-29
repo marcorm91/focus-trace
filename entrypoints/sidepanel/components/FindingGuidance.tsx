@@ -8,6 +8,9 @@ import {
   MULTIPLE_MAIN_LANDMARKS_RULE,
   NATIVE_BUTTON_SEMANTICS_RULE,
   NATIVE_LINK_SEMANTICS_RULE,
+  OBSOLETE_BUT_CONFORMING_HTML_RULE,
+  OBSOLETE_HTML_ATTRIBUTE_RULE,
+  OBSOLETE_HTML_ELEMENT_RULE,
 } from '../../../shared/html-authoring-rules';
 import { localizedSeverity, tr, type AppLanguage } from '../../../shared/i18n';
 import { localizedRuleSeverityRationale, type RuleDefinition } from '../../../shared/rule-catalog';
@@ -16,6 +19,9 @@ import type { ScanIssue } from '../../../shared/types';
 const HEADING_JUMP_RULE_ID = 'FT-REVIEW-002';
 const AUTHORING_RULES: RuleDefinition[] = [
   DUPLICATE_ID_RULE,
+  OBSOLETE_HTML_ELEMENT_RULE,
+  OBSOLETE_HTML_ATTRIBUTE_RULE,
+  OBSOLETE_BUT_CONFORMING_HTML_RULE,
   MAIN_LANDMARK_RULE,
   MULTIPLE_MAIN_LANDMARKS_RULE,
   NATIVE_BUTTON_SEMANTICS_RULE,
@@ -44,6 +50,33 @@ function duplicateIdGuidance(language: AppLanguage): FindingGuidanceModel {
       language,
       'Run the scan again and confirm the duplicate-ID warning is gone, then verify that every ID-based relationship still resolves to its intended target.',
       'Vuelve a ejecutar el análisis y confirma que desaparece el aviso de ID duplicado; después verifica que cada relación basada en ID sigue resolviendo hacia su destino previsto.',
+    ),
+  };
+}
+
+function obsoleteHtmlGuidance(issue: ScanIssue, language: AppLanguage): FindingGuidanceModel | undefined {
+  if (![OBSOLETE_HTML_ELEMENT_RULE.id, OBSOLETE_HTML_ATTRIBUTE_RULE.id, OBSOLETE_BUT_CONFORMING_HTML_RULE.id].includes(issue.ruleId)) return undefined;
+
+  const hardObsolete = issue.ruleId !== OBSOLETE_BUT_CONFORMING_HTML_RULE.id;
+  return {
+    impact: tr(
+      language,
+      hardObsolete
+        ? 'This markup is not conforming HTML authoring. Legacy elements and attributes can preserve outdated browser behavior, duplicate presentational responsibilities that belong in CSS, or make the intended semantics harder to understand and maintain.'
+        : 'This legacy feature is still tolerated by HTML only as obsolete-but-conforming markup. Conformance checkers are expected to warn about it even though it is not a hard conformance error.',
+      hardObsolete
+        ? 'Este marcado no es conforme con la autoría HTML actual. Los elementos y atributos heredados pueden mantener comportamientos antiguos del navegador, duplicar responsabilidades de presentación que corresponden a CSS o hacer más difícil comprender y mantener la semántica prevista.'
+        : 'Esta característica heredada todavía se tolera en HTML únicamente como marcado obsoleto pero conforme. Los validadores deben advertir de ella aunque no sea un error estricto de conformidad.',
+    ),
+    remediation: tr(
+      language,
+      'Replace or remove the obsolete feature using the modernization recorded in the finding evidence. Prefer current semantic HTML first, CSS for presentation, and JavaScript only for behavior that requires scripting.',
+      'Sustituye o elimina la característica obsoleta siguiendo la modernización indicada en la evidencia del hallazgo. Prioriza HTML semántico actual, CSS para la presentación y JavaScript únicamente para el comportamiento que necesite script.',
+    ),
+    validation: tr(
+      language,
+      'Run FocusTrace again and confirm the obsolete-markup warning is gone. Then validate the resulting document with a current HTML conformance checker and verify that the replacement preserves the intended content and interaction.',
+      'Vuelve a ejecutar FocusTrace y confirma que desaparece el aviso de marcado obsoleto. Después valida el documento resultante con un validador HTML actual y comprueba que la sustitución conserva el contenido y la interacción previstos.',
     ),
   };
 }
@@ -203,10 +236,11 @@ function HeadingReviewContext({ issue, language }: { issue: ScanIssue; language:
 }
 
 export function FindingGuidance({ issue, language }: { issue: ScanIssue; language: AppLanguage }) {
+  const obsolete = obsoleteHtmlGuidance(issue, language);
   const semantic = semanticGuidance(issue, language);
   const guidance = issue.ruleId === DUPLICATE_ID_RULE.id
     ? duplicateIdGuidance(language)
-    : semantic ?? guidanceForIssue(issue, language);
+    : obsolete ?? semantic ?? guidanceForIssue(issue, language);
   const authoringRule = AUTHORING_RULES.find((rule) => rule.id === issue.ruleId);
   const severityRationale = authoringRule
     ? authoringRule.severityRationale[language]
