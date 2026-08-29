@@ -1,11 +1,11 @@
 import type { RuntimeEvent, RuntimeInteraction } from '../../shared/types';
 
-interface FocusWalkInterval {
+export interface FocusWalkInterval {
   startedAt: number;
   endedAt: number;
 }
 
-function focusWalkIntervals(events: RuntimeEvent[]): FocusWalkInterval[] {
+export function focusWalkIntervals(events: RuntimeEvent[]): FocusWalkInterval[] {
   const sorted = [...events].sort((a, b) => a.timestamp - b.timestamp);
   const intervals: FocusWalkInterval[] = [];
   let startedAt: number | undefined;
@@ -35,7 +35,7 @@ function focusWalkIntervals(events: RuntimeEvent[]): FocusWalkInterval[] {
   return intervals;
 }
 
-function timestampInsideAutomaticFocusWalk(timestamp: number, events: RuntimeEvent[]): boolean {
+export function timestampInsideAutomaticFocusWalk(timestamp: number, events: RuntimeEvent[]): boolean {
   return focusWalkIntervals(events).some(
     (interval) => timestamp >= interval.startedAt && timestamp <= interval.endedAt,
   );
