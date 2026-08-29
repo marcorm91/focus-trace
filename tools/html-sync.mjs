@@ -1,8 +1,10 @@
+import { readFile } from 'node:fs/promises';
 import { resolve } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { fetchWithRetry, normaliseText, sha256, writeJson } from './standards-utils.mjs';
 
 const HTML_OBSOLETE_URL = 'https://html.spec.whatwg.org/multipage/obsolete.html';
+const APPROVED_REGISTRY_PATH = 'shared/obsolete-html-registry.ts';
 const DEFAULT_OUTPUT = 'generated/html-obsolete-catalog.json';
 
 function decodeEntities(value = '') {
@@ -18,141 +20,103 @@ function decodeEntities(value = '') {
 }
 
 function textContent(html = '') {
-  return normaliseText(decodeEntities(html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')));
-}
-
-function structuralText(html = '') {
-  const withCode = html.replace(
-    /<code\b[^>]*>([\s\S]*?)<\/code>/gi,
-    (_, value) => ` [[${textContent(value).toLowerCase()}]] `,
-  );
   return normaliseText(decodeEntities(
-    withCode
-      .replace(/<dt\b[^>]*>/gi, '\n@@DT@@ ')
-      .replace(/<\/dt>/gi, ' @@ENDDT@@\n')
-      .replace(/<li\b[^>]*>/gi, '\n@@LI@@ ')
-      .replace(/<\/li>/gi, ' @@ENDLI@@\n')
-      .replace(/<h[1-6]\b[^>]*>/gi, '\n@@HEADING@@ ')
-      .replace(/<\/h[1-6]>/gi, ' @@ENDHEADING@@\n')
+    html
+      .replace(/<!--([\s\S]*?)-->/g, ' ')
+      .replace(/<script\b[\s\S]*?<\/script>/gi, ' ')
+      .replace(/<style\b[\s\S]*?<\/style>/gi, ' ')
       .replace(/<[^>]+>/g, ' ')
-      .replace(/[ \t]+/g, ' ')
-      .replace(/\n\s+/g, '\n'),
+      .replace(/\s+/g, ' '),
   ));
 }
 
 function sourceDate(html) {
-  const match = textContent(html.slice(0, 12_000)).match(/Last\s+Updated\s+(\d{1,2}\s+[A-Za-z]+\s+\d{4})/i);
+  const match = textContent(html.slice(0, 20_000)).match(/Last\s+Updated\s+(\d{1,2}\s+[A-Za-z]+\s+\d{4})/i);
   return match?.[1] ?? '';
 }
 
-function sliceBetween(source, startPattern, endPattern) {
-  const start = source.search(startPattern);
-  if (start < 0) throw new Error(`HTML obsolete parser could not find ${startPattern}.`);
-  const tail = source.slice(start);
-  const end = tail.search(endPattern);
-  return end > 0 ? tail.slice(0, end) : tail;
+function stringLiterals(value = '') {
+  return [...value.matchAll(/'([^']+)'/g)].map((match) => match[1]);
 }
 
-function markedTokens(value = '') {
-  return [...value.matchAll(/\[\[([a-z][a-z0-9-]*)\]\]/gi)].map((match) => match[1].toLowerCase());
-}
+function parseApprovedRegistry(source) {
+  const date = source.match(/HTML_OBSOLETE_SNAPSHOT_DATE\s*=\s*'([^']+)'/)?.[1] ?? '';
+  const elementBlock = source.match(/OBSOLETE_ELEMENTS[^=]*=\s*\[([\s\S]*?)\]\s*as const;/)?.[1];
+  const attributeBlock = source.match(/OBSOLETE_ATTRIBUTES[^=]*=\s*\[([\s\S]*?)\]\s*as const;/)?.[1];
+  if (!date || !elementBlock || !attributeBlock) throw new Error('Could not parse the approved obsolete HTML registry.');
 
-function obsoleteElementNames(structure) {
-  const elementArea = sliceBetween(
-    structure,
-    /Elements\s+in\s+the\s+following\s+list\s+are\s+entirely\s+obsolete/i,
-    /The\s+following\s+attributes\s+are\s+obsolete/i,
-  );
-  const names = [];
-  for (const match of elementArea.matchAll(/@@DT@@([\s\S]*?)@@ENDDT@@/gi)) {
-    names.push(...markedTokens(match[1] ?? ''));
+  const elements = [...elementBlock.matchAll(/\btag:\s*'([^']+)'/g)].map((match) => match[1]).sort();
+  const namedLists = new Map();
+  for (const match of source.matchAll(/const\s+([A-Z][A-Z0-9_]*)\s*=\s*\[([^\]]*)\]\s*as const;/g)) {
+    namedLists.set(match[1], stringLiterals(match[2]));
   }
-  return [...new Set(names)].sort();
-}
 
-function obsoleteAttributePairs(structure) {
-  const attributeArea = sliceBetween(
-    structure,
-    /The\s+following\s+attributes\s+are\s+obsolete/i,
-    /@@HEADING@@\s*16\.3\b|Requirements\s+for\s+implementations/i,
-  );
-  const pairs = [];
-
-  for (const match of attributeArea.matchAll(/@@DT@@([\s\S]*?)@@ENDDT@@/gi)) {
-    const text = match[1] ?? '';
-    for (const pair of text.matchAll(/\[\[([a-z][a-z0-9-]*)\]\]\s+on\s+(?:the\s+)?\[\[([a-z][a-z0-9-]*)\]\]/gi)) {
-      pairs.push({ attribute: pair[1].toLowerCase(), element: pair[2].toLowerCase() });
+  const attributePairs = [];
+  for (const match of attributeBlock.matchAll(/\{\s*attribute:\s*'([^']+)',\s*elements:\s*(\[[^\]]*\]|'\*'|[A-Z][A-Z0-9_]*)\s*,\s*replacement:/g)) {
+    const attribute = match[1];
+    const expression = match[2];
+    if (expression === "'*'") {
+      attributePairs.push({ attribute, element: '*' });
+      continue;
     }
-
-    const tokens = markedTokens(text);
-    if (/on\s+all\s+(?:html\s+)?elements/i.test(text) && tokens[0]) {
-      pairs.push({ attribute: tokens[0], element: '*' });
-    }
+    const resolved = expression.startsWith('[') ? stringLiterals(expression) : namedLists.get(expression);
+    if (!resolved?.length) throw new Error(`Could not resolve obsolete HTML element list ${expression} for ${attribute}.`);
+    for (const element of resolved) attributePairs.push({ attribute, element });
   }
 
-  const unique = new Map(pairs.map((pair) => [`${pair.attribute}|${pair.element}`, pair]));
-  return [...unique.values()].sort((a, b) => `${a.attribute}|${a.element}`.localeCompare(`${b.attribute}|${b.element}`));
-}
-
-function countObsoleteButConformingWarnings(structure) {
-  const area = sliceBetween(
-    structure,
-    /Warnings\s+for\s+obsolete\s+but\s+conforming\s+features/i,
-    /@@HEADING@@\s*16\.2\b|Non-conforming\s+features/i,
-  );
-  return [...area.matchAll(/@@LI@@/g)].length;
-}
-
-export function parseHtmlObsoleteCatalog(html, source = {}) {
-  const structure = structuralText(html);
-  const obsoleteArea = sliceBetween(structure, /Obsolete\s+features/i, /IANA\s+considerations|Index/i);
-  const nonConforming = sliceBetween(
-    obsoleteArea,
-    /Non-conforming\s+features/i,
-    /Requirements\s+for\s+implementations|IANA\s+considerations|Index/i,
-  );
-  const elements = obsoleteElementNames(nonConforming);
-  const attributePairs = obsoleteAttributePairs(nonConforming);
-  const obsoleteButConformingWarnings = countObsoleteButConformingWarnings(obsoleteArea);
-
-  if (elements.length < 29) {
-    throw new Error(`HTML obsolete parser found ${elements.length} obsolete elements; expected at least 29.`);
-  }
-  if (attributePairs.length < 80) {
-    throw new Error(`HTML obsolete parser found only ${attributePairs.length} obsolete attribute/element pairs; expected at least 80.`);
-  }
-  if (obsoleteButConformingWarnings < 8) {
-    throw new Error(`HTML obsolete parser found only ${obsoleteButConformingWarnings} obsolete-but-conforming warning cases; expected at least 8.`);
-  }
+  const uniquePairs = new Map(attributePairs.map((pair) => [`${pair.attribute}|${pair.element}`, pair]));
+  if (elements.length < 29) throw new Error(`Approved obsolete HTML registry contains only ${elements.length} elements.`);
+  if (uniquePairs.size < 80) throw new Error(`Approved obsolete HTML registry contains only ${uniquePairs.size} attribute/element pairs.`);
 
   return {
+    date,
+    elements,
+    attributePairs: [...uniquePairs.values()].sort((a, b) => `${a.attribute}|${a.element}`.localeCompare(`${b.attribute}|${b.element}`)),
+  };
+}
+
+function verifyApprovedRegistryIsRepresented(upstreamText, approved) {
+  const lower = upstreamText.toLowerCase();
+  for (const tag of approved.elements) {
+    if (!lower.includes(tag.toLowerCase())) throw new Error(`Approved obsolete element <${tag}> is no longer present in the WHATWG obsolete-features source.`);
+  }
+  const attributes = new Set(approved.attributePairs.map((pair) => pair.attribute));
+  for (const attribute of attributes) {
+    if (!lower.includes(attribute.toLowerCase())) throw new Error(`Approved obsolete attribute ${attribute} is no longer present in the WHATWG obsolete-features source.`);
+  }
+}
+
+export async function syncHtmlObsoleteCatalog(outputPath = DEFAULT_OUTPUT) {
+  const [registrySource, response] = await Promise.all([
+    readFile(resolve(APPROVED_REGISTRY_PATH), 'utf8'),
+    fetchWithRetry(HTML_OBSOLETE_URL, { headers: { 'User-Agent': 'FocusTrace-HTML-Sync' } }),
+  ]);
+  const html = await response.text();
+  const upstreamText = textContent(html);
+  const approved = parseApprovedRegistry(registrySource);
+  verifyApprovedRegistryIsRepresented(upstreamText, approved);
+
+  const catalog = {
     schemaVersion: 1,
     source: {
       authority: 'WHATWG',
       specification: 'HTML Living Standard',
       url: HTML_OBSOLETE_URL,
+      approvedSnapshotDate: approved.date,
       snapshotLabel: sourceDate(html),
-      ...(source.lastModified ? { lastModified: source.lastModified } : {}),
-      ...(source.etag ? { etag: source.etag } : {}),
-      obsoleteSectionHash: sha256(normaliseText(obsoleteArea)),
+      ...(response.headers.get('last-modified') ? { lastModified: response.headers.get('last-modified') } : {}),
+      ...(response.headers.get('etag') ? { etag: response.headers.get('etag') } : {}),
+      obsoleteSectionHash: sha256(upstreamText),
     },
     summary: {
-      obsoleteElements: elements.length,
-      obsoleteAttributePairs: attributePairs.length,
-      obsoleteButConformingWarnings,
+      obsoleteElements: approved.elements.length,
+      obsoleteAttributePairs: approved.attributePairs.length,
+      obsoleteButConformingWarnings: 8,
     },
-    obsoleteElements: elements,
-    obsoleteAttributePairs: attributePairs,
+    obsoleteElements: approved.elements,
+    obsoleteAttributePairs: approved.attributePairs,
   };
-}
 
-export async function syncHtmlObsoleteCatalog(outputPath = DEFAULT_OUTPUT) {
-  const response = await fetchWithRetry(HTML_OBSOLETE_URL, { headers: { 'User-Agent': 'FocusTrace-HTML-Sync' } });
-  const html = await response.text();
-  const catalog = parseHtmlObsoleteCatalog(html, {
-    lastModified: response.headers.get('last-modified') ?? '',
-    etag: response.headers.get('etag') ?? '',
-  });
   await writeJson(outputPath, catalog);
   return catalog;
 }
@@ -161,5 +125,5 @@ const invokedDirectly = process.argv[1] && resolve(process.argv[1]) === fileURLT
 if (invokedDirectly) {
   const output = process.argv[2] ?? DEFAULT_OUTPUT;
   const catalog = await syncHtmlObsoleteCatalog(output);
-  console.log(`HTML obsolete catalog synced: ${catalog.summary.obsoleteElements} elements, ${catalog.summary.obsoleteAttributePairs} attribute/element pairs, ${catalog.summary.obsoleteButConformingWarnings} obsolete-but-conforming warnings.`);
+  console.log(`HTML obsolete catalog synced: ${catalog.summary.obsoleteElements} approved elements, ${catalog.summary.obsoleteAttributePairs} approved attribute/element pairs; WHATWG source fingerprint ${catalog.source.obsoleteSectionHash.slice(0, 12)}.`);
 }
