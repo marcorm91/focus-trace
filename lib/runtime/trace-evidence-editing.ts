@@ -25,14 +25,26 @@ function focusWalkIntervals(events: RuntimeEvent[]): FocusWalkInterval[] {
   return intervals;
 }
 
+function timestampInsideAutomaticFocusWalk(timestamp: number, events: RuntimeEvent[]): boolean {
+  return focusWalkIntervals(events).some(
+    (interval) => timestamp >= interval.startedAt && timestamp <= interval.endedAt,
+  );
+}
+
+export function isManualTraceInteractionId(events: RuntimeEvent[], interactionId: string): boolean {
+  if (!interactionId) return false;
+  const matching = events.filter((event) => event.interactionId === interactionId);
+  if (!matching.length) return false;
+  const startedAt = Math.min(...matching.map((event) => event.timestamp));
+  return !timestampInsideAutomaticFocusWalk(startedAt, events);
+}
+
 export function isManualTraceInteraction(
   interaction: RuntimeInteraction,
   events: RuntimeEvent[],
 ): boolean {
   if (!interaction.correlated) return false;
-  return !focusWalkIntervals(events).some(
-    (interval) => interaction.startedAt >= interval.startedAt && interaction.startedAt <= interval.endedAt,
-  );
+  return isManualTraceInteractionId(events, interaction.id);
 }
 
 export function deletableManualInteractionIds(
