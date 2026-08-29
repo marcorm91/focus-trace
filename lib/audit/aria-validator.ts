@@ -25,88 +25,72 @@ export interface AriaValidationSignal {
 
 type ScanRoot = Document | Element;
 
+type OwnershipModel = {
+  ownerFor: Map<Element, Element>;
+  ownedBy: Map<Element, Element[]>;
+  signals: AriaValidationSignal[];
+};
+
 const KNOWN_PROPERTIES = new Set(Object.keys(ariaRegistryJson.properties));
 const TRANSPARENT_ROLES = new Set<string | null>([null, 'generic', 'none', 'presentation']);
 
-const REQUIRED_PARENT = new Map<string, Set<string>>([
-  ['caption', new Set(['figure', 'grid', 'radiogroup', 'table', 'treegrid'])],
-  ['cell', new Set(['row'])],
-  ['columnheader', new Set(['row'])],
-  ['gridcell', new Set(['row'])],
-  ['listitem', new Set(['list'])],
-  ['row', new Set(['grid', 'rowgroup', 'table', 'treegrid'])],
-  ['rowgroup', new Set(['grid', 'table', 'treegrid'])],
-  ['rowheader', new Set(['row'])],
-  ['tab', new Set(['tablist'])],
+const REQUIRED_PARENT: Record<string, string[]> = {
+  caption: ['figure', 'grid', 'radiogroup', 'table', 'treegrid'],
+  cell: ['row'],
+  columnheader: ['row'],
+  gridcell: ['row'],
+  listitem: ['list'],
+  row: ['grid', 'rowgroup', 'table', 'treegrid'],
+  rowgroup: ['grid', 'table', 'treegrid'],
+  rowheader: ['row'],
+  tab: ['tablist'],
+};
+
+const GROUPED_PARENT: Record<string, { direct: string[]; throughGroup: string[] }> = {
+  menuitem: { direct: ['menu', 'menubar'], throughGroup: ['menu', 'menubar'] },
+  menuitemcheckbox: { direct: ['menu', 'menubar'], throughGroup: ['menu', 'menubar'] },
+  menuitemradio: { direct: ['menu', 'menubar'], throughGroup: ['menu', 'menubar'] },
+  option: { direct: ['listbox'], throughGroup: ['listbox'] },
+  treeitem: { direct: ['tree'], throughGroup: ['treeitem'] },
+};
+
+const ALLOWED_CHILD: Record<string, string[]> = {
+  grid: ['caption', 'row', 'rowgroup'],
+  table: ['caption', 'row', 'rowgroup'],
+  treegrid: ['caption', 'row', 'rowgroup'],
+  rowgroup: ['row'],
+  row: ['cell', 'columnheader', 'gridcell', 'rowheader'],
+  list: ['listitem'],
+  listbox: ['group', 'option'],
+  menu: ['group', 'menuitem', 'menuitemcheckbox', 'menuitemradio', 'separator'],
+  menubar: ['group', 'menuitem', 'menuitemcheckbox', 'menuitemradio', 'separator'],
+  tablist: ['tab'],
+  tree: ['treeitem'],
+};
+
+const IDREF_LIST = new Set([
+  'aria-controls', 'aria-describedby', 'aria-details', 'aria-errormessage',
+  'aria-flowto', 'aria-labelledby', 'aria-owns',
 ]);
 
-const GROUPED_REQUIRED_PARENT = new Map<string, { direct: Set<string>; groupParent: Set<string> }>([
-  ['menuitem', { direct: new Set(['menu', 'menubar']), groupParent: new Set(['menu', 'menubar']) }],
-  ['menuitemcheckbox', { direct: new Set(['menu', 'menubar']), groupParent: new Set(['menu', 'menubar']) }],
-  ['menuitemradio', { direct: new Set(['menu', 'menubar']), groupParent: new Set(['menu', 'menubar']) }],
-  ['option', { direct: new Set(['listbox']), groupParent: new Set(['listbox']) }],
-  ['treeitem', { direct: new Set(['tree']), groupParent: new Set(['treeitem']) }],
+const BOOLEAN = new Set([
+  'aria-atomic', 'aria-busy', 'aria-disabled', 'aria-expanded', 'aria-hidden',
+  'aria-modal', 'aria-multiline', 'aria-multiselectable', 'aria-readonly', 'aria-required',
 ]);
-
-const ALLOWED_CHILD = new Map<string, Set<string>>([
-  ['grid', new Set(['caption', 'row', 'rowgroup'])],
-  ['table', new Set(['caption', 'row', 'rowgroup'])],
-  ['treegrid', new Set(['caption', 'row', 'rowgroup'])],
-  ['rowgroup', new Set(['row'])],
-  ['row', new Set(['cell', 'columnheader', 'gridcell', 'rowheader'])],
-  ['list', new Set(['listitem'])],
-  ['listbox', new Set(['group', 'option'])],
-  ['menu', new Set(['group', 'menuitem', 'menuitemcheckbox', 'menuitemradio', 'separator'])],
-  ['menubar', new Set(['group', 'menuitem', 'menuitemcheckbox', 'menuitemradio', 'separator'])],
-  ['tablist', new Set(['tab'])],
-  ['tree', new Set(['treeitem'])],
+const TRISTATE = new Set(['aria-checked', 'aria-pressed']);
+const ENUMS: Record<string, string[]> = {
+  'aria-autocomplete': ['both', 'inline', 'list', 'none'],
+  'aria-haspopup': ['dialog', 'false', 'grid', 'listbox', 'menu', 'tree', 'true'],
+  'aria-invalid': ['false', 'grammar', 'spelling', 'true'],
+  'aria-live': ['assertive', 'off', 'polite'],
+  'aria-orientation': ['horizontal', 'undefined', 'vertical'],
+  'aria-sort': ['ascending', 'descending', 'none', 'other'],
+};
+const POSITIVE_INTEGER = new Set([
+  'aria-colindex', 'aria-colspan', 'aria-level', 'aria-posinset', 'aria-rowindex', 'aria-rowspan',
 ]);
-
-const ID_REFERENCE_LIST_PROPERTIES = new Set([
-  'aria-controls',
-  'aria-describedby',
-  'aria-details',
-  'aria-errormessage',
-  'aria-flowto',
-  'aria-labelledby',
-  'aria-owns',
-]);
-
-const BOOLEAN_PROPERTIES = new Set([
-  'aria-atomic',
-  'aria-busy',
-  'aria-disabled',
-  'aria-expanded',
-  'aria-hidden',
-  'aria-modal',
-  'aria-multiline',
-  'aria-multiselectable',
-  'aria-readonly',
-  'aria-required',
-]);
-
-const TRISTATE_PROPERTIES = new Set(['aria-checked', 'aria-pressed']);
-
-const ENUM_PROPERTIES = new Map<string, Set<string>>([
-  ['aria-autocomplete', new Set(['both', 'inline', 'list', 'none'])],
-  ['aria-haspopup', new Set(['dialog', 'false', 'grid', 'listbox', 'menu', 'tree', 'true'])],
-  ['aria-invalid', new Set(['false', 'grammar', 'spelling', 'true'])],
-  ['aria-live', new Set(['assertive', 'off', 'polite'])],
-  ['aria-orientation', new Set(['horizontal', 'undefined', 'vertical'])],
-  ['aria-sort', new Set(['ascending', 'descending', 'none', 'other'])],
-]);
-
-const POSITIVE_INTEGER_PROPERTIES = new Set([
-  'aria-colindex',
-  'aria-colspan',
-  'aria-level',
-  'aria-posinset',
-  'aria-rowindex',
-  'aria-rowspan',
-]);
-
-const COUNT_PROPERTIES = new Set(['aria-colcount', 'aria-rowcount', 'aria-setsize']);
-const NUMBER_PROPERTIES = new Set(['aria-valuemax', 'aria-valuemin', 'aria-valuenow']);
+const COUNT = new Set(['aria-colcount', 'aria-rowcount', 'aria-setsize']);
+const NUMBER = new Set(['aria-valuemax', 'aria-valuemin', 'aria-valuenow']);
 
 function scopedElements(root: ScanRoot): Element[] {
   const descendants = [...root.querySelectorAll('*')];
@@ -117,14 +101,14 @@ function tokens(value: string | null): string[] {
   return value?.trim().split(/\s+/).filter(Boolean) ?? [];
 }
 
-function strictInteger(value: string): number | null {
+function integer(value: string): number | null {
   const trimmed = value.trim();
   if (!/^-?\d+$/.test(trimmed)) return null;
   const parsed = Number(trimmed);
   return Number.isSafeInteger(parsed) ? parsed : null;
 }
 
-function finiteNumber(value: string): number | null {
+function number(value: string): number | null {
   const trimmed = value.trim();
   if (!trimmed) return null;
   const parsed = Number(trimmed);
@@ -141,36 +125,22 @@ function nativeRole(element: Element): string | null {
   if (element instanceof HTMLProgressElement) return 'progressbar';
   if (element instanceof HTMLMeterElement) return 'meter';
   if (element instanceof HTMLInputElement) {
-    switch (element.type.toLowerCase()) {
-      case 'button':
-      case 'submit':
-      case 'reset':
-      case 'image': return 'button';
-      case 'checkbox': return 'checkbox';
-      case 'radio': return 'radio';
-      case 'range': return 'slider';
-      case 'number': return 'spinbutton';
-      case 'search': return 'searchbox';
-      case 'hidden': return null;
-      default: return 'textbox';
-    }
+    const inputRoles: Record<string, string | null> = {
+      button: 'button', submit: 'button', reset: 'button', image: 'button',
+      checkbox: 'checkbox', radio: 'radio', range: 'slider', number: 'spinbutton',
+      search: 'searchbox', hidden: null,
+    };
+    return element.type.toLowerCase() in inputRoles ? inputRoles[element.type.toLowerCase()]! : 'textbox';
   }
 
-  switch (element.tagName.toLowerCase()) {
-    case 'ul':
-    case 'ol':
-    case 'menu': return 'list';
-    case 'li': return 'listitem';
-    case 'table': return 'table';
-    case 'caption': return 'caption';
-    case 'thead':
-    case 'tbody':
-    case 'tfoot': return 'rowgroup';
-    case 'tr': return 'row';
-    case 'td': return 'cell';
-    case 'th': return element.getAttribute('scope')?.toLowerCase().startsWith('row') ? 'rowheader' : 'columnheader';
-    default: return null;
+  const tagRoles: Record<string, string> = {
+    ul: 'list', ol: 'list', menu: 'list', li: 'listitem', table: 'table', caption: 'caption',
+    thead: 'rowgroup', tbody: 'rowgroup', tfoot: 'rowgroup', tr: 'row', td: 'cell',
+  };
+  if (element.tagName.toLowerCase() === 'th') {
+    return element.getAttribute('scope')?.toLowerCase().startsWith('row') ? 'rowheader' : 'columnheader';
   }
+  return tagRoles[element.tagName.toLowerCase()] ?? null;
 }
 
 export function resolvedExplicitAriaRole(element: Element): AriaRoleRecord | null {
@@ -181,104 +151,68 @@ export function effectiveAriaRole(element: Element): string | null {
   return registeredExplicitAriaRole(element)?.name ?? nativeRole(element);
 }
 
-function hasExplicitResolvedRole(element: Element): boolean {
-  return registeredExplicitAriaRole(element) != null;
-}
-
-function propertyValueIsValid(property: string, raw: string): boolean {
+function validPropertyValue(property: string, raw: string): boolean {
   const value = raw.trim().toLowerCase();
-
-  if (BOOLEAN_PROPERTIES.has(property)) return ['false', 'true', 'undefined'].includes(value);
-  if (TRISTATE_PROPERTIES.has(property)) return ['false', 'mixed', 'true', 'undefined'].includes(value);
-  if (ENUM_PROPERTIES.has(property)) return ENUM_PROPERTIES.get(property)!.has(value);
-  if (NUMBER_PROPERTIES.has(property)) return finiteNumber(value) != null;
-
-  if (POSITIVE_INTEGER_PROPERTIES.has(property)) {
-    const parsed = strictInteger(value);
-    return parsed != null && parsed >= 1;
-  }
-
-  if (COUNT_PROPERTIES.has(property)) {
-    const parsed = strictInteger(value);
+  if (BOOLEAN.has(property)) return ['false', 'true', 'undefined'].includes(value);
+  if (TRISTATE.has(property)) return ['false', 'mixed', 'true', 'undefined'].includes(value);
+  if (ENUMS[property]) return ENUMS[property].includes(value);
+  if (NUMBER.has(property)) return number(value) != null;
+  if (POSITIVE_INTEGER.has(property)) return (integer(value) ?? 0) >= 1;
+  if (COUNT.has(property)) {
+    const parsed = integer(value);
     return parsed === -1 || (parsed != null && parsed >= 1);
   }
-
   if (property === 'aria-relevant') {
-    const relevant = tokens(value);
-    return relevant.length > 0 && relevant.every((token) => ['additions', 'all', 'removals', 'text'].includes(token));
+    const values = tokens(value);
+    return values.length > 0 && values.every((token) => ['additions', 'all', 'removals', 'text'].includes(token));
   }
-
-  // aria-current deliberately accepts custom non-empty tokens: ARIA maps
-  // unknown token values to true rather than making them invalid authoring.
+  // Unknown aria-current tokens intentionally map to true in WAI-ARIA.
   return true;
 }
 
-function hostProvidesRequiredProperty(element: Element, role: string, property: string): boolean {
+function nativeRequiredState(element: Element, role: string, property: string): boolean {
   if (property === 'aria-checked') {
     return element instanceof HTMLInputElement
       && ['checkbox', 'radio'].includes(element.type.toLowerCase())
       && ['checkbox', 'radio'].includes(role);
   }
-
-  if (property === 'aria-level') {
-    return /^h[1-6]$/i.test(element.tagName);
+  if (property === 'aria-level') return /^h[1-6]$/i.test(element.tagName);
+  if (property !== 'aria-valuenow') return false;
+  if (element instanceof HTMLInputElement) {
+    return (role === 'slider' && element.type.toLowerCase() === 'range')
+      || (role === 'spinbutton' && element.type.toLowerCase() === 'number');
   }
-
-  if (property === 'aria-valuenow') {
-    if (element instanceof HTMLInputElement) {
-      return (role === 'slider' && element.type.toLowerCase() === 'range')
-        || (role === 'spinbutton' && element.type.toLowerCase() === 'number');
-    }
-    return (role === 'meter' && element instanceof HTMLMeterElement)
-      || (role === 'progressbar' && element instanceof HTMLProgressElement && element.hasAttribute('value'));
-  }
-
-  return false;
+  return (role === 'meter' && element instanceof HTMLMeterElement)
+    || (role === 'progressbar' && element instanceof HTMLProgressElement && element.hasAttribute('value'));
 }
 
 function idTargets(element: Element, property: string): Element[] {
-  return tokens(element.getAttribute(property)).map((id) => document.getElementById(id)).filter((target): target is Element => target != null);
+  return tokens(element.getAttribute(property))
+    .map((id) => document.getElementById(id))
+    .filter((target): target is HTMLElement => target != null);
 }
 
-interface OwnershipModel {
-  ownerFor: Map<Element, Element>;
-  ownedBy: Map<Element, Element[]>;
-  invalidOwners: Set<Element>;
-  signals: AriaValidationSignal[];
-}
-
-function buildOwnershipModel(elements: Element[]): OwnershipModel {
+function buildOwnershipModel(): OwnershipModel {
   const claims = new Map<Element, Element[]>();
-  const invalidOwners = new Set<Element>();
   const signals: AriaValidationSignal[] = [];
 
-  for (const owner of elements.filter((element) => element.hasAttribute('aria-owns'))) {
-    const ids = tokens(owner.getAttribute('aria-owns'));
-    if (!ids.length) continue;
-    for (const id of ids) {
+  for (const owner of document.querySelectorAll('[aria-owns]')) {
+    for (const id of tokens(owner.getAttribute('aria-owns'))) {
       const target = document.getElementById(id);
       if (!target) continue;
       if (target === owner || target.contains(owner)) {
-        invalidOwners.add(owner);
-        signals.push({
-          kind: 'broken-reference',
-          element: owner,
-          detail: `aria-owns references #${id}, which would create a self/ancestor ownership cycle.`,
-        });
+        signals.push({ kind: 'broken-reference', element: owner, detail: `aria-owns references #${id}, which would create a self/ancestor ownership cycle.` });
         continue;
       }
-      const owners = claims.get(target) ?? [];
-      owners.push(owner);
-      claims.set(target, owners);
+      claims.set(target, [...(claims.get(target) ?? []), owner]);
     }
   }
 
   const ownerFor = new Map<Element, Element>();
   const ownedBy = new Map<Element, Element[]>();
   for (const [target, owners] of claims) {
-    if (owners.length !== 1) {
+    if (owners.length > 1) {
       for (const owner of owners) {
-        invalidOwners.add(owner);
         signals.push({
           kind: 'broken-reference',
           element: owner,
@@ -289,235 +223,166 @@ function buildOwnershipModel(elements: Element[]): OwnershipModel {
     }
     const owner = owners[0]!;
     ownerFor.set(target, owner);
-    const children = ownedBy.get(owner) ?? [];
-    children.push(target);
-    ownedBy.set(owner, children);
+    ownedBy.set(owner, [...(ownedBy.get(owner) ?? []), target]);
   }
-
-  return { ownerFor, ownedBy, invalidOwners, signals };
+  return { ownerFor, ownedBy, signals };
 }
 
-function rawAccessibilityParent(element: Element, ownership: OwnershipModel): Element | null {
-  return ownership.ownerFor.get(element) ?? element.parentElement;
+function rawParent(element: Element, model: OwnershipModel): Element | null {
+  return model.ownerFor.get(element) ?? element.parentElement;
 }
 
-function semanticAccessibilityParent(element: Element, ownership: OwnershipModel): Element | null {
-  let parent = rawAccessibilityParent(element, ownership);
+function semanticParent(element: Element, model: OwnershipModel): Element | null {
+  let parent = rawParent(element, model);
   const seen = new Set<Element>();
   while (parent && !seen.has(parent)) {
     seen.add(parent);
     if (!TRANSPARENT_ROLES.has(effectiveAriaRole(parent))) return parent;
-    parent = rawAccessibilityParent(parent, ownership);
+    parent = rawParent(parent, model);
   }
   return null;
 }
 
-function directAccessibilityChildren(owner: Element, ownership: OwnershipModel): Element[] {
-  const result = [...owner.children];
-  for (const owned of ownership.ownedBy.get(owner) ?? []) {
-    if (!result.includes(owned)) result.push(owned);
-  }
-  return result.filter((child) => ownership.ownerFor.get(child) == null || ownership.ownerFor.get(child) === owner);
+function directChildren(owner: Element, model: OwnershipModel): Element[] {
+  const children = [...owner.children, ...(model.ownedBy.get(owner) ?? [])];
+  return [...new Set(children)].filter((child) => {
+    const effectiveOwner = model.ownerFor.get(child);
+    return effectiveOwner == null || effectiveOwner === owner;
+  });
 }
 
-function semanticAccessibilityChildren(owner: Element, ownership: OwnershipModel): Element[] {
-  const result: Element[] = [];
+function semanticChildren(owner: Element, model: OwnershipModel): Element[] {
+  const found: Element[] = [];
   const seen = new Set<Element>();
-
   const visit = (element: Element) => {
     if (seen.has(element)) return;
     seen.add(element);
-    const role = effectiveAriaRole(element);
-    if (!TRANSPARENT_ROLES.has(role)) {
-      result.push(element);
+    if (!TRANSPARENT_ROLES.has(effectiveAriaRole(element))) {
+      found.push(element);
       return;
     }
-    for (const child of directAccessibilityChildren(element, ownership)) visit(child);
+    directChildren(element, model).forEach(visit);
   };
-
-  for (const child of directAccessibilityChildren(owner, ownership)) visit(child);
-  return result;
+  directChildren(owner, model).forEach(visit);
+  return found;
 }
 
-function isAccessibilityDescendant(owner: Element, target: Element, ownership: OwnershipModel): boolean {
-  if (owner === target) return false;
+function accessibilityDescendant(owner: Element, target: Element, model: OwnershipModel): boolean {
   let current: Element | null = target;
   const seen = new Set<Element>();
   while (current && !seen.has(current)) {
     seen.add(current);
-    current = rawAccessibilityParent(current, ownership);
+    current = rawParent(current, model);
     if (current === owner) return true;
   }
   return false;
 }
 
-function requiredParentSatisfied(element: Element, role: string, ownership: OwnershipModel): boolean {
-  const parent = semanticAccessibilityParent(element, ownership);
+function hasRequiredParent(element: Element, role: string, model: OwnershipModel): boolean {
+  const parent = semanticParent(element, model);
   if (!parent) return false;
   const parentRole = effectiveAriaRole(parent);
+  const direct = REQUIRED_PARENT[role];
+  if (direct) return parentRole != null && direct.includes(parentRole);
 
-  const direct = REQUIRED_PARENT.get(role);
-  if (direct) return parentRole != null && direct.has(parentRole);
-
-  const grouped = GROUPED_REQUIRED_PARENT.get(role);
+  const grouped = GROUPED_PARENT[role];
   if (!grouped) return true;
-  if (parentRole != null && grouped.direct.has(parentRole)) return true;
+  if (parentRole != null && grouped.direct.includes(parentRole)) return true;
   if (parentRole !== 'group') return false;
-
-  const groupParent = semanticAccessibilityParent(parent, ownership);
+  const groupParent = semanticParent(parent, model);
   const groupParentRole = groupParent ? effectiveAriaRole(groupParent) : null;
-  return groupParentRole != null && grouped.groupParent.has(groupParentRole);
+  return groupParentRole != null && grouped.throughGroup.includes(groupParentRole);
 }
 
-function validateActiveDescendant(element: Element, ownership: OwnershipModel): AriaValidationSignal | null {
+function activeDescendantSignal(element: Element, model: OwnershipModel): AriaValidationSignal | null {
   if (!element.hasAttribute('aria-activedescendant')) return null;
   const ids = tokens(element.getAttribute('aria-activedescendant'));
   if (ids.length !== 1) {
-    return {
-      kind: 'broken-reference',
-      element,
-      detail: `aria-activedescendant must reference one element; received ${ids.length} ID tokens.`,
-    };
+    return { kind: 'broken-reference', element, detail: `aria-activedescendant must reference one element; received ${ids.length} ID tokens.` };
   }
-
   const target = document.getElementById(ids[0]!);
-  if (!target) {
-    return {
-      kind: 'broken-reference',
-      element,
-      detail: `aria-activedescendant references missing element #${ids[0]}.`,
-    };
-  }
-
-  if (isAccessibilityDescendant(element, target, ownership)) return null;
+  if (!target) return { kind: 'broken-reference', element, detail: `aria-activedescendant references missing element #${ids[0]}.` };
+  if (accessibilityDescendant(element, target, model)) return null;
 
   const role = effectiveAriaRole(element);
   if (role && ['combobox', 'searchbox', 'textbox'].includes(role)) {
     for (const controlled of idTargets(element, 'aria-controls')) {
-      if (controlled === target || isAccessibilityDescendant(controlled, target, ownership)) return null;
+      if (controlled === target || accessibilityDescendant(controlled, target, model)) return null;
     }
   }
-
   return {
     kind: 'broken-reference',
     element,
-    detail: `aria-activedescendant references #${ids[0]}, but that element is not an accessibility descendant of the active-descendant owner${role && ['combobox', 'searchbox', 'textbox'].includes(role) ? ' or of an aria-controls target' : ''}.`,
+    detail: `aria-activedescendant references #${ids[0]}, but that element is not an accessibility descendant${role && ['combobox', 'searchbox', 'textbox'].includes(role) ? ' of the owner or an aria-controls target' : ' of the owner'}.`,
   };
 }
 
-function stateConsistencySignals(element: Element): AriaValidationSignal[] {
-  const signals: AriaValidationSignal[] = [];
-  const min = element.hasAttribute('aria-valuemin') ? finiteNumber(element.getAttribute('aria-valuemin') ?? '') : null;
-  const max = element.hasAttribute('aria-valuemax') ? finiteNumber(element.getAttribute('aria-valuemax') ?? '') : null;
-  const now = element.hasAttribute('aria-valuenow') ? finiteNumber(element.getAttribute('aria-valuenow') ?? '') : null;
+function consistencySignals(element: Element): AriaValidationSignal[] {
+  const result: AriaValidationSignal[] = [];
+  const min = element.hasAttribute('aria-valuemin') ? number(element.getAttribute('aria-valuemin') ?? '') : null;
+  const max = element.hasAttribute('aria-valuemax') ? number(element.getAttribute('aria-valuemax') ?? '') : null;
+  const now = element.hasAttribute('aria-valuenow') ? number(element.getAttribute('aria-valuenow') ?? '') : null;
 
-  if (min != null && max != null && min > max) {
-    signals.push({
-      kind: 'state-consistency',
-      element,
-      detail: `aria-valuemin=${min} is greater than aria-valuemax=${max}.`,
-    });
-  }
-  if (now != null && min != null && now < min) {
-    signals.push({
-      kind: 'state-consistency',
-      element,
-      detail: `aria-valuenow=${now} is below aria-valuemin=${min}.`,
-    });
-  }
-  if (now != null && max != null && now > max) {
-    signals.push({
-      kind: 'state-consistency',
-      element,
-      detail: `aria-valuenow=${now} is above aria-valuemax=${max}.`,
-    });
-  }
+  if (min != null && max != null && min > max) result.push({ kind: 'state-consistency', element, detail: `aria-valuemin=${min} is greater than aria-valuemax=${max}.` });
+  if (now != null && min != null && now < min) result.push({ kind: 'state-consistency', element, detail: `aria-valuenow=${now} is below aria-valuemin=${min}.` });
+  if (now != null && max != null && now > max) result.push({ kind: 'state-consistency', element, detail: `aria-valuenow=${now} is above aria-valuemax=${max}.` });
 
-  const comparePosition = (indexProperty: string, countProperty: string) => {
-    if (!element.hasAttribute(indexProperty) || !element.hasAttribute(countProperty)) return;
-    const index = strictInteger(element.getAttribute(indexProperty) ?? '');
-    const count = strictInteger(element.getAttribute(countProperty) ?? '');
-    if (index == null || count == null || count === -1 || index <= count) return;
-    signals.push({
-      kind: 'state-consistency',
-      element,
-      detail: `${indexProperty}=${index} exceeds ${countProperty}=${count}.`,
-    });
-  };
-
-  comparePosition('aria-posinset', 'aria-setsize');
-  comparePosition('aria-colindex', 'aria-colcount');
-  comparePosition('aria-rowindex', 'aria-rowcount');
-  return signals;
+  for (const [indexName, countName] of [
+    ['aria-posinset', 'aria-setsize'],
+    ['aria-colindex', 'aria-colcount'],
+    ['aria-rowindex', 'aria-rowcount'],
+  ] as const) {
+    if (!element.hasAttribute(indexName) || !element.hasAttribute(countName)) continue;
+    const index = integer(element.getAttribute(indexName) ?? '');
+    const count = integer(element.getAttribute(countName) ?? '');
+    if (index != null && count != null && count !== -1 && index > count) {
+      result.push({ kind: 'state-consistency', element, detail: `${indexName}=${index} exceeds ${countName}=${count}.` });
+    }
+  }
+  return result;
 }
 
 export function evaluateAdvancedAria(root: ScanRoot): AriaValidationSignal[] {
   const elements = scopedElements(root);
-  const signals: AriaValidationSignal[] = [];
-  const ownership = buildOwnershipModel([...document.querySelectorAll('*')]);
-  signals.push(...ownership.signals.filter((signal) => root instanceof Document || signal.element === root || root.contains(signal.element)));
+  const result: AriaValidationSignal[] = [];
+  const ownership = buildOwnershipModel();
+  result.push(...ownership.signals.filter(({ element }) => root instanceof Document || element === root || root.contains(element)));
 
   for (const element of elements) {
     if (element.hasAttribute('role')) {
       const roleTokens = ariaRoleTokens(element);
-      const abstractTokens = roleTokens.filter((token) => isAbstractAriaRole(token));
+      const abstract = roleTokens.filter(isAbstractAriaRole);
       const resolved = registeredExplicitAriaRole(element);
-
-      if (abstractTokens.length) {
-        signals.push({
-          kind: 'invalid-role',
-          element,
-          detail: `role contains abstract ARIA role token${abstractTokens.length > 1 ? 's' : ''}: ${abstractTokens.join(', ')}. Abstract roles are ontology concepts and must not be used by authors.`,
-        });
+      if (abstract.length) {
+        result.push({ kind: 'invalid-role', element, detail: `role contains abstract ARIA role token${abstract.length > 1 ? 's' : ''}: ${abstract.join(', ')}. Abstract roles must not be used by authors.` });
       }
       if (!resolved) {
-        const knownTokens = roleTokens.filter((token) => ariaRoleRecord(token) != null);
-        signals.push({
+        const recognised = roleTokens.filter((token) => ariaRoleRecord(token) != null);
+        result.push({
           kind: 'invalid-role',
           element,
           detail: roleTokens.length
-            ? `No non-abstract ARIA role can be resolved from role=${JSON.stringify(element.getAttribute('role'))}.${knownTokens.length ? ' The recognised token(s) are abstract.' : ' None of the tokens are registered ARIA roles.'}`
+            ? `No non-abstract ARIA role can be resolved from role=${JSON.stringify(element.getAttribute('role'))}.${recognised.length ? ' The recognised token(s) are abstract.' : ' None of the tokens are registered ARIA roles.'}`
             : 'The role attribute is empty, so it does not resolve to an ARIA role.',
         });
       }
     }
 
-    for (const attribute of element.getAttributeNames().map((name) => name.toLowerCase()).filter((name) => name.startsWith('aria-'))) {
-      if (!KNOWN_PROPERTIES.has(attribute)) {
-        signals.push({
-          kind: 'unknown-attribute',
-          element,
-          detail: `${attribute} is not a state or property in the synced WAI-ARIA registry.`,
-        });
+    for (const property of element.getAttributeNames().map((name) => name.toLowerCase()).filter((name) => name.startsWith('aria-'))) {
+      if (!KNOWN_PROPERTIES.has(property)) {
+        result.push({ kind: 'unknown-attribute', element, detail: `${property} is not a state or property in the synced WAI-ARIA registry.` });
         continue;
       }
-
-      const raw = element.getAttribute(attribute) ?? '';
-      if (!propertyValueIsValid(attribute, raw)) {
-        signals.push({
-          kind: 'invalid-value',
-          element,
-          detail: `${attribute}=${JSON.stringify(raw)} does not match the value grammar FocusTrace can verify for this ARIA state/property.`,
-        });
+      const raw = element.getAttribute(property) ?? '';
+      if (!validPropertyValue(property, raw)) {
+        result.push({ kind: 'invalid-value', element, detail: `${property}=${JSON.stringify(raw)} does not match the deterministic WAI-ARIA value grammar checked by FocusTrace.` });
       }
-
-      if (ID_REFERENCE_LIST_PROPERTIES.has(attribute)) {
+      if (IDREF_LIST.has(property)) {
         const ids = tokens(raw);
-        if (!ids.length) {
-          signals.push({
-            kind: 'broken-reference',
-            element,
-            detail: `${attribute} is present but does not contain any ID reference.`,
-          });
-        } else {
+        if (!ids.length) result.push({ kind: 'broken-reference', element, detail: `${property} is present but does not contain any ID reference.` });
+        else {
           const missing = ids.filter((id) => document.getElementById(id) == null);
-          if (missing.length) {
-            signals.push({
-              kind: 'broken-reference',
-              element,
-              detail: `${attribute} references missing ID${missing.length > 1 ? 's' : ''}: ${missing.map((id) => `#${id}`).join(', ')}.`,
-            });
-          }
+          if (missing.length) result.push({ kind: 'broken-reference', element, detail: `${property} references missing ID${missing.length > 1 ? 's' : ''}: ${missing.map((id) => `#${id}`).join(', ')}.` });
         }
       }
     }
@@ -525,41 +390,29 @@ export function evaluateAdvancedAria(root: ScanRoot): AriaValidationSignal[] {
     const role = registeredExplicitAriaRole(element);
     if (role) {
       for (const property of role.requiredProperties) {
-        if (!element.hasAttribute(property) && !hostProvidesRequiredProperty(element, role.name, property)) {
-          signals.push({
-            kind: 'missing-required-property',
-            element,
-            detail: `role=${JSON.stringify(role.name)} requires ${property}, but the attribute is missing and no equivalent native host state was detected.`,
-          });
+        if (!element.hasAttribute(property) && !nativeRequiredState(element, role.name, property)) {
+          result.push({ kind: 'missing-required-property', element, detail: `role=${JSON.stringify(role.name)} requires ${property}, but the attribute is missing and no equivalent native host state was detected.` });
         }
       }
 
-      if ((REQUIRED_PARENT.has(role.name) || GROUPED_REQUIRED_PARENT.has(role.name)) && !requiredParentSatisfied(element, role.name, ownership)) {
-        signals.push({
-          kind: 'required-parent',
-          element,
-          detail: `role=${JSON.stringify(role.name)} is not inside the required accessibility parent context. Generic/presentation wrappers and valid aria-owns ownership were ignored while resolving the semantic parent.`,
-        });
+      if ((REQUIRED_PARENT[role.name] || GROUPED_PARENT[role.name]) && !hasRequiredParent(element, role.name, ownership)) {
+        result.push({ kind: 'required-parent', element, detail: `role=${JSON.stringify(role.name)} is not inside its required accessibility-parent context after transparent wrappers and valid aria-owns ownership are resolved.` });
       }
 
-      const allowed = ALLOWED_CHILD.get(role.name);
+      const allowed = ALLOWED_CHILD[role.name];
       if (allowed) {
-        for (const child of semanticAccessibilityChildren(element, ownership)) {
+        for (const child of semanticChildren(element, ownership)) {
           const childRole = effectiveAriaRole(child);
-          if (!childRole || allowed.has(childRole)) continue;
-          signals.push({
-            kind: 'allowed-child',
-            element: child,
-            detail: `role=${JSON.stringify(role.name)} exposes accessibility child role=${JSON.stringify(childRole)}, which is outside the allowed child-role model for this container.`,
-          });
+          if (childRole && !allowed.includes(childRole)) {
+            result.push({ kind: 'allowed-child', element: child, detail: `role=${JSON.stringify(role.name)} exposes accessibility child role=${JSON.stringify(childRole)}, which is outside its allowed child-role model.` });
+          }
         }
       }
     }
 
-    const activeDescendant = validateActiveDescendant(element, ownership);
-    if (activeDescendant) signals.push(activeDescendant);
-    signals.push(...stateConsistencySignals(element));
+    const active = activeDescendantSignal(element, ownership);
+    if (active) result.push(active);
+    result.push(...consistencySignals(element));
   }
-
-  return signals;
+  return result;
 }
