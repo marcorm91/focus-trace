@@ -1,6 +1,12 @@
 import { browser, defineContentScript } from '#imports';
 import { accessibleName, isProgrammaticallyHidden, selectorFor } from '../lib/audit/dom';
 import {
+  captureAriaWidgetProbes,
+  createDynamicDialogNameReview,
+  evaluateAriaWidgetProbe,
+  type RuntimeWidgetAction,
+} from '../lib/runtime/aria-widget-runtime';
+import {
   createRuntimeBreakpointHits,
   defaultRuntimeBreakpointSettings,
   normalizeRuntimeBreakpointSettings,
@@ -79,6 +85,7 @@ export default defineContentScript({
     let routeTimer: number | undefined;
     const interactionTracker = new RuntimeInteractionTracker();
     const dialogs = new Map<Element, DialogState>();
+    const emittedAriaWidgetFindings = new Set<string>();
 
     const resetObservedDialogs = () => {
       dialogs.clear();
@@ -134,6 +141,36 @@ export default defineContentScript({
         stopInstrumentation();
         interactionTracker.reset();
       }
+    };
+
+    const emitAriaWidgetFinding = (
+      finding: Omit<RuntimeEvent, 'id' | 'timestamp'> | undefined,
+      interactionId?: string,
+    ) => {
+      if (!finding) return;
+      const key = [
+        interactionId ?? 'ambient',
+        finding.ruleId ?? finding.title,
+        finding.element?.selector ?? 'session',
+      ].join('|');
+      if (emittedAriaWidgetFindings.has(key)) return;
+      emittedAriaWidgetFindings.add(key);
+      emit(finding, interactionId);
+    };
+
+    const scheduleAriaWidgetEvaluation = (
+      target: Element,
+      action: RuntimeWidgetAction,
+      interactionId: string,
+    ) => {
+      const probes = captureAriaWidgetProbes(target, action);
+      if (!probes.length) return;
+      ctx.setTimeout(() => {
+        if (!recording) return;
+        for (const probe of probes) {
+          emitAriaWidgetFinding(evaluateAriaWidgetProbe(probe), interactionId);
+        }
+      }, 320);
     };
 
     const emitMutation = (
@@ -281,6 +318,7 @@ export default defineContentScript({
         if (event.key === 'Tab') pendingFocusIntent = event.shiftKey ? 'backward' : 'forward';
         const target = event.target instanceof Element ? actionTarget(event.target) : null;
         const interactionId = beginInteraction('keyboard', target, event.key);
+        if (target && ['Enter', ' ', 'ArrowUp', 'ArrowDown'].includes(event.key)) lastActionElement = target;
         emit(
           createKeydownEvent({
             key: event.key,
@@ -288,6 +326,7 @@ export default defineContentScript({
           }),
           interactionId,
         );
+        if (target) scheduleAriaWidgetEvaluation(target, { kind: 'keydown', key: event.key }, interactionId);
       },
       true,
     );
@@ -311,6 +350,7 @@ export default defineContentScript({
           }),
           interactionId,
         );
+        scheduleAriaWidgetEvaluation(target, { kind: 'click' }, interactionId);
       },
       true,
     );
@@ -323,6 +363,10 @@ export default defineContentScript({
         if (!recording || !isDialogOpen(dialog)) return;
         const focusedInside = document.activeElement instanceof Element && dialog.contains(document.activeElement);
         emit(createDialogOpenEvent({ dialog: snapshot(dialog), focusedInside }), interactionId);
+        ctx.setTimeout(() => {
+          if (!recording || !isDialogOpen(dialog)) return;
+          emitAriaWidgetFinding(createDynamicDialogNameReview(dialog), interactionId);
+        }, 160);
       });
     };
 
@@ -538,6 +582,7 @@ export default defineContentScript({
         lastTitle = document.title;
         focusVersion = 0;
         hiddenFocusReported = null;
+        emittedAriaWidgetFindings.clear();
         interactionTracker.reset();
         resetObservedDialogs();
         if (recording) startInstrumentation();
