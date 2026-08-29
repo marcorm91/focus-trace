@@ -88,7 +88,7 @@ describe('runtime ARIA widget validation', () => {
       </div>
     `);
 
-    element('#menu-button').focus();
+    (element('#menu-button') as HTMLElement).focus();
     const probes = captureAriaWidgetProbes(element('#menu-button'), { kind: 'keydown', key: 'ArrowDown' });
     const menuProbe = probes.find((probe) => probe.kind === 'menu-open-focus');
     expect(evaluateAriaWidgetProbe(menuProbe!)).toMatchObject({
