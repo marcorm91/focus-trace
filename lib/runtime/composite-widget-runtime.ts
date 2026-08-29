@@ -28,6 +28,17 @@ const TREE_ITEM_SELECTOR = '[role="treeitem"]';
 const GRID_CELL_SELECTOR = '[role="gridcell"], [role="rowheader"], [role="columnheader"]';
 const GRID_MANAGED_ROLES = ['row', 'gridcell', 'rowheader', 'columnheader'];
 const ARROW_KEYS = new Set(['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight']);
+const ARROW_CONSUMING_ROLES = new Set([
+  'combobox',
+  'textbox',
+  'searchbox',
+  'spinbutton',
+  'slider',
+  'listbox',
+  'menu',
+  'menubar',
+  'tab',
+]);
 
 const ARIA_EXPANDED_REFERENCE: StandardReference = {
   type: 'WAI-ARIA',
@@ -120,6 +131,14 @@ function compositeForTarget(target: Element): Element | undefined {
 
   return [...document.querySelectorAll(COMPOSITE_SELECTOR)]
     .find((candidate) => accessibilityOwns(candidate, target));
+}
+
+function targetConsumesArrowKeys(target: Element, composite: Element): boolean {
+  if (target === composite) return false;
+  const role = semanticRole(target);
+  if (role && ARROW_CONSUMING_ROLES.has(role)) return true;
+  if (target.matches('input, textarea, select')) return true;
+  return target.getAttribute('contenteditable')?.trim().toLowerCase() === 'true';
 }
 
 function managedRoles(composite: Element): string[] {
@@ -342,6 +361,10 @@ export function captureCompositeWidgetProbes(
   if (!composite) return [];
   const role = compositeRole(composite);
   if (!role) return [];
+
+  if (action.kind === 'keydown' && ARROW_KEYS.has(action.key) && targetConsumesArrowKeys(target, composite)) {
+    return [];
+  }
 
   const probes: CompositeWidgetProbe[] = [
     { kind: 'composite-roving-tabindex', composite },
