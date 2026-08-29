@@ -1,0 +1,17 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "authority": "W3C",
+    "specification": "WCAG 2.2",
+    "url": "https://www.w3.org/TR/WCAG22/"
+  },
+  "summary": {
+    "total": 0,
+    "active": 0,
+    "removed": 0,
+    "A": 0,
+    "AA": 0,
+    "AAA": 0
+  },
+  "criteria": []
+}
