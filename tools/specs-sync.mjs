@@ -16,7 +16,14 @@ export const MONITORED_SPECS = [
   { id: 'core-aam', label: 'Core Accessibility API Mappings 1.2', authority: 'W3C', url: 'https://www.w3.org/TR/core-aam-1.2/', role: 'normative' },
   { id: 'apg', label: 'ARIA Authoring Practices Guide', authority: 'W3C', url: 'https://www.w3.org/WAI/ARIA/apg/', role: 'informative' },
   { id: 'mime-sniff', label: 'MIME Sniffing Living Standard', authority: 'WHATWG', url: 'https://mimesniff.spec.whatwg.org/', role: 'normative' },
-  { id: 'iana-language-subtags', label: 'IANA Language Subtag Registry', authority: 'IANA', url: 'https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry', role: 'normative' },
+  {
+    id: 'iana-language-subtags',
+    label: 'IANA Language Subtag Registry',
+    authority: 'IANA',
+    url: 'https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry',
+    fallbackUrl: 'https://raw.githubusercontent.com/Masterain98/IANA-BCP47/main/src/iana_bcp47/language-subtag-registry.txt',
+    role: 'normative',
+  },
 ];
 
 function stableBody(value = '') {
@@ -29,14 +36,31 @@ function stableBody(value = '') {
   );
 }
 
+async function fetchSpec(spec) {
+  try {
+    const response = await fetchWithRetry(spec.url, { headers: { 'User-Agent': 'FocusTrace-Spec-Monitor' } });
+    return { response, resolvedUrl: spec.url, usedFallback: false };
+  } catch (error) {
+    if (!spec.fallbackUrl) throw error;
+    const response = await fetchWithRetry(spec.fallbackUrl, { headers: { 'User-Agent': 'FocusTrace-Spec-Monitor' } });
+    return { response, resolvedUrl: spec.fallbackUrl, usedFallback: true };
+  }
+}
+
 async function fingerprint(spec) {
-  const response = await fetchWithRetry(spec.url, { headers: { 'User-Agent': 'FocusTrace-Spec-Monitor' } });
+  const { response, resolvedUrl, usedFallback } = await fetchSpec(spec);
   const body = await response.text();
   const stable = stableBody(body);
   if (stable.length < 100) throw new Error(`Monitored specification ${spec.id} returned unexpectedly little content.`);
   return {
-    ...spec,
+    id: spec.id,
+    label: spec.label,
+    authority: spec.authority,
+    url: spec.url,
+    role: spec.role,
     contentHash: sha256(stable),
+    ...(spec.fallbackUrl ? { fallbackUrl: spec.fallbackUrl } : {}),
+    ...(usedFallback ? { resolvedUrl, usedFallback: true } : {}),
     ...(response.headers.get('etag') ? { etag: response.headers.get('etag') } : {}),
     ...(response.headers.get('last-modified') ? { lastModified: response.headers.get('last-modified') } : {}),
   };
