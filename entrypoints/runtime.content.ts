@@ -399,6 +399,7 @@ export default defineContentScript({
     const observer = new MutationObserver((mutations) => {
       if (!recording) return;
       const interactionId = activeInteractionId();
+      const virtualFocusOwners = new Set<Element>();
 
       if (lastFocused && lastFocused !== document.body && !lastFocused.isConnected) {
         const removed = snapshot(lastFocused);
@@ -446,18 +447,24 @@ export default defineContentScript({
         }
 
         if (mutation.type === 'attributes' && mutation.target instanceof Element) {
+          const attributeTarget = mutation.target;
           const attribute = mutation.attributeName ?? '';
-          const currentValue = attribute ? mutation.target.getAttribute(attribute) : null;
+          const currentValue = attribute ? attributeTarget.getAttribute(attribute) : null;
           const affectsLastFocused =
             lastFocused != null &&
             lastFocused !== document.body &&
-            (mutation.target === lastFocused || mutation.target.contains(lastFocused));
+            (attributeTarget === lastFocused || attributeTarget.contains(lastFocused));
 
-          if (attribute === 'aria-activedescendant' && interactionId) {
+          if (
+            attribute === 'aria-activedescendant'
+            && interactionId
+            && !virtualFocusOwners.has(attributeTarget)
+          ) {
+            virtualFocusOwners.add(attributeTarget);
             const beforeId = mutation.oldValue?.trim() || undefined;
             const virtualFocus = evaluateAriaWidgetProbe({
               kind: 'active-descendant-transition',
-              owner: mutation.target,
+              owner: attributeTarget,
               ...(beforeId ? { beforeId } : {}),
             });
             if (virtualFocus?.kind === 'virtual-focus') emit(virtualFocus, interactionId);
@@ -465,9 +472,9 @@ export default defineContentScript({
             // Frameworks can insert/re-parent the active item in the same render.
             // Validate the final ownership relationship after the normal window.
             ctx.setTimeout(() => {
-              if (!recording || !mutation.target.isConnected) return;
+              if (!recording || !attributeTarget.isConnected) return;
               emitAriaWidgetFinding(
-                evaluateAriaWidgetProbe({ kind: 'active-descendant', owner: mutation.target }),
+                evaluateAriaWidgetProbe({ kind: 'active-descendant', owner: attributeTarget }),
                 interactionId,
               );
             }, 320);
@@ -480,7 +487,7 @@ export default defineContentScript({
             emitMutation(
               {
                 kind: 'attribute-changed',
-                target: snapshot(mutation.target),
+                target: snapshot(attributeTarget),
                 attribute,
                 previousValue: mutation.oldValue,
                 currentValue,
@@ -506,8 +513,8 @@ export default defineContentScript({
             }
           }
 
-          if (attribute === 'open' && mutation.target.matches('dialog') && isDialogOpen(mutation.target)) {
-            registerDialog(mutation.target, interactionId);
+          if (attribute === 'open' && attributeTarget.matches('dialog') && isDialogOpen(attributeTarget)) {
+            registerDialog(attributeTarget, interactionId);
           }
         }
       }
