@@ -66,6 +66,10 @@ function nodeId(element: ElementSnapshot): string {
   return element.selector;
 }
 
+function isFocusDestinationEvent(event: RuntimeEvent): boolean {
+  return event.kind === 'focus' || event.kind === 'virtual-focus';
+}
+
 export function focusGraphNodeLabel(element: ElementSnapshot): string {
   return element.name?.trim() || element.role || element.tag;
 }
@@ -83,7 +87,7 @@ export function buildObservedFocusPath(events: RuntimeEvent[]): ObservedFocusPat
   let order = 0;
 
   for (const event of events) {
-    if (event.kind !== 'focus' || !event.element) continue;
+    if (!isFocusDestinationEvent(event) || !event.element) continue;
     order += 1;
 
     const id = nodeId(event.element);
@@ -145,7 +149,7 @@ export function buildFocusGraph(events: RuntimeEvent[]): FocusGraph {
   };
 
   for (const event of events) {
-    if (event.kind === 'focus' && event.element) {
+    if (isFocusDestinationEvent(event) && event.element) {
       focusEvents += 1;
       const current = ensureNode(event.element, event.timestamp);
       current.visits += 1;
