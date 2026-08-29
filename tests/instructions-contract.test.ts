@@ -84,6 +84,7 @@ describe('README language and instructions contract', () => {
     expect(instructions).toContain("'Finding vs occurrence.', 'Hallazgo vs ocurrencia.'");
     expect(convention).toContain('Do **not** introduce a new prefix just because a new feature or component exists.');
     expect(convention).toContain('Tree/Grid runtime work should continue using `FT-RUNTIME-ARIA`');
+    expect(convention).toContain('Accessibility Tree or assistive-technology observations');
     expect(runtimeAria).toContain('[`RULE_IDENTIFIERS.md`](RULE_IDENTIFIERS.md)');
     expect(css).toContain('.instructions-legend');
     expect(css).toContain('grid-template-columns: minmax(126px, max-content) minmax(0, 1fr);');
