@@ -15,4 +15,12 @@ describe('scan categories', () => {
     expect(scanCategoryForRule('FT-WARN-003')).toBe('aria');
     expect(scanCategoryForRule('FT-WARN-004')).toBe('structure');
   });
+
+  it('keeps structural and interactive semantics in the same review area', () => {
+    expect(scanCategoryForRule('FT-REVIEW-004')).toBe('structure');
+    expect(scanCategoryForRule('FT-REVIEW-005')).toBe('structure');
+    expect(scanCategoryForRule('FT-REVIEW-006')).toBe('structure');
+    expect(scanCategoryForRule('FT-REVIEW-007')).toBe('structure');
+    expect(scanCategoryForRule('FT-REVIEW-008')).toBe('structure');
+  });
 });
