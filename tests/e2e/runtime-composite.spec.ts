@@ -17,12 +17,47 @@ test('records composite widget reviews and virtual focus without inflating findi
   await expect(page.getByRole('heading', { name: 'Runtime composite widgets' })).toBeVisible();
   const tabId = await startRecording(extensionWorker, page);
 
+  await extensionWorker.evaluate(async (id) => {
+    const chromeApi = (globalThis as any).chrome;
+    await chromeApi.scripting.executeScript({
+      target: { tabId: id },
+      func: () => {
+        const owner = document.querySelector('#virtual-tree');
+        if (!(owner instanceof HTMLElement)) return;
+
+        document.addEventListener('keydown', (event) => {
+          if (event.key !== 'ArrowDown' || event.target !== owner) return;
+          owner.dataset.ftKeyTargetStrict = String(event.target === document.activeElement);
+        }, { capture: true, once: true });
+
+        const observer = new MutationObserver((mutations) => {
+          const mutation = mutations.find((candidate) => candidate.attributeName === 'aria-activedescendant');
+          if (!mutation || !(mutation.target instanceof Element)) return;
+          const active = document.activeElement;
+          owner.dataset.ftMutationTargetStrict = String(active === mutation.target);
+          owner.dataset.ftMutationTargetSameNode = String(
+            active instanceof Element && active.isSameNode(mutation.target),
+          );
+          observer.disconnect();
+        });
+        observer.observe(owner, {
+          attributes: true,
+          attributeOldValue: true,
+          attributeFilter: ['aria-activedescendant'],
+        });
+      },
+    });
+  }, tabId);
+
   const virtualTree = page.getByRole('tree', { name: 'Files', exact: true });
   await virtualTree.focus();
   await expect(virtualTree).toBeFocused();
   await page.keyboard.press('ArrowDown');
   await expect(virtualTree).toBeFocused();
   await expect(virtualTree).toHaveAttribute('aria-activedescendant', 'virtual-two');
+  await expect(virtualTree).toHaveAttribute('data-ft-key-target-strict', 'true');
+  await expect(virtualTree).toHaveAttribute('data-ft-mutation-target-strict', 'true');
+  await expect(virtualTree).toHaveAttribute('data-ft-mutation-target-same-node', 'true');
 
   let session = await waitForSession(
     extensionWorker,
