@@ -98,6 +98,8 @@ Before introducing one:
 
 For example, future Tree/Grid runtime work should continue using `FT-RUNTIME-ARIA` for deterministic ARIA contradictions and `FT-APG` for contextual APG behavior rather than inventing `FT-TREE` or `FT-GRID` families.
 
+If a future capability introduces genuinely different evidence — for example browser Accessibility Tree or assistive-technology observations — the family name should be decided only after the evidence contract is defined, then registered here before the first rule ships.
+
 ## Report terminology
 
 FocusTrace also distinguishes:
