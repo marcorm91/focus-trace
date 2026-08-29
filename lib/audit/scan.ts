@@ -1,4 +1,11 @@
-import { DUPLICATE_ID_RULE } from '../../shared/html-authoring-rules';
+import {
+  DUPLICATE_ID_RULE,
+  GENERIC_INTERACTIVE_SEMANTICS_RULE,
+  MAIN_LANDMARK_RULE,
+  MULTIPLE_MAIN_LANDMARKS_RULE,
+  NATIVE_BUTTON_SEMANTICS_RULE,
+  NATIVE_LINK_SEMANTICS_RULE,
+} from '../../shared/html-authoring-rules';
 import { RULES, type RuleDefinition } from '../../shared/rule-catalog';
 import type { ComponentScanScope, FindingOutcome, HeadingSnapshot, ScanIssue, ScanResult } from '../../shared/types';
 import { evaluateTextContrastForElement, textContrastSubjectsForElement } from './contrast';
@@ -6,6 +13,7 @@ import { accessibleNameDetails, accessibleNameDiagnostics, isMarkedDecorative, i
 import { evaluateDuplicateIds } from './duplicate-ids';
 import { evaluateLabelInName } from './label-in-name';
 import { evaluateNonTextContrast } from './non-text-contrast';
+import { evaluateInteractiveSemantics, mainLandmarkCandidates } from './semantics';
 import { evaluateAriaAuthoringSignals, pageLanguageStatus, type AriaAuthoringSignal } from './standards-registry';
 
 interface RuleExecution {
@@ -212,6 +220,87 @@ function runDuplicateIds(root: ScanRoot): RuleExecution {
     ));
   }
   return result;
+}
+
+function runMainLandmarkPresence(): RuleExecution {
+  const result = emptyExecution(MAIN_LANDMARK_RULE);
+  const landmarks = mainLandmarkCandidates().filter((element) => !isProgrammaticallyHidden(element));
+  if (landmarks.length > 0) {
+    result.passes += 1;
+    return result;
+  }
+
+  result.review.push(finding(
+    MAIN_LANDMARK_RULE,
+    'review',
+    document.body ? 'body' : 'html',
+    'The page does not expose a visible <main> element or role="main" landmark. Review whether the primary page content should be identified with a main landmark for faster orientation and navigation.',
+    'No exposed main landmark was detected. Prefer a native <main> element for the primary content when the document structure allows it.',
+  ));
+  return result;
+}
+
+function runMultipleMainLandmarks(): RuleExecution {
+  const result = emptyExecution(MULTIPLE_MAIN_LANDMARKS_RULE);
+  const landmarks = mainLandmarkCandidates().filter((element) => !isProgrammaticallyHidden(element));
+  if (landmarks.length <= 1) {
+    if (landmarks.length === 1) result.passes += 1;
+    return result;
+  }
+
+  for (const landmark of landmarks) {
+    result.review.push(finding(
+      MULTIPLE_MAIN_LANDMARKS_RULE,
+      'review',
+      landmark,
+      'The page exposes more than one main landmark. Review whether there should be one primary main region or whether multiple regions are genuinely required and clearly distinguishable.',
+      `${landmarks.length} exposed main landmarks were detected. Native HTML should not expose multiple visible <main> elements; multiple ARIA main landmarks require clear structural purpose and distinguishable labels.`,
+    ));
+  }
+  return result;
+}
+
+function runInteractiveSemantics(root: ScanRoot): RuleExecution[] {
+  const button = emptyExecution(NATIVE_BUTTON_SEMANTICS_RULE);
+  const link = emptyExecution(NATIVE_LINK_SEMANTICS_RULE);
+  const generic = emptyExecution(GENERIC_INTERACTIVE_SEMANTICS_RULE);
+
+  for (const signal of evaluateInteractiveSemantics(root)) {
+    if (isProgrammaticallyHidden(signal.element)) continue;
+    const baseEvidence = `Current <${signal.currentTag}>; signals: ${signal.signals.join(', ') || 'interactive behavior'}; confidence=${signal.confidence}.`;
+
+    if (signal.intent === 'button') {
+      button.review.push(finding(
+        NATIVE_BUTTON_SEMANTICS_RULE,
+        'review',
+        signal.element,
+        'This element appears to perform an action with button-like semantics. Prefer a native <button type="button"> when possible. If the host element must remain, role="button" is only the semantic fallback and keyboard/focus behavior still needs to match a real button.',
+        `${baseEvidence} Recommended native element: ${signal.recommendedNative}. Alternative semantics: role="${signal.alternativeRole}" with complete keyboard and focus behavior.`,
+      ));
+      continue;
+    }
+
+    if (signal.intent === 'link') {
+      link.review.push(finding(
+        NATIVE_LINK_SEMANTICS_RULE,
+        'review',
+        signal.element,
+        'This element appears to perform navigation with link-like semantics. Prefer a native <a href="…"> so the browser and assistive technologies receive native navigation behavior. Use role="link" only when a native anchor cannot be used and the expected interaction is recreated completely.',
+        `${baseEvidence} Recommended native element: ${signal.recommendedNative}. Alternative semantics: role="${signal.alternativeRole}" with complete keyboard and navigation behavior.`,
+      ));
+      continue;
+    }
+
+    generic.review.push(finding(
+      GENERIC_INTERACTIVE_SEMANTICS_RULE,
+      'review',
+      signal.element,
+      'FocusTrace detected interaction on a generic element but cannot determine whether it represents an action, navigation or another widget. Review the intended behavior before assigning semantics, and prefer the matching native HTML element over adding ARIA when one exists.',
+      `${baseEvidence} Native recommendation withheld because the interaction intent is ambiguous.`,
+    ));
+  }
+
+  return [button, link, generic];
 }
 
 function ariaWarningExecutions(signals: AriaAuthoringSignal[]): RuleExecution[] {
@@ -433,6 +522,7 @@ export function runFocusTraceScan(scope: ComponentScanScope | undefined = consum
     runLabelInName(root),
     runAriaHiddenFocusable(root),
     runDuplicateIds(root),
+    ...runInteractiveSemantics(root),
     runTextContrast(root),
     runNonTextContrast(root),
     ...ariaExecutions,
@@ -440,7 +530,15 @@ export function runFocusTraceScan(scope: ComponentScanScope | undefined = consum
   ];
   const executions = scope
     ? componentExecutions
-    : [runPageTitle(), runPageLangPresent(), runPageLangKnown(), ...componentExecutions, runHeadingJumps()];
+    : [
+        runPageTitle(),
+        runPageLangPresent(),
+        runPageLangKnown(),
+        runMainLandmarkPresence(),
+        runMultipleMainLandmarks(),
+        ...componentExecutions,
+        runHeadingJumps(),
+      ];
 
   return {
     engine: 'FocusTrace Rules',
