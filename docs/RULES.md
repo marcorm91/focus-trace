@@ -24,7 +24,7 @@ FocusTrace found a signal that can indicate an accessibility problem but final j
 
 ### WARNING
 
-FocusTrace found an authoring or standards-maintenance risk that should be fixed or reviewed but is not automatically represented as a WCAG failure. Current examples include deprecated/prohibited ARIA usage, duplicate HTML identifiers, obsolete HTML and invalid native content-model relationships.
+FocusTrace found an authoring or standards-maintenance risk that should be fixed or reviewed but is not automatically represented as a WCAG failure. Current examples include deprecated/prohibited/invalid ARIA usage, duplicate HTML identifiers, obsolete HTML and invalid native content-model relationships.
 
 ### PASS
 
@@ -109,13 +109,26 @@ The same structured contrast evidence used by text contrast is reused here with 
 
 ## ARIA authoring warnings
 
-The scan consumes `generated/aria-registry.json` instead of maintaining role/property lists by hand. For recognized explicit ARIA roles FocusTrace currently reports:
+The scan consumes `generated/aria-registry.json` instead of maintaining role/property lists by hand where the synced registry contains the required information. Existing role-specific rules report:
 
 - `FT-WARN-001` when the role itself is deprecated;
 - `FT-WARN-002` when a state/property is deprecated for that role;
 - `FT-WARN-003` when a state/property is prohibited for that role.
 
-These are `WARNING`, not `FAIL`. Unknown roles/attributes, required ARIA properties, context/owned-element requirements and value validation are planned as separate conformance rules so each can be mapped to the appropriate ACT expectation.
+Advanced ARIA validation adds deterministic checks for:
+
+- `FT-WARN-012` — explicit role fallback cannot resolve to a registered non-abstract role, or an abstract role token is used by the author;
+- `FT-WARN-013` — unknown `aria-*` state/property names;
+- `FT-WARN-014` — invalid deterministic state/property value grammar;
+- `FT-WARN-015` — a required state/property is missing for the resolved explicit role, after native host semantics are considered;
+- `FT-WARN-016` — empty/missing ID references, invalid `aria-owns` ownership, or invalid `aria-activedescendant` relationships;
+- `FT-WARN-017` — a role is outside its required accessibility-parent context;
+- `FT-WARN-018` — an explicit ARIA container exposes an incompatible accessibility child role;
+- `FT-WARN-019` — ARIA range, position or set metadata contradicts itself.
+
+Role parsing follows WAI-ARIA fallback-token semantics: an unknown future token before a valid fallback role is not itself an error. Required parent/child validation resolves accessibility relationships rather than comparing only DOM parents: transparent generic/presentation wrappers and valid `aria-owns` ownership are considered. Custom `aria-current` tokens are deliberately not rejected because WAI-ARIA maps unknown token values to `true`.
+
+These findings are `WARNING`, not automatic WCAG `FAIL`. They identify deterministic ARIA authoring/conformance evidence; a separate WCAG rule is responsible for deciding when that evidence proves failure of a WCAG success criterion. See [`ARIA_VALIDATION.md`](ARIA_VALIDATION.md) for the detailed coverage and false-positive controls.
 
 ## HTML authoring warnings
 
@@ -197,6 +210,14 @@ A causal classification explains the recorded chain; the linked runtime WCAG/APG
 | FT-WARN-009 Native HTML content-model/group/order violation | WARNING | HTML Living Standard |
 | FT-WARN-010 Conflicting nested interactive/label structure | WARNING | HTML Living Standard |
 | FT-WARN-011 Invalid native main hierarchy | WARNING | HTML Living Standard |
+| FT-WARN-012 Unresolvable/abstract explicit ARIA role | WARNING | WAI-ARIA 1.3 |
+| FT-WARN-013 Unknown aria-* attribute | WARNING | WAI-ARIA registry |
+| FT-WARN-014 Invalid deterministic ARIA value | WARNING | WAI-ARIA 1.3 |
+| FT-WARN-015 Missing required ARIA state/property | WARNING | WAI-ARIA registry |
+| FT-WARN-016 Invalid ARIA ID/ownership/active-descendant relationship | WARNING | WAI-ARIA 1.3 |
+| FT-WARN-017 Missing required accessibility parent role | WARNING | WAI-ARIA 1.3 |
+| FT-WARN-018 Incompatible accessibility child role | WARNING | WAI-ARIA 1.3 |
+| FT-WARN-019 Internally inconsistent ARIA range/set state | WARNING | WAI-ARIA 1.3 |
 | FT-REVIEW-001 Positive tabindex | REVIEW | WCAG 2.4.3 |
 | FT-REVIEW-002 Heading-level jump | REVIEW | WCAG 1.3.1 / 2.4.6 |
 | FT-REVIEW-003 Placeholder-only form label | REVIEW | WCAG 3.3.2 |
@@ -230,5 +251,6 @@ A causal classification explains the recorded chain; the linked runtime WCAG/APG
 - `FT-WCAG-010` covers DOM text with deterministically resolvable computed foreground/background colors. Images of text, pseudo-element text and complex visual composition remain outside deterministic FAIL coverage.
 - `FT-WCAG-011` does not programmatically exercise every hover, pressed, checked or focus state. Multi-color graphics, CSS pseudo-element icons, complex shadows, images/canvas and contextual “required visual information” decisions remain REVIEW/manual territory.
 - Structural HTML checks operate on the parsed live DOM. Browser parser repair can normalize invalid source before FocusTrace runs; the tool does not infer source-level errors that are no longer observable. See [`STRUCTURAL_HTML.md`](STRUCTURAL_HTML.md).
+- Advanced ARIA checks operate on the live accessibility relationships FocusTrace can derive from DOM semantics and `aria-owns`; they do not claim to reproduce the browser accessibility tree or a screen reader's spoken output. See [`ARIA_VALIDATION.md`](ARIA_VALIDATION.md).
 - Automated static checks are intentionally narrower than the corresponding full WCAG success criteria.
 - Runtime findings are evidence from the observed interaction, not proof that every possible path was exercised.
