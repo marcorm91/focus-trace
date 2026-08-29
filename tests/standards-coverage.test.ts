@@ -1,0 +1,90 @@
+import { describe, expect, it } from 'vitest';
+import actCatalog from '../generated/act-catalog.json';
+import htmlCatalog from '../generated/html-obsolete-catalog.json';
+import sourcesRegistry from '../generated/standards-sources.json';
+import wcagCatalog from '../generated/wcag-catalog.json';
+import {
+  DUPLICATE_ID_RULE,
+  GENERIC_INTERACTIVE_SEMANTICS_RULE,
+  MAIN_LANDMARK_RULE,
+  MULTIPLE_MAIN_LANDMARKS_RULE,
+  NATIVE_BUTTON_SEMANTICS_RULE,
+  NATIVE_LINK_SEMANTICS_RULE,
+  OBSOLETE_BUT_CONFORMING_HTML_RULE,
+  OBSOLETE_HTML_ATTRIBUTE_RULE,
+  OBSOLETE_HTML_ELEMENT_RULE,
+} from '../shared/html-authoring-rules';
+import { OBSOLETE_ATTRIBUTES, OBSOLETE_ELEMENTS } from '../shared/obsolete-html-registry';
+import { RULES, type RuleDefinition } from '../shared/rule-catalog';
+
+const HTML_RULES: RuleDefinition[] = [
+  DUPLICATE_ID_RULE,
+  OBSOLETE_HTML_ELEMENT_RULE,
+  OBSOLETE_HTML_ATTRIBUTE_RULE,
+  OBSOLETE_BUT_CONFORMING_HTML_RULE,
+  MAIN_LANDMARK_RULE,
+  MULTIPLE_MAIN_LANDMARKS_RULE,
+  NATIVE_BUTTON_SEMANTICS_RULE,
+  NATIVE_LINK_SEMANTICS_RULE,
+  GENERIC_INTERACTIVE_SEMANTICS_RULE,
+];
+
+const ALL_RULES: RuleDefinition[] = [...Object.values(RULES), ...HTML_RULES];
+
+describe('standards registry coverage', () => {
+  it('keeps every FocusTrace WCAG and ACT reference resolvable against current upstream catalogs', () => {
+    const wcag = new Map(wcagCatalog.criteria.map((criterion) => [criterion.id, criterion]));
+    const act = new Set(actCatalog.rules.map((rule) => rule.id));
+
+    for (const rule of ALL_RULES) {
+      for (const reference of rule.references) {
+        if (reference.type === 'WCAG') {
+          const criterion = wcag.get(reference.id);
+          expect(criterion, `${rule.id} references missing WCAG ${reference.id}`).toBeDefined();
+          if (criterion?.status === 'active' && reference.level) {
+            expect(reference.level, `${rule.id} has stale WCAG level for ${reference.id}`).toBe(criterion.level);
+          }
+        }
+        if (reference.type === 'ACT') {
+          expect(act.has(reference.id), `${rule.id} references missing ACT ${reference.id}`).toBe(true);
+        }
+      }
+    }
+  });
+
+  it('monitors every standards family directly used by FocusTrace', () => {
+    const ids = new Set(sourcesRegistry.sources.map((source) => source.id));
+    expect(ids).toEqual(expect.objectContaining ? ids : ids);
+    for (const required of ['wcag22', 'html', 'html-obsolete', 'wai-aria', 'accname', 'html-aam', 'core-aam', 'apg', 'mime-sniff', 'iana-language-subtags']) {
+      expect(ids.has(required), `Missing monitored source ${required}`).toBe(true);
+    }
+  });
+
+  it('keeps the implemented obsolete-element registry aligned with the current WHATWG snapshot', () => {
+    const implemented = OBSOLETE_ELEMENTS.map((definition) => definition.tag).sort();
+    expect(implemented).toEqual([...htmlCatalog.obsoleteElements].sort());
+  });
+
+  it('keeps every implemented non-conforming obsolete attribute pair present in the WHATWG snapshot', () => {
+    const upstream = new Set(htmlCatalog.obsoleteAttributePairs.map((pair) => `${pair.attribute}|${pair.element}`));
+    for (const definition of OBSOLETE_ATTRIBUTES) {
+      if (definition.elements === '*') {
+        expect(upstream.has(`${definition.attribute}|*`), `Missing upstream pair ${definition.attribute}|*`).toBe(true);
+        continue;
+      }
+      for (const element of definition.elements) {
+        expect(upstream.has(`${definition.attribute}|${element}`), `Missing upstream pair ${definition.attribute}|${element}`).toBe(true);
+      }
+    }
+  });
+
+  it('makes WCAG coverage gaps explicit instead of implying full automated conformance', () => {
+    const active = wcagCatalog.criteria.filter((criterion) => criterion.status === 'active');
+    const referenced = new Set(
+      ALL_RULES.flatMap((rule) => rule.references.filter((reference) => reference.type === 'WCAG').map((reference) => reference.id)),
+    );
+    expect(active.length).toBeGreaterThan(80);
+    expect(referenced.size).toBeGreaterThan(0);
+    expect(referenced.size).toBeLessThan(active.length);
+  });
+});
