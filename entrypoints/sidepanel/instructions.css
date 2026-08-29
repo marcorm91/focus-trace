@@ -138,6 +138,7 @@
 
 .instructions-card p,
 .instructions-card li,
+.instructions-card dd,
 .instructions-note p {
   color: var(--ft-text);
   font-size: 14px;
@@ -159,6 +160,43 @@
   color: var(--ft-brand);
 }
 
+.instructions-legend {
+  display: grid;
+  gap: 7px;
+  margin: 10px 0 0;
+}
+
+.instructions-legend > div {
+  display: grid;
+  grid-template-columns: minmax(126px, max-content) minmax(0, 1fr);
+  gap: 10px;
+  align-items: start;
+  padding: 8px 0;
+  border-bottom: 1px solid var(--ft-border-soft);
+}
+
+.instructions-legend > div:last-child {
+  border-bottom: 0;
+}
+
+.instructions-legend dt,
+.instructions-legend dd {
+  margin: 0;
+}
+
+.instructions-legend code {
+  display: inline-block;
+  padding: 2px 5px;
+  border: 1px solid var(--ft-border-soft);
+  border-radius: 5px;
+  background: var(--ft-surface-subtle);
+  color: var(--ft-ink);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
 .instructions-note {
   margin: 0;
 }
@@ -175,6 +213,11 @@
   .instructions-heading {
     padding-right: 0;
     padding-top: 44px;
+  }
+
+  .instructions-legend > div {
+    grid-template-columns: 1fr;
+    gap: 4px;
   }
 }
 
