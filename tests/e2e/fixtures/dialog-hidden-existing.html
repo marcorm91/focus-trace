@@ -1,0 +1,19 @@
+<!doctype html>
+<html lang="en">
+<head><meta charset="utf-8"><title>Existing hidden dialog fixture</title></head>
+<body>
+  <main>
+    <h1>Existing hidden dialog</h1>
+    <button id="open-existing" type="button">Open existing dialog</button>
+    <div id="existing-dialog" role="dialog" aria-modal="true" aria-label="Existing dialog" hidden>
+      <p>Dialog content</p>
+      <button type="button">Continue</button>
+    </div>
+  </main>
+  <script>
+    document.querySelector('#open-existing').addEventListener('click', () => {
+      document.querySelector('#existing-dialog').hidden = false;
+    });
+  </script>
+</body>
+</html>
