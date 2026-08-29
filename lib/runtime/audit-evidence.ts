@@ -1,6 +1,7 @@
 import { explanationForCause, humanInteractionTitle, humanRuntimeEventTitle } from './explanations';
 import type { FocusGraph, FocusGraphNode } from './focus-graph';
 import { tr, type AppLanguage } from '../../shared/i18n';
+import { ruleLegendCopy } from '../../shared/rule-legend';
 import type { RuntimeEvent, RuntimeInteraction } from '../../shared/types';
 
 export interface FocusArrivalTrace {
@@ -166,6 +167,7 @@ export function renderAuditEvidenceMarkdown(
   bundle: AuditEvidenceBundle,
   language: AppLanguage = 'en',
 ): string {
+  const legend = ruleLegendCopy(language);
   const lines = [
     tr(language, '# FocusTrace accessibility evidence', '# Evidencia de accesibilidad de FocusTrace'),
     '',
@@ -182,6 +184,10 @@ export function renderAuditEvidenceMarkdown(
       `- URL: ${bundle.page?.url || '—'}`,
     );
   }
+
+  lines.push('', `## ${legend.title}`, '', legend.intro, '');
+  legend.items.forEach((item) => lines.push(`- \`${item.pattern}\` — ${item.description}`));
+  legend.notes.forEach((note) => lines.push('', `**${note.title}** ${note.description}`));
 
   lines.push(
     '',

@@ -336,6 +336,38 @@ export function useTraceActions({
     await showFocusPath();
   }, [focusPathVisible, setSelectedFocusSelector, showFocusPath]);
 
+  const deleteTraceInteraction = useCallback(async (interactionId: string) => {
+    if (tabId == null || session.recording || !interactionId) return;
+    setBusy(true);
+    setError(undefined);
+    try {
+      await browser.scripting.executeScript({
+        target: { tabId },
+        func: clearFocusPathInPage,
+      }).catch(() => undefined);
+      resetFocusPathState();
+
+      const next = (await browser.runtime.sendMessage({
+        type: 'FOCUSTRACE_DELETE_INTERACTION',
+        tabId,
+        interactionId,
+      } satisfies ExtensionMessage)) as SessionState;
+      setSession(next);
+    } catch (reason) {
+      setError(localizedUserError(reason, language, 'trace'));
+    } finally {
+      setBusy(false);
+    }
+  }, [
+    language,
+    resetFocusPathState,
+    session.recording,
+    setBusy,
+    setError,
+    setSession,
+    tabId,
+  ]);
+
   return {
     breakpointSettings,
     interactions,
@@ -348,5 +380,6 @@ export function useTraceActions({
     toggleFocusPath,
     selectFocusPoint,
     clearFocusSelection,
+    deleteTraceInteraction,
   };
 }

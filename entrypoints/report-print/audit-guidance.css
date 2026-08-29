@@ -40,6 +40,61 @@
   color: #172033;
 }
 
+.print-rule-legend {
+  display: grid;
+  gap: 8px;
+  margin-top: 3px;
+  padding-top: 11px;
+  border-top: 1px solid #d9deea;
+}
+
+.print-rule-legend h3 {
+  margin: 0;
+  color: #172033;
+  font-size: 12px;
+}
+
+.print-rule-legend dl {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px;
+  margin: 0;
+}
+
+.print-rule-legend dl > div {
+  min-width: 0;
+  display: grid;
+  gap: 3px;
+  padding: 7px 8px;
+  border: 1px solid #e1e5ed;
+  border-radius: 7px;
+  background: #fff;
+}
+
+.print-rule-legend dt,
+.print-rule-legend dd {
+  margin: 0;
+}
+
+.print-rule-legend code {
+  color: #3d35d5;
+  font-size: 9px;
+  font-weight: 900;
+  overflow-wrap: anywhere;
+}
+
+.print-rule-legend dd,
+.print-rule-legend-notes p {
+  color: #475467;
+  font-size: 9.3px;
+  line-height: 1.42;
+}
+
+.print-rule-legend-notes {
+  display: grid;
+  gap: 4px;
+}
+
 .print-finding-description {
   margin: 0;
   color: #475467;
@@ -95,13 +150,15 @@
 }
 
 @media (max-width: 760px) {
-  .print-guidance {
+  .print-guidance,
+  .print-rule-legend dl {
     grid-template-columns: 1fr;
   }
 }
 
 @media print {
   .print-report-notes,
+  .print-rule-legend dl > div,
   .print-guidance > div {
     break-inside: avoid;
     page-break-inside: avoid;

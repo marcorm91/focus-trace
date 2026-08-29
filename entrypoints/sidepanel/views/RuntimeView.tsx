@@ -1,3 +1,4 @@
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { RUNTIME_BREAKPOINTS } from '../../../lib/runtime/breakpoints';
 import {
   explanationForCause,
@@ -7,6 +8,7 @@ import {
   type ExplanationLevel,
 } from '../../../lib/runtime/explanations';
 import { humanRuntimeEventDetail, runtimeEventKindLabel } from '../../../lib/runtime/runtime-presentation';
+import { deletableManualInteractionIds } from '../../../lib/runtime/trace-evidence-editing';
 import { localizedBreakpoint, tr, type AppLanguage } from '../../../shared/i18n';
 import type {
   RuntimeBreakpointHit,
@@ -24,6 +26,7 @@ export function RuntimeView({
   breakpointSettings,
   pausedByBreakpoint,
   onBreakpointChange,
+  onDeleteInteraction,
   level,
   language,
 }: {
@@ -33,11 +36,42 @@ export function RuntimeView({
   breakpointSettings: RuntimeBreakpointSettings;
   pausedByBreakpoint?: RuntimeBreakpointHit | undefined;
   onBreakpointChange: (breakpointId: RuntimeBreakpointId, enabled: boolean) => void | Promise<void>;
+  onDeleteInteraction: (interactionId: string) => void | Promise<void>;
   level: ExplanationLevel;
   language: AppLanguage;
 }) {
   const enabledCount = RUNTIME_BREAKPOINTS.filter((breakpoint) => breakpointSettings[breakpoint.id]).length;
   const pauseExplanation = pausedByBreakpoint ? explanationForCause(pausedByBreakpoint.causeType, language) : undefined;
+  const deletableIds = useMemo(
+    () => deletableManualInteractionIds(interactions, events),
+    [events, interactions],
+  );
+  const [pendingDelete, setPendingDelete] = useState<RuntimeInteraction>();
+  const [deleting, setDeleting] = useState(false);
+  const deleteDialogRef = useRef<HTMLDialogElement>(null);
+  const cancelDeleteRef = useRef<HTMLButtonElement>(null);
+
+  useEffect(() => {
+    const dialog = deleteDialogRef.current;
+    if (!dialog) return;
+    if (pendingDelete && !dialog.open) {
+      dialog.showModal();
+      requestAnimationFrame(() => cancelDeleteRef.current?.focus());
+      return;
+    }
+    if (!pendingDelete && dialog.open) dialog.close();
+  }, [pendingDelete]);
+
+  const confirmDelete = async () => {
+    if (!pendingDelete || recording || deleting || !deletableIds.has(pendingDelete.id)) return;
+    setDeleting(true);
+    try {
+      await onDeleteInteraction(pendingDelete.id);
+      setPendingDelete(undefined);
+    } finally {
+      setDeleting(false);
+    }
+  };
 
   return (
     <section className="panel" aria-labelledby="runtime-title">
@@ -55,6 +89,63 @@ export function RuntimeView({
           </p>
         </div>
       </div>
+
+      {!recording && deletableIds.size > 0 && (
+        <p className="trace-edit-note">
+          {tr(
+            language,
+            'Made a mistake during manual Trace? Open an interaction and remove that action. FocusTrace also removes every focus change, mutation and finding correlated with it, then recalculates Replay, Journey, Graph and Report.',
+            '¿Te has equivocado durante el Trace manual? Abre una interacción y elimina esa acción. FocusTrace también elimina todos los cambios de foco, mutaciones y hallazgos correlacionados con ella, y recalcula Replay, Recorrido, Grafo e Informe.',
+          )}
+        </p>
+      )}
+
+      <dialog
+        ref={deleteDialogRef}
+        className="trace-reset-dialog"
+        aria-labelledby="trace-delete-interaction-title"
+        aria-describedby="trace-delete-interaction-description"
+        onCancel={(event) => {
+          event.preventDefault();
+          if (!deleting) setPendingDelete(undefined);
+        }}
+        onClose={() => {
+          if (!deleting) setPendingDelete(undefined);
+        }}
+      >
+        <div className="trace-reset-dialog-copy">
+          <p className="eyebrow">{tr(language, 'Manual Trace evidence', 'Evidencia de Trace manual')}</p>
+          <h3 id="trace-delete-interaction-title">{tr(language, 'Remove this action from Trace?', '¿Eliminar esta acción del Trace?')}</h3>
+          <p id="trace-delete-interaction-description">
+            {tr(
+              language,
+              'The selected user action and every event or finding correlated with it will be removed from this session. Replay, Journey, Graph and Report are recalculated from the remaining evidence. The static page analysis is not changed.',
+              'La acción seleccionada y todos los eventos o hallazgos correlacionados con ella se eliminarán de esta sesión. Replay, Recorrido, Grafo e Informe se recalculan con la evidencia restante. El análisis estático de la página no cambia.',
+            )}
+          </p>
+          {pendingDelete && <strong className="trace-delete-interaction-name">{humanInteractionTitle(pendingDelete, language)}</strong>}
+        </div>
+        <div className="trace-reset-dialog-actions">
+          <button
+            ref={cancelDeleteRef}
+            type="button"
+            disabled={deleting}
+            onClick={() => setPendingDelete(undefined)}
+          >
+            {tr(language, 'Cancel', 'Cancelar')}
+          </button>
+          <button
+            className="trace-reset-confirm"
+            type="button"
+            disabled={deleting}
+            onClick={() => void confirmDelete()}
+          >
+            {deleting
+              ? tr(language, 'Removing…', 'Eliminando…')
+              : tr(language, 'Remove action', 'Eliminar acción')}
+          </button>
+        </div>
+      </dialog>
 
       {pausedByBreakpoint && pauseExplanation && (
         <div className="breakpoint-pause" role="status">
@@ -114,7 +205,14 @@ export function RuntimeView({
           )}
         />
       ) : (
-        <RuntimeInteractionList interactions={interactions} level={level} language={language} />
+        <RuntimeInteractionList
+          interactions={interactions}
+          deletableIds={deletableIds}
+          recording={recording}
+          onRequestDelete={setPendingDelete}
+          level={level}
+          language={language}
+        />
       )}
     </section>
   );
@@ -122,10 +220,16 @@ export function RuntimeView({
 
 function RuntimeInteractionList({
   interactions,
+  deletableIds,
+  recording,
+  onRequestDelete,
   level,
   language,
 }: {
   interactions: RuntimeInteraction[];
+  deletableIds: Set<string>;
+  recording: boolean;
+  onRequestDelete: (interaction: RuntimeInteraction) => void;
   level: ExplanationLevel;
   language: AppLanguage;
 }) {
@@ -143,6 +247,7 @@ function RuntimeInteractionList({
         const explanation = primaryCause ? explanationForCause(primaryCause.type, language) : undefined;
         const eventCount = interaction.events.length;
         const findingCount = interaction.findings;
+        const canDelete = !recording && deletableIds.has(interaction.id);
 
         return (
           <li key={interaction.id} className={classNames}>
@@ -176,6 +281,24 @@ function RuntimeInteractionList({
                   </small>
                 </span>
               </summary>
+
+              {canDelete && (
+                <div className="interaction-edit-actions">
+                  <button
+                    type="button"
+                    className="interaction-delete-action"
+                    onClick={() => onRequestDelete(interaction)}
+                  >
+                    <span aria-hidden="true">×</span>
+                    {tr(language, 'Remove this action from Trace', 'Eliminar esta acción del Trace')}
+                  </button>
+                  <small>{tr(
+                    language,
+                    'Deletes the action and all evidence correlated with it from this session.',
+                    'Elimina de esta sesión la acción y toda la evidencia correlacionada con ella.',
+                  )}</small>
+                </div>
+              )}
 
               {interaction.breakpointHits.length > 0 && (
                 <div className="breakpoint-hit-box">

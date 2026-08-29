@@ -130,6 +130,12 @@ function ariaWidgetEventTitle(event: RuntimeEvent, language: AppLanguage): strin
       return tr(language, 'Expanded state does not match controlled content', 'El estado expandido no coincide con el contenido controlado');
     case 'FT-RUNTIME-ARIA-002':
       return tr(language, 'Selected tab controls a hidden tab panel', 'La pestaña seleccionada controla un panel oculto');
+    case 'FT-RUNTIME-ARIA-003':
+      return tr(language, 'Combobox popup relationship is invalid', 'La relación con el popup del combobox no es válida');
+    case 'FT-RUNTIME-ARIA-004':
+      return tr(language, 'Combobox popup role does not match aria-haspopup', 'El rol del popup del combobox no coincide con aria-haspopup');
+    case 'FT-RUNTIME-ARIA-005':
+      return tr(language, 'aria-activedescendant does not identify a valid active item', 'aria-activedescendant no identifica un elemento activo válido');
     case 'FT-APG-004':
       return tr(language, 'Activated tab did not become selected', 'La pestaña activada no pasó a estar seleccionada');
     case 'FT-APG-005':
@@ -138,6 +144,12 @@ function ariaWidgetEventTitle(event: RuntimeEvent, language: AppLanguage): strin
       return tr(language, 'Review Escape behavior for the open menu', 'Revisa el comportamiento de Escape en el menú abierto');
     case 'FT-APG-007':
       return tr(language, 'Opened dialog has no accessible name', 'El diálogo abierto no tiene nombre accesible');
+    case 'FT-APG-008':
+      return tr(language, 'Active descendant is programmatically hidden', 'El descendiente activo está oculto programáticamente');
+    case 'FT-APG-009':
+      return tr(language, 'Escape did not dismiss the combobox popup', 'Escape no cerró el popup del combobox');
+    case 'FT-APG-010':
+      return tr(language, 'Single-select listbox exposes multiple selected options', 'El listbox de selección única expone varias opciones seleccionadas');
     default:
       return event.title;
   }

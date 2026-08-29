@@ -16,6 +16,7 @@ import {
   type ReportVisualEvidence,
 } from '../../lib/report/visual-evidence';
 import { localizedScanIssue, localizedSeverity, tr, type AppLanguage } from '../../shared/i18n';
+import { ruleLegendCopy } from '../../shared/rule-legend';
 import { countBySeverity, sortBySeverity } from '../../shared/severity';
 import type {
   ExtensionMessage,
@@ -212,14 +213,15 @@ function Finding({
 }
 
 function ReportNotes({ language }: { language: AppLanguage }) {
+  const legend = ruleLegendCopy(language);
   return (
     <section className="print-report-notes" aria-labelledby="report-notes-title">
       <div>
         <h2 id="report-notes-title">{tr(language, 'How to read this report', 'Cómo interpretar este informe')}</h2>
         <p>{tr(
           language,
-          'General limitations are stated here once so each finding can focus on the affected element, evidence and corrective action.',
-          'Las limitaciones generales se indican aquí una sola vez para que cada hallazgo se centre en el elemento afectado, la evidencia y la acción correctiva.',
+          'General limitations and FocusTrace rule identifiers are explained here once so the findings below can focus on evidence and corrective action.',
+          'Las limitaciones generales y los identificadores de regla de FocusTrace se explican aquí una sola vez para que los hallazgos posteriores se centren en la evidencia y la acción correctiva.',
         )}</p>
       </div>
       <ul>
@@ -239,6 +241,25 @@ function ReportNotes({ language }: { language: AppLanguage }) {
           'automated evidence and runtime observations do not by themselves constitute complete WCAG conformance. Manual testing remains necessary.',
           'la evidencia automática y las observaciones runtime no constituyen por sí solas una conformidad WCAG completa. Sigue siendo necesaria la revisión manual.')}</li>
       </ul>
+      <div className="print-rule-legend" aria-labelledby="print-rule-legend-title">
+        <div>
+          <h3 id="print-rule-legend-title">{legend.title}</h3>
+          <p>{legend.intro}</p>
+        </div>
+        <dl>
+          {legend.items.map((item) => (
+            <div key={item.id}>
+              <dt><code>{item.pattern}</code></dt>
+              <dd>{item.description}</dd>
+            </div>
+          ))}
+        </dl>
+        <div className="print-rule-legend-notes">
+          {legend.notes.map((note) => (
+            <p key={note.id}><strong>{note.title}</strong> {note.description}</p>
+          ))}
+        </div>
+      </div>
     </section>
   );
 }

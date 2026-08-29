@@ -249,6 +249,7 @@ export type ExtensionMessage =
   | { type: 'FOCUSTRACE_GET_SESSION'; tabId: number }
   | { type: 'FOCUSTRACE_FLUSH_SESSION'; tabId: number }
   | { type: 'FOCUSTRACE_CLEAR_SESSION'; tabId: number }
+  | { type: 'FOCUSTRACE_DELETE_INTERACTION'; tabId: number; interactionId: string }
   | { type: 'FOCUSTRACE_RESET_TAB'; tabId: number }
   | { type: 'FOCUSTRACE_ENSURE_INJECTED'; tabId: number }
   | { type: 'FOCUSTRACE_SESSION_UPDATED'; state: SessionState }

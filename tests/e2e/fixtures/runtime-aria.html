@@ -29,6 +29,31 @@
         <button role="menuitem" tabindex="-1">Edit</button>
       </div>
     </section>
+
+    <section>
+      <h2>Broken combobox relationships</h2>
+      <label for="city-combobox">City</label>
+      <input
+        id="city-combobox"
+        role="combobox"
+        aria-expanded="false"
+        aria-haspopup="grid"
+        aria-controls="city-popup"
+        aria-activedescendant="missing-city"
+      />
+      <div id="city-popup" role="listbox" hidden>
+        <div id="city-madrid" role="option" aria-selected="false">Madrid</div>
+        <div id="city-seville" role="option" aria-selected="false">Seville</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Broken single-select listbox</h2>
+      <div id="priority-listbox" role="listbox" tabindex="0" aria-label="Priority">
+        <div id="priority-high" role="option" aria-selected="true">High</div>
+        <div id="priority-low" role="option" aria-selected="false">Low</div>
+      </div>
+    </section>
   </main>
 
   <script>
@@ -38,6 +63,21 @@
       if (event.key !== 'ArrowDown') return;
       menuTrigger.setAttribute('aria-expanded', 'true');
       menu.hidden = false;
+    });
+
+    const cityCombobox = document.querySelector('#city-combobox');
+    const cityPopup = document.querySelector('#city-popup');
+    cityCombobox.addEventListener('keydown', (event) => {
+      if (event.key !== 'ArrowDown') return;
+      cityCombobox.setAttribute('aria-expanded', 'true');
+      cityPopup.hidden = false;
+    });
+
+    const priorityListbox = document.querySelector('#priority-listbox');
+    const priorityLow = document.querySelector('#priority-low');
+    priorityListbox.addEventListener('keydown', (event) => {
+      if (event.key !== 'ArrowDown') return;
+      priorityLow.setAttribute('aria-selected', 'true');
     });
   </script>
 </body>

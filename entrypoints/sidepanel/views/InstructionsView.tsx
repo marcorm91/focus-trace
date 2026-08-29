@@ -1,4 +1,5 @@
 import { tr, type AppLanguage } from '../../../shared/i18n';
+import { ruleLegendCopy } from '../../../shared/rule-legend';
 import { closeFocusedInstructionsView } from '../settings-focus';
 
 function InstructionCard({
@@ -19,6 +20,7 @@ function InstructionCard({
 }
 
 export function InstructionsView({ language }: { language: AppLanguage }) {
+  const legend = ruleLegendCopy(language);
   return (
     <section className="panel instructions-panel" aria-labelledby="instructions-title">
       <button
@@ -76,6 +78,23 @@ export function InstructionsView({ language }: { language: AppLanguage }) {
           </ul>
         </InstructionCard>
 
+        <InstructionCard title={legend.title}>
+          <p>{legend.intro}</p>
+          <dl className="instructions-legend">
+            {legend.items.map((item) => (
+              <div key={item.id}>
+                <dt><code>{item.pattern}</code></dt>
+                <dd>{item.description}</dd>
+              </div>
+            ))}
+          </dl>
+          {legend.notes.map((note) => (
+            <p key={note.id}>
+              <strong>{note.title}</strong>{' '}{note.description}
+            </p>
+          ))}
+        </InstructionCard>
+
         <InstructionCard title={tr(language, 'Analyze a component', 'Analizar un componente')}>
           <p>{tr(language, 'Choose a DOM region directly on the inspected page and run the rule engine only for that component scope.', 'Selecciona una región del DOM directamente en la página inspeccionada y ejecuta el motor de reglas solo para ese ámbito de componente.')}</p>
           <p>{tr(language, 'Document-wide context is still used where the rule requires it, for example when checking whether an HTML id is actually unique.', 'El contexto global del documento se sigue usando cuando una regla lo necesita, por ejemplo para comprobar si un id HTML es realmente único.')}</p>
@@ -92,6 +111,7 @@ export function InstructionsView({ language }: { language: AppLanguage }) {
             <li>{tr(language, 'Replay shows the recorded sequence without re-running the page interaction.', 'Replay muestra la secuencia grabada sin volver a ejecutar la interacción en la página.')}</li>
             <li>{tr(language, 'Journey and Graph help explain where focus moved and how controls were connected during the session.', 'Recorrido y Grafo ayudan a explicar dónde se movió el foco y cómo se relacionaron los controles durante la sesión.')}</li>
             <li>{tr(language, 'Accessibility breakpoints can pause FocusTrace recording after selected deterministic runtime conditions are captured.', 'Los breakpoints de accesibilidad pueden pausar la grabación de FocusTrace después de capturar determinadas condiciones runtime deterministas.')}</li>
+            <li>{tr(language, 'After stopping a manual Trace, you can remove a mistaken interaction. FocusTrace removes that action and all correlated runtime evidence, then recalculates Replay, Journey, Graph and Report.', 'Después de detener un Trace manual puedes eliminar una interacción realizada por error. FocusTrace elimina esa acción y toda la evidencia runtime correlacionada, y recalcula Replay, Recorrido, Grafo e Informe.')}</li>
           </ul>
         </InstructionCard>
 
@@ -106,6 +126,7 @@ export function InstructionsView({ language }: { language: AppLanguage }) {
 
         <InstructionCard title={tr(language, 'Report', 'Informe')}>
           <p>{tr(language, 'Combine static findings and runtime stories in a shareable review. Reports include the evidence FocusTrace recorded, not only a score or summary count.', 'Combina hallazgos estáticos e historias runtime en una revisión compartible. Los informes incluyen la evidencia registrada por FocusTrace, no solo una puntuación o un contador.')}</p>
+          <p>{tr(language, 'The rule legend is included near the beginning of PDF, TXT and Markdown exports so identifiers can be interpreted without opening Instructions separately.', 'La leyenda de reglas se incluye al principio de las exportaciones PDF, TXT y Markdown para poder interpretar los identificadores sin tener que abrir Instrucciones aparte.')}</p>
           <p>{tr(language, 'Optional visual evidence for printable reports is created only when you explicitly request it and should be reviewed before sharing.', 'La evidencia visual opcional para informes imprimibles solo se crea cuando la solicitas expresamente y debe revisarse antes de compartirla.')}</p>
         </InstructionCard>
 

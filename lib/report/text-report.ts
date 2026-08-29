@@ -1,5 +1,6 @@
 import { suggestAccessibleForeground } from '../audit/contrast';
 import { tr, type AppLanguage } from '../../shared/i18n';
+import { ruleLegendCopy } from '../../shared/rule-legend';
 import type { RuntimeEvent, ScanIssue, ScanResult } from '../../shared/types';
 import {
   componentContextLabel,
@@ -24,6 +25,18 @@ function lineLabel(language: AppLanguage, english: string, spanish: string): str
 
 function heading(title: string): string[] {
   return ['', title, '='.repeat(title.length)];
+}
+
+function ruleLegendLines(language: AppLanguage): string[] {
+  const legend = ruleLegendCopy(language);
+  return [
+    ...heading(legend.title.toUpperCase()),
+    legend.intro,
+    '',
+    ...legend.items.map((item) => `- ${item.pattern}: ${item.description}`),
+    '',
+    ...legend.notes.flatMap((note) => [`${note.title} ${note.description}`, '']),
+  ];
 }
 
 function contrastLines(issue: ScanIssue, language: AppLanguage): string[] {
@@ -154,6 +167,7 @@ export function buildTextSessionReport({
     ] : [`${lineLabel(language, 'Static scope', 'Alcance estático')}: ${lineLabel(language, 'Full page', 'Página completa')}`]),
   ];
 
+  lines.push(...ruleLegendLines(language));
   lines.push(...heading(lineLabel(language, 'EXECUTIVE SUMMARY', 'RESUMEN EJECUTIVO')));
   lines.push(
     `${lineLabel(language, 'Static failures', 'Fallos estáticos')}: ${model.failures}`,

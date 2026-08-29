@@ -67,6 +67,32 @@ describe('README language and instructions contract', () => {
     expect(instructions).toContain('Las revisiones necesitan contexto humano');
     expect(instructions).toContain('Warnings highlight risky HTML/ARIA authoring');
     expect(instructions).toContain('Los avisos señalan riesgos de autoría HTML/ARIA');
+    expect(instructions).toContain('After stopping a manual Trace, you can remove a mistaken interaction.');
+    expect(instructions).toContain('La leyenda de reglas se incluye al principio de las exportaciones PDF, TXT y Markdown');
+  });
+
+  it('explains FocusTrace identifiers, outcomes and report terminology from one shared source', () => {
+    const instructions = source('entrypoints/sidepanel/views/InstructionsView.tsx');
+    const legend = source('shared/rule-legend.ts');
+    const css = source('entrypoints/sidepanel/instructions.css');
+    const convention = source('docs/RULE_IDENTIFIERS.md');
+    const runtimeAria = source('docs/RUNTIME_ARIA.md');
+
+    expect(instructions).toContain("ruleLegendCopy(language)");
+    for (const prefix of ['FT-WCAG-###', 'FT-WARN-###', 'FT-REVIEW-###', 'FT-RUNTIME-###', 'FT-RUNTIME-ARIA-###', 'FT-APG-###']) {
+      expect(legend).toContain(`pattern: '${prefix}'`);
+      expect(convention).toContain(`\`${prefix}\``);
+    }
+    expect(legend).toContain("'Family, result and severity are different.'");
+    expect(legend).toContain("'Finding vs occurrence.'");
+    expect(convention).toContain('Do **not** introduce a new prefix just because a new feature or component exists.');
+    expect(convention).toContain('Tree/Grid runtime work should continue using `FT-RUNTIME-ARIA`');
+    expect(convention).toContain('Accessibility Tree or assistive-technology observations');
+    expect(convention).toContain('`docs/RUNTIME_ARIA.md` applies this policy');
+    expect(runtimeAria).toContain('[`RULE_IDENTIFIERS.md`](RULE_IDENTIFIERS.md)');
+    expect(runtimeAria).toContain('Future widget work should follow the registered identifier families');
+    expect(css).toContain('.instructions-legend');
+    expect(css).toContain('grid-template-columns: minmax(126px, max-content) minmax(0, 1fr);');
   });
 
   it('keeps the instructions trigger centered and the intro text untruncated', () => {
