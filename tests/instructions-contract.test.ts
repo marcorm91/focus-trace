@@ -73,6 +73,7 @@ describe('README language and instructions contract', () => {
     const instructions = source('entrypoints/sidepanel/views/InstructionsView.tsx');
     const css = source('entrypoints/sidepanel/instructions.css');
     const convention = source('docs/RULE_IDENTIFIERS.md');
+    const runtimeAria = source('docs/RUNTIME_ARIA.md');
 
     expect(instructions).toContain("'Rule legend and identifiers', 'Leyenda de reglas e identificadores'");
     for (const prefix of ['FT-WCAG-###', 'FT-WARN-###', 'FT-REVIEW-###', 'FT-RUNTIME-###', 'FT-RUNTIME-ARIA-###', 'FT-APG-###']) {
@@ -83,6 +84,7 @@ describe('README language and instructions contract', () => {
     expect(instructions).toContain("'Finding vs occurrence.', 'Hallazgo vs ocurrencia.'");
     expect(convention).toContain('Do **not** introduce a new prefix just because a new feature or component exists.');
     expect(convention).toContain('Tree/Grid runtime work should continue using `FT-RUNTIME-ARIA`');
+    expect(runtimeAria).toContain('[`RULE_IDENTIFIERS.md`](RULE_IDENTIFIERS.md)');
     expect(css).toContain('.instructions-legend');
     expect(css).toContain('grid-template-columns: minmax(126px, max-content) minmax(0, 1fr);');
   });
