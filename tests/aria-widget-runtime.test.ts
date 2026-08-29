@@ -19,6 +19,10 @@ function element(selector: string): Element {
   return result;
 }
 
+function probeFor(selector: string, kind: Parameters<typeof captureAriaWidgetProbes>[1], probeKind: string) {
+  return captureAriaWidgetProbes(element(selector), kind).find((probe) => probe.kind === probeKind);
+}
+
 describe('runtime ARIA widget validation', () => {
   it('warns when aria-expanded=false leaves controlled content available', () => {
     render(`
@@ -129,6 +133,144 @@ describe('runtime ARIA widget validation', () => {
     element('#menu').setAttribute('hidden', '');
     (element('#menu-button') as HTMLElement).focus();
     expect(evaluateAriaWidgetProbe(escapeProbe!)).toBeUndefined();
+  });
+
+  it('warns when an expanded combobox controls an invalid popup role', () => {
+    render(`
+      <input id="city" role="combobox" aria-expanded="true" aria-controls="city-popup">
+      <div id="city-popup"><div role="option">Madrid</div></div>
+    `);
+
+    const popupProbe = probeFor('#city', { kind: 'keydown', key: 'ArrowDown' }, 'combobox-popup');
+    expect(evaluateAriaWidgetProbe(popupProbe!)).toMatchObject({
+      ruleId: 'FT-RUNTIME-ARIA-003',
+      outcome: 'warning',
+      severity: 'serious',
+    });
+  });
+
+  it('accepts the implicit listbox popup role for a combobox', () => {
+    render(`
+      <input id="city" role="combobox" aria-expanded="true" aria-controls="city-popup">
+      <div id="city-popup" role="listbox"><div role="option">Madrid</div></div>
+    `);
+
+    const popupProbe = probeFor('#city', { kind: 'keydown', key: 'ArrowDown' }, 'combobox-popup');
+    expect(evaluateAriaWidgetProbe(popupProbe!)).toBeUndefined();
+  });
+
+  it('warns when aria-haspopup does not match the controlled combobox popup', () => {
+    render(`
+      <input id="city" role="combobox" aria-expanded="true" aria-haspopup="grid" aria-controls="city-popup">
+      <div id="city-popup" role="listbox"><div role="option">Madrid</div></div>
+    `);
+
+    const popupProbe = probeFor('#city', { kind: 'keydown', key: 'ArrowDown' }, 'combobox-popup');
+    expect(evaluateAriaWidgetProbe(popupProbe!)).toMatchObject({
+      ruleId: 'FT-RUNTIME-ARIA-004',
+      outcome: 'warning',
+      severity: 'serious',
+    });
+  });
+
+  it('warns when aria-activedescendant points to a missing node', () => {
+    render(`
+      <input id="city" role="combobox" aria-expanded="true" aria-controls="city-popup" aria-activedescendant="missing-option">
+      <div id="city-popup" role="listbox"><div id="madrid" role="option">Madrid</div></div>
+    `);
+
+    (element('#city') as HTMLElement).focus();
+    const activeProbe = probeFor('#city', { kind: 'keydown', key: 'ArrowDown' }, 'active-descendant');
+    expect(evaluateAriaWidgetProbe(activeProbe!)).toMatchObject({
+      ruleId: 'FT-RUNTIME-ARIA-005',
+      outcome: 'warning',
+    });
+  });
+
+  it('accepts aria-activedescendant owned by the controlled listbox', () => {
+    render(`
+      <input id="city" role="combobox" aria-expanded="true" aria-controls="city-popup" aria-activedescendant="madrid">
+      <div id="city-popup" role="listbox"><div id="madrid" role="option">Madrid</div></div>
+    `);
+
+    (element('#city') as HTMLElement).focus();
+    const activeProbe = probeFor('#city', { kind: 'keydown', key: 'ArrowDown' }, 'active-descendant');
+    expect(evaluateAriaWidgetProbe(activeProbe!)).toBeUndefined();
+  });
+
+  it('warns when aria-activedescendant points outside the controlled widget', () => {
+    render(`
+      <input id="city" role="combobox" aria-expanded="true" aria-controls="city-popup" aria-activedescendant="outside">
+      <div id="city-popup" role="listbox"><div id="madrid" role="option">Madrid</div></div>
+      <div id="outside" role="option">Outside</div>
+    `);
+
+    (element('#city') as HTMLElement).focus();
+    const activeProbe = probeFor('#city', { kind: 'keydown', key: 'ArrowDown' }, 'active-descendant');
+    expect(evaluateAriaWidgetProbe(activeProbe!)).toMatchObject({
+      ruleId: 'FT-RUNTIME-ARIA-005',
+      outcome: 'warning',
+    });
+  });
+
+  it('reviews a programmatically hidden active descendant', () => {
+    render(`
+      <div id="choices" role="listbox" tabindex="0" aria-activedescendant="two">
+        <div id="one" role="option">One</div>
+        <div id="two" role="option" hidden>Two</div>
+      </div>
+    `);
+
+    (element('#choices') as HTMLElement).focus();
+    const activeProbe = probeFor('#choices', { kind: 'keydown', key: 'ArrowDown' }, 'active-descendant');
+    expect(evaluateAriaWidgetProbe(activeProbe!)).toMatchObject({
+      ruleId: 'FT-APG-008',
+      outcome: 'review',
+    });
+  });
+
+  it('reviews Escape when a combobox popup remains open', () => {
+    render(`
+      <input id="city" role="combobox" aria-expanded="true" aria-controls="city-popup">
+      <div id="city-popup" role="listbox"><div role="option">Madrid</div></div>
+    `);
+
+    const escapeProbe = probeFor('#city', { kind: 'keydown', key: 'Escape' }, 'combobox-escape');
+    expect(evaluateAriaWidgetProbe(escapeProbe!)).toMatchObject({
+      ruleId: 'FT-APG-009',
+      outcome: 'review',
+    });
+
+    element('#city').setAttribute('aria-expanded', 'false');
+    element('#city-popup').setAttribute('hidden', '');
+    expect(evaluateAriaWidgetProbe(escapeProbe!)).toBeUndefined();
+  });
+
+  it('reviews multiple selected options in a single-select listbox', () => {
+    render(`
+      <div id="choices" role="listbox" tabindex="0">
+        <div role="option" aria-selected="true">One</div>
+        <div role="option" aria-selected="true">Two</div>
+      </div>
+    `);
+
+    const selectionProbe = probeFor('#choices', { kind: 'keydown', key: 'ArrowDown' }, 'listbox-selection');
+    expect(evaluateAriaWidgetProbe(selectionProbe!)).toMatchObject({
+      ruleId: 'FT-APG-010',
+      outcome: 'review',
+    });
+  });
+
+  it('accepts multiple selected options in a multiselect listbox', () => {
+    render(`
+      <div id="choices" role="listbox" tabindex="0" aria-multiselectable="true">
+        <div role="option" aria-selected="true">One</div>
+        <div role="option" aria-selected="true">Two</div>
+      </div>
+    `);
+
+    const selectionProbe = probeFor('#choices', { kind: 'keydown', key: 'ArrowDown' }, 'listbox-selection');
+    expect(evaluateAriaWidgetProbe(selectionProbe!)).toBeUndefined();
   });
 
   it('reviews dynamically opened dialogs without an accessible name', () => {
