@@ -192,6 +192,15 @@ export function FocusView({
               const primaryCopy = primarySemantic
                 ? focusTransitionSemanticCopy(primarySemantic, language)
                 : undefined;
+              const connectorIcon = primarySemantic
+                ? focusTransitionSemanticIcon(primarySemantic)
+                : step.mode === 'virtual'
+                  ? '↳'
+                  : directionIcon(step.direction);
+              const connectorLabel = primaryCopy?.label
+                ?? (step.mode === 'virtual'
+                  ? tr(language, 'Virtual focus moved', 'Foco virtual desplazado')
+                  : directionLabel(step.direction, step.distance, language));
 
               return (
                 <li
@@ -200,12 +209,8 @@ export function FocusView({
                 >
                   {step.direction !== 'start' && (
                     <div className={`journey-connector${primarySemantic ? ' has-semantic' : ''}`}>
-                      <span aria-hidden="true">
-                        {primarySemantic ? focusTransitionSemanticIcon(primarySemantic) : directionIcon(step.direction)}
-                      </span>
-                      <strong>
-                        {primaryCopy?.label ?? directionLabel(step.direction, step.distance, language)}
-                      </strong>
+                      <span aria-hidden="true">{connectorIcon}</span>
+                      <strong>{connectorLabel}</strong>
                     </div>
                   )}
                   <button
