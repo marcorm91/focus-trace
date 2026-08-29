@@ -200,6 +200,29 @@ describe('runtime composite widget validation', () => {
     expect(observed?.ruleId).toBeUndefined();
   });
 
+  it('does not emit virtual-focus evidence for unsupported owner roles', () => {
+    render(`
+      <div id="owner" role="button" tabindex="0" aria-activedescendant="one">
+        <span id="one">One</span>
+        <span id="two">Two</span>
+      </div>
+    `);
+
+    const owner = element('#owner') as HTMLElement;
+    owner.focus();
+    expect(
+      captureAriaWidgetProbes(owner, { kind: 'keydown', key: 'ArrowDown' })
+        .some((candidate) => candidate.kind === 'active-descendant-transition'),
+    ).toBe(false);
+
+    owner.setAttribute('aria-activedescendant', 'two');
+    expect(evaluateAriaWidgetProbe({
+      kind: 'active-descendant-transition',
+      owner,
+      beforeId: 'one',
+    })).toBeUndefined();
+  });
+
   it('includes virtual focus destinations in Journey, Graph and page path', () => {
     const events: RuntimeEvent[] = [
       {
