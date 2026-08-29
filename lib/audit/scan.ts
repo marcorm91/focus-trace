@@ -147,6 +147,7 @@ export function runFocusTraceScan(scope?: ComponentScanScope): ScanResult {
         failures: 0,
         reviews: ruleFindings.filter((issue) => issue.outcome === 'review').length,
         warnings: ruleFindings.filter((issue) => issue.outcome === 'warning').length,
+        coverage: 'findings-only' as const,
       };
     }),
   ];
@@ -166,6 +167,7 @@ export function runFocusTraceScan(scope?: ComponentScanScope): ScanResult {
         failures: 0,
         reviews: 0,
         warnings: warnings.length,
+        coverage: 'findings-only' as const,
       };
     }),
   ];
