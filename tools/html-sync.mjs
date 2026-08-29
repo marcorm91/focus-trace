@@ -41,7 +41,7 @@ function structuralText(html = '') {
 }
 
 function sourceDate(html) {
-  const match = textContent(html.slice(0, 12_000)).match(/Last Updated\s+(\d{1,2}\s+[A-Za-z]+\s+\d{4})/i);
+  const match = textContent(html.slice(0, 12_000)).match(/Last\s+Updated\s+(\d{1,2}\s+[A-Za-z]+\s+\d{4})/i);
   return match?.[1] ?? '';
 }
 
@@ -60,8 +60,8 @@ function markedTokens(value = '') {
 function obsoleteElementNames(structure) {
   const elementArea = sliceBetween(
     structure,
-    /Elements in the following list are entirely obsolete/i,
-    /The following attributes are obsolete/i,
+    /Elements\s+in\s+the\s+following\s+list\s+are\s+entirely\s+obsolete/i,
+    /The\s+following\s+attributes\s+are\s+obsolete/i,
   );
   const names = [];
   for (const match of elementArea.matchAll(/@@DT@@([\s\S]*?)@@ENDDT@@/gi)) {
@@ -73,8 +73,8 @@ function obsoleteElementNames(structure) {
 function obsoleteAttributePairs(structure) {
   const attributeArea = sliceBetween(
     structure,
-    /The following attributes are obsolete/i,
-    /@@HEADING@@\s*16\.3\b|Requirements for implementations/i,
+    /The\s+following\s+attributes\s+are\s+obsolete/i,
+    /@@HEADING@@\s*16\.3\b|Requirements\s+for\s+implementations/i,
   );
   const pairs = [];
 
@@ -85,7 +85,7 @@ function obsoleteAttributePairs(structure) {
     }
 
     const tokens = markedTokens(text);
-    if (/on all html elements|on all elements/i.test(text) && tokens[0]) {
+    if (/on\s+all\s+(?:html\s+)?elements/i.test(text) && tokens[0]) {
       pairs.push({ attribute: tokens[0], element: '*' });
     }
   }
@@ -97,19 +97,19 @@ function obsoleteAttributePairs(structure) {
 function countObsoleteButConformingWarnings(structure) {
   const area = sliceBetween(
     structure,
-    /Warnings for obsolete but conforming features/i,
-    /@@HEADING@@\s*16\.2\b|Non-conforming features/i,
+    /Warnings\s+for\s+obsolete\s+but\s+conforming\s+features/i,
+    /@@HEADING@@\s*16\.2\b|Non-conforming\s+features/i,
   );
   return [...area.matchAll(/@@LI@@/g)].length;
 }
 
 export function parseHtmlObsoleteCatalog(html, source = {}) {
   const structure = structuralText(html);
-  const obsoleteArea = sliceBetween(structure, /Obsolete features/i, /IANA considerations|Index/i);
+  const obsoleteArea = sliceBetween(structure, /Obsolete\s+features/i, /IANA\s+considerations|Index/i);
   const nonConforming = sliceBetween(
     obsoleteArea,
-    /Non-conforming features/i,
-    /Requirements for implementations|IANA considerations|Index/i,
+    /Non-conforming\s+features/i,
+    /Requirements\s+for\s+implementations|IANA\s+considerations|Index/i,
   );
   const elements = obsoleteElementNames(nonConforming);
   const attributePairs = obsoleteAttributePairs(nonConforming);
