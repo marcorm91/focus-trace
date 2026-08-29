@@ -17,16 +17,26 @@ describe('scan categories', () => {
   });
 
   it('keeps structural and interactive semantics in the same review area', () => {
-    expect(scanCategoryForRule('FT-REVIEW-004')).toBe('structure');
-    expect(scanCategoryForRule('FT-REVIEW-005')).toBe('structure');
-    expect(scanCategoryForRule('FT-REVIEW-006')).toBe('structure');
-    expect(scanCategoryForRule('FT-REVIEW-007')).toBe('structure');
-    expect(scanCategoryForRule('FT-REVIEW-008')).toBe('structure');
+    for (const ruleId of [
+      'FT-REVIEW-004',
+      'FT-REVIEW-005',
+      'FT-REVIEW-006',
+      'FT-REVIEW-007',
+      'FT-REVIEW-008',
+      'FT-REVIEW-009',
+      'FT-REVIEW-010',
+    ]) expect(scanCategoryForRule(ruleId)).toBe('structure');
   });
 
-  it('keeps obsolete HTML authoring warnings inside Semantics', () => {
-    expect(scanCategoryForRule('FT-WARN-005')).toBe('structure');
-    expect(scanCategoryForRule('FT-WARN-006')).toBe('structure');
-    expect(scanCategoryForRule('FT-WARN-007')).toBe('structure');
+  it('keeps HTML authoring and content-model warnings inside Semantics', () => {
+    for (const ruleId of [
+      'FT-WARN-005',
+      'FT-WARN-006',
+      'FT-WARN-007',
+      'FT-WARN-008',
+      'FT-WARN-009',
+      'FT-WARN-010',
+      'FT-WARN-011',
+    ]) expect(scanCategoryForRule(ruleId)).toBe('structure');
   });
 });
