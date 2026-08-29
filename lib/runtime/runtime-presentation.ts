@@ -4,6 +4,7 @@ import type { FocusJourneyDirection } from './focus-journey';
 
 export function runtimeEventKindLabel(kind: RuntimeEventKind, language: AppLanguage): string {
   if (kind === 'focus') return tr(language, 'Focus', 'Foco');
+  if (kind === 'virtual-focus') return tr(language, 'Virtual focus', 'Foco virtual');
   if (kind === 'keydown') return tr(language, 'Keyboard', 'Teclado');
   if (kind === 'click') return tr(language, 'Activation', 'Activación');
   if (kind === 'route') return tr(language, 'Navigation', 'Navegación');
@@ -14,6 +15,7 @@ export function runtimeEventKindLabel(kind: RuntimeEventKind, language: AppLangu
   if (kind === 'dialog-open') return tr(language, 'Dialog opened', 'Diálogo abierto');
   if (kind === 'dialog-close') return tr(language, 'Dialog closed', 'Diálogo cerrado');
   if (kind === 'dialog-focus-escape') return tr(language, 'Modal focus escape', 'Foco fuera del modal');
+  if (kind === 'aria-widget') return tr(language, 'Widget state', 'Estado del widget');
   if (kind === 'live-region') return tr(language, 'Live region', 'Región dinámica');
   if (kind === 'focus-walk-start') return tr(language, 'Focus walk started', 'Recorrido de foco iniciado');
   return tr(language, 'Focus walk finished', 'Recorrido de foco finalizado');
@@ -29,6 +31,21 @@ export function focusDirectionLabel(direction: FocusJourneyDirection, language: 
 }
 
 export function humanRuntimeEventDetail(event: RuntimeEvent, language: AppLanguage): string | undefined {
+  if (event.kind === 'virtual-focus') {
+    const target = event.element?.name?.trim() || event.element?.role || event.element?.tag;
+    return target
+      ? tr(
+          language,
+          `aria-activedescendant moved the widget's virtual focus to “${target}” while DOM focus remained on the composite widget.`,
+          `aria-activedescendant movió el foco virtual del widget a “${target}” mientras el foco DOM permanecía en el widget compuesto.`,
+        )
+      : tr(
+          language,
+          'aria-activedescendant moved the widget virtual focus while DOM focus remained on the composite widget.',
+          'aria-activedescendant movió el foco virtual del widget mientras el foco DOM permanecía en el widget compuesto.',
+        );
+  }
+
   if (event.kind === 'live-region') {
     // Live-region content belongs to the inspected page, not to FocusTrace. Preserve it verbatim.
     return event.detail;
