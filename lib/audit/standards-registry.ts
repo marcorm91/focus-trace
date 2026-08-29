@@ -1,7 +1,7 @@
 import ariaRegistryJson from '../../generated/aria-registry.json';
 import languageRegistryJson from '../../generated/language-subtags.json';
 
-interface AriaRoleRecord {
+export interface AriaRoleRecord {
   name: string;
   parentRoles: string[];
   deprecated: boolean;
@@ -11,6 +11,21 @@ interface AriaRoleRecord {
   disallowedProperties: string[];
   deprecatedProperties: string[];
 }
+
+const ABSTRACT_ARIA_ROLES = new Set([
+  'command',
+  'composite',
+  'input',
+  'landmark',
+  'range',
+  'roletype',
+  'section',
+  'sectionhead',
+  'select',
+  'structure',
+  'widget',
+  'window',
+]);
 
 const ariaRoles = new Map(
   (ariaRegistryJson.roles as AriaRoleRecord[]).map((role) => [role.name, role] as const),
@@ -49,12 +64,34 @@ export function pageLanguageStatus(): PageLanguageStatus {
   };
 }
 
+export function ariaRoleTokens(element: Element): string[] {
+  const value = element.getAttribute('role');
+  if (value == null) return [];
+  return value.trim().toLowerCase().split(/\s+/).filter(Boolean);
+}
+
+export function ariaRoleRecord(name: string): AriaRoleRecord | undefined {
+  return ariaRoles.get(name.trim().toLowerCase());
+}
+
+export function isAbstractAriaRole(name: string): boolean {
+  return ABSTRACT_ARIA_ROLES.has(name.trim().toLowerCase());
+}
+
+export function knownAriaPropertyNames(): ReadonlySet<string> {
+  return new Set(Object.keys(ariaRegistryJson.properties));
+}
+
+/**
+ * Resolves role tokens using ARIA fallback semantics: the first recognised,
+ * non-abstract role wins. Unknown tokens may intentionally precede a fallback
+ * role for forward compatibility, while abstract roles are never valid author
+ * roles and therefore cannot become the computed role.
+ */
 export function registeredExplicitAriaRole(element: Element): AriaRoleRecord | null {
-  const roleValue = element.getAttribute('role');
-  if (!roleValue) return null;
-  for (const token of roleValue.trim().toLowerCase().split(/\s+/)) {
+  for (const token of ariaRoleTokens(element)) {
     const role = ariaRoles.get(token);
-    if (role) return role;
+    if (role && !isAbstractAriaRole(token)) return role;
   }
   return null;
 }

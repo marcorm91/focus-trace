@@ -46,6 +46,26 @@ describe('FocusTrace bilingual presentation', () => {
     expect(spanish.evidence).toContain('<li>');
   });
 
+  it('localizes advanced ARIA validation findings while preserving technical evidence', () => {
+    const issue: ScanIssue = {
+      id: 'issue-aria',
+      ruleId: 'FT-WARN-016',
+      title: 'ARIA ID reference does not resolve to a valid relationship',
+      description: 'This ARIA ID relationship is invalid.',
+      evidence: 'aria-controls references missing ID #dialog-panel.',
+      severity: 'serious',
+      outcome: 'warning',
+      targets: ['#open'],
+      references: [],
+    };
+
+    const spanish = localizedScanIssue(issue, 'es');
+    expect(spanish.title).toContain('referencia ARIA por ID');
+    expect(spanish.description).toContain('relación ARIA');
+    expect(spanish.evidence).toContain('aria-controls');
+    expect(spanish.evidence).toContain('#dialog-panel');
+  });
+
   it('keeps English as the default explanation language', () => {
     expect(explanationForCause('FOCUSED_NODE_REMOVED').title).toBe('Focus was lost after an element disappeared');
     expect(outcomeLabel('fail', 'simple')).toBe('issue');
