@@ -7,10 +7,10 @@ FocusTrace implements its own local analysis engine and maps each rule to the st
 1. **WCAG 2.2** is the conformance standard and normative source for success criteria.
 2. **W3C ACT Rules** make applicability, expectations and outcome mapping explicit where available.
 3. **WAI-ARIA** supplies role/state/property semantics. The automated registry currently follows the public ARIA 1.3 Editor Draft; findings sourced only from this registry are authoring warnings, not direct WCAG failures.
-4. **WAI-ARIA APG** is used for runtime widget patterns such as modal-dialog focus behavior and remains informative guidance.
+4. **WAI-ARIA APG** is used for runtime widget patterns and authoring guidance such as modal-dialog focus behavior, landmark structure and preferring native HTML semantics. It remains informative guidance.
 5. **AccName** and **HTML-AAM** guide accessible-name precedence and host-language fallbacks.
 6. **IANA Language Subtag Registry** supplies the primary language subtags used by the ACT rule behind `FT-WCAG-009`.
-7. **HTML Living Standard** supplies host-language authoring requirements that are useful to report as warnings when they are not, by themselves, a WCAG 2.2 failure.
+7. **HTML Living Standard** supplies host-language authoring requirements and native element semantics. FocusTrace can surface these as warnings or review guidance when they are not, by themselves, a WCAG 2.2 failure.
 
 ## Outcomes
 
@@ -125,6 +125,24 @@ The duplicate itself is reported as `WARNING`, not as a WCAG 2.2 failure. WCAG 2
 
 Component-scoped scans still evaluate identifier uniqueness against the whole document, while reporting only duplicate occurrences inside the selected component. See [`DUPLICATE_IDS.md`](DUPLICATE_IDS.md) for the detailed behavior and remediation model.
 
+## Semantic HTML review
+
+Semantic authoring is shown in the **Semantics** area of Review. FocusTrace intentionally keeps these checks as `REVIEW`: the DOM can provide strong signals about likely intent, but the tool must not claim a WCAG failure when product intent or interaction context is still required.
+
+`FT-REVIEW-004` checks whether a full-page scan exposes a visible native `<main>` or `role="main"` landmark. A missing main landmark is review guidance, not an automatic WCAG failure.
+
+`FT-REVIEW-005` reports every exposed main landmark when more than one is present. A document should normally have a clear primary main region. Multiple ARIA main landmarks require genuine structural purpose and clear differentiation; FocusTrace therefore asks for review instead of assuming the structure is invalid.
+
+Interactive semantic inference is intentionally conservative:
+
+- `FT-REVIEW-006` is used when the evidence is button-like. Strong signals include explicit `role="button"`; medium-confidence signals include button states such as `aria-expanded`, `aria-pressed` or `aria-haspopup`. The recommended native element is `<button type="button">`. `role="button"` is shown only as a fallback because ARIA does not add the native keyboard and focus behavior of a real button.
+- `FT-REVIEW-007` is used when the evidence is link/navigation-like. Explicit `role="link"` is high confidence; recognizable navigation handlers such as `location`, `window.open`, History API navigation or common router navigation calls are medium-confidence signals. The recommended native element is `<a href="…">`; `role="link"` is only a fallback.
+- `FT-REVIEW-008` is used for generic click interaction where FocusTrace cannot safely distinguish action, navigation or another widget. No native element is recommended until the intended behavior is reviewed.
+
+Native buttons and native links are not reported merely for being interactive. Elements with another explicit widget role, such as `role="tab"`, are also not reinterpreted as buttons or links by this heuristic; those patterns need their own role-specific rules.
+
+These recommendations follow the first rule of ARIA authoring: prefer native HTML semantics and behavior where a suitable element exists. The current inference does not inspect framework event-listener registries added only through `addEventListener` or synthetic event systems when no observable DOM/element signal exists, so absence of a semantic review finding is not proof that every custom interaction is correctly authored.
+
 ## Runtime causality
 
 Runtime recording assigns a stable `interactionId` to user-driven keyboard and pointer activity. Subsequent focus changes, relevant DOM mutations, dialog lifecycle events and SPA route changes inherit that interaction while they remain inside a bounded correlation window.
@@ -171,6 +189,11 @@ A causal classification explains the recorded chain; the linked runtime WCAG/APG
 | FT-REVIEW-001 Positive tabindex | REVIEW | WCAG 2.4.3 |
 | FT-REVIEW-002 Heading-level jump | REVIEW | WCAG 1.3.1 / 2.4.6 |
 | FT-REVIEW-003 Placeholder-only form label | REVIEW | WCAG 3.3.2 |
+| FT-REVIEW-004 Missing primary main landmark | REVIEW/PASS | HTML Living Standard · WAI-ARIA APG |
+| FT-REVIEW-005 Multiple exposed main landmarks | REVIEW/PASS | HTML Living Standard · WAI-ARIA APG |
+| FT-REVIEW-006 Button-like custom interaction | REVIEW | HTML Living Standard · WAI-ARIA APG |
+| FT-REVIEW-007 Link-like custom interaction | REVIEW | HTML Living Standard · WAI-ARIA APG |
+| FT-REVIEW-008 Ambiguous generic interaction | REVIEW | WAI-ARIA APG |
 
 ## Runtime rules
 
@@ -195,6 +218,8 @@ A causal classification explains the recorded chain; the linked runtime WCAG/APG
 - `FT-WCAG-011` does not programmatically exercise every hover, pressed, checked or focus state. Multi-color graphics, CSS pseudo-element icons, complex shadows, images/canvas and contextual “required visual information” decisions remain REVIEW/manual territory.
 - ARIA warnings currently operate on recognized explicit role tokens; native implicit-role validation is a later layer.
 - Duplicate IDs are authoring warnings; FocusTrace does not infer a WCAG failure unless a separate rule can demonstrate the resulting accessibility effect.
+- Semantic interaction inference currently relies on observable host-element signals such as roles, inline/element click handlers and ARIA widget states. Framework listeners with no observable element-level signal can require manual review.
+- Semantic inference does not reinterpret elements that already expose another explicit widget role; role-specific pattern validation remains a separate layer.
 - Runtime causality uses bounded temporal correlation and intentionally records only accessibility-relevant mutations, not every DOM change.
 - Runtime focus-obscured detection intentionally returns REVIEW because exact 2.4.11 evaluation has edge cases.
 - SPA focus movement and dialog restoration can have workflow-specific exceptions, so those findings remain REVIEW.
