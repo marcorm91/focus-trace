@@ -16,6 +16,7 @@ import {
 } from '../shared/html-authoring-rules';
 import { OBSOLETE_ATTRIBUTES, OBSOLETE_ELEMENTS } from '../shared/obsolete-html-registry';
 import { RULES, type RuleDefinition } from '../shared/rule-catalog';
+import { STRUCTURAL_HTML_RULES } from '../shared/structural-html-rules';
 import { WCAG_COVERAGE, WCAG_COVERAGE_SUMMARY, wcagCoverageForCriterion } from '../shared/wcag-coverage';
 
 const HTML_RULES: RuleDefinition[] = [
@@ -28,6 +29,7 @@ const HTML_RULES: RuleDefinition[] = [
   NATIVE_BUTTON_SEMANTICS_RULE,
   NATIVE_LINK_SEMANTICS_RULE,
   GENERIC_INTERACTIVE_SEMANTICS_RULE,
+  ...STRUCTURAL_HTML_RULES,
 ];
 
 const ALL_RULES: RuleDefinition[] = [...Object.values(RULES), ...HTML_RULES];
