@@ -17,6 +17,14 @@
     </section>
 
     <section>
+      <h2>Dynamic virtual focus tree</h2>
+      <div id="dynamic-virtual-tree" role="tree" tabindex="0" aria-label="Dynamic files">
+        <div id="dynamic-one" role="treeitem">Dynamic one</div>
+        <div id="dynamic-two" role="treeitem">Dynamic two</div>
+      </div>
+    </section>
+
+    <section>
       <h2>Broken roving tree</h2>
       <div id="broken-tree" role="tree" aria-label="Broken files">
         <div id="broken-parent" role="treeitem" tabindex="0" aria-expanded="false">
@@ -45,7 +53,12 @@
     virtualTree.addEventListener('keydown', (event) => {
       if (event.key !== 'ArrowDown') return;
       virtualTree.setAttribute('aria-activedescendant', 'virtual-two');
-      virtualTree.classList.add('virtual-focus-moved');
+    });
+
+    const dynamicVirtualTree = document.querySelector('#dynamic-virtual-tree');
+    dynamicVirtualTree.addEventListener('keydown', (event) => {
+      if (event.key !== 'ArrowDown') return;
+      dynamicVirtualTree.setAttribute('aria-activedescendant', 'dynamic-two');
     });
   </script>
 </body>
