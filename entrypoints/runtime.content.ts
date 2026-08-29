@@ -457,27 +457,39 @@ export default defineContentScript({
 
           if (
             attribute === 'aria-activedescendant'
-            && interactionId
             && !virtualFocusOwners.has(attributeTarget)
           ) {
             virtualFocusOwners.add(attributeTarget);
             const beforeId = mutation.oldValue?.trim() || undefined;
-            const virtualFocus = evaluateAriaWidgetProbe({
-              kind: 'active-descendant-transition',
-              owner: attributeTarget,
-              ...(beforeId ? { beforeId } : {}),
-            });
-            if (virtualFocus?.kind === 'virtual-focus') emit(virtualFocus, interactionId);
 
-            // Frameworks can insert/re-parent the active item in the same render.
-            // Validate the final ownership relationship after the normal window.
+            // In Chromium an isolated-world MutationObserver can run before the
+            // content-script keydown listener has created the interaction. Defer
+            // one task so the real keyboard event is correlated first, while the
+            // MutationRecord still supplies the exact previous ARIA state.
             ctx.setTimeout(() => {
               if (!recording || !attributeTarget.isConnected) return;
-              emitAriaWidgetFinding(
-                evaluateAriaWidgetProbe({ kind: 'active-descendant', owner: attributeTarget }),
-                interactionId,
-              );
-            }, 320);
+              const correlatedInteractionId = activeInteractionId();
+              if (!correlatedInteractionId) return;
+
+              const virtualFocus = evaluateAriaWidgetProbe({
+                kind: 'active-descendant-transition',
+                owner: attributeTarget,
+                ...(beforeId ? { beforeId } : {}),
+              });
+              if (virtualFocus?.kind === 'virtual-focus') {
+                emit(virtualFocus, correlatedInteractionId);
+              }
+
+              // Frameworks can insert/re-parent the active item in the same render.
+              // Validate the final ownership relationship after the normal window.
+              ctx.setTimeout(() => {
+                if (!recording || !attributeTarget.isConnected) return;
+                emitAriaWidgetFinding(
+                  evaluateAriaWidgetProbe({ kind: 'active-descendant', owner: attributeTarget }),
+                  correlatedInteractionId,
+                );
+              }, 320);
+            }, 0);
           }
 
           if (
