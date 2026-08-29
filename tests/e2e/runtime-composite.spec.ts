@@ -22,6 +22,7 @@ test('records composite widget reviews and virtual focus without inflating findi
     await chromeApi.scripting.executeScript({
       target: { tabId: id },
       func: () => {
+        const chromeApiInPage = (globalThis as any).chrome;
         const owner = document.querySelector('#virtual-tree');
         if (!(owner instanceof HTMLElement)) return;
 
@@ -48,7 +49,7 @@ test('records composite widget reviews and virtual focus without inflating findi
           owner.dataset.ftVirtualDisplay = virtual ? getComputedStyle(virtual).display : 'missing';
           owner.dataset.ftVirtualVisibility = virtual ? getComputedStyle(virtual).visibility : 'missing';
 
-          void chrome.runtime.sendMessage({
+          void chromeApiInPage.runtime.sendMessage({
             type: 'FOCUSTRACE_EVENT',
             event: {
               id: `diagnostic-${Date.now()}`,
