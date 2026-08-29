@@ -30,6 +30,7 @@ import {
 import { scanRepresentativePage, sourcePageLinks } from '../../lib/site-audit/runner';
 import { buildSiteAuditTextReport, siteAuditFilename } from '../../lib/site-audit/text-report';
 import { captureSiteAuditFindingVisual } from '../../lib/site-audit/visual-evidence';
+import { useRovingTabs } from '../../lib/ui/roving-tabs';
 import { localizedScanIssue, localizedSeverity, tr, type AppLanguage } from '../../shared/i18n';
 import { countBySeverity, severityRank } from '../../shared/severity';
 import type { FindingOutcome, Severity } from '../../shared/types';
@@ -37,6 +38,10 @@ import { localizedUserError } from '../../shared/user-facing-errors';
 import './index.css';
 
 const DISPLAY_SEVERITIES: Severity[] = ['critical', 'serious', 'moderate', 'minor'];
+const SITE_AUDIT_SCOPE_MODES: Array<{ id: SiteAuditInputMode }> = [
+  { id: 'automatic' },
+  { id: 'manual' },
+];
 
 function outcomeText(outcome: FindingOutcome, language: AppLanguage): string {
   if (outcome === 'fail') return tr(language, 'FAILURE', 'FALLO');
@@ -94,6 +99,16 @@ function App() {
   const [error, setError] = useState<string>();
   const abortRef = useRef<AbortController | undefined>(undefined);
   document.documentElement.lang = language;
+
+  const selectMode = (next: SiteAuditInputMode) => {
+    setMode(next);
+    setError(undefined);
+  };
+  const scopeTabProps = useRovingTabs({
+    options: SITE_AUDIT_SCOPE_MODES,
+    selected: mode,
+    onSelect: selectMode,
+  });
 
   const manualSelection = useMemo(
     () => parseManualSiteAuditUrls(manualUrls, sourceMeta.origin),
@@ -259,10 +274,8 @@ function App() {
               role="tab"
               aria-selected={mode === 'automatic'}
               aria-controls="site-scope-panel-automatic"
-              onClick={() => {
-                setMode('automatic');
-                setError(undefined);
-              }}
+              {...scopeTabProps('automatic')}
+              onClick={() => selectMode('automatic')}
             >
               {tr(language, 'Automatic', 'Automático')}
             </button>
@@ -272,92 +285,90 @@ function App() {
               role="tab"
               aria-selected={mode === 'manual'}
               aria-controls="site-scope-panel-manual"
-              onClick={() => {
-                setMode('manual');
-                setError(undefined);
-              }}
+              {...scopeTabProps('manual')}
+              onClick={() => selectMode('manual')}
             >
               {tr(language, 'Manual URLs', 'URLs manuales')}
             </button>
           </div>
 
-          {mode === 'automatic' ? (
-            <div
-              id="site-scope-panel-automatic"
-              className="site-scope-panel"
-              role="tabpanel"
-              aria-labelledby="site-scope-tab-automatic"
-            >
-              <label className="site-domain-field">
-                <span>{tr(language, 'Parent domain to audit', 'Dominio padre a analizar')}</span>
-                <input
-                  type="text"
-                  inputMode="url"
-                  value={rootUrl}
-                  onChange={(event) => setRootUrl(event.target.value)}
-                  placeholder="https://www.example.com/"
-                />
-                <small>{tr(
-                  language,
-                  'You can enter a domain with or without https://. FocusTrace always starts discovery from its root.',
-                  'Puedes indicar el dominio con o sin https://. FocusTrace siempre inicia el descubrimiento desde su raíz.',
-                )}</small>
-              </label>
-              <div className="site-limits">
-                <span><strong>{SITE_AUDIT_MAX_DISCOVERED_URLS}</strong>{tr(language, 'max discovered URLs', 'URLs descubiertas máx.')}</span>
-                <span><strong>{SITE_AUDIT_MAX_SCANNED_PAGES}</strong>{tr(language, 'max pages scanned', 'páginas analizadas máx.')}</span>
-                <span><strong>{SITE_AUDIT_SAMPLES_PER_FAMILY}</strong>{tr(language, 'samples per route family', 'muestras por familia')}</span>
-              </div>
-              <p className="site-mode-description">{tr(
+          <div
+            id="site-scope-panel-automatic"
+            className="site-scope-panel"
+            role="tabpanel"
+            aria-labelledby="site-scope-tab-automatic"
+            hidden={mode !== 'automatic'}
+          >
+            <label className="site-domain-field">
+              <span>{tr(language, 'Parent domain to audit', 'Dominio padre a analizar')}</span>
+              <input
+                type="text"
+                inputMode="url"
+                value={rootUrl}
+                onChange={(event) => setRootUrl(event.target.value)}
+                placeholder="https://www.example.com/"
+              />
+              <small>{tr(
                 language,
-                'FocusTrace checks robots.txt and sitemaps, supplements discovery with internal links when available, groups repeated route families and automatically scans representative pages.',
-                'FocusTrace revisa robots.txt y sitemaps, complementa el descubrimiento con enlaces internos cuando están disponibles, agrupa familias de rutas repetidas y analiza automáticamente páginas representativas.',
-              )}</p>
+                'You can enter a domain with or without https://. FocusTrace always starts discovery from its root.',
+                'Puedes indicar el dominio con o sin https://. FocusTrace siempre inicia el descubrimiento desde su raíz.',
+              )}</small>
+            </label>
+            <div className="site-limits">
+              <span><strong>{SITE_AUDIT_MAX_DISCOVERED_URLS}</strong>{tr(language, 'max discovered URLs', 'URLs descubiertas máx.')}</span>
+              <span><strong>{SITE_AUDIT_MAX_SCANNED_PAGES}</strong>{tr(language, 'max pages scanned', 'páginas analizadas máx.')}</span>
+              <span><strong>{SITE_AUDIT_SAMPLES_PER_FAMILY}</strong>{tr(language, 'samples per route family', 'muestras por familia')}</span>
             </div>
-          ) : (
-            <div
-              id="site-scope-panel-manual"
-              className="site-scope-panel"
-              role="tabpanel"
-              aria-labelledby="site-scope-tab-manual"
-            >
-              <label className="site-manual-urls">
-                <span>{tr(language, 'URLs to audit, one per line', 'URLs a analizar, una por línea')}</span>
-                <textarea
-                  value={manualUrls}
-                  onChange={(event) => setManualUrls(event.target.value)}
-                  rows={7}
-                  placeholder={`${sourceMeta.origin}/\n${sourceMeta.origin}/productos\n${sourceMeta.origin}/contacto`}
-                />
-                <small>{tr(
-                  language,
-                  `Only URLs from ${sourceMeta.origin} are accepted. Relative paths such as /contact are also valid.`,
-                  `Solo se aceptan URLs de ${sourceMeta.origin}. También puedes usar rutas relativas como /contacto.`,
-                )}</small>
-              </label>
-              <div className="site-manual-summary" aria-live="polite">
-                <span><strong>{manualSelection.totalValid}</strong> {tr(language, 'valid URLs', 'URLs válidas')}</span>
-                {manualSelection.duplicateCount > 0 && (
-                  <span><strong>{manualSelection.duplicateCount}</strong> {tr(language, 'duplicates ignored', 'duplicadas ignoradas')}</span>
-                )}
-                {manualSelection.invalid.length > 0 && (
-                  <span><strong>{manualSelection.invalid.length}</strong> {tr(language, 'invalid / out of site', 'no válidas / fuera del sitio')}</span>
-                )}
-              </div>
-              {manualSelection.truncated && (
-                <p className="site-manual-warning">{tr(
-                  language,
-                  `The safety limit is ${SITE_AUDIT_MAX_SCANNED_PAGES} pages. FocusTrace will scan the first ${SITE_AUDIT_MAX_SCANNED_PAGES} valid URLs in the list.`,
-                  `El límite de seguridad es de ${SITE_AUDIT_MAX_SCANNED_PAGES} páginas. FocusTrace analizará las primeras ${SITE_AUDIT_MAX_SCANNED_PAGES} URLs válidas de la lista.`,
-                )}</p>
+            <p className="site-mode-description">{tr(
+              language,
+              'FocusTrace checks robots.txt and sitemaps, supplements discovery with internal links when available, groups repeated route families and automatically scans representative pages.',
+              'FocusTrace revisa robots.txt y sitemaps, complementa el descubrimiento con enlaces internos cuando están disponibles, agrupa familias de rutas repetidas y analiza automáticamente páginas representativas.',
+            )}</p>
+          </div>
+
+          <div
+            id="site-scope-panel-manual"
+            className="site-scope-panel"
+            role="tabpanel"
+            aria-labelledby="site-scope-tab-manual"
+            hidden={mode !== 'manual'}
+          >
+            <label className="site-manual-urls">
+              <span>{tr(language, 'URLs to audit, one per line', 'URLs a analizar, una por línea')}</span>
+              <textarea
+                value={manualUrls}
+                onChange={(event) => setManualUrls(event.target.value)}
+                rows={7}
+                placeholder={`${sourceMeta.origin}/\n${sourceMeta.origin}/productos\n${sourceMeta.origin}/contacto`}
+              />
+              <small>{tr(
+                language,
+                `Only URLs from ${sourceMeta.origin} are accepted. Relative paths such as /contact are also valid.`,
+                `Solo se aceptan URLs de ${sourceMeta.origin}. También puedes usar rutas relativas como /contacto.`,
+              )}</small>
+            </label>
+            <div className="site-manual-summary" aria-live="polite">
+              <span><strong>{manualSelection.totalValid}</strong> {tr(language, 'valid URLs', 'URLs válidas')}</span>
+              {manualSelection.duplicateCount > 0 && (
+                <span><strong>{manualSelection.duplicateCount}</strong> {tr(language, 'duplicates ignored', 'duplicadas ignoradas')}</span>
               )}
-              <p className="site-mode-description">{tr(
-                language,
-                'FocusTrace will automatically scan exactly the selected URLs. It will not discover or add other pages from the site.',
-                'FocusTrace analizará automáticamente exactamente las URLs seleccionadas. No descubrirá ni añadirá otras páginas del sitio.',
-              )}</p>
+              {manualSelection.invalid.length > 0 && (
+                <span><strong>{manualSelection.invalid.length}</strong> {tr(language, 'invalid / out of site', 'no válidas / fuera del sitio')}</span>
+              )}
             </div>
-          )}
+            {manualSelection.truncated && (
+              <p className="site-manual-warning">{tr(
+                language,
+                `The safety limit is ${SITE_AUDIT_MAX_SCANNED_PAGES} pages. FocusTrace will scan the first ${SITE_AUDIT_MAX_SCANNED_PAGES} valid URLs in the list.`,
+                `El límite de seguridad es de ${SITE_AUDIT_MAX_SCANNED_PAGES} páginas. FocusTrace analizará las primeras ${SITE_AUDIT_MAX_SCANNED_PAGES} URLs válidas de la lista.`,
+              )}</p>
+            )}
+            <p className="site-mode-description">{tr(
+              language,
+              'FocusTrace will automatically scan exactly the selected URLs. It will not discover or add other pages from the site.',
+              'FocusTrace analizará automáticamente exactamente las URLs seleccionadas. No descubrirá ni añadirá otras páginas del sitio.',
+            )}</p>
+          </div>
 
           <p className="site-scope-note">{tr(
             language,
