@@ -41,34 +41,42 @@ test('tabs in separate browser windows retain independent FocusTrace session sta
 
   expect(secondWindow).not.toBe(firstTab.windowId);
 
-  const states = await extensionWorker.evaluate(async ({ firstId, secondId }) => {
+  const sessions = await extensionWorker.evaluate(async ({ firstId, secondId }) => {
     const chromeApi = (globalThis as any).chrome;
-    const getSession = (tabId: number) => chromeApi.runtime.sendMessage({ type: 'FOCUSTRACE_GET_SESSION', tabId });
-
-    await chromeApi.runtime.sendMessage({
-      type: 'FOCUSTRACE_SET_RECORDING_STATE',
-      tabId: firstId,
-      enabled: true,
-      startedAt: 101,
+    const sendEventFromTab = (tabId: number, eventId: string, title: string) => chromeApi.scripting.executeScript({
+      target: { tabId },
+      func: async (id: string, eventTitle: string) => {
+        const runtime = (globalThis as any).chrome.runtime;
+        await runtime.sendMessage({
+          type: 'FOCUSTRACE_EVENT',
+          event: {
+            id,
+            timestamp: Date.now(),
+            kind: 'click',
+            severity: 'info',
+            title: eventTitle,
+          },
+        });
+      },
+      args: [eventId, title],
     });
-    await chromeApi.runtime.sendMessage({
-      type: 'FOCUSTRACE_SET_RECORDING_STATE',
-      tabId: secondId,
-      enabled: false,
-    });
 
+    await sendEventFromTab(firstId, 'window-one-event', 'Window one event');
+    await sendEventFromTab(secondId, 'window-two-event', 'Window two event');
+
+    const firstKey = `session:${firstId}`;
+    const secondKey = `session:${secondId}`;
+    const stored = await chromeApi.storage.session.get([firstKey, secondKey]);
     return {
-      first: await getSession(firstId),
-      second: await getSession(secondId),
+      first: stored[firstKey],
+      second: stored[secondKey],
     };
   }, { firstId: firstTab.id, secondId: secondTab.id });
 
-  expect(states.first.tabId).toBe(firstTab.id);
-  expect(states.first.recording).toBe(true);
-  expect(states.first.startedAt).toBe(101);
-  expect(states.second.tabId).toBe(secondTab.id);
-  expect(states.second.recording).toBe(false);
-  expect(states.second.startedAt).toBeUndefined();
+  expect(sessions.first.tabId).toBe(firstTab.id);
+  expect(sessions.first.events.map((event: { id: string }) => event.id)).toEqual(['window-one-event']);
+  expect(sessions.second.tabId).toBe(secondTab.id);
+  expect(sessions.second.events.map((event: { id: string }) => event.id)).toEqual(['window-two-event']);
 
   await extensionWorker.evaluate(async (windowId) => {
     const chromeApi = (globalThis as any).chrome;
