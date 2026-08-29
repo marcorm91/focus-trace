@@ -32,35 +32,61 @@ function attribute(source, name) {
   return match?.[1] ?? '';
 }
 
-export function parseWcagCatalog(html, source = {}) {
-  const criteria = [];
-  const sectionPattern = /<section\b([^>]*)>([\s\S]*?)<\/section>/gi;
+function nearestSectionId(html, headingIndex) {
+  const before = html.slice(0, headingIndex);
+  const sectionStart = before.lastIndexOf('<section');
+  const sectionEnd = before.lastIndexOf('</section');
+  if (sectionStart < 0 || sectionStart < sectionEnd) return '';
+  const openingTagEnd = html.indexOf('>', sectionStart);
+  if (openingTagEnd < 0 || openingTagEnd > headingIndex) return '';
+  return attribute(html.slice(sectionStart, openingTagEnd + 1), 'id');
+}
 
-  for (const match of html.matchAll(sectionPattern)) {
-    const attrs = match[1] ?? '';
-    const body = match[2] ?? '';
-    const headingMatch = body.match(/<h[1-6]\b[^>]*>([\s\S]*?)<\/h[1-6]>/i);
-    const heading = textContent(headingMatch?.[1] ?? '');
+function criterionHeadings(html) {
+  const headings = [];
+  const pattern = /<h([1-6])\b([^>]*)>([\s\S]*?)<\/h\1>/gi;
+  for (const match of html.matchAll(pattern)) {
+    const heading = textContent(match[3] ?? '');
     const numberMatch = heading.match(/^Success Criterion\s+(\d+\.\d+\.\d+)\b/i);
-    if (!numberMatch?.[1]) continue;
+    if (!numberMatch?.[1] || match.index == null) continue;
+    headings.push({
+      id: numberMatch[1],
+      heading,
+      headingAttributes: match[2] ?? '',
+      start: match.index,
+      end: match.index + match[0].length,
+    });
+  }
+  return headings;
+}
 
+export function parseWcagCatalog(html, source = {}) {
+  const headings = criterionHeadings(html);
+  const criteria = [];
+
+  for (let index = 0; index < headings.length; index += 1) {
+    const current = headings[index];
+    const next = headings[index + 1];
+    const body = html.slice(current.end, next?.start ?? html.length);
     const text = textContent(body);
-    const id = attribute(attrs, 'id');
-    const title = heading
-      .replace(new RegExp(`^Success Criterion\\s+${numberMatch[1]}\\s*`, 'i'), '')
+    const headingId = attribute(current.headingAttributes, 'id');
+    const sectionId = nearestSectionId(html, current.start);
+    const anchor = headingId || sectionId;
+    const title = current.heading
+      .replace(new RegExp(`^Success Criterion\\s+${current.id}\\s*`, 'i'), '')
       .trim();
     const levelMatch = text.match(/\(?Level\s+(AAA|AA|A)\)?/i);
     const removed = /obsolete\s+and\s+removed|removed\s+success\s+criterion/i.test(`${title} ${text}`);
     const level = removed ? null : (levelMatch?.[1]?.toUpperCase() ?? null);
 
     criteria.push({
-      id: numberMatch[1],
-      anchor: id,
-      title: title || numberMatch[1],
+      id: current.id,
+      anchor,
+      title: title || current.id,
       level,
       status: removed ? 'removed' : 'active',
-      url: id ? `${WCAG_URL}#${id}` : WCAG_URL,
-      logicHash: sha256(text),
+      url: anchor ? `${WCAG_URL}#${anchor}` : WCAG_URL,
+      logicHash: sha256(`${current.heading}\n${text}`),
     });
   }
 
