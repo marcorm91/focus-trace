@@ -62,3 +62,5 @@ Listbox selection also includes options logically owned through `aria-owns`. Mul
 ## Standards
 
 Deterministic state and relationship checks cite WAI-ARIA definitions. Interaction-pattern reviews cite the WAI-ARIA Authoring Practices Guide and remain explicitly informative/contextual.
+
+Future widget work should follow the registered identifier families in `RULE_IDENTIFIERS.md` rather than introducing component-specific prefixes unless the evidence model genuinely changes.
