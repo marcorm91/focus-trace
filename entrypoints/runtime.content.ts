@@ -168,7 +168,11 @@ export default defineContentScript({
       ctx.setTimeout(() => {
         if (!recording) return;
         for (const probe of probes) {
-          emitAriaWidgetFinding(evaluateAriaWidgetProbe(probe), interactionId);
+          const finding = evaluateAriaWidgetProbe(probe);
+          // Virtual focus is chronological evidence, so it is emitted from the
+          // actual aria-activedescendant mutation instead of this stabilized pass.
+          if (finding?.kind === 'virtual-focus') continue;
+          emitAriaWidgetFinding(finding, interactionId);
         }
       }, 320);
     };
@@ -449,6 +453,26 @@ export default defineContentScript({
             lastFocused !== document.body &&
             (mutation.target === lastFocused || mutation.target.contains(lastFocused));
 
+          if (attribute === 'aria-activedescendant' && interactionId) {
+            const beforeId = mutation.oldValue?.trim() || undefined;
+            const virtualFocus = evaluateAriaWidgetProbe({
+              kind: 'active-descendant-transition',
+              owner: mutation.target,
+              ...(beforeId ? { beforeId } : {}),
+            });
+            if (virtualFocus?.kind === 'virtual-focus') emit(virtualFocus, interactionId);
+
+            // Frameworks can insert/re-parent the active item in the same render.
+            // Validate the final ownership relationship after the normal window.
+            ctx.setTimeout(() => {
+              if (!recording || !mutation.target.isConnected) return;
+              emitAriaWidgetFinding(
+                evaluateAriaWidgetProbe({ kind: 'active-descendant', owner: mutation.target }),
+                interactionId,
+              );
+            }, 320);
+          }
+
           if (
             affectsLastFocused &&
             ['aria-hidden', 'hidden', 'style', 'class'].includes(attribute)
@@ -544,7 +568,17 @@ export default defineContentScript({
           characterData: true,
           attributes: true,
           attributeOldValue: true,
-          attributeFilter: ['open', 'role', 'aria-live', 'aria-modal', 'aria-hidden', 'hidden', 'class', 'style'],
+          attributeFilter: [
+            'open',
+            'role',
+            'aria-live',
+            'aria-modal',
+            'aria-hidden',
+            'aria-activedescendant',
+            'hidden',
+            'class',
+            'style',
+          ],
         });
         observerActive = true;
       }
