@@ -102,8 +102,10 @@ function issueLines(
 }
 
 function focusMode(events: RuntimeEvent[], language: AppLanguage): string {
-  const hasFocus = events.some((event) => event.kind === 'focus');
-  if (!hasFocus) return lineLabel(language, 'Not performed', 'No realizado');
+  const hasFocusDestination = events.some(
+    (event) => event.kind === 'focus' || event.kind === 'virtual-focus',
+  );
+  if (!hasFocusDestination) return lineLabel(language, 'Not performed', 'No realizado');
   return events.some((event) => event.kind === 'focus-walk-start')
     ? lineLabel(language, 'Automatic focus walk', 'Recorrido automático de foco')
     : lineLabel(language, 'Manual keyboard recording', 'Grabación manual con teclado');
