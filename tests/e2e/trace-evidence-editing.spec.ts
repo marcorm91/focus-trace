@@ -29,6 +29,12 @@ test('removes one manual interaction and all correlated evidence while preservin
   const keptId = interactionIds[1];
   expect(removedId).toBeTruthy();
   expect(keptId).toBeTruthy();
+
+  session = await waitForSession(
+    extensionWorker,
+    tabId,
+    (state) => state.events.some((event) => event.interactionId === removedId && event.outcome != null),
+  );
   expect(session.events.some((event) => event.interactionId === removedId && event.outcome != null)).toBe(true);
 
   const extensionId = new URL(extensionWorker.url()).hostname;
