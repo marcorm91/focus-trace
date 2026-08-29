@@ -6,6 +6,7 @@ import {
   emptySessionState,
   invalidateSessionScanForUrl,
   normalizeSessionState,
+  removeSessionInteraction,
   resetSessionState,
   setSessionRecordingState,
   updateSessionBreakpoints,
@@ -137,6 +138,17 @@ export default defineBackground(() => {
       return serializeTabWrite(message.tabId, async () => {
         const current = await getSession(message.tabId);
         const next = clearSessionEvents(current, message.tabId);
+        await saveSession(next);
+        await broadcast(next);
+        return next;
+      });
+    }
+
+    if (message.type === 'FOCUSTRACE_DELETE_INTERACTION') {
+      return serializeTabWrite(message.tabId, async () => {
+        const current = await getSession(message.tabId);
+        const next = removeSessionInteraction(current, message.interactionId);
+        if (next === current) return current;
         await saveSession(next);
         await broadcast(next);
         return next;
