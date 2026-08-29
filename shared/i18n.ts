@@ -7,7 +7,7 @@ import type { ScanIssue } from './types';
 
 export * from './i18n-base';
 
-const STRUCTURAL_COPY_ES: Record<string, { title: string; description: string }> = {
+const EXTRA_COPY_ES: Record<string, { title: string; description: string }> = {
   'FT-WARN-008': {
     title: 'El elemento HTML se utiliza fuera de su contexto semántico requerido',
     description: 'Este elemento HTML nativo está fuera del contexto en el que el HTML Living Standard define su semántica estructural. Revisa la relación padre/ancestro indicada en la evidencia.',
@@ -24,6 +24,38 @@ const STRUCTURAL_COPY_ES: Record<string, { title: string; description: string }>
     title: 'El elemento main nativo no tiene una jerarquía válida',
     description: 'Este elemento <main> tiene un ancestro no permitido por la definición HTML de un main jerárquicamente correcto. Revisa la estructura de ancestros indicada en la evidencia.',
   },
+  'FT-WARN-012': {
+    title: 'El rol ARIA explícito no puede resolverse de forma segura',
+    description: 'El atributo role contiene un rol abstracto o no puede resolverse a ningún rol WAI-ARIA registrado y no abstracto aplicando el modelo estándar de tokens alternativos.',
+  },
+  'FT-WARN-013': {
+    title: 'Se utiliza un atributo aria-* desconocido',
+    description: 'Este atributo aria-* no existe en el registro WAI-ARIA sincronizado, por lo que no puede exponer de forma fiable el estado, nombre o relación que se pretendía.',
+  },
+  'FT-WARN-014': {
+    title: 'Un estado o propiedad ARIA tiene un valor no válido',
+    description: 'Este estado o propiedad ARIA utiliza un valor que no coincide con la gramática actual de WAI-ARIA que FocusTrace puede verificar de forma determinista.',
+  },
+  'FT-WARN-015': {
+    title: 'Al rol ARIA le falta un estado o propiedad obligatoria',
+    description: 'El rol ARIA explícito resuelto requiere un estado o propiedad que no está presente y que tampoco queda proporcionado por una semántica nativa equivalente del elemento.',
+  },
+  'FT-WARN-016': {
+    title: 'La referencia ARIA por ID no resuelve una relación válida',
+    description: 'Esta relación ARIA basada en IDs está vacía, no resuelve, crea un ciclo, tiene varios propietarios o apunta fuera de la relación de accesibilidad que requiere la propiedad.',
+  },
+  'FT-WARN-017': {
+    title: 'El rol ARIA está fuera de su contexto padre de accesibilidad requerido',
+    description: 'El rol ARIA resuelto no se encuentra dentro del contexto padre de accesibilidad exigido después de tener en cuenta wrappers transparentes y relaciones aria-owns válidas.',
+  },
+  'FT-WARN-018': {
+    title: 'El contenedor ARIA expone un rol hijo de accesibilidad incompatible',
+    description: 'Este contenedor ARIA expone un hijo semántico cuyo rol queda fuera del modelo de roles hijo permitido para ese contenedor.',
+  },
+  'FT-WARN-019': {
+    title: 'El rango o estado de conjunto ARIA es internamente incoherente',
+    description: 'El elemento expone valores ARIA de rango, posición o conjunto que se contradicen entre sí aunque cada atributo individual pueda ser sintácticamente válido.',
+  },
   'FT-REVIEW-009': {
     title: 'El contenido de sección debería poder identificarse por su estructura',
     description: 'Este section o article no tiene un encabezado que le pertenezca ni un nombre accesible calculado. Revisa si la sección puede identificarse correctamente o si un contenedor genérico se ajustaría mejor al contenido.',
@@ -35,12 +67,12 @@ const STRUCTURAL_COPY_ES: Record<string, { title: string; description: string }>
 };
 
 export function localizedRuleTitle(ruleId: string, fallback: string, language: AppLanguage): string {
-  if (language === 'es' && STRUCTURAL_COPY_ES[ruleId]) return STRUCTURAL_COPY_ES[ruleId].title;
+  if (language === 'es' && EXTRA_COPY_ES[ruleId]) return EXTRA_COPY_ES[ruleId].title;
   return baseLocalizedRuleTitle(ruleId, fallback, language);
 }
 
 export function localizedScanIssue(issue: ScanIssue, language: AppLanguage): ScanIssue {
-  const copy = language === 'es' ? STRUCTURAL_COPY_ES[issue.ruleId] : undefined;
+  const copy = language === 'es' ? EXTRA_COPY_ES[issue.ruleId] : undefined;
   if (!copy) return baseLocalizedScanIssue(issue, language);
   return baseLocalizedScanIssue({ ...issue, title: copy.title, description: copy.description }, language);
 }
