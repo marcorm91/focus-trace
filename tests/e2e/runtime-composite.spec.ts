@@ -19,7 +19,10 @@ test('records composite widget reviews and virtual focus without inflating findi
 
   const virtualTree = page.getByRole('tree', { name: 'Files', exact: true });
   await virtualTree.focus();
+  await expect(virtualTree).toBeFocused();
   await page.keyboard.press('ArrowDown');
+  await expect(virtualTree).toBeFocused();
+  await expect(virtualTree).toHaveAttribute('aria-activedescendant', 'virtual-two');
 
   let session = await waitForSession(
     extensionWorker,
