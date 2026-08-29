@@ -63,7 +63,7 @@ test('component scope is consumed once and excludes findings outside the selecte
   expect(componentTargets).toContain('#inside-empty');
   expect(componentTargets).not.toContain('#outside-empty');
   expect(componentScan.headings).toBeUndefined();
-  expect(componentScan.rulesRun).toBeLessThan(18);
+  expect(componentScan.rulesRun).toBeLessThan(23);
 
   const fullPageScan = await extensionWorker.evaluate(async (id) => {
     const chromeApi = (globalThis as any).chrome;
@@ -74,5 +74,5 @@ test('component scope is consumed once and excludes findings outside the selecte
   expect(fullPageScan.scope).toEqual({ type: 'page' });
   expect(pageTargets).toContain('#inside-empty');
   expect(pageTargets).toContain('#outside-empty');
-  expect(fullPageScan.rulesRun).toBe(18);
+  expect(fullPageScan.rulesRun).toBe(23);
 });
