@@ -124,6 +124,25 @@ function quotedTarget(event: RuntimeEvent): string | undefined {
   return target ? `“${target}”` : undefined;
 }
 
+function ariaWidgetEventTitle(event: RuntimeEvent, language: AppLanguage): string {
+  switch (event.ruleId) {
+    case 'FT-RUNTIME-ARIA-001':
+      return tr(language, 'Expanded state does not match controlled content', 'El estado expandido no coincide con el contenido controlado');
+    case 'FT-RUNTIME-ARIA-002':
+      return tr(language, 'Selected tab controls a hidden tab panel', 'La pestaña seleccionada controla un panel oculto');
+    case 'FT-APG-004':
+      return tr(language, 'Activated tab did not become selected', 'La pestaña activada no pasó a estar seleccionada');
+    case 'FT-APG-005':
+      return tr(language, 'Menu opened without moving focus inside', 'El menú se abrió sin mover el foco a su interior');
+    case 'FT-APG-006':
+      return tr(language, 'Review Escape behavior for the open menu', 'Revisa el comportamiento de Escape en el menú abierto');
+    case 'FT-APG-007':
+      return tr(language, 'Opened dialog has no accessible name', 'El diálogo abierto no tiene nombre accesible');
+    default:
+      return event.title;
+  }
+}
+
 export function humanRuntimeEventTitle(event: RuntimeEvent, language: AppLanguage = 'en'): string {
   const target = quotedTarget(event);
 
@@ -164,6 +183,8 @@ export function humanRuntimeEventTitle(event: RuntimeEvent, language: AppLanguag
         : tr(language, 'The dialog closed', 'El diálogo se cerró');
     case 'dialog-focus-escape':
       return tr(language, 'Focus moved outside the open modal', 'El foco se movió fuera del modal abierto');
+    case 'aria-widget':
+      return ariaWidgetEventTitle(event, language);
     case 'live-region':
       return tr(language, 'A screen reader announcement region updated', 'Se actualizó una región de anuncios para lectores de pantalla');
     default:
