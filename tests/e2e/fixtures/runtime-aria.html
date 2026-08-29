@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Runtime ARIA widgets</title>
+</head>
+<body>
+  <main>
+    <h1>Runtime ARIA widgets</h1>
+
+    <section>
+      <h2>Broken disclosure</h2>
+      <button id="filters" type="button" aria-expanded="false" aria-controls="filters-panel">Filters</button>
+      <div id="filters-panel">Filter options remain exposed while collapsed.</div>
+    </section>
+
+    <section>
+      <h2>Broken tab activation</h2>
+      <div role="tablist" aria-label="Account sections">
+        <button id="account-tab" type="button" role="tab" aria-selected="false" aria-controls="account-panel">Account</button>
+      </div>
+      <div id="account-panel" role="tabpanel" hidden>Account panel</div>
+    </section>
+
+    <section>
+      <h2>Broken menu focus</h2>
+      <button id="menu-trigger" type="button" aria-haspopup="menu" aria-expanded="false" aria-controls="actions-menu">Actions</button>
+      <div id="actions-menu" role="menu" hidden>
+        <button role="menuitem" tabindex="-1">Edit</button>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const menuTrigger = document.querySelector('#menu-trigger');
+    const menu = document.querySelector('#actions-menu');
+    menuTrigger.addEventListener('keydown', (event) => {
+      if (event.key !== 'ArrowDown') return;
+      menuTrigger.setAttribute('aria-expanded', 'true');
+      menu.hidden = false;
+    });
+  </script>
+</body>
+</html>
