@@ -199,6 +199,7 @@ export interface ScanRuleResult {
   failures: number;
   reviews: number;
   warnings: number;
+  coverage?: 'complete' | 'findings-only';
 }
 
 export interface ScanResult {
