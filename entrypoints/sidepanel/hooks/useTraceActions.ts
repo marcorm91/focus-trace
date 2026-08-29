@@ -55,6 +55,47 @@ async function waitForRuntimeFlush(tabId: number) {
   } satisfies ExtensionMessage);
 }
 
+async function applyRecordingState(input: {
+  tabId: number;
+  enabled: boolean;
+  breakpoints: RuntimeBreakpointSettings;
+  startedAt?: number;
+}): Promise<SessionState> {
+  // The background session is the source of truth. Persist the requested state
+  // first, then apply it to the inspected page. If enabling the page runtime
+  // fails, explicitly disable both sides again so a half-started Trace cannot
+  // remain recording without the session knowing about it.
+  const next = (await browser.runtime.sendMessage({
+    type: 'FOCUSTRACE_SET_RECORDING_STATE',
+    tabId: input.tabId,
+    enabled: input.enabled,
+    ...(input.startedAt ? { startedAt: input.startedAt } : {}),
+  } satisfies ExtensionMessage)) as SessionState;
+
+  try {
+    await browser.tabs.sendMessage(input.tabId, {
+      type: 'FOCUSTRACE_SET_RECORDING',
+      enabled: input.enabled,
+      breakpoints: input.breakpoints,
+    } satisfies ExtensionMessage);
+    return next;
+  } catch (reason) {
+    if (input.enabled) {
+      await browser.tabs.sendMessage(input.tabId, {
+        type: 'FOCUSTRACE_SET_RECORDING',
+        enabled: false,
+        breakpoints: input.breakpoints,
+      } satisfies ExtensionMessage).catch(() => undefined);
+      await browser.runtime.sendMessage({
+        type: 'FOCUSTRACE_SET_RECORDING_STATE',
+        tabId: input.tabId,
+        enabled: false,
+      } satisfies ExtensionMessage).catch(() => undefined);
+    }
+    throw reason;
+  }
+}
+
 export function useTraceActions({
   tabId,
   session,
@@ -92,26 +133,30 @@ export function useTraceActions({
           func: clearFocusPathInPage,
         }).catch(() => undefined);
         resetFocusPathState();
+      } else {
+        // Capture every event that was already emitted before changing either
+        // side of the recording state.
+        await waitForRuntimeFlush(tabId);
       }
 
       if (enabled && !resumingFromBreakpoint) {
         await browser.runtime.sendMessage({ type: 'FOCUSTRACE_CLEAR_SESSION', tabId } satisfies ExtensionMessage);
       }
 
-      const startedAt = enabled ? Date.now() : undefined;
-      await browser.tabs.sendMessage(tabId, {
-        type: 'FOCUSTRACE_SET_RECORDING',
-        enabled,
-        breakpoints: breakpointSettings,
-      } satisfies ExtensionMessage);
-
-      const next = (await browser.runtime.sendMessage({
-        type: 'FOCUSTRACE_SET_RECORDING_STATE',
+      const next = await applyRecordingState({
         tabId,
         enabled,
-        ...(startedAt ? { startedAt } : {}),
-      } satisfies ExtensionMessage)) as SessionState;
+        breakpoints: breakpointSettings,
+        ...(enabled ? { startedAt: Date.now() } : {}),
+      });
       setSession(next);
+
+      if (!enabled) {
+        // A final barrier catches an event emitted between the first flush and
+        // the page acknowledging the stop command.
+        await waitForRuntimeFlush(tabId);
+        await refresh(tabId);
+      }
       onOpenTrace();
     } catch (reason) {
       setError(localizedUserError(reason, language, 'trace'));
@@ -123,6 +168,7 @@ export function useTraceActions({
     ensureInjected,
     language,
     onOpenTrace,
+    refresh,
     resetFocusPathState,
     session.pausedByBreakpoint,
     session.recording,
@@ -136,7 +182,7 @@ export function useTraceActions({
     if (tabId == null) return;
     setBusy(true);
     setError(undefined);
-    let contentRecording = false;
+    let runtimeStarted = false;
 
     try {
       await ensureInjected();
@@ -147,19 +193,13 @@ export function useTraceActions({
       resetFocusPathState();
 
       await browser.runtime.sendMessage({ type: 'FOCUSTRACE_CLEAR_SESSION', tabId } satisfies ExtensionMessage);
-      await browser.tabs.sendMessage(tabId, {
-        type: 'FOCUSTRACE_SET_RECORDING',
-        enabled: true,
-        breakpoints: breakpointSettings,
-      } satisfies ExtensionMessage);
-      contentRecording = true;
-
-      const started = (await browser.runtime.sendMessage({
-        type: 'FOCUSTRACE_SET_RECORDING_STATE',
+      const started = await applyRecordingState({
         tabId,
         enabled: true,
+        breakpoints: breakpointSettings,
         startedAt: Date.now(),
-      } satisfies ExtensionMessage)) as SessionState;
+      });
+      runtimeStarted = true;
       setSession(started);
       onOpenTrace();
 
@@ -169,18 +209,12 @@ export function useTraceActions({
       } satisfies ExtensionMessage)) as FocusWalkResult;
 
       await waitForRuntimeFlush(tabId);
-      await browser.tabs.sendMessage(tabId, {
-        type: 'FOCUSTRACE_SET_RECORDING',
-        enabled: false,
-        breakpoints: breakpointSettings,
-      } satisfies ExtensionMessage);
-      contentRecording = false;
-
-      const stopped = (await browser.runtime.sendMessage({
-        type: 'FOCUSTRACE_SET_RECORDING_STATE',
+      const stopped = await applyRecordingState({
         tabId,
         enabled: false,
-      } satisfies ExtensionMessage)) as SessionState;
+        breakpoints: breakpointSettings,
+      });
+      runtimeStarted = false;
       setSession(stopped);
       await waitForRuntimeFlush(tabId);
       await refresh(tabId);
@@ -194,17 +228,12 @@ export function useTraceActions({
         ));
       }
     } catch (reason) {
-      if (contentRecording) {
-        await browser.tabs.sendMessage(tabId, {
-          type: 'FOCUSTRACE_SET_RECORDING',
-          enabled: false,
-          breakpoints: breakpointSettings,
-        } satisfies ExtensionMessage).catch(() => undefined);
-        await browser.runtime.sendMessage({
-          type: 'FOCUSTRACE_SET_RECORDING_STATE',
+      if (runtimeStarted) {
+        await applyRecordingState({
           tabId,
           enabled: false,
-        } satisfies ExtensionMessage).catch(() => undefined);
+          breakpoints: breakpointSettings,
+        }).catch(() => undefined);
       }
       setError(localizedUserError(reason, language, 'focus-walk'));
     } finally {
