@@ -16,6 +16,7 @@ import {
 } from '../shared/html-authoring-rules';
 import { OBSOLETE_ATTRIBUTES, OBSOLETE_ELEMENTS } from '../shared/obsolete-html-registry';
 import { RULES, type RuleDefinition } from '../shared/rule-catalog';
+import { WCAG_COVERAGE, WCAG_COVERAGE_SUMMARY, wcagCoverageForCriterion } from '../shared/wcag-coverage';
 
 const HTML_RULES: RuleDefinition[] = [
   DUPLICATE_ID_RULE,
@@ -54,7 +55,23 @@ describe('standards registry coverage', () => {
 
   it('monitors every standards family directly used by FocusTrace', () => {
     const ids = new Set(sourcesRegistry.sources.map((source) => source.id));
-    for (const required of ['wcag22', 'html', 'html-obsolete', 'wai-aria', 'accname', 'html-aam', 'core-aam', 'apg', 'mime-sniff', 'iana-language-subtags']) {
+    for (const required of [
+      'wcag22',
+      'wcag22-errata',
+      'wcag22-editor-draft',
+      'wcag22-understanding',
+      'wcag22-techniques',
+      'wcag2-changelog',
+      'html',
+      'html-obsolete',
+      'wai-aria',
+      'accname',
+      'html-aam',
+      'core-aam',
+      'apg',
+      'mime-sniff',
+      'iana-language-subtags',
+    ]) {
       expect(ids.has(required), `Missing monitored source ${required}`).toBe(true);
     }
   });
@@ -77,13 +94,25 @@ describe('standards registry coverage', () => {
     }
   });
 
-  it('makes WCAG coverage gaps explicit instead of implying full automated conformance', () => {
+  it('exposes a criterion-by-criterion WCAG coverage matrix', () => {
     const active = wcagCatalog.criteria.filter((criterion) => criterion.status === 'active');
-    const referenced = new Set(
-      ALL_RULES.flatMap((rule) => rule.references.filter((reference) => reference.type === 'WCAG').map((reference) => reference.id)),
-    );
-    expect(active.length).toBeGreaterThan(80);
-    expect(referenced.size).toBeGreaterThan(0);
-    expect(referenced.size).toBeLessThan(active.length);
+    expect(WCAG_COVERAGE).toHaveLength(active.length);
+    expect(WCAG_COVERAGE_SUMMARY.totalActive).toBe(active.length);
+    expect(WCAG_COVERAGE_SUMMARY.implemented + WCAG_COVERAGE_SUMMARY.notImplemented).toBe(active.length);
+
+    expect(wcagCoverageForCriterion('1.4.3')).toMatchObject({
+      level: 'AA',
+      coverage: ['automated'],
+      ruleIds: ['FT-WCAG-010'],
+      implemented: true,
+    });
+    expect(wcagCoverageForCriterion('2.4.3')?.coverage).toEqual(expect.arrayContaining(['review', 'runtime']));
+  });
+
+  it('makes WCAG coverage gaps explicit instead of implying full automated conformance', () => {
+    expect(WCAG_COVERAGE_SUMMARY.totalActive).toBeGreaterThan(80);
+    expect(WCAG_COVERAGE_SUMMARY.implemented).toBeGreaterThan(0);
+    expect(WCAG_COVERAGE_SUMMARY.notImplemented).toBeGreaterThan(0);
+    expect(WCAG_COVERAGE_SUMMARY.automated).toBeLessThan(WCAG_COVERAGE_SUMMARY.totalActive);
   });
 });
