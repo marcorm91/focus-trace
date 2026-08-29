@@ -71,7 +71,6 @@ export function SessionReportView({
   const graph = useMemo(() => buildFocusGraph(events), [events]);
   const interactions = useMemo(() => groupRuntimeInteractions(events), [events]);
   const headings = scan?.headings ?? [];
-  const focusEvents = events.filter((event) => event.kind === 'focus' && event.element);
   const highPriority = model.suggestions.filter((suggestion) => suggestion.priority === 'high').slice(0, 4);
   const automatic = events.some((event) => event.kind === 'focus-walk-start');
   const [components, setComponents] = useState<ReportComponentIdentity[]>([]);
@@ -279,7 +278,7 @@ export function SessionReportView({
                 <div>
                   <h3 id="report-trace-title">{tr(language, 'Runtime trace', 'Traza runtime')}</h3>
                   <p>
-                    {focusEvents.length
+                    {model.focusSteps > 0
                       ? automatic
                         ? tr(language, 'Automatic focus evidence plus correlated interactions.', 'Evidencia automática de foco e interacciones correlacionadas.')
                         : tr(language, 'Recorded interactions, focus movement and deterministic causes.', 'Interacciones grabadas, movimientos de foco y causas deterministas.')
