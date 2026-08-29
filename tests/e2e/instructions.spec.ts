@@ -22,10 +22,12 @@ test('instructions is a focused bilingual guide and Back restores the previous w
   await expect(panel.getByRole('heading', { level: 3, name: /Start here|Empieza aquí/ })).toBeVisible();
 
   const review = panel.locator('.instructions-card > summary').filter({ hasText: /Review|Revisión/ });
+  const legend = panel.locator('.instructions-card > summary').filter({ hasText: /Rule legend and identifiers|Leyenda de reglas e identificadores/ });
   const siteAudit = panel.locator('.instructions-card > summary').filter({ hasText: /Site Audit|Análisis de sitio/ });
   const trace = panel.locator('.instructions-card > summary').filter({ hasText: /^Trace$/ });
   const memory = panel.locator('.instructions-card > summary').filter({ hasText: /^FocusTrace Memory$/ });
   await expect(review).toBeVisible();
+  await expect(legend).toBeVisible();
   await expect(siteAudit).toBeVisible();
   await expect(trace).toBeVisible();
   await expect(memory).toBeVisible();
@@ -35,6 +37,15 @@ test('instructions is a focused bilingual guide and Back restores the previous w
   await review.click();
   await expect(reviewCard).toHaveAttribute('open', '');
   await expect(reviewCard.getByText(/Failures are findings|Los fallos son hallazgos/)).toBeVisible();
+
+  const legendCard = legend.locator('..');
+  await legend.click();
+  await expect(legendCard).toHaveAttribute('open', '');
+  await expect(legendCard.getByText('FT-WCAG-###', { exact: true })).toBeVisible();
+  await expect(legendCard.getByText('FT-RUNTIME-ARIA-###', { exact: true })).toBeVisible();
+  await expect(legendCard.getByText('FT-APG-###', { exact: true })).toBeVisible();
+  await expect(legendCard.getByText(/Prefix, result and severity|Prefijo, resultado y severidad/)).toBeVisible();
+  await expect(legendCard.getByText(/Finding vs occurrence|Hallazgo vs ocurrencia/)).toBeVisible();
 
   await expect(panel.getByRole('navigation', { name: /FocusTrace sections|Secciones de FocusTrace/ })).not.toBeVisible();
   await expect(panel.getByRole('region', { name: /Page tools|Herramientas de página/ })).not.toBeVisible();
