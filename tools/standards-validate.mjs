@@ -88,8 +88,19 @@ export function validateWcagCatalog(catalog) {
     assert(/^[a-f0-9]{64}$/.test(criterion.logicHash), `WCAG ${criterion.id} has invalid logicHash.`);
   }
   const active = catalog.criteria.filter((criterion) => criterion.status === 'active');
+  const removed = catalog.criteria.filter((criterion) => criterion.status === 'removed');
+  const byLevel = {
+    A: active.filter((criterion) => criterion.level === 'A').length,
+    AA: active.filter((criterion) => criterion.level === 'AA').length,
+    AAA: active.filter((criterion) => criterion.level === 'AAA').length,
+  };
   assert(catalog.summary.active === active.length, 'WCAG summary.active does not match criteria.');
+  assert(catalog.summary.removed === removed.length, 'WCAG summary.removed does not match criteria.');
   assert(catalog.summary.total === catalog.criteria.length, 'WCAG summary.total does not match criteria length.');
+  assert(catalog.summary.A === byLevel.A, 'WCAG summary.A does not match active criteria.');
+  assert(catalog.summary.AA === byLevel.AA, 'WCAG summary.AA does not match active criteria.');
+  assert(catalog.summary.AAA === byLevel.AAA, 'WCAG summary.AAA does not match active criteria.');
+  assert(byLevel.A + byLevel.AA + byLevel.AAA === active.length, 'Every active WCAG criterion must have exactly one conformance level.');
   return true;
 }
 
@@ -127,6 +138,7 @@ export function validateStandardsSources(registry) {
     assert(/^[a-f0-9]{64}$/.test(source.contentHash), `Specification ${source.id} has invalid contentHash.`);
   }
   assert(registry.summary.sources === registry.sources.length, 'Standards source summary is inconsistent.');
+  assert(registry.summary.normative + registry.summary.informative === registry.sources.length, 'Standards source role summary is inconsistent.');
   return true;
 }
 
