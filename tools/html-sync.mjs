@@ -21,6 +21,25 @@ function textContent(html = '') {
   return normaliseText(decodeEntities(html.replace(/<[^>]+>/g, ' ').replace(/\s+/g, ' ')));
 }
 
+function structuralText(html = '') {
+  const withCode = html.replace(
+    /<code\b[^>]*>([\s\S]*?)<\/code>/gi,
+    (_, value) => ` [[${textContent(value).toLowerCase()}]] `,
+  );
+  return normaliseText(decodeEntities(
+    withCode
+      .replace(/<dt\b[^>]*>/gi, '\n@@DT@@ ')
+      .replace(/<\/dt>/gi, ' @@ENDDT@@\n')
+      .replace(/<li\b[^>]*>/gi, '\n@@LI@@ ')
+      .replace(/<\/li>/gi, ' @@ENDLI@@\n')
+      .replace(/<h[1-6]\b[^>]*>/gi, '\n@@HEADING@@ ')
+      .replace(/<\/h[1-6]>/gi, ' @@ENDHEADING@@\n')
+      .replace(/<[^>]+>/g, ' ')
+      .replace(/[ \t]+/g, ' ')
+      .replace(/\n\s+/g, '\n'),
+  ));
+}
+
 function sourceDate(html) {
   const match = textContent(html.slice(0, 12_000)).match(/Last Updated\s+(\d{1,2}\s+[A-Za-z]+\s+\d{4})/i);
   return match?.[1] ?? '';
@@ -34,46 +53,39 @@ function sliceBetween(source, startPattern, endPattern) {
   return end > 0 ? tail.slice(0, end) : tail;
 }
 
-function codeTokens(html = '') {
-  return [...html.matchAll(/<code\b[^>]*>([\s\S]*?)<\/code>/gi)]
-    .map((match) => textContent(match[1] ?? '').trim().toLowerCase())
-    .filter(Boolean);
+function markedTokens(value = '') {
+  return [...value.matchAll(/\[\[([a-z][a-z0-9-]*)\]\]/gi)].map((match) => match[1].toLowerCase());
 }
 
-function obsoleteElementNames(nonConformingHtml) {
+function obsoleteElementNames(structure) {
   const elementArea = sliceBetween(
-    nonConformingHtml,
+    structure,
     /Elements in the following list are entirely obsolete/i,
     /The following attributes are obsolete/i,
   );
   const names = [];
-  for (const match of elementArea.matchAll(/<dt\b[^>]*>([\s\S]*?)<\/dt>/gi)) {
-    for (const token of codeTokens(match[1] ?? '')) {
-      if (/^[a-z][a-z0-9-]*$/.test(token)) names.push(token);
-    }
+  for (const match of elementArea.matchAll(/@@DT@@([\s\S]*?)@@ENDDT@@/gi)) {
+    names.push(...markedTokens(match[1] ?? ''));
   }
   return [...new Set(names)].sort();
 }
 
-function obsoleteAttributePairs(nonConformingHtml) {
+function obsoleteAttributePairs(structure) {
   const attributeArea = sliceBetween(
-    nonConformingHtml,
+    structure,
     /The following attributes are obsolete/i,
-    /<h[23]\b[^>]*id=["'][^"']+["'][^>]*>/i,
+    /@@HEADING@@\s*16\.3\b|Requirements for implementations/i,
   );
   const pairs = [];
 
-  for (const match of attributeArea.matchAll(/<dt\b[^>]*>([\s\S]*?)<\/dt>/gi)) {
-    const block = match[1] ?? '';
-    const marked = block.replace(/<code\b[^>]*>([\s\S]*?)<\/code>/gi, (_, value) => `[[${textContent(value).toLowerCase()}]]`);
-    const text = textContent(marked).replace(/\[\s*\[/g, '[[').replace(/\]\s*\]/g, ']]');
-
+  for (const match of attributeArea.matchAll(/@@DT@@([\s\S]*?)@@ENDDT@@/gi)) {
+    const text = match[1] ?? '';
     for (const pair of text.matchAll(/\[\[([a-z][a-z0-9-]*)\]\]\s+on\s+(?:the\s+)?\[\[([a-z][a-z0-9-]*)\]\]/gi)) {
       pairs.push({ attribute: pair[1].toLowerCase(), element: pair[2].toLowerCase() });
     }
 
-    const tokens = [...text.matchAll(/\[\[([a-z][a-z0-9-]*)\]\]/gi)].map((token) => token[1].toLowerCase());
-    if (/on all html elements|on all elements|global attribute/i.test(text) && tokens[0]) {
+    const tokens = markedTokens(text);
+    if (/on all html elements|on all elements/i.test(text) && tokens[0]) {
       pairs.push({ attribute: tokens[0], element: '*' });
     }
   }
@@ -82,14 +94,23 @@ function obsoleteAttributePairs(nonConformingHtml) {
   return [...unique.values()].sort((a, b) => `${a.attribute}|${a.element}`.localeCompare(`${b.attribute}|${b.element}`));
 }
 
-function countObsoleteButConformingWarnings(html) {
-  const area = sliceBetween(html, /Warnings for obsolete but conforming features/i, /Non-conforming features/i);
-  return [...area.matchAll(/<li\b/gi)].length;
+function countObsoleteButConformingWarnings(structure) {
+  const area = sliceBetween(
+    structure,
+    /Warnings for obsolete but conforming features/i,
+    /@@HEADING@@\s*16\.2\b|Non-conforming features/i,
+  );
+  return [...area.matchAll(/@@LI@@/g)].length;
 }
 
 export function parseHtmlObsoleteCatalog(html, source = {}) {
-  const obsoleteArea = sliceBetween(html, /Obsolete features/i, /IANA considerations|Index/i);
-  const nonConforming = sliceBetween(obsoleteArea, /Non-conforming features/i, /Requirements for implementations|IANA considerations|Index/i);
+  const structure = structuralText(html);
+  const obsoleteArea = sliceBetween(structure, /Obsolete features/i, /IANA considerations|Index/i);
+  const nonConforming = sliceBetween(
+    obsoleteArea,
+    /Non-conforming features/i,
+    /Requirements for implementations|IANA considerations|Index/i,
+  );
   const elements = obsoleteElementNames(nonConforming);
   const attributePairs = obsoleteAttributePairs(nonConforming);
   const obsoleteButConformingWarnings = countObsoleteButConformingWarnings(obsoleteArea);
@@ -113,7 +134,7 @@ export function parseHtmlObsoleteCatalog(html, source = {}) {
       snapshotLabel: sourceDate(html),
       ...(source.lastModified ? { lastModified: source.lastModified } : {}),
       ...(source.etag ? { etag: source.etag } : {}),
-      obsoleteSectionHash: sha256(normaliseText(textContent(obsoleteArea))),
+      obsoleteSectionHash: sha256(normaliseText(obsoleteArea)),
     },
     summary: {
       obsoleteElements: elements.length,
