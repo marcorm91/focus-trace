@@ -11,7 +11,8 @@ Rule IDs in this document are FocusTrace product identifiers. See [`RULE_IDENTIF
 3. After a short stabilization delay, FocusTrace checks the resulting ARIA state, controlled content and focus destination.
 4. A deterministic state mismatch is emitted as a runtime `warning`.
 5. A behavior described by an APG pattern but requiring author/context judgement is emitted as `review`.
-6. The runtime finding flows into the consolidated session report. Repeated occurrences are counted but do not create duplicate report cards.
+6. Valid `aria-activedescendant` movement is emitted as informational `virtual-focus` evidence, not as a finding.
+7. Runtime findings flow into the consolidated session report. Repeated occurrences are counted but do not create duplicate report cards.
 
 Raw Trace Markdown/JSON evidence remains chronological and lossless.
 
@@ -27,24 +28,70 @@ Raw Trace Markdown/JSON evidence remains chronological and lossless.
 | `FT-APG-007` | Dialog | Review | A dynamically observed dialog opens without an accessible name. |
 | `FT-RUNTIME-ARIA-003` | Combobox | Warning | An expanded combobox does not resolve `aria-controls` to an allowed popup role (`listbox`, `tree`, `grid`, `dialog`). |
 | `FT-RUNTIME-ARIA-004` | Combobox | Warning | The resolved popup role does not match the combobox `aria-haspopup` value; omitted `aria-haspopup` correctly implies `listbox`. |
-| `FT-RUNTIME-ARIA-005` | Combobox / Listbox | Warning | `aria-activedescendant` is missing or is outside the ownership/control relationship allowed by WAI-ARIA. |
-| `FT-APG-008` | Combobox / Listbox | Review | A valid active descendant is programmatically hidden after widget navigation. |
+| `FT-RUNTIME-ARIA-005` | Combobox / Listbox / Tree / Grid / Treegrid | Warning | `aria-activedescendant` is missing or is outside the ownership/control relationship allowed by WAI-ARIA. |
+| `FT-APG-008` | Combobox / Listbox / Tree / Grid / Treegrid | Review | A valid active descendant is programmatically hidden after widget navigation. |
 | `FT-APG-009` | Combobox | Review | Escape is pressed while the popup is open but the popup remains exposed after stabilization. |
 | `FT-APG-010` | Listbox | Review | A single-select listbox exposes multiple selected or checked options after interaction. |
+| `FT-RUNTIME-ARIA-006` | Tree | Warning | A parent treeitem exposes `aria-expanded` that contradicts the programmatic availability of its child `group`. |
+| `FT-APG-011` | Tree / Grid / Treegrid | Review | A composite using roving tabindex exposes more than one managed item with `tabindex="0"` after interaction. |
+| `FT-APG-012` | Tree | Review | Arrow navigation does not move to, expand or collapse the item expected by the observed Tree pattern. |
+| `FT-APG-013` | Grid / Treegrid | Review | Arrow navigation does not move to the expected row/cell or update the expected treegrid row state. |
+| `FT-APG-014` | Tree | Review | A single-select tree exposes multiple selected or checked treeitems after interaction. |
 
 Existing dialog runtime rules continue to cover initial focus, modal focus escape and focus restoration (`FT-APG-001` to `FT-APG-003`).
+
+## Composite widget focus model
+
+FocusTrace supports both common composite focus-management strategies instead of requiring one implementation technique:
+
+- **DOM focus / roving tabindex** — focus moves among managed treeitems, rows or cells while normally only one managed item participates in the page tab sequence.
+- **Virtual focus / `aria-activedescendant`** — DOM focus remains on the composite owner while `aria-activedescendant` identifies the active item.
+
+When a valid `aria-activedescendant` value changes after a recorded interaction, FocusTrace emits an informational `virtual-focus` event. That event:
+
+- appears in Trace as part of the real interaction chain;
+- appears as a focus destination in Journey and Graph;
+- can be located on the inspected page like other observed focus destinations;
+- has severity `info` and no finding outcome;
+- does **not** increase runtime finding counts or create an additional report problem.
+
+The existing `FT-RUNTIME-ARIA-005` relationship rule is reused for Tree/Grid/Treegrid. A new component-specific prefix such as `FT-TREE` or `FT-GRID` is intentionally not introduced.
 
 ## Combobox and listbox relationship model
 
 `aria-activedescendant` validation understands both physical and logical ownership:
 
 - DOM descendants;
-- `aria-owns` relationships;
+- recursive `aria-owns` relationships;
 - active items owned by a `listbox`, `tree` or `grid` controlled by a focused combobox/textbox/searchbox.
 
 The evaluator skips active-descendant review during Escape dismissal so a temporarily residual reference is not treated as a false positive while the popup closes.
 
 Listbox selection also includes options logically owned through `aria-owns`. Multiselect listboxes (`aria-multiselectable="true"`) are accepted when they expose multiple selected options.
+
+## Tree behavior
+
+Tree checks observe the orientation and current active-item strategy before deriving an expectation:
+
+- vertical Tree: Up/Down moves among visible treeitems, Right expands or enters children, Left collapses or moves to the parent;
+- horizontal Tree: the APG axis mapping is respected instead of hard-coding vertical arrows;
+- hidden child groups are removed from the visible traversal sequence;
+- nested or external child groups connected with `aria-owns` participate in the accessibility ownership model;
+- multi-selection is accepted only when the Tree explicitly exposes `aria-multiselectable="true"`.
+
+`FT-RUNTIME-ARIA-006` is reserved for the deterministic state contradiction between `aria-expanded` and the child group. Keyboard expectations remain `FT-APG-012` reviews because application context and interaction design still require human judgement.
+
+## Grid and treegrid behavior
+
+Grid checks are deliberately conservative:
+
+- Right/Left can be reviewed between adjacent managed cells;
+- Up/Down can be reviewed between corresponding cells in adjacent rows;
+- row-focused Treegrid can review Up/Down row movement and Right/Left expand/collapse behavior;
+- ambiguous Treegrid first-cell Left behavior is not forced because row-focus support is optional;
+- when an embedded editor such as an `input`, `textarea`, `select`, `combobox`, `textbox`, `slider` or similar control is consuming an arrow key, FocusTrace does not attribute that key to the outer Grid.
+
+This avoids treating normal text editing or nested-widget keyboard behavior as a broken Grid.
 
 ## Precision boundaries
 
@@ -58,6 +105,9 @@ Listbox selection also includes options logically owned through `aria-owns`. Mul
 - Dialog naming is checked after a short delay so frameworks can finish inserting labels for dynamically opened dialogs.
 - Combobox popup validation accepts the implicit `listbox` value when `aria-haspopup` is omitted.
 - Active-descendant review is deliberately skipped during Escape dismissal.
+- Composite roving-tabindex review is skipped when the composite is using `aria-activedescendant`; the two strategies are both valid.
+- Grid arrow reviews are suppressed for embedded editors and nested controls that normally consume arrow keys.
+- The current Trace keyboard recorder evaluates the arrow keys, Enter, Space and Escape used by these runtime checks. Home/End behavior is not reported by this release and absence of that evidence is not treated as a failure.
 
 ## Standards
 
