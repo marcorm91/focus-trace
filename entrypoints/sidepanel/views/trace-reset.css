@@ -23,6 +23,57 @@
   background: rgba(176, 42, 42, 0.06);
 }
 
+.trace-edit-note {
+  margin: 0;
+  padding: 10px 12px;
+  border: 1px solid var(--ft-border-soft);
+  border-left: 4px solid var(--ft-brand);
+  border-radius: 10px;
+  background: var(--ft-surface-subtle);
+  color: var(--ft-muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.interaction-edit-actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  margin: 0 12px 10px;
+  padding: 9px 10px;
+  border: 1px solid color-mix(in srgb, var(--ft-danger) 26%, var(--ft-border));
+  border-radius: 9px;
+  background: color-mix(in srgb, var(--ft-danger-soft) 38%, var(--ft-surface));
+}
+
+.interaction-edit-actions small {
+  flex: 1 1 180px;
+  color: var(--ft-muted);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.interaction-delete-action {
+  min-height: 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  border: 1px solid color-mix(in srgb, var(--ft-danger) 58%, var(--ft-border));
+  border-radius: 8px;
+  background: var(--ft-surface);
+  color: var(--ft-danger);
+  padding: 6px 9px;
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.interaction-delete-action:hover:not(:disabled) {
+  background: var(--ft-danger-soft);
+}
+
 .trace-reset-dialog {
   width: min(360px, calc(100vw - 32px));
   max-width: 100%;
@@ -48,6 +99,17 @@
 
 .trace-reset-dialog-copy p:last-child {
   margin-bottom: 0;
+}
+
+.trace-delete-interaction-name {
+  display: block;
+  margin-top: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  background: var(--ft-surface-subtle);
+  color: var(--ft-text);
+  font-size: 14px;
+  overflow-wrap: anywhere;
 }
 
 .trace-reset-dialog-actions {
