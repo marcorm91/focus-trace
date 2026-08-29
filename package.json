@@ -25,6 +25,9 @@
     "act:sync": "node tools/act-sync.mjs",
     "aria:sync": "node tools/aria-sync.mjs",
     "language:sync": "node tools/language-sync.mjs",
+    "wcag:sync": "node tools/wcag-sync.mjs",
+    "html:sync": "node tools/html-sync.mjs",
+    "specs:sync": "node tools/specs-sync.mjs",
     "standards:sync": "node tools/standards-sync.mjs",
     "standards:validate": "node tools/standards-validate.mjs",
     "postinstall": "wxt prepare"
