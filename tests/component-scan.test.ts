@@ -78,6 +78,7 @@ describe('component-scoped static analysis', () => {
     expect(component.headings).toBeUndefined();
     expect(component.issues.some((issue) => ['FT-WCAG-001', 'FT-WCAG-008', 'FT-WCAG-009'].includes(issue.ruleId))).toBe(false);
     expect(component.review.some((issue) => issue.ruleId === 'FT-REVIEW-002')).toBe(false);
+    expect(component.review.some((issue) => ['FT-REVIEW-004', 'FT-REVIEW-005'].includes(issue.ruleId))).toBe(false);
 
     expect(fullPage.issues.map((issue) => issue.ruleId)).toContain('FT-WCAG-001');
     expect(fullPage.issues.map((issue) => issue.ruleId)).toContain('FT-WCAG-008');
@@ -111,7 +112,7 @@ describe('component-scoped static analysis', () => {
 
     expect(result.scope).toEqual({ type: 'page' });
     expect(result.headings).toHaveLength(1);
-    expect(result.rulesRun).toBe(18);
+    expect(result.rulesRun).toBe(23);
     expect(document.documentElement.hasAttribute('data-focustrace-focus-component')).toBe(false);
   });
 
