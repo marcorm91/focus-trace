@@ -121,7 +121,7 @@ export default defineContentScript({
 
     const flushPendingEventDeliveries = async () => {
       while (pendingEventDeliveries.size > 0) {
-        await Promise.allSettled([...pendingEventDeliveries]);
+        await Promise.allSettled(pendingEventDeliveries);
       }
     };
 
