@@ -452,7 +452,7 @@ function nativeRoleFor(element: Element): string | null {
   if (element instanceof HTMLButtonElement) return 'button';
   if (element instanceof HTMLAnchorElement && element.hasAttribute('href')) return 'link';
   if (element instanceof HTMLAreaElement && element.hasAttribute('href')) return 'link';
-  if (element instanceof HTMLImageElement) return element.alt === '' ? 'presentation' : 'img';
+  if (element instanceof HTMLImageElement) return element.hasAttribute('alt') && element.alt === '' ? 'presentation' : 'img';
   if (element instanceof HTMLSelectElement) return element.multiple || element.size > 1 ? 'listbox' : 'combobox';
   if (element instanceof HTMLTextAreaElement) return 'textbox';
   if (element instanceof HTMLInputElement) {
@@ -557,6 +557,7 @@ export function isSequentiallyFocusable(element: Element): boolean {
   if (isCssHidden(element)) return false;
   if (element.closest('[inert]')) return false;
   if (isNativeElementDisabled(element)) return false;
+  if (element instanceof HTMLInputElement && element.type.toLowerCase() === 'hidden') return false;
 
   const tabindex = element.getAttribute('tabindex');
   if (tabindex != null) {
@@ -566,7 +567,7 @@ export function isSequentiallyFocusable(element: Element): boolean {
 
   if (element instanceof HTMLAnchorElement || element instanceof HTMLAreaElement) return element.hasAttribute('href');
   if (element instanceof HTMLButtonElement || element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement) return true;
-  if (element instanceof HTMLInputElement) return element.type !== 'hidden';
+  if (element instanceof HTMLInputElement) return true;
   if (element instanceof HTMLElement && element.tagName === 'SUMMARY') return true;
   if (element instanceof HTMLIFrameElement) return true;
   if (element instanceof HTMLAudioElement || element instanceof HTMLVideoElement) return element.controls;
