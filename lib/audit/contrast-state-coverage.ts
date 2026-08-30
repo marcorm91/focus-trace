@@ -220,10 +220,10 @@ function stateKind(element: Element, properties: string[]): ContrastStateKind | 
   return undefined;
 }
 
-function selectorIsObserved(selector: string): boolean {
+function elementMatchesObservedSelector(element: Element, selector: string): boolean {
   const withoutPseudoElement = selector.replace(PSEUDO_ELEMENTS, '');
   try {
-    return Boolean(document.querySelector(withoutPseudoElement));
+    return element.matches(withoutPseudoElement);
   } catch {
     return false;
   }
@@ -256,6 +256,15 @@ export function observedContrastStates(element: Element): ContrastStateName[] {
 export function evaluateContrastStateCoverage(root: Document | Element = document): ContrastStateSignal[] {
   const signals: ContrastStateSignal[] = [];
   const seen = new Set<string>();
+  const elementIds = new WeakMap<Element, number>();
+  let nextElementId = 1;
+  const elementId = (element: Element) => {
+    const existing = elementIds.get(element);
+    if (existing != null) return existing;
+    const value = nextElementId++;
+    elementIds.set(element, value);
+    return value;
+  };
 
   for (const rule of authorStyleRules()) {
     const properties = ruleProperties(rule.style);
@@ -264,9 +273,6 @@ export function evaluateContrastStateCoverage(root: Document | Element = documen
     for (const selector of splitSelectorList(rule.selectorText)) {
       const patterns = statePatternsForSelector(selector);
       if (!patterns.length) continue;
-      // If the authored selector is currently active, the normal scan measures
-      // the real computed state. Only surface states that were not observed.
-      if (selectorIsObserved(selector)) continue;
       const candidate = candidateSelector(selector, patterns);
       if (!candidate) continue;
 
@@ -278,11 +284,14 @@ export function evaluateContrastStateCoverage(root: Document | Element = documen
       }
 
       for (const element of elements) {
+        // Coverage is element-specific: one hovered/focused component must not
+        // hide the same unobserved authored state on its siblings.
+        if (elementMatchesObservedSelector(element, selector)) continue;
         if (isInactiveContrastElement(element)) continue;
         const kind = stateKind(element, properties);
         if (!kind) continue;
         for (const pattern of patterns) {
-          const key = `${kind}|${pattern.state}|${selector}|${candidate}|${element.tagName}|${element.id}`;
+          const key = `${kind}|${pattern.state}|${selector}|${candidate}|${elementId(element)}`;
           if (seen.has(key)) continue;
           seen.add(key);
           signals.push({
