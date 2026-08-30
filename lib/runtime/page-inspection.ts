@@ -35,7 +35,7 @@ export function snapshot(
       : {}),
   };
   if (element.id) result.id = element.id;
-  const role = semanticRole(element);
+  const role = element.hasAttribute('role') ? semanticRole(element) : null;
   if (role) result.role = role;
   const attributes = snapshotAttributes(element);
   if (attributes) result.attributes = attributes;
