@@ -38,14 +38,14 @@ const MANAGED_PROBE_KINDS = new Set<ManagedKeyboardFocusProbe['kind']>([
   'dialog-escape',
 ]);
 
-const MANAGED_GROUP_SELECTOR = [
-  '[role="tablist"]',
-  '[role="radiogroup"]',
-  '[role="toolbar"]',
-  '[role="menu"]',
-  '[role="menubar"]',
-  '[role="listbox"]',
-].join(', ');
+const MANAGED_GROUP_ROLES = new Set<ManagedGroupRole>([
+  'tablist',
+  'radiogroup',
+  'toolbar',
+  'menu',
+  'menubar',
+  'listbox',
+]);
 const MENU_ITEM_ROLES = ['menuitem', 'menuitemcheckbox', 'menuitemradio'];
 const TOOLBAR_CONTROL_SELECTOR = [
   'button',
@@ -56,14 +56,7 @@ const TOOLBAR_CONTROL_SELECTOR = [
   'summary',
   '[contenteditable]:not([contenteditable="false"])',
   '[tabindex]',
-  '[role="button"]',
-  '[role="checkbox"]',
-  '[role="combobox"]',
-  '[role="link"]',
-  '[role="radio"]',
-  '[role="slider"]',
-  '[role="spinbutton"]',
-  '[role="switch"]',
+  '[role]',
 ].join(', ');
 
 const APG_KEYBOARD_REFERENCE: StandardReference = {
@@ -163,15 +156,29 @@ function controlledElements(control: Element): Element[] {
     .filter((element): element is HTMLElement => element != null);
 }
 
+function closestManagedGroup(target: Element, roles: ReadonlySet<ManagedGroupRole> = MANAGED_GROUP_ROLES): Element | undefined {
+  let current: Element | null = target;
+  while (current) {
+    const role = semanticRole(current) as ManagedGroupRole | null;
+    if (role && roles.has(role)) return current;
+    current = current.parentElement;
+  }
+  return undefined;
+}
+
+function roleElements(role: ManagedGroupRole): Element[] {
+  return [...document.querySelectorAll('[role]')]
+    .filter((candidate) => semanticRole(candidate) === role);
+}
+
 function groupForTarget(target: Element, role: ManagedGroupRole): Element | undefined {
-  const ancestor = target.closest(`[role="${role}"]`);
+  const ancestor = closestManagedGroup(target, new Set([role]));
   if (ancestor) return ancestor;
-  return [...document.querySelectorAll(`[role="${role}"]`)]
-    .find((candidate) => accessibilityOwns(candidate, target));
+  return roleElements(role).find((candidate) => accessibilityOwns(candidate, target));
 }
 
 function belongsToManagedGroup(group: Element, candidate: Element): boolean {
-  const nearest = candidate.closest(MANAGED_GROUP_SELECTOR);
+  const nearest = closestManagedGroup(candidate);
   if (nearest && nearest !== group) return false;
   return accessibilityOwns(group, candidate);
 }
@@ -211,11 +218,15 @@ function adjacentItem(
 }
 
 function isNativeDisabled(element: Element): boolean {
-  if (element instanceof HTMLButtonElement) return element.disabled;
-  if (element instanceof HTMLInputElement) return element.disabled || element.type.toLowerCase() === 'hidden';
-  if (element instanceof HTMLSelectElement) return element.disabled;
-  if (element instanceof HTMLTextAreaElement) return element.disabled;
-  return false;
+  try {
+    return element.matches(':disabled');
+  } catch {
+    if (element instanceof HTMLButtonElement) return element.disabled;
+    if (element instanceof HTMLInputElement) return element.disabled || element.type.toLowerCase() === 'hidden';
+    if (element instanceof HTMLSelectElement) return element.disabled;
+    if (element instanceof HTMLTextAreaElement) return element.disabled;
+    return false;
+  }
 }
 
 function isSequentialTabStop(element: Element): boolean {
@@ -228,7 +239,7 @@ function toolbarControls(toolbar: Element): Element[] {
   return [...toolbar.querySelectorAll(TOOLBAR_CONTROL_SELECTOR)]
     .filter((candidate) => {
       if (candidate === toolbar || !isAvailable(candidate) || isNativeDisabled(candidate)) return false;
-      const nestedToolbar = candidate.closest('[role="toolbar"]');
+      const nestedToolbar = closestManagedGroup(candidate, new Set<ManagedGroupRole>(['toolbar']));
       return nestedToolbar === toolbar;
     });
 }
@@ -272,7 +283,7 @@ function tabNavigation(target: Element, key: string): ManagedKeyboardFocusProbe 
 }
 
 function radioNavigation(target: Element, key: string): ManagedKeyboardFocusProbe | undefined {
-  if (semanticRole(target) !== 'radio' || target.closest('[role="toolbar"]')) return undefined;
+  if (semanticRole(target) !== 'radio' || groupForTarget(target, 'toolbar')) return undefined;
   const radiogroup = groupForTarget(target, 'radiogroup');
   if (!radiogroup) return undefined;
   const radios = managedRoleItems(radiogroup, ['radio']);
@@ -362,20 +373,33 @@ function disclosureToggle(target: Element, key: string): ManagedKeyboardFocusPro
   return { kind: 'disclosure-toggle', control: target, beforeExpanded };
 }
 
+function closestDialog(target: Element): Element | undefined {
+  let current: Element | null = target;
+  while (current) {
+    const role = semanticRole(current);
+    if (current instanceof HTMLDialogElement || role === 'dialog' || role === 'alertdialog') return current;
+    current = current.parentElement;
+  }
+  return undefined;
+}
+
 function dialogEscape(target: Element, key: string): ManagedKeyboardFocusProbe | undefined {
   if (key !== 'Escape') return undefined;
-  const dialog = target.closest('dialog, [role="dialog"], [role="alertdialog"]');
+  const dialog = closestDialog(target);
   if (!dialog || !isDialogOpen(dialog) || !isModalDialog(dialog)) return undefined;
   return { kind: 'dialog-escape', dialog };
 }
 
 function rovingProbeForTarget(target: Element): ManagedKeyboardFocusProbe | undefined {
-  let group = target.closest(MANAGED_GROUP_SELECTOR);
+  let group = closestManagedGroup(target);
   if (!group) return undefined;
   let role = semanticRole(group) as ManagedGroupRole | undefined;
-  if (role === 'radiogroup' && group.closest('[role="toolbar"]')) {
-    group = group.closest('[role="toolbar"]');
-    role = group ? 'toolbar' : undefined;
+  if (role === 'radiogroup') {
+    const toolbar = groupForTarget(group, 'toolbar');
+    if (toolbar && toolbar !== group) {
+      group = toolbar;
+      role = 'toolbar';
+    }
   }
   if (!group || !role) return undefined;
   if (role === 'tablist') return { kind: 'managed-roving-tabindex', group, roles: ['tab'], pattern: 'tabs' };
