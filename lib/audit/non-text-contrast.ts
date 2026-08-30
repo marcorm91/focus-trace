@@ -7,7 +7,7 @@ import {
   parseCssColor,
   type RgbaColor,
 } from './contrast';
-import { semanticRole } from './dom';
+import { isDisabledUiComponent, semanticRole } from './dom';
 
 export type NonTextContrastKind = 'ui-boundary' | 'graphic' | 'focus-indicator';
 
@@ -67,13 +67,7 @@ function renderedColor(color: RgbaColor, background: RgbaColor): RgbaColor {
 }
 
 function isDisabled(element: Element): boolean {
-  if (element.getAttribute('aria-disabled')?.trim().toLowerCase() === 'true') return true;
-  return element instanceof HTMLButtonElement ||
-    element instanceof HTMLInputElement ||
-    element instanceof HTMLSelectElement ||
-    element instanceof HTMLTextAreaElement
-    ? element.disabled
-    : false;
+  return isDisabledUiComponent(element);
 }
 
 function usesNativeUserAgentAppearance(element: Element, style: CSSStyleDeclaration): boolean {
@@ -425,12 +419,14 @@ export function evaluateNonTextContrast(): NonTextContrastFinding[] {
     }
   }
 
-  for (const svg of document.querySelectorAll<SVGElement>('svg[role="img"]')) {
+  for (const svg of document.querySelectorAll<SVGElement>('svg[role]')) {
+    if (semanticRole(svg) !== 'img') continue;
     if (owningInteractiveControl(svg)) continue;
     findings.push({ element: svg, evaluation: evaluateGraphic(svg) });
   }
 
-  for (const graphic of document.querySelectorAll<HTMLElement>('[role="img"]:not(svg)')) {
+  for (const graphic of document.querySelectorAll<HTMLElement>('[role]:not(svg)')) {
+    if (semanticRole(graphic) !== 'img') continue;
     if (owningInteractiveControl(graphic)) continue;
     const reason = graphic instanceof HTMLCanvasElement ? undefined : cssGraphicReason(graphic);
     if (!(graphic instanceof HTMLCanvasElement) && !reason) continue;
