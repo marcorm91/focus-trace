@@ -49,7 +49,7 @@ describe('contrast state coverage', () => {
     );
     const target = document.querySelector<HTMLButtonElement>('#target')!;
     target.focus();
-    expect(observedContrastStates(target)).toContain('focus');
+    expect(observedContrastStates(target)).toEqual(expect.arrayContaining(['focus-visible']));
     expect(evaluateContrastStateCoverage().some((signal) => signal.state === 'focus')).toBe(false);
   });
 
