@@ -53,6 +53,31 @@ describe('contrast state coverage', () => {
     expect(evaluateContrastStateCoverage().some((signal) => signal.state === 'focus')).toBe(false);
   });
 
+  it('keeps coverage per element when only one matching control is observed', () => {
+    render(
+      '<style>.target:focus { color: #777; }</style>',
+      '<button id="first" class="target">First</button><button id="second" class="target">Second</button>',
+    );
+    document.querySelector<HTMLButtonElement>('#first')!.focus();
+    const signals = evaluateContrastStateCoverage().filter((signal) => signal.state === 'focus');
+    expect(signals).toHaveLength(1);
+    expect(signals[0]?.element.id).toBe('second');
+  });
+
+  it('recognizes contrast-related CSS custom properties used by component libraries', () => {
+    render(
+      '<style>#target:hover { --bs-btn-hover-color: #777; --bs-btn-hover-bg: #fff; }</style>',
+      '<button id="target">Action</button>',
+    );
+    expect(evaluateContrastStateCoverage()).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        state: 'hover',
+        kind: 'text',
+        properties: expect.arrayContaining(['--bs-btn-hover-bg', '--bs-btn-hover-color']),
+      }),
+    ]));
+  });
+
   it('tracks authored ARIA expanded states that are not currently active', () => {
     render(
       '<style>#target[aria-expanded="true"] { color: #777; }</style>',
