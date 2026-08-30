@@ -92,6 +92,23 @@ describe('runtime session state helpers', () => {
     expect(trimmed.length).toBeGreaterThan(MAX_RUNTIME_EVENTS);
   });
 
+  it('preserves a correlated interaction when ambient evidence sits on the retention boundary', () => {
+    const events = Array.from({ length: MAX_RUNTIME_EVENTS + 10 }, (_, index) => {
+      const id = String(index + 1);
+      const interactionId = index === 8 || index === 12 ? 'ix-interleaved' : undefined;
+      return event(id, {
+        timestamp: index + 1,
+        ...(interactionId ? { interactionId } : {}),
+      });
+    });
+
+    const trimmed = trimRuntimeEvents(events);
+
+    expect(trimmed[0]?.id).toBe('9');
+    expect(trimmed.filter((item) => item.interactionId === 'ix-interleaved').map((item) => item.id)).toEqual(['9', '13']);
+    expect(trimmed.length).toBe(MAX_RUNTIME_EVENTS + 2);
+  });
+
   it('keeps an automatic focus walk complete when the retention boundary lands inside it', () => {
     const events: RuntimeEvent[] = [];
     for (let index = 1; index <= 8; index += 1) events.push(event(String(index), { timestamp: index }));
