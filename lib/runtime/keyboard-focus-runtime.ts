@@ -18,10 +18,20 @@ export type KeyboardFocusProbe = ManagedKeyboardFocusProbe | BoundaryKeyboardFoc
 
 type PendingRuntimeEvent = Omit<RuntimeEvent, 'id' | 'timestamp'>;
 
+function hasKeyboardModifier(action: KeyboardFocusAction): boolean {
+  return action.kind === 'keydown'
+    && Boolean(action.ctrlKey || action.altKey || action.shiftKey || action.metaKey);
+}
+
 export function captureKeyboardFocusProbes(
   target: Element,
   action: KeyboardFocusAction,
 ): KeyboardFocusProbe[] {
+  // APG expectations in this module model the unmodified key bindings.
+  // Preserve modified shortcuts in Trace, but do not reinterpret them as the
+  // corresponding plain Arrow/Home/End/activation key.
+  if (hasKeyboardModifier(action)) return [];
+
   return [
     ...captureManagedKeyboardFocusProbes(target, action),
     ...captureBoundaryKeyboardFocusProbes(target, action),
