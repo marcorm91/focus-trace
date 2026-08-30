@@ -141,7 +141,7 @@ function ariaWidgetEventTitle(event: RuntimeEvent, language: AppLanguage): strin
     case 'FT-APG-004':
       return tr(language, 'Activated tab did not become selected', 'La pestaña activada no pasó a estar seleccionada');
     case 'FT-APG-005':
-      return tr(language, 'Menu opened without moving focus inside', 'El menú se abrió sin mover el foco a su interior');
+      return tr(language, 'Menu button keyboard behavior needs review', 'El comportamiento por teclado del botón de menú requiere revisión');
     case 'FT-APG-006':
       return tr(language, 'Review Escape behavior for the open menu', 'Revisa el comportamiento de Escape en el menú abierto');
     case 'FT-APG-007':
@@ -155,11 +155,25 @@ function ariaWidgetEventTitle(event: RuntimeEvent, language: AppLanguage): strin
     case 'FT-APG-011':
       return tr(language, 'Composite widget exposes multiple roving tab stops', 'El widget compuesto expone varios puntos de tabulación roving');
     case 'FT-APG-012':
-      return tr(language, 'Tree arrow navigation did not match the expected behavior', 'La navegación con flechas del árbol no coincide con el comportamiento esperado');
+      return tr(language, 'Tree keyboard navigation did not match the expected behavior', 'La navegación por teclado del árbol no coincide con el comportamiento esperado');
     case 'FT-APG-013':
-      return tr(language, 'Grid arrow navigation did not match the expected behavior', 'La navegación con flechas del grid no coincide con el comportamiento esperado');
+      return tr(language, 'Grid or treegrid keyboard navigation did not match the expected behavior', 'La navegación por teclado del grid o treegrid no coincide con el comportamiento esperado');
     case 'FT-APG-014':
       return tr(language, 'Single-select tree exposes multiple selected items', 'El árbol de selección única expone varios elementos seleccionados');
+    case 'FT-APG-015':
+      return tr(language, 'Tab arrow navigation did not reach the expected tab', 'La navegación con flechas de las pestañas no llegó a la pestaña esperada');
+    case 'FT-APG-016':
+      return tr(language, 'Radio group arrow navigation needs review', 'La navegación con flechas del grupo de opciones requiere revisión');
+    case 'FT-APG-017':
+      return tr(language, 'Toolbar arrow navigation did not reach the expected control', 'La navegación con flechas de la barra de herramientas no llegó al control esperado');
+    case 'FT-APG-018':
+      return tr(language, 'Menu arrow navigation did not reach the expected item', 'La navegación con flechas del menú no llegó al elemento esperado');
+    case 'FT-APG-019':
+      return tr(language, 'Listbox arrow navigation did not reach the expected option', 'La navegación con flechas del listbox no llegó a la opción esperada');
+    case 'FT-APG-020':
+      return tr(language, 'Escape did not close the open modal dialog', 'Escape no cerró el diálogo modal abierto');
+    case 'FT-APG-021':
+      return tr(language, 'Disclosure keyboard activation did not toggle the expanded state', 'La activación por teclado del desplegable no cambió el estado expandido');
     default:
       return event.title;
   }
