@@ -1,4 +1,4 @@
-import { accessibleName, isProgrammaticallyHidden, selectorFor } from '../audit/dom';
+import { accessibleName, isProgrammaticallyHidden, selectorFor, semanticRole } from '../audit/dom';
 import type { ElementAttributesSnapshot, ElementSnapshot } from '../../shared/types';
 
 function snapshotAttributes(element: Element): ElementAttributesSnapshot | undefined {
@@ -35,7 +35,7 @@ export function snapshot(
       : {}),
   };
   if (element.id) result.id = element.id;
-  const role = element.getAttribute('role');
+  const role = semanticRole(element);
   if (role) result.role = role;
   const attributes = snapshotAttributes(element);
   if (attributes) result.attributes = attributes;
@@ -49,30 +49,57 @@ export function snapshot(
 }
 
 export function actionTarget(element: Element): Element {
-  return element.closest('button, a[href], input, select, textarea, [role="button"], [role="link"], [tabindex]') ?? element;
+  let current: Element | null = element;
+  while (current) {
+    const role = semanticRole(current);
+    if (
+      current instanceof HTMLButtonElement
+      || (current instanceof HTMLAnchorElement && current.hasAttribute('href'))
+      || current instanceof HTMLInputElement
+      || current instanceof HTMLSelectElement
+      || current instanceof HTMLTextAreaElement
+      || role === 'button'
+      || role === 'link'
+      || current.hasAttribute('tabindex')
+    ) {
+      return current;
+    }
+    current = current.parentElement;
+  }
+  return element;
+}
+
+function isDialogRole(element: Element): boolean {
+  const role = semanticRole(element);
+  return role === 'dialog' || role === 'alertdialog';
 }
 
 export function findDialogs(root: Node): Element[] {
   if (!(root instanceof Element)) return [];
   const dialogs: Element[] = [];
-  if (root.matches('dialog[open], [role="dialog"], [role="alertdialog"]')) dialogs.push(root);
-  dialogs.push(...root.querySelectorAll('dialog[open], [role="dialog"], [role="alertdialog"]'));
-  return dialogs;
+  if ((root instanceof HTMLDialogElement && root.open) || isDialogRole(root)) dialogs.push(root);
+  for (const candidate of root.querySelectorAll('dialog[open], [role]')) {
+    if ((candidate instanceof HTMLDialogElement && candidate.open) || isDialogRole(candidate)) dialogs.push(candidate);
+  }
+  return [...new Set(dialogs)];
 }
 
 export function findSignificantAddedElements(root: Node): Element[] {
   if (!(root instanceof Element)) return [];
-  const candidates = [
-    ...(root.matches('dialog, [role="dialog"], [role="alertdialog"], [autofocus]') ? [root] : []),
-    ...root.querySelectorAll('dialog, [role="dialog"], [role="alertdialog"], [autofocus]'),
-  ];
+  const candidates: Element[] = [];
+  if (root instanceof HTMLDialogElement || isDialogRole(root) || root.hasAttribute('autofocus')) candidates.push(root);
+  for (const candidate of root.querySelectorAll('dialog, [role], [autofocus]')) {
+    if (candidate instanceof HTMLDialogElement || isDialogRole(candidate) || candidate.hasAttribute('autofocus')) {
+      candidates.push(candidate);
+    }
+  }
   return [...new Set(candidates)].slice(0, 6);
 }
 
 export function isDialogOpen(dialog: Element): boolean {
   if (!dialog.isConnected || isProgrammaticallyHidden(dialog)) return false;
   if (dialog instanceof HTMLDialogElement) return dialog.open;
-  return dialog.matches('[role="dialog"], [role="alertdialog"]');
+  return isDialogRole(dialog);
 }
 
 export function isModalDialog(dialog: Element): boolean {
