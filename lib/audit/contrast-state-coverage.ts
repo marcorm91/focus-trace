@@ -1,3 +1,5 @@
+import { isDisabledUiComponent } from './dom';
+
 export type ContrastStateName =
   | 'hover'
   | 'active'
@@ -189,12 +191,7 @@ function inScope(root: Document | Element, element: Element): boolean {
 }
 
 export function isInactiveContrastElement(element: Element): boolean {
-  if (element.closest('[aria-disabled="true" i]')) return true;
-  try {
-    return element.matches(':disabled') || Boolean(element.closest(':disabled'));
-  } catch {
-    return false;
-  }
+  return isDisabledUiComponent(element);
 }
 
 function hasRenderedTextCandidate(element: Element): boolean {
