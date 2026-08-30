@@ -7,6 +7,10 @@ import {
   type RuntimeWidgetAction,
 } from '../lib/runtime/aria-widget-runtime';
 import {
+  captureKeyboardFocusProbes,
+  evaluateKeyboardFocusProbe,
+} from '../lib/runtime/keyboard-focus-runtime';
+import {
   createRuntimeBreakpointHits,
   defaultRuntimeBreakpointSettings,
   normalizeRuntimeBreakpointSettings,
@@ -179,16 +183,20 @@ export default defineContentScript({
       action: RuntimeWidgetAction,
       interactionId: string,
     ) => {
-      const probes = captureAriaWidgetProbes(target, action);
-      if (!probes.length) return;
+      const ariaProbes = captureAriaWidgetProbes(target, action);
+      const keyboardFocusProbes = captureKeyboardFocusProbes(target, action);
+      if (!ariaProbes.length && !keyboardFocusProbes.length) return;
       ctx.setTimeout(() => {
         if (!recording) return;
-        for (const probe of probes) {
+        for (const probe of ariaProbes) {
           const finding = evaluateAriaWidgetProbe(probe);
           // Virtual focus is chronological evidence, so it is emitted from the
           // actual aria-activedescendant mutation instead of this stabilized pass.
           if (finding?.kind === 'virtual-focus') continue;
           emitAriaWidgetFinding(finding, interactionId);
+        }
+        for (const probe of keyboardFocusProbes) {
+          emitAriaWidgetFinding(evaluateKeyboardFocusProbe(probe), interactionId);
         }
       }, 320);
     };
@@ -334,7 +342,7 @@ export default defineContentScript({
       (rawEvent) => {
         if (!recording) return;
         const event = rawEvent as KeyboardEvent;
-        if (!['Tab', 'Enter', 'Escape', ' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+        if (!['Tab', 'Enter', 'Escape', ' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
         if (event.key === 'Tab') pendingFocusIntent = event.shiftKey ? 'backward' : 'forward';
         const target = event.target instanceof Element ? actionTarget(event.target) : null;
         const interactionId = beginInteraction('keyboard', target, event.key);
