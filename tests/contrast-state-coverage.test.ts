@@ -66,13 +66,14 @@ describe('contrast state coverage', () => {
 
   it('recognizes contrast-related CSS custom properties used by component libraries', () => {
     render(
-      '<style>#target:hover { --bs-btn-hover-color: #777; --bs-btn-hover-bg: #fff; }</style>',
-      '<button id="target">Action</button>',
+      '<style>#variable-target:hover { --bs-btn-hover-color: #777; --bs-btn-hover-bg: #fff; }</style>',
+      '<button id="variable-target">Action</button>',
     );
     expect(evaluateContrastStateCoverage()).toEqual(expect.arrayContaining([
       expect.objectContaining({
         state: 'hover',
         kind: 'text',
+        selector: '#variable-target:hover',
         properties: expect.arrayContaining(['--bs-btn-hover-bg', '--bs-btn-hover-color']),
       }),
     ]));
