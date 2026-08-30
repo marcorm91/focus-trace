@@ -4,8 +4,12 @@ import {
   captureAriaWidgetProbes,
   createDynamicDialogNameReview,
   evaluateAriaWidgetProbe,
-  type RuntimeWidgetAction,
 } from '../lib/runtime/aria-widget-runtime';
+import {
+  captureKeyboardFocusProbes,
+  evaluateKeyboardFocusProbe,
+  type KeyboardFocusAction,
+} from '../lib/runtime/keyboard-focus-runtime';
 import {
   createRuntimeBreakpointHits,
   defaultRuntimeBreakpointSettings,
@@ -67,6 +71,21 @@ interface DialogState {
 
 const DIALOG_SELECTOR = 'dialog, [role="dialog"], [role="alertdialog"]';
 const DIALOG_STATE_ATTRIBUTES = new Set(['open', 'role', 'aria-hidden', 'hidden', 'class', 'style']);
+
+function keyboardEventLabel(event: KeyboardEvent): string {
+  const parts: string[] = [];
+  if (event.ctrlKey) parts.push('Control');
+  if (event.altKey) parts.push('Alt');
+  if (event.shiftKey) parts.push('Shift');
+  if (event.metaKey) parts.push('Meta');
+  parts.push(event.key === ' ' ? 'Space' : event.key);
+  return parts.join('+');
+}
+
+function hasKeyboardModifier(action: KeyboardFocusAction): boolean {
+  return action.kind === 'keydown'
+    && Boolean(action.ctrlKey || action.altKey || action.shiftKey || action.metaKey);
+}
 
 export default defineContentScript({
   registration: 'runtime',
@@ -176,19 +195,26 @@ export default defineContentScript({
 
     const scheduleAriaWidgetEvaluation = (
       target: Element,
-      action: RuntimeWidgetAction,
+      action: KeyboardFocusAction,
       interactionId: string,
     ) => {
-      const probes = captureAriaWidgetProbes(target, action);
-      if (!probes.length) return;
+      // Runtime APG/ARIA probes model the documented unmodified bindings.
+      // Modified shortcuts remain in raw Trace evidence but are not reinterpreted
+      // as the corresponding plain key behavior.
+      const ariaProbes = hasKeyboardModifier(action) ? [] : captureAriaWidgetProbes(target, action);
+      const keyboardFocusProbes = captureKeyboardFocusProbes(target, action);
+      if (!ariaProbes.length && !keyboardFocusProbes.length) return;
       ctx.setTimeout(() => {
         if (!recording) return;
-        for (const probe of probes) {
+        for (const probe of ariaProbes) {
           const finding = evaluateAriaWidgetProbe(probe);
           // Virtual focus is chronological evidence, so it is emitted from the
           // actual aria-activedescendant mutation instead of this stabilized pass.
           if (finding?.kind === 'virtual-focus') continue;
           emitAriaWidgetFinding(finding, interactionId);
+        }
+        for (const probe of keyboardFocusProbes) {
+          emitAriaWidgetFinding(evaluateKeyboardFocusProbe(probe), interactionId);
         }
       }, 320);
     };
@@ -334,19 +360,28 @@ export default defineContentScript({
       (rawEvent) => {
         if (!recording) return;
         const event = rawEvent as KeyboardEvent;
-        if (!['Tab', 'Enter', 'Escape', ' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+        if (!['Tab', 'Enter', 'Escape', ' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
         if (event.key === 'Tab') pendingFocusIntent = event.shiftKey ? 'backward' : 'forward';
         const target = event.target instanceof Element ? actionTarget(event.target) : null;
-        const interactionId = beginInteraction('keyboard', target, event.key);
+        const keyLabel = keyboardEventLabel(event);
+        const action: KeyboardFocusAction = {
+          kind: 'keydown',
+          key: event.key,
+          ctrlKey: event.ctrlKey,
+          altKey: event.altKey,
+          shiftKey: event.shiftKey,
+          metaKey: event.metaKey,
+        };
+        const interactionId = beginInteraction('keyboard', target, keyLabel);
         if (target && ['Enter', ' ', 'ArrowUp', 'ArrowDown'].includes(event.key)) lastActionElement = target;
         emit(
           createKeydownEvent({
-            key: event.key,
+            key: keyLabel,
             ...(target ? { element: snapshot(target) } : {}),
           }),
           interactionId,
         );
-        if (target) scheduleAriaWidgetEvaluation(target, { kind: 'keydown', key: event.key }, interactionId);
+        if (target) scheduleAriaWidgetEvaluation(target, action, interactionId);
       },
       true,
     );

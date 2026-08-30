@@ -1,0 +1,258 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>FocusTrace keyboard focus runtime fixture</title>
+    <style>
+      [hidden] { display: none !important; }
+      section { margin-block: 1rem; }
+      [role="tab"], [role="radio"], [role="menuitem"], [role="option"], [role="treeitem"], [role="gridcell"], [role="row"] { padding: 0.25rem; }
+    </style>
+  </head>
+  <body>
+    <h1>Keyboard focus runtime fixture</h1>
+
+    <section>
+      <h2>Broken tabs</h2>
+      <div role="tablist" aria-label="Broken tabs">
+        <button id="broken-tab-a" role="tab" tabindex="0" aria-selected="true">A</button>
+        <button id="broken-tab-b" role="tab" tabindex="-1" aria-selected="false">B</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Valid tabs</h2>
+      <div id="valid-tabs" role="tablist" aria-label="Valid tabs">
+        <button id="valid-tab-a" role="tab" tabindex="0" aria-selected="true">A</button>
+        <button id="valid-tab-b" role="tab" tabindex="-1" aria-selected="false">B</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Broken radios</h2>
+      <div role="radiogroup" aria-label="Broken radios">
+        <button id="broken-radio-a" role="radio" tabindex="0" aria-checked="true">A</button>
+        <button id="broken-radio-b" role="radio" tabindex="-1" aria-checked="false">B</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Valid radios</h2>
+      <div id="valid-radios" role="radiogroup" aria-label="Valid radios">
+        <button id="valid-radio-a" role="radio" tabindex="0" aria-checked="true">A</button>
+        <button id="valid-radio-b" role="radio" tabindex="-1" aria-checked="false">B</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Broken toolbar</h2>
+      <div role="toolbar" aria-label="Broken toolbar">
+        <button id="broken-tool-a" tabindex="0">A</button>
+        <button id="broken-tool-b" tabindex="-1">B</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Valid toolbar</h2>
+      <div id="valid-toolbar" role="toolbar" aria-label="Valid toolbar">
+        <button id="valid-tool-a" tabindex="0">A</button>
+        <button id="valid-tool-b" tabindex="-1">B</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Broken menu</h2>
+      <div role="menu" aria-label="Broken menu">
+        <button id="broken-menu-a" role="menuitem" tabindex="0">A</button>
+        <button id="broken-menu-b" role="menuitem" tabindex="-1">B</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Valid menu button</h2>
+      <button id="valid-menu-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="valid-menu">Actions</button>
+      <div id="valid-menu" role="menu" hidden>
+        <button id="valid-menu-a" role="menuitem" tabindex="-1">A</button>
+        <button id="valid-menu-b" role="menuitem" tabindex="-1">B</button>
+      </div>
+      <button id="broken-menu-trigger" aria-haspopup="menu" aria-expanded="false" aria-controls="broken-popup">Broken actions</button>
+      <div id="broken-popup" role="menu" hidden>
+        <button role="menuitem" tabindex="-1">First</button>
+        <button role="menuitem" tabindex="-1">Second</button>
+      </div>
+    </section>
+
+    <section>
+      <h2>Broken listbox</h2>
+      <div id="broken-listbox" role="listbox" tabindex="0" aria-label="Broken listbox" aria-activedescendant="broken-option-a">
+        <div id="broken-option-a" role="option" aria-selected="true">A</div>
+        <div id="broken-option-b" role="option" aria-selected="false">B</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Valid listbox</h2>
+      <div id="valid-listbox" role="listbox" tabindex="0" aria-label="Valid listbox" aria-activedescendant="valid-option-a">
+        <div id="valid-option-a" role="option" aria-selected="true">A</div>
+        <div id="valid-option-b" role="option" aria-selected="false">B</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Disclosures</h2>
+      <button id="broken-disclosure" aria-expanded="false" aria-controls="broken-panel">Broken details</button>
+      <div id="broken-panel" hidden>Broken panel</div>
+      <button id="valid-disclosure" aria-expanded="false" aria-controls="valid-panel">Valid details</button>
+      <div id="valid-panel" hidden>Valid panel</div>
+    </section>
+
+    <section>
+      <h2>Trees</h2>
+      <div role="tree" aria-label="Broken tree">
+        <div id="broken-tree-a" role="treeitem" tabindex="-1">A</div>
+        <div id="broken-tree-b" role="treeitem" tabindex="0">B</div>
+        <div id="broken-tree-c" role="treeitem" tabindex="-1">C</div>
+      </div>
+      <div id="valid-tree" role="tree" aria-label="Valid tree">
+        <div id="valid-tree-a" role="treeitem" tabindex="-1">A</div>
+        <div id="valid-tree-b" role="treeitem" tabindex="0">B</div>
+        <div id="valid-tree-c" role="treeitem" tabindex="-1">C</div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Grids</h2>
+      <div role="grid" aria-label="Broken grid">
+        <div role="row">
+          <div id="broken-grid-a" role="gridcell" tabindex="-1">A</div>
+          <div id="broken-grid-b" role="gridcell" tabindex="0">B</div>
+          <div id="broken-grid-c" role="gridcell" tabindex="-1">C</div>
+        </div>
+      </div>
+      <div id="valid-grid" role="grid" aria-label="Valid grid">
+        <div role="row">
+          <div id="valid-grid-a" role="gridcell" tabindex="-1">A</div>
+          <div id="valid-grid-b" role="gridcell" tabindex="0">B</div>
+          <div id="valid-grid-c" role="gridcell" tabindex="-1">C</div>
+        </div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Treegrid</h2>
+      <div role="treegrid" aria-label="Broken treegrid">
+        <div id="broken-row-a" role="row" tabindex="-1"><div role="gridcell">A</div></div>
+        <div id="broken-row-b" role="row" tabindex="0"><div role="gridcell">B</div></div>
+        <div id="broken-row-c" role="row" tabindex="-1"><div role="gridcell">C</div></div>
+      </div>
+    </section>
+
+    <section>
+      <h2>Dialogs</h2>
+      <div id="broken-dialog" role="dialog" aria-modal="true" aria-label="Broken dialog" hidden>
+        <button id="broken-dialog-close">Close</button>
+      </div>
+      <div id="valid-dialog" role="dialog" aria-modal="true" aria-label="Valid dialog" hidden>
+        <button id="valid-dialog-close">Close</button>
+      </div>
+    </section>
+
+    <script>
+      const setRovingFocus = (items, next) => {
+        items.forEach((item) => item.tabIndex = item === next ? 0 : -1);
+        next.focus();
+      };
+
+      const validTabs = [...document.querySelectorAll('#valid-tabs [role="tab"]')];
+      document.querySelector('#valid-tabs').addEventListener('keydown', (event) => {
+        if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+        const current = validTabs.indexOf(document.activeElement);
+        const direction = event.key === 'ArrowRight' ? 1 : -1;
+        const next = validTabs[(current + direction + validTabs.length) % validTabs.length];
+        validTabs.forEach((tab) => {
+          tab.setAttribute('aria-selected', tab === next ? 'true' : 'false');
+        });
+        setRovingFocus(validTabs, next);
+        event.preventDefault();
+      });
+
+      const validRadios = [...document.querySelectorAll('#valid-radios [role="radio"]')];
+      document.querySelector('#valid-radios').addEventListener('keydown', (event) => {
+        if (!['ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown'].includes(event.key)) return;
+        const current = validRadios.indexOf(document.activeElement);
+        const direction = ['ArrowRight', 'ArrowDown'].includes(event.key) ? 1 : -1;
+        const next = validRadios[(current + direction + validRadios.length) % validRadios.length];
+        validRadios.forEach((radio) => radio.setAttribute('aria-checked', radio === next ? 'true' : 'false'));
+        setRovingFocus(validRadios, next);
+        event.preventDefault();
+      });
+
+      const validTools = [...document.querySelectorAll('#valid-toolbar button')];
+      document.querySelector('#valid-toolbar').addEventListener('keydown', (event) => {
+        if (!['ArrowLeft', 'ArrowRight'].includes(event.key)) return;
+        const current = validTools.indexOf(document.activeElement);
+        const nextIndex = current + (event.key === 'ArrowRight' ? 1 : -1);
+        if (nextIndex < 0 || nextIndex >= validTools.length) return;
+        setRovingFocus(validTools, validTools[nextIndex]);
+        event.preventDefault();
+      });
+
+      const validMenuTrigger = document.querySelector('#valid-menu-trigger');
+      const validMenu = document.querySelector('#valid-menu');
+      const validMenuItems = [...validMenu.querySelectorAll('[role="menuitem"]')];
+      validMenuTrigger.addEventListener('keydown', (event) => {
+        if (!['Enter', ' '].includes(event.key)) return;
+        validMenu.hidden = false;
+        validMenuTrigger.setAttribute('aria-expanded', 'true');
+        setRovingFocus(validMenuItems, validMenuItems[0]);
+        event.preventDefault();
+      });
+      validMenu.addEventListener('keydown', (event) => {
+        if (!['ArrowUp', 'ArrowDown'].includes(event.key)) return;
+        const current = validMenuItems.indexOf(document.activeElement);
+        const nextIndex = current + (event.key === 'ArrowDown' ? 1 : -1);
+        if (nextIndex < 0 || nextIndex >= validMenuItems.length) return;
+        setRovingFocus(validMenuItems, validMenuItems[nextIndex]);
+        event.preventDefault();
+      });
+
+      document.querySelector('#valid-listbox').addEventListener('keydown', (event) => {
+        if (event.key !== 'ArrowDown') return;
+        event.currentTarget.setAttribute('aria-activedescendant', 'valid-option-b');
+        event.preventDefault();
+      });
+
+      document.querySelector('#valid-disclosure').addEventListener('click', (event) => {
+        const button = event.currentTarget;
+        const expanded = button.getAttribute('aria-expanded') === 'true';
+        button.setAttribute('aria-expanded', expanded ? 'false' : 'true');
+        document.querySelector('#valid-panel').hidden = expanded;
+      });
+
+      const validTreeItems = [...document.querySelectorAll('#valid-tree [role="treeitem"]')];
+      document.querySelector('#valid-tree').addEventListener('keydown', (event) => {
+        if (!['Home', 'End'].includes(event.key)) return;
+        setRovingFocus(validTreeItems, event.key === 'Home' ? validTreeItems[0] : validTreeItems[validTreeItems.length - 1]);
+        event.preventDefault();
+      });
+
+      const validGridCells = [...document.querySelectorAll('#valid-grid [role="gridcell"]')];
+      document.querySelector('#valid-grid').addEventListener('keydown', (event) => {
+        if (!['Home', 'End'].includes(event.key)) return;
+        setRovingFocus(validGridCells, event.key === 'Home' ? validGridCells[0] : validGridCells[validGridCells.length - 1]);
+        event.preventDefault();
+      });
+
+      document.querySelector('#valid-dialog').addEventListener('keydown', (event) => {
+        if (event.key !== 'Escape') return;
+        event.currentTarget.hidden = true;
+      });
+
+      window.openRuntimeDialog = (kind) => {
+        const dialog = document.querySelector(`#${kind}-dialog`);
+        dialog.hidden = false;
+        dialog.querySelector('button').focus();
+      };
+    </script>
+  </body>
+</html>
