@@ -48,6 +48,15 @@ describe('QA hardening regressions', () => {
     expect(semanticRole(dialog)).toBe('dialog');
   });
 
+  it('applies image-name scanning to a valid fallback img role', () => {
+    render('<div id="fallback-image" role="future-image img"></div>');
+
+    const scan = runFocusTraceScan();
+    expect(scan.issues.some((issue) =>
+      issue.ruleId === 'FT-WCAG-002'
+      && issue.targets.includes('#fallback-image'))).toBe(true);
+  });
+
   it('keeps aria-disabled controls in keyboard order while excluding inert and natively disabled controls', () => {
     render(`
       <fieldset disabled>
