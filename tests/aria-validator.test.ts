@@ -3,6 +3,7 @@
 import { describe, expect, it } from 'vitest';
 import { evaluateAdvancedAria, resolvedExplicitAriaRole } from '../lib/audit/aria-validator';
 import { runFocusTraceScan } from '../lib/audit/scan';
+import { scanCategoryForRule } from '../shared/scan-categories';
 
 function render(body: string) {
   document.open();
@@ -58,9 +59,33 @@ describe('advanced ARIA validation', () => {
     ]));
   });
 
+  it('validates selected and strict true/false states without rejecting aria-rowspan zero', () => {
+    render(`<div id="tab" role="tab" aria-selected="maybe">Tab</div>
+      <div id="modal" role="dialog" aria-modal="undefined">Dialog</div>
+      <div role="grid"><div role="row"><div id="cell" role="gridcell" aria-rowspan="0">Cell</div></div></div>`);
+
+    const invalid = signals('invalid-value');
+    expect(invalid.some((signal) => signal.element.id === 'tab' && signal.detail.includes('aria-selected'))).toBe(true);
+    expect(invalid.some((signal) => signal.element.id === 'modal' && signal.detail.includes('aria-modal'))).toBe(true);
+    expect(invalid.some((signal) => signal.element.id === 'cell' && signal.detail.includes('aria-rowspan'))).toBe(false);
+  });
+
   it('keeps custom aria-current tokens valid because ARIA maps unknown tokens to true', () => {
     render('<a id="current" href="/" aria-current="chapter-marker">Current</a>');
     expect(signals('invalid-value').some((signal) => signal.element.id === 'current')).toBe(false);
+  });
+
+  it('reports known ARIA properties that are unsupported by explicit or native roles', () => {
+    render(`<div id="custom-button" role="button" aria-selected="true">Save</div>
+      <button id="native-button" aria-selected="true">Save</button>
+      <div role="tablist"><button id="tab" role="tab" aria-selected="true">Tab</button></div>`);
+
+    const unsupported = signals('unsupported-property');
+    expect(unsupported.map((signal) => signal.element.id)).toEqual(expect.arrayContaining([
+      'custom-button',
+      'native-button',
+    ]));
+    expect(unsupported.map((signal) => signal.element.id)).not.toContain('tab');
   });
 
   it('requires role-specific required properties but accepts an equivalent native host state', () => {
@@ -138,10 +163,58 @@ describe('advanced ARIA validation', () => {
     expect(inconsistent.some((signal) => signal.element.id === 'gridcell' && signal.detail.includes('aria-colindex'))).toBe(true);
   });
 
+  it('requires aria-invalid when aria-errormessage is authored', () => {
+    render('<input id="email" aria-errormessage="email-error"><p id="email-error">Enter a valid email.</p>');
+    const inconsistent = signals('relationship-consistency');
+    expect(inconsistent.some((signal) => signal.element.id === 'email' && signal.detail.includes('without aria-invalid'))).toBe(true);
+  });
+
+  it('checks whether aria-errormessage visibility matches aria-invalid state', () => {
+    render(`<input id="valid" aria-invalid="false" aria-errormessage="visible-error">
+      <p id="visible-error">Should be hidden.</p>
+      <input id="invalid" aria-invalid="true" aria-errormessage="hidden-error">
+      <p id="hidden-error" hidden>Should be exposed.</p>
+      <input id="valid-hidden" aria-invalid="false" aria-errormessage="properly-hidden-error">
+      <p id="properly-hidden-error" hidden>Hidden while valid.</p>`);
+
+    const inconsistent = signals('relationship-consistency');
+    expect(inconsistent.some((signal) => signal.element.id === 'valid' && signal.detail.includes('visible error content'))).toBe(true);
+    expect(inconsistent.some((signal) => signal.element.id === 'invalid' && signal.detail.includes('hidden from users'))).toBe(true);
+    expect(inconsistent.some((signal) => signal.element.id === 'valid-hidden')).toBe(false);
+  });
+
+  it('checks static aria-expanded state against controlled content availability', () => {
+    render(`<button id="open-mismatch" aria-expanded="true" aria-controls="hidden-panel">Open</button>
+      <div id="hidden-panel" hidden>Panel</div>
+      <button id="closed-mismatch" aria-expanded="false" aria-controls="visible-panel">Closed</button>
+      <div id="visible-panel">Panel</div>
+      <button id="closed-valid" aria-expanded="false" aria-controls="closed-panel">Closed</button>
+      <div id="closed-panel" hidden>Panel</div>`);
+
+    const inconsistent = signals('relationship-consistency');
+    expect(inconsistent.map((signal) => signal.element.id)).toEqual(expect.arrayContaining([
+      'open-mismatch',
+      'closed-mismatch',
+    ]));
+    expect(inconsistent.map((signal) => signal.element.id)).not.toContain('closed-valid');
+  });
+
   it('integrates deterministic ARIA authoring errors as warnings, not WCAG failures', () => {
-    render('<div id="check" role="checkbox">Receive updates</div>');
+    render(`<div id="check" role="checkbox">Receive updates</div>
+      <div id="bad-state" role="button" aria-selected="true">Save</div>
+      <input id="error-field" aria-errormessage="error-message"><span id="error-message">Required</span>`);
     const result = runFocusTraceScan();
-    expect(result.warnings.map((issue) => issue.ruleId)).toContain('FT-WARN-015');
-    expect(result.issues.map((issue) => issue.ruleId)).not.toContain('FT-WARN-015');
+    expect(result.warnings.map((issue) => issue.ruleId)).toEqual(expect.arrayContaining([
+      'FT-WARN-015',
+      'FT-WARN-020',
+      'FT-WARN-021',
+    ]));
+    expect(result.issues.map((issue) => issue.ruleId)).not.toEqual(expect.arrayContaining([
+      'FT-WARN-015',
+      'FT-WARN-020',
+      'FT-WARN-021',
+    ]));
+    expect(scanCategoryForRule('FT-WARN-020')).toBe('aria');
+    expect(scanCategoryForRule('FT-WARN-021')).toBe('aria');
   });
 });
