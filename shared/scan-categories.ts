@@ -41,6 +41,8 @@ const RULE_CATEGORY: Record<string, Exclude<ScanCategory, 'all'>> = {
   'FT-WARN-017': 'aria',
   'FT-WARN-018': 'aria',
   'FT-WARN-019': 'aria',
+  'FT-WARN-020': 'aria',
+  'FT-WARN-021': 'aria',
   'FT-REVIEW-001': 'keyboard',
   'FT-REVIEW-002': 'structure',
   'FT-REVIEW-003': 'forms',
