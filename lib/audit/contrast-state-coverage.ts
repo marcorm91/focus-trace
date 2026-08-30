@@ -110,14 +110,16 @@ function splitSelectorList(selectorText: string): string[] {
   return selectors;
 }
 
-function ruleProperties(style: CSSStyleDeclaration): string[] {
+function ruleProperties(rule: CSSStyleRule): string[] {
   const properties = new Set<string>();
-  for (let index = 0; index < style.length; index += 1) {
-    const property = style.item(index).toLowerCase();
+  for (let index = 0; index < rule.style.length; index += 1) {
+    const property = rule.style.item(index).toLowerCase();
     if (property) properties.add(property);
   }
-  for (const match of style.cssText.matchAll(/(--[\w-]+)\s*:/g)) {
-    if (match[1]) properties.add(match[1].toLowerCase());
+  for (const source of [rule.style.cssText, rule.cssText]) {
+    for (const match of source.matchAll(/(--[\w-]+)\s*:/g)) {
+      if (match[1]) properties.add(match[1].toLowerCase());
+    }
   }
   return [...properties];
 }
@@ -270,7 +272,7 @@ export function evaluateContrastStateCoverage(root: Document | Element = documen
   };
 
   for (const rule of authorStyleRules()) {
-    const properties = ruleProperties(rule.style);
+    const properties = ruleProperties(rule);
     if (!properties.some(propertyIsContrastRelevant)) continue;
 
     for (const selector of splitSelectorList(rule.selectorText)) {
