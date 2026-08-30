@@ -66,6 +66,45 @@ describe('FocusTrace bilingual presentation', () => {
     expect(spanish.evidence).toContain('#dialog-panel');
   });
 
+  it('localizes the new ARIA semantic warnings in both supported languages', () => {
+    const unsupported: ScanIssue = {
+      id: 'issue-aria-unsupported',
+      ruleId: 'FT-WARN-020',
+      title: 'ARIA state or property is not supported by the resolved role',
+      description: 'This known ARIA state/property is not supported by the resolved role.',
+      evidence: 'aria-selected is not supported by role="button".',
+      severity: 'serious',
+      outcome: 'warning',
+      targets: ['#save'],
+      references: [],
+    };
+    const relationship: ScanIssue = {
+      id: 'issue-aria-relationship',
+      ruleId: 'FT-WARN-021',
+      title: 'ARIA relationship and exposed state are inconsistent',
+      description: 'The ARIA relationship resolves but contradicts the exposed state.',
+      evidence: 'aria-expanded="true" contradicts the current availability of #panel.',
+      severity: 'serious',
+      outcome: 'warning',
+      targets: ['#toggle'],
+      references: [],
+    };
+
+    const unsupportedEs = localizedScanIssue(unsupported, 'es');
+    const relationshipEs = localizedScanIssue(relationship, 'es');
+    const unsupportedEn = localizedScanIssue(unsupported, 'en');
+    const relationshipEn = localizedScanIssue(relationship, 'en');
+
+    expect(unsupportedEs.title).toContain('no es compatible con el rol');
+    expect(unsupportedEs.description).toContain('tecnologías de asistencia');
+    expect(relationshipEs.title).toContain('relación ARIA');
+    expect(relationshipEs.description).toContain('aria-invalid');
+    expect(unsupportedEn.title).toBe(unsupported.title);
+    expect(relationshipEn.title).toBe(relationship.title);
+    expect(unsupportedEs.evidence).toBe(unsupported.evidence);
+    expect(relationshipEs.evidence).toBe(relationship.evidence);
+  });
+
   it('keeps English as the default explanation language', () => {
     expect(explanationForCause('FOCUSED_NODE_REMOVED').title).toBe('Focus was lost after an element disappeared');
     expect(outcomeLabel('fail', 'simple')).toBe('issue');

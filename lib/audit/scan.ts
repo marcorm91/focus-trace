@@ -3,12 +3,14 @@ import {
   ALLOWED_ARIA_CHILD_RULE,
   ADVANCED_ARIA_RULES,
   ARIA_REFERENCE_RULE,
+  ARIA_RELATIONSHIP_CONSISTENCY_RULE,
   ARIA_STATE_CONSISTENCY_RULE,
   INVALID_ARIA_ROLE_RULE,
   INVALID_ARIA_VALUE_RULE,
   REQUIRED_ARIA_PARENT_RULE,
   REQUIRED_ARIA_PROPERTY_RULE,
   UNKNOWN_ARIA_ATTRIBUTE_RULE,
+  UNSUPPORTED_ARIA_PROPERTY_RULE,
 } from '../../shared/aria-authoring-rules';
 import {
   HTML_CONTENT_MODEL_RULE,
@@ -46,6 +48,8 @@ const RULE_FOR_ARIA_KIND = {
   'required-parent': REQUIRED_ARIA_PARENT_RULE,
   'allowed-child': ALLOWED_ARIA_CHILD_RULE,
   'state-consistency': ARIA_STATE_CONSISTENCY_RULE,
+  'unsupported-property': UNSUPPORTED_ARIA_PROPERTY_RULE,
+  'relationship-consistency': ARIA_RELATIONSHIP_CONSISTENCY_RULE,
 } satisfies Record<AriaValidationSignalKind, (typeof ADVANCED_ARIA_RULES)[number]>;
 
 const REVIEW_KINDS = new Set<StructuralHtmlSignalKind>(['section-heading', 'landmark-label']);
@@ -86,6 +90,10 @@ function ariaDescriptionFor(kind: AriaValidationSignalKind): string {
       return 'This ARIA container exposes a semantic accessibility child role that is outside the role model allowed for that container.';
     case 'state-consistency':
       return 'The element exposes ARIA range, position or set metadata whose values contradict each other even though the individual attributes may be syntactically valid.';
+    case 'unsupported-property':
+      return 'This known ARIA state/property is not supported by the element’s resolved explicit or native role in the synced WAI-ARIA role registry.';
+    case 'relationship-consistency':
+      return 'The ARIA relationship resolves, but the owner’s exposed state contradicts the relationship or the availability of the referenced content.';
   }
 }
 

@@ -56,6 +56,14 @@ const EXTRA_COPY_ES: Record<string, { title: string; description: string }> = {
     title: 'El rango o estado de conjunto ARIA es internamente incoherente',
     description: 'El elemento expone valores ARIA de rango, posición o conjunto que se contradicen entre sí aunque cada atributo individual pueda ser sintácticamente válido.',
   },
+  'FT-WARN-020': {
+    title: 'El estado o propiedad ARIA no es compatible con el rol resuelto',
+    description: 'Este estado o propiedad ARIA existe en WAI-ARIA, pero no está admitido por el rol explícito o nativo resuelto para el elemento. La semántica resultante queda indefinida y las tecnologías de asistencia pueden ignorar el estado previsto.',
+  },
+  'FT-WARN-021': {
+    title: 'La relación ARIA y el estado expuesto son incoherentes',
+    description: 'La relación ARIA resuelve correctamente, pero el estado expuesto por el elemento contradice esa relación o la disponibilidad actual del contenido relacionado. Revisa aria-invalid, aria-errormessage, aria-expanded y aria-controls según la evidencia.',
+  },
   'FT-REVIEW-009': {
     title: 'El contenido de sección debería poder identificarse por su estructura',
     description: 'Este section o article no tiene un encabezado que le pertenezca ni un nombre accesible calculado. Revisa si la sección puede identificarse correctamente o si un contenedor genérico se ajustaría mejor al contenido.',
