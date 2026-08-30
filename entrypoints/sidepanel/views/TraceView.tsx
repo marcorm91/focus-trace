@@ -11,6 +11,7 @@ import {
 } from '../../../lib/runtime/focus-transition-semantics';
 import { explanationForCause, humanInteractionTitle, type ExplanationLevel } from '../../../lib/runtime/explanations';
 import { focusDirectionLabel } from '../../../lib/runtime/runtime-presentation';
+import { useRovingTabs } from '../../../lib/ui/roving-tabs';
 import { tr, type AppLanguage } from '../../../shared/i18n';
 import type {
   ExtensionMessage,
@@ -26,6 +27,13 @@ import { ReplayView } from './ReplayView';
 import { RuntimeView } from './RuntimeView';
 
 type TraceMode = 'replay' | 'journey' | 'interactions' | 'graph';
+
+const TRACE_MODES: Array<{ id: TraceMode }> = [
+  { id: 'replay' },
+  { id: 'journey' },
+  { id: 'interactions' },
+  { id: 'graph' },
+];
 
 function directionSymbol(direction: FocusJourney['steps'][number]['direction']): string {
   if (direction === 'backward') return '↩';
@@ -96,6 +104,11 @@ export function TraceView({
     [events, interactions, journey],
   );
   const hasSessionEvidence = events.length > 0;
+  const traceTabProps = useRovingTabs({
+    options: TRACE_MODES,
+    selected: mode,
+    onSelect: setMode,
+  });
 
   useEffect(() => {
     if (previousRecording.current && !recording && events.length > 0) setMode('replay');
@@ -398,11 +411,14 @@ export function TraceView({
 
       <div className="trace-mode-switcher" role="tablist" aria-label={tr(language, 'Trace inspector', 'Inspector de traza')}>
         <button
+          id="trace-mode-tab-replay"
           type="button"
           role="tab"
           title={tr(language, 'Inspect the recorded evidence step by step', 'Inspeccionar la evidencia grabada paso a paso')}
           aria-selected={mode === 'replay'}
+          aria-controls="trace-mode-panel-replay"
           className={mode === 'replay' ? 'active' : ''}
+          {...traceTabProps('replay')}
           onClick={() => setMode('replay')}
         >
           <span className="trace-tab-icon" aria-hidden="true">↶</span>
@@ -410,22 +426,28 @@ export function TraceView({
           {events.length > 0 && <span className="trace-tab-count">{events.length}</span>}
         </button>
         <button
+          id="trace-mode-tab-journey"
           type="button"
           role="tab"
           title={tr(language, 'Inspect the focus journey', 'Inspeccionar el recorrido de foco')}
           aria-selected={mode === 'journey'}
+          aria-controls="trace-mode-panel-journey"
           className={mode === 'journey' ? 'active' : ''}
+          {...traceTabProps('journey')}
           onClick={() => setMode('journey')}
         >
           <span className="trace-tab-icon" aria-hidden="true">⇥</span>
           <span className="trace-tab-label">{tr(language, 'Journey', 'Recorrido')}</span>
         </button>
         <button
+          id="trace-mode-tab-interactions"
           type="button"
           role="tab"
           title={tr(language, 'Inspect correlated runtime interactions', 'Inspeccionar las interacciones runtime correlacionadas')}
           aria-selected={mode === 'interactions'}
+          aria-controls="trace-mode-panel-interactions"
           className={mode === 'interactions' ? 'active' : ''}
+          {...traceTabProps('interactions')}
           onClick={() => setMode('interactions')}
         >
           <span className="trace-tab-icon" aria-hidden="true">⚡</span>
@@ -433,11 +455,14 @@ export function TraceView({
           {findings.length > 0 && <span className="trace-tab-count">{findings.length}</span>}
         </button>
         <button
+          id="trace-mode-tab-graph"
           type="button"
           role="tab"
           title={tr(language, 'Inspect the focus graph', 'Inspeccionar el grafo de foco')}
           aria-selected={mode === 'graph'}
+          aria-controls="trace-mode-panel-graph"
           className={mode === 'graph' ? 'active' : ''}
+          {...traceTabProps('graph')}
           onClick={() => setMode('graph')}
         >
           <span className="trace-tab-icon" aria-hidden="true">⠿</span>
@@ -445,63 +470,91 @@ export function TraceView({
         </button>
       </div>
 
-      <div className="trace-inspector" role="tabpanel">
-        {mode === 'replay' && (
-          <ReplayView
-            events={events}
-            interactions={interactions}
-            journey={journey}
-            semantics={transitionSemantics}
-            recording={recording}
-            level={level}
-            language={language}
-            onSelectFocusTarget={onSelectStep}
-            onClearFocusTarget={onClearSelection}
-          />
-        )}
-        {mode === 'journey' && (
-          <FocusView
-            journey={journey}
-            semantics={transitionSemantics}
-            pathSteps={pathSteps}
-            pathVisible={pathVisible}
-            recording={recording}
-            busy={busy}
-            selectedSelector={selectedSelector}
-            onTogglePath={onTogglePath}
-            onToggleRecording={onToggleRecording}
-            onSelectStep={onSelectStep}
-            language={language}
-          />
-        )}
-        {mode === 'interactions' && (
-          <RuntimeView
-            events={events}
-            interactions={interactions}
-            recording={recording}
-            breakpointSettings={breakpointSettings}
-            pausedByBreakpoint={pausedByBreakpoint}
-            onBreakpointChange={onBreakpointChange}
-            onDeleteInteraction={onDeleteInteraction}
-            level={level}
-            language={language}
-          />
-        )}
-        {mode === 'graph' && (
-          <FocusGraphView
-            graph={graph}
-            interactions={interactions}
-            level={level}
-            language={language}
-            page={page}
-            pathVisible={pathVisible}
-            recording={recording}
-            selectedPageNodeId={selectedSelector}
-            onTogglePath={onTogglePath}
-            onSelectPageNode={onSelectStep}
-            onClearPageNode={onClearSelection}
-          />
-        )}
+      <div className="trace-inspector">
+        <div
+          id="trace-mode-panel-replay"
+          role="tabpanel"
+          aria-labelledby="trace-mode-tab-replay"
+          hidden={mode !== 'replay'}
+        >
+          {mode === 'replay' && (
+            <ReplayView
+              events={events}
+              interactions={interactions}
+              journey={journey}
+              semantics={transitionSemantics}
+              recording={recording}
+              level={level}
+              language={language}
+              onSelectFocusTarget={onSelectStep}
+              onClearFocusTarget={onClearSelection}
+            />
+          )}
+        </div>
+        <div
+          id="trace-mode-panel-journey"
+          role="tabpanel"
+          aria-labelledby="trace-mode-tab-journey"
+          hidden={mode !== 'journey'}
+        >
+          {mode === 'journey' && (
+            <FocusView
+              journey={journey}
+              semantics={transitionSemantics}
+              pathSteps={pathSteps}
+              pathVisible={pathVisible}
+              recording={recording}
+              busy={busy}
+              selectedSelector={selectedSelector}
+              onTogglePath={onTogglePath}
+              onToggleRecording={onToggleRecording}
+              onSelectStep={onSelectStep}
+              language={language}
+            />
+          )}
+        </div>
+        <div
+          id="trace-mode-panel-interactions"
+          role="tabpanel"
+          aria-labelledby="trace-mode-tab-interactions"
+          hidden={mode !== 'interactions'}
+        >
+          {mode === 'interactions' && (
+            <RuntimeView
+              events={events}
+              interactions={interactions}
+              recording={recording}
+              breakpointSettings={breakpointSettings}
+              pausedByBreakpoint={pausedByBreakpoint}
+              onBreakpointChange={onBreakpointChange}
+              onDeleteInteraction={onDeleteInteraction}
+              level={level}
+              language={language}
+            />
+          )}
+        </div>
+        <div
+          id="trace-mode-panel-graph"
+          role="tabpanel"
+          aria-labelledby="trace-mode-tab-graph"
+          hidden={mode !== 'graph'}
+        >
+          {mode === 'graph' && (
+            <FocusGraphView
+              graph={graph}
+              interactions={interactions}
+              level={level}
+              language={language}
+              page={page}
+              pathVisible={pathVisible}
+              recording={recording}
+              selectedPageNodeId={selectedSelector}
+              onTogglePath={onTogglePath}
+              onSelectPageNode={onSelectStep}
+              onClearPageNode={onClearSelection}
+            />
+          )}
+        </div>
       </div>
     </section>
   );

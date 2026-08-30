@@ -65,6 +65,9 @@ interface DialogState {
   openedAt: number;
 }
 
+const DIALOG_SELECTOR = 'dialog, [role="dialog"], [role="alertdialog"]';
+const DIALOG_STATE_ATTRIBUTES = new Set(['open', 'role', 'aria-hidden', 'hidden', 'class', 'style']);
+
 export default defineContentScript({
   registration: 'runtime',
   matches: ['http://*/*', 'https://*/*'],
@@ -86,10 +89,12 @@ export default defineContentScript({
     const interactionTracker = new RuntimeInteractionTracker();
     const dialogs = new Map<Element, DialogState>();
     const emittedAriaWidgetFindings = new Set<string>();
+    const pendingEventDeliveries = new Set<Promise<unknown>>();
 
     const resetObservedDialogs = () => {
       dialogs.clear();
-      for (const dialog of document.querySelectorAll('dialog[open], [role="dialog"], [role="alertdialog"]')) {
+      for (const dialog of document.querySelectorAll(DIALOG_SELECTOR)) {
+        if (!isDialogOpen(dialog)) continue;
         dialogs.set(dialog, { element: dialog, trigger: null, openedAt: Date.now() });
       }
     };
@@ -107,6 +112,18 @@ export default defineContentScript({
         target ? selectorFor(target) : undefined,
         activationKey,
       );
+
+    const queueRuntimeEventDelivery = (message: ExtensionMessage) => {
+      const delivery = browser.runtime.sendMessage(message).catch(() => undefined);
+      pendingEventDeliveries.add(delivery);
+      void delivery.finally(() => pendingEventDeliveries.delete(delivery));
+    };
+
+    const flushPendingEventDeliveries = async () => {
+      while (pendingEventDeliveries.size > 0) {
+        await Promise.allSettled(pendingEventDeliveries);
+      }
+    };
 
     const emit = (
       event: Omit<RuntimeEvent, 'id' | 'timestamp'>,
@@ -133,8 +150,7 @@ export default defineContentScript({
         ...(interactionId ? { interactionId } : {}),
         ...(breakpointHits.length ? { breakpointHits } : {}),
       };
-      const message: ExtensionMessage = { type: 'FOCUSTRACE_EVENT', event: runtimeEvent };
-      void browser.runtime.sendMessage(message).catch(() => undefined);
+      queueRuntimeEventDelivery({ type: 'FOCUSTRACE_EVENT', event: runtimeEvent });
 
       if (breakpointHits.length) {
         recording = false;
@@ -360,7 +376,7 @@ export default defineContentScript({
     );
 
     const registerDialog = (dialog: Element, interactionId = activeInteractionId()) => {
-      if (dialogs.has(dialog)) return;
+      if (dialogs.has(dialog) || !isDialogOpen(dialog)) return;
       const trigger = lastActionElement ?? lastFocused;
       dialogs.set(dialog, { element: dialog, trigger, openedAt: Date.now() });
       queueMicrotask(() => {
@@ -525,7 +541,11 @@ export default defineContentScript({
             }
           }
 
-          if (attribute === 'open' && attributeTarget.matches('dialog') && isDialogOpen(attributeTarget)) {
+          if (
+            DIALOG_STATE_ATTRIBUTES.has(attribute)
+            && attributeTarget.matches(DIALOG_SELECTOR)
+            && isDialogOpen(attributeTarget)
+          ) {
             registerDialog(attributeTarget, interactionId);
           }
         }
@@ -619,6 +639,10 @@ export default defineContentScript({
 
     browser.runtime.onMessage.addListener((message: ExtensionMessage | { type: 'FOCUSTRACE_PING' }) => {
       if (message.type === 'FOCUSTRACE_PING') return Promise.resolve(true);
+
+      if (message.type === 'FOCUSTRACE_FLUSH_CONTENT_EVENTS') {
+        return flushPendingEventDeliveries().then(() => true);
+      }
 
       if (message.type === 'FOCUSTRACE_CONFIGURE_BREAKPOINTS') {
         breakpointSettings = normalizeRuntimeBreakpointSettings(message.breakpoints);

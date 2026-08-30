@@ -25,6 +25,8 @@ export interface PrintableReportEvidenceBundle {
 
 export const REPORT_EVIDENCE_STORAGE_PREFIX = 'focustrace:report-evidence:';
 const VISUAL_CAPTURE_HOST_PERMISSION = '<all_urls>';
+const MAX_CAPTURE_WIDTH_PX = 1100;
+const MAX_CAPTURE_HEIGHT_PX = 1400;
 let pendingVisualCapturePermission: Promise<boolean> | undefined;
 
 function wait(ms: number) {
@@ -125,6 +127,11 @@ function evidenceColor(tone: VisualEvidenceTone): string {
   return tone === 'fail' ? '#b42318' : tone === 'review' ? '#b54708' : '#8a6d00';
 }
 
+export function visualEvidenceOutputScale(width: number, height: number): number {
+  if (!(width > 0) || !(height > 0)) return 1;
+  return Math.min(1, MAX_CAPTURE_WIDTH_PX / width, MAX_CAPTURE_HEIGHT_PX / height);
+}
+
 async function cropCapture(
   dataUrl: string,
   metrics: { rect: { x: number; y: number; width: number; height: number }; viewport: { width: number; height: number } },
@@ -148,8 +155,10 @@ async function cropCapture(
   const sw = Math.max(1, Math.ceil((rightCss - leftCss) * scaleX));
   const sh = Math.max(1, Math.ceil((bottomCss - topCss) * scaleY));
 
-  const maxWidth = 1100;
-  const outputScale = Math.min(1, maxWidth / sw);
+  // Constrain both axes before the image reaches print layout. Extremely tall
+  // or wide captures therefore keep their aspect ratio and cannot create an
+  // oversized intrinsic bitmap that pushes outside the printable page.
+  const outputScale = visualEvidenceOutputScale(sw, sh);
   const canvas = document.createElement('canvas');
   canvas.width = Math.max(1, Math.round(sw * outputScale));
   canvas.height = Math.max(1, Math.round(sh * outputScale));

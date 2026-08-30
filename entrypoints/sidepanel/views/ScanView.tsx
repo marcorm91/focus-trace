@@ -2,6 +2,7 @@ import { useEffect, useMemo, useState } from 'react';
 import { colorToHex, colorToRgb, parseCssColor, suggestAccessibleForeground } from '../../../lib/audit/contrast';
 import { reportFindingDescription } from '../../../lib/report/finding-guidance';
 import { type ExplanationLevel } from '../../../lib/runtime/explanations';
+import { useRovingTabs } from '../../../lib/ui/roving-tabs';
 import { scanCategoryForIssue, type ScanCategory } from '../../../shared/scan-categories';
 import { countBySeverity, SEVERITY_ORDER, sortBySeverity, type SeverityFilter } from '../../../shared/severity';
 import {
@@ -45,7 +46,7 @@ function severityImpactDescription(severity: Severity, language: AppLanguage): s
   if (severity === 'moderate') return tr(
     language,
     'Estimated impact: meaningful difficulty that is usually not completely blocking.',
-    'Impacto estimado: dificultad relevante que normalmente no bloquea por completo la tarea.',
+    'Impacto estimado: dificultad relevante que normalmente no bloquea por completo una tarea.',
   );
   if (severity === 'minor') return tr(
     language,
@@ -160,6 +161,17 @@ export function ScanView({
     };
   }, [category, groups]);
 
+  const tabs = useMemo<Array<{ id: ScanFilter; label: string; count: number }>>(() => [
+    { id: 'fail', label: tr(language, 'Failures', 'Fallos'), count: categoryFilteredGroups.fail.length },
+    { id: 'review', label: tr(language, 'Review', 'Revisión'), count: categoryFilteredGroups.review.length },
+    { id: 'warning', label: tr(language, 'Warnings', 'Avisos'), count: categoryFilteredGroups.warning.length },
+  ], [categoryFilteredGroups, language]);
+  const resultTabProps = useRovingTabs({
+    options: tabs.map((tab) => ({ id: tab.id, disabled: tab.count === 0 })),
+    selected: filter,
+    onSelect: setFilter,
+  });
+
   useEffect(() => {
     if (!scan) return;
     if (categoryFilteredGroups[filter].length > 0) return;
@@ -201,11 +213,6 @@ export function ScanView({
   const criterionGroups = groupedByCriterion(findings);
   const totalFindings = allFindings.length;
   const componentScope = scan.scope?.type === 'component' ? scan.scope : undefined;
-  const tabs: Array<{ id: ScanFilter; label: string; count: number }> = [
-    { id: 'fail', label: tr(language, 'Failures', 'Fallos'), count: categoryFilteredGroups.fail.length },
-    { id: 'review', label: tr(language, 'Review', 'Revisión'), count: categoryFilteredGroups.review.length },
-    { id: 'warning', label: tr(language, 'Warnings', 'Avisos'), count: categoryFilteredGroups.warning.length },
-  ];
   const visibleCategories = CATEGORY_ORDER.filter((candidate) =>
     candidate === 'all' || (categoryCounts.get(candidate) ?? 0) > 0,
   );
@@ -310,6 +317,7 @@ export function ScanView({
                 aria-controls={`scan-panel-${tab.id}`}
                 className={filter === tab.id ? 'active' : ''}
                 disabled={tab.count === 0}
+                {...resultTabProps(tab.id)}
                 onClick={() => setFilter(tab.id)}
               >
                 <span>{tab.label}</span>
@@ -350,32 +358,38 @@ export function ScanView({
             </div>
           </div>
 
-          <div
-            id={`scan-panel-${filter}`}
-            role="tabpanel"
-            aria-labelledby={`scan-tab-${filter}`}
-            className="scan-results-panel"
-          >
-            {criterionGroups.length === 0 ? (
-              <div className="scan-filter-empty">
-                {severityFilter === 'all'
-                  ? tr(language, 'No findings in this category.', 'No hay resultados en esta categoría.')
-                  : tr(language, 'No findings with this impact level.', 'No hay hallazgos con este nivel de impacto.')}
-              </div>
-            ) : (
-              <div className="scan-rule-list">
-                {criterionGroups.map((issues) => (
-                  <FindingRuleAccordion
-                    issues={issues}
-                    level={level}
-                    language={language}
-                    onLocate={onLocate}
-                    key={issues[0]!.ruleId}
-                  />
-                ))}
-              </div>
-            )}
-          </div>
+          {tabs.map((tab) => (
+            <div
+              key={`panel-${tab.id}`}
+              id={`scan-panel-${tab.id}`}
+              role="tabpanel"
+              aria-labelledby={`scan-tab-${tab.id}`}
+              className="scan-results-panel"
+              hidden={filter !== tab.id}
+            >
+              {filter === tab.id && (
+                criterionGroups.length === 0 ? (
+                  <div className="scan-filter-empty">
+                    {severityFilter === 'all'
+                      ? tr(language, 'No findings in this category.', 'No hay resultados en esta categoría.')
+                      : tr(language, 'No findings with this impact level.', 'No hay hallazgos con este nivel de impacto.')}
+                  </div>
+                ) : (
+                  <div className="scan-rule-list">
+                    {criterionGroups.map((issues) => (
+                      <FindingRuleAccordion
+                        issues={issues}
+                        level={level}
+                        language={language}
+                        onLocate={onLocate}
+                        key={issues[0]!.ruleId}
+                      />
+                    ))}
+                  </div>
+                )
+              )}
+            </div>
+          ))}
         </>
       )}
     </section>

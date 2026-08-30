@@ -95,6 +95,12 @@ function invalidateScanAfterNavigation(tabId: number, url: string): Promise<void
   });
 }
 
+async function flushContentRuntimeEvents(tabId: number): Promise<void> {
+  await browser.tabs.sendMessage(tabId, {
+    type: 'FOCUSTRACE_FLUSH_CONTENT_EVENTS',
+  } satisfies ExtensionMessage).catch(() => undefined);
+}
+
 function configurePanelAction() {
   if (import.meta.env.FIREFOX) {
     const firefoxBrowser = browser as FirefoxSidebarBrowser;
@@ -131,7 +137,8 @@ export default defineBackground(() => {
     if (message.type === 'FOCUSTRACE_GET_SESSION') return getSession(message.tabId);
 
     if (message.type === 'FOCUSTRACE_FLUSH_SESSION') {
-      return serializeTabWrite(message.tabId, () => getSession(message.tabId));
+      return flushContentRuntimeEvents(message.tabId)
+        .then(() => serializeTabWrite(message.tabId, () => getSession(message.tabId)));
     }
 
     if (message.type === 'FOCUSTRACE_CLEAR_SESSION') {

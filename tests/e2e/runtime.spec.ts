@@ -110,6 +110,25 @@ test('detects a dialog that opens without moving focus inside', async ({ page, e
   expect(session.events.some((event) => event.ruleId === 'FT-APG-001')).toBe(true);
 });
 
+test('detects a pre-existing hidden ARIA dialog when it becomes available', async ({ page, extensionWorker }) => {
+  await openFixture(page, 'dialog-hidden-existing.html');
+  const tabId = await startRecording(extensionWorker, page);
+
+  const trigger = page.getByRole('button', { name: 'Open existing dialog' });
+  await trigger.focus();
+  await page.keyboard.press('Enter');
+
+  await expect(page.locator('#existing-dialog')).toBeVisible();
+  const session = await waitForSession(
+    extensionWorker,
+    tabId,
+    (state) => sessionHasCause(state, 'DIALOG_OPENED_WITHOUT_FOCUS'),
+  );
+
+  expect(session.events.some((event) => event.kind === 'dialog-open' && event.element?.selector === '#existing-dialog')).toBe(true);
+  expect(session.events.some((event) => event.ruleId === 'FT-APG-001')).toBe(true);
+});
+
 test('accepts correct initial modal focus and detects a later modal escape', async ({ page, extensionWorker }) => {
   await openFixture(page, 'dialog-good.html');
   const tabId = await startRecording(extensionWorker, page);

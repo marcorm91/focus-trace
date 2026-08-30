@@ -1,4 +1,4 @@
-import { accessibleName, selectorFor } from '../audit/dom';
+import { accessibleName, isProgrammaticallyHidden, selectorFor } from '../audit/dom';
 import type { ElementAttributesSnapshot, ElementSnapshot } from '../../shared/types';
 
 function snapshotAttributes(element: Element): ElementAttributesSnapshot | undefined {
@@ -70,10 +70,9 @@ export function findSignificantAddedElements(root: Node): Element[] {
 }
 
 export function isDialogOpen(dialog: Element): boolean {
-  if (!dialog.isConnected) return false;
+  if (!dialog.isConnected || isProgrammaticallyHidden(dialog)) return false;
   if (dialog instanceof HTMLDialogElement) return dialog.open;
-  const style = getComputedStyle(dialog);
-  return style.display !== 'none' && style.visibility === 'visible' && dialog.matches('[role="dialog"], [role="alertdialog"]');
+  return dialog.matches('[role="dialog"], [role="alertdialog"]');
 }
 
 export function isModalDialog(dialog: Element): boolean {
