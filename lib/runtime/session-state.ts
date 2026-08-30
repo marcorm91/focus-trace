@@ -36,30 +36,34 @@ export function trimRuntimeEvents(
   let start = Math.max(0, events.length - maxEvents);
 
   // The retention limit is a target, not permission to corrupt evidence. Move
-  // the cut backwards until it no longer lands inside either a correlated
-  // interaction or an automatic focus-walk interval. A single large semantic
-  // unit may therefore temporarily make the retained list slightly exceed the
-  // target, which is preferable to changing the meaning of the Trace.
+  // the cut backwards until no correlated interaction crosses the boundary and
+  // it no longer lands inside an automatic focus-walk interval. Interactions
+  // are not guaranteed to be contiguous because ambient runtime evidence can
+  // be emitted between two events carrying the same interactionId.
   while (start > 0) {
-    const boundary = events[start];
-    if (!boundary) break;
     let nextStart = start;
+    const retainedInteractionIds = new Set(
+      events.slice(start).flatMap((candidate) => candidate.interactionId ? [candidate.interactionId] : []),
+    );
 
-    if (boundary.interactionId) {
-      const firstInteractionEvent = events.findIndex(
-        (candidate) => candidate.interactionId === boundary.interactionId,
-      );
-      if (firstInteractionEvent >= 0) nextStart = Math.min(nextStart, firstInteractionEvent);
+    for (let index = 0; index < start; index += 1) {
+      const interactionId = events[index]?.interactionId;
+      if (interactionId && retainedInteractionIds.has(interactionId)) {
+        nextStart = Math.min(nextStart, index);
+      }
     }
 
-    const interval = intervals.find(
-      (candidate) => boundary.timestamp >= candidate.startedAt && boundary.timestamp <= candidate.endedAt,
-    );
-    if (interval) {
-      const focusWalkStart = events.findIndex(
-        (candidate) => candidate.kind === 'focus-walk-start' && candidate.timestamp === interval.startedAt,
+    const boundary = events[nextStart];
+    if (boundary) {
+      const interval = intervals.find(
+        (candidate) => boundary.timestamp >= candidate.startedAt && boundary.timestamp <= candidate.endedAt,
       );
-      if (focusWalkStart >= 0) nextStart = Math.min(nextStart, focusWalkStart);
+      if (interval) {
+        const focusWalkStart = events.findIndex(
+          (candidate) => candidate.kind === 'focus-walk-start' && candidate.timestamp === interval.startedAt,
+        );
+        if (focusWalkStart >= 0) nextStart = Math.min(nextStart, focusWalkStart);
+      }
     }
 
     if (nextStart === start) break;
