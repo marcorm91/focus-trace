@@ -236,6 +236,38 @@ describe('keyboard and focus runtime coverage', () => {
     ).toBe(false);
   });
 
+  it('does not reinterpret modified shortcuts as plain APG navigation keys', () => {
+    render(`
+      <div id="grid" role="grid">
+        <div role="row">
+          <div id="a1" role="gridcell" tabindex="-1">A1</div>
+          <div id="a2" role="gridcell" tabindex="0">A2</div>
+        </div>
+        <div role="row">
+          <div id="b1" role="gridcell" tabindex="-1">B1</div>
+          <div id="b2" role="gridcell" tabindex="-1">B2</div>
+        </div>
+      </div>
+      <div role="tablist">
+        <button id="tab-a" role="tab" tabindex="0">A</button>
+        <button id="tab-b" role="tab" tabindex="-1">B</button>
+      </div>
+    `);
+    element<HTMLElement>('#a2').focus();
+    expect(captureKeyboardFocusProbes(element('#a2'), {
+      kind: 'keydown',
+      key: 'Home',
+      ctrlKey: true,
+    })).toEqual([]);
+
+    element<HTMLButtonElement>('#tab-a').focus();
+    expect(captureKeyboardFocusProbes(element('#tab-a'), {
+      kind: 'keydown',
+      key: 'ArrowRight',
+      shiftKey: true,
+    })).toEqual([]);
+  });
+
   it('reviews modal Escape only while the dialog remains open', () => {
     render(`
       <div id="dialog" role="dialog" aria-modal="true" aria-label="Settings">
