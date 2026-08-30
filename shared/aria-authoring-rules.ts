@@ -141,6 +141,28 @@ export const ARIA_STATE_CONSISTENCY_RULE: RuleDefinition = {
   references: [ariaStatesReference],
 };
 
+export const UNSUPPORTED_ARIA_PROPERTY_RULE: RuleDefinition = {
+  id: 'FT-WARN-020',
+  title: 'ARIA state or property is not supported by the resolved role',
+  severity: 'serious',
+  ...impact(
+    'ARIA defines state and property support per role. Using a known attribute on a role that does not support it produces undefined semantics and can cause the intended state to be ignored by assistive technologies.',
+    'ARIA define el soporte de estados y propiedades por rol. Usar un atributo conocido en un rol que no lo admite produce una semántica indefinida y puede hacer que las tecnologías de asistencia ignoren el estado previsto.',
+  ),
+  references: [ariaRolesReference, ariaStatesReference],
+};
+
+export const ARIA_RELATIONSHIP_CONSISTENCY_RULE: RuleDefinition = {
+  id: 'FT-WARN-021',
+  title: 'ARIA relationship and exposed state are inconsistent',
+  severity: 'serious',
+  ...impact(
+    'A relationship can resolve correctly while still contradicting the state exposed by its owner, such as an error message without aria-invalid or an expanded control whose controlled content is unavailable.',
+    'Una relación puede resolverse correctamente y aun así contradecir el estado expuesto por su propietario, por ejemplo un mensaje de error sin aria-invalid o un control expandido cuyo contenido controlado no está disponible.',
+  ),
+  references: [ariaStatesReference, ariaIdReference],
+};
+
 export const ADVANCED_ARIA_RULES = [
   INVALID_ARIA_ROLE_RULE,
   UNKNOWN_ARIA_ATTRIBUTE_RULE,
@@ -150,4 +172,6 @@ export const ADVANCED_ARIA_RULES = [
   REQUIRED_ARIA_PARENT_RULE,
   ALLOWED_ARIA_CHILD_RULE,
   ARIA_STATE_CONSISTENCY_RULE,
+  UNSUPPORTED_ARIA_PROPERTY_RULE,
+  ARIA_RELATIONSHIP_CONSISTENCY_RULE,
 ] as const;
