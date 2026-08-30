@@ -29,10 +29,22 @@ export interface AccessibleColorSuggestion {
   rgb: string;
   ratio: number;
   direction: 'darker' | 'lighter';
+  targetRatio: number;
+  perceptualDelta: number;
+}
+
+export interface AccessibleTextColorSuggestions {
+  aa?: AccessibleColorSuggestion;
+  aaa?: AccessibleColorSuggestion;
+}
+
+interface OklabColor {
+  l: number;
+  a: number;
+  b: number;
 }
 
 const WHITE: RgbaColor = { r: 255, g: 255, b: 255, a: 1 };
-const BLACK: RgbaColor = { r: 0, g: 0, b: 0, a: 1 };
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -48,8 +60,7 @@ function parseChannel(value: string): number | undefined {
   return Number.isFinite(numeric) ? clamp(numeric, 0, 255) : undefined;
 }
 
-function parseAlpha(value: string | undefined): number | undefined {
-  if (value == null) return 1;
+function parseUnitChannel(value: string): number | undefined {
   const token = value.trim();
   if (token.endsWith('%')) {
     const percent = Number.parseFloat(token);
@@ -57,6 +68,90 @@ function parseAlpha(value: string | undefined): number | undefined {
   }
   const numeric = Number.parseFloat(token);
   return Number.isFinite(numeric) ? clamp(numeric, 0, 1) : undefined;
+}
+
+function parseAlpha(value: string | undefined): number | undefined {
+  if (value == null) return 1;
+  return parseUnitChannel(value);
+}
+
+function gammaChannel(value: number): number {
+  return value <= 0.0031308
+    ? value * 12.92
+    : 1.055 * value ** (1 / 2.4) - 0.055;
+}
+
+function oklabToRawSrgb(color: OklabColor): { r: number; g: number; b: number } {
+  const lRoot = color.l + 0.3963377774 * color.a + 0.2158037573 * color.b;
+  const mRoot = color.l - 0.1055613458 * color.a - 0.0638541728 * color.b;
+  const sRoot = color.l - 0.0894841775 * color.a - 1.291485548 * color.b;
+  const l = lRoot ** 3;
+  const m = mRoot ** 3;
+  const s = sRoot ** 3;
+  return {
+    r: gammaChannel(4.0767416621 * l - 3.3077115913 * m + 0.2309699292 * s),
+    g: gammaChannel(-1.2684380046 * l + 2.6097574011 * m - 0.3413193965 * s),
+    b: gammaChannel(-0.0041960863 * l - 0.7034186147 * m + 1.707614701 * s),
+  };
+}
+
+function rawSrgbInGamut(color: { r: number; g: number; b: number }): boolean {
+  return color.r >= -1e-7 && color.r <= 1 + 1e-7
+    && color.g >= -1e-7 && color.g <= 1 + 1e-7
+    && color.b >= -1e-7 && color.b <= 1 + 1e-7;
+}
+
+function oklabToRgba(color: OklabColor, alpha = 1): RgbaColor {
+  const raw = oklabToRawSrgb(color);
+  return {
+    r: clamp(raw.r, 0, 1) * 255,
+    g: clamp(raw.g, 0, 1) * 255,
+    b: clamp(raw.b, 0, 1) * 255,
+    a: alpha,
+  };
+}
+
+function parseOklabFunction(value: string): RgbaColor | undefined {
+  const match = value.match(/^oklab\((.*)\)$/i)?.[1];
+  if (!match) return undefined;
+  const slashParts = match.split('/').map((part) => part.trim());
+  const tokens = slashParts[0]?.split(/\s+/).filter(Boolean) ?? [];
+  if (tokens.length !== 3) return undefined;
+  const l = parseUnitChannel(tokens[0]!);
+  const a = Number.parseFloat(tokens[1]!);
+  const b = Number.parseFloat(tokens[2]!);
+  const alpha = parseAlpha(slashParts[1]);
+  if (l == null || !Number.isFinite(a) || !Number.isFinite(b) || alpha == null) return undefined;
+  return oklabToRgba({ l, a, b }, alpha);
+}
+
+function parseOklchFunction(value: string): RgbaColor | undefined {
+  const match = value.match(/^oklch\((.*)\)$/i)?.[1];
+  if (!match) return undefined;
+  const slashParts = match.split('/').map((part) => part.trim());
+  const tokens = slashParts[0]?.split(/\s+/).filter(Boolean) ?? [];
+  if (tokens.length !== 3) return undefined;
+  const l = parseUnitChannel(tokens[0]!);
+  const c = Number.parseFloat(tokens[1]!);
+  const h = Number.parseFloat(tokens[2]!);
+  const alpha = parseAlpha(slashParts[1]);
+  if (l == null || !Number.isFinite(c) || !Number.isFinite(h) || alpha == null) return undefined;
+  const radians = h * Math.PI / 180;
+  return oklabToRgba({ l, a: c * Math.cos(radians), b: c * Math.sin(radians) }, alpha);
+}
+
+function parseSrgbColorFunction(value: string): RgbaColor | undefined {
+  const match = value.match(/^color\(srgb\s+(.+)\)$/i)?.[1];
+  if (!match) return undefined;
+  const slashParts = match.split('/').map((part) => part.trim());
+  const tokens = slashParts[0]?.split(/\s+/).filter(Boolean) ?? [];
+  if (tokens.length !== 3) return undefined;
+  const r = parseUnitChannel(tokens[0]!);
+  const g = parseUnitChannel(tokens[1]!);
+  const b = parseUnitChannel(tokens[2]!);
+  const a = parseAlpha(slashParts[1]);
+  if (r == null || g == null || b == null || a == null) return undefined;
+  return { r: r * 255, g: g * 255, b: b * 255, a };
 }
 
 export function parseCssColor(value: string): RgbaColor | undefined {
@@ -79,23 +174,28 @@ export function parseCssColor(value: string): RgbaColor | undefined {
   }
 
   const functional = normalized.match(/^rgba?\((.*)\)$/i)?.[1];
-  if (!functional) return undefined;
-  const slashParts = functional.split('/').map((part) => part.trim());
-  const colorPart = slashParts[0];
-  if (!colorPart) return undefined;
-  const colorTokens = colorPart.includes(',')
-    ? colorPart.split(',').map((part) => part.trim())
-    : colorPart.split(/\s+/).filter(Boolean);
-  if (colorTokens.length < 3) return undefined;
+  if (functional) {
+    const slashParts = functional.split('/').map((part) => part.trim());
+    const colorPart = slashParts[0];
+    if (!colorPart) return undefined;
+    const colorTokens = colorPart.includes(',')
+      ? colorPart.split(',').map((part) => part.trim())
+      : colorPart.split(/\s+/).filter(Boolean);
+    if (colorTokens.length < 3) return undefined;
 
-  let alphaToken = slashParts[1];
-  if (!alphaToken && colorTokens.length >= 4) alphaToken = colorTokens[3];
-  const r = parseChannel(colorTokens[0]!);
-  const g = parseChannel(colorTokens[1]!);
-  const b = parseChannel(colorTokens[2]!);
-  const a = parseAlpha(alphaToken);
-  if (r == null || g == null || b == null || a == null) return undefined;
-  return { r, g, b, a };
+    let alphaToken = slashParts[1];
+    if (!alphaToken && colorTokens.length >= 4) alphaToken = colorTokens[3];
+    const r = parseChannel(colorTokens[0]!);
+    const g = parseChannel(colorTokens[1]!);
+    const b = parseChannel(colorTokens[2]!);
+    const a = parseAlpha(alphaToken);
+    if (r == null || g == null || b == null || a == null) return undefined;
+    return { r, g, b, a };
+  }
+
+  return parseSrgbColorFunction(normalized)
+    ?? parseOklabFunction(normalized)
+    ?? parseOklchFunction(normalized);
 }
 
 export function compositeColor(foreground: RgbaColor, background: RgbaColor): RgbaColor {
@@ -133,6 +233,10 @@ export function textContrastRequirement(fontSizePx: number, fontWeight: number):
   return { largeText, requiredRatio: largeText ? 3 : 4.5 };
 }
 
+export function textContrastTargets(largeText: boolean): { aa: number; aaa: number } {
+  return largeText ? { aa: 3, aaa: 4.5 } : { aa: 4.5, aaa: 7 };
+}
+
 function numericFontWeight(value: string): number {
   if (value === 'bold' || value === 'bolder') return 700;
   if (value === 'normal' || value === 'lighter') return 400;
@@ -167,46 +271,92 @@ function colorLabel(color: RgbaColor): string {
   return colorToRgb(color);
 }
 
-function mixToward(color: RgbaColor, target: RgbaColor, amount: number): RgbaColor {
-  return integerColor({
-    r: color.r + (target.r - color.r) * amount,
-    g: color.g + (target.g - color.g) * amount,
-    b: color.b + (target.b - color.b) * amount,
-    a: 1,
-  });
+function rgbToOklab(color: RgbaColor): OklabColor {
+  const r = linearChannel(color.r);
+  const g = linearChannel(color.g);
+  const b = linearChannel(color.b);
+  const lRoot = Math.cbrt(0.4122214708 * r + 0.5363325363 * g + 0.0514459929 * b);
+  const mRoot = Math.cbrt(0.2119034982 * r + 0.6806995451 * g + 0.1073969566 * b);
+  const sRoot = Math.cbrt(0.0883024619 * r + 0.2817188376 * g + 0.6299787005 * b);
+  return {
+    l: 0.2104542553 * lRoot + 0.793617785 * mRoot - 0.0040720468 * sRoot,
+    a: 1.9779984951 * lRoot - 2.428592205 * mRoot + 0.4505937099 * sRoot,
+    b: 0.0259040371 * lRoot + 0.7827717662 * mRoot - 0.808675766 * sRoot,
+  };
 }
 
-function rgbDistance(first: RgbaColor, second: RgbaColor): number {
-  return Math.hypot(first.r - second.r, first.g - second.g, first.b - second.b);
+function oklabDistance(first: OklabColor, second: OklabColor): number {
+  return Math.hypot(first.l - second.l, first.a - second.a, first.b - second.b);
 }
 
-function firstAccessibleToward(
+function gamutMappedLightness(origin: OklabColor, lightness: number): RgbaColor {
+  const target = { ...origin, l: clamp(lightness, 0, 1) };
+  if (rawSrgbInGamut(oklabToRawSrgb(target))) return integerColor(oklabToRgba(target));
+
+  let low = 0;
+  let high = 1;
+  for (let iteration = 0; iteration < 18; iteration += 1) {
+    const scale = (low + high) / 2;
+    const candidate = {
+      l: target.l,
+      a: target.a * scale,
+      b: target.b * scale,
+    };
+    if (rawSrgbInGamut(oklabToRawSrgb(candidate))) low = scale;
+    else high = scale;
+  }
+  return integerColor(oklabToRgba({
+    l: target.l,
+    a: target.a * low,
+    b: target.b * low,
+  }));
+}
+
+function accessibleCandidateInDirection(
   foreground: RgbaColor,
   background: RgbaColor,
   requiredRatio: number,
-  target: RgbaColor,
   direction: AccessibleColorSuggestion['direction'],
-): { color: RgbaColor; ratio: number; distance: number; direction: AccessibleColorSuggestion['direction'] } | undefined {
-  if (contrastRatio(target, background) + Number.EPSILON < requiredRatio) return undefined;
+): { color: RgbaColor; ratio: number; distance: number } | undefined {
+  const origin = rgbToOklab(foreground);
+  const targetLightness = direction === 'darker' ? 0 : 1;
+  const extreme = gamutMappedLightness(origin, targetLightness);
+  if (contrastRatio(extreme, background) + Number.EPSILON < requiredRatio) return undefined;
 
-  let previousKey = '';
-  for (let step = 1; step <= 255; step += 1) {
-    const candidate = mixToward(foreground, target, step / 255);
-    const key = `${candidate.r},${candidate.g},${candidate.b}`;
-    if (key === previousKey) continue;
-    previousKey = key;
-    const ratio = contrastRatio(candidate, background);
-    if (ratio + Number.EPSILON >= requiredRatio) {
-      return { color: candidate, ratio, distance: rgbDistance(foreground, candidate), direction };
+  let inaccessible = origin.l;
+  let accessible = targetLightness;
+  for (let iteration = 0; iteration < 22; iteration += 1) {
+    const middle = (inaccessible + accessible) / 2;
+    const candidate = gamutMappedLightness(origin, middle);
+    if (contrastRatio(candidate, background) + Number.EPSILON >= requiredRatio) accessible = middle;
+    else inaccessible = middle;
+  }
+
+  let color = gamutMappedLightness(origin, accessible);
+  let ratio = contrastRatio(color, background);
+  if (ratio + Number.EPSILON < requiredRatio) {
+    const step = direction === 'darker' ? -0.0005 : 0.0005;
+    let lightness = accessible;
+    for (let attempt = 0; attempt < 64 && ratio + Number.EPSILON < requiredRatio; attempt += 1) {
+      lightness = clamp(lightness + step, 0, 1);
+      color = gamutMappedLightness(origin, lightness);
+      ratio = contrastRatio(color, background);
     }
   }
-  return undefined;
+  if (ratio + Number.EPSILON < requiredRatio) return undefined;
+
+  return {
+    color,
+    ratio,
+    distance: oklabDistance(origin, rgbToOklab(color)),
+  };
 }
 
 /**
- * Suggest the smallest deterministic sRGB adjustment toward black or white
- * that reaches the requested contrast against a resolved opaque background.
- * This deliberately avoids claiming a global perceptual nearest-color result.
+ * Suggest the smallest deterministic perceptual adjustment that reaches the
+ * requested contrast. FocusTrace changes OKLCH lightness first and preserves
+ * hue/chroma as far as the sRGB gamut permits, then compares darker/lighter
+ * candidates using OKLab distance.
  */
 export function suggestAccessibleForeground(
   foregroundValue: string,
@@ -216,18 +366,26 @@ export function suggestAccessibleForeground(
   const foreground = parseCssColor(foregroundValue);
   const background = parseCssColor(backgroundValue);
   if (!foreground || !background || foreground.a < 0.999 || background.a < 0.999) return undefined;
-  if (contrastRatio(foreground, background) + Number.EPSILON >= requiredRatio) {
+
+  const currentRatio = contrastRatio(foreground, background);
+  if (currentRatio + Number.EPSILON >= requiredRatio) {
+    const direction = relativeLuminance(foreground) <= relativeLuminance(background) ? 'darker' : 'lighter';
     return {
       hex: colorToHex(foreground),
       rgb: colorToRgb(foreground),
-      ratio: Number(contrastRatio(foreground, background).toFixed(2)),
-      direction: 'darker',
+      ratio: Number(currentRatio.toFixed(2)),
+      direction,
+      targetRatio: requiredRatio,
+      perceptualDelta: 0,
     };
   }
 
-  const darker = firstAccessibleToward(foreground, background, requiredRatio, BLACK, 'darker');
-  const lighter = firstAccessibleToward(foreground, background, requiredRatio, WHITE, 'lighter');
-  const candidates = [darker, lighter].filter((candidate): candidate is NonNullable<typeof candidate> => Boolean(candidate));
+  const darker = accessibleCandidateInDirection(foreground, background, requiredRatio, 'darker');
+  const lighter = accessibleCandidateInDirection(foreground, background, requiredRatio, 'lighter');
+  const candidates = [
+    ...(darker ? [{ ...darker, direction: 'darker' as const }] : []),
+    ...(lighter ? [{ ...lighter, direction: 'lighter' as const }] : []),
+  ];
   candidates.sort((first, second) => first.distance - second.distance || first.ratio - second.ratio);
   const best = candidates[0];
   if (!best) return undefined;
@@ -237,16 +395,36 @@ export function suggestAccessibleForeground(
     rgb: colorToRgb(best.color),
     ratio: Number(best.ratio.toFixed(2)),
     direction: best.direction,
+    targetRatio: requiredRatio,
+    perceptualDelta: Number(best.distance.toFixed(4)),
   };
 }
 
-export function complexVisualReason(style: CSSStyleDeclaration): string | undefined {
+export function suggestAccessibleTextColors(
+  foregroundValue: string,
+  backgroundValue: string,
+  largeText: boolean,
+): AccessibleTextColorSuggestions {
+  const targets = textContrastTargets(largeText);
+  return {
+    aa: suggestAccessibleForeground(foregroundValue, backgroundValue, targets.aa),
+    aaa: suggestAccessibleForeground(foregroundValue, backgroundValue, targets.aaa),
+  };
+}
+
+function complexVisualReasonInternal(style: CSSStyleDeclaration, includeOpacity: boolean): string | undefined {
   if (style.backgroundImage && style.backgroundImage !== 'none') return 'A background image or gradient affects the rendered background.';
-  const opacity = Number.parseFloat(style.opacity || '1');
-  if (Number.isFinite(opacity) && opacity < 0.999) return 'Element or ancestor opacity affects the rendered colors.';
+  if (includeOpacity) {
+    const opacity = Number.parseFloat(style.opacity || '1');
+    if (Number.isFinite(opacity) && opacity < 0.999) return 'Element or ancestor opacity affects the rendered colors.';
+  }
   if (style.mixBlendMode && style.mixBlendMode !== 'normal') return 'mix-blend-mode affects the rendered colors.';
   if (style.filter && style.filter !== 'none') return 'A CSS filter affects the rendered colors.';
   return undefined;
+}
+
+export function complexVisualReason(style: CSSStyleDeclaration): string | undefined {
+  return complexVisualReasonInternal(style, true);
 }
 
 export function effectiveBackground(element: Element): { color?: RgbaColor; reason?: string } {
@@ -265,6 +443,59 @@ export function effectiveBackground(element: Element): { color?: RgbaColor; reas
   let result = WHITE;
   for (const layer of layers.reverse()) result = compositeColor(layer, result);
   return { color: result };
+}
+
+function opacityAdjustedTextColors(
+  element: Element,
+  style: CSSStyleDeclaration,
+  foreground: RgbaColor,
+  opacity: number,
+): { foreground?: RgbaColor; background?: RgbaColor; reason?: string } {
+  const complex = complexVisualReasonInternal(style, false);
+  if (complex) return { reason: complex };
+
+  const backdropResult = element.parentElement
+    ? effectiveBackground(element.parentElement)
+    : { color: WHITE };
+  if (!backdropResult.color) {
+    return { reason: backdropResult.reason ?? 'The backdrop behind the translucent element could not be resolved reliably.' };
+  }
+
+  const ownBackground = parseCssColor(style.backgroundColor);
+  if (!ownBackground) {
+    return { reason: `Background color ${JSON.stringify(style.backgroundColor)} could not be resolved.` };
+  }
+
+  const internalBackground = compositeColor(ownBackground, backdropResult.color);
+  const internalForeground = foreground.a < 0.999
+    ? compositeColor(foreground, internalBackground)
+    : foreground;
+  const foregroundGroup = { ...internalForeground, a: opacity };
+  const backgroundGroup = { ...internalBackground, a: opacity };
+  return {
+    foreground: compositeColor(foregroundGroup, backdropResult.color),
+    background: compositeColor(backgroundGroup, backdropResult.color),
+  };
+}
+
+function textEvaluation(
+  foreground: RgbaColor,
+  background: RgbaColor,
+  requirement: { largeText: boolean; requiredRatio: number },
+  fontSizePx: number,
+  fontWeight: number,
+): TextContrastEvaluation {
+  const ratio = contrastRatio(foreground, background);
+  return {
+    status: ratio + Number.EPSILON >= requirement.requiredRatio ? 'pass' : 'fail',
+    ratio: Number(ratio.toFixed(2)),
+    requiredRatio: requirement.requiredRatio,
+    foreground: colorLabel(foreground),
+    background: colorLabel(background),
+    fontSizePx,
+    fontWeight,
+    largeText: requirement.largeText,
+  };
 }
 
 export function evaluateTextContrastForElement(
@@ -294,9 +525,8 @@ export function evaluateTextContrastForElement(
   const requirement = textContrastRequirement(fontSizePx, fontWeight);
 
   const foreground = parseCssColor(style.color);
-  // Computed colors normally serialize to rgb/rgba. Preserve unresolved system
-  // colors and future color syntaxes as review evidence instead of silently
-  // dropping visible text from the scan.
+  // Preserve genuinely unresolved system colors and unsupported future color
+  // syntaxes as review evidence instead of silently dropping visible text.
   if (!foreground) {
     return {
       status: 'review',
@@ -306,6 +536,23 @@ export function evaluateTextContrastForElement(
       largeText: requirement.largeText,
       reason: `Text color ${JSON.stringify(style.color)} could not be resolved.`,
     };
+  }
+
+  const opacity = Number.parseFloat(style.opacity || '1');
+  if (!pseudo && Number.isFinite(opacity) && opacity < 0.999) {
+    const adjusted = opacityAdjustedTextColors(element, style, foreground, clamp(opacity, 0, 1));
+    if (!adjusted.foreground || !adjusted.background) {
+      return {
+        status: 'review',
+        requiredRatio: requirement.requiredRatio,
+        foreground: colorLabel(foreground),
+        fontSizePx,
+        fontWeight,
+        largeText: requirement.largeText,
+        reason: adjusted.reason ?? 'Element opacity could not be composited reliably.',
+      };
+    }
+    return textEvaluation(adjusted.foreground, adjusted.background, requirement, fontSizePx, fontWeight);
   }
 
   const complexOnText = complexVisualReason(style);
@@ -356,19 +603,7 @@ export function evaluateTextContrastForElement(
   const renderedForeground = foreground.a < 0.999
     ? compositeColor(foreground, resolvedBackground)
     : foreground;
-  const ratio = contrastRatio(renderedForeground, resolvedBackground);
-  const roundedRatio = Number(ratio.toFixed(2));
-
-  return {
-    status: ratio + Number.EPSILON >= requirement.requiredRatio ? 'pass' : 'fail',
-    ratio: roundedRatio,
-    requiredRatio: requirement.requiredRatio,
-    foreground: colorLabel(renderedForeground),
-    background: colorLabel(resolvedBackground),
-    fontSizePx,
-    fontWeight,
-    largeText: requirement.largeText,
-  };
+  return textEvaluation(renderedForeground, resolvedBackground, requirement, fontSizePx, fontWeight);
 }
 
 const TEXT_VALUE_INPUT_TYPES = new Set([
@@ -411,7 +646,10 @@ export function textContrastSubjectsForElement(element: Element): TextContrastSu
 
   if (element instanceof HTMLInputElement) {
     const type = element.type.toLowerCase();
-    if (['button', 'submit', 'reset'].includes(type) && element.value.trim()) {
+    if (['submit', 'reset'].includes(type)) {
+      // Browsers render localized default labels even when value is omitted.
+      subjects.push({ subject: 'input value' });
+    } else if (type === 'button' && element.value.trim()) {
       subjects.push({ subject: 'input value' });
     } else if (TEXT_VALUE_INPUT_TYPES.has(type)) {
       if (element.value.trim()) subjects.push({ subject: 'input value' });
