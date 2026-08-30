@@ -1,3 +1,5 @@
+import { semanticRole } from '../audit/dom';
+
 function ids(value: string | null): string[] {
   return value?.trim().split(/\s+/).filter(Boolean) ?? [];
 }
@@ -33,7 +35,6 @@ export function accessibilityOwns(owner: Element, candidate: Element): boolean {
 
 export function ownedRoleElements(owner: Element, roles: string[]): Element[] {
   if (!roles.length) return [];
-  const selector = roles.map((role) => `[role="${role}"]`).join(', ');
   const result = new Set<Element>();
   const visitedOwners = new Set<Element>();
 
@@ -41,8 +42,10 @@ export function ownedRoleElements(owner: Element, roles: string[]): Element[] {
     if (visitedOwners.has(current)) return;
     visitedOwners.add(current);
 
-    if (roles.includes(current.getAttribute('role')?.trim().toLowerCase() ?? '')) result.add(current);
-    current.querySelectorAll(selector).forEach((element) => result.add(element));
+    if (roles.includes(semanticRole(current) ?? '')) result.add(current);
+    current.querySelectorAll('[role]').forEach((element) => {
+      if (roles.includes(semanticRole(element) ?? '')) result.add(element);
+    });
 
     const logicalOwners = [current, ...current.querySelectorAll('[aria-owns]')];
     for (const logicalOwner of logicalOwners) {
