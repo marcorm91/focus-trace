@@ -15,7 +15,7 @@ export type BoundaryKeyboardFocusProbe = {
   pattern: BoundaryPattern;
 };
 
-const COMPOSITE_SELECTOR = '[role="tree"], [role="grid"], [role="treegrid"]';
+const COMPOSITE_ROLES = new Set<BoundaryPattern>(['tree', 'grid', 'treegrid']);
 const GRID_CELL_ROLES = ['gridcell', 'rowheader', 'columnheader'];
 
 const APG_TREE_REFERENCE: StandardReference = {
@@ -63,15 +63,25 @@ function isAvailable(element: Element): boolean {
   return element.isConnected && !isProgrammaticallyHidden(element);
 }
 
+function closestRole(target: Element, roles: ReadonlySet<string>): Element | undefined {
+  let current: Element | null = target;
+  while (current) {
+    if (roles.has(semanticRole(current) ?? '')) return current;
+    current = current.parentElement;
+  }
+  return undefined;
+}
+
 function compositeForTarget(target: Element): Element | undefined {
-  const ancestor = target.closest(COMPOSITE_SELECTOR);
+  const ancestor = closestRole(target, COMPOSITE_ROLES);
   if (ancestor) return ancestor;
-  return [...document.querySelectorAll(COMPOSITE_SELECTOR)]
+  return [...document.querySelectorAll('[role]')]
+    .filter((candidate) => COMPOSITE_ROLES.has(semanticRole(candidate) as BoundaryPattern))
     .find((candidate) => accessibilityOwns(candidate, target));
 }
 
 function belongsToComposite(composite: Element, candidate: Element): boolean {
-  const nearest = candidate.closest(COMPOSITE_SELECTOR);
+  const nearest = closestRole(candidate, COMPOSITE_ROLES);
   if (nearest && nearest !== composite) return false;
   return accessibilityOwns(composite, candidate);
 }
@@ -120,7 +130,7 @@ function gridRows(grid: Element): Element[] {
 function rowCells(row: Element): Element[] {
   return ownedRoleElements(row, GRID_CELL_ROLES)
     .filter((cell) => {
-      const domRow = cell.closest('[role="row"]');
+      const domRow = closestRole(cell, new Set(['row']));
       return (domRow ? domRow === row : accessibilityOwns(row, cell)) && isAvailable(cell);
     });
 }
@@ -157,7 +167,7 @@ function gridBoundaryNavigation(
       : undefined;
   }
 
-  const row = current.closest('[role="row"]')
+  const row = closestRole(current, new Set(['row']))
     ?? gridRows(grid).find((candidate) => accessibilityOwns(candidate, current));
   if (!row) return undefined;
   const cells = rowCells(row);

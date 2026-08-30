@@ -125,10 +125,12 @@ function runPageLangKnown(): RuleExecution {
 
 function runImages(root: ScanRoot): RuleExecution {
   const result = emptyExecution(RULES.imageName);
-  for (const element of scopedElements(root, 'img, [role="img"]')) {
+  for (const element of scopedElements(root, 'img, [role]')) {
+    const decorative = isMarkedDecorative(element);
+    if (semanticRole(element) !== 'img' && !decorative) continue;
     if (isProgrammaticallyHidden(element)) continue;
     const name = accessibleNameDiagnostics(element);
-    if (isMarkedDecorative(element) || name.name) { result.passes += 1; continue; }
+    if (decorative || name.name) { result.passes += 1; continue; }
     result.issues.push(finding(RULES.imageName, 'fail', element, 'The image is exposed as image content but has an empty accessible name and is not marked decorative.', element instanceof HTMLImageElement && !element.hasAttribute('alt') ? 'The <img> element has no alt attribute and no alternative naming mechanism was detected.' : 'No non-empty accessible name was detected.', name));
   }
   return result;

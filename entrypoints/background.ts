@@ -172,6 +172,13 @@ export default defineBackground(() => {
           enabled: false,
           breakpoints: next.breakpoints,
         } satisfies ExtensionMessage).catch(() => undefined);
+        await browser.scripting.executeScript({
+          target: { tabId: message.tabId },
+          func: () => {
+            document.documentElement.removeAttribute('data-focustrace-scan-component');
+            document.documentElement.removeAttribute('data-focustrace-focus-component');
+          },
+        }).catch(() => undefined);
         await broadcast(next);
         return next;
       });

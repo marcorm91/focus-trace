@@ -1,3 +1,5 @@
+import { semanticRole } from './dom';
+
 export type InteractiveSemanticIntent = 'button' | 'link' | 'unknown';
 export type SemanticConfidence = 'high' | 'medium';
 
@@ -24,12 +26,14 @@ function scopedElements(root: ScanRoot, selector: string): Element[] {
 }
 
 function explicitInteractiveRole(element: Element): 'button' | 'link' | undefined {
-  const role = element.getAttribute('role')?.trim().toLowerCase().split(/\s+/)[0];
+  if (!element.hasAttribute('role')) return undefined;
+  const role = semanticRole(element);
   return role === 'button' || role === 'link' ? role : undefined;
 }
 
 function hasOtherExplicitRole(element: Element): boolean {
-  const role = element.getAttribute('role')?.trim().toLowerCase().split(/\s+/)[0];
+  if (!element.hasAttribute('role')) return false;
+  const role = semanticRole(element);
   return Boolean(role && role !== 'button' && role !== 'link' && role !== 'none' && role !== 'presentation');
 }
 
@@ -148,7 +152,7 @@ function signalFor(element: Element): InteractiveSemanticSignal | undefined {
 export function evaluateInteractiveSemantics(root: ScanRoot): InteractiveSemanticSignal[] {
   const candidates = scopedElements(
     root,
-    '[role="button"], [role="link"], [onclick], [aria-pressed], [aria-expanded], [aria-haspopup]',
+    '[role], [onclick], [aria-pressed], [aria-expanded], [aria-haspopup]',
   );
   const seen = new Set<Element>();
   const signals: InteractiveSemanticSignal[] = [];
@@ -165,9 +169,9 @@ export function evaluateInteractiveSemantics(root: ScanRoot): InteractiveSemanti
 
 export function mainLandmarkCandidates(): Element[] {
   return [...document.querySelectorAll('main, [role]')].filter((element) => {
-    const explicitRole = element.getAttribute('role')?.trim().toLowerCase().split(/\s+/)[0];
-    if (explicitRole === 'main') return true;
+    const role = semanticRole(element);
+    if (element.hasAttribute('role') && role === 'main') return true;
     if (element.tagName !== 'MAIN') return false;
-    return explicitRole !== 'none' && explicitRole !== 'presentation';
+    return role !== 'none' && role !== 'presentation';
   });
 }
