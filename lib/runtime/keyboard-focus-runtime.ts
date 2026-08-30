@@ -11,6 +11,7 @@ export type KeyboardFocusAction =
 
 type ManagedGroupRole = 'tablist' | 'radiogroup' | 'toolbar' | 'menu' | 'menubar' | 'listbox';
 type ManagedPattern = 'tabs' | 'radio group' | 'toolbar' | 'menu' | 'listbox';
+type BoundaryPattern = 'tree' | 'grid' | 'treegrid';
 
 export type KeyboardFocusProbe =
   | { kind: 'managed-roving-tabindex'; group: Element; roles: string[]; pattern: ManagedPattern }
@@ -19,6 +20,9 @@ export type KeyboardFocusProbe =
   | { kind: 'toolbar-navigation'; toolbar: Element; expected: Element; key: string }
   | { kind: 'menu-navigation'; menu: Element; expected: Element; key: string }
   | { kind: 'listbox-navigation'; listbox: Element; expected: Element; key: string }
+  | { kind: 'menu-button-open'; trigger: Element; menu: Element; expected: Element; key: string; requiredOpen: boolean }
+  | { kind: 'disclosure-toggle'; control: Element; beforeExpanded: 'true' | 'false' }
+  | { kind: 'boundary-navigation'; owner: Element; expected: Element; key: 'Home' | 'End'; pattern: BoundaryPattern }
   | { kind: 'dialog-escape'; dialog: Element };
 
 const MANAGED_GROUP_SELECTOR = [
@@ -29,7 +33,9 @@ const MANAGED_GROUP_SELECTOR = [
   '[role="menubar"]',
   '[role="listbox"]',
 ].join(', ');
+const COMPOSITE_SELECTOR = '[role="tree"], [role="grid"], [role="treegrid"]';
 const MENU_ITEM_ROLES = ['menuitem', 'menuitemcheckbox', 'menuitemradio'];
+const GRID_CELL_ROLES = ['gridcell', 'rowheader', 'columnheader'];
 const TOOLBAR_CONTROL_SELECTOR = [
   'button',
   'a[href]',
@@ -89,6 +95,14 @@ const APG_MENU_REFERENCE: StandardReference = {
   status: 'informative',
 };
 
+const APG_MENU_BUTTON_REFERENCE: StandardReference = {
+  type: 'WAI-ARIA APG',
+  id: 'menu-button',
+  label: 'Menu Button Pattern',
+  url: 'https://www.w3.org/WAI/ARIA/apg/patterns/menu-button/',
+  status: 'informative',
+};
+
 const APG_LISTBOX_REFERENCE: StandardReference = {
   type: 'WAI-ARIA APG',
   id: 'listbox',
@@ -97,11 +111,43 @@ const APG_LISTBOX_REFERENCE: StandardReference = {
   status: 'informative',
 };
 
+const APG_DISCLOSURE_REFERENCE: StandardReference = {
+  type: 'WAI-ARIA APG',
+  id: 'disclosure',
+  label: 'Disclosure Pattern',
+  url: 'https://www.w3.org/WAI/ARIA/apg/patterns/disclosure/',
+  status: 'informative',
+};
+
 const APG_DIALOG_REFERENCE: StandardReference = {
   type: 'WAI-ARIA APG',
   id: 'dialog-modal',
   label: 'Dialog (Modal) Pattern',
   url: 'https://www.w3.org/WAI/ARIA/apg/patterns/dialog-modal/',
+  status: 'informative',
+};
+
+const APG_TREE_REFERENCE: StandardReference = {
+  type: 'WAI-ARIA APG',
+  id: 'treeview',
+  label: 'Tree View Pattern',
+  url: 'https://www.w3.org/WAI/ARIA/apg/patterns/treeview/',
+  status: 'informative',
+};
+
+const APG_GRID_REFERENCE: StandardReference = {
+  type: 'WAI-ARIA APG',
+  id: 'grid',
+  label: 'Grid Pattern',
+  url: 'https://www.w3.org/WAI/ARIA/apg/patterns/grid/',
+  status: 'informative',
+};
+
+const APG_TREEGRID_REFERENCE: StandardReference = {
+  type: 'WAI-ARIA APG',
+  id: 'treegrid',
+  label: 'Treegrid Pattern',
+  url: 'https://www.w3.org/WAI/ARIA/apg/patterns/treegrid/',
   status: 'informative',
 };
 
@@ -126,6 +172,16 @@ function pendingFinding(input: {
 
 function isAvailable(element: Element): boolean {
   return element.isConnected && !isProgrammaticallyHidden(element);
+}
+
+function ids(value: string | null): string[] {
+  return value?.trim().split(/\s+/).filter(Boolean) ?? [];
+}
+
+function controlledElements(control: Element): Element[] {
+  return ids(control.getAttribute('aria-controls'))
+    .map((id) => document.getElementById(id))
+    .filter((element): element is HTMLElement => element != null);
 }
 
 function groupForTarget(target: Element, role: ManagedGroupRole): Element | undefined {
@@ -195,10 +251,10 @@ function toolbarControls(toolbar: Element): Element[] {
     });
 }
 
-function toolbarTargetConsumesKey(target: Element, key: string): boolean {
+function targetConsumesNavigationKey(target: Element, key: string): boolean {
   const role = semanticRole(target);
   if (role === 'slider') return true;
-  if (role === 'spinbutton') return key === 'ArrowUp' || key === 'ArrowDown';
+  if (role === 'spinbutton') return ['ArrowUp', 'ArrowDown', 'Home', 'End'].includes(key);
   if (['combobox', 'textbox', 'searchbox'].includes(role ?? '')) return true;
   if (target instanceof HTMLTextAreaElement || target instanceof HTMLSelectElement) return true;
   if (target instanceof HTMLInputElement) {
@@ -253,7 +309,7 @@ function radioNavigation(target: Element, key: string): KeyboardFocusProbe | und
 
 function toolbarNavigation(target: Element, key: string): KeyboardFocusProbe | undefined {
   const toolbar = groupForTarget(target, 'toolbar');
-  if (!toolbar || target === toolbar || toolbarTargetConsumesKey(target, key)) return undefined;
+  if (!toolbar || target === toolbar || targetConsumesNavigationKey(target, key)) return undefined;
   const controls = toolbarControls(toolbar);
   const current = controls.find((control) => control === target || control.contains(target));
   if (!current) return undefined;
@@ -297,6 +353,143 @@ function listboxNavigation(target: Element, key: string): KeyboardFocusProbe | u
   return expected ? { kind: 'listbox-navigation', listbox, expected, key } : undefined;
 }
 
+function controlledMenu(trigger: Element): Element | undefined {
+  return controlledElements(trigger).find((element) => semanticRole(element) === 'menu');
+}
+
+function menuButtonOpen(target: Element, key: string): KeyboardFocusProbe | undefined {
+  if (!['Enter', ' ', 'ArrowDown', 'ArrowUp'].includes(key)) return undefined;
+  const menu = controlledMenu(target);
+  if (!menu) return undefined;
+  const hasPopup = target.getAttribute('aria-haspopup')?.trim().toLowerCase();
+  if (hasPopup !== 'menu' && hasPopup !== 'true') return undefined;
+  const items = managedRoleItems(menu, MENU_ITEM_ROLES);
+  if (!items.length) return undefined;
+  const expected = key === 'ArrowUp' ? items[items.length - 1] : items[0];
+  if (!expected) return undefined;
+  return {
+    kind: 'menu-button-open',
+    trigger: target,
+    menu,
+    expected,
+    key,
+    requiredOpen: key === 'Enter' || key === ' ',
+  };
+}
+
+function disclosureToggle(target: Element, key: string): KeyboardFocusProbe | undefined {
+  if (!['Enter', ' '].includes(key) || semanticRole(target) !== 'button') return undefined;
+  if (target.hasAttribute('aria-haspopup')) return undefined;
+  if (!controlledElements(target).length) return undefined;
+  const beforeExpanded = target.getAttribute('aria-expanded')?.trim().toLowerCase();
+  if (beforeExpanded !== 'true' && beforeExpanded !== 'false') return undefined;
+  return { kind: 'disclosure-toggle', control: target, beforeExpanded };
+}
+
+function compositeForTarget(target: Element): Element | undefined {
+  const ancestor = target.closest(COMPOSITE_SELECTOR);
+  if (ancestor) return ancestor;
+  return [...document.querySelectorAll(COMPOSITE_SELECTOR)]
+    .find((candidate) => accessibilityOwns(candidate, target));
+}
+
+function belongsToComposite(composite: Element, candidate: Element): boolean {
+  const nearest = candidate.closest(COMPOSITE_SELECTOR);
+  if (nearest && nearest !== composite) return false;
+  return accessibilityOwns(composite, candidate);
+}
+
+function activeCompositeItem(composite: Element, managed: Element[]): Element | undefined {
+  const activeId = composite.getAttribute('aria-activedescendant')?.trim();
+  if (activeId) {
+    const active = document.getElementById(activeId);
+    if (active) {
+      const managedActive = managed.find((item) => item === active || item.contains(active));
+      if (managedActive) return managedActive;
+    }
+  }
+  const active = document.activeElement instanceof Element ? document.activeElement : undefined;
+  if (!active) return undefined;
+  return managed.find((item) => item === active || item.contains(active));
+}
+
+function treeBoundaryNavigation(tree: Element, key: 'Home' | 'End'): KeyboardFocusProbe | undefined {
+  const items = ownedRoleElements(tree, ['treeitem'])
+    .filter((item) => belongsToComposite(tree, item) && isAvailable(item));
+  if (!items.length || !activeCompositeItem(tree, items)) return undefined;
+  const expected = key === 'Home' ? items[0] : items[items.length - 1];
+  return expected ? { kind: 'boundary-navigation', owner: tree, expected, key, pattern: 'tree' } : undefined;
+}
+
+function gridRows(grid: Element): Element[] {
+  return ownedRoleElements(grid, ['row'])
+    .filter((row) => belongsToComposite(grid, row) && isAvailable(row));
+}
+
+function rowCells(row: Element): Element[] {
+  return ownedRoleElements(row, GRID_CELL_ROLES)
+    .filter((cell) => {
+      const domRow = cell.closest('[role="row"]');
+      return (domRow ? domRow === row : accessibilityOwns(row, cell)) && isAvailable(cell);
+    });
+}
+
+function managedGridItem(grid: Element): Element | undefined {
+  const rows = gridRows(grid);
+  const cells = rows.flatMap(rowCells);
+  const activeId = grid.getAttribute('aria-activedescendant')?.trim();
+  const rawActive = activeId
+    ? document.getElementById(activeId)
+    : document.activeElement instanceof Element
+      ? document.activeElement
+      : undefined;
+  if (!rawActive) return undefined;
+
+  const cell = cells.find((candidate) => candidate === rawActive || candidate.contains(rawActive));
+  if (cell) return cell;
+  return rows.find((row) => row === rawActive || row.contains(rawActive));
+}
+
+function gridBoundaryNavigation(
+  grid: Element,
+  key: 'Home' | 'End',
+): KeyboardFocusProbe | undefined {
+  const current = managedGridItem(grid);
+  if (!current) return undefined;
+  const role = semanticRole(grid);
+
+  if (semanticRole(current) === 'row') {
+    if (role !== 'treegrid') return undefined;
+    const rows = gridRows(grid);
+    const expected = key === 'Home' ? rows[0] : rows[rows.length - 1];
+    return expected ? { kind: 'boundary-navigation', owner: grid, expected, key, pattern: 'treegrid' } : undefined;
+  }
+
+  const row = current.closest('[role="row"]')
+    ?? gridRows(grid).find((candidate) => accessibilityOwns(candidate, current));
+  if (!row) return undefined;
+  const cells = rowCells(row);
+  const expected = key === 'Home' ? cells[0] : cells[cells.length - 1];
+  if (!expected) return undefined;
+  return {
+    kind: 'boundary-navigation',
+    owner: grid,
+    expected,
+    key,
+    pattern: role === 'treegrid' ? 'treegrid' : 'grid',
+  };
+}
+
+function boundaryNavigation(target: Element, key: string): KeyboardFocusProbe | undefined {
+  if (key !== 'Home' && key !== 'End') return undefined;
+  const composite = compositeForTarget(target);
+  if (!composite || (target !== composite && targetConsumesNavigationKey(target, key))) return undefined;
+  const role = semanticRole(composite);
+  if (role === 'tree') return treeBoundaryNavigation(composite, key);
+  if (role === 'grid' || role === 'treegrid') return gridBoundaryNavigation(composite, key);
+  return undefined;
+}
+
 function dialogEscape(target: Element, key: string): KeyboardFocusProbe | undefined {
   if (key !== 'Escape') return undefined;
   const dialog = target.closest('dialog, [role="dialog"], [role="alertdialog"]');
@@ -331,6 +524,12 @@ export function captureKeyboardFocusProbes(
 
   const dialog = dialogEscape(target, key);
   if (dialog) probes.push(dialog);
+  const menuOpen = menuButtonOpen(target, key);
+  if (menuOpen) probes.push(menuOpen);
+  const disclosure = disclosureToggle(target, key);
+  if (disclosure) probes.push(disclosure);
+  const boundary = boundaryNavigation(target, key);
+  if (boundary) probes.push(boundary);
 
   if (['ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight'].includes(key)) {
     const tab = tabNavigation(target, key);
@@ -358,7 +557,7 @@ function evaluateManagedRovingTabindex(
   roles: string[],
   pattern: ManagedPattern,
 ): PendingRuntimeEvent | undefined {
-  if (!group.isConnected || group.hasAttribute('aria-activedescendant')) return undefined;
+  if (!group.isConnected || Boolean(group.getAttribute('aria-activedescendant')?.trim())) return undefined;
   const items = pattern === 'toolbar' ? toolbarControls(group) : managedRoleItems(group, roles);
   const tabStops = items.filter(isSequentialTabStop);
   if (tabStops.length <= 1) return undefined;
@@ -385,7 +584,12 @@ function evaluateExpectedFocus(input: {
   const active = document.activeElement instanceof Element ? document.activeElement : undefined;
   const activeDescendant = input.owner.getAttribute('aria-activedescendant')?.trim();
   const virtualActive = activeDescendant ? document.getElementById(activeDescendant) : undefined;
-  if (active === input.expected || input.expected.contains(active ?? null) || virtualActive === input.expected) return undefined;
+  if (
+    active === input.expected
+    || (active != null && input.expected.contains(active))
+    || virtualActive === input.expected
+    || (virtualActive != null && input.expected.contains(virtualActive))
+  ) return undefined;
 
   return pendingFinding({
     ruleId: input.ruleId,
@@ -419,6 +623,71 @@ function evaluateRadioNavigation(
     detail: `${key} moved radio-group focus to ${selectorFor(expected)}, but the focused radio did not expose aria-checked="true" after the interaction.`,
     element: radiogroup,
     references: [APG_RADIO_REFERENCE],
+  });
+}
+
+function evaluateMenuButtonOpen(probe: Extract<KeyboardFocusProbe, { kind: 'menu-button-open' }>): PendingRuntimeEvent | undefined {
+  if (!probe.trigger.isConnected) return undefined;
+  const expanded = probe.trigger.getAttribute('aria-expanded')?.trim().toLowerCase();
+  const menuAvailable = probe.menu.isConnected && isAvailable(probe.menu);
+  if (!menuAvailable || expanded === 'false') {
+    if (!probe.requiredOpen) return undefined;
+    return pendingFinding({
+      ruleId: 'FT-APG-005',
+      title: 'Keyboard activation did not open the menu',
+      detail: `${probe.key === ' ' ? 'Space' : probe.key} was pressed on ${selectorFor(probe.trigger)}, but its controlled menu did not become available after the interaction.`,
+      element: probe.trigger,
+      references: [APG_MENU_BUTTON_REFERENCE],
+    });
+  }
+
+  return evaluateExpectedFocus({
+    owner: probe.menu,
+    expected: probe.expected,
+    key: probe.key,
+    ruleId: 'FT-APG-005',
+    title: 'Menu opened without focusing the expected item',
+    pattern: 'menu',
+    reference: APG_MENU_BUTTON_REFERENCE,
+  });
+}
+
+function evaluateDisclosureToggle(
+  control: Element,
+  beforeExpanded: 'true' | 'false',
+): PendingRuntimeEvent | undefined {
+  if (!control.isConnected) return undefined;
+  const afterExpanded = control.getAttribute('aria-expanded')?.trim().toLowerCase();
+  if ((afterExpanded === 'true' || afterExpanded === 'false') && afterExpanded !== beforeExpanded) return undefined;
+
+  return pendingFinding({
+    ruleId: 'FT-APG-021',
+    title: 'Disclosure keyboard activation did not toggle its expanded state',
+    detail: `${selectorFor(control)} reported aria-expanded="${beforeExpanded}" before keyboard activation and did not expose the opposite state after the interaction.`,
+    element: control,
+    references: [APG_DISCLOSURE_REFERENCE],
+  });
+}
+
+function evaluateBoundaryNavigation(
+  owner: Element,
+  expected: Element,
+  key: 'Home' | 'End',
+  pattern: BoundaryPattern,
+): PendingRuntimeEvent | undefined {
+  const reference = pattern === 'tree'
+    ? APG_TREE_REFERENCE
+    : pattern === 'treegrid'
+      ? APG_TREEGRID_REFERENCE
+      : APG_GRID_REFERENCE;
+  return evaluateExpectedFocus({
+    owner,
+    expected,
+    key,
+    ruleId: pattern === 'tree' ? 'FT-APG-012' : 'FT-APG-013',
+    title: `${pattern === 'tree' ? 'Tree' : pattern === 'treegrid' ? 'Treegrid' : 'Grid'} ${key} navigation did not reach the expected boundary item`,
+    pattern,
+    reference,
   });
 }
 
@@ -479,6 +748,12 @@ export function evaluateKeyboardFocusProbe(probe: KeyboardFocusProbe): PendingRu
         pattern: 'listbox',
         reference: APG_LISTBOX_REFERENCE,
       });
+    case 'menu-button-open':
+      return evaluateMenuButtonOpen(probe);
+    case 'disclosure-toggle':
+      return evaluateDisclosureToggle(probe.control, probe.beforeExpanded);
+    case 'boundary-navigation':
+      return evaluateBoundaryNavigation(probe.owner, probe.expected, probe.key, probe.pattern);
     case 'dialog-escape':
       return evaluateDialogEscape(probe.dialog);
   }
