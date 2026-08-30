@@ -12,6 +12,7 @@ import {
   primaryFocusTransitionSemantic,
   type FocusTransitionSemantic,
 } from '../runtime/focus-transition-semantics';
+import { timestampInsideAutomaticFocusWalk } from '../runtime/trace-evidence-editing';
 import { localizedScanIssue, type AppLanguage } from '../../shared/i18n';
 import { scanCategoryForIssue, type ScanCategory } from '../../shared/scan-categories';
 import type {
@@ -35,11 +36,13 @@ export interface SessionSuggestion {
 }
 
 export type ReportTraceTone = 'review' | 'handled' | 'observed';
+export type ReportTraceMode = 'manual' | 'automatic' | 'ambient';
 
 export interface ReportTraceOccurrence {
   id: string;
   timestamp: number;
   interactionNumber?: number;
+  mode: ReportTraceMode;
   trigger: string;
   chain: string[];
 }
@@ -48,6 +51,7 @@ export interface ReportTraceStory {
   id: string;
   tone: ReportTraceTone;
   interactionNumber?: number;
+  modes: ReportTraceMode[];
   trigger: string;
   chain: string[];
   result: string;
@@ -76,6 +80,8 @@ export interface SessionReportModel {
   runtimeFindings: number;
   runtimeOccurrences: number;
   causalInteractions: number;
+  manualTraceInteractions: number;
+  automaticTraceInteractions: number;
   transitionReviews: number;
   handledTransitions: number;
   focusSteps: number;
@@ -91,6 +97,8 @@ interface ReportTraceCandidate {
   story: ReportTraceStory;
   representedEventIds: string[];
 }
+
+const TRACE_MODE_ORDER: ReportTraceMode[] = ['manual', 'automatic', 'ambient'];
 
 function translated(language: AppLanguage, english: string, spanish: string): string {
   return language === 'es' ? spanish : english;
@@ -183,6 +191,49 @@ function mergeReferences(left: StandardReference[], right: StandardReference[]):
   return result;
 }
 
+function traceModeForInteraction(interaction: RuntimeInteraction, events: RuntimeEvent[]): ReportTraceMode {
+  return timestampInsideAutomaticFocusWalk(interaction.startedAt, events) ? 'automatic' : 'manual';
+}
+
+function traceModeForEvent(
+  event: RuntimeEvent,
+  interaction: RuntimeInteraction | undefined,
+  events: RuntimeEvent[],
+): ReportTraceMode {
+  if (interaction) return traceModeForInteraction(interaction, events);
+  return timestampInsideAutomaticFocusWalk(event.timestamp, events) ? 'automatic' : 'ambient';
+}
+
+function traceModeLabel(mode: ReportTraceMode, language: AppLanguage): string {
+  if (mode === 'manual') return translated(language, 'Manual', 'Manual');
+  if (mode === 'automatic') return translated(language, 'Automatic', 'Automático');
+  return translated(language, 'Session signal', 'Señal de sesión');
+}
+
+function normalizedTraceModes(modes: ReportTraceMode[]): ReportTraceMode[] {
+  const present = new Set(modes);
+  return TRACE_MODE_ORDER.filter((mode) => present.has(mode));
+}
+
+function traceModesLabel(modes: ReportTraceMode[], language: AppLanguage): string {
+  return normalizedTraceModes(modes)
+    .map((mode) => traceModeLabel(mode, language))
+    .join(' + ');
+}
+
+function prefixedTraceOccurrence(
+  occurrence: ReportTraceOccurrence,
+  language: AppLanguage,
+): ReportTraceOccurrence {
+  const prefix = traceModeLabel(occurrence.mode, language);
+  const trigger = `${prefix} · ${occurrence.trigger}`;
+  return {
+    ...occurrence,
+    trigger,
+    chain: occurrence.chain.length ? [trigger, ...occurrence.chain.slice(1)] : [trigger],
+  };
+}
+
 function semanticIdentityContext(
   semantic: FocusTransitionSemantic | undefined,
   selector: string | undefined,
@@ -199,10 +250,35 @@ function semanticIdentityContext(
   return selector ?? 'session';
 }
 
+function reportIdentityKey({
+  semantic,
+  finding,
+  causeType,
+  context,
+  fallbackKind,
+}: {
+  semantic?: FocusTransitionSemantic | undefined;
+  finding?: RuntimeEvent | undefined;
+  causeType?: string | undefined;
+  context: string;
+  fallbackKind?: string | undefined;
+}): string {
+  if (finding?.ruleId || causeType) {
+    return [
+      `rule:${finding?.ruleId ?? 'none'}`,
+      `cause:${causeType ?? 'none'}`,
+      `context:${context}`,
+    ].join('|');
+  }
+  if (semantic) return `semantic:${semantic.kind}|context:${context}`;
+  return `event:${fallbackKind ?? finding?.kind ?? 'runtime'}|context:${context}`;
+}
+
 function candidateForInteraction(
   interaction: RuntimeInteraction,
   interactionNumber: number,
   semantics: FocusTransitionSemantic[],
+  events: RuntimeEvent[],
   language: AppLanguage,
 ): ReportTraceCandidate | undefined {
   const matchingSemantics = semantics.filter((semantic) => semantic.interactionId === interaction.id);
@@ -230,19 +306,21 @@ function candidateForInteraction(
     ?? finding?.element?.selector
     ?? interaction.trigger?.element?.selector;
   const timestamp = interaction.startedAt;
+  const mode = traceModeForInteraction(interaction, events);
   const occurrence: ReportTraceOccurrence = {
     id: interaction.id,
     timestamp,
     interactionNumber,
+    mode,
     trigger,
     chain,
   };
-  const identityKey = [
-    `semantic:${semantic?.kind ?? 'none'}`,
-    `rule:${finding?.ruleId ?? 'none'}`,
-    `cause:${cause?.type ?? 'none'}`,
-    `context:${semanticIdentityContext(semantic, selector)}`,
-  ].join('|');
+  const identityKey = reportIdentityKey({
+    semantic,
+    finding,
+    causeType: cause?.type,
+    context: semanticIdentityContext(semantic, selector),
+  });
 
   return {
     identityKey,
@@ -251,6 +329,7 @@ function candidateForInteraction(
       id: `interaction-story-${interaction.id}`,
       tone,
       interactionNumber,
+      modes: [mode],
       trigger,
       chain,
       result: semanticCopy?.label ?? causeCopy?.title ?? (finding ? humanRuntimeEventTitle(finding, language) : undefined) ?? translated(language, 'Runtime signal', 'Señal runtime'),
@@ -293,25 +372,28 @@ function unlinkedRuntimeCandidates(
       const chain = interaction ? uniqueStrings([trigger, eventTitle]) : [eventTitle];
       const selector = event.element?.selector;
       const cause = event.causes?.[0];
+      const mode = traceModeForEvent(event, interaction, events);
       const occurrence: ReportTraceOccurrence = {
         id: event.id,
         timestamp: event.timestamp,
         ...(interactionNumber != null ? { interactionNumber } : {}),
+        mode,
         trigger,
         chain,
       };
       return {
-        identityKey: [
-          `event:${event.kind}`,
-          `rule:${event.ruleId ?? 'none'}`,
-          `cause:${cause?.type ?? 'none'}`,
-          `context:${selector ?? 'session'}`,
-        ].join('|'),
+        identityKey: reportIdentityKey({
+          finding: event,
+          causeType: cause?.type,
+          context: selector ?? 'session',
+          fallbackKind: event.kind,
+        }),
         representedEventIds: [event.id],
         story: {
           id: `event-story-${event.id}`,
           tone: 'review' as const,
           ...(interactionNumber != null ? { interactionNumber } : {}),
+          modes: [mode],
           trigger,
           chain,
           result: eventTitle,
@@ -333,12 +415,19 @@ function unlinkedRuntimeCandidates(
     });
 }
 
-function consolidateTraceCandidates(candidates: ReportTraceCandidate[]): ReportTraceStory[] {
+function consolidateTraceCandidates(
+  candidates: ReportTraceCandidate[],
+  language: AppLanguage,
+): ReportTraceStory[] {
   const grouped = new Map<string, ReportTraceStory>();
   for (const candidate of candidates) {
     const existing = grouped.get(candidate.identityKey);
     if (!existing) {
-      grouped.set(candidate.identityKey, { ...candidate.story, occurrences: [...candidate.story.occurrences] });
+      grouped.set(candidate.identityKey, {
+        ...candidate.story,
+        modes: [...candidate.story.modes],
+        occurrences: [...candidate.story.occurrences],
+      });
       continue;
     }
 
@@ -348,9 +437,23 @@ function consolidateTraceCandidates(candidates: ReportTraceCandidate[]): ReportT
     existing.occurrenceCount = occurrences.length;
     existing.firstDetectedAt = occurrences[0]?.timestamp ?? existing.firstDetectedAt;
     existing.lastDetectedAt = occurrences.at(-1)?.timestamp ?? existing.lastDetectedAt;
+    existing.modes = normalizedTraceModes([...existing.modes, ...candidate.story.modes]);
     existing.references = mergeReferences(existing.references, candidate.story.references);
   }
-  return [...grouped.values()];
+
+  return [...grouped.values()].map((story) => {
+    const modes = normalizedTraceModes(story.modes);
+    const prefix = traceModesLabel(modes, language);
+    const trigger = `${prefix} · ${story.trigger}`;
+    const occurrences = story.occurrences.map((occurrence) => prefixedTraceOccurrence(occurrence, language));
+    return {
+      ...story,
+      modes,
+      trigger,
+      chain: story.chain.length ? [trigger, ...story.chain.slice(1)] : [trigger],
+      occurrences,
+    };
+  });
 }
 
 export function buildSessionSuggestions(
@@ -466,7 +569,7 @@ export function buildSessionSuggestions(
     });
   }
 
-  const focusEvents = events.filter((event) => event.kind === 'focus');
+  const focusEvents = events.filter((event) => event.kind === 'focus' || event.kind === 'virtual-focus');
   if (focusEvents.length === 0) {
     suggestions.push({
       id: 'coverage-focus',
@@ -500,7 +603,7 @@ export function buildSessionReportModel(
 
   interactions.forEach((interaction, index) => {
     if (!interaction.correlated) return;
-    const candidate = candidateForInteraction(interaction, index + 1, transitionSemantics, language);
+    const candidate = candidateForInteraction(interaction, index + 1, transitionSemantics, events, language);
     if (!candidate) return;
     candidate.representedEventIds.forEach((eventId) => representedEventIds.add(eventId));
     traceCandidates.push(candidate);
@@ -512,7 +615,7 @@ export function buildSessionReportModel(
     interactionNumbers,
     language,
   ));
-  const traceStories = consolidateTraceCandidates(traceCandidates);
+  const traceStories = consolidateTraceCandidates(traceCandidates, language);
 
   const allStaticFindings = scan
     ? [...scan.issues, ...scan.review, ...(scan.warnings ?? [])]
@@ -528,6 +631,7 @@ export function buildSessionReportModel(
   const categories = categoryOrder
     .map((id) => ({ id, label: categoryLabel(id, language), count: categoryMap.get(id) ?? 0 }))
     .filter((item) => item.count > 0);
+  const correlatedInteractions = interactions.filter((interaction) => interaction.correlated);
 
   return {
     staticFindings: allStaticFindings.length,
@@ -537,6 +641,12 @@ export function buildSessionReportModel(
     runtimeFindings: traceStories.filter((story) => story.tone === 'review').length,
     runtimeOccurrences: traceCandidates.filter((candidate) => candidate.story.tone === 'review').length,
     causalInteractions: interactions.filter((interaction) => interaction.causes.length > 0).length,
+    manualTraceInteractions: correlatedInteractions.filter(
+      (interaction) => traceModeForInteraction(interaction, events) === 'manual',
+    ).length,
+    automaticTraceInteractions: correlatedInteractions.filter(
+      (interaction) => traceModeForInteraction(interaction, events) === 'automatic',
+    ).length,
     transitionReviews: transitionSemantics.filter((semantic) => semantic.tone === 'review').length,
     handledTransitions: transitionSemantics.filter((semantic) => semantic.tone === 'positive').length,
     focusSteps: journey.steps.length,
