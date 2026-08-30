@@ -3,6 +3,7 @@ export type ContrastStateName =
   | 'active'
   | 'focus'
   | 'focus-visible'
+  | 'visited'
   | 'checked'
   | 'unchecked'
   | 'expanded'
@@ -54,6 +55,7 @@ const NON_TEXT_PROPERTIES = new Set([
 ]);
 
 const PSEUDO_ELEMENTS = /::(?:before|after)\b/gi;
+const CONTRAST_CUSTOM_PROPERTY = /(?:color|colour|bg|background|border|outline|shadow|fill|stroke|opacity|contrast)/i;
 
 interface StatePattern {
   state: ContrastStateName;
@@ -67,6 +69,7 @@ const STATE_PATTERNS: StatePattern[] = [
   { state: 'focus', test: /:focus\b/i, replace: /:focus\b/gi, replacement: '' },
   { state: 'hover', test: /:hover\b/i, replace: /:hover\b/gi, replacement: '' },
   { state: 'active', test: /:active\b/i, replace: /:active\b/gi, replacement: '' },
+  { state: 'visited', test: /:visited\b/i, replace: /:visited\b/gi, replacement: '' },
   { state: 'unchecked', test: /:not\(\s*:checked\s*\)/i, replace: /:not\(\s*:checked\s*\)/gi, replacement: '' },
   { state: 'checked', test: /:checked\b/i, replace: /:checked\b/gi, replacement: '' },
   { state: 'collapsed', test: /\[aria-expanded\s*=\s*(["'])?false\1\s*\]/i, replace: /\[aria-expanded\s*=\s*(["'])?false\1\s*\]/gi, replacement: '[aria-expanded]' },
@@ -116,6 +119,14 @@ function ruleProperties(style: CSSStyleDeclaration): string[] {
   return properties;
 }
 
+function propertyIsContrastRelevant(property: string): boolean {
+  return TEXT_PROPERTIES.has(property)
+    || NON_TEXT_PROPERTIES.has(property)
+    || property.startsWith('border-')
+    || property.startsWith('outline-')
+    || (property.startsWith('--') && CONTRAST_CUSTOM_PROPERTY.test(property));
+}
+
 function nestedStyleRules(rules: CSSRuleList): CSSStyleRule[] {
   const result: CSSStyleRule[] = [];
   for (const rule of Array.from(rules)) {
@@ -156,7 +167,7 @@ function candidateSelector(selector: string, patterns: StatePattern[]): string |
   // State selectors inside functional pseudos cannot be safely reconstructed
   // as exact static selectors. Removing the functional condition deliberately
   // broadens candidate discovery without pretending to simulate the state.
-  candidate = candidate.replace(/:(?:is|where|has)\([^)]*(?::hover|:active|:focus(?:-visible)?|:checked|aria-(?:expanded|selected|pressed|checked))[^)]*\)/gi, '');
+  candidate = candidate.replace(/:(?:is|where|has)\([^)]*(?::hover|:active|:visited|:focus(?:-visible)?|:checked|aria-(?:expanded|selected|pressed|checked))[^)]*\)/gi, '');
   for (const pattern of patterns) candidate = candidate.replace(pattern.replace, pattern.replacement);
   candidate = candidate.trim();
   if (!candidate || candidate.includes('&')) return undefined;
@@ -195,12 +206,15 @@ function hasRenderedTextCandidate(element: Element): boolean {
 
 function stateKind(element: Element, properties: string[]): ContrastStateKind | undefined {
   const textCandidate = hasRenderedTextCandidate(element);
-  const textRelevant = properties.some((property) => TEXT_PROPERTIES.has(property));
+  const hasRelevantCustomProperty = properties.some((property) =>
+    property.startsWith('--') && CONTRAST_CUSTOM_PROPERTY.test(property),
+  );
+  const textRelevant = properties.some((property) => TEXT_PROPERTIES.has(property)) || hasRelevantCustomProperty;
   const nonTextRelevant = properties.some((property) =>
     NON_TEXT_PROPERTIES.has(property)
     || property.startsWith('border-')
     || property.startsWith('outline-'),
-  );
+  ) || hasRelevantCustomProperty;
   if (textCandidate && textRelevant) return 'text';
   if (nonTextRelevant) return 'non-text';
   return undefined;
@@ -224,10 +238,18 @@ export function observedContrastStates(element: Element): ContrastStateName[] {
   if (match(':active')) states.push('active');
   if (match(':focus-visible')) states.push('focus-visible');
   else if (match(':focus')) states.push('focus');
-  if (match(':checked') || element.getAttribute('aria-checked') === 'true') states.push('checked');
+
+  const nativeCheckable = element instanceof HTMLInputElement
+    && ['checkbox', 'radio'].includes(element.type.toLowerCase());
+  if ((nativeCheckable && element.checked) || element.getAttribute('aria-checked') === 'true') states.push('checked');
+  else if ((nativeCheckable && !element.checked) || element.getAttribute('aria-checked') === 'false') states.push('unchecked');
+
   if (element.getAttribute('aria-expanded') === 'true') states.push('expanded');
+  else if (element.getAttribute('aria-expanded') === 'false') states.push('collapsed');
   if (element.getAttribute('aria-selected') === 'true') states.push('selected');
+  else if (element.getAttribute('aria-selected') === 'false') states.push('unselected');
   if (element.getAttribute('aria-pressed') === 'true') states.push('pressed');
+  else if (element.getAttribute('aria-pressed') === 'false') states.push('unpressed');
   return states;
 }
 
@@ -237,12 +259,7 @@ export function evaluateContrastStateCoverage(root: Document | Element = documen
 
   for (const rule of authorStyleRules()) {
     const properties = ruleProperties(rule.style);
-    if (!properties.some((property) =>
-      TEXT_PROPERTIES.has(property)
-      || NON_TEXT_PROPERTIES.has(property)
-      || property.startsWith('border-')
-      || property.startsWith('outline-'),
-    )) continue;
+    if (!properties.some(propertyIsContrastRelevant)) continue;
 
     for (const selector of splitSelectorList(rule.selectorText)) {
       const patterns = statePatternsForSelector(selector);
