@@ -1,4 +1,4 @@
-import { isProgrammaticallyHidden, selectorFor } from '../audit/dom';
+import { isSequentiallyFocusable, selectorFor } from '../audit/dom';
 
 export interface FocusWalkCandidate {
   element: HTMLElement | SVGElement;
@@ -23,16 +23,6 @@ const FOCUSABLE_SELECTOR = [
   '[tabindex]',
 ].join(',');
 
-function isDisabled(element: Element): boolean {
-  if (element instanceof HTMLButtonElement) return element.disabled;
-  if (element instanceof HTMLInputElement) return element.disabled || element.type.toLowerCase() === 'hidden';
-  if (element instanceof HTMLSelectElement) return element.disabled;
-  if (element instanceof HTMLTextAreaElement) return element.disabled;
-  if (element instanceof HTMLOptGroupElement) return element.disabled;
-  if (element instanceof HTMLOptionElement) return element.disabled;
-  return element.getAttribute('aria-disabled')?.trim().toLowerCase() === 'true';
-}
-
 function hasRenderedBox(element: Element): boolean {
   const rects = element.getClientRects();
   if (rects.length === 0) return false;
@@ -42,10 +32,9 @@ function hasRenderedBox(element: Element): boolean {
 function isVisibleFocusable(element: Element): element is HTMLElement | SVGElement {
   if (!(element instanceof HTMLElement) && !(element instanceof SVGElement)) return false;
   if (!element.isConnected) return false;
-  if (isDisabled(element)) return false;
-  if (isProgrammaticallyHidden(element)) return false;
+  if (!isSequentiallyFocusable(element)) return false;
   if (!hasRenderedBox(element)) return false;
-  return element.tabIndex >= 0;
+  return true;
 }
 
 function activeComponentFocusRoot(): ParentNode | null {
