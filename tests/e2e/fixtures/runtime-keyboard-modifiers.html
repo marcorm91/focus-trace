@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Modified keyboard shortcut fixture</title>
+</head>
+<body>
+  <main>
+    <h1>Modified keyboard shortcuts</h1>
+    <div id="grid" role="grid" aria-label="Two row grid">
+      <div role="row">
+        <div id="a1" role="gridcell" tabindex="-1">A1</div>
+        <div id="a2" role="gridcell" tabindex="-1">A2</div>
+      </div>
+      <div role="row">
+        <div id="b1" role="gridcell" tabindex="-1">B1</div>
+        <div id="b2" role="gridcell" tabindex="0">B2</div>
+      </div>
+    </div>
+  </main>
+
+  <script>
+    const cells = [...document.querySelectorAll('[role="gridcell"]')];
+    const focusCell = (target) => {
+      cells.forEach((cell) => cell.tabIndex = cell === target ? 0 : -1);
+      target.focus();
+    };
+
+    document.querySelector('#grid').addEventListener('keydown', (event) => {
+      if (!(event.ctrlKey && event.key === 'Home')) return;
+      focusCell(document.querySelector('#a1'));
+      event.preventDefault();
+    });
+  </script>
+</body>
+</html>
