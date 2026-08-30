@@ -164,13 +164,29 @@ test('keeps valid keyboard/focus pattern journeys quiet', async ({ page, extensi
   await page.keyboard.press('Home');
   await page.waitForTimeout(400);
 
-  await page.evaluate(() => (window as any).openRuntimeDialog('valid'));
-  await page.keyboard.press('Escape');
-  await page.waitForTimeout(450);
-
   const session = await readSession(extensionWorker, tabId);
   const forbidden = new Set<string>([...NEW_RULE_IDS, 'FT-APG-005', 'FT-APG-012', 'FT-APG-013']);
   const findings = session.events.filter((event) => event.ruleId && forbidden.has(event.ruleId));
   expect(findings).toEqual([]);
+  expect(session.recording).toBe(true);
+});
+
+test('accepts a modal that closes with Escape and restores focus to its trigger', async ({ page, extensionWorker }) => {
+  await page.goto(`${fixtures.origin}/runtime-dialog-escape-good.html`);
+  await expect(page.getByRole('heading', { name: 'Valid modal Escape' })).toBeVisible();
+  const tabId = await startRecording(extensionWorker, page);
+
+  const trigger = page.locator('#open-dialog');
+  await trigger.focus();
+  await page.keyboard.press('Enter');
+  await expect(page.locator('#inside-dialog')).toBeFocused();
+
+  await page.keyboard.press('Escape');
+  await expect(trigger).toBeFocused();
+  await page.waitForTimeout(450);
+
+  const session = await readSession(extensionWorker, tabId);
+  expect(session.events.some((event) => event.ruleId === 'FT-APG-020')).toBe(false);
+  expect(session.events.some((event) => event.kind === 'dialog-focus-escape')).toBe(false);
   expect(session.recording).toBe(true);
 });
