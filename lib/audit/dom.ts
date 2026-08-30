@@ -1,3 +1,5 @@
+import { registeredExplicitAriaRole } from './standards-registry';
+
 function selectorResolvesOnlyTo(selector: string, element: Element): boolean {
   try {
     const matches = document.querySelectorAll(selector);
@@ -104,6 +106,28 @@ const TEXT_LIKE_INPUT_TYPES = new Set([
   'tel',
   'text',
   'url',
+]);
+
+const ARIA_DISABLED_UI_ROLES = new Set([
+  'button',
+  'checkbox',
+  'combobox',
+  'gridcell',
+  'link',
+  'listbox',
+  'menuitem',
+  'menuitemcheckbox',
+  'menuitemradio',
+  'option',
+  'radio',
+  'scrollbar',
+  'searchbox',
+  'slider',
+  'spinbutton',
+  'switch',
+  'tab',
+  'textbox',
+  'treeitem',
 ]);
 
 function isAccNameHidden(element: Element): boolean {
@@ -424,62 +448,115 @@ export function isProgrammaticallyHidden(element: Element): boolean {
   return getComputedStyle(element).visibility !== 'visible';
 }
 
-export function semanticRole(element: Element): string | null {
-  const nativeRole = (() => {
-    if (element instanceof HTMLButtonElement) return 'button';
-    if (element instanceof HTMLAnchorElement && element.hasAttribute('href')) return 'link';
-    if (element instanceof HTMLAreaElement && element.hasAttribute('href')) return 'link';
-    if (element instanceof HTMLImageElement) return element.alt === '' ? 'presentation' : 'img';
-    if (element instanceof HTMLSelectElement) return element.multiple || element.size > 1 ? 'listbox' : 'combobox';
-    if (element instanceof HTMLTextAreaElement) return 'textbox';
-    if (element instanceof HTMLInputElement) {
-      switch (element.type.toLowerCase()) {
-        case 'button':
-        case 'submit':
-        case 'reset': return 'button';
-        case 'checkbox': return 'checkbox';
-        case 'radio': return 'radio';
-        case 'range': return 'slider';
-        case 'number': return 'spinbutton';
-        case 'search': return 'searchbox';
-        case 'hidden': return null;
-        case 'image': return 'button';
-        default: return 'textbox';
-      }
+function nativeRoleFor(element: Element): string | null {
+  if (element instanceof HTMLButtonElement) return 'button';
+  if (element instanceof HTMLAnchorElement && element.hasAttribute('href')) return 'link';
+  if (element instanceof HTMLAreaElement && element.hasAttribute('href')) return 'link';
+  if (element instanceof HTMLImageElement) return element.alt === '' ? 'presentation' : 'img';
+  if (element instanceof HTMLSelectElement) return element.multiple || element.size > 1 ? 'listbox' : 'combobox';
+  if (element instanceof HTMLTextAreaElement) return 'textbox';
+  if (element instanceof HTMLInputElement) {
+    switch (element.type.toLowerCase()) {
+      case 'button':
+      case 'submit':
+      case 'reset': return 'button';
+      case 'checkbox': return 'checkbox';
+      case 'radio': return 'radio';
+      case 'range': return 'slider';
+      case 'number': return 'spinbutton';
+      case 'search': return 'searchbox';
+      case 'hidden': return null;
+      case 'image': return 'button';
+      default: return 'textbox';
     }
-    return null;
-  })();
+  }
+  return null;
+}
 
-  const explicit = element.getAttribute('role')?.trim().split(/\s+/)[0]?.toLowerCase();
+function matchesDisabled(element: Element): boolean {
+  try {
+    return element.matches(':disabled');
+  } catch {
+    if (element instanceof HTMLButtonElement) return element.disabled;
+    if (element instanceof HTMLInputElement) return element.disabled;
+    if (element instanceof HTMLSelectElement) return element.disabled;
+    if (element instanceof HTMLTextAreaElement) return element.disabled;
+    if (element instanceof HTMLFieldSetElement) return element.disabled;
+    if (element instanceof HTMLOptGroupElement) return element.disabled;
+    if (element instanceof HTMLOptionElement) return element.disabled;
+    return false;
+  }
+}
+
+function isNativeDisableableElement(element: Element): boolean {
+  return element instanceof HTMLButtonElement
+    || element instanceof HTMLInputElement
+    || element instanceof HTMLSelectElement
+    || element instanceof HTMLTextAreaElement
+    || element instanceof HTMLFieldSetElement
+    || element instanceof HTMLOptGroupElement
+    || element instanceof HTMLOptionElement;
+}
+
+function isNativeUiControl(element: Element): boolean {
+  return element instanceof HTMLButtonElement
+    || element instanceof HTMLInputElement
+    || element instanceof HTMLSelectElement
+    || element instanceof HTMLTextAreaElement
+    || element instanceof HTMLOptionElement;
+}
+
+function isNativeElementDisabled(element: Element): boolean {
+  return isNativeDisableableElement(element) && matchesDisabled(element);
+}
+
+export function semanticRole(element: Element): string | null {
+  const nativeRole = nativeRoleFor(element);
+  const explicit = registeredExplicitAriaRole(element)?.name;
   if (!explicit) return nativeRole;
   if ((explicit === 'none' || explicit === 'presentation') && nativeRole && isNativeControlFocusable(element)) return nativeRole;
   return explicit;
 }
 
 function isNativeControlFocusable(element: Element): boolean {
-  if (element instanceof HTMLButtonElement) return !element.disabled;
+  if (element instanceof HTMLButtonElement) return !isNativeElementDisabled(element);
   if (element instanceof HTMLAnchorElement || element instanceof HTMLAreaElement) return element.hasAttribute('href');
-  if (element instanceof HTMLInputElement) return !element.disabled && element.type !== 'hidden';
-  if (element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement) return !element.disabled;
+  if (element instanceof HTMLInputElement) return !isNativeElementDisabled(element) && element.type !== 'hidden';
+  if (element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement) return !isNativeElementDisabled(element);
   return element.hasAttribute('tabindex');
+}
+
+export function isDisabledUiComponent(element: Element): boolean {
+  let current: Element | null = element;
+  while (current) {
+    if (isNativeUiControl(current) && isNativeElementDisabled(current)) return true;
+    if (
+      current.getAttribute('aria-disabled')?.trim().toLowerCase() === 'true'
+      && ARIA_DISABLED_UI_ROLES.has(semanticRole(current) ?? '')
+    ) {
+      return true;
+    }
+    current = current.parentElement;
+  }
+  return false;
 }
 
 function isCssHidden(element: Element): boolean {
   let current: Element | null = element;
   while (current) {
-    if (getComputedStyle(current).display === 'none') return true;
+    const style = getComputedStyle(current);
+    if (style.display === 'none') return true;
+    if (style.visibility === 'hidden' || style.visibility === 'collapse') return true;
+    if (style.getPropertyValue('content-visibility') === 'hidden') return true;
     current = current.parentElement;
   }
-  return getComputedStyle(element).visibility !== 'visible';
+  return false;
 }
 
 export function isSequentiallyFocusable(element: Element): boolean {
   if (isCssHidden(element)) return false;
-  if (element instanceof HTMLButtonElement && element.disabled) return false;
-  if (element instanceof HTMLInputElement && element.disabled) return false;
-  if (element instanceof HTMLSelectElement && element.disabled) return false;
-  if (element instanceof HTMLTextAreaElement && element.disabled) return false;
-  if (element instanceof HTMLFieldSetElement && element.disabled) return false;
+  if (element.closest('[inert]')) return false;
+  if (isNativeElementDisabled(element)) return false;
 
   const tabindex = element.getAttribute('tabindex');
   if (tabindex != null) {
@@ -498,7 +575,7 @@ export function isSequentiallyFocusable(element: Element): boolean {
 }
 
 export function isMarkedDecorative(element: Element): boolean {
-  const role = element.getAttribute('role')?.trim().split(/\s+/)[0]?.toLowerCase();
+  const role = semanticRole(element);
   if (role === 'none' || role === 'presentation') return true;
-  return element instanceof HTMLImageElement && element.hasAttribute('alt') && element.alt === '' && !role;
+  return element instanceof HTMLImageElement && element.hasAttribute('alt') && element.alt === '' && !element.hasAttribute('role');
 }
