@@ -1,5 +1,11 @@
 import { useEffect, useMemo, useState } from 'react';
-import { colorToHex, colorToRgb, parseCssColor, suggestAccessibleForeground } from '../../../lib/audit/contrast';
+import {
+  colorToHex,
+  colorToRgb,
+  parseCssColor,
+  suggestAccessibleForeground,
+  suggestAccessibleTextColors,
+} from '../../../lib/audit/contrast';
 import { reportFindingDescription } from '../../../lib/report/finding-guidance';
 import { type ExplanationLevel } from '../../../lib/runtime/explanations';
 import { useRovingTabs } from '../../../lib/ui/roving-tabs';
@@ -486,11 +492,21 @@ function FindingCard({
   const [colorFormat, setColorFormat] = useState<ColorFormat>('hex');
   const [copiedKey, setCopiedKey] = useState<string>();
 
-  const suggestion = useMemo(() => {
+  const contrastGuidance = useMemo(() => {
     if (issue.outcome !== 'fail') return undefined;
     const contrast = issue.contrast;
     if (!contrast?.foreground || !contrast.background) return undefined;
-    return suggestAccessibleForeground(contrast.foreground, contrast.background, contrast.requiredRatio);
+    const isText = contrast.kind === 'text' || issue.ruleId === 'FT-WCAG-010';
+    if (isText) {
+      return {
+        isText: true as const,
+        ...suggestAccessibleTextColors(contrast.foreground, contrast.background, Boolean(contrast.largeText)),
+      };
+    }
+    return {
+      isText: false as const,
+      target: suggestAccessibleForeground(contrast.foreground, contrast.background, contrast.requiredRatio),
+    };
   }, [issue]);
 
   const copyColor = async (value: string, key: string) => {
@@ -529,7 +545,7 @@ function FindingCard({
             <small>{tr(language, `Required ${issue.contrast.requiredRatio}:1`, `Requerido ${issue.contrast.requiredRatio}:1`)}</small>
           </div>
 
-          {(issue.contrast.foreground || suggestion) && (
+          {(issue.contrast.foreground || contrastGuidance) && (
             <div className="contrast-format" role="group" aria-label={tr(language, 'Color format', 'Formato de color')}>
               <button type="button" className={colorFormat === 'hex' ? 'active' : ''} aria-pressed={colorFormat === 'hex'} onClick={() => setColorFormat('hex')}>HEX</button>
               <button type="button" className={colorFormat === 'rgb' ? 'active' : ''} aria-pressed={colorFormat === 'rgb'} onClick={() => setColorFormat('rgb')}>RGB</button>
@@ -575,23 +591,67 @@ function FindingCard({
             )}
           </dl>
 
-          {suggestion && (
+          {contrastGuidance?.isText && contrastGuidance.aa && (
             <div className="contrast-suggestion">
               <div>
-                <strong>{tr(language, 'Suggested accessible color', 'Color accesible sugerido')}</strong>
+                <strong>{tr(language, 'Closest AA color', 'Color AA más cercano')}</strong>
                 <small>
                   {tr(
                     language,
-                    `Smallest ${suggestion.direction} adjustment found · ${suggestion.ratio}:1`,
-                    `Menor ajuste hacia ${suggestion.direction === 'darker' ? 'oscuro' : 'claro'} encontrado · ${suggestion.ratio}:1`,
+                    `Target ${contrastGuidance.aa.targetRatio}:1 · perceptual ${contrastGuidance.aa.direction} adjustment · result ${contrastGuidance.aa.ratio}:1`,
+                    `Objetivo ${contrastGuidance.aa.targetRatio}:1 · ajuste perceptual hacia ${contrastGuidance.aa.direction === 'darker' ? 'oscuro' : 'claro'} · resultado ${contrastGuidance.aa.ratio}:1`,
                   )}
                 </small>
               </div>
               <div className="contrast-suggestion-value">
-                <span className="contrast-swatch contrast-swatch-large" style={{ backgroundColor: suggestion.rgb }} aria-hidden="true" />
-                <code>{colorFormat === 'hex' ? suggestion.hex : suggestion.rgb}</code>
-                <button type="button" className="copy-color primary" onClick={() => void copyColor(colorFormat === 'hex' ? suggestion.hex : suggestion.rgb, 'suggestion')}>
-                  {copiedKey === 'suggestion' ? tr(language, 'Copied', 'Copiado') : tr(language, 'Copy', 'Copiar')}
+                <span className="contrast-swatch contrast-swatch-large" style={{ backgroundColor: contrastGuidance.aa.rgb }} aria-hidden="true" />
+                <code>{colorFormat === 'hex' ? contrastGuidance.aa.hex : contrastGuidance.aa.rgb}</code>
+                <button type="button" className="copy-color primary" onClick={() => void copyColor(colorFormat === 'hex' ? contrastGuidance.aa!.hex : contrastGuidance.aa!.rgb, 'suggestion-aa')}>
+                  {copiedKey === 'suggestion-aa' ? tr(language, 'Copied', 'Copiado') : tr(language, 'Copy', 'Copiar')}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {contrastGuidance?.isText && contrastGuidance.aaa && (
+            <div className="contrast-suggestion">
+              <div>
+                <strong>{tr(language, 'Closest AAA color', 'Color AAA más cercano')}</strong>
+                <small>
+                  {tr(
+                    language,
+                    `Target ${contrastGuidance.aaa.targetRatio}:1 · perceptual ${contrastGuidance.aaa.direction} adjustment · result ${contrastGuidance.aaa.ratio}:1`,
+                    `Objetivo ${contrastGuidance.aaa.targetRatio}:1 · ajuste perceptual hacia ${contrastGuidance.aaa.direction === 'darker' ? 'oscuro' : 'claro'} · resultado ${contrastGuidance.aaa.ratio}:1`,
+                  )}
+                </small>
+              </div>
+              <div className="contrast-suggestion-value">
+                <span className="contrast-swatch contrast-swatch-large" style={{ backgroundColor: contrastGuidance.aaa.rgb }} aria-hidden="true" />
+                <code>{colorFormat === 'hex' ? contrastGuidance.aaa.hex : contrastGuidance.aaa.rgb}</code>
+                <button type="button" className="copy-color primary" onClick={() => void copyColor(colorFormat === 'hex' ? contrastGuidance.aaa!.hex : contrastGuidance.aaa!.rgb, 'suggestion-aaa')}>
+                  {copiedKey === 'suggestion-aaa' ? tr(language, 'Copied', 'Copiado') : tr(language, 'Copy', 'Copiar')}
+                </button>
+              </div>
+            </div>
+          )}
+
+          {contrastGuidance && !contrastGuidance.isText && contrastGuidance.target && (
+            <div className="contrast-suggestion">
+              <div>
+                <strong>{tr(language, 'Closest 3:1 color', 'Color 3:1 más cercano')}</strong>
+                <small>
+                  {tr(
+                    language,
+                    `Applicable non-text target · perceptual ${contrastGuidance.target.direction} adjustment · result ${contrastGuidance.target.ratio}:1`,
+                    `Objetivo aplicable de contraste no textual · ajuste perceptual hacia ${contrastGuidance.target.direction === 'darker' ? 'oscuro' : 'claro'} · resultado ${contrastGuidance.target.ratio}:1`,
+                  )}
+                </small>
+              </div>
+              <div className="contrast-suggestion-value">
+                <span className="contrast-swatch contrast-swatch-large" style={{ backgroundColor: contrastGuidance.target.rgb }} aria-hidden="true" />
+                <code>{colorFormat === 'hex' ? contrastGuidance.target.hex : contrastGuidance.target.rgb}</code>
+                <button type="button" className="copy-color primary" onClick={() => void copyColor(colorFormat === 'hex' ? contrastGuidance.target!.hex : contrastGuidance.target!.rgb, 'suggestion-target')}>
+                  {copiedKey === 'suggestion-target' ? tr(language, 'Copied', 'Copiado') : tr(language, 'Copy', 'Copiar')}
                 </button>
               </div>
             </div>
