@@ -89,13 +89,15 @@ describe('contrast state coverage', () => {
     ]));
   });
 
-  it('treats disabled and aria-disabled content as inactive contrast', () => {
+  it('treats disabled UI components as inactive without suppressing generic aria-disabled content', () => {
     render('', `
       <button id="native" disabled><span id="native-copy">Disabled</span></button>
-      <div id="aria" aria-disabled="true"><span id="aria-copy">Disabled</span></div>
+      <div id="aria" role="button" aria-disabled="true"><span id="aria-copy">Disabled</span></div>
+      <div id="generic" aria-disabled="true"><span id="generic-copy">Normal content</span></div>
     `);
     expect(isInactiveContrastElement(document.querySelector('#native-copy')!)).toBe(true);
     expect(isInactiveContrastElement(document.querySelector('#aria-copy')!)).toBe(true);
+    expect(isInactiveContrastElement(document.querySelector('#generic-copy')!)).toBe(false);
   });
 
   it('removes inactive text contrast failures from the final scan', () => {
