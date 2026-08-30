@@ -29,8 +29,9 @@ import {
   observedContrastStates,
   type ContrastStateSignal,
 } from './contrast-state-coverage';
+import { textContrastSubjectsForElement } from './contrast';
 import { evaluateStructuralHtml, type StructuralHtmlSignalKind } from './content-model';
-import { selectorFor } from './dom';
+import { isProgrammaticallyHidden, selectorFor } from './dom';
 import { collectHeadingOutline, runFocusTraceScan as runBaseFocusTraceScan } from './scan-base';
 
 export { collectHeadingOutline };
@@ -150,7 +151,20 @@ function elementForIssue(issue: ScanIssue): Element | undefined {
   }
 }
 
-function pruneInactiveTextContrast(result: ScanResult): void {
+function contrastElements(root: Document | Element): Element[] {
+  if (root instanceof Document) {
+    return document.body ? [document.body, ...document.body.querySelectorAll('*')] : [];
+  }
+  return [root, ...root.querySelectorAll('*')];
+}
+
+function pruneInactiveTextContrast(result: ScanResult, root: Document | Element): void {
+  const inactiveSubjects = contrastElements(root).reduce((count, element) => {
+    if (isProgrammaticallyHidden(element) || !isInactiveContrastElement(element)) return count;
+    return count + textContrastSubjectsForElement(element).length;
+  }, 0);
+  if (!inactiveSubjects) return;
+
   let removedFailures = 0;
   let removedReviews = 0;
   result.issues = result.issues.filter((issue) => {
@@ -168,12 +182,15 @@ function pruneInactiveTextContrast(result: ScanResult): void {
     return false;
   });
 
-  if (!removedFailures && !removedReviews) return;
+  const removedPasses = Math.max(0, inactiveSubjects - removedFailures - removedReviews);
   const ruleResult = result.ruleResults?.find((entry) => entry.ruleId === RULES.textContrast.id);
-  if (!ruleResult) return;
-  ruleResult.applicable = Math.max(0, ruleResult.applicable - removedFailures - removedReviews);
-  ruleResult.failures = Math.max(0, ruleResult.failures - removedFailures);
-  ruleResult.reviews = Math.max(0, ruleResult.reviews - removedReviews);
+  if (ruleResult) {
+    ruleResult.applicable = Math.max(0, ruleResult.applicable - inactiveSubjects);
+    ruleResult.passed = Math.max(0, ruleResult.passed - removedPasses);
+    ruleResult.failures = Math.max(0, ruleResult.failures - removedFailures);
+    ruleResult.reviews = Math.max(0, ruleResult.reviews - removedReviews);
+  }
+  result.passes = Math.max(0, result.passes - removedPasses);
 }
 
 function annotateObservedContrastStates(result: ScanResult): void {
@@ -228,7 +245,7 @@ export function runFocusTraceScan(scope?: ComponentScanScope): ScanResult {
   const root = componentScope ? document.querySelector(componentScope.selector) : document;
   if (!root) return result;
 
-  pruneInactiveTextContrast(result);
+  pruneInactiveTextContrast(result, root);
   annotateObservedContrastStates(result);
   appendContrastStateCoverage(result, root);
 
