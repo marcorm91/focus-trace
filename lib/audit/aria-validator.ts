@@ -1,4 +1,5 @@
 import ariaRegistryJson from '../../generated/aria-registry.json';
+import { isProgrammaticallyHidden } from './dom';
 import {
   ariaRoleRecord,
   ariaRoleTokens,
@@ -15,7 +16,9 @@ export type AriaValidationSignalKind =
   | 'broken-reference'
   | 'required-parent'
   | 'allowed-child'
-  | 'state-consistency';
+  | 'state-consistency'
+  | 'unsupported-property'
+  | 'relationship-consistency';
 
 export interface AriaValidationSignal {
   kind: AriaValidationSignalKind;
@@ -73,10 +76,11 @@ const IDREF_LIST = new Set([
   'aria-flowto', 'aria-labelledby', 'aria-owns',
 ]);
 
-const BOOLEAN = new Set([
-  'aria-atomic', 'aria-busy', 'aria-disabled', 'aria-expanded', 'aria-hidden',
-  'aria-modal', 'aria-multiline', 'aria-multiselectable', 'aria-readonly', 'aria-required',
+const TRUE_FALSE = new Set([
+  'aria-atomic', 'aria-busy', 'aria-disabled', 'aria-modal', 'aria-multiline',
+  'aria-multiselectable', 'aria-readonly', 'aria-required',
 ]);
+const TRUE_FALSE_UNDEFINED = new Set(['aria-expanded', 'aria-hidden', 'aria-selected']);
 const TRISTATE = new Set(['aria-checked', 'aria-pressed']);
 const ENUMS: Record<string, string[]> = {
   'aria-autocomplete': ['both', 'inline', 'list', 'none'],
@@ -87,7 +91,7 @@ const ENUMS: Record<string, string[]> = {
   'aria-sort': ['ascending', 'descending', 'none', 'other'],
 };
 const POSITIVE_INTEGER = new Set([
-  'aria-colindex', 'aria-colspan', 'aria-level', 'aria-posinset', 'aria-rowindex', 'aria-rowspan',
+  'aria-colindex', 'aria-colspan', 'aria-level', 'aria-posinset', 'aria-rowindex',
 ]);
 const COUNT = new Set(['aria-colcount', 'aria-rowcount', 'aria-setsize']);
 const NUMBER = new Set(['aria-valuemax', 'aria-valuemin', 'aria-valuenow']);
@@ -124,6 +128,8 @@ function nativeRole(element: Element): string | null {
   if (element instanceof HTMLTextAreaElement) return 'textbox';
   if (element instanceof HTMLProgressElement) return 'progressbar';
   if (element instanceof HTMLMeterElement) return 'meter';
+  if (typeof HTMLDialogElement !== 'undefined' && element instanceof HTMLDialogElement) return 'dialog';
+  if (typeof HTMLOutputElement !== 'undefined' && element instanceof HTMLOutputElement) return 'status';
   if (element instanceof HTMLInputElement) {
     const inputRoles: Record<string, string | null> = {
       button: 'button', submit: 'button', reset: 'button', image: 'button',
@@ -133,14 +139,25 @@ function nativeRole(element: Element): string | null {
     return element.type.toLowerCase() in inputRoles ? inputRoles[element.type.toLowerCase()]! : 'textbox';
   }
 
+  const tag = element.tagName.toLowerCase();
   const tagRoles: Record<string, string> = {
     ul: 'list', ol: 'list', menu: 'list', li: 'listitem', table: 'table', caption: 'caption',
     thead: 'rowgroup', tbody: 'rowgroup', tfoot: 'rowgroup', tr: 'row', td: 'cell',
+    main: 'main', nav: 'navigation', aside: 'complementary', figure: 'figure', summary: 'button',
   };
-  if (element.tagName.toLowerCase() === 'th') {
+  if (/^h[1-6]$/.test(tag)) return 'heading';
+  if (tag === 'th') {
     return element.getAttribute('scope')?.toLowerCase().startsWith('row') ? 'rowheader' : 'columnheader';
   }
-  return tagRoles[element.tagName.toLowerCase()] ?? null;
+  return tagRoles[tag] ?? null;
+}
+
+function effectiveRoleRecord(element: Element): AriaRoleRecord | null {
+  const explicit = registeredExplicitAriaRole(element);
+  if (explicit) return explicit;
+  const role = nativeRole(element);
+  if (!role || role === 'presentation' || role === 'none') return null;
+  return ariaRoleRecord(role) ?? null;
 }
 
 export function resolvedExplicitAriaRole(element: Element): AriaRoleRecord | null {
@@ -153,11 +170,13 @@ export function effectiveAriaRole(element: Element): string | null {
 
 function validPropertyValue(property: string, raw: string): boolean {
   const value = raw.trim().toLowerCase();
-  if (BOOLEAN.has(property)) return ['false', 'true', 'undefined'].includes(value);
+  if (TRUE_FALSE.has(property)) return ['false', 'true'].includes(value);
+  if (TRUE_FALSE_UNDEFINED.has(property)) return ['false', 'true', 'undefined'].includes(value);
   if (TRISTATE.has(property)) return ['false', 'mixed', 'true', 'undefined'].includes(value);
   if (ENUMS[property]) return ENUMS[property].includes(value);
   if (NUMBER.has(property)) return number(value) != null;
   if (POSITIVE_INTEGER.has(property)) return (integer(value) ?? 0) >= 1;
+  if (property === 'aria-rowspan') return (integer(value) ?? -1) >= 0;
   if (COUNT.has(property)) {
     const parsed = integer(value);
     return parsed === -1 || (parsed != null && parsed >= 1);
@@ -342,6 +361,77 @@ function consistencySignals(element: Element): AriaValidationSignal[] {
   return result;
 }
 
+function relationshipConsistencySignals(element: Element): AriaValidationSignal[] {
+  const result: AriaValidationSignal[] = [];
+
+  if (element.hasAttribute('aria-errormessage')) {
+    const invalid = element.getAttribute('aria-invalid')?.trim().toLowerCase();
+    const errorTargets = idTargets(element, 'aria-errormessage');
+    if (!element.hasAttribute('aria-invalid')) {
+      result.push({
+        kind: 'relationship-consistency',
+        element,
+        detail: 'aria-errormessage is present without aria-invalid. WAI-ARIA requires authors to use aria-invalid in conjunction with aria-errormessage.',
+      });
+    } else if (errorTargets.length && invalid === 'false') {
+      const visible = errorTargets.filter((target) => !isProgrammaticallyHidden(target));
+      if (visible.length) {
+        result.push({
+          kind: 'relationship-consistency',
+          element,
+          detail: `aria-invalid="false" marks the value as valid, but aria-errormessage still references visible error content: ${visible.map((target) => `#${target.id || target.tagName.toLowerCase()}`).join(', ')}. Hide the non-pertinent message from all users or remove the relationship.`,
+        });
+      }
+    } else if (errorTargets.length && ['true', 'grammar', 'spelling'].includes(invalid ?? '')) {
+      const hidden = errorTargets.filter((target) => isProgrammaticallyHidden(target));
+      if (hidden.length) {
+        result.push({
+          kind: 'relationship-consistency',
+          element,
+          detail: `aria-invalid=${JSON.stringify(invalid)} makes aria-errormessage pertinent, but referenced error content is hidden from users: ${hidden.map((target) => `#${target.id || target.tagName.toLowerCase()}`).join(', ')}.`,
+        });
+      }
+    }
+  }
+
+  const expanded = element.getAttribute('aria-expanded')?.trim().toLowerCase();
+  if ((expanded === 'true' || expanded === 'false') && element.hasAttribute('aria-controls')) {
+    const controlled = idTargets(element, 'aria-controls');
+    if (controlled.length) {
+      const available = controlled.map((target) => !isProgrammaticallyHidden(target));
+      const mismatch = expanded === 'true'
+        ? available.every((value) => !value)
+        : available.some(Boolean);
+      if (mismatch) {
+        result.push({
+          kind: 'relationship-consistency',
+          element,
+          detail: `aria-expanded="${expanded}" contradicts the current availability of controlled content (${controlled.map((target) => `#${target.id || target.tagName.toLowerCase()}`).join(', ')}).`,
+        });
+      }
+    }
+  }
+
+  return result;
+}
+
+function unsupportedPropertySignal(
+  element: Element,
+  property: string,
+  role: AriaRoleRecord | null,
+  explicitRole: AriaRoleRecord | null,
+): AriaValidationSignal | null {
+  if (!role || role.supportedProperties.includes(property)) return null;
+  // Explicit prohibited properties are already reported by the synced
+  // authoring-signal pass, so do not duplicate that finding here.
+  if (explicitRole?.disallowedProperties.includes(property)) return null;
+  return {
+    kind: 'unsupported-property',
+    element,
+    detail: `${property} is a known WAI-ARIA state/property, but role=${JSON.stringify(role.name)} does not list it as supported or inherited in the synced ARIA role model.`,
+  };
+}
+
 export function evaluateAdvancedAria(root: ScanRoot): AriaValidationSignal[] {
   const elements = scopedElements(root);
   const result: AriaValidationSignal[] = [];
@@ -349,14 +439,16 @@ export function evaluateAdvancedAria(root: ScanRoot): AriaValidationSignal[] {
   result.push(...ownership.signals.filter(({ element }) => root instanceof Document || element === root || root.contains(element)));
 
   for (const element of elements) {
+    const explicitRole = registeredExplicitAriaRole(element);
+    const roleForProperties = effectiveRoleRecord(element);
+
     if (element.hasAttribute('role')) {
       const roleTokens = ariaRoleTokens(element);
       const abstract = roleTokens.filter(isAbstractAriaRole);
-      const resolved = registeredExplicitAriaRole(element);
       if (abstract.length) {
         result.push({ kind: 'invalid-role', element, detail: `role contains abstract ARIA role token${abstract.length > 1 ? 's' : ''}: ${abstract.join(', ')}. Abstract roles must not be used by authors.` });
       }
-      if (!resolved) {
+      if (!explicitRole) {
         const recognised = roleTokens.filter((token) => ariaRoleRecord(token) != null);
         result.push({
           kind: 'invalid-role',
@@ -377,6 +469,8 @@ export function evaluateAdvancedAria(root: ScanRoot): AriaValidationSignal[] {
       if (!validPropertyValue(property, raw)) {
         result.push({ kind: 'invalid-value', element, detail: `${property}=${JSON.stringify(raw)} does not match the deterministic WAI-ARIA value grammar checked by FocusTrace.` });
       }
+      const unsupported = unsupportedPropertySignal(element, property, roleForProperties, explicitRole);
+      if (unsupported) result.push(unsupported);
       if (IDREF_LIST.has(property)) {
         const ids = tokens(raw);
         if (!ids.length) result.push({ kind: 'broken-reference', element, detail: `${property} is present but does not contain any ID reference.` });
@@ -387,24 +481,23 @@ export function evaluateAdvancedAria(root: ScanRoot): AriaValidationSignal[] {
       }
     }
 
-    const role = registeredExplicitAriaRole(element);
-    if (role) {
-      for (const property of role.requiredProperties) {
-        if (!element.hasAttribute(property) && !nativeRequiredState(element, role.name, property)) {
-          result.push({ kind: 'missing-required-property', element, detail: `role=${JSON.stringify(role.name)} requires ${property}, but the attribute is missing and no equivalent native host state was detected.` });
+    if (explicitRole) {
+      for (const property of explicitRole.requiredProperties) {
+        if (!element.hasAttribute(property) && !nativeRequiredState(element, explicitRole.name, property)) {
+          result.push({ kind: 'missing-required-property', element, detail: `role=${JSON.stringify(explicitRole.name)} requires ${property}, but the attribute is missing and no equivalent native host state was detected.` });
         }
       }
 
-      if ((REQUIRED_PARENT[role.name] || GROUPED_PARENT[role.name]) && !hasRequiredParent(element, role.name, ownership)) {
-        result.push({ kind: 'required-parent', element, detail: `role=${JSON.stringify(role.name)} is not inside its required accessibility-parent context after transparent wrappers and valid aria-owns ownership are resolved.` });
+      if ((REQUIRED_PARENT[explicitRole.name] || GROUPED_PARENT[explicitRole.name]) && !hasRequiredParent(element, explicitRole.name, ownership)) {
+        result.push({ kind: 'required-parent', element, detail: `role=${JSON.stringify(explicitRole.name)} is not inside its required accessibility-parent context after transparent wrappers and valid aria-owns ownership are resolved.` });
       }
 
-      const allowed = ALLOWED_CHILD[role.name];
+      const allowed = ALLOWED_CHILD[explicitRole.name];
       if (allowed) {
         for (const child of semanticChildren(element, ownership)) {
           const childRole = effectiveAriaRole(child);
           if (childRole && !allowed.includes(childRole)) {
-            result.push({ kind: 'allowed-child', element: child, detail: `role=${JSON.stringify(role.name)} exposes accessibility child role=${JSON.stringify(childRole)}, which is outside its allowed child-role model.` });
+            result.push({ kind: 'allowed-child', element: child, detail: `role=${JSON.stringify(explicitRole.name)} exposes accessibility child role=${JSON.stringify(childRole)}, which is outside its allowed child-role model.` });
           }
         }
       }
@@ -413,6 +506,7 @@ export function evaluateAdvancedAria(root: ScanRoot): AriaValidationSignal[] {
     const active = activeDescendantSignal(element, ownership);
     if (active) result.push(active);
     result.push(...consistencySignals(element));
+    result.push(...relationshipConsistencySignals(element));
   }
   return result;
 }
