@@ -66,7 +66,7 @@ interface StatePattern {
 
 const STATE_PATTERNS: StatePattern[] = [
   { state: 'focus-visible', test: /:focus-visible\b/i, replace: /:focus-visible\b/gi, replacement: '' },
-  { state: 'focus', test: /:focus\b/i, replace: /:focus\b/gi, replacement: '' },
+  { state: 'focus', test: /:focus(?!-visible)\b/i, replace: /:focus(?!-visible)\b/gi, replacement: '' },
   { state: 'hover', test: /:hover\b/i, replace: /:hover\b/gi, replacement: '' },
   { state: 'active', test: /:active\b/i, replace: /:active\b/gi, replacement: '' },
   { state: 'visited', test: /:visited\b/i, replace: /:visited\b/gi, replacement: '' },
@@ -111,12 +111,15 @@ function splitSelectorList(selectorText: string): string[] {
 }
 
 function ruleProperties(style: CSSStyleDeclaration): string[] {
-  const properties: string[] = [];
+  const properties = new Set<string>();
   for (let index = 0; index < style.length; index += 1) {
     const property = style.item(index).toLowerCase();
-    if (property) properties.push(property);
+    if (property) properties.add(property);
   }
-  return properties;
+  for (const match of style.cssText.matchAll(/(--[\w-]+)\s*:/g)) {
+    if (match[1]) properties.add(match[1].toLowerCase());
+  }
+  return [...properties];
 }
 
 function propertyIsContrastRelevant(property: string): boolean {
