@@ -157,8 +157,14 @@ describe('UX polish contract', () => {
 
   it('keeps hover states legible and contrast metadata responsive', () => {
     const states = source('entrypoints/sidepanel/control-states.css');
-    expect(states).toContain('.export-pdf-report:hover:not(:disabled)');
-    expect(states).toContain('color: var(--ft-paper, Canvas);');
+    const exportCss = source('entrypoints/sidepanel/views/report-export.css');
+
+    expect(states).toContain('button:not(:disabled):hover');
+    expect(states).toContain('opacity: .94;');
+    expect(states).toContain('.report-export-actions button:hover:not(:disabled)');
+    expect(states).toContain('color: var(--ft-ink, CanvasText);');
+    expect(exportCss).toContain('.report-export-actions .export-pdf-report');
+    expect(exportCss).toContain('background: var(--ft-surface, ButtonFace);');
     expect(states).toContain('grid-template-columns: repeat(2, minmax(0, 1fr));');
     expect(states).toContain('@media (max-width: 560px)');
     expect(states).not.toContain('!important');
