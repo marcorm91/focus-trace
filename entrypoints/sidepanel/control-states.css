@@ -1,5 +1,36 @@
 /* Cross-component interactive states. This is intentionally limited to shared
    control behaviour; layout and component appearance stay with their owners. */
+button:not(:disabled) {
+  cursor: pointer;
+  transition:
+    opacity 120ms ease,
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+button:not(:disabled):hover {
+  opacity: .94;
+}
+
+button:not(:disabled):active {
+  opacity: .9;
+}
+
+button:disabled {
+  cursor: not-allowed;
+}
+
+.actions .primary,
+.export-pdf-report,
+.copy-color.primary {
+  border-color: var(--ft-border, CanvasText);
+  background: var(--ft-surface, Canvas);
+  color: var(--ft-ink, CanvasText);
+}
+
 .contrast-evidence,
 .contrast-evidence > *,
 .contrast-evidence dl,
@@ -109,11 +140,10 @@
   color: var(--ft-ink, CanvasText);
 }
 
-.report-export-actions .export-pdf-report:hover:not(:disabled),
-.report-export-actions .export-pdf-report:focus-visible {
-  border-color: var(--ft-brand-strong, Highlight);
-  background: var(--ft-brand-strong, Highlight);
-  color: var(--ft-paper, Canvas);
+@media (prefers-reduced-motion: reduce) {
+  button:not(:disabled) {
+    transition: none;
+  }
 }
 
 @media (max-width: 560px) {
