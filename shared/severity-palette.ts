@@ -14,13 +14,13 @@ export const SEVERITY_PALETTE: Record<SeverityTheme, Record<SeverityPaletteLevel
   light: {
     aa: {
       critical: '#b91c1c',
-      serious: '#c2410c',
+      serious: '#a64b00',
       moderate: '#786500',
       minor: '#2377d4',
     },
     aaa: {
       critical: '#991b1b',
-      serious: '#9a3412',
+      serious: '#8a3d00',
       moderate: '#695800',
       minor: '#1b59a0',
     },
@@ -28,13 +28,13 @@ export const SEVERITY_PALETTE: Record<SeverityTheme, Record<SeverityPaletteLevel
   dark: {
     aa: {
       critical: '#f87171',
-      serious: '#fb923c',
+      serious: '#f5a524',
       moderate: '#998b3e',
       minor: '#448dde',
     },
     aaa: {
       critical: '#fca5a5',
-      serious: '#fdba74',
+      serious: '#ffd08a',
       moderate: '#b9af7b',
       minor: '#81b2e9',
     },

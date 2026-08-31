@@ -91,8 +91,11 @@
   background: var(--ft-surface);
 }
 
-.report-rule-group.outcome-fail { border-left-color: var(--ft-danger); }
-.report-rule-group.outcome-review { border-left-color: var(--ft-warning); }
+.report-rule-group.severity-critical { border-left-color: var(--ft-severity-critical-aa); }
+.report-rule-group.severity-serious { border-left-color: var(--ft-severity-serious-aa); }
+.report-rule-group.severity-moderate { border-left-color: var(--ft-severity-moderate-aa); }
+.report-rule-group.severity-minor { border-left-color: var(--ft-severity-minor-aa); }
+.report-rule-group.severity-info { border-left-color: var(--ft-muted); }
 
 .report-rule-group > summary {
   display: grid;
@@ -248,4 +251,3 @@
     width: 100%;
   }
 }
-

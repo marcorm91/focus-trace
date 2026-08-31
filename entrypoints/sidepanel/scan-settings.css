@@ -150,20 +150,12 @@
 
 .contrast-evidence {
   display: grid;
-  grid-template-columns: 92px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
   padding: 10px;
   border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 14%, transparent));
   border-radius: 10px;
   background: var(--ft-surface-subtle, color-mix(in srgb, CanvasText 3%, Canvas));
-}
-
-.contrast-evidence.fail {
-  border-color: color-mix(in srgb, #b42318 45%, transparent);
-}
-
-.contrast-evidence.review {
-  border-color: color-mix(in srgb, #b54708 45%, transparent);
 }
 
 .contrast-ratio {
@@ -183,6 +175,7 @@
 .contrast-ratio strong {
   font-size: 20px;
   line-height: 1.05;
+  white-space: nowrap;
 }
 
 .contrast-ratio small {
