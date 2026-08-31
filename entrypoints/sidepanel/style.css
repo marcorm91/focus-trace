@@ -16,7 +16,7 @@ h1 { margin: 0; font-size: 22px; } h2 { font-size: 17px; margin: 0; } h3 { font-
 .error { border: 1px solid #d93025; padding: 10px 12px; border-radius: 8px; margin-bottom: 14px; }
 .tabs { display: grid; grid-template-columns: repeat(5, 1fr); border-bottom: 1px solid color-mix(in srgb, CanvasText 16%, transparent); margin-bottom: 16px; }
 .tabs button { min-height: 42px; border: 0; border-bottom: 3px solid transparent; background: transparent; color: inherit; text-transform: capitalize; cursor: pointer; padding-inline: 4px; font-size: 14px; }
-.tabs button.active { border-bottom-color: Highlight; font-weight: 700; }
+.tabs button.active { border-bottom-color: CanvasText; font-weight: 700; }
 .panel { display: grid; gap: 14px; }
 .section-heading, .subsection-heading { display: flex; justify-content: space-between; align-items: start; gap: 12px; }
 .section-heading p { margin: 3px 0 0; color: GrayText; font-size: 14px; max-width: 260px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -156,10 +156,10 @@ code { display: inline-block; max-width: 100%; overflow-wrap: anywhere; white-sp
   align-items: center;
   justify-content: center;
   gap: 8px;
-  border: 1px solid var(--focustrace-focus-path);
+  border: 1px solid var(--ft-border);
   border-radius: 8px;
   padding: 7px 10px;
-  background: color-mix(in srgb, var(--focustrace-focus-path) 8%, Canvas);
+  background: var(--ft-surface, Canvas);
   color: inherit;
   cursor: pointer;
   font-size: 14px;
@@ -167,8 +167,8 @@ code { display: inline-block; max-width: 100%; overflow-wrap: anywhere; white-sp
 }
 
 .focus-path-toggle[aria-pressed="true"] {
-  background: color-mix(in srgb, var(--focustrace-focus-path) 18%, Canvas);
-  box-shadow: inset 0 0 0 1px var(--focustrace-focus-path);
+  background: var(--ft-surface, Canvas);
+  box-shadow: inset 0 0 0 1px var(--ft-border);
 }
 
 .focus-path-toggle:disabled {
@@ -1015,12 +1015,12 @@ code {
 
 .report-section-heading > div {
   display: grid;
-  grid-template-columns: 26px minmax(0, 1fr);
+  grid-template-columns: 26px minmax(0, 1fr) auto;
   gap: 9px;
   align-items: start;
 }
 
-.report-section-heading > div > span {
+.report-section-index {
   width: 26px;
   height: 26px;
   display: grid;
@@ -1419,14 +1419,14 @@ code {
 }
 
 .journey-step > button:hover {
-  border-color: color-mix(in srgb, var(--ft-brand) 48%, var(--ft-border));
-  background: var(--ft-brand-soft);
+  border-color: var(--ft-border);
+  background: var(--ft-surface);
 }
 
 .journey-step > button[aria-current="step"] {
-  border-color: var(--ft-brand);
-  box-shadow: inset 0 0 0 1px var(--ft-brand);
-  background: var(--ft-brand-soft);
+  border-color: var(--ft-border);
+  box-shadow: inset 0 0 0 1px var(--ft-border);
+  background: var(--ft-surface);
 }
 
 .journey-node {

@@ -72,8 +72,8 @@
 
 .report-compact-tabs button:hover:not(:disabled),
 .report-compact-tabs button:focus-visible {
-  border-color: var(--ft-accent);
-  background: var(--ft-accent-soft);
+  border-color: var(--ft-border);
+  background: var(--ft-surface);
   color: var(--ft-ink);
 }
 
@@ -91,8 +91,11 @@
   background: var(--ft-surface);
 }
 
-.report-rule-group.outcome-fail { border-left-color: var(--ft-danger); }
-.report-rule-group.outcome-review { border-left-color: var(--ft-warning); }
+.report-rule-group.severity-critical { border-left-color: var(--ft-severity-critical-aa); }
+.report-rule-group.severity-serious { border-left-color: var(--ft-severity-serious-aa); }
+.report-rule-group.severity-moderate { border-left-color: var(--ft-severity-moderate-aa); }
+.report-rule-group.severity-minor { border-left-color: var(--ft-severity-minor-aa); }
+.report-rule-group.severity-info { border-left-color: var(--ft-muted); }
 
 .report-rule-group > summary {
   display: grid;
@@ -171,8 +174,8 @@
 
 .report-rule-pager button:hover:not(:disabled),
 .report-rule-pager button:focus-visible {
-  border-color: var(--ft-accent);
-  background: var(--ft-accent-soft);
+  border-color: var(--ft-border);
+  background: var(--ft-surface);
   color: var(--ft-ink);
 }
 
@@ -231,8 +234,8 @@
 
 .report-rule-target button:hover:not(:disabled),
 .report-rule-target button:focus-visible {
-  border-color: var(--ft-accent);
-  background: var(--ft-accent-soft);
+  border-color: var(--ft-border);
+  background: var(--ft-surface);
 }
 
 @media (max-width: 520px) {
@@ -248,4 +251,3 @@
     width: 100%;
   }
 }
-

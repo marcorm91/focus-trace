@@ -66,8 +66,9 @@
 }
 
 .scan-category-filter button.active {
-  border-color: var(--ft-brand, Highlight);
-  background: var(--ft-brand-soft, color-mix(in srgb, Highlight 8%, Canvas));
+  border-color: var(--ft-border, CanvasText);
+  background: var(--ft-surface, Canvas);
+  box-shadow: var(--ft-shadow-sm, none);
   font-weight: 800;
 }
 
@@ -118,9 +119,10 @@
 }
 
 .scan-filter-tabs button.active {
-  border-color: var(--ft-brand, Highlight);
-  background: var(--ft-brand-soft, color-mix(in srgb, Highlight 8%, Canvas));
-  color: var(--ft-brand-strong, inherit);
+  border-color: var(--ft-border, CanvasText);
+  background: var(--ft-surface, Canvas);
+  color: var(--ft-ink, inherit);
+  box-shadow: var(--ft-shadow-sm, none);
   font-weight: 700;
 }
 
@@ -150,20 +152,12 @@
 
 .contrast-evidence {
   display: grid;
-  grid-template-columns: 92px minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
   padding: 10px;
   border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 14%, transparent));
   border-radius: 10px;
   background: var(--ft-surface-subtle, color-mix(in srgb, CanvasText 3%, Canvas));
-}
-
-.contrast-evidence.fail {
-  border-color: color-mix(in srgb, #b42318 45%, transparent);
-}
-
-.contrast-evidence.review {
-  border-color: color-mix(in srgb, #b54708 45%, transparent);
 }
 
 .contrast-ratio {
@@ -183,11 +177,15 @@
 .contrast-ratio strong {
   font-size: 20px;
   line-height: 1.05;
+  white-space: nowrap;
 }
 
 .contrast-ratio small {
   color: var(--ft-muted, GrayText);
   font-size: 14px;
+  overflow-wrap: normal;
+  word-break: normal;
+  white-space: nowrap;
 }
 
 .contrast-format {
@@ -214,8 +212,9 @@
 }
 
 .contrast-format button.active {
-  background: var(--ft-brand-soft, color-mix(in srgb, Highlight 10%, Canvas));
-  color: var(--ft-brand-strong, inherit);
+  background: var(--ft-surface, Canvas);
+  color: var(--ft-ink, inherit);
+  box-shadow: inset 0 0 0 1px var(--ft-border, CanvasText);
 }
 
 .contrast-evidence dl {
@@ -282,12 +281,12 @@
 
 .copy-color:hover,
 .copy-color:focus-visible {
-  border-color: var(--ft-brand, Highlight);
+  border-color: var(--ft-border, CanvasText);
 }
 
 .copy-color.primary {
-  background: var(--ft-brand-soft, color-mix(in srgb, Highlight 9%, Canvas));
-  border-color: color-mix(in srgb, Highlight 38%, transparent);
+  background: var(--ft-surface, Canvas);
+  border-color: var(--ft-border, CanvasText);
 }
 
 .contrast-suggestion {
@@ -357,8 +356,8 @@
 }
 
 .locate-finding:hover {
-  border-color: var(--ft-brand, Highlight);
-  background: var(--ft-brand-soft, color-mix(in srgb, Highlight 7%, Canvas));
+  border-color: var(--ft-border, CanvasText);
+  background: var(--ft-surface, Canvas);
 }
 
 .settings-panel {
@@ -441,8 +440,8 @@
 }
 
 .settings-contact-link:hover {
-  border-color: var(--ft-brand, Highlight);
-  background: var(--ft-brand-soft, color-mix(in srgb, Highlight 7%, Canvas));
+  border-color: var(--ft-border, CanvasText);
+  background: var(--ft-surface, Canvas);
 }
 
 .settings-note p {

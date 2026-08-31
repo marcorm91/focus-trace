@@ -141,7 +141,7 @@
 }
 
 .report-trace-section {
-  border-color: color-mix(in srgb, Highlight 26%, var(--ft-border, transparent));
+  border: 1px solid var(--ft-border, CanvasText);
 }
 
 .trace-story {
@@ -162,7 +162,7 @@
 }
 
 .trace-story.tone-observed {
-  border-color: color-mix(in srgb, Highlight 32%, transparent);
+  border-color: var(--ft-border, CanvasText);
 }
 
 .trace-story-head {
@@ -279,9 +279,25 @@
 
 .trace-story-recommendation {
   padding: 8px;
-  border-left: 3px solid var(--ft-brand, Highlight);
+  border-left: 1px solid var(--ft-border, CanvasText);
   border-radius: 5px;
-  background: var(--ft-brand-soft, color-mix(in srgb, Highlight 6%, Canvas));
+  background: var(--ft-surface-subtle, color-mix(in srgb, CanvasText 3%, Canvas));
+}
+
+.report-section-count {
+  align-self: start;
+  justify-self: end;
+  color: var(--ft-muted, GrayText);
+  font-size: 14px;
+  font-weight: 750;
+  line-height: 1.35;
+  text-align: right;
+  white-space: nowrap;
+}
+
+.report-pending {
+  border: 1px solid var(--ft-border, CanvasText);
+  background: var(--ft-surface-subtle, color-mix(in srgb, CanvasText 3%, Canvas));
 }
 
 .trace-story > button {
@@ -357,6 +373,13 @@
 }
 
 @media (max-width: 360px) {
+  .report-section-count {
+    grid-column: 2 / -1;
+    grid-row: 2;
+    justify-self: start;
+    text-align: left;
+  }
+
   .report-hero {
     display: grid;
   }

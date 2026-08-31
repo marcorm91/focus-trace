@@ -133,11 +133,26 @@ describe('UX polish contract', () => {
 
   it('labels unresolved contrast as indeterminate and exposes the missing background', () => {
     const scan = source('entrypoints/sidepanel/views/ScanView.tsx');
+    const contrastCss = source('entrypoints/sidepanel/scan-settings.css');
 
     expect(scan).toContain("tr(language, 'Indeterminate', 'Indeterminado')");
     expect(scan).toContain('Manual review · required');
     expect(scan).toContain("tr(language, 'Unresolved', 'No resuelto')");
     expect(scan).toContain('!issue.contrast.background && issue.contrast.ratio == null');
+    expect(contrastCss).toContain('grid-template-columns: minmax(0, 1fr) auto;');
+    expect(contrastCss).toContain('white-space: nowrap;');
+    expect(contrastCss).toContain('overflow-wrap: normal;');
+    expect(contrastCss).toContain('word-break: normal;');
+    expect(contrastCss).not.toContain('.contrast-evidence.fail');
+    expect(contrastCss).not.toContain('.contrast-evidence.review');
+  });
+
+  it('uses the neutral border color for finding evidence', () => {
+    const visualSystem = source('entrypoints/sidepanel/visual-system.css');
+
+    expect(visualSystem).toContain('.evidence {');
+    expect(visualSystem).toContain('border-left-width: 4px;');
+    expect(visualSystem).toContain('border-left-color: var(--ft-border);');
   });
 
   it('keeps hover states legible and contrast metadata responsive', () => {

@@ -249,7 +249,7 @@ export function SessionReportView({
           <section className="report-section report-priority" aria-labelledby="report-priority-title">
             <div className="report-section-heading">
               <div>
-                <span>!</span>
+                <span className="report-section-index">!</span>
                 <div>
                   <h3 id="report-priority-title">{tr(language, 'Highest priority', 'Máxima prioridad')}</h3>
                   <p>{tr(language, 'The first things worth fixing from the evidence collected.', 'Lo primero que merece la pena corregir según la evidencia recogida.')}</p>
@@ -274,7 +274,7 @@ export function SessionReportView({
           <section className="report-section report-trace-section" aria-labelledby="report-trace-title">
             <div className="report-section-heading">
               <div>
-                <span>{model.traceStories.length}</span>
+                <span className="report-section-index">01</span>
                 <div>
                   <h3 id="report-trace-title">{tr(language, 'Runtime trace', 'Traza runtime')}</h3>
                   <p>
@@ -285,6 +285,9 @@ export function SessionReportView({
                       : tr(language, 'No focus journey has been recorded yet.', 'Todavía no se ha grabado ningún recorrido de foco.')}
                   </p>
                 </div>
+                <span className="report-section-count">
+                  {model.runtimeFindings} {tr(language, 'findings', 'hallazgos')}
+                </span>
               </div>
             </div>
 
@@ -381,11 +384,14 @@ export function SessionReportView({
           <section className="report-section" aria-labelledby="report-analysis-title">
             <div className="report-section-heading">
               <div>
-                <span>{model.failures}</span>
+                <span className="report-section-index">02</span>
                 <div>
                   <h3 id="report-analysis-title">{tr(language, 'Full page scan', 'Barrido completo de página')}</h3>
                   <p>{scan.engine} · {scan.standard} · {scan.rulesRun} {tr(language, 'rule families', 'familias de reglas')}</p>
                 </div>
+                <span className="report-section-count">
+                  {model.failures} {tr(language, 'failures', 'fallos')}
+                </span>
               </div>
             </div>
 
@@ -403,11 +409,14 @@ export function SessionReportView({
           <section className="report-section" aria-labelledby="report-headings-title">
             <div className="report-section-heading">
               <div>
-                <span>{headings.length}</span>
+                <span className="report-section-index">03</span>
                 <div>
                   <h3 id="report-headings-title">{tr(language, 'Heading structure', 'Estructura de encabezados')}</h3>
                   <p>{tr(language, 'Visible H1-H6 elements in DOM order.', 'Elementos H1–H6 visibles en orden DOM.')}</p>
                 </div>
+                <span className="report-section-count">
+                  {headings.length} {tr(language, 'headings', 'encabezados')}
+                </span>
               </div>
             </div>
 
@@ -431,11 +440,14 @@ export function SessionReportView({
           <section className="report-section report-recommendations" aria-labelledby="report-suggestions-title">
             <div className="report-section-heading">
               <div>
-                <span>{model.suggestions.length}</span>
+                <span className="report-section-index">04</span>
                 <div>
                   <h3 id="report-suggestions-title">{tr(language, 'Recommended next steps', 'Sugerencias de mejora')}</h3>
                   <p>{tr(language, 'Prioritized from static and runtime evidence.', 'Priorizadas a partir de evidencia estática y runtime.')}</p>
                 </div>
+                <span className="report-section-count">
+                  {model.suggestions.length} {tr(language, 'suggestions', 'sugerencias')}
+                </span>
               </div>
             </div>
 

@@ -14,7 +14,7 @@ html[data-ft-focused-subview-open] .topbar {
   margin-bottom: 14px;
 }
 
-/* Quick actions: every action is neutral at rest and uses the same soft-blue hover. */
+/* Quick actions remain neutral both at rest and on interaction. */
 .quick-start .quick-actions > button,
 .quick-start .quick-actions .site-audit-launch {
   min-width: 0;
@@ -39,7 +39,7 @@ html[data-ft-focused-subview-open] .topbar {
 .quick-start .quick-actions > button:not(:disabled):hover,
 .quick-start .quick-actions .site-audit-launch:not(:disabled):hover {
   border-color: var(--ft-border);
-  background: var(--ft-accent-soft);
+  background: var(--ft-surface);
   color: var(--ft-ink);
 }
 
@@ -66,7 +66,7 @@ html[data-ft-focused-subview-open] .topbar {
 .topbar .topbar-tools > button:not(:disabled):hover,
 .topbar .topbar-tools > .settings-trigger[aria-pressed='true']:not(:disabled):hover {
   border-color: var(--ft-border);
-  background: var(--ft-accent-soft);
+  background: var(--ft-surface);
   color: var(--ft-ink);
 }
 
@@ -103,21 +103,35 @@ html[data-ft-focused-subview-open] .topbar {
   font-weight: 700;
 }
 
-.trace-workspace .trace-hero .trace-record.start:hover:not(:disabled),
+.trace-workspace .trace-hero .trace-record.start:hover:not(:disabled) {
+  border-color: var(--ft-border);
+  background: var(--ft-surface);
+  color: var(--ft-ink);
+}
+
 .trace-workspace .trace-hero .trace-record.stop:hover:not(:disabled),
 .trace-workspace .trace-hero .trace-reset:hover:not(:disabled) {
-  border-color: var(--ft-border);
-  background: var(--ft-accent-soft);
-  color: var(--ft-ink);
+  border-color: var(--ft-danger);
+  background: var(--ft-danger-soft);
+  color: var(--ft-danger);
 }
 
 .trace-workspace .trace-hero .trace-reset:disabled {
   color: var(--ft-muted);
 }
 
-/* The manual journey start action uses the same neutral resting treatment as
-   the rest of the workspace. The red stop state remains distinct while a
-   recording is active. */
+/* Manual journey is an ordinary neutral surface. Red remains reserved for the
+   meaningful recording state and its stop action. */
+.focus-journey-view .manual-focus-controls:not(.is-recording) {
+  border: 1px solid var(--ft-border);
+  background: var(--ft-surface);
+  box-shadow: none;
+}
+
+.focus-journey-view .manual-focus-controls.is-recording {
+  border: 1px solid var(--ft-danger);
+}
+
 .focus-journey-view .manual-focus-controls button:not(.stop) {
   border: 1.5px solid var(--ft-border);
   background: var(--ft-surface);
@@ -127,7 +141,7 @@ html[data-ft-focused-subview-open] .topbar {
 
 .focus-journey-view .manual-focus-controls button:not(.stop):hover:not(:disabled) {
   border-color: var(--ft-border);
-  background: var(--ft-accent-soft);
+  background: var(--ft-surface);
   color: var(--ft-ink);
 }
 

@@ -61,6 +61,14 @@
   color: var(--ft-warning);
 }
 
+/* Heading totals belong to the headings workspace and need a shared surface
+   so the three values read as one informational group. */
+.heading-outline-summary > span {
+  border: 1px solid var(--ft-border-soft);
+  border-radius: var(--ft-radius-xs);
+  background: var(--ft-surface-subtle);
+}
+
 /* Small inline summaries are metadata, not chips or pill buttons. */
 .report-inline-summary,
 .report-category-summary {

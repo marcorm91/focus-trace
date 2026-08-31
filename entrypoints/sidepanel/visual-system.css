@@ -181,7 +181,7 @@ code {
 }
 
 .topbar-tools button:not(:disabled):hover {
-  background: var(--ft-accent-soft);
+  background: var(--ft-surface);
   border-color: var(--ft-border);
 }
 
@@ -251,7 +251,7 @@ code {
 
 .actions .primary:not(:disabled):hover,
 .export-pdf-report:not(:disabled):hover {
-  background: color-mix(in srgb, var(--ft-ink) 88%, var(--ft-accent));
+  background: var(--ft-ink);
 }
 
 .actions .primary:not(:disabled):active,
@@ -265,7 +265,7 @@ code {
 }
 
 .export-text-report:not(:disabled):hover {
-  background: var(--ft-accent-soft);
+  background: var(--ft-surface);
 }
 
 .export-text-report:not(:disabled):active {
@@ -424,9 +424,11 @@ button:disabled {
   box-shadow: 2px 2px 0 color-mix(in srgb, var(--ft-border) 70%, transparent);
 }
 
-.scan-rule-group.outcome-fail { border-left-color: var(--ft-danger); }
-.scan-rule-group.outcome-review { border-left-color: var(--ft-warning); }
-.scan-rule-group.outcome-warning { border-left-color: #786500; }
+.scan-rule-group.severity-critical { border-left-color: var(--ft-severity-critical-aa); }
+.scan-rule-group.severity-serious { border-left-color: var(--ft-severity-serious-aa); }
+.scan-rule-group.severity-moderate { border-left-color: var(--ft-severity-moderate-aa); }
+.scan-rule-group.severity-minor { border-left-color: var(--ft-severity-minor-aa); }
+.scan-rule-group.severity-info { border-left-color: var(--ft-muted); }
 
 .scan-rule-group > summary {
   min-height: 49px;
@@ -511,8 +513,8 @@ button:disabled {
 
 .finding-location button:hover,
 .finding-location button:focus-visible {
-  background: var(--ft-accent-strong);
-  color: #fff;
+  background: var(--ft-surface);
+  color: var(--ft-ink);
 }
 
 .finding-dom {
@@ -572,10 +574,15 @@ button:disabled {
 
 .cause-box,
 .breakpoint-hit-box,
-.evidence,
 .cause-line {
   border-left-width: 4px;
   border-left-color: var(--ft-accent);
+  background: var(--ft-surface-subtle);
+}
+
+.evidence {
+  border-left-width: 4px;
+  border-left-color: var(--ft-border);
   background: var(--ft-surface-subtle);
 }
 
@@ -624,16 +631,16 @@ button:disabled {
 .trace-toolbar button:hover,
 .replay-controls button:hover {
   border-color: var(--ft-border);
-  background: var(--ft-accent-soft);
+  background: var(--ft-surface);
 }
 
 .graph-filter button.active,
 .graph-toolbar button.active,
 .trace-toolbar button.active {
   border-color: var(--ft-border);
-  background: var(--ft-ink);
-  color: var(--ft-surface);
-  box-shadow: none;
+  background: var(--ft-surface);
+  color: var(--ft-ink);
+  box-shadow: var(--ft-shadow-sm);
 }
 
 /* Headings */
@@ -727,7 +734,7 @@ button:disabled {
   margin-bottom: 1px;
 }
 
-.report-section-heading > div > span {
+.report-section-index {
   border: 1px solid var(--ft-border);
   border-radius: var(--ft-radius-xs);
   background: var(--ft-ink);

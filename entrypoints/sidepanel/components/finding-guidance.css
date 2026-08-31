@@ -71,24 +71,33 @@
   line-height: 1.5;
 }
 
-.finding-guidance-severity {
-  border-left-width: 4px;
-}
-
-.finding-guidance-severity.severity-critical { border-left-color: var(--ft-severity-critical-aa, #a72b22); }
-.finding-guidance-severity.severity-serious { border-left-color: var(--ft-severity-serious-aa, #9b4300); }
-.finding-guidance-severity.severity-moderate { border-left-color: var(--ft-severity-moderate-aa, #746100); }
-.finding-guidance-severity.severity-minor { border-left-color: var(--ft-severity-minor-aa, #14589f); }
-.finding-guidance-severity.severity-info { border-left-color: var(--ft-muted, GrayText); }
-
 .finding-guidance-severity > summary {
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto 18px;
   align-items: center;
-  justify-content: space-between;
   gap: 8px;
   cursor: pointer;
+  list-style: none;
   font-size: 14px;
   font-weight: 850;
+}
+
+.finding-guidance-severity > summary::-webkit-details-marker {
+  display: none;
+}
+
+.finding-guidance-severity > summary::after {
+  content: '›';
+  color: var(--ft-ink, CanvasText);
+  font-size: 22px;
+  line-height: 1;
+  text-align: center;
+  transform: rotate(0deg);
+  transition: transform .12s ease;
+}
+
+.finding-guidance-severity[open] > summary::after {
+  transform: rotate(90deg);
 }
 
 .finding-guidance-severity > summary strong {
@@ -116,4 +125,3 @@
   font-weight: 750;
   overflow-wrap: anywhere;
 }
-
