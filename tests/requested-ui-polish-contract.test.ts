@@ -74,6 +74,15 @@ describe('requested FocusTrace UI polish', () => {
     expect(css).toContain('background: var(--ft-accent-soft);');
   });
 
+  it('keeps the manual focus recording start action neutral at rest', () => {
+    const css = source('entrypoints/sidepanel/shared-control-policy.css');
+
+    expect(css).toContain('.focus-journey-view .manual-focus-controls button:not(.stop)');
+    expect(css).toContain('border: 1.5px solid var(--ft-border);');
+    expect(css).toContain('background: var(--ft-surface);');
+    expect(css).toContain('color: var(--ft-ink);');
+  });
+
   it('makes heading level tones more distinct and switches foreground at mid-scale', () => {
     const css = source('entrypoints/sidepanel/ui-consistency.css');
 

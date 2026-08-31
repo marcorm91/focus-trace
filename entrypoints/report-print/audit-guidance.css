@@ -1,6 +1,7 @@
 .print-report-notes {
   display: grid;
   gap: 10px;
+  margin-top: 18px;
   margin-bottom: 24px;
   padding: 13px 14px 17px;
   border: 1px solid #d9deea;
