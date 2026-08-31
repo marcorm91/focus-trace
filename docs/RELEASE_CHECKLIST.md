@@ -73,7 +73,7 @@ Firefox production permissions must remain:
 
 Firefox uses `sidebar_action` generated from the WXT sidepanel entrypoint rather than the Chromium `sidePanel` permission.
 
-Production builds must not request global host permissions. The localhost host permission used by E2E is test-only.
+Production builds must not declare required global host permissions. Optional HTTP/HTTPS host access may be requested only from an explicit page action and must remain documented in the README and privacy policy. The localhost host permission used by E2E is test-only.
 
 Confirm [`PRIVACY.md`](../PRIVACY.md) still matches the actual product behavior, especially storage, optional screenshot evidence, external services and any future sponsorship integration.
 

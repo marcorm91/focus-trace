@@ -53,9 +53,11 @@ Users should review exported reports before sharing them with third parties.
 
 ## Permissions
 
-FocusTrace uses extension permissions only for product functionality such as analyzing the active page, injecting local instrumentation and storing preferences/session state.
+FocusTrace uses extension permissions only for product functionality such as analyzing web pages selected by the user, injecting local instrumentation and storing preferences/session state.
 
-Production builds are designed not to require permanent global host access. Broader screenshot access, when required by the browser API, is requested from an explicit export action and removed after use.
+Production builds do not require host access at installation. On the first explicit page action, FocusTrace may request optional HTTP/HTTPS page access before it can read the selected tab and inject the local runtime. Browsers can retain that optional grant until the user revokes it from the extension's site-access settings. The grant permits local inspection; it does not change the policy that inspected-page data is not intentionally transmitted by FocusTrace.
+
+Broader `<all_urls>` screenshot access, when required by the browser API, is requested from an explicit export action and removed after use.
 
 The current permission model is documented in [`README.md`](README.md) and validated by the repository's browser-build checks.
 

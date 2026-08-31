@@ -155,6 +155,17 @@ describe('FocusTrace bilingual presentation', () => {
     );
   });
 
+  it('explains a denied fresh-install page permission instead of showing a generic analysis error', () => {
+    const reason = new Error('FocusTrace page access permission was not granted.');
+
+    expect(localizedUserError(reason, 'es', 'analysis')).toBe(
+      'FocusTrace no tiene el acceso a la página necesario para esta acción. Concede el acceso y vuelve a intentarlo.',
+    );
+    expect(localizedUserError(reason, 'en', 'analysis')).toBe(
+      'FocusTrace does not have the page access required for this action. Grant access and try again.',
+    );
+  });
+
   it('localizes runtime kinds and structured details instead of rendering stored English prose', () => {
     const event: RuntimeEvent = {
       id: 'event-walk',

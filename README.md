@@ -109,7 +109,9 @@ FocusTrace intentionally keeps its production permission set narrow:
 
 Firefox uses its native sidebar manifest integration instead of requesting the Chromium-only `sidePanel` permission.
 
-Production builds do not require global host permissions. HTTP/HTTPS page access is declared as optional and requested only from explicit user actions. Printable reports can optionally include visual evidence; when that option is used, FocusTrace requests the browser's `<all_urls>` screenshot capability from the Export PDF click because `tabs.captureVisibleTab()` requires `activeTab` or `<all_urls>`. That broad screenshot permission is removed after the export operation. A localhost host permission is enabled only for the end-to-end test build.
+Production builds do not require host access at installation. HTTP/HTTPS page access is declared as optional and requested from the first explicit page action, such as **Analyze this page**. Requesting it before reading the active tab is required because Chromium can hide `Tab.url` from a newly installed extension until host access exists. The granted access remains controlled by the browser and can be revoked from the extension's site-access settings.
+
+Printable reports can optionally include visual evidence; when that option is used, FocusTrace requests the browser's `<all_urls>` screenshot capability from the Export PDF click because `tabs.captureVisibleTab()` requires `activeTab` or `<all_urls>`. That broad screenshot permission is removed after the export operation. A localhost host permission is enabled only for the end-to-end test build.
 
 ## Privacy
 

@@ -14,7 +14,7 @@ Responsibilities include:
 - starting/stopping Trace and Focus Walk;
 - rendering scan, heading, focus, replay and report views;
 - managing user-facing settings;
-- requesting optional page access from explicit user actions;
+- requesting optional HTTP/HTTPS page access directly from explicit user actions, before querying privileged tab URL fields on a fresh installation;
 - presenting FocusTrace Memory comparisons without mutating scan history merely by rendering a view.
 
 The side panel treats the background session as the source of truth for the active tab. Asynchronous tab refreshes are guarded so a slow response from a previously selected tab cannot overwrite the current tab state.
