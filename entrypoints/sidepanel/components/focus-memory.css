@@ -1,41 +1,27 @@
 .focus-memory {
+  width: 100%;
   min-width: 0;
   max-width: 100%;
   display: grid;
   gap: 9px;
   margin: 0;
   padding: 12px;
-  border: 1.5px solid var(--ft-border);
-  border-left: 5px solid var(--ft-accent);
+  border: 1px solid var(--ft-border);
   border-radius: var(--ft-radius-md);
   background: var(--ft-surface);
-  box-shadow: var(--ft-shadow-sm);
+  box-shadow: none;
   overflow: hidden;
 }
 
-.focus-memory.status-fixed {
-  border-left-color: var(--ft-success);
-  background: color-mix(in srgb, var(--ft-success-soft) 58%, var(--ft-surface));
-}
-
+.focus-memory.status-fixed,
 .focus-memory.status-regressed,
-.focus-memory.status-open {
-  border-left-color: var(--ft-danger);
-}
-
-.focus-memory.status-regressed {
-  background: color-mix(in srgb, var(--ft-danger-soft) 58%, var(--ft-surface));
-}
-
-.focus-memory.status-changed {
-  border-left-color: var(--ft-warning);
-}
-
+.focus-memory.status-open,
+.focus-memory.status-changed,
 .focus-memory.is-paused,
 .focus-memory.is-cleared,
 .focus-memory.is-loading {
-  border-color: var(--ft-border-soft);
-  border-left-color: var(--ft-muted);
+  border-color: var(--ft-border);
+  background: var(--ft-surface);
   box-shadow: none;
 }
 
@@ -48,6 +34,7 @@
 }
 
 .focus-memory-heading > div {
+  min-width: 0;
   display: grid;
   gap: 2px;
 }
@@ -111,6 +98,7 @@
 }
 
 .focus-memory-history {
+  min-width: 0;
   padding-top: 8px;
   border-top: 1px solid var(--ft-border-faint);
 }
@@ -160,6 +148,7 @@
 }
 
 .focus-memory-history-list {
+  min-width: 0;
   display: grid;
   gap: 0;
   margin-top: 8px;
@@ -302,8 +291,9 @@
   display: grid;
   gap: 4px;
   padding: 7px 8px;
-  border-left: 3px solid var(--ft-success);
-  background: color-mix(in srgb, var(--ft-success-soft) 62%, transparent);
+  border: 1px solid var(--ft-border);
+  border-radius: var(--ft-radius-xs);
+  background: var(--ft-surface-subtle);
 }
 
 .focus-memory-resolve label {

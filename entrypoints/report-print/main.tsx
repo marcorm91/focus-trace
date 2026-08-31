@@ -151,7 +151,6 @@ function PrintComponentIdentity({
 
 function Finding({
   issue,
-  label,
   language,
   component,
   visual,
@@ -159,7 +158,6 @@ function Finding({
   showVisual,
 }: {
   issue: ScanIssue;
-  label: string;
   language: AppLanguage;
   component?: ReportComponentIdentity | undefined;
   visual?: ReportVisualEvidence | undefined;
@@ -172,7 +170,6 @@ function Finding({
   return (
     <article className={`print-finding tone-${issue.outcome} severity-${issue.severity}`}>
       <div className="print-finding-meta">
-        <span>{label}</span>
         <span className={`print-severity severity-${issue.severity}`}>{localizedSeverity(issue.severity, language)}</span>
         <code>{issue.ruleId}</code>
       </div>
@@ -503,7 +500,6 @@ function PrintableReport({ report }: { report: LoadedReport }) {
                     return (
                       <Finding
                         issue={issue}
-                        label={group.label}
                         language={language}
                         component={selector ? componentMap.get(selector) : undefined}
                         visual={selector ? visualMap.get(selector) : undefined}

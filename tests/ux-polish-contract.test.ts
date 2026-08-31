@@ -141,6 +141,8 @@ describe('UX polish contract', () => {
     expect(scan).toContain('!issue.contrast.background && issue.contrast.ratio == null');
     expect(contrastCss).toContain('grid-template-columns: minmax(0, 1fr) auto;');
     expect(contrastCss).toContain('white-space: nowrap;');
+    expect(contrastCss).toContain('overflow-wrap: normal;');
+    expect(contrastCss).toContain('word-break: normal;');
     expect(contrastCss).not.toContain('.contrast-evidence.fail');
     expect(contrastCss).not.toContain('.contrast-evidence.review');
   });

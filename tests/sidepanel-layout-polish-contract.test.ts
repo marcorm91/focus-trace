@@ -109,4 +109,26 @@ describe('sidepanel layout polish contract', () => {
     expect(css).toContain('overflow: hidden;');
     expect(css).not.toContain('.focus-memory-status');
   });
+
+  it('keeps Memory contained and visually neutral while preserving state labels', () => {
+    const memory = source('entrypoints/sidepanel/components/focus-memory.css');
+    const interactions = source('entrypoints/sidepanel/memory-interactions.css');
+    const controls = source('entrypoints/sidepanel/ui-consistency.css');
+
+    expect(memory).toContain('width: 100%;');
+    expect(memory).toContain('border: 1px solid var(--ft-border);');
+    expect(memory).toContain('box-shadow: none;');
+    expect(memory).not.toContain('border-left: 5px');
+    expect(interactions).toContain('background: var(--ft-surface-subtle);');
+    expect(interactions).not.toContain('border-left: 4px');
+    expect(controls).toContain('border-bottom-color: var(--ft-border);');
+  });
+
+  it('gives heading totals an informational surface instead of leaving them ungrouped', () => {
+    const css = source('entrypoints/sidepanel/information-summaries.css');
+    const headingSummary = css.slice(css.lastIndexOf('.heading-outline-summary > span {'));
+
+    expect(headingSummary).toContain('border: 1px solid var(--ft-border-soft);');
+    expect(headingSummary).toContain('background: var(--ft-surface-subtle);');
+  });
 });

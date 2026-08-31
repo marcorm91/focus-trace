@@ -58,43 +58,31 @@
 /* Each historical finding is a distinct card rather than one continuous block. */
 .focus-memory-finding,
 .focus-memory-history-list.is-step .focus-memory-finding {
+  min-width: 0;
   gap: 8px;
   padding: 10px;
-  border: 1px solid var(--ft-border-soft);
-  border-left: 4px solid var(--ft-border-soft);
+  border: 1px solid var(--ft-border);
   border-radius: var(--ft-radius-xs);
-  background: var(--ft-surface);
+  background: var(--ft-surface-subtle);
 }
 
 .focus-memory-finding:last-child {
-  border-bottom: 1px solid var(--ft-border-soft);
+  border-bottom: 1px solid var(--ft-border);
 }
 
 .focus-memory-finding.changed-now {
   padding-left: 10px;
 }
 
-.focus-memory-finding.state-present {
-  border-left-color: var(--ft-danger);
-  background: color-mix(in srgb, var(--ft-danger-soft) 28%, var(--ft-surface));
-}
-
+.focus-memory-finding.state-present,
 .focus-memory-finding.state-new,
-.focus-memory-finding.state-changed {
-  border-left-color: var(--ft-warning);
-  background: color-mix(in srgb, var(--ft-warning-soft) 34%, var(--ft-surface));
-}
-
+.focus-memory-finding.state-changed,
 .focus-memory-finding.state-regressed,
-.focus-memory-finding.state-regressed.changed-now {
-  border-left-color: var(--ft-danger);
-  background: color-mix(in srgb, var(--ft-danger-soft) 46%, var(--ft-surface));
-}
-
+.focus-memory-finding.state-regressed.changed-now,
 .focus-memory-finding.state-resolved,
 .focus-memory-finding.state-resolved.changed-now {
-  border-left-color: var(--ft-success);
-  background: color-mix(in srgb, var(--ft-success-soft) 42%, var(--ft-surface));
+  border-color: var(--ft-border);
+  background: var(--ft-surface-subtle);
 }
 
 /* Current findings become explicit page-locate actions without looking like large buttons. */

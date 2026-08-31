@@ -1015,12 +1015,12 @@ code {
 
 .report-section-heading > div {
   display: grid;
-  grid-template-columns: 26px minmax(0, 1fr);
+  grid-template-columns: 26px minmax(0, 1fr) auto;
   gap: 9px;
   align-items: start;
 }
 
-.report-section-heading > div > span {
+.report-section-index {
   width: 26px;
   height: 26px;
   display: grid;

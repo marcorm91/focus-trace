@@ -181,6 +181,9 @@
 .contrast-ratio small {
   color: var(--ft-muted, GrayText);
   font-size: 14px;
+  overflow-wrap: normal;
+  word-break: normal;
+  white-space: nowrap;
 }
 
 .contrast-format {

@@ -734,7 +734,7 @@ button:disabled {
   margin-bottom: 1px;
 }
 
-.report-section-heading > div > span {
+.report-section-index {
   border: 1px solid var(--ft-border);
   border-radius: var(--ft-radius-xs);
   background: var(--ft-ink);
