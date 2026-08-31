@@ -54,11 +54,9 @@ test('scans form values, placeholders, generated text and non-DOM graphics', asy
     .flatMap((issue) => issue.targets);
   expect(graphicReviewTargets).toEqual(expect.arrayContaining(['#css-icon', '#chart']));
 
-  const repeatedStateReviews = scan.review.filter((issue) =>
-    issue.ruleId === 'FT-WCAG-010'
-    && issue.evidence?.includes('authored selector=".state-target:hover"'),
+  const inactiveStateFindings = [...scan.issues, ...scan.review].filter((issue) =>
+    issue.evidence?.includes('.state-target:hover'),
   );
-  expect(repeatedStateReviews).toHaveLength(1);
-  expect(repeatedStateReviews[0]?.evidence).toContain('matching candidates=6');
+  expect(inactiveStateFindings).toEqual([]);
   expect(scan.review.some((issue) => issue.evidence?.includes('.dropdown-toggle:active'))).toBe(false);
 });

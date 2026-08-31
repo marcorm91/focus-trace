@@ -25,6 +25,11 @@ test('sidepanel controls and finding surfaces expose their intended behavior', a
   const settings = panel.locator('.settings-trigger');
   await expect(settings).toHaveAttribute('title', /Settings|Ajustes/);
   await expect(settings).toHaveAttribute('aria-label', /Open settings|Abrir ajustes/);
+  const topbarButtons = panel.locator('.topbar-tools > button');
+  const restingTopbarBackgrounds = await topbarButtons.evaluateAll((buttons) =>
+    buttons.map((button) => getComputedStyle(button).backgroundColor),
+  );
+  expect(new Set(restingTopbarBackgrounds).size).toBe(1);
   const workspace = panel.getByRole('navigation', { name: /FocusTrace sections|Secciones de FocusTrace/ });
   const workspaceButtons = workspace.getByRole('button');
   await expect(workspaceButtons).toHaveCount(4);
