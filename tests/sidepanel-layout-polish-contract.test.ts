@@ -58,6 +58,7 @@ describe('sidepanel layout polish contract', () => {
     expect(css).toContain('.report-scoreline > div');
     expect(css).toContain('.focus-journey-summary > span');
     expect(css).toContain('.heading-outline-summary > span');
+    expect(css).toContain('.scan-coverage-summary > div');
     expect(css).toContain('.report-coverage > div');
     expect(css).toContain('.metric,');
     expect(css).toContain('border: 0;');
@@ -71,6 +72,18 @@ describe('sidepanel layout polish contract', () => {
     expect(css).not.toContain(':hover');
     expect(css).not.toContain('cursor: pointer');
     expect(css).not.toContain('!important');
+  });
+
+  it('shows report category totals as metadata instead of pill buttons', () => {
+    const css = source('entrypoints/sidepanel/views/session-report.css');
+    const categorySummary = css.slice(css.indexOf('.report-category-summary {'), css.indexOf('.report-scope-note {'));
+
+    expect(categorySummary).toContain('border: 0;');
+    expect(categorySummary).toContain('border-radius: 0;');
+    expect(categorySummary).toContain('background: transparent;');
+    expect(categorySummary).toContain('cursor: default;');
+    expect(categorySummary).toContain('span:not(:last-child)::after');
+    expect(categorySummary).not.toContain('border-radius: 999px;');
   });
 
   it('shows the complete runtime trace chain without horizontal scrolling or ellipsis', () => {
@@ -124,11 +137,42 @@ describe('sidepanel layout polish contract', () => {
     expect(controls).toContain('border-bottom-color: var(--ft-border);');
   });
 
-  it('gives heading totals an informational surface instead of leaving them ungrouped', () => {
+  it('keeps heading and scan coverage totals on the same flat informational treatment', () => {
     const css = source('entrypoints/sidepanel/information-summaries.css');
-    const headingSummary = css.slice(css.lastIndexOf('.heading-outline-summary > span {'));
 
-    expect(headingSummary).toContain('border: 1px solid var(--ft-border-soft);');
-    expect(headingSummary).toContain('background: var(--ft-surface-subtle);');
+    expect(css).toContain('.heading-outline-summary > span,');
+    expect(css).toContain('.scan-coverage-summary > div,');
+    expect(css).not.toContain('Heading totals belong to the headings workspace');
+  });
+
+  it('gives enabled buttons subtle feedback, a pointer cursor and reduced-motion fallback', () => {
+    const controls = source('entrypoints/sidepanel/control-states.css');
+    const exportCss = source('entrypoints/sidepanel/views/report-export.css');
+
+    expect(controls).toContain('button:not(:disabled) {');
+    expect(controls).toContain('cursor: pointer;');
+    expect(controls).toContain('opacity 120ms ease');
+    expect(controls).toContain('button:not(:disabled):hover');
+    expect(controls).toContain('opacity: .94;');
+    expect(controls).toContain('@media (prefers-reduced-motion: reduce)');
+    expect(controls).toContain('button:disabled {');
+    expect(controls).toContain('cursor: not-allowed;');
+    expect(exportCss).toContain('.report-export-actions .export-pdf-report');
+    expect(exportCss).toContain('background: var(--ft-surface, ButtonFace);');
+  });
+
+  it('uses a neutral one-pixel Replay card border and a drawn Trace disclosure chevron', () => {
+    const replay = source('entrypoints/sidepanel/views/replay.css');
+    const trace = source('entrypoints/sidepanel/views/trace-polish.css');
+    const event = replay.slice(replay.indexOf('.replay-event {'), replay.indexOf('.replay-event-header {'));
+    const chevron = trace.slice(trace.indexOf('.trace-accordion > summary {'), trace.indexOf('.trace-accordion-icon {'));
+
+    expect(event).toContain('border: 1px solid var(--ft-border');
+    expect(event).not.toContain('border-left: 4px');
+    expect(replay).toContain('background: var(--ft-surface-subtle');
+    expect(chevron).toContain('grid-template-columns: 30px minmax(0, 1fr) auto 14px;');
+    expect(chevron).toContain("content: '';");
+    expect(chevron).toContain('border-inline-end: 2px solid currentColor;');
+    expect(chevron).not.toContain("content: '⌄';");
   });
 });
