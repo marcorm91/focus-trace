@@ -11,7 +11,7 @@
   place-items: center;
   border: 1px solid color-mix(in srgb, CanvasText 18%, transparent);
   border-radius: 8px;
-  background: ButtonFace;
+  background: var(--ft-surface, Canvas);
   color: ButtonText;
   cursor: pointer;
   font-size: 16px;
@@ -615,4 +615,3 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-

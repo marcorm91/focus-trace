@@ -38,12 +38,15 @@ describe('requested FocusTrace UI polish', () => {
 
   it('uses the same light-blue hover language for reset, Instructions and Settings', () => {
     const css = source('entrypoints/sidepanel/shared-control-policy.css');
+    const settingsCss = source('entrypoints/sidepanel/scan-settings.css');
 
     expect(css).toContain('.topbar .topbar-tools > button:not(:disabled):hover');
     expect(css).toContain(".settings-trigger[aria-pressed='true']:not(:disabled):hover");
     expect(css).toContain('background: var(--ft-accent-soft);');
-    expect(css).toContain(".settings-trigger[aria-pressed='true'] {");
+    expect(css).toContain('.topbar .topbar-tools > .settings-trigger,');
     expect(css).toContain('background: var(--ft-surface);');
+    expect(settingsCss).toContain('background: var(--ft-surface, Canvas);');
+    expect(settingsCss).not.toContain('background: ButtonFace;');
   });
 
   it('uses flat runtime surfaces and a tab-style Trace inspector switcher', () => {

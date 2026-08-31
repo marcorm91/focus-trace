@@ -24,10 +24,8 @@ import {
 } from '../../shared/structural-html-rules';
 import { evaluateAdvancedAria, type AriaValidationSignalKind } from './aria-validator';
 import {
-  evaluateContrastStateCoverage,
   isInactiveContrastElement,
   observedContrastStates,
-  type ContrastStateSignal,
 } from './contrast-state-coverage';
 import { textContrastSubjectsForElement } from './contrast';
 import { evaluateStructuralHtml, type StructuralHtmlSignalKind } from './content-model';
@@ -205,47 +203,6 @@ function annotateObservedContrastStates(result: ScanResult): void {
   }
 }
 
-function contrastStateIssue(signal: ContrastStateSignal): ScanIssue {
-  const rule = signal.kind === 'text' ? RULES.textContrast : RULES.nonTextContrast;
-  const description = signal.kind === 'text'
-    ? `An authored ${signal.state} state changes contrast-relevant text styling, but that state was not active when FocusTrace analyzed the page. Review the rendered state manually instead of assuming the default-state ratio also applies.`
-    : `An authored ${signal.state} state changes a contrast-relevant visual cue, but that state was not active when FocusTrace analyzed the page. Review the rendered state manually instead of assuming the default-state ratio also applies.`;
-  return {
-    id: uid(),
-    ruleId: rule.id,
-    title: rule.title,
-    description,
-    severity: rule.severity,
-    outcome: 'review',
-    targets: [selectorFor(signal.element)],
-    evidence: `Unobserved visual state=${signal.state}; authored selector=${JSON.stringify(signal.selector)}; contrast-relevant properties=${signal.properties.join(', ')}; matching candidates=${signal.candidateCount}. FocusTrace reports one representative target for this authored selector and did not synthesize pointer, focus or control-state changes because doing so could trigger page behavior.`,
-    contrastState: {
-      state: signal.state,
-      kind: signal.kind,
-      selector: signal.selector,
-      properties: signal.properties,
-      candidateCount: signal.candidateCount,
-    },
-    references: rule.references,
-  };
-}
-
-function appendContrastStateCoverage(result: ScanResult, root: Document | Element): void {
-  const stateIssues = evaluateContrastStateCoverage(root).map(contrastStateIssue);
-  if (!stateIssues.length) return;
-  result.review.push(...stateIssues);
-
-  for (const ruleId of [RULES.textContrast.id, RULES.nonTextContrast.id]) {
-    const reviews = stateIssues.filter((issue) => issue.ruleId === ruleId).length;
-    if (!reviews) continue;
-    const ruleResult = result.ruleResults?.find((entry) => entry.ruleId === ruleId);
-    if (!ruleResult) continue;
-    ruleResult.applicable += reviews;
-    ruleResult.reviews += reviews;
-    ruleResult.coverage = 'findings-only';
-  }
-}
-
 export function runFocusTraceScan(scope?: ComponentScanScope): ScanResult {
   const result = runBaseFocusTraceScan(scope);
   const componentScope = result.scope?.type === 'component' ? result.scope : undefined;
@@ -254,7 +211,6 @@ export function runFocusTraceScan(scope?: ComponentScanScope): ScanResult {
 
   pruneInactiveTextContrast(result, root);
   annotateObservedContrastStates(result);
-  appendContrastStateCoverage(result, root);
 
   const signals = evaluateStructuralHtml(root, !componentScope);
   const activeRules = STRUCTURAL_HTML_RULES.filter((rule) => !componentScope || !PAGE_ONLY_RULE_IDS.has(rule.id));

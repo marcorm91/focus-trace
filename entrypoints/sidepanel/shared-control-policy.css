@@ -54,8 +54,9 @@ html[data-ft-focused-subview-open] .topbar {
   cursor: not-allowed;
 }
 
-/* Topbar tools share exactly the same hover feedback, including Settings when
-   the settings view is already selected. */
+/* Topbar tools share the same resting surface and hover feedback, including
+   Settings in both its selected and unselected states. */
+.topbar .topbar-tools > .settings-trigger,
 .topbar .topbar-tools > .settings-trigger[aria-pressed='true'] {
   background: var(--ft-surface);
   color: var(--ft-ink);
