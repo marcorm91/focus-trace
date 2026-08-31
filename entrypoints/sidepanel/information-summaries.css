@@ -2,6 +2,7 @@
    Keep them flat, text-first and free of hover/press affordances. */
 .metric,
 .heading-outline-summary > span,
+.scan-coverage-summary > div,
 .report-coverage > div,
 .focus-journey-summary > span,
 .report-scoreline > div {
@@ -18,6 +19,7 @@
 
 .metric::before,
 .heading-outline-summary > span::before,
+.scan-coverage-summary > div::before,
 .report-coverage > div::before,
 .focus-journey-summary > span::before,
 .report-scoreline > div::before {
@@ -31,6 +33,7 @@
 
 .metric strong,
 .heading-outline-summary strong,
+.scan-coverage-summary dd,
 .report-coverage strong,
 .focus-journey-summary strong,
 .report-scoreline strong {
@@ -59,14 +62,6 @@
 
 .focus-journey-summary > span.has-warning strong {
   color: var(--ft-warning);
-}
-
-/* Heading totals belong to the headings workspace and need a shared surface
-   so the three values read as one informational group. */
-.heading-outline-summary > span {
-  border: 1px solid var(--ft-border-soft);
-  border-radius: var(--ft-radius-xs);
-  background: var(--ft-surface-subtle);
 }
 
 /* Small inline summaries are metadata, not chips or pill buttons. */
