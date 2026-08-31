@@ -144,7 +144,7 @@ export const RULES = {
   },
   textContrast: {
     id: 'FT-WCAG-010',
-    title: 'Text has sufficient color contrast',
+    title: 'Text color contrast',
     severity: 'serious',
     ...impact(
       'Insufficient text contrast can make content substantially harder or impossible to read for people with low vision or reduced contrast sensitivity.',
@@ -154,7 +154,7 @@ export const RULES = {
   },
   nonTextContrast: {
     id: 'FT-WCAG-011',
-    title: 'Required non-text visual information has sufficient contrast',
+    title: 'Non-text visual contrast',
     severity: 'serious',
     ...impact(
       'Low contrast in essential component boundaries, states, focus indicators or graphics can make controls and information difficult to perceive.',

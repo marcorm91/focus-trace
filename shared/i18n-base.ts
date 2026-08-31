@@ -57,6 +57,11 @@ function withCriteria(description: string, issue: ScanIssue, language: AppLangua
   return `${description} ${tr(language, 'Criterion/source', 'Criterio/fuente')}: ${criteria.join(' · ')}.`;
 }
 
+const RULE_TITLES_EN: Record<string, string> = {
+  'FT-WCAG-010': 'Text color contrast',
+  'FT-WCAG-011': 'Non-text visual contrast',
+};
+
 const RULE_TITLES_ES: Record<string, string> = {
   'FT-WCAG-001': 'La página HTML tiene un título no vacío',
   'FT-WCAG-002': 'La imagen tiene un nombre accesible o está marcada como decorativa',
@@ -67,8 +72,8 @@ const RULE_TITLES_ES: Record<string, string> = {
   'FT-WCAG-007': 'La etiqueta visible forma parte del nombre accesible',
   'FT-WCAG-008': 'La página HTML tiene un atributo lang no vacío',
   'FT-WCAG-009': 'El atributo lang contiene una etiqueta de idioma principal conocida',
-  'FT-WCAG-010': 'El texto tiene suficiente contraste de color',
-  'FT-WCAG-011': 'La información visual no textual necesaria tiene suficiente contraste',
+  'FT-WCAG-010': 'Contraste de color del texto',
+  'FT-WCAG-011': 'Contraste visual no textual',
   'FT-WARN-001': 'Se utiliza un rol ARIA obsoleto',
   'FT-WARN-002': 'El estado o propiedad ARIA está obsoleto para este rol',
   'FT-WARN-003': 'El estado o propiedad ARIA está prohibido para este rol',
@@ -95,7 +100,45 @@ const RULE_TITLES_ES: Record<string, string> = {
 };
 
 export function localizedRuleTitle(ruleId: string, fallback: string, language: AppLanguage): string {
-  return language === 'es' ? RULE_TITLES_ES[ruleId] ?? fallback : fallback;
+  return language === 'es'
+    ? RULE_TITLES_ES[ruleId] ?? fallback
+    : RULE_TITLES_EN[ruleId] ?? fallback;
+}
+
+const CONTRAST_REASONS_ES: Record<string, string> = {
+  'A background image or gradient affects the rendered background.': 'Una imagen de fondo o un degradado afecta al fondo renderizado.',
+  'Element or ancestor opacity affects the rendered colors.': 'La opacidad del elemento o de uno de sus ancestros afecta a los colores renderizados.',
+  'mix-blend-mode affects the rendered colors.': 'La propiedad mix-blend-mode afecta a los colores renderizados.',
+  'A CSS filter affects the rendered colors.': 'Un filtro CSS afecta a los colores renderizados.',
+  'The backdrop behind the translucent element could not be resolved reliably.': 'No se pudo resolver con fiabilidad el fondo situado detrás del elemento translúcido.',
+  'Element opacity could not be composited reliably.': 'No se pudo componer con fiabilidad la opacidad del elemento.',
+  'The rendered background could not be resolved reliably.': 'No se pudo resolver con fiabilidad el fondo renderizado.',
+  'The adjacent background could not be resolved reliably.': 'No se pudo resolver con fiabilidad el fondo adyacente.',
+  'The adjacent color outside the component could not be resolved.': 'No se pudo resolver el color adyacente exterior al componente.',
+  'Graphic opacity affects the rendered non-text color.': 'La opacidad del gráfico afecta al color no textual renderizado.',
+};
+
+export function localizedContrastReason(
+  reason: string | undefined,
+  language: AppLanguage,
+): string | undefined {
+  if (!reason || language === 'en') return reason;
+  const exact = CONTRAST_REASONS_ES[reason];
+  if (exact) return exact;
+
+  const dynamicReasons: Array<[RegExp, string]> = [
+    [/^Background color (.+) could not be resolved\.$/, 'No se pudo resolver el color de fondo $1.'],
+    [/^Text color (.+) could not be resolved\.$/, 'No se pudo resolver el color del texto $1.'],
+    [/^Text size (.+) could not be resolved\.$/, 'No se pudo resolver el tamaño del texto $1.'],
+    [/^Pseudo-element background (.+) could not be resolved\.$/, 'No se pudo resolver el fondo del pseudoelemento $1.'],
+    [/^Outline color (.+) could not be resolved\.$/, 'No se pudo resolver el color del contorno $1.'],
+    [/^Graphic fill (.+) could not be resolved\.$/, 'No se pudo resolver el relleno del gráfico $1.'],
+    [/^Graphic stroke (.+) could not be resolved\.$/, 'No se pudo resolver el trazo del gráfico $1.'],
+  ];
+  for (const [pattern, replacement] of dynamicReasons) {
+    if (pattern.test(reason)) return reason.replace(pattern, replacement);
+  }
+  return undefined;
 }
 
 const SCAN_COPY_ES: Record<string, { description: string; evidence?: string }> = {
@@ -363,7 +406,7 @@ export function localizedScanIssue(
   if (language === 'en') {
     return {
       ...issue,
-      title: issue.title,
+      title: localizedRuleTitle(issue.ruleId, issue.title, language),
       description: withCriteria(issue.description, issue, language),
       ...(issue.evidence ? { evidence: issue.evidence } : {}),
     };

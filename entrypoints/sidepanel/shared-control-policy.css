@@ -58,6 +58,7 @@ html[data-ft-focused-subview-open] .topbar {
    Settings in both its selected and unselected states. */
 .topbar .topbar-tools > .settings-trigger,
 .topbar .topbar-tools > .settings-trigger[aria-pressed='true'] {
+  border: 1.5px solid var(--ft-border);
   background: var(--ft-surface);
   color: var(--ft-ink);
 }

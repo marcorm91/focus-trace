@@ -129,6 +129,15 @@ describe('UX polish contract', () => {
     expect(states).toContain('@media (max-width: 560px)');
   });
 
+  it('labels unresolved contrast as indeterminate and exposes the missing background', () => {
+    const scan = source('entrypoints/sidepanel/views/ScanView.tsx');
+
+    expect(scan).toContain("tr(language, 'Indeterminate', 'Indeterminado')");
+    expect(scan).toContain('Manual review · required');
+    expect(scan).toContain("tr(language, 'Unresolved', 'No resuelto')");
+    expect(scan).toContain('!issue.contrast.background && issue.contrast.ratio == null');
+  });
+
   it('keeps hover states legible and contrast metadata responsive', () => {
     const states = source('entrypoints/sidepanel/control-states.css');
     expect(states).toContain('.export-pdf-report:hover:not(:disabled)');

@@ -1,4 +1,9 @@
-import { localizedScanIssue, tr, type AppLanguage } from '../../shared/i18n';
+import {
+  localizedContrastReason,
+  localizedScanIssue,
+  tr,
+  type AppLanguage,
+} from '../../shared/i18n';
 import type { ScanIssue } from '../../shared/types';
 
 export interface FindingGuidance {
@@ -22,14 +27,14 @@ export function reportFindingDescription(issue: ScanIssue, language: AppLanguage
     );
   }
   if (issue.ruleId === 'FT-WCAG-010' && issue.outcome === 'review') {
-    return issue.contrast?.reason || tr(
+    return localizedContrastReason(issue.contrast?.reason, language) || tr(
       language,
       'The final rendered text/background contrast could not be determined reliably for this element. Manual review is required.',
       'No se ha podido determinar con fiabilidad el contraste final renderizado entre el texto y su fondo para este elemento. Requiere revisión manual.',
     );
   }
   if (issue.ruleId === 'FT-WCAG-011' && issue.outcome === 'review') {
-    return issue.contrast?.reason || tr(
+    return localizedContrastReason(issue.contrast?.reason, language) || tr(
       language,
       'The final non-text visual contrast or the necessity of this visual cue could not be proven automatically. Manual review is required.',
       'No se ha podido demostrar automáticamente el contraste visual no textual final o que esta señal visual sea imprescindible. Requiere revisión manual.',
