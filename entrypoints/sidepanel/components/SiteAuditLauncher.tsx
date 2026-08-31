@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { browser } from '#imports';
+import { requestWebPageAccess } from '../../../lib/extension/page-access';
 import { tr, type AppLanguage } from '../../../shared/i18n';
 
 export function SiteAuditLauncher({ language }: { language: AppLanguage }) {
@@ -9,6 +10,7 @@ export function SiteAuditLauncher({ language }: { language: AppLanguage }) {
     if (opening) return;
     setOpening(true);
     try {
+      if (!(await requestWebPageAccess())) return;
       const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
       if (tab?.id == null || !tab.url || !/^https?:/i.test(tab.url)) return;
       const query = new URLSearchParams({

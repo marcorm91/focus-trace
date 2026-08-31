@@ -1,5 +1,7 @@
 import { browser } from '#imports';
 
+export const WEB_PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'] as const;
+
 export interface WebPageTab {
   id: number;
   url: string;
@@ -30,21 +32,27 @@ export async function webPageTabById(tabId: number): Promise<WebPageTab | undefi
   return webPageTab(await browser.tabs.get(tabId));
 }
 
-export async function requestPageAccessForUrl(url: string): Promise<boolean> {
-  const pattern = pageAccessPattern(url);
-  if (!pattern) return false;
-  if (await browser.permissions.contains({ origins: [pattern] })) return true;
-  return browser.permissions.request({ origins: [pattern] });
+/**
+ * Requests normal web-page access before reading privileged tab URL fields.
+ *
+ * A fresh Chromium installation may hide Tab.url until host access has already
+ * been granted. This request must therefore be the first extension API call in
+ * the user's click path; looking up the tab first creates a permission
+ * bootstrap loop and can also lose the transient user gesture required by
+ * permissions.request().
+ */
+export function requestWebPageAccess(): Promise<boolean> {
+  return browser.permissions.request({ origins: [...WEB_PAGE_ACCESS_ORIGINS] });
 }
 
 export async function requestActivePageAccess(): Promise<WebPageTab | undefined> {
+  if (!(await requestWebPageAccess())) return undefined;
   const tab = await activeWebPageTab();
-  if (!tab || !(await requestPageAccessForUrl(tab.url))) return undefined;
   return tab;
 }
 
 export async function requestTabPageAccess(tabId: number): Promise<WebPageTab | undefined> {
+  if (!(await requestWebPageAccess())) return undefined;
   const tab = await webPageTabById(tabId);
-  if (!tab || !(await requestPageAccessForUrl(tab.url))) return undefined;
   return tab;
 }

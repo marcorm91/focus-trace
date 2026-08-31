@@ -56,7 +56,7 @@ export default function App() {
     onError: handleSessionError,
     onTabSelected: resetFocusPathState,
   });
-  const { requestPageAccess, ensureInjected } = usePageRuntimeAccess(tabId, language);
+  const { requestPageAccess, ensureInjected } = usePageRuntimeAccess(tabId);
   const scan = session.scan;
   const componentScan = scan?.scope?.type === 'component' ? scan.scope : undefined;
   const openTrace = useCallback(() => setView('trace'), []);
