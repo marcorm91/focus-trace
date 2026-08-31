@@ -21,7 +21,7 @@
 .replay-recording-state {
   flex: 0 0 auto;
   padding: 5px 8px;
-  border: 1px solid var(--border, #d8dde6);
+  border: 1px solid var(--ft-border, #d8dde6);
   border-radius: 999px;
   font-size: 14px;
   font-weight: 700;
@@ -79,15 +79,14 @@
   display: grid;
   gap: 12px;
   padding: 15px;
-  border: 1px solid var(--border, #d8dde6);
-  border-left: 4px solid rgba(65, 84, 255, 0.55);
+  border: 1px solid var(--ft-border, #d8dde6);
   border-radius: 13px;
-  background: var(--panel, #fff);
+  background: var(--ft-surface, #fff);
 }
 
 .replay-event.has-cause {
-  border-left-color: #b54708;
-  background: linear-gradient(180deg, rgba(181, 71, 8, 0.045), transparent 46%);
+  border-color: color-mix(in srgb, var(--ft-warning, #b54708) 45%, var(--ft-border, #d8dde6));
+  background: color-mix(in srgb, var(--ft-warning, #b54708) 4%, var(--ft-surface, #fff));
 }
 
 .replay-event-header {
@@ -107,13 +106,15 @@
   width: 34px;
   height: 34px;
   border-radius: 50%;
-  background: rgba(65, 84, 255, 0.1);
+  background: var(--ft-surface-subtle, rgba(0, 0, 0, 0.045));
+  color: var(--ft-ink, inherit);
   font-size: 15px;
   font-weight: 800;
 }
 
 .phase-signal .replay-phase-icon {
-  background: rgba(181, 71, 8, 0.12);
+  background: var(--ft-warning-soft, rgba(181, 71, 8, 0.12));
+  color: var(--ft-warning, #b54708);
 }
 
 .replay-meta {
@@ -125,7 +126,7 @@
 .replay-meta > * {
   padding: 3px 6px;
   border-radius: 999px;
-  background: rgba(0, 0, 0, 0.045);
+  background: var(--ft-surface-subtle, rgba(0, 0, 0, 0.045));
   font-size: 14px;
   font-weight: 700;
 }
@@ -141,7 +142,7 @@
   gap: 7px;
   padding: 11px;
   border-radius: 10px;
-  background: rgba(65, 84, 255, 0.055);
+  background: var(--ft-surface-subtle, rgba(0, 0, 0, 0.035));
 }
 
 .replay-target > div {
@@ -177,7 +178,7 @@
   display: grid;
   gap: 6px;
   padding: 10px 11px;
-  border: 1px solid var(--border, #d8dde6);
+  border: 1px solid var(--ft-border, #d8dde6);
   border-radius: 10px;
   background: rgba(0, 0, 0, 0.018);
 }
@@ -214,7 +215,7 @@
   gap: 2px;
   min-width: 0;
   padding: 7px 5px;
-  border: 1px solid var(--border, #d8dde6);
+  border: 1px solid var(--ft-border, #d8dde6);
   border-radius: 9px;
   background: transparent;
 }
