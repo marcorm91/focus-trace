@@ -52,19 +52,26 @@ test('sidepanel controls and finding surfaces expose their intended behavior', a
 
   const firstQuickAction = quickActions.first();
   const restingBackground = await firstQuickAction.evaluate((button) => getComputedStyle(button).backgroundColor);
-  const expectedHoverBackground = await panel.locator('.app-shell').evaluate((shell) => {
+  const expectedNeutralStyles = await panel.locator('.app-shell').evaluate((shell) => {
     const probe = document.createElement('span');
-    probe.style.backgroundColor = 'var(--ft-accent-soft)';
+    probe.style.backgroundColor = 'var(--ft-surface)';
+    probe.style.border = '1px solid var(--ft-border)';
     shell.append(probe);
-    const color = getComputedStyle(probe).backgroundColor;
+    const style = getComputedStyle(probe);
+    const result = {
+      backgroundColor: style.backgroundColor,
+      borderColor: style.borderTopColor,
+    };
     probe.remove();
-    return color;
+    return result;
   });
   await firstQuickAction.hover();
-  await expect(firstQuickAction).toHaveCSS('background-color', expectedHoverBackground);
-  expect(expectedHoverBackground).not.toBe(restingBackground);
+  await expect(firstQuickAction).toHaveCSS('background-color', expectedNeutralStyles.backgroundColor);
+  await expect(firstQuickAction).toHaveCSS('border-color', expectedNeutralStyles.borderColor);
+  expect(restingBackground).toBe(expectedNeutralStyles.backgroundColor);
   await settings.hover();
-  await expect(settings).toHaveCSS('background-color', expectedHoverBackground);
+  await expect(settings).toHaveCSS('background-color', expectedNeutralStyles.backgroundColor);
+  await expect(settings).toHaveCSS('border-color', expectedNeutralStyles.borderColor);
   await settings.click();
   await expect(settings).toHaveAttribute('aria-pressed', 'true');
   await panel.mouse.move(0, 0);
