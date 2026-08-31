@@ -7,6 +7,17 @@ function source(path: string): string {
 }
 
 describe('sidepanel layout polish contract', () => {
+  it('keeps the four workspace navigation actions at equal full width', () => {
+    const navigation = source('entrypoints/sidepanel/ux-polish.css');
+    const about = source('entrypoints/sidepanel/about.css');
+    const focusGraph = source('entrypoints/sidepanel/focus-graph.css');
+
+    expect(navigation).toContain('.workspace-nav.tabs {');
+    expect(navigation).toContain('grid-template-columns: repeat(4, minmax(0, 1fr));');
+    expect(about).not.toMatch(/(^|\n)\.tabs\s*\{/);
+    expect(focusGraph).not.toMatch(/(^|\n)\.tabs\s*\{/);
+  });
+
   it('renders four composed quick actions as 2x2 and one column when narrow', () => {
     const css = source('entrypoints/sidepanel/workspace-layout.css');
     const siteAudit = source('entrypoints/sidepanel/components/SiteAuditLauncher.tsx');
@@ -54,6 +65,7 @@ describe('sidepanel layout polish contract', () => {
     expect(css).toContain('background: transparent;');
     expect(css).toContain('box-shadow: none;');
     expect(css).toContain('cursor: default;');
+    expect(source('entrypoints/sidepanel/views/session-report.css')).toContain('border-radius: 0;');
     expect(css).toContain('.report-inline-summary > span');
     expect(css).toContain('.report-category-summary > span');
     expect(css).not.toContain(':hover');
@@ -92,6 +104,9 @@ describe('sidepanel layout polish contract', () => {
     expect(css).toContain('.focus-memory-history > summary::after');
     expect(css).toContain('.focus-memory-evidence-table');
     expect(css).toContain('border-collapse: collapse;');
+    expect(css).toContain('flex-wrap: wrap;');
+    expect(css).toContain('overflow-wrap: anywhere;');
+    expect(css).toContain('overflow: hidden;');
     expect(css).not.toContain('.focus-memory-status');
   });
 });

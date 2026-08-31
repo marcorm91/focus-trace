@@ -53,4 +53,12 @@ test('scans form values, placeholders, generated text and non-DOM graphics', asy
     .filter((issue) => issue.ruleId === 'FT-WCAG-011')
     .flatMap((issue) => issue.targets);
   expect(graphicReviewTargets).toEqual(expect.arrayContaining(['#css-icon', '#chart']));
+
+  const repeatedStateReviews = scan.review.filter((issue) =>
+    issue.ruleId === 'FT-WCAG-010'
+    && issue.evidence?.includes('authored selector=".state-target:hover"'),
+  );
+  expect(repeatedStateReviews).toHaveLength(1);
+  expect(repeatedStateReviews[0]?.evidence).toContain('matching candidates=6');
+  expect(scan.review.some((issue) => issue.evidence?.includes('.dropdown-toggle:active'))).toBe(false);
 });

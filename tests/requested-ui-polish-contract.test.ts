@@ -42,6 +42,8 @@ describe('requested FocusTrace UI polish', () => {
     expect(css).toContain('.topbar .topbar-tools > button:not(:disabled):hover');
     expect(css).toContain(".settings-trigger[aria-pressed='true']:not(:disabled):hover");
     expect(css).toContain('background: var(--ft-accent-soft);');
+    expect(css).toContain(".settings-trigger[aria-pressed='true'] {");
+    expect(css).toContain('background: var(--ft-surface);');
   });
 
   it('uses flat runtime surfaces and a tab-style Trace inspector switcher', () => {

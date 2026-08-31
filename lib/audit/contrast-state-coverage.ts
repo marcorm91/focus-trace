@@ -1,3 +1,4 @@
+import { parseCssColor } from './contrast';
 import { isDisabledUiComponent } from './dom';
 
 export type ContrastStateName =
@@ -23,6 +24,7 @@ export interface ContrastStateSignal {
   kind: ContrastStateKind;
   selector: string;
   properties: string[];
+  candidateCount: number;
 }
 
 const TEXT_PROPERTIES = new Set([
@@ -41,13 +43,11 @@ const NON_TEXT_PROPERTIES = new Set([
   'background',
   'background-color',
   'background-image',
-  'border',
   'border-color',
   'border-top-color',
   'border-right-color',
   'border-bottom-color',
   'border-left-color',
-  'outline',
   'outline-color',
   'box-shadow',
   'fill',
@@ -58,6 +58,8 @@ const NON_TEXT_PROPERTIES = new Set([
 
 const PSEUDO_ELEMENTS = /::(?:before|after)\b/gi;
 const CONTRAST_CUSTOM_PROPERTY = /(?:color|colour|bg|background|border|outline|shadow|fill|stroke|opacity|contrast)/i;
+const NON_TEXT_COLOR_PROPERTY = /^(?:border(?:-(?:top|right|bottom|left))?-color|outline-color|fill|stroke)$/;
+const NON_TEXT_SHORTHAND = /^(?:border(?:-(?:top|right|bottom|left))?|outline)$/;
 
 interface StatePattern {
   state: ContrastStateName;
@@ -126,11 +128,26 @@ function ruleProperties(rule: CSSStyleRule): string[] {
   return [...properties];
 }
 
-function propertyIsContrastRelevant(property: string): boolean {
+function transparentPaint(value: string): boolean {
+  const parsed = parseCssColor(value);
+  return parsed?.a === 0;
+}
+
+function shorthandPaintsVisibleCue(value: string): boolean {
+  const normalized = value.trim().toLowerCase();
+  if (!normalized || normalized === 'none' || normalized === '0' || normalized === '0px') return false;
+  if (/(?:^|\s)none(?:\s|$)/.test(normalized)) return false;
+  if (/(?:^|\s)0(?:px|rem|em)?(?:\s|$)/.test(normalized)) return false;
+  const colorTokens = normalized.match(/(?:rgba?|hsla?|oklch|oklab|lab|lch|color)\([^)]*\)|#[0-9a-f]{3,8}|transparent/gi) ?? [];
+  return !colorTokens.length || colorTokens.some((token) => !transparentPaint(token));
+}
+
+function propertyIsContrastRelevant(rule: CSSStyleRule, property: string): boolean {
+  const value = rule.style.getPropertyValue(property).trim();
+  if (NON_TEXT_COLOR_PROPERTY.test(property) && transparentPaint(value)) return false;
+  if (NON_TEXT_SHORTHAND.test(property)) return shorthandPaintsVisibleCue(value);
   return TEXT_PROPERTIES.has(property)
     || NON_TEXT_PROPERTIES.has(property)
-    || property.startsWith('border-')
-    || property.startsWith('outline-')
     || (property.startsWith('--') && CONTRAST_CUSTOM_PROPERTY.test(property));
 }
 
@@ -214,6 +231,7 @@ function stateKind(element: Element, properties: string[]): ContrastStateKind | 
   const textRelevant = properties.some((property) => TEXT_PROPERTIES.has(property)) || hasRelevantCustomProperty;
   const nonTextRelevant = properties.some((property) =>
     NON_TEXT_PROPERTIES.has(property)
+    || NON_TEXT_SHORTHAND.test(property)
     || property.startsWith('border-')
     || property.startsWith('outline-'),
   ) || hasRelevantCustomProperty;
@@ -256,21 +274,11 @@ export function observedContrastStates(element: Element): ContrastStateName[] {
 }
 
 export function evaluateContrastStateCoverage(root: Document | Element = document): ContrastStateSignal[] {
-  const signals: ContrastStateSignal[] = [];
-  const seen = new Set<string>();
-  const elementIds = new WeakMap<Element, number>();
-  let nextElementId = 1;
-  const elementId = (element: Element) => {
-    const existing = elementIds.get(element);
-    if (existing != null) return existing;
-    const value = nextElementId++;
-    elementIds.set(element, value);
-    return value;
-  };
+  const signals = new Map<string, ContrastStateSignal>();
 
   for (const rule of authorStyleRules()) {
-    const properties = ruleProperties(rule);
-    if (!properties.some(propertyIsContrastRelevant)) continue;
+    const properties = ruleProperties(rule).filter((property) => propertyIsContrastRelevant(rule, property));
+    if (!properties.length) continue;
 
     for (const selector of splitSelectorList(rule.selectorText)) {
       const patterns = statePatternsForSelector(selector);
@@ -285,28 +293,43 @@ export function evaluateContrastStateCoverage(root: Document | Element = documen
         continue;
       }
 
+      const candidatesByKind = new Map<ContrastStateKind, Element[]>();
       for (const element of elements) {
-        // Coverage is element-specific: one hovered/focused component must not
-        // hide the same unobserved authored state on its siblings.
-        if (elementMatchesObservedSelector(element, selector)) continue;
-        if (isInactiveContrastElement(element)) continue;
+        if (elementMatchesObservedSelector(element, selector) || isInactiveContrastElement(element)) continue;
         const kind = stateKind(element, properties);
         if (!kind) continue;
+        const candidates = candidatesByKind.get(kind) ?? [];
+        candidates.push(element);
+        candidatesByKind.set(kind, candidates);
+      }
+
+      for (const [kind, candidates] of candidatesByKind) {
+        const representative = candidates[0];
+        if (!representative) continue;
         for (const pattern of patterns) {
-          const key = `${kind}|${pattern.state}|${selector}|${candidate}|${elementId(element)}`;
-          if (seen.has(key)) continue;
-          seen.add(key);
-          signals.push({
-            element,
+          // A CSS selector describes one authored state obligation. Repeating
+          // the same manual-review card for every matched node manufactures
+          // volume without adding evidence, so keep one representative target
+          // and preserve the number of matching candidates in the signal.
+          const key = `${kind}|${pattern.state}|${selector}`;
+          const existing = signals.get(key);
+          if (existing) {
+            existing.properties = [...new Set([...existing.properties, ...properties])].sort();
+            existing.candidateCount = Math.max(existing.candidateCount, candidates.length);
+            continue;
+          }
+          signals.set(key, {
+            element: representative,
             state: pattern.state,
             kind,
             selector,
             properties: [...new Set(properties)].sort(),
+            candidateCount: candidates.length,
           });
         }
       }
     }
   }
 
-  return signals;
+  return [...signals.values()];
 }

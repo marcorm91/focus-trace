@@ -186,6 +186,27 @@ export function localizedScanIssue(
   issue: ScanIssue,
   language: AppLanguage,
 ): ScanIssue {
+  if (issue.contrastState) {
+    const { kind, state } = issue.contrastState;
+    const textState = kind === 'text';
+    const title = language === 'es'
+      ? textState
+        ? 'Revisar el contraste de texto en estados no observados'
+        : 'Revisar el contraste no textual en estados no observados'
+      : textState
+        ? 'Review text contrast in unobserved states'
+        : 'Review non-text contrast in unobserved states';
+    const description = language === 'es'
+      ? `FocusTrace ha encontrado una regla CSS para el estado ${state}, pero ese estado no estaba activo durante el análisis; por tanto, no se ha medido ningún fallo de contraste. Activa el estado y revisa su resultado visual manualmente.`
+      : `FocusTrace found a CSS rule for the ${state} state, but that state was not active during analysis, so no contrast failure was measured. Activate the state and review its visual result manually.`;
+    return {
+      ...issue,
+      title,
+      description: withCriteria(description, issue, language),
+      ...(issue.evidence ? { evidence: issue.evidence } : {}),
+    };
+  }
+
   if (language === 'en') {
     return {
       ...issue,

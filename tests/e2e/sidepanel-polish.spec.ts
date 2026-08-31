@@ -26,6 +26,15 @@ test('sidepanel controls and finding surfaces expose their intended behavior', a
   await expect(settings).toHaveAttribute('title', /Settings|Ajustes/);
   await expect(settings).toHaveAttribute('aria-label', /Open settings|Abrir ajustes/);
   const workspace = panel.getByRole('navigation', { name: /FocusTrace sections|Secciones de FocusTrace/ });
+  const workspaceButtons = workspace.getByRole('button');
+  await expect(workspaceButtons).toHaveCount(4);
+  const [workspaceBox, workspaceButtonBoxes] = await Promise.all([
+    workspace.boundingBox(),
+    workspaceButtons.evaluateAll((buttons) => buttons.map((button) => button.getBoundingClientRect().toJSON())),
+  ]);
+  if (!workspaceBox) throw new Error('Could not measure the workspace navigation.');
+  expect(workspaceButtonBoxes.every((box) => Math.abs(box.width - workspaceButtonBoxes[0]!.width) < 1)).toBe(true);
+  expect(workspaceButtonBoxes.at(-1)!.right).toBeGreaterThan(workspaceBox.x + workspaceBox.width - 12);
 
   const quickActions = panel.locator('.quick-actions > button, .quick-actions .site-audit-launch');
   expect(await quickActions.count()).toBeGreaterThanOrEqual(4);
@@ -50,6 +59,11 @@ test('sidepanel controls and finding surfaces expose their intended behavior', a
   expect(expectedHoverBackground).not.toBe(restingBackground);
   await settings.hover();
   await expect(settings).toHaveCSS('background-color', expectedHoverBackground);
+  await settings.click();
+  await expect(settings).toHaveAttribute('aria-pressed', 'true');
+  await panel.mouse.move(0, 0);
+  await expect(settings).toHaveCSS('background-color', restingBackground);
+  await panel.getByRole('button', { name: /Back|Volver/ }).click();
 
   await workspace.getByRole('button', { name: 'Trace' }).click();
   const traceControls = panel.locator('.trace-hero-actions .trace-record, .trace-hero-actions .trace-reset');
@@ -110,6 +124,14 @@ test('sidepanel controls and finding surfaces expose their intended behavior', a
   await expect(scanFinding.locator('.scan-rule-outcome')).toHaveCount(0);
 
   await workspace.getByRole('button', { name: /Report|Informe/ }).click();
+
+  const scorelineStyles = await panel.locator('.report-scoreline > div').evaluateAll((metrics) => metrics.map((metric) => {
+    const style = getComputedStyle(metric);
+    return `${style.borderTopWidth}|${style.borderRadius}|${style.backgroundColor}|${style.boxShadow}`;
+  }));
+  expect(scorelineStyles).toHaveLength(4);
+  expect(new Set(scorelineStyles).size).toBe(1);
+  expect(scorelineStyles[0]).toContain('0px|0px|rgba(0, 0, 0, 0)|none');
 
   const reportTabs = panel.locator('.report-compact-tabs');
   await expect(reportTabs.getByRole('tab', { name: /Failures|Fallos/ })).toBeEnabled();

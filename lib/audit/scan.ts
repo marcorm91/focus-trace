@@ -218,7 +218,14 @@ function contrastStateIssue(signal: ContrastStateSignal): ScanIssue {
     severity: rule.severity,
     outcome: 'review',
     targets: [selectorFor(signal.element)],
-    evidence: `Unobserved visual state=${signal.state}; authored selector=${JSON.stringify(signal.selector)}; contrast-relevant properties=${signal.properties.join(', ')}. FocusTrace did not synthesize pointer, focus or control-state changes because doing so could trigger page behavior.`,
+    evidence: `Unobserved visual state=${signal.state}; authored selector=${JSON.stringify(signal.selector)}; contrast-relevant properties=${signal.properties.join(', ')}; matching candidates=${signal.candidateCount}. FocusTrace reports one representative target for this authored selector and did not synthesize pointer, focus or control-state changes because doing so could trigger page behavior.`,
+    contrastState: {
+      state: signal.state,
+      kind: signal.kind,
+      selector: signal.selector,
+      properties: signal.properties,
+      candidateCount: signal.candidateCount,
+    },
     references: rule.references,
   };
 }

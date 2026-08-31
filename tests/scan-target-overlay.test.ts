@@ -44,6 +44,7 @@ describe('scan target page overlay', () => {
     expect(result).toEqual({
       found: true,
       selector: '#card',
+      rendered: true,
     });
     expect(document.activeElement).toBe(document.querySelector('#card'));
     expect(document.querySelector('#card')?.hasAttribute('tabindex')).toBe(false);
@@ -66,14 +67,46 @@ describe('scan target page overlay', () => {
 
     expect(result.found).toBe(true);
     expect(result.selector).toBe('#card');
+    expect(result.rendered).toBe(true);
     expect(document.querySelector('[data-focustrace-scan-highlight]')).not.toBeNull();
+  });
+
+  it('reports a DOM-only target instead of drawing an invisible overlay', () => {
+    installFixture();
+    document.head.innerHTML = '<script id="metadata" charset="utf-8"></script>';
+    const target = document.querySelector('#metadata')!;
+    Object.defineProperty(target, 'getBoundingClientRect', {
+      configurable: true,
+      value: () => ({
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        width: 0,
+        height: 0,
+        x: 0,
+        y: 0,
+        toJSON: () => ({}),
+      }),
+    });
+
+    expect(locateScanTargetInPage('#metadata')).toEqual({
+      found: true,
+      selector: '#metadata',
+      rendered: false,
+    });
+    expect(document.querySelector('[data-focustrace-scan-highlight]')).toBeNull();
   });
 
   it('returns a miss for stale or invalid selectors without leaving overlays behind', () => {
     installFixture();
 
-    expect(locateScanTargetInPage('#missing')).toEqual({ found: false, selector: '#missing' });
-    expect(locateScanTargetInPage('main >> broken')).toEqual({ found: false, selector: 'main >> broken' });
+    expect(locateScanTargetInPage('#missing')).toEqual({ found: false, selector: '#missing', rendered: false });
+    expect(locateScanTargetInPage('main >> broken')).toEqual({
+      found: false,
+      selector: 'main >> broken',
+      rendered: false,
+    });
     expect(document.querySelector('[data-focustrace-scan-highlight]')).toBeNull();
   });
 });

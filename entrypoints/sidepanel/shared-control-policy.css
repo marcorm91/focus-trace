@@ -56,6 +56,11 @@ html[data-ft-focused-subview-open] .topbar {
 
 /* Topbar tools share exactly the same hover feedback, including Settings when
    the settings view is already selected. */
+.topbar .topbar-tools > .settings-trigger[aria-pressed='true'] {
+  background: var(--ft-surface);
+  color: var(--ft-ink);
+}
+
 .topbar .topbar-tools > button:not(:disabled):hover,
 .topbar .topbar-tools > .settings-trigger[aria-pressed='true']:not(:disabled):hover {
   border-color: var(--ft-border);

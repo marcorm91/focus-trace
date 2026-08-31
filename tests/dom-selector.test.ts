@@ -51,4 +51,17 @@ describe('stable DOM selectors', () => {
     expect(document.querySelectorAll(selector)).toHaveLength(1);
     expect(document.querySelector(selector)).toBe(second);
   });
+
+  it('avoids volatile framework ids while preserving a unique locator', () => {
+    document.head.innerHTML = `
+      <script charset="utf-8"></script>
+      <script id="yui_patched_v3_18_4_1_1788157613526_54" charset="utf-8"></script>
+    `;
+    const target = document.head.querySelectorAll('script')[1]!;
+    const selector = selectorFor(target);
+
+    expect(selector).not.toContain('yui_patched');
+    expect(selector).toContain('script:nth-of-type(2)');
+    expect(document.querySelector(selector)).toBe(target);
+  });
 });

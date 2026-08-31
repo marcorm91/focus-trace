@@ -7,11 +7,13 @@ import {
   observedContrastStates,
 } from '../lib/audit/contrast-state-coverage';
 import { runFocusTraceScan } from '../lib/audit/scan';
+import { reportFindingDescription } from '../lib/report/finding-guidance';
+import { localizedScanIssue } from '../shared/i18n';
 
 function render(head: string, body: string) {
-  document.open();
-  document.write(`<!doctype html><html lang="en"><head><title>States</title>${head}</head><body>${body}</body></html>`);
-  document.close();
+  document.documentElement.lang = 'en';
+  document.head.innerHTML = `<title>States</title>${head}`;
+  document.body.innerHTML = body;
 }
 
 describe('contrast state coverage', () => {
@@ -62,6 +64,36 @@ describe('contrast state coverage', () => {
     const signals = evaluateContrastStateCoverage().filter((signal) => signal.state === 'focus');
     expect(signals).toHaveLength(1);
     expect(signals[0]?.element.id).toBe('second');
+  });
+
+  it('reports one representative review for a repeated authored selector', () => {
+    render(
+      '<style>.target:hover { color: #777; background-color: #fff; }</style>',
+      Array.from({ length: 20 }, (_, index) => `<a class="target" href="#${index}">Item ${index}</a>`).join(''),
+    );
+    const signals = evaluateContrastStateCoverage().filter((signal) => signal.state === 'hover');
+
+    expect(signals).toHaveLength(1);
+    expect(signals[0]).toMatchObject({
+      selector: '.target:hover',
+      candidateCount: 20,
+    });
+  });
+
+  it('ignores transparent outline geometry that does not create contrast evidence', () => {
+    render(
+      `<style>#target:active {
+        outline-color: transparent;
+        outline-offset: 0;
+        outline-style: solid;
+        outline-width: 0;
+      }</style>`,
+      '<a id="target" href="#menu">Menu</a>',
+    );
+
+    expect(evaluateContrastStateCoverage()).toEqual([]);
+    const scan = runFocusTraceScan();
+    expect(scan.review.some((issue) => issue.evidence?.includes('state=active'))).toBe(false);
   });
 
   it('recognizes contrast-related CSS custom properties used by component libraries', () => {
@@ -122,6 +154,20 @@ describe('contrast state coverage', () => {
     );
     expect(stateReview).toBeDefined();
     expect(stateReview?.outcome).toBe('review');
+    expect(stateReview?.evidence).toContain('matching candidates=1');
+    expect(stateReview?.contrastState).toMatchObject({
+      state: 'hover',
+      kind: 'text',
+      selector: '#target:hover',
+      candidateCount: 1,
+    });
+    expect(localizedScanIssue(stateReview!, 'es')).toMatchObject({
+      title: 'Revisar el contraste de texto en estados no observados',
+      description: expect.stringContaining('no se ha medido ning\u00fan fallo de contraste'),
+    });
+    expect(reportFindingDescription(stateReview!, 'es')).toContain(
+      'FocusTrace no ha medido ning\u00fan fallo de contraste',
+    );
     expect(scan.issues.some((issue) => issue.evidence?.includes('state=hover'))).toBe(false);
   });
 });

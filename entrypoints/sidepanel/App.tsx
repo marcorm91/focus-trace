@@ -159,7 +159,7 @@ export default function App() {
       const results = await browser.scripting.executeScript({
         target: { tabId },
         func: locateScanTargetInPage,
-        args: [selector],
+        args: [selector, { tone: 'inspect', label: 'FocusTrace', focusTarget: false }],
       });
       const result = results[0]?.result;
       if (!result?.found) {
@@ -167,6 +167,12 @@ export default function App() {
           language,
           'The element is no longer present on the page. Run the scan again.',
           'El elemento ya no está presente en la página. Vuelve a ejecutar el análisis.',
+        ));
+      } else if (!result.rendered) {
+        setError(tr(
+          language,
+          'The element exists in the DOM but has no visual box on the page (for example, script or head content), so it cannot be highlighted.',
+          'El elemento existe en el DOM, pero no tiene una caja visual en la página (por ejemplo, contenido script o head), por lo que no se puede resaltar.',
         ));
       }
     } catch (reason) {
