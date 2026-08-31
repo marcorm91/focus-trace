@@ -349,7 +349,7 @@
 
 .focus-memory button:not(:disabled):hover {
   border-color: var(--ft-border);
-  background: var(--ft-accent-soft);
+  background: var(--ft-surface);
 }
 
 @media (max-width: 390px) {

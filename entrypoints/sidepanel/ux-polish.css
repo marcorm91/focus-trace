@@ -88,8 +88,8 @@ body,
 }
 
 .workspace-nav.tabs button.active > span {
-  background: color-mix(in srgb, var(--ft-brand) 14%, var(--ft-surface));
-  color: var(--ft-brand-strong);
+  background: transparent;
+  color: inherit;
 }
 
 .quick-actions button {
@@ -291,4 +291,3 @@ body,
     padding-inline: 11px;
   }
 }
-

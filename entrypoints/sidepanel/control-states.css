@@ -104,8 +104,8 @@
 .scan-filter-tabs button:focus-visible,
 .scan-severity-filter button:hover:not(:disabled),
 .scan-severity-filter button:focus-visible {
-  border-color: var(--ft-accent, Highlight);
-  background: var(--ft-accent-soft, color-mix(in srgb, Highlight 10%, Canvas));
+  border-color: var(--ft-border, CanvasText);
+  background: var(--ft-surface, Canvas);
   color: var(--ft-ink, CanvasText);
 }
 

@@ -130,8 +130,8 @@
 
 .scan-occurrence-pager button:hover:not(:disabled),
 .scan-occurrence-pager button:focus-visible {
-  border-color: var(--ft-accent);
-  background: var(--ft-accent-soft);
+  border-color: var(--ft-border);
+  background: var(--ft-surface);
   color: var(--ft-ink);
 }
 
@@ -226,8 +226,8 @@
 
 .finding-location > button:hover:not(:disabled),
 .finding-location > button:focus-visible {
-  border-color: var(--ft-accent-strong);
-  background: var(--ft-accent-soft);
+  border-color: var(--ft-border);
+  background: var(--ft-surface);
   color: var(--ft-ink);
 }
 

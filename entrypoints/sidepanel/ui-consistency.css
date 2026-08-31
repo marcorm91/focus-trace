@@ -40,15 +40,14 @@ body {
   background-image: none;
 }
 
-/* Trace inspector navigation follows the same tab language as the rest of the
-   workspace instead of looking like a four-button segmented control. */
+/* Trace inspector navigation follows the same neutral button language as the
+   filters used by Review and Report. */
 .trace-workspace .trace-mode-switcher {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
-  gap: 0;
+  gap: 6px;
   padding: 0;
   border: 0;
-  border-bottom: 1px solid var(--ft-border-soft);
   border-radius: 0;
   background: transparent;
 }
@@ -57,26 +56,26 @@ body {
   min-height: 44px;
   gap: 6px;
   padding: 8px 7px;
-  border: 0;
-  border-bottom: 3px solid transparent;
-  border-radius: 0;
-  background: transparent;
+  border: 1px solid var(--ft-border-soft);
+  border-radius: var(--ft-radius-sm);
+  background: var(--ft-surface);
   color: var(--ft-muted);
   box-shadow: none;
   font-weight: 600;
 }
 
 .trace-workspace .trace-mode-switcher button:hover:not(:disabled) {
-  background: var(--ft-surface-subtle);
+  border-color: var(--ft-border);
+  background: var(--ft-surface);
   color: var(--ft-ink);
 }
 
 .trace-workspace .trace-mode-switcher button.active {
-  border-bottom-color: var(--ft-accent);
-  background: transparent;
+  border-color: var(--ft-border);
+  background: var(--ft-surface);
   color: var(--ft-ink);
-  box-shadow: none;
-  font-weight: 600;
+  box-shadow: var(--ft-shadow-sm);
+  font-weight: 800;
 }
 
 .trace-workspace .trace-mode-switcher button span,
@@ -168,7 +167,8 @@ body {
 
 .focus-memory-history-mode button:hover:not(:disabled),
 .focus-memory-history-pager button:hover:not(:disabled) {
-  background: var(--ft-surface-subtle);
+  border-color: var(--ft-border);
+  background: var(--ft-surface);
   color: var(--ft-ink);
 }
 

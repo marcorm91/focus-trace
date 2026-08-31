@@ -42,7 +42,7 @@
 }
 
 .settings-breakpoint-option:hover {
-  border-color: var(--accent, #1769e0);
+  border-color: var(--ft-border, CanvasText);
 }
 
 .settings-breakpoint-option:has(input:focus-visible) {
@@ -76,4 +76,3 @@
   font-size: .875rem;
   line-height: 1.45;
 }
-

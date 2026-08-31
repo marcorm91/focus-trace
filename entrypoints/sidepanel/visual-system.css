@@ -181,7 +181,7 @@ code {
 }
 
 .topbar-tools button:not(:disabled):hover {
-  background: var(--ft-accent-soft);
+  background: var(--ft-surface);
   border-color: var(--ft-border);
 }
 
@@ -251,7 +251,7 @@ code {
 
 .actions .primary:not(:disabled):hover,
 .export-pdf-report:not(:disabled):hover {
-  background: color-mix(in srgb, var(--ft-ink) 88%, var(--ft-accent));
+  background: var(--ft-ink);
 }
 
 .actions .primary:not(:disabled):active,
@@ -265,7 +265,7 @@ code {
 }
 
 .export-text-report:not(:disabled):hover {
-  background: var(--ft-accent-soft);
+  background: var(--ft-surface);
 }
 
 .export-text-report:not(:disabled):active {
@@ -513,8 +513,8 @@ button:disabled {
 
 .finding-location button:hover,
 .finding-location button:focus-visible {
-  background: var(--ft-accent-strong);
-  color: #fff;
+  background: var(--ft-surface);
+  color: var(--ft-ink);
 }
 
 .finding-dom {
@@ -631,16 +631,16 @@ button:disabled {
 .trace-toolbar button:hover,
 .replay-controls button:hover {
   border-color: var(--ft-border);
-  background: var(--ft-accent-soft);
+  background: var(--ft-surface);
 }
 
 .graph-filter button.active,
 .graph-toolbar button.active,
 .trace-toolbar button.active {
   border-color: var(--ft-border);
-  background: var(--ft-ink);
-  color: var(--ft-surface);
-  box-shadow: none;
+  background: var(--ft-surface);
+  color: var(--ft-ink);
+  box-shadow: var(--ft-shadow-sm);
 }
 
 /* Headings */

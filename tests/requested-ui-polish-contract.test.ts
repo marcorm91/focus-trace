@@ -21,7 +21,7 @@ describe('requested FocusTrace UI polish', () => {
     expect(finalCss).toContain('font-weight: 600;');
     expect(finalCss).toContain('.quick-start .quick-actions > button');
     expect(finalCss).toContain('background: var(--ft-surface);');
-    expect(finalCss).toContain('background: var(--ft-accent-soft);');
+    expect(finalCss).not.toContain('background: var(--ft-accent-soft);');
     expect(componentCss).not.toContain('!important');
   });
 
@@ -36,13 +36,13 @@ describe('requested FocusTrace UI polish', () => {
     expect(css).toContain("url('./ui-scale.css') layer(accessibility)");
   });
 
-  it('uses the same light-blue hover language for reset, Instructions and Settings', () => {
+  it('uses the same neutral white hover language for Instructions and Settings', () => {
     const css = source('entrypoints/sidepanel/shared-control-policy.css');
     const settingsCss = source('entrypoints/sidepanel/scan-settings.css');
 
     expect(css).toContain('.topbar .topbar-tools > button:not(:disabled):hover');
     expect(css).toContain(".settings-trigger[aria-pressed='true']:not(:disabled):hover");
-    expect(css).toContain('background: var(--ft-accent-soft);');
+    expect(css).not.toContain('background: var(--ft-accent-soft);');
     expect(css).toContain('.topbar .topbar-tools > .settings-trigger,');
     expect(css).toContain('background: var(--ft-surface);');
     expect(css).toContain('border: 1.5px solid var(--ft-border);');
@@ -50,7 +50,7 @@ describe('requested FocusTrace UI polish', () => {
     expect(settingsCss).not.toContain('background: ButtonFace;');
   });
 
-  it('uses flat runtime surfaces and a tab-style Trace inspector switcher', () => {
+  it('uses flat runtime surfaces and neutral button-style Trace navigation', () => {
     const css = source('entrypoints/sidepanel/ui-consistency.css');
 
     expect(css).toContain('.trace-hero {');
@@ -58,9 +58,11 @@ describe('requested FocusTrace UI polish', () => {
     expect(css).toContain('.session-console.live');
     expect(css).toContain('background-image: none;');
     expect(css).toContain('.trace-workspace .trace-mode-switcher');
-    expect(css).toContain('border-bottom: 3px solid transparent;');
-    expect(css).toContain('border-bottom-color: var(--ft-accent);');
-    expect(css).toContain('box-shadow: none;');
+    expect(css).toContain('grid-template-columns: repeat(4, minmax(0, 1fr));');
+    expect(css).toContain('border: 1px solid var(--ft-border-soft);');
+    expect(css).toContain('background: var(--ft-surface);');
+    expect(css).toContain('box-shadow: var(--ft-shadow-sm);');
+    expect(css).not.toContain('border-bottom-color: var(--ft-accent);');
   });
 
   it('presents Trace session controls as normal neutral FocusTrace actions', () => {
@@ -71,16 +73,35 @@ describe('requested FocusTrace UI polish', () => {
     expect(css).toContain('.trace-hero .trace-record');
     expect(css).toContain('.trace-hero .trace-reset');
     expect(css).toContain('background: var(--ft-surface);');
-    expect(css).toContain('background: var(--ft-accent-soft);');
+    expect(css).not.toContain('background: var(--ft-accent-soft);');
   });
 
   it('keeps the manual focus recording start action neutral at rest', () => {
     const css = source('entrypoints/sidepanel/shared-control-policy.css');
 
     expect(css).toContain('.focus-journey-view .manual-focus-controls button:not(.stop)');
+    expect(css).toContain('.focus-journey-view .manual-focus-controls:not(.is-recording)');
+    expect(css).toContain('border: 1px solid var(--ft-border);');
     expect(css).toContain('border: 1.5px solid var(--ft-border);');
     expect(css).toContain('background: var(--ft-surface);');
     expect(css).toContain('color: var(--ft-ink);');
+  });
+
+  it('removes decorative pale accent states from controls across the app', () => {
+    const controls = source('entrypoints/sidepanel/control-states.css');
+    const scan = source('entrypoints/sidepanel/scan-settings.css');
+    const trace = source('entrypoints/sidepanel/views/trace-polish.css');
+    const headings = source('entrypoints/sidepanel/heading-tree-visual.css');
+    const replay = source('entrypoints/sidepanel/views/replay.css');
+
+    expect(controls).toContain('border-color: var(--ft-border, CanvasText);');
+    expect(controls).toContain('background: var(--ft-surface, Canvas);');
+    expect(scan).toContain('.scan-category-filter button.active');
+    expect(scan).toContain('box-shadow: var(--ft-shadow-sm, none);');
+    expect(trace).toContain('background: var(--ft-surface-subtle);');
+    expect(trace).not.toContain('background: color-mix(in srgb, var(--ft-brand-soft) 42%');
+    expect(headings).not.toContain('background: var(--ft-accent-soft);');
+    expect(replay).not.toContain('background: rgba(65, 84, 255, 0.08);');
   });
 
   it('makes heading level tones more distinct and switches foreground at mid-scale', () => {

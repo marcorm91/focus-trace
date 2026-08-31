@@ -133,8 +133,8 @@
   display: grid;
   place-items: center;
   border-radius: 9px;
-  background: var(--ft-brand-soft);
-  color: var(--ft-brand-strong);
+  background: var(--ft-surface-subtle);
+  color: var(--ft-ink);
   font-size: 15px;
   font-weight: 800;
 }
@@ -278,13 +278,13 @@
 }
 
 .trace-step-button:hover {
-  border-color: color-mix(in srgb, var(--ft-brand) 42%, var(--ft-border));
-  background: color-mix(in srgb, var(--ft-brand-soft) 42%, var(--ft-surface));
+  border-color: var(--ft-border);
+  background: var(--ft-surface);
 }
 
 .trace-step-button[aria-current='step'] {
-  border-color: var(--ft-brand);
-  outline: 2px solid color-mix(in srgb, var(--ft-brand) 48%, transparent);
+  border-color: var(--ft-border);
+  outline: 2px solid var(--ft-border);
   outline-offset: 1px;
 }
 
@@ -299,8 +299,8 @@
   display: grid;
   place-items: center;
   border-radius: 50%;
-  background: var(--ft-brand-soft);
-  color: var(--ft-brand-strong);
+  background: var(--ft-surface-subtle);
+  color: var(--ft-ink);
   font-size: 14px;
 }
 
@@ -475,4 +475,3 @@
     display: inline;
   }
 }
-

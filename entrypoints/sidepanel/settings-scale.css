@@ -27,8 +27,8 @@
 }
 
 .ui-scale-step:hover:not(:disabled) {
-  border-color: var(--ft-brand, Highlight);
-  background: var(--ft-brand-soft, color-mix(in srgb, Highlight 8%, Canvas));
+  border-color: var(--ft-border, CanvasText);
+  background: var(--ft-surface, Canvas);
 }
 
 .ui-scale-step:disabled {
@@ -37,8 +37,8 @@
 }
 
 .ui-scale-value {
-  background: var(--ft-brand-soft, color-mix(in srgb, Highlight 7%, Canvas));
-  color: var(--ft-brand-strong, CanvasText);
+  background: var(--ft-surface-subtle, color-mix(in srgb, CanvasText 4%, Canvas));
+  color: var(--ft-ink, CanvasText);
   font-variant-numeric: tabular-nums;
   font-weight: 850;
 }
@@ -48,4 +48,3 @@
   font-size: 14px;
   line-height: 1.4;
 }
-

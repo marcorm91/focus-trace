@@ -37,7 +37,8 @@
 }
 
 .settings-back-trigger:not(:disabled):hover {
-  background: var(--ft-accent-soft);
+  border-color: var(--ft-border);
+  background: var(--ft-surface);
 }
 
 .settings-back-trigger span[aria-hidden='true'] {

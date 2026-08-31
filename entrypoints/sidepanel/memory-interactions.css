@@ -29,7 +29,7 @@
 
 .focus-memory-heading .focus-memory-clear:not(:disabled):hover {
   border-color: var(--ft-border);
-  background: var(--ft-accent-soft);
+  background: var(--ft-surface);
   color: var(--ft-danger);
 }
 
@@ -108,7 +108,7 @@
 }
 
 .focus-memory-finding-link:not(:disabled):hover {
-  background: var(--ft-accent-soft);
+  background: var(--ft-surface);
   color: var(--ft-text);
   text-decoration: none;
 }

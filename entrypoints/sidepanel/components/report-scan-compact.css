@@ -72,8 +72,8 @@
 
 .report-compact-tabs button:hover:not(:disabled),
 .report-compact-tabs button:focus-visible {
-  border-color: var(--ft-accent);
-  background: var(--ft-accent-soft);
+  border-color: var(--ft-border);
+  background: var(--ft-surface);
   color: var(--ft-ink);
 }
 
@@ -174,8 +174,8 @@
 
 .report-rule-pager button:hover:not(:disabled),
 .report-rule-pager button:focus-visible {
-  border-color: var(--ft-accent);
-  background: var(--ft-accent-soft);
+  border-color: var(--ft-border);
+  background: var(--ft-surface);
   color: var(--ft-ink);
 }
 
@@ -234,8 +234,8 @@
 
 .report-rule-target button:hover:not(:disabled),
 .report-rule-target button:focus-visible {
-  border-color: var(--ft-accent);
-  background: var(--ft-accent-soft);
+  border-color: var(--ft-border);
+  background: var(--ft-surface);
 }
 
 @media (max-width: 520px) {

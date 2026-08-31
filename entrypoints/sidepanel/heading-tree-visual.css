@@ -55,8 +55,8 @@
 
 .heading-tree-controls button:hover:not(:disabled),
 .heading-tree-controls button:focus-visible {
-  border-color: var(--ft-accent-strong);
-  background: var(--ft-accent-soft);
+  border-color: var(--ft-border);
+  background: var(--ft-surface);
 }
 
 .heading-tree-controls button:disabled {
@@ -180,12 +180,12 @@
 
 .heading-tree-row .heading-node:hover {
   border-color: var(--ft-border);
-  background: var(--ft-accent-soft);
+  background: var(--ft-surface);
 }
 
 .heading-tree-branch[aria-selected='true'] > .heading-tree-row .heading-node {
-  border-color: var(--ft-accent-strong);
-  box-shadow: inset 3px 0 0 var(--ft-accent);
+  border-color: var(--ft-border);
+  box-shadow: inset 3px 0 0 var(--ft-border);
 }
 
 .heading-tree-row.has-signal .heading-node {
@@ -258,8 +258,8 @@
 
 .heading-branch-toggle:hover,
 .heading-branch-toggle:focus-visible {
-  border-color: var(--ft-accent-strong);
-  background: var(--ft-accent-soft);
+  border-color: var(--ft-border);
+  background: var(--ft-surface);
   color: var(--ft-ink);
 }
 
@@ -299,4 +299,3 @@
     flex: 1 1 120px;
   }
 }
-

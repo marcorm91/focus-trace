@@ -26,8 +26,7 @@
 .trace-edit-note {
   margin: 0;
   padding: 10px 12px;
-  border: 1px solid var(--ft-border-soft);
-  border-left: 4px solid var(--ft-brand);
+  border: 1px solid var(--ft-border);
   border-radius: 10px;
   background: var(--ft-surface-subtle);
   color: var(--ft-muted);
