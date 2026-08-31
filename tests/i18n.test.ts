@@ -46,6 +46,89 @@ describe('FocusTrace bilingual presentation', () => {
     expect(spanish.evidence).toContain('<li>');
   });
 
+  it('localizes dynamic semantic evidence while preserving HTML and ARIA tokens', () => {
+    const cases: ScanIssue[] = [
+      {
+        id: 'issue-semantic-button',
+        ruleId: 'FT-REVIEW-006',
+        title: 'Button-like interaction should prefer native button semantics',
+        description: 'Button-like interaction.',
+        evidence: 'Current <div>; signals: role="button", click handler, keyboard handler; confidence=high. Recommended native element: <button type="button">. Alternative semantics: role="button" with complete keyboard and focus behavior.',
+        severity: 'moderate',
+        outcome: 'review',
+        targets: ['#save'],
+        references: [],
+      },
+      {
+        id: 'issue-semantic-link',
+        ruleId: 'FT-REVIEW-007',
+        title: 'Link-like navigation should prefer native link semantics',
+        description: 'Link-like interaction.',
+        evidence: 'Current <div>; signals: click handler, navigation-like click handler; confidence=medium. Recommended native element: <a href="…">. Alternative semantics: role="link" with complete keyboard and navigation behavior.',
+        severity: 'moderate',
+        outcome: 'review',
+        targets: ['#products'],
+        references: [],
+      },
+      {
+        id: 'issue-semantic-unknown',
+        ruleId: 'FT-REVIEW-008',
+        title: 'Generic interactive element requires semantic review',
+        description: 'Ambiguous interaction.',
+        evidence: 'Current <img>; signals: click handler; confidence=medium. Native recommendation withheld because the interaction intent is ambiguous.',
+        severity: 'moderate',
+        outcome: 'review',
+        targets: ['#card'],
+        references: [],
+      },
+    ];
+
+    const [button, link, unknown] = cases.map((issue) => localizedScanIssue(issue, 'es'));
+
+    expect(button?.evidence).toContain('Elemento actual <div>');
+    expect(button?.evidence).toContain('role="button"');
+    expect(button?.evidence).toContain('<button type="button">');
+    expect(button?.evidence).toContain('controlador de teclado');
+    expect(link?.evidence).toContain('<a href="…">');
+    expect(link?.evidence).toContain('teclado y navegación');
+    expect(unknown?.evidence).toBe(
+      'Elemento actual <img>; señales: controlador de clic; confianza=media. No se ofrece una recomendación de elemento nativo porque la intención de la interacción es ambigua.',
+    );
+    expect(cases.map((issue) => localizedScanIssue(issue, 'en').evidence)).toEqual(
+      cases.map((issue) => issue.evidence),
+    );
+  });
+
+  it('localizes structured contrast evidence without changing ratios or colors', () => {
+    const issue: ScanIssue = {
+      id: 'issue-contrast',
+      ruleId: 'FT-WCAG-010',
+      title: 'Text has sufficient color contrast',
+      description: 'Rendered text contrast is too low.',
+      evidence: 'text: contrast 2.07:1; required 4.5:1; foreground rgb(180, 180, 180); background rgb(255, 255, 255); font 16px / 400. Observed visual state: expanded.',
+      severity: 'serious',
+      outcome: 'fail',
+      targets: ['#copy'],
+      contrast: {
+        kind: 'text',
+        subject: 'text',
+        ratio: 2.07,
+        requiredRatio: 4.5,
+        foreground: 'rgb(180, 180, 180)',
+        background: 'rgb(255, 255, 255)',
+        fontSizePx: 16,
+        fontWeight: 400,
+      },
+      references: [],
+    };
+
+    const spanish = localizedScanIssue(issue, 'es');
+    expect(spanish.evidence).toBe(
+      'texto: contraste 2.07:1; requerido 4.5:1; primer plano rgb(180, 180, 180); fondo rgb(255, 255, 255); fuente 16px / 400. Estado visual observado: expandido.',
+    );
+    expect(localizedScanIssue(issue, 'en').evidence).toBe(issue.evidence);
+  });
+
   it('localizes advanced ARIA validation findings while preserving technical evidence', () => {
     const issue: ScanIssue = {
       id: 'issue-aria',

@@ -182,6 +182,159 @@ const SCAN_COPY_ES: Record<string, { description: string; evidence?: string }> =
   },
 };
 
+const EVIDENCE_SUBJECT_ES: Record<string, string> = {
+  text: 'texto',
+  'input value': 'valor del campo',
+  'textarea value': 'valor del área de texto',
+  'selected option': 'opción seleccionada',
+  placeholder: 'placeholder',
+  'generated text': 'texto generado',
+  graphic: 'gráfico',
+  'icon fill': 'relleno del icono',
+  'icon stroke': 'trazo del icono',
+  'component visual boundary': 'límite visual del componente',
+  'component fill': 'relleno del componente',
+  'component border': 'borde del componente',
+  'observed focus indicator': 'indicador de foco observado',
+  'observed focus outline': 'contorno de foco observado',
+  'control icons': 'iconos del control',
+  'CSS graphic': 'gráfico CSS',
+  'canvas graphic': 'gráfico canvas',
+};
+
+const OBSERVED_STATE_ES: Record<string, string> = {
+  hover: 'hover',
+  active: 'activo',
+  focus: 'foco',
+  'focus-visible': 'foco visible',
+  checked: 'marcado',
+  unchecked: 'no marcado',
+  expanded: 'expandido',
+  collapsed: 'contraído',
+  selected: 'seleccionado',
+  unselected: 'no seleccionado',
+  pressed: 'pulsado',
+  unpressed: 'no pulsado',
+};
+
+function localizedEvidenceSubject(subject: string | undefined): string {
+  if (!subject) return 'señal visual';
+  return EVIDENCE_SUBJECT_ES[subject] ?? subject;
+}
+
+function localizedSemanticSignal(signal: string): string {
+  const normalized = signal.trim();
+  if (normalized === 'click handler') return 'controlador de clic';
+  if (normalized === 'keyboard handler') return 'controlador de teclado';
+  if (normalized === 'navigation-like click handler') return 'controlador de clic con comportamiento de navegación';
+  if (normalized === 'interactive behavior') return 'comportamiento interactivo';
+  return normalized;
+}
+
+function localizedSemanticEvidence(evidence: string): string | undefined {
+  const match = evidence.match(/^Current <([^>]+)>; signals: (.*?); confidence=(high|medium)\.\s*(.*)$/);
+  if (!match) return undefined;
+
+  const tag = match[1]!;
+  const rawSignals = match[2] ?? 'interactive behavior';
+  const confidence = match[3] ?? 'medium';
+  const rawRecommendation = match[4] ?? '';
+  const signals = (rawSignals || 'interactive behavior')
+    .split(',')
+    .map(localizedSemanticSignal)
+    .join(', ');
+  const recommendation = rawRecommendation === 'Native recommendation withheld because the interaction intent is ambiguous.'
+    ? 'No se ofrece una recomendación de elemento nativo porque la intención de la interacción es ambigua.'
+    : rawRecommendation
+      .replace('Recommended native element:', 'Elemento nativo recomendado:')
+      .replace('Alternative semantics:', 'Semántica alternativa:')
+      .replace('with complete keyboard and focus behavior.', 'con comportamiento completo de teclado y foco.')
+      .replace('with complete keyboard and navigation behavior.', 'con comportamiento completo de teclado y navegación.');
+
+  return `Elemento actual <${tag}>; señales: ${signals}; confianza=${confidence === 'high' ? 'alta' : 'media'}. ${recommendation}`;
+}
+
+function localizedObservedStateSuffix(evidence: string | undefined): string {
+  const match = evidence?.match(/Observed visual state:\s*([^.]+)\./);
+  if (!match?.[1]) return '';
+  const states = match[1].split(',').map((state) => OBSERVED_STATE_ES[state.trim()] ?? state.trim());
+  return ` Estado visual observado: ${states.join(', ')}.`;
+}
+
+function localizedContrastEvidence(issue: ScanIssue): string | undefined {
+  const contrast = issue.contrast;
+  if (!contrast) return undefined;
+  const subject = localizedEvidenceSubject(contrast.subject);
+  const suffix = localizedObservedStateSuffix(issue.evidence);
+
+  if (issue.ruleId === 'FT-WCAG-010') {
+    if (contrast.ratio == null) {
+      return `No se pudo resolver con fiabilidad el contraste renderizado de ${subject}. Ratio mínimo requerido: ${contrast.requiredRatio}:1.${suffix}`;
+    }
+    const visual = [
+      contrast.foreground ? `primer plano ${contrast.foreground}` : undefined,
+      contrast.background ? `fondo ${contrast.background}` : undefined,
+      contrast.fontSizePx != null ? `fuente ${contrast.fontSizePx}px / ${contrast.fontWeight ?? '?'}` : undefined,
+    ].filter(Boolean).join('; ');
+    return `${subject}: contraste ${contrast.ratio}:1; requerido ${contrast.requiredRatio}:1${visual ? `; ${visual}` : ''}.${suffix}`;
+  }
+
+  if (issue.ruleId === 'FT-WCAG-011') {
+    if (contrast.ratio == null) {
+      return `No se pudo calcular un ratio determinista para ${subject}. Ratio mínimo requerido: ${contrast.requiredRatio}:1.${suffix}`;
+    }
+    const visual = [
+      contrast.foreground ? `color visual ${contrast.foreground}` : undefined,
+      contrast.background ? `color adyacente ${contrast.background}` : undefined,
+    ].filter(Boolean).join('; ');
+    return `${subject}: ${contrast.ratio}:1; requerido ${contrast.requiredRatio}:1${visual ? `; ${visual}` : ''}.${suffix}`;
+  }
+
+  return undefined;
+}
+
+function localizedDynamicEvidence(issue: ScanIssue): string | undefined {
+  if (!issue.evidence) return undefined;
+  if (['FT-REVIEW-006', 'FT-REVIEW-007', 'FT-REVIEW-008'].includes(issue.ruleId)) {
+    return localizedSemanticEvidence(issue.evidence) ?? issue.evidence;
+  }
+  if (issue.ruleId === 'FT-WARN-001') {
+    return issue.evidence.replace('; deprecated since ARIA ', '; obsoleto desde ARIA ');
+  }
+  if (issue.ruleId === 'FT-WARN-002' || issue.ruleId === 'FT-WARN-003') {
+    return issue.evidence.replace(' on role=', ' en role=');
+  }
+  if (issue.ruleId === 'FT-WARN-004') {
+    return issue.evidence.replace(
+      /^id=(.+) is used by (\d+) elements in this document\.$/,
+      'id=$1 se utiliza en $2 elementos de este documento.',
+    );
+  }
+  if (issue.ruleId === 'FT-REVIEW-002') {
+    return issue.evidence.replace(
+      /^Document starts with (H[1-6]) before any H1\.$/,
+      'El documento comienza con $1 antes de cualquier H1.',
+    );
+  }
+  if (issue.ruleId === 'FT-REVIEW-005') {
+    return issue.evidence.replace(
+      /^(\d+) exposed main landmarks were detected\. Native HTML should not expose multiple visible <main> elements; multiple ARIA main landmarks require clear structural purpose and distinguishable labels\.$/,
+      'Se han detectado $1 landmarks main expuestos. El HTML nativo no debería exponer varios elementos <main> visibles; varios landmarks main de ARIA requieren un propósito estructural claro y etiquetas diferenciables.',
+    );
+  }
+  return issue.evidence;
+}
+
+function localizedIssueEvidence(
+  issue: ScanIssue,
+  copy: { description: string; evidence?: string } | undefined,
+): string | undefined {
+  if (!issue.evidence) return undefined;
+  return copy?.evidence
+    ?? localizedContrastEvidence(issue)
+    ?? localizedDynamicEvidence(issue);
+}
+
 export function localizedScanIssue(
   issue: ScanIssue,
   language: AppLanguage,
@@ -227,12 +380,12 @@ export function localizedScanIssue(
         issue,
         language,
       ),
-      ...(issue.evidence ? { evidence: issue.evidence } : {}),
+      ...(issue.evidence ? { evidence: localizedIssueEvidence(issue, undefined) } : {}),
     };
   }
 
   if (issue.ruleId === 'FT-WCAG-011') {
-    const subject = issue.contrast?.subject ?? 'señal visual';
+    const subject = localizedEvidenceSubject(issue.contrast?.subject);
     return {
       ...issue,
       title: localizedRuleTitle(issue.ruleId, issue.title, language),
@@ -243,7 +396,7 @@ export function localizedScanIssue(
         issue,
         language,
       ),
-      ...(issue.evidence ? { evidence: issue.evidence } : {}),
+      ...(issue.evidence ? { evidence: localizedIssueEvidence(issue, undefined) } : {}),
     };
   }
 
@@ -252,7 +405,7 @@ export function localizedScanIssue(
     ...issue,
     title: localizedRuleTitle(issue.ruleId, issue.title, language),
     description: withCriteria(copy?.description ?? issue.description, issue, language),
-    ...(issue.evidence ? { evidence: copy?.evidence ?? issue.evidence } : {}),
+    ...(issue.evidence ? { evidence: localizedIssueEvidence(issue, copy) } : {}),
   };
 }
 
