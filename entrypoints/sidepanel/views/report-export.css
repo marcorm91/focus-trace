@@ -32,7 +32,7 @@
   padding: 6px 9px;
   border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 16%, transparent));
   border-radius: 8px;
-  background: color-mix(in srgb, var(--ft-brand, Highlight) 3%, Canvas);
+  background: var(--ft-surface, Canvas);
   cursor: pointer;
 }
 
@@ -83,7 +83,7 @@
   border-radius: 8px;
   padding: 6px 9px;
   background: var(--ft-surface, ButtonFace);
-  color: inherit;
+  color: var(--ft-ink, inherit);
   cursor: pointer;
   font-weight: 800;
   white-space: normal;
@@ -91,14 +91,14 @@
 }
 
 .report-export-actions .export-pdf-report {
-  border-color: color-mix(in srgb, var(--ft-brand, Highlight) 45%, transparent);
-  background: var(--ft-brand-soft, color-mix(in srgb, Highlight 8%, Canvas));
-  color: var(--ft-brand-strong, inherit);
+  border-color: var(--ft-border, CanvasText);
+  background: var(--ft-surface, ButtonFace);
+  color: var(--ft-ink, inherit);
 }
 
 .report-export-actions button:disabled {
   opacity: .5;
-  cursor: default;
+  cursor: not-allowed;
 }
 
 .report-more-formats {
