@@ -1,5 +1,3 @@
-.tabs { grid-template-columns: repeat(5, 1fr); }
-
 .explanation-level {
   display: flex;
   align-items: center;
@@ -51,7 +49,6 @@
 .graph-scope-note p { margin-bottom: 0; }
 
 @media (max-width: 430px) {
-  .tabs { grid-template-columns: repeat(3, 1fr); }
   .explanation-level { align-items: stretch; display: grid; }
   .explanation-level select { max-width: none; width: 100%; }
   .focus-node-heading { display: grid; }
@@ -59,4 +56,3 @@
 }
 
 .causal-chain > li.simple-event { grid-template-columns: 1fr; }
-

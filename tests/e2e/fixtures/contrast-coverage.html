@@ -14,6 +14,13 @@
       input::placeholder { color: rgb(190, 190, 190); opacity: 1; }
       #generated::before { content: "Generated status"; }
       #css-icon { width: 32px; height: 32px; border: 0; background-image: url("missing-menu-icon.svg"); }
+      .state-target:hover { color: #777; background: #fff; }
+      .dropdown-toggle:active {
+        outline-color: transparent;
+        outline-offset: 0;
+        outline-style: solid;
+        outline-width: 0;
+      }
     </style>
   </head>
   <body>
@@ -26,6 +33,14 @@
       <p id="generated"></p>
       <button id="css-icon" aria-label="Open menu"></button>
       <canvas id="chart" role="img" aria-label="Sales chart"></canvas>
+      <nav aria-label="Repeated state controls">
+        <a class="state-target dropdown-toggle" href="#one">One</a>
+        <a class="state-target" href="#two">Two</a>
+        <a class="state-target" href="#three">Three</a>
+        <a class="state-target" href="#four">Four</a>
+        <a class="state-target" href="#five">Five</a>
+        <a class="state-target" href="#six">Six</a>
+      </nav>
     </main>
   </body>
 </html>

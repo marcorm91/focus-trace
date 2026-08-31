@@ -45,10 +45,11 @@
   min-width: 0;
   display: grid;
   gap: 2px;
-  padding: 10px 8px;
-  border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 12%, transparent));
-  border-radius: 10px;
-  background: var(--ft-surface, Canvas);
+  padding: 8px 10px 8px 12px;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
 }
 
 .report-scoreline strong {
@@ -63,8 +64,8 @@
 }
 
 .report-scoreline .is-alert {
-  border-color: color-mix(in srgb, #b42318 38%, transparent);
-  background: color-mix(in srgb, #b42318 5%, Canvas);
+  border-color: transparent;
+  background: transparent;
 }
 
 .report-context-line {
@@ -368,4 +369,3 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
-

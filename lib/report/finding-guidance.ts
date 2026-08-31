@@ -14,6 +14,13 @@ function criterionlessDescription(description: string): string {
 }
 
 export function reportFindingDescription(issue: ScanIssue, language: AppLanguage): string {
+  if (issue.contrastState) {
+    return tr(
+      language,
+      `The authored ${issue.contrastState.state} state was not active during analysis, so FocusTrace did not measure a contrast failure. Activate that state and review its final visual contrast manually.`,
+      `El estado ${issue.contrastState.state} definido en el CSS no estaba activo durante el análisis, por lo que FocusTrace no ha medido ningún fallo de contraste. Activa ese estado y revisa manualmente su contraste visual final.`,
+    );
+  }
   if (issue.ruleId === 'FT-WCAG-010' && issue.outcome === 'review') {
     return issue.contrast?.reason || tr(
       language,

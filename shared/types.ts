@@ -154,6 +154,14 @@ export interface ContrastEvidence {
   reason?: string;
 }
 
+export interface ContrastStateReviewEvidence {
+  state: string;
+  kind: 'text' | 'non-text';
+  selector: string;
+  properties: string[];
+  candidateCount: number;
+}
+
 export interface ScanIssue {
   id: string;
   ruleId: string;
@@ -165,6 +173,7 @@ export interface ScanIssue {
   evidence?: string;
   accessibleName?: AccessibleNameEvidence;
   contrast?: ContrastEvidence;
+  contrastState?: ContrastStateReviewEvidence;
   references: StandardReference[];
 }
 

@@ -9,11 +9,23 @@ function selectorResolvesOnlyTo(selector: string, element: Element): boolean {
   }
 }
 
+function isLikelyVolatileId(id: string): boolean {
+  const normalized = id.trim().toLowerCase();
+  if (!normalized) return true;
+
+  return /^(?:yui[_-]|ext-gen|ember\d|react-select-|mui-)/.test(normalized)
+    || /(?:^|[_-])\d{8,}(?:[_-]|$)/.test(normalized);
+}
+
+function stableIdSelector(element: Element): string | undefined {
+  if (!element.id || isLikelyVolatileId(element.id)) return undefined;
+  const selector = `#${CSS.escape(element.id)}`;
+  return selectorResolvesOnlyTo(selector, element) ? selector : undefined;
+}
+
 export function selectorFor(element: Element): string {
-  if (element.id) {
-    const idSelector = `#${CSS.escape(element.id)}`;
-    if (selectorResolvesOnlyTo(idSelector, element)) return idSelector;
-  }
+  const directIdSelector = stableIdSelector(element);
+  if (directIdSelector) return directIdSelector;
 
   const parts: string[] = [];
   let current: Element | null = element;
@@ -30,13 +42,11 @@ export function selectorFor(element: Element): string {
     const structuralSelector = parts.join(' > ');
     if (selectorResolvesOnlyTo(structuralSelector, element)) return structuralSelector;
 
-    if (current.id) {
-      const ancestorIdSelector = `#${CSS.escape(current.id)}`;
-      if (selectorResolvesOnlyTo(ancestorIdSelector, current)) {
-        parts[0] = ancestorIdSelector;
-        const anchoredSelector = parts.join(' > ');
-        if (selectorResolvesOnlyTo(anchoredSelector, element)) return anchoredSelector;
-      }
+    const ancestorIdSelector = stableIdSelector(current);
+    if (ancestorIdSelector) {
+      parts[0] = ancestorIdSelector;
+      const anchoredSelector = parts.join(' > ');
+      if (selectorResolvesOnlyTo(anchoredSelector, element)) return anchoredSelector;
     }
 
     current = parent;

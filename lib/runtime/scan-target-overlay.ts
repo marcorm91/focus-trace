@@ -10,6 +10,7 @@ export interface ScanTargetHighlightOptions {
 export interface ScanTargetHighlightResult {
   found: boolean;
   selector: string;
+  rendered: boolean;
 }
 
 export function clearScanTargetHighlightInPage(): { removed: boolean } {
@@ -36,9 +37,9 @@ export function locateScanTargetInPage(
   try {
     target = document.querySelector(selector);
   } catch {
-    return { found: false, selector };
+    return { found: false, selector, rendered: false };
   }
-  if (!target) return { found: false, selector };
+  if (!target) return { found: false, selector, rendered: false };
 
   const readableLabel = (element: Element): string => {
     const ariaLabel = element.getAttribute('aria-label')?.trim();
@@ -59,6 +60,11 @@ export function locateScanTargetInPage(
   };
 
   target.scrollIntoView({ block: 'center', inline: 'center', behavior: 'auto' });
+
+  const rect = target.getBoundingClientRect();
+  if (rect.width <= 0 || rect.height <= 0) {
+    return { found: true, selector, rendered: false };
+  }
 
   if (options.focusTarget !== false && target instanceof HTMLElement) {
     const naturallyFocusable = target.matches(
@@ -97,7 +103,6 @@ export function locateScanTargetInPage(
     },
   };
   const color = colors[tone];
-  const rect = target.getBoundingClientRect();
   const overlay = document.createElement('div');
   overlay.setAttribute('data-focustrace-scan-highlight', 'true');
   overlay.setAttribute('data-focustrace-tone', tone);
@@ -177,5 +182,5 @@ export function locateScanTargetInPage(
   const durationMs = options.durationMs ?? 7000;
   if (durationMs > 0) window.setTimeout(() => overlay.remove(), durationMs);
 
-  return { found: true, selector };
+  return { found: true, selector, rendered: true };
 }
