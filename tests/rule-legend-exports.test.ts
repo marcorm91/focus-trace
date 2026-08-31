@@ -84,5 +84,6 @@ describe('rule legend exports', () => {
     expect(printable.indexOf('<ReportNotes language={language} />')).toBeLessThan(printable.indexOf('id="summary-title"'));
     expect(printable).toContain('className="print-rule-legend"');
     expect(printCss).toContain('.print-rule-legend');
+    expect(printCss).toContain('margin-top: 18px;');
   });
 });

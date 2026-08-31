@@ -32,9 +32,11 @@
 }
 
 .contrast-color-value {
-  gap: 4px;
-  justify-content: flex-start;
-  flex-wrap: wrap;
+  width: 100%;
+  display: grid;
+  grid-template-columns: 18px minmax(0, 1fr) 30px;
+  align-items: center;
+  gap: 6px;
 }
 
 .contrast-color-value code,
@@ -48,8 +50,14 @@
   white-space: normal;
 }
 
-.contrast-color-value code {
-  flex: 0 1 auto;
+.contrast-color-value code,
+.contrast-suggestion-value code {
+  width: 100%;
+  display: block;
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .copy-color {
@@ -79,7 +87,8 @@
 }
 
 .contrast-evidence > dl > div {
-  grid-template-columns: minmax(64px, auto) minmax(0, 1fr);
+  grid-template-columns: minmax(0, 1fr);
+  gap: 4px;
   align-content: start;
 }
 
@@ -123,4 +132,3 @@
     width: 100%;
   }
 }
-

@@ -124,7 +124,9 @@ describe('UX polish contract', () => {
     expect(scanCss).toContain('grid-template-columns: auto minmax(0, 1fr) auto auto;');
     expect(scanCss).not.toContain('grid-column: 1 / -1;');
     expect(states).toContain('.contrast-color-value');
-    expect(states).toContain('flex-wrap: wrap;');
+    expect(states).toContain('grid-template-columns: 18px minmax(0, 1fr) 30px;');
+    expect(states).toContain('text-overflow: ellipsis;');
+    expect(states).toContain('grid-template-columns: minmax(0, 1fr);');
     expect(states).toContain('grid-template-columns: 24px minmax(0, 1fr) 30px;');
     expect(states).toContain('@media (max-width: 560px)');
   });

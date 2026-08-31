@@ -115,6 +115,22 @@ html[data-ft-focused-subview-open] .topbar {
   color: var(--ft-muted);
 }
 
+/* The manual journey start action uses the same neutral resting treatment as
+   the rest of the workspace. The red stop state remains distinct while a
+   recording is active. */
+.focus-journey-view .manual-focus-controls button:not(.stop) {
+  border: 1.5px solid var(--ft-border);
+  background: var(--ft-surface);
+  color: var(--ft-ink);
+  box-shadow: var(--ft-shadow-sm);
+}
+
+.focus-journey-view .manual-focus-controls button:not(.stop):hover:not(:disabled) {
+  border-color: var(--ft-border);
+  background: var(--ft-accent-soft);
+  color: var(--ft-ink);
+}
+
 @media (max-width: 520px) {
   .trace-workspace .trace-hero .trace-hero-actions {
     display: flex;
