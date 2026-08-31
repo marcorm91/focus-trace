@@ -123,10 +123,13 @@ describe('FocusTrace bilingual presentation', () => {
     };
 
     const spanish = localizedScanIssue(issue, 'es');
+    expect(spanish.title).toBe('Contraste de color del texto');
     expect(spanish.evidence).toBe(
       'texto: contraste 2.07:1; requerido 4.5:1; primer plano rgb(180, 180, 180); fondo rgb(255, 255, 255); fuente 16px / 400. Estado visual observado: expandido.',
     );
-    expect(localizedScanIssue(issue, 'en').evidence).toBe(issue.evidence);
+    const english = localizedScanIssue(issue, 'en');
+    expect(english.title).toBe('Text color contrast');
+    expect(english.evidence).toBe(issue.evidence);
   });
 
   it('localizes advanced ARIA validation findings while preserving technical evidence', () => {

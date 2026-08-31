@@ -30,7 +30,27 @@ function issue(overrides: Partial<ScanIssue> = {}): ScanIssue {
 
 describe('finding guidance', () => {
   it('keeps generic complex-contrast disclaimers out of each PDF finding', () => {
-    expect(reportFindingDescription(issue(), 'es')).toBe('Background composition requires manual review.');
+    expect(reportFindingDescription(issue(), 'es')).toBe(
+      'No se ha podido determinar con fiabilidad el contraste final renderizado entre el texto y su fondo para este elemento. Requiere revisión manual.',
+    );
+  });
+
+  it('localizes a known unresolved contrast reason without changing the English source', () => {
+    const finding = issue({
+      contrast: {
+        kind: 'text',
+        requiredRatio: 4.5,
+        foreground: '#ffffff',
+        reason: 'Element or ancestor opacity affects the rendered colors.',
+      },
+    });
+
+    expect(reportFindingDescription(finding, 'es')).toBe(
+      'La opacidad del elemento o de uno de sus ancestros afecta a los colores renderizados.',
+    );
+    expect(reportFindingDescription(finding, 'en')).toBe(
+      'Element or ancestor opacity affects the rendered colors.',
+    );
   });
 
   it('provides a remediation and verification path for deterministic contrast failures', () => {

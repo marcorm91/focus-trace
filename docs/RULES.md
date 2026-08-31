@@ -197,7 +197,7 @@ A causal classification explains the recorded chain; the linked runtime WCAG/APG
 | FT-WCAG-007 Visible label is part of accessible name | FAIL/PASS | WCAG 2.5.3 · ACT 2ee8b8 |
 | FT-WCAG-008 HTML page has a non-empty lang attribute | FAIL/PASS | WCAG 3.1.1 · ACT b5c3f8 |
 | FT-WCAG-009 Page lang has a known primary language tag | FAIL/PASS | WCAG 3.1.1 · ACT bf051a · IANA |
-| FT-WCAG-010 Text has sufficient color contrast | FAIL/REVIEW/PASS | WCAG 1.4.3 AA |
+| FT-WCAG-010 Text color contrast | FAIL/REVIEW/PASS | WCAG 1.4.3 AA |
 | FT-WCAG-011 Required non-text visual information has sufficient contrast | FAIL/REVIEW/PASS | WCAG 1.4.11 AA |
 | FT-WARN-001 Deprecated ARIA role | WARNING/PASS | WAI-ARIA registry |
 | FT-WARN-002 Deprecated ARIA property for role | WARNING/PASS | WAI-ARIA registry |

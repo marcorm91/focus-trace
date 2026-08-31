@@ -541,8 +541,12 @@ function FindingCard({
         <div className={`contrast-evidence ${issue.outcome}`}>
           <div className="contrast-ratio">
             <span>{tr(language, 'Contrast', 'Contraste')}</span>
-            <strong>{issue.contrast.ratio != null ? `${issue.contrast.ratio}:1` : tr(language, 'Review', 'Revisar')}</strong>
-            <small>{tr(language, `Required ${issue.contrast.requiredRatio}:1`, `Requerido ${issue.contrast.requiredRatio}:1`)}</small>
+            <strong>{issue.contrast.ratio != null ? `${issue.contrast.ratio}:1` : tr(language, 'Indeterminate', 'Indeterminado')}</strong>
+            <small>
+              {issue.contrast.ratio != null
+                ? tr(language, `Required ${issue.contrast.requiredRatio}:1`, `Requerido ${issue.contrast.requiredRatio}:1`)
+                : tr(language, `Manual review · required ${issue.contrast.requiredRatio}:1`, `Revisión manual · requerido ${issue.contrast.requiredRatio}:1`)}
+            </small>
           </div>
 
           {(issue.contrast.foreground || contrastGuidance) && (
@@ -575,6 +579,12 @@ function FindingCard({
                     {copiedKey === 'background' ? tr(language, 'Copied', 'Copiado') : tr(language, 'Copy', 'Copiar')}
                   </button>
                 </dd>
+              </div>
+            )}
+            {!issue.contrast.background && issue.contrast.ratio == null && (
+              <div>
+                <dt>{issue.contrast.kind === 'text' || issue.ruleId === 'FT-WCAG-010' ? tr(language, 'Background', 'Fondo') : tr(language, 'Adjacent color', 'Color adyacente')}</dt>
+                <dd>{tr(language, 'Unresolved', 'No resuelto')}</dd>
               </div>
             )}
             {level !== 'simple' && issue.contrast.fontSizePx != null && (

@@ -45,6 +45,7 @@ describe('requested FocusTrace UI polish', () => {
     expect(css).toContain('background: var(--ft-accent-soft);');
     expect(css).toContain('.topbar .topbar-tools > .settings-trigger,');
     expect(css).toContain('background: var(--ft-surface);');
+    expect(css).toContain('border: 1.5px solid var(--ft-border);');
     expect(settingsCss).toContain('background: var(--ft-surface, Canvas);');
     expect(settingsCss).not.toContain('background: ButtonFace;');
   });
