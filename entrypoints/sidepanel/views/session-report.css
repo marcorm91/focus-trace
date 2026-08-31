@@ -313,21 +313,34 @@
 
 .report-category-summary {
   display: flex;
-  gap: 6px;
+  gap: 5px 10px;
   overflow-x: auto;
   padding-bottom: 4px;
   scrollbar-width: thin;
 }
 
 .report-category-summary span {
+  position: relative;
   flex: 0 0 auto;
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  padding: 5px 8px;
-  border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 12%, transparent));
-  border-radius: 999px;
+  padding: 0 10px 0 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  cursor: default;
   font-size: 14px;
+}
+
+.report-category-summary span:not(:last-child)::after {
+  position: absolute;
+  top: 20%;
+  right: 0;
+  width: 1px;
+  height: 60%;
+  background: var(--ft-border-soft, color-mix(in srgb, CanvasText 16%, transparent));
+  content: '';
 }
 
 .report-category-summary strong {
