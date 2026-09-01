@@ -14,6 +14,8 @@ describe('button affordance follow-up', () => {
     expect(css).toContain('grid-template-columns: minmax(0, 1fr) auto;');
     expect(css).toContain('.quick-start-copy > p {');
     expect(css).toContain('grid-column: 1;');
+    expect(css).toContain('white-space: normal;');
+    expect(css).toContain('overflow-wrap: anywhere;');
     expect(css).toContain('.quick-start-copy > .status {');
     expect(css).toContain('grid-column: 2;');
     expect(css).toContain('justify-self: end;');
@@ -46,5 +48,26 @@ describe('button affordance follow-up', () => {
     expect(css).toContain('.settings-contact-link:active {');
     expect(index).toContain("@import url('./button-affordance-followup.css') layer(policy);");
     expect(css).not.toContain('!important');
+  });
+
+  it('keeps Trace controls button-like while passive and empty states stay informational', () => {
+    const css = source('entrypoints/sidepanel/button-affordance-followup.css');
+
+    expect(css).toContain('.trace-workspace .trace-mode-switcher button,');
+    expect(css).toContain('.trace-workspace .replay-controller button {');
+    expect(css).toContain('.trace-workspace .trace-mode-switcher button.active {');
+    expect(css).toContain('.trace-workspace .trace-mode-switcher button:not(.active) .trace-tab-count {');
+    expect(css).toContain('.replay-recording-state:not(.is-live) {');
+    expect(css).toContain('text-transform: uppercase;');
+    expect(css).toContain('.focus-empty-state {');
+    expect(css).toContain('border: 1px solid color-mix(in srgb, CanvasText 14%, transparent);');
+    expect(css).toContain('text-align: left;');
+  });
+
+  it('dismisses the report format menu when clicking elsewhere in the sidepanel', () => {
+    const main = source('entrypoints/sidepanel/main.tsx');
+
+    expect(main).toContain("document.querySelectorAll<HTMLDetailsElement>('.report-more-formats[open]')");
+    expect(main).toContain('if (!details.contains(target)) details.open = false;');
   });
 });
