@@ -5,6 +5,8 @@ on:
   schedule:
     - cron: '17 6 * * *'
   push:
+    branches:
+      - '**'
     paths:
       - 'tools/act-sync.mjs'
       - 'tools/aria-sync.mjs'
@@ -96,7 +98,7 @@ jobs:
           fi
 
       - name: Bootstrap snapshots on development branch
-        if: steps.changes.outputs.changed == 'true' && github.event_name == 'push' && github.ref_name != 'main'
+        if: steps.changes.outputs.changed == 'true' && github.event_name == 'push' && github.ref_type == 'branch' && github.ref_name != 'main'
         shell: bash
         run: |
           git config user.name 'github-actions[bot]'
@@ -107,7 +109,7 @@ jobs:
           git push origin "HEAD:${GITHUB_REF_NAME}"
 
       - name: Open or refresh upstream registry PR
-        if: steps.changes.outputs.changed == 'true' && !(github.event_name == 'push' && github.ref_name != 'main')
+        if: steps.changes.outputs.changed == 'true' && !(github.event_name == 'push' && github.ref_type == 'branch' && github.ref_name != 'main')
         env:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         shell: bash
