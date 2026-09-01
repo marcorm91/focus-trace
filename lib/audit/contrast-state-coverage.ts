@@ -61,12 +61,12 @@ function suppressesVisualRendering(style: CSSStyleDeclaration): boolean {
 function hiddenByClosedDetails(element: Element): boolean {
   let current: Element | null = element;
   while (current?.parentElement) {
-    const parent = current.parentElement;
-    if (parent instanceof HTMLDetailsElement && !parent.open) {
-      const renderedSummary = [...parent.children].find((child) => child.tagName === 'SUMMARY');
+    const parentElement: Element = current.parentElement;
+    if (parentElement instanceof HTMLDetailsElement && !parentElement.open) {
+      const renderedSummary = [...parentElement.children].find((child) => child.tagName === 'SUMMARY');
       if (current !== renderedSummary) return true;
     }
-    current = parent;
+    current = parentElement;
   }
   return false;
 }
