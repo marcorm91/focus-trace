@@ -1,65 +1,93 @@
 # FocusTrace severity audit
 
-Audit date: 2026-08-28
+Audit date: 2026-09-01
 
-This document records the rule-by-rule review behind the base severity values in `shared/rule-catalog.ts`.
+This document records the rule-by-rule review behind the base severity values used by FocusTrace.
 
-Severity is a FocusTrace prioritization aid. It is not a WCAG conformance level. WCAG A / AA / AAA remains separate from `critical / serious / moderate / minor`.
+Severity is a prioritization aid. It is not a WCAG conformance level. WCAG A / AA / AAA remains separate from `critical / serious / moderate / minor`.
 
 ## Method
 
-For each rule we reviewed:
+For each rule we review:
 
 1. the user barrier that the FocusTrace rule can actually demonstrate or flag;
-2. whether the result is a deterministic `fail`, a `review`, or a `warning`;
+2. whether the result is a deterministic `fail`, a `review`, a `warning` or a runtime observation;
 3. the applicable W3C / ACT / WAI-ARIA / APG / HTML references attached to the rule;
-4. whether the rule can block a task, substantially hinder it, create a meaningful difficulty, or normally remain localized;
-5. whether the detected evidence is strong enough to justify the base impact without pretending to know page context that FocusTrace has not observed.
+4. whether axe-core has a sufficiently equivalent rule and, when it does, the impact currently published by the latest stable axe-core release;
+5. whether the detected evidence is strong enough to justify the impact without pretending to know page context that FocusTrace has not observed.
 
-External standards references describe accessibility or authoring requirements and expected behavior. They do not define FocusTrace severity scores. The severity mapping is owned and maintained by FocusTrace.
+FocusTrace still owns its detector logic and rules that have no reliable axe equivalent. For declared equivalents, however, we deliberately avoid maintaining a second impact scale for the same failure.
 
-## Changes from the previous catalog
+`generated/axe-rule-severities.json` stores the complete current axe impact registry. `config/axe-equivalents.json` stores the curated equivalence map. Mappings with `highest-impact` must match the highest axe impact in their equivalent set and CI enforces that contract.
 
-| Rule | Previous | Audited | Reason |
+See `docs/AXE-SEVERITY-BENCHMARK.md` for the synchronization and review model.
+
+## Changes in the 2026-09-01 benchmark alignment
+
+| Rule | Previous | Current | axe benchmark / reason |
 | --- | --- | --- | --- |
-| `FT-WCAG-006` aria-hidden + sequential focus | critical | **serious** | The barrier is substantial, but the condition does not necessarily prove a complete task blocker in every page context. |
-| `FT-WARN-001` deprecated ARIA role | moderate | **minor** | Deprecation alone is primarily an authoring and future-compatibility risk with normally limited immediate user impact. |
-| `FT-WARN-003` prohibited ARIA property | moderate | **serious** | Prohibited semantics can be ignored or misrepresented to assistive technology and can remove important state or role information. |
-| `FT-REVIEW-001` positive tabindex | moderate | **serious** | A positive tabindex can substantially disrupt sequential focus. FocusTrace still reports it as `review` because the final order requires context. |
+| `FT-WCAG-002` Image name | serious | **critical** | The broad FocusTrace image-name detector includes native images; axe `image-alt` is critical. The combined rule adopts the highest equivalent axe impact. |
+| `FT-WARN-012` Invalid / unresolved ARIA role | serious | **critical** | axe `aria-roles` is critical. |
+| `FT-WARN-013` Unknown `aria-*` attribute | moderate | **critical** | axe `aria-valid-attr` is critical. |
+| `FT-WARN-014` Invalid ARIA value | serious | **critical** | axe `aria-valid-attr-value` is critical. |
+| `FT-WARN-015` Missing required ARIA state/property | serious | **critical** | axe `aria-required-attr` is critical. |
+| `FT-WARN-016` Invalid ARIA ID relationship | serious | **critical** | Invalid relationship values overlap the critical axe `aria-valid-attr-value` failure family. |
+| `FT-WARN-017` Missing required ARIA parent | serious | **critical** | axe `aria-required-parent` is critical. |
+| `FT-WARN-018` Missing/incompatible required ARIA children | serious | **critical** | axe `aria-required-children` is critical. |
+| `FT-WARN-020` ARIA attribute unsupported by role | serious | **critical** | axe `aria-allowed-attr` is critical. |
 
-## Current rule audit
+Existing equivalent rules that already matched axe keep their severity, including page title, buttons, form fields, links, aria-hidden focus, label-in-name, page language, contrast, deprecated roles and prohibited ARIA attributes.
+
+## Current core rule audit
 
 | FocusTrace rule | Base impact | Outcome family | Audit note |
 | --- | --- | --- | --- |
-| `FT-WCAG-001` Page title | serious | fail | Missing titles make page/view identification and multi-tab navigation substantially harder. |
-| `FT-WCAG-002` Image name | serious | fail | A meaningful unnamed image can remove information for screen-reader users; the rule spans multiple image semantics. |
-| `FT-WCAG-003` Button name | critical | fail | An unnamed button can make an action impossible to identify or invoke reliably. |
-| `FT-WCAG-004` Form field name | critical | fail | An unnamed control can prevent users from understanding the requested input and can block form completion. |
-| `FT-WCAG-005` Link name | serious | fail | An unnamed link hides destination or purpose and substantially impairs navigation. |
-| `FT-WCAG-006` aria-hidden focus | serious | fail | Keyboard operability and accessibility-tree exposure disagree. |
-| `FT-WCAG-007` Label in name | serious | fail / warning | Voice-input users may be unable to target the visible label. |
-| `FT-WCAG-008` Page lang present | serious | fail | Missing language can apply incorrect pronunciation across the document. |
-| `FT-WCAG-009` Page lang known | serious | fail | Invalid primary language can apply incorrect language rules across the document. |
-| `FT-WCAG-010` Text contrast | serious | fail / review | Low contrast can make text difficult or impossible to read; uncertain compositions remain review. |
-| `FT-WCAG-011` Non-text contrast | serious | fail / review | Essential boundaries, indicators and graphics can become difficult to perceive. |
-| `FT-WARN-001` Deprecated ARIA role | minor | warning | Usually a limited immediate barrier; primarily an authoring and compatibility risk. |
-| `FT-WARN-002` Deprecated ARIA property | minor | warning | Deprecation alone does not prove the current interaction is blocked. |
-| `FT-WARN-003` Prohibited ARIA property | serious | warning | Important semantics or state may be ignored or exposed incorrectly. |
-| `FT-WARN-004` Duplicate HTML id | moderate | warning | Duplicate identifiers can break ID-based relationships, navigation or scripted lookup, but duplication alone does not prove an accessibility barrier. |
-| `FT-REVIEW-001` Positive tabindex | serious | review | It can substantially disrupt sequential focus, but the final order still needs contextual review. |
-| `FT-REVIEW-002` Heading level jump | minor | review | FocusTrace only detects a skip signal; a skip alone does not prove a misleading document hierarchy. |
-| `FT-REVIEW-003` Placeholder-only label | moderate | review | The field has a computed name, but the visible cue can disappear while typing. |
-| `FT-RUNTIME-001` Focused element removed | serious | runtime | Can disorient users and interrupt the current interaction. |
-| `FT-RUNTIME-002` Focus completely obscured | serious | runtime | Keyboard users can be operating a control they cannot perceive. |
-| `FT-RUNTIME-003` SPA title unchanged | moderate | runtime | The new view can be harder to identify without necessarily blocking the task. |
-| `FT-RUNTIME-004` SPA focus unchanged | moderate | runtime | Context may be unclear, but actual harm depends strongly on transition design. |
-| `FT-RUNTIME-005` Focused element became hidden | serious | runtime | Users can lose both visible position and a reliable assistive-technology target. |
-| `FT-APG-001` Dialog opened without focus | serious | runtime | Keyboard and screen-reader users can be separated from the active dialog task. |
-| `FT-APG-002` Modal focus escape | serious | runtime | Background controls can become reachable while a modal is active. |
-| `FT-APG-003` Dialog focus restore | moderate | runtime | Users may need to recover their prior position, but the page normally remains operable. |
+| `FT-WCAG-001` Page title | serious | fail | Aligned with axe `document-title`. |
+| `FT-WCAG-002` Image name | critical | fail | Aligned to the highest equivalent image impact; axe `image-alt` is critical. |
+| `FT-WCAG-003` Button name | critical | fail | Aligned with axe `button-name`. |
+| `FT-WCAG-004` Form field name | critical | fail | Broad native/ARIA field rule adopts the highest equivalent form-name impact. |
+| `FT-WCAG-005` Link name | serious | fail | Aligned with native and ARIA link/command naming impacts. |
+| `FT-WCAG-006` aria-hidden focus | serious | fail | Aligned with axe `aria-hidden-focus`. |
+| `FT-WCAG-007` Label in name | serious | fail / warning | Aligned with axe label/content-name mismatch impact. |
+| `FT-WCAG-008` Page lang present | serious | fail | Aligned with axe `html-has-lang`. |
+| `FT-WCAG-009` Page lang known | serious | fail | Aligned with axe `html-lang-valid`. |
+| `FT-WCAG-010` Text contrast | serious | fail / review | Aligned with axe `color-contrast`. |
+| `FT-WCAG-011` Non-text contrast | serious | fail / review | Aligned with axe `non-text-contrast`. |
+| `FT-WARN-001` Deprecated ARIA role | minor | warning | Aligned with axe `aria-deprecated-role`. |
+| `FT-WARN-002` Deprecated ARIA property | minor | warning | No exact impact mapping is enforced; deprecation alone is treated as an authoring/compatibility warning. |
+| `FT-WARN-003` Prohibited ARIA property | serious | warning | Aligned with axe `aria-prohibited-attr`. |
+| `FT-WARN-004` Duplicate HTML id | moderate | warning | Generic duplicate IDs are broader than axe `duplicate-id-aria`; no exact mapping is enforced. |
+| `FT-REVIEW-001` Positive tabindex | serious | review | Contextual FocusTrace review; no direct impact mapping is enforced. |
+| `FT-REVIEW-002` Heading level jump | minor | review | Structural review signal rather than a deterministic failure. |
+| `FT-REVIEW-003` Placeholder-only label | moderate | review | The field still has a computed name; persistent visible identification needs context. |
+| `FT-RUNTIME-001` Focused element removed | serious | runtime | FocusTrace runtime evidence; no axe equivalent. |
+| `FT-RUNTIME-002` Focus completely obscured | serious | runtime | FocusTrace runtime evidence; no direct axe equivalent. |
+| `FT-RUNTIME-003` SPA title unchanged | moderate | runtime | Context depends on the SPA transition. |
+| `FT-RUNTIME-004` SPA focus unchanged | moderate | runtime | Context depends on the SPA transition. |
+| `FT-RUNTIME-005` Focused element became hidden | serious | runtime | FocusTrace runtime evidence. |
+| `FT-APG-001` Dialog opened without focus | serious | runtime | APG/runtime behavior rather than an axe-equivalent static rule. |
+| `FT-APG-002` Modal focus escape | serious | runtime | APG/runtime behavior rather than an axe-equivalent static rule. |
+| `FT-APG-003` Dialog focus restore | moderate | runtime | APG/runtime behavior rather than an axe-equivalent static rule. |
+
+## Advanced ARIA audit
+
+| FocusTrace rule | Base impact | axe alignment |
+| --- | --- | --- |
+| `FT-WARN-012` Invalid/unresolved role | critical | `aria-roles` · critical |
+| `FT-WARN-013` Unknown ARIA attribute | critical | `aria-valid-attr` · critical |
+| `FT-WARN-014` Invalid ARIA value | critical | `aria-valid-attr-value` · critical |
+| `FT-WARN-015` Missing required ARIA property | critical | `aria-required-attr` · critical |
+| `FT-WARN-016` Invalid ARIA ID relationship | critical | `aria-valid-attr-value` failure family · critical |
+| `FT-WARN-017` Required ARIA parent missing | critical | `aria-required-parent` · critical |
+| `FT-WARN-018` Required/incompatible ARIA children | critical | `aria-required-children` · critical |
+| `FT-WARN-019` Inconsistent ARIA range/set state | serious | FocusTrace-specific consistency detector |
+| `FT-WARN-020` ARIA property unsupported by role | critical | `aria-allowed-attr` · critical |
+| `FT-WARN-021` Relationship/state contradiction | serious | FocusTrace-specific consistency detector |
 
 ## Guardrails
 
-The catalog is the source of truth. Automated tests require every rule to provide a non-empty English and Spanish rationale. Standards references are kept separate from severity so a WCAG level or an external rule cannot silently become a FocusTrace impact score.
+The rule catalog remains the source of truth for FocusTrace rule definitions. The axe benchmark is a maintained external constraint for declared equivalents, not a replacement for our detector logic.
 
-This is intentionally a base-impact model. A future contextual model may raise or lower the effective severity of an occurrence only when FocusTrace can justify that change from concrete evidence such as task blocking, alternatives, repetition, or interaction state.
+The Standards Registry workflow refreshes the latest stable axe rule-impact snapshot every day. If axe adds/removes rules or changes an impact, the workflow generates a diff and opens or refreshes the registry PR; if that cannot be created, it falls back to a GitHub issue.
+
+Automated tests require every declared FocusTrace ↔ axe mapping to resolve and require `highest-impact` mappings to match the current generated axe snapshot. Unmapped axe critical rules are listed by the daily report but do not automatically fail CI, because a missing equivalence can mean different detector scope rather than missing accessibility coverage.
