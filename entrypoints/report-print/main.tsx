@@ -56,6 +56,12 @@ function suggestionSourceLabel(source: string, language: AppLanguage): string {
   return tr(language, 'Coverage', 'Cobertura');
 }
 
+function suggestionPriorityLabel(priority: 'high' | 'medium' | 'low', language: AppLanguage): string {
+  if (priority === 'high') return tr(language, 'High', 'Alta');
+  if (priority === 'medium') return tr(language, 'Medium', 'Media');
+  return tr(language, 'Low', 'Baja');
+}
+
 function findingGroup(scan: NonNullable<SessionState['scan']>, language: AppLanguage) {
   return [
     { id: 'fail', label: tr(language, 'Failures', 'Fallos'), issues: sortBySeverity(scan.issues) },
@@ -269,7 +275,11 @@ function PrintableReport({ report }: { report: LoadedReport }) {
     () => buildSessionReportModel(scan, session.events, language),
     [language, scan, session.events],
   );
-  const failureSeverityCounts = useMemo(() => countBySeverity(scan.issues), [scan.issues]);
+  const staticFindings = useMemo(
+    () => [...scan.issues, ...scan.review, ...(scan.warnings ?? [])],
+    [scan],
+  );
+  const findingSeverityCounts = useMemo(() => countBySeverity(staticFindings), [staticFindings]);
   const highPriority = model.suggestions.filter((suggestion) => suggestion.priority === 'high').slice(0, 6);
   const headings = scan.headings ?? [];
   const componentMap = useMemo(
@@ -283,14 +293,14 @@ function PrintableReport({ report }: { report: LoadedReport }) {
   const firstVisualIssueIds = useMemo(() => {
     const seen = new Set<string>();
     const ids = new Set<string>();
-    for (const issue of [...scan.issues, ...scan.review, ...(scan.warnings ?? [])]) {
+    for (const issue of staticFindings) {
       const selector = issue.targets[0];
       if (!selector || seen.has(selector)) continue;
       seen.add(selector);
       ids.add(issue.id);
     }
     return ids;
-  }, [scan]);
+  }, [staticFindings]);
   const generatedLabel = new Intl.DateTimeFormat(language === 'es' ? 'es-ES' : 'en-GB', {
     dateStyle: 'medium',
     timeStyle: 'short',
@@ -355,17 +365,17 @@ function PrintableReport({ report }: { report: LoadedReport }) {
           <div className="print-category-row">
             {model.categories.map((category) => <span key={category.id}><strong>{category.count}</strong> {category.label}</span>)}
           </div>
-          {scan.issues.length > 0 && (
+          {staticFindings.length > 0 && (
             <div className="print-impact-summary">
               <p>{tr(
                 language,
-                'Failure impact · FocusTrace prioritization, not a WCAG conformance level.',
-                'Impacto de los fallos · priorización de FocusTrace, no nivel de conformidad WCAG.',
+                'Finding impact · failures, reviews and warnings combined; FocusTrace prioritization, not a WCAG conformance level.',
+                'Impacto de los hallazgos · combina fallos, revisiones y avisos; priorización de FocusTrace, no nivel de conformidad WCAG.',
               )}</p>
               <div className="print-impact-counts">
                 {DISPLAY_SEVERITIES.map((severity) => (
                   <span className={`severity-${severity}`} key={severity}>
-                    <strong>{failureSeverityCounts[severity]}</strong>
+                    <strong>{findingSeverityCounts[severity]}</strong>
                     <small>{localizedSeverity(severity, language)}</small>
                   </span>
                 ))}
@@ -481,7 +491,7 @@ function PrintableReport({ report }: { report: LoadedReport }) {
               <p>{tr(
                 language,
                 'Only applicable element-level checks were evaluated inside this DOM subtree. Page title, document language and global heading hierarchy were not evaluated as component findings.',
-                'Solo se han evaluado dentro de este subtree del DOM las comprobaciones aplicables a elementos. El título de página, el idioma del documento y la jerarquía global de encabezados no se han evaluado como hallazgos del componente.',
+                'Solo se han evaluado dentro de este subárbol del DOM las comprobaciones aplicables a elementos. El título de página, el idioma del documento y la jerarquía global de encabezados no se han evaluado como hallazgos del componente.',
               )}</p>
             </div>
           )}
@@ -559,7 +569,7 @@ function PrintableReport({ report }: { report: LoadedReport }) {
             <ol className="print-recommendation-list">
               {model.suggestions.map((suggestion) => (
                 <li key={suggestion.id}>
-                  <div><span>{suggestion.priority}</span><small>{suggestionSourceLabel(suggestion.source, language)}</small></div>
+                  <div><span>{suggestionPriorityLabel(suggestion.priority, language)}</span><small>{suggestionSourceLabel(suggestion.source, language)}</small></div>
                   <strong>{suggestion.title}</strong>
                   <p>{suggestion.detail}</p>
                 </li>
