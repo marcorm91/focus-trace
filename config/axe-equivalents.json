@@ -1,0 +1,28 @@
+{
+  "schemaVersion": 1,
+  "benchmark": "axe-core",
+  "policy": "Mapped FocusTrace rules use the highest impact among equivalent axe-core rules when policy is highest-impact. Rules without a reliable semantic equivalent remain owned by FocusTrace.",
+  "mappings": [
+    { "focusTraceRuleId": "FT-WCAG-001", "axeRuleIds": ["document-title"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-002", "axeRuleIds": ["image-alt", "role-img-alt", "svg-img-alt"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-003", "axeRuleIds": ["button-name"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-004", "axeRuleIds": ["label", "select-name", "input-button-name", "input-image-alt", "aria-input-field-name", "aria-toggle-field-name"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-005", "axeRuleIds": ["link-name", "aria-command-name"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-006", "axeRuleIds": ["aria-hidden-focus"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-007", "axeRuleIds": ["label-content-name-mismatch"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-008", "axeRuleIds": ["html-has-lang"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-009", "axeRuleIds": ["html-lang-valid"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-010", "axeRuleIds": ["color-contrast"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-011", "axeRuleIds": ["non-text-contrast"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-001", "axeRuleIds": ["aria-deprecated-role"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-003", "axeRuleIds": ["aria-prohibited-attr"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-012", "axeRuleIds": ["aria-roles"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-013", "axeRuleIds": ["aria-valid-attr"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-014", "axeRuleIds": ["aria-valid-attr-value"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-015", "axeRuleIds": ["aria-required-attr"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-016", "axeRuleIds": ["aria-valid-attr-value"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-017", "axeRuleIds": ["aria-required-parent"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-018", "axeRuleIds": ["aria-required-children"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-020", "axeRuleIds": ["aria-allowed-attr"], "policy": "highest-impact" }
+  ]
+}
