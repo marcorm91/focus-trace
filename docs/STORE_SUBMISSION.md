@@ -80,16 +80,25 @@ The default product is local-first. The submission declarations must remain cons
 
 FocusTrace currently has no product analytics or behavioral telemetry pipeline and does not require a FocusTrace account/backend for analysis.
 
+## Voluntary project support
+
+FocusTrace may expose an optional **Support FocusTrace** link in the About view after a real public support destination is configured. Support is voluntary and does not unlock product features, remove limits or change analysis behavior.
+
+The link opens an external support provider in a new browser tab. FocusTrace does not process payment-card or bank details. Keep the destination and public privacy policy consistent before enabling it. See `SUPPORT_MODEL.md`.
+
+Do not submit a placeholder or inactive support URL to a store listing.
+
 ## Publication blocker: public privacy URL
 
 Before submitting to Chrome Web Store or Edge Add-ons, provide a publicly accessible privacy-policy URL that contains the policy represented by `PRIVACY.md`.
 
 A URL that requires access to the private GitHub repository is not suitable as the store privacy-policy URL.
 
-Record the final public URL here before submission:
+Record the final public URLs here before submission:
 
 - Privacy policy URL: **TODO — public URL required**
-- Support URL/contact: **TODO — confirm public destination**
+- Support/contact URL: **TODO — confirm public destination**
+- Voluntary support URL: **disabled until configured**
 
 ## Assets to prepare
 
@@ -107,6 +116,7 @@ Before uploading the production ZIP:
 3. Complete the manual accessibility/self-audit items in `RELEASE_CHECKLIST.md`.
 4. Smoke-test the unpacked production Chromium build.
 5. Confirm production manifests contain only the intended required and optional permissions.
-6. Confirm the public privacy-policy and support URLs resolve without authentication.
-7. Review the final store declarations against `PRIVACY.md` and actual behavior.
-8. Tag the exact approved commit as `v0.1.0` only after the release candidate is accepted.
+6. Confirm the public privacy-policy and support/contact URLs resolve without authentication.
+7. If voluntary support is enabled, confirm its destination is `https://`, opens externally and matches `PRIVACY.md`.
+8. Review the final store declarations against `PRIVACY.md` and actual behavior.
+9. Tag the exact approved commit as `v0.1.0` only after the release candidate is accepted.

@@ -11,8 +11,11 @@
 .about-meta dd { margin: 0; font-size: 14px; overflow-wrap: anywhere; }
 .about-link { min-height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 6px; border: 1px solid color-mix(in srgb, CanvasText 18%, transparent); border-radius: 8px; padding: 8px 10px; color: LinkText; text-decoration: none; font-size: 14px; font-weight: 700; }
 .about-link:hover { text-decoration: underline; }
+.about-support strong,
 .about-privacy strong { font-size: 14px; }
+.about-support p,
 .about-privacy p { margin-bottom: 0; }
+.about-support-link { margin-top: 10px; width: 100%; box-sizing: border-box; }
 
 @media (max-width: 360px) {
   .about-meta > div { grid-template-columns: 82px minmax(0, 1fr); }

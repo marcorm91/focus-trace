@@ -1,5 +1,6 @@
 import { browser } from '#imports';
 import { localeFor, tr, type AppLanguage } from '../../../shared/i18n';
+import { SUPPORT_URL } from '../../../shared/project-links';
 
 const VERSION_DATE = '2026-08-24';
 const CREATOR_NAME = 'Marco Romero';
@@ -49,6 +50,22 @@ export function AboutView({ language }: { language: AppLanguage }) {
           {tr(language, `View ${CREATOR_NAME} on LinkedIn`, `Ver a ${CREATOR_NAME} en LinkedIn`)} <span aria-hidden="true">↗</span>
         </a>
       </article>
+
+      {SUPPORT_URL ? (
+        <aside className="notice about-support" aria-labelledby="about-support-title">
+          <strong id="about-support-title">{tr(language, 'Support FocusTrace', 'Apoya FocusTrace')}</strong>
+          <p>
+            {tr(
+              language,
+              'FocusTrace remains free to use. If it helps your accessibility work, you can voluntarily support its continued development.',
+              'FocusTrace seguirá siendo gratuito. Si te ayuda en tu trabajo de accesibilidad, puedes apoyar voluntariamente su desarrollo.',
+            )}
+          </p>
+          <a className="about-link about-support-link" href={SUPPORT_URL} target="_blank" rel="noreferrer">
+            {tr(language, 'Support development', 'Apoyar el desarrollo')} <span aria-hidden="true">↗</span>
+          </a>
+        </aside>
+      ) : null}
 
       <div className="notice about-privacy">
         <strong>{tr(language, 'Local-first by design', 'Local-first por diseño')}</strong>

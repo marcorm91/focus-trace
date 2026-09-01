@@ -117,7 +117,23 @@ Before changing visibility:
 - Review Dependabot/security-alert settings and enable the ones appropriate for a public extension project.
 - Review issue and pull-request templates for public contributors.
 - Decide whether discussions should happen in GitHub Issues, Discussions or both.
-- Do not add a funding configuration until the actual sponsorship destination is configured and ready to receive contributions.
+
+## Voluntary support readiness
+
+FocusTrace may accept voluntary support without gating features. See `SUPPORT_MODEL.md`.
+
+Before enabling the support link:
+
+- configure a real public `https://` destination in `shared/project-links.ts`;
+- verify the provider supports the intended contribution model and is ready to receive funds;
+- keep the support invitation optional and secondary to the product workflow;
+- confirm no Analyze, Trace, Replay, Report, Site Audit or Memory feature depends on payment;
+- update `PRIVACY.md` for the external support provider and confirm FocusTrace itself does not process payment details;
+- update `STORE_SUBMISSION.md` with the final destination;
+- keyboard-test the About support link and verify visible focus and 200% zoom behavior;
+- only add GitHub funding configuration after the destination is live.
+
+A disabled support destination is not a release blocker.
 
 ## Release
 
