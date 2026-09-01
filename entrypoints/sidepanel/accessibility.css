@@ -8,6 +8,16 @@ summary:focus-visible {
   outline-offset: 3px;
 }
 
+/* Keep hover affordance visible even when component-level rules reset the
+   button background shorthand. The translucent ink layer preserves the
+   component's own semantic background while making interactivity perceptible. */
+button:not(:disabled):hover {
+  background-image: linear-gradient(
+    color-mix(in srgb, currentColor 4%, transparent),
+    color-mix(in srgb, currentColor 4%, transparent)
+  );
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
