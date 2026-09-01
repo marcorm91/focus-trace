@@ -73,6 +73,7 @@ document.addEventListener('click', (event) => {
   const target = event.target instanceof Element ? event.target : null;
   if (!target) return;
 
+  // The format picker behaves like a popover: clicking elsewhere dismisses it.
   for (const details of document.querySelectorAll<HTMLDetailsElement>('.report-more-formats[open]')) {
     if (!details.contains(target)) details.open = false;
   }
