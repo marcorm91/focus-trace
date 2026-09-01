@@ -56,10 +56,10 @@ const impact = (en: string, es: string): Pick<RuleDefinition, 'severityRationale
 export const INVALID_ARIA_ROLE_RULE: RuleDefinition = {
   id: 'FT-WARN-012',
   title: 'Explicit ARIA role cannot be resolved safely',
-  severity: 'serious',
+  severity: 'critical',
   ...impact(
-    'An unresolved or abstract role can cause the intended semantics to be ignored, leaving assistive technologies with different semantics from those the author intended.',
-    'Un rol no resoluble o abstracto puede hacer que se ignore la semántica prevista y que las tecnologías de asistencia reciban una semántica distinta de la que pretendía el autor.',
+    'An unresolved or abstract role can cause the intended semantics to be ignored, leaving assistive technologies with different semantics from those the author intended. This aligns with the critical axe-core aria-roles benchmark.',
+    'Un rol no resoluble o abstracto puede hacer que se ignore la semántica prevista y que las tecnologías de asistencia reciban una semántica distinta de la que pretendía el autor. Se alinea con la referencia crítica de aria-roles de axe-core.',
   ),
   references: [ariaRolesReference],
 };
@@ -67,10 +67,10 @@ export const INVALID_ARIA_ROLE_RULE: RuleDefinition = {
 export const UNKNOWN_ARIA_ATTRIBUTE_RULE: RuleDefinition = {
   id: 'FT-WARN-013',
   title: 'Unknown aria-* attribute is used',
-  severity: 'moderate',
+  severity: 'critical',
   ...impact(
-    'An unknown ARIA attribute is not part of the current ARIA vocabulary and can silently fail to expose the intended name, state or relationship.',
-    'Un atributo ARIA desconocido no forma parte del vocabulario ARIA actual y puede no exponer silenciosamente el nombre, estado o relación que se pretendía.',
+    'An unknown ARIA attribute is not part of the current ARIA vocabulary and can silently fail to expose the intended name, state or relationship. This aligns with the critical axe-core aria-valid-attr benchmark.',
+    'Un atributo ARIA desconocido no forma parte del vocabulario ARIA actual y puede no exponer silenciosamente el nombre, estado o relación que se pretendía. Se alinea con la referencia crítica de aria-valid-attr de axe-core.',
   ),
   references: [ariaStatesReference],
 };
@@ -78,10 +78,10 @@ export const UNKNOWN_ARIA_ATTRIBUTE_RULE: RuleDefinition = {
 export const INVALID_ARIA_VALUE_RULE: RuleDefinition = {
   id: 'FT-WARN-014',
   title: 'ARIA state or property has an invalid value',
-  severity: 'serious',
+  severity: 'critical',
   ...impact(
-    'An invalid ARIA value can be ignored or repaired differently by user agents, making state and relationship information unreliable for assistive technologies.',
-    'Un valor ARIA no válido puede ignorarse o repararse de forma distinta por los agentes de usuario, haciendo poco fiable la información de estado o relación para las tecnologías de asistencia.',
+    'An invalid ARIA value can be ignored or repaired differently by user agents, making state and relationship information unreliable for assistive technologies. This aligns with the critical axe-core aria-valid-attr-value benchmark.',
+    'Un valor ARIA no válido puede ignorarse o repararse de forma distinta por los agentes de usuario, haciendo poco fiable la información de estado o relación para las tecnologías de asistencia. Se alinea con la referencia crítica de aria-valid-attr-value de axe-core.',
   ),
   references: [ariaStatesReference],
 };
@@ -89,10 +89,10 @@ export const INVALID_ARIA_VALUE_RULE: RuleDefinition = {
 export const REQUIRED_ARIA_PROPERTY_RULE: RuleDefinition = {
   id: 'FT-WARN-015',
   title: 'ARIA role is missing a required state or property',
-  severity: 'serious',
+  severity: 'critical',
   ...impact(
-    'A role without a state or property that ARIA requires can expose an incomplete widget model, so assistive technologies may not receive information needed to operate or understand the control.',
-    'Un rol sin un estado o propiedad que ARIA exige puede exponer un modelo de widget incompleto, por lo que las tecnologías de asistencia pueden no recibir información necesaria para comprender u operar el control.',
+    'A role without a state or property that ARIA requires can expose an incomplete widget model, so assistive technologies may not receive information needed to operate or understand the control. This aligns with the critical axe-core aria-required-attr benchmark.',
+    'Un rol sin un estado o propiedad que ARIA exige puede exponer un modelo de widget incompleto, por lo que las tecnologías de asistencia pueden no recibir información necesaria para comprender u operar el control. Se alinea con la referencia crítica de aria-required-attr de axe-core.',
   ),
   references: [ariaRequiredReference],
 };
@@ -100,10 +100,10 @@ export const REQUIRED_ARIA_PROPERTY_RULE: RuleDefinition = {
 export const ARIA_REFERENCE_RULE: RuleDefinition = {
   id: 'FT-WARN-016',
   title: 'ARIA ID reference does not resolve to a valid relationship',
-  severity: 'serious',
+  severity: 'critical',
   ...impact(
-    'A broken ARIA ID relationship can remove an accessible name, description, controlled relationship, error message, ownership relationship or active-descendant focus target.',
-    'Una relación ARIA por ID rota puede eliminar un nombre accesible, descripción, relación de control, mensaje de error, relación de propiedad o destino de foco mediante active-descendant.',
+    'A broken ARIA ID relationship can remove an accessible name, description, controlled relationship, error message, ownership relationship or active-descendant focus target. Invalid ARIA relationship values align with the critical axe-core aria-valid-attr-value benchmark.',
+    'Una relación ARIA por ID rota puede eliminar un nombre accesible, descripción, relación de control, mensaje de error, relación de propiedad o destino de foco mediante active-descendant. Los valores de relación ARIA no válidos se alinean con la referencia crítica de aria-valid-attr-value de axe-core.',
   ),
   references: [ariaIdReference],
 };
@@ -111,10 +111,10 @@ export const ARIA_REFERENCE_RULE: RuleDefinition = {
 export const REQUIRED_ARIA_PARENT_RULE: RuleDefinition = {
   id: 'FT-WARN-017',
   title: 'ARIA role is outside its required accessibility parent context',
-  severity: 'serious',
+  severity: 'critical',
   ...impact(
-    'ARIA roles that require a specific accessibility parent can lose their intended computed role when they are orphaned from that context.',
-    'Los roles ARIA que requieren un padre de accesibilidad concreto pueden perder su rol calculado previsto cuando quedan fuera de ese contexto.',
+    'ARIA roles that require a specific accessibility parent can lose their intended computed role when they are orphaned from that context. This aligns with the critical axe-core aria-required-parent benchmark.',
+    'Los roles ARIA que requieren un padre de accesibilidad concreto pueden perder su rol calculado previsto cuando quedan fuera de ese contexto. Se alinea con la referencia crítica de aria-required-parent de axe-core.',
   ),
   references: [ariaParentReference],
 };
@@ -122,10 +122,10 @@ export const REQUIRED_ARIA_PARENT_RULE: RuleDefinition = {
 export const ALLOWED_ARIA_CHILD_RULE: RuleDefinition = {
   id: 'FT-WARN-018',
   title: 'ARIA container exposes an incompatible accessibility child role',
-  severity: 'serious',
+  severity: 'critical',
   ...impact(
-    'A composite or structural ARIA container with incompatible accessibility children can expose a relationship that does not match the ARIA role model.',
-    'Un contenedor ARIA compuesto o estructural con hijos de accesibilidad incompatibles puede exponer una relación que no coincide con el modelo de roles ARIA.',
+    'A composite or structural ARIA container with incompatible accessibility children can expose a relationship that does not match the ARIA role model. This aligns with the critical axe-core aria-required-children benchmark.',
+    'Un contenedor ARIA compuesto o estructural con hijos de accesibilidad incompatibles puede exponer una relación que no coincide con el modelo de roles ARIA. Se alinea con la referencia crítica de aria-required-children de axe-core.',
   ),
   references: [ariaChildrenReference],
 };
@@ -144,10 +144,10 @@ export const ARIA_STATE_CONSISTENCY_RULE: RuleDefinition = {
 export const UNSUPPORTED_ARIA_PROPERTY_RULE: RuleDefinition = {
   id: 'FT-WARN-020',
   title: 'ARIA state or property is not supported by the resolved role',
-  severity: 'serious',
+  severity: 'critical',
   ...impact(
-    'ARIA defines state and property support per role. Using a known attribute on a role that does not support it produces undefined semantics and can cause the intended state to be ignored by assistive technologies.',
-    'ARIA define el soporte de estados y propiedades por rol. Usar un atributo conocido en un rol que no lo admite produce una semántica indefinida y puede hacer que las tecnologías de asistencia ignoren el estado previsto.',
+    'ARIA defines state and property support per role. Using a known attribute on a role that does not support it produces undefined semantics and can cause the intended state to be ignored by assistive technologies. This aligns with the critical axe-core aria-allowed-attr benchmark.',
+    'ARIA define el soporte de estados y propiedades por rol. Usar un atributo conocido en un rol que no lo admite produce una semántica indefinida y puede hacer que las tecnologías de asistencia ignoren el estado previsto. Se alinea con la referencia crítica de aria-allowed-attr de axe-core.',
   ),
   references: [ariaRolesReference, ariaStatesReference],
 };
