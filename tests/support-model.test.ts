@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import { describe, expect, it } from 'vitest';
 import { SUPPORT_URL } from '../shared/project-links';
 import { mountSupportFooter } from '../shared/support-footer';
