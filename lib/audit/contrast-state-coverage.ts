@@ -1,3 +1,4 @@
+import { parseCssColor } from './contrast';
 import { isDisabledUiComponent } from './dom';
 
 export type ContrastStateName =
@@ -14,8 +15,144 @@ export type ContrastStateName =
   | 'pressed'
   | 'unpressed';
 
+function normalizedCssValue(value: string | undefined): string {
+  return (value ?? '').replace(/\s+/g, '').toLowerCase();
+}
+
+function inlineStyleFor(element: Element): CSSStyleDeclaration | undefined {
+  return element instanceof HTMLElement || element instanceof SVGElement
+    ? element.style
+    : undefined;
+}
+
+function styleValues(
+  computed: CSSStyleDeclaration,
+  inline: CSSStyleDeclaration | undefined,
+  property: string,
+): string[] {
+  const values = [computed.getPropertyValue(property), inline?.getPropertyValue(property)]
+    .map((value) => value?.trim() ?? '')
+    .filter(Boolean);
+  return [...new Set(values)];
+}
+
+function isZeroLegacyClip(value: string): boolean {
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/px/g, '')
+    .replace(/[,\s]+/g, ',');
+  return normalized === 'rect(0,0,0,0)';
+}
+
+function clipsAllRenderedContent(
+  computed: CSSStyleDeclaration,
+  inline: CSSStyleDeclaration | undefined,
+): boolean {
+  const clipValues = [computed.clip, inline?.clip, ...styleValues(computed, inline, 'clip')]
+    .filter((value): value is string => Boolean(value?.trim()));
+  if (clipValues.some(isZeroLegacyClip)) return true;
+
+  const clipPaths = styleValues(computed, inline, 'clip-path').map(normalizedCssValue);
+  return clipPaths.some((clipPath) => clipPath === 'inset(50%)'
+    || clipPath === 'inset(50%50%50%50%)'
+    || clipPath === 'inset(100%)'
+    || clipPath === 'circle(0px)'
+    || clipPath === 'circle(0%)');
+}
+
+function fullyTransparentFilter(
+  computed: CSSStyleDeclaration,
+  inline: CSSStyleDeclaration | undefined,
+): boolean {
+  return styleValues(computed, inline, 'filter').some((filter) =>
+    /opacity\(\s*(?:0(?:\.0+)?|0%)\s*\)/.test(filter.toLowerCase()),
+  );
+}
+
+function hasZeroNumericStyle(
+  computed: CSSStyleDeclaration,
+  inline: CSSStyleDeclaration | undefined,
+  property: string,
+): boolean {
+  return styleValues(computed, inline, property).some((value) => {
+    const numeric = Number.parseFloat(value);
+    return Number.isFinite(numeric) && numeric <= 0;
+  });
+}
+
+function hasClippingOverflow(
+  computed: CSSStyleDeclaration,
+  inline: CSSStyleDeclaration | undefined,
+  axis: 'x' | 'y',
+): boolean {
+  const axisProperty = axis === 'x' ? 'overflow-x' : 'overflow-y';
+  return [...styleValues(computed, inline, axisProperty), ...styleValues(computed, inline, 'overflow')]
+    .some((value) => ['hidden', 'clip'].includes(value.toLowerCase()));
+}
+
+function suppressesVisualRendering(element: Element): boolean {
+  const computed = getComputedStyle(element);
+  const inline = inlineStyleFor(element);
+
+  if (element.hasAttribute('hidden') || computed.display === 'none') return true;
+  if (['hidden', 'collapse'].includes(computed.visibility)) return true;
+  if (styleValues(computed, inline, 'content-visibility')
+    .some((value) => value.toLowerCase() === 'hidden')) return true;
+
+  if (hasZeroNumericStyle(computed, inline, 'opacity')) return true;
+  if (fullyTransparentFilter(computed, inline)) return true;
+  if (clipsAllRenderedContent(computed, inline)) return true;
+
+  const zeroWidth = hasZeroNumericStyle(computed, inline, 'width');
+  const zeroHeight = hasZeroNumericStyle(computed, inline, 'height');
+  if (zeroWidth && zeroHeight
+    && hasClippingOverflow(computed, inline, 'x')
+    && hasClippingOverflow(computed, inline, 'y')) {
+    return true;
+  }
+
+  return false;
+}
+
+function hiddenByClosedDetails(element: Element): boolean {
+  let current: Element | null = element;
+  while (current?.parentElement) {
+    const parentElement: Element = current.parentElement;
+    if (parentElement instanceof HTMLDetailsElement && !parentElement.open) {
+      const renderedSummary = [...parentElement.children].find((child) => child.tagName === 'SUMMARY');
+      if (current !== renderedSummary) return true;
+    }
+    current = parentElement;
+  }
+  return false;
+}
+
+/**
+ * Returns whether text contrast is inapplicable in the element's current
+ * rendered state. This intentionally does not use viewport intersection:
+ * content below the fold or outside the current scroll position still needs
+ * contrast once the user reaches it.
+ */
 export function isInactiveContrastElement(element: Element): boolean {
-  return isDisabledUiComponent(element);
+  if (isDisabledUiComponent(element) || hiddenByClosedDetails(element)) return true;
+
+  const targetStyle = getComputedStyle(element);
+  if (targetStyle.visibility === 'hidden' || targetStyle.visibility === 'collapse') return true;
+
+  const fontSize = Number.parseFloat(targetStyle.fontSize);
+  if (Number.isFinite(fontSize) && fontSize <= 0) return true;
+
+  const textColor = parseCssColor(targetStyle.color);
+  if (textColor && textColor.a <= 0) return true;
+
+  let current: Element | null = element;
+  while (current) {
+    if (suppressesVisualRendering(current)) return true;
+    current = current.parentElement;
+  }
+
+  return false;
 }
 
 /**
