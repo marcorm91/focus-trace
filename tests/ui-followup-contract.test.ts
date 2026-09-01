@@ -17,6 +17,20 @@ describe('UI follow-up contract', () => {
     expect(css).toContain('currentColor 4%');
   });
 
+  it('shows a neutral check-circle for the ready analysis state instead of a status dot', () => {
+    const css = source('entrypoints/sidepanel/accessibility.css');
+    const app = source('entrypoints/sidepanel/App.tsx');
+
+    expect(app).toContain("? tr(language, 'Analysis ready', 'Análisis listo')");
+    expect(css).toContain('.quick-start-copy .status.ready {');
+    expect(css).toContain('.quick-start-copy .status.ready > span {');
+    expect(css).toContain("data:image/svg+xml");
+    expect(css).toContain("<circle");
+    expect(css).toContain("<path");
+    expect(css).toContain('background: currentColor;');
+    expect(css).not.toContain('.quick-start-copy .status.ready > span {\n  width: 8px;');
+  });
+
   it('presents Trace summary metrics as data instead of button-like cards', () => {
     const css = source('entrypoints/sidepanel/information-summaries.css');
 
