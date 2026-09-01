@@ -61,7 +61,7 @@ Unit tests additionally resolve FocusTrace's own WCAG/ACT references against the
 
 ## Automated maintenance workflow
 
-`.github/workflows/standards-registry.yml` runs every day and can also be dispatched manually. It:
+`.github/workflows/standards-registry.yml` runs on the 1st and 15th of each month at 06:17 UTC and can also be dispatched manually. It:
 
 1. preserves the committed snapshots;
 2. synchronizes all public standards sources;
