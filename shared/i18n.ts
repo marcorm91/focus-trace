@@ -102,7 +102,10 @@ function localizedExtraEvidence(ruleId: string, evidence: string): string | unde
   if (ruleId === 'FT-WARN-008') {
     const directParent = evidence.match(/^(<[^>]+>) requires a direct (.+?) parent(?:; current parent is (.+?))?\.$/);
     if (directParent) {
-      return `${directParent[1]} requiere un padre directo ${directParent[2]}${directParent[3] ? `; el padre actual es ${directParent[3]}` : ''}.`;
+      const parentRequirement = directParent[2]
+        .replace(/\s+or\s+/gi, ' o ')
+        .replace(/\s+and\s+/gi, ' y ');
+      return `${directParent[1]} requiere un padre directo ${parentRequirement}${directParent[3] ? `; el padre actual es ${directParent[3]}` : ''}.`;
     }
   }
 
