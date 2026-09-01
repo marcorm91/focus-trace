@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "repository": "dequelabs/axe-core",
+    "release": "",
+    "tag": "",
+    "publishedAt": null
+  },
+  "summary": {
+    "total": 0,
+    "critical": 0,
+    "serious": 0,
+    "moderate": 0,
+    "minor": 0,
+    "unrated": 0
+  },
+  "rules": []
+}
