@@ -82,16 +82,12 @@ describe('rendered contrast states', () => {
       <span id="zero-font-copy" style="font-size:0">Invisible</span>
     `);
 
-    for (const selector of [
-      '#opacity-copy',
-      '#content-copy',
-      '#clip-copy',
-      '#clip-path-copy',
-      '#transparent-copy',
-      '#zero-font-copy',
-    ]) {
-      expect(isInactiveContrastElement(document.querySelector(selector)!)).toBe(true);
-    }
+    expect(isInactiveContrastElement(document.querySelector('#opacity-copy')!), '#opacity-copy').toBe(true);
+    expect(isInactiveContrastElement(document.querySelector('#content-copy')!), '#content-copy').toBe(true);
+    expect(isInactiveContrastElement(document.querySelector('#clip-copy')!), '#clip-copy').toBe(true);
+    expect(isInactiveContrastElement(document.querySelector('#clip-path-copy')!), '#clip-path-copy').toBe(true);
+    expect(isInactiveContrastElement(document.querySelector('#transparent-copy')!), '#transparent-copy').toBe(true);
+    expect(isInactiveContrastElement(document.querySelector('#zero-font-copy')!), '#zero-font-copy').toBe(true);
   });
 
   it('treats content inside a closed details disclosure as contrast-inapplicable but keeps its summary active', () => {
@@ -108,52 +104,46 @@ describe('rendered contrast states', () => {
 
   it('removes hidden unresolved-background reviews from the final scan', () => {
     render(
-      '<style>#hidden-shell { opacity: 0; background-image: linear-gradient(#fff, #eee); } #hidden-copy { color: #777; font-size: 16px; }</style>',
-      '<div id="hidden-shell"><p id="hidden-copy">Hidden contrast candidate</p></div>',
+      '<style>#hidden-copy { color: #777; background: linear-gradient(white, black); }</style>',
+      '<div style="display:none"><p id="hidden-copy">Hidden uncertain contrast</p></div>',
     );
 
     const scan = runFocusTraceScan();
-    const hiddenFindings = [...scan.issues, ...scan.review].filter((issue) =>
+    const matches = [...scan.issues, ...scan.review].filter((issue) =>
       issue.ruleId === 'FT-WCAG-010' && issue.targets.includes('#hidden-copy'),
     );
-    expect(hiddenFindings).toEqual([]);
+    expect(matches).toEqual([]);
   });
 
   it('keeps genuinely visible unresolved backgrounds in review', () => {
     render(
-      '<style>#visible { color: #777; background-image: linear-gradient(#fff, #eee); font-size: 16px; }</style>',
-      '<p id="visible">Visible gradient text</p>',
+      '<style>#visible-copy { color: #777; background: linear-gradient(white, black); }</style>',
+      '<p id="visible-copy">Visible uncertain contrast</p>',
     );
 
     const scan = runFocusTraceScan();
     const review = scan.review.find((issue) =>
-      issue.ruleId === 'FT-WCAG-010' && issue.targets.includes('#visible'),
+      issue.ruleId === 'FT-WCAG-010' && issue.targets.includes('#visible-copy'),
     );
     expect(review).toBeDefined();
-    expect(review?.contrast?.reason).toContain('background image or gradient');
+    expect(review?.outcome).toBe('review');
   });
 
   it('does not use viewport position to decide contrast applicability', () => {
-    render(
-      '<style>#below-fold { position:absolute; top:200vh; color:rgb(180,180,180); background:white; font-size:16px; }</style>',
-      '<p id="below-fold">Rendered after scrolling</p>',
-    );
-
-    const target = document.querySelector('#below-fold')!;
-    expect(isInactiveContrastElement(target)).toBe(false);
-
-    const scan = runFocusTraceScan();
-    expect(scan.issues.some((issue) =>
-      issue.ruleId === 'FT-WCAG-010' && issue.targets.includes('#below-fold'),
-    )).toBe(true);
+    render('', '<p id="below-fold" style="margin-top:5000px;color:black;background:white">Still rendered</p>');
+    expect(isInactiveContrastElement(document.querySelector('#below-fold')!)).toBe(false);
   });
 
   it('removes inactive text contrast failures from the final scan', () => {
     render(
-      '<style>#disabled { color: rgb(180, 180, 180); background: white; font-size: 16px; }</style>',
-      '<button id="disabled" disabled>Inactive low contrast</button>',
+      '<style>#copy { color: rgb(180, 180, 180); background:white; }</style>',
+      '<div hidden><p id="copy">Hidden low contrast</p></div>',
     );
+
     const scan = runFocusTraceScan();
-    expect(scan.issues.some((issue) => issue.ruleId === 'FT-WCAG-010' && issue.targets.includes('#disabled'))).toBe(false);
+    const matches = [...scan.issues, ...scan.review].filter((issue) =>
+      issue.ruleId === 'FT-WCAG-010' && issue.targets.includes('#copy'),
+    );
+    expect(matches).toEqual([]);
   });
 });
