@@ -1,7 +1,18 @@
+body.ft-support-footer-host {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+}
+
+body.ft-support-footer-host > #root {
+  flex: 1 0 auto;
+}
+
 .ft-support-footer {
   box-sizing: border-box;
   width: calc(100% - 32px);
   max-width: 1180px;
+  flex: 0 0 auto;
   margin: 0 auto 16px;
   padding: 10px 0 0;
   border-top: 1px solid color-mix(in srgb, CanvasText 12%, transparent);
@@ -29,7 +40,8 @@
   width: 16px;
   height: 16px;
   flex: 0 0 auto;
-  fill: none;
+  color: #d93025;
+  fill: currentColor;
   stroke: currentColor;
   stroke-width: 1.8;
   stroke-linecap: round;
@@ -58,6 +70,8 @@
   }
 
   .ft-support-footer-icon {
-    stroke: LinkText;
+    color: LinkText;
+    fill: currentColor;
+    stroke: currentColor;
   }
 }
