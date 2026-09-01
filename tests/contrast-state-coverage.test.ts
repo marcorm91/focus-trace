@@ -76,7 +76,7 @@ describe('rendered contrast states', () => {
     render('', `
       <div style="opacity:0"><span id="opacity-copy">Invisible</span></div>
       <div style="content-visibility:hidden"><span id="content-copy">Invisible</span></div>
-      <div style="position:absolute;clip:rect(0 0 0 0)"><span id="clip-copy">Invisible</span></div>
+      <div style="position:absolute;clip:rect(0, 0, 0, 0)"><span id="clip-copy">Invisible</span></div>
       <div style="clip-path:inset(50%)"><span id="clip-path-copy">Invisible</span></div>
       <span id="transparent-copy" style="color:transparent">Invisible</span>
       <span id="zero-font-copy" style="font-size:0">Invisible</span>
