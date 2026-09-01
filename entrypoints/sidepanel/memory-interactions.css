@@ -85,36 +85,136 @@
   background: var(--ft-surface-subtle);
 }
 
-/* Current findings become explicit page-locate actions without looking like large buttons. */
+/* Current findings are full-card page-locate actions. The real button sits over
+   the card so mouse, touch and keyboard users get the same generous target
+   without flattening the table semantics into a button. */
+.focus-memory-finding.is-locatable {
+  position: relative;
+  cursor: pointer;
+  transition:
+    background-color 120ms ease,
+    border-color 120ms ease;
+}
+
+.focus-memory-finding.is-locatable:hover {
+  border-color: var(--ft-ink);
+  background: color-mix(in srgb, var(--ft-ink) 3%, var(--ft-surface-subtle));
+}
+
 .focus-memory-finding-link {
-  width: fit-content;
-  max-width: 100%;
-  min-height: 0;
-  margin: -3px -5px;
-  padding: 3px 5px;
+  position: absolute;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  min-height: 100%;
+  margin: 0;
+  padding: 0;
   border: 0;
-  border-radius: var(--ft-radius-xs);
+  border-radius: inherit;
   background: transparent;
-  color: var(--ft-text);
+  color: transparent;
   box-shadow: none;
-  font: inherit;
-  font-size: 14px;
-  font-weight: 800;
-  line-height: 1.35;
-  text-align: left;
-  overflow-wrap: anywhere;
+  font-size: 0;
   text-decoration: none;
   cursor: pointer;
 }
 
 .focus-memory-finding-link:not(:disabled):hover {
-  background: var(--ft-surface);
-  color: var(--ft-text);
+  border-color: transparent;
+  background: transparent;
+  color: transparent;
   text-decoration: none;
 }
 
 .focus-memory-finding-link:not(:disabled):active {
   transform: none;
+}
+
+.focus-memory-finding-link:focus-visible {
+  outline: 2px solid var(--ft-focus);
+  outline-offset: -3px;
+}
+
+.focus-memory-finding-head {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: start;
+}
+
+.focus-memory-finding-head > span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  max-width: 100%;
+}
+
+.focus-memory-finding-card-chevron,
+.focus-memory-pager-chevron {
+  width: 7px;
+  height: 7px;
+  flex: 0 0 auto;
+  border-inline-end: 2px solid currentColor;
+  border-block-end: 2px solid currentColor;
+}
+
+.focus-memory-finding-card-chevron {
+  transform: rotate(-45deg);
+}
+
+/* The pager uses drawn chevrons instead of font glyphs, giving both directions
+   identical weight and keeping them centered at every UI scale. */
+.focus-memory-history-pager {
+  gap: 8px;
+}
+
+.focus-memory-history-pager button {
+  display: inline-grid;
+  place-items: center;
+  width: 38px;
+  min-width: 38px;
+  min-height: 38px;
+  padding: 0;
+  border: 1px solid var(--ft-border-soft);
+  border-radius: var(--ft-radius-sm);
+  background: var(--ft-surface);
+  color: var(--ft-ink);
+  box-shadow: none;
+}
+
+.focus-memory-history-pager button:not(:disabled):hover {
+  border-color: var(--ft-border);
+  background: color-mix(in srgb, var(--ft-ink) 4%, var(--ft-surface));
+  color: var(--ft-ink);
+}
+
+.focus-memory-history-pager button:not(:disabled):active {
+  background: color-mix(in srgb, var(--ft-ink) 7%, var(--ft-surface));
+  box-shadow: none;
+  transform: none;
+}
+
+.focus-memory-history-pager button:disabled {
+  border-color: var(--ft-border-faint);
+  background: var(--ft-surface-subtle);
+  color: var(--ft-faint);
+  opacity: .7;
+}
+
+.focus-memory-pager-chevron.is-previous {
+  transform: translateX(1px) rotate(135deg);
+}
+
+.focus-memory-pager-chevron.is-next {
+  transform: translateX(-1px) rotate(-45deg);
+}
+
+.focus-memory-history-pager strong {
+  min-width: 64px;
+  color: var(--ft-ink);
+  font-size: 14px;
+  font-variant-numeric: tabular-nums;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .focus-memory-locate-error {
@@ -140,10 +240,45 @@
   .focus-memory-heading .focus-memory-clear {
     align-self: start;
   }
+
+  .focus-memory-history-toolbar {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .focus-memory-history-mode {
+    width: fit-content;
+  }
+
+  .focus-memory-history-pager {
+    width: 100%;
+    display: grid;
+    grid-template-columns: 38px minmax(0, 1fr) 38px;
+  }
+
+  .focus-memory-history-pager strong {
+    min-width: 0;
+    align-self: center;
+  }
+
+  .focus-memory-finding-head {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 6px;
+  }
+
+  .focus-memory-finding-head > span {
+    justify-self: start;
+  }
 }
 
 @media (max-width: 520px) {
   .focus-memory-history-list:not(.is-step) {
     max-height: min(50vh, 460px);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .focus-memory-finding.is-locatable {
+    transition: none;
   }
 }
