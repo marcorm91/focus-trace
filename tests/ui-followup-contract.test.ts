@@ -61,7 +61,8 @@ describe('UI follow-up contract', () => {
 
     const localized = localizedScanIssue(issue, 'es');
     expect(localized.title).toContain('contexto semántico requerido');
-    expect(localized.evidence).toContain('no cumple el contexto padre o ancestro');
+    expect(localized.evidence).toContain('<li> requiere un padre directo <ul>, <ol> o <menu>');
+    expect(localized.evidence).toContain('el padre actual es <div>');
     expect(localized.evidence).not.toContain('requires a direct');
   });
 
