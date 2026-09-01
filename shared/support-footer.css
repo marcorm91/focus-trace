@@ -17,11 +17,23 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 6px;
   padding: 4px 8px;
   border-radius: 6px;
   color: LinkText;
   font-weight: 700;
   text-decoration: none;
+}
+
+.ft-support-footer-icon {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 auto;
+  fill: none;
+  stroke: currentColor;
+  stroke-width: 1.8;
+  stroke-linecap: round;
+  stroke-linejoin: round;
 }
 
 .ft-support-footer a:hover {
@@ -43,5 +55,9 @@
 @media (forced-colors: active) {
   .ft-support-footer {
     border-top-color: CanvasText;
+  }
+
+  .ft-support-footer-icon {
+    stroke: LinkText;
   }
 }
