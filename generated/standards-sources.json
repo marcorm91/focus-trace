@@ -39,9 +39,9 @@
       "authority": "WHATWG",
       "url": "https://html.spec.whatwg.org/multipage/",
       "role": "normative",
-      "contentHash": "efded796f166ac5d5b978e5b9dd475f692c743ab56a375d1f0fb0b6037866047",
-      "etag": "W/\"6a9586cc-25c4d\"",
-      "lastModified": "Mon, 31 Aug 2026 13:51:08 GMT"
+      "contentHash": "167d4d5453314829ec06adb71b92d2cca17b69d3df5bd01393b04cd05ceeaabe",
+      "etag": "W/\"6a96e38e-25c4f\"",
+      "lastModified": "Tue, 01 Sep 2026 14:39:10 GMT"
     },
     {
       "id": "html-aam",
@@ -58,9 +58,9 @@
       "authority": "WHATWG",
       "url": "https://html.spec.whatwg.org/multipage/obsolete.html",
       "role": "normative",
-      "contentHash": "ee57c600c6e7d56e1ce12ed05950b66d27aec63da3c05ce6786f72b04d0a8cc9",
-      "etag": "W/\"6a9586ce-2abb9\"",
-      "lastModified": "Mon, 31 Aug 2026 13:51:10 GMT"
+      "contentHash": "11b984f04a92dcc010117234f4bea48c6019880c86d2436e4403591629d3aaa3",
+      "etag": "W/\"6a96e38f-2abbb\"",
+      "lastModified": "Tue, 01 Sep 2026 14:39:11 GMT"
     },
     {
       "id": "iana-language-subtags",
@@ -117,8 +117,8 @@
       "url": "https://w3c.github.io/wcag/guidelines/22/",
       "role": "informative",
       "contentHash": "50047cf00ab25f0029def9a271e3e213b7d26c68817f040149e80d3fefc78ba3",
-      "etag": "W/\"6a91c0b9-7c9aa\"",
-      "lastModified": "Fri, 28 Aug 2026 17:09:13 GMT"
+      "etag": "W/\"6a91c0ba-7c9aa\"",
+      "lastModified": "Fri, 28 Aug 2026 17:09:14 GMT"
     },
     {
       "id": "wcag22-errata",
