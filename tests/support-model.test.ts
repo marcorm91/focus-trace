@@ -7,7 +7,7 @@ import { SUPPORT_URL } from '../shared/project-links';
 import { mountSupportFooter } from '../shared/support-footer';
 
 describe('voluntary support configuration', () => {
-  it('keeps support disabled until a real destination is configured', () => {
+  it('uses only a public HTTPS support destination when enabled', () => {
     if (SUPPORT_URL === null) {
       expect(SUPPORT_URL).toBeNull();
       return;
@@ -16,6 +16,10 @@ describe('voluntary support configuration', () => {
     const url = new URL(SUPPORT_URL);
     expect(url.protocol).toBe('https:');
     expect(url.hostname).not.toBe('localhost');
+  });
+
+  it('uses the reviewed GitHub Sponsors destination for this release', () => {
+    expect(SUPPORT_URL).toBe('https://github.com/sponsors/marcorm91');
   });
 
   it('mounts one accessible global footer when support is enabled', () => {

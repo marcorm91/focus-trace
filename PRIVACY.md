@@ -63,13 +63,15 @@ The current permission model is documented in [`README.md`](README.md) and valid
 
 ## External links
 
-FocusTrace may provide links to standards documentation, the project repository, contact pages or future voluntary project-support pages. Opening those destinations is governed by the privacy policies of the external service. FocusTrace does not treat use of those services as part of its local accessibility analysis.
+FocusTrace may provide links to standards documentation, the project repository, contact pages and voluntary project-support pages. Opening those destinations is governed by the privacy policies of the external service. FocusTrace does not treat use of those services as part of its local accessibility analysis.
 
-## Donations and sponsorship
+## Voluntary sponsorship
 
-If voluntary sponsorship or donations are introduced later, payment processing will be handled by the selected external platform. FocusTrace itself is not intended to collect payment-card details.
+FocusTrace provides optional links to the project's public GitHub Sponsors page at `https://github.com/sponsors/marcorm91` from interactive support surfaces such as About, the global side-panel footer and Site Audit. These support links do not appear in printed/exported reports.
 
-A future sponsorship feature must not make accessibility functionality conditional on payment unless this policy and the project's public product commitments are explicitly changed.
+Sponsorship is entirely optional. It does not unlock features, remove limits or change FocusTrace analysis behavior.
+
+GitHub Sponsors and its payment-processing services handle the financial transaction. FocusTrace itself does not collect or process payment-card or bank-account details. Following a support link opens the external GitHub Sponsors service in a new tab, where GitHub's own terms and privacy policy apply.
 
 ## Telemetry and analytics
 
