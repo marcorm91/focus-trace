@@ -36,7 +36,7 @@ See `docs/AXE-SEVERITY-BENCHMARK.md` for the synchronization and review model.
 | `FT-WARN-018` Missing/incompatible required ARIA children | serious | **critical** | axe `aria-required-children` is critical. |
 | `FT-WARN-020` ARIA attribute unsupported by role | serious | **critical** | axe `aria-allowed-attr` is critical. |
 
-Existing equivalent rules that already matched axe keep their severity, including page title, buttons, form fields, links, aria-hidden focus, label-in-name, page language, contrast, deprecated roles and prohibited ARIA attributes.
+Existing equivalent rules that already matched axe keep their severity, including page title, buttons, form fields, links, aria-hidden focus, label-in-name, page language, text contrast, deprecated roles and prohibited ARIA attributes.
 
 ## Current core rule audit
 
@@ -52,7 +52,7 @@ Existing equivalent rules that already matched axe keep their severity, includin
 | `FT-WCAG-008` Page lang present | serious | fail | Aligned with axe `html-has-lang`. |
 | `FT-WCAG-009` Page lang known | serious | fail | Aligned with axe `html-lang-valid`. |
 | `FT-WCAG-010` Text contrast | serious | fail / review | Aligned with axe `color-contrast`. |
-| `FT-WCAG-011` Non-text contrast | serious | fail / review | Aligned with axe `non-text-contrast`. |
+| `FT-WCAG-011` Non-text contrast | serious | fail / review | FocusTrace-owned WCAG 1.4.11 detector; axe-core 4.13 has no equivalent rule to enforce. |
 | `FT-WARN-001` Deprecated ARIA role | minor | warning | Aligned with axe `aria-deprecated-role`. |
 | `FT-WARN-002` Deprecated ARIA property | minor | warning | No exact impact mapping is enforced; deprecation alone is treated as an authoring/compatibility warning. |
 | `FT-WARN-003` Prohibited ARIA property | serious | warning | Aligned with axe `aria-prohibited-attr`. |
