@@ -34,7 +34,7 @@ describe('page inspector entries', () => {
     expect(entry).toMatchObject({ tone: 'ok', status: 'No signals', findingCount: 0 });
   });
 
-  it('links descendant failures and exposes the exact rule in context', () => {
+  it('links descendant failures and localizes the exact rule in Spanish', () => {
     const scan: ScanResult = {
       ...emptyScan,
       issues: [{
@@ -49,8 +49,47 @@ describe('page inspector entries', () => {
       }],
     };
     const [entry] = buildPageInspectorEntries([target()], scan, [], 'es');
-    expect(entry).toMatchObject({ tone: 'fail', status: 'FAIL · FT-WCAG-003', findingCount: 1 });
-    expect(entry?.detail).toContain('Button has no accessible name');
+    expect(entry).toMatchObject({
+      tone: 'fail',
+      status: 'FALLO · FT-WCAG-003',
+      findingCount: 1,
+      findingSummary: '1 hallazgo vinculado',
+    });
+    expect(entry?.detail).toContain('El botón tiene un nombre accesible no vacío');
+    expect(entry?.detail).not.toContain('Button has no accessible name');
+  });
+
+  it('localizes contrast reviews instead of leaking the English scan copy', () => {
+    const scan: ScanResult = {
+      ...emptyScan,
+      review: [{
+        id: 'review-contrast',
+        ruleId: 'FT-WCAG-010',
+        title: 'Text color contrast',
+        description: 'FocusTrace could not determine the rendered text/background contrast reliably.',
+        severity: 'serious',
+        outcome: 'review',
+        targets: ['#save'],
+        references: [],
+        contrast: {
+          kind: 'text',
+          subject: 'text',
+          requiredRatio: 4.5,
+          reason: 'The rendered background could not be resolved reliably.',
+        },
+      }],
+    };
+
+    const [entry] = buildPageInspectorEntries([target()], scan, [], 'es');
+    expect(entry).toMatchObject({
+      tone: 'review',
+      status: 'REVISIÓN · FT-WCAG-010',
+      findingCount: 1,
+      findingSummary: '1 hallazgo vinculado',
+    });
+    expect(entry?.detail).toContain('Contraste de color del texto');
+    expect(entry?.detail).toContain('FocusTrace no puede determinar con fiabilidad');
+    expect(entry?.detail).not.toContain('Text color contrast');
   });
 
   it('keeps contextual focus-path signals as review instead of red failure', () => {
@@ -82,7 +121,8 @@ describe('page inspector entries', () => {
     }];
     const [entry] = buildPageInspectorEntries([target()], emptyScan, events, 'en');
     expect(entry).toMatchObject({ tone: 'fail', status: 'FAIL · FT-RUNTIME-002', findingCount: 1 });
-    expect(entry?.detail).toContain('Focus is obscured');
+    expect(entry?.detail).toContain('The focused control may be covered by other content');
+    expect(entry?.detail).not.toContain('Focus is obscured');
   });
 
   it('does not promote a serious runtime review to deterministic failure', () => {

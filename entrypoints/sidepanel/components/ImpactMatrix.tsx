@@ -86,12 +86,6 @@ export function ImpactMatrix({ scan, language }: { scan: ScanResult; language: A
               </tbody>
             </table>
           </div>
-
-          <p>{tr(
-            language,
-            'Example: a skipped heading level is a Review with Minor impact, so it is counted under Review · Minor rather than disappearing from a failure-only counter.',
-            'Ejemplo: un salto de nivel de encabezado es una Revisión de impacto Leve, por lo que se cuenta en Revisión · Leve y no desaparece de un contador limitado a fallos.',
-          )}</p>
         </section>
       )}
     </>

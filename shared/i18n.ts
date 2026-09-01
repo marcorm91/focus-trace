@@ -74,6 +74,62 @@ const EXTRA_COPY_ES: Record<string, { title: string; description: string }> = {
   },
 };
 
+const EXTRA_EVIDENCE_ES: Record<string, string> = {
+  'FT-WARN-008': 'El elemento señalado no cumple el contexto padre o ancestro nativo exigido por HTML.',
+  'FT-WARN-009': 'La estructura hija, agrupación u orden del elemento señalado no coincide con el modelo de contenido HTML nativo.',
+  'FT-WARN-010': 'Se ha detectado contenido interactivo o etiquetable anidado en una combinación que HTML no permite.',
+  'FT-WARN-011': 'El elemento <main> señalado se encuentra dentro de un ancestro no permitido por HTML.',
+  'FT-WARN-012': 'El valor de role del elemento señalado no resuelve a un rol WAI-ARIA válido y no abstracto.',
+  'FT-WARN-013': 'El elemento señalado utiliza un atributo aria-* que no existe en el registro WAI-ARIA sincronizado.',
+  'FT-WARN-014': 'El estado o propiedad ARIA del elemento señalado contiene un valor no válido para su gramática.',
+  'FT-WARN-015': 'Al rol ARIA resuelto del elemento señalado le falta un estado o propiedad obligatoria.',
+  'FT-WARN-016': 'La relación ARIA basada en IDs del elemento señalado no resuelve de forma válida.',
+  'FT-WARN-017': 'El rol ARIA del elemento señalado no se encuentra dentro de su contexto padre de accesibilidad requerido.',
+  'FT-WARN-018': 'El contenedor ARIA señalado expone un rol hijo que no está permitido por su modelo de roles.',
+  'FT-WARN-019': 'Los valores ARIA de rango, posición o conjunto del elemento señalado son internamente incoherentes.',
+  'FT-WARN-020': 'El estado o propiedad ARIA del elemento señalado no es compatible con su rol resuelto.',
+  'FT-WARN-021': 'La relación ARIA del elemento señalado resuelve, pero el estado expuesto contradice esa relación o el contenido relacionado.',
+  'FT-REVIEW-009': 'La sección señalada no tiene un encabezado propio ni un nombre accesible calculado y necesita revisión contextual.',
+  'FT-REVIEW-010': 'El landmark señalado repite un rol sin un nombre accesible suficientemente diferenciable.',
+};
+
+function technicalEvidenceTokens(evidence: string): string[] {
+  const matches = evidence.match(/<[^>]+>|aria-[a-z-]+(?:="[^"]*")?|role="[^"]*"|#[A-Za-z][\w:.-]*/gi) ?? [];
+  return [...new Set(matches)];
+}
+
+function localizedExtraEvidence(ruleId: string, evidence: string): string | undefined {
+  if (ruleId === 'FT-WARN-008') {
+    const directParent = evidence.match(/^(<[^>]+>) requires a direct (.+?) parent(?:; current parent is (.+?))?\.$/);
+    if (directParent) {
+      const parentRequirement = (directParent[2] ?? '')
+        .replace(/\s+or\s+/gi, ' o ')
+        .replace(/\s+and\s+/gi, ' y ');
+      return `${directParent[1]} requiere un padre directo ${parentRequirement}${directParent[3] ? `; el padre actual es ${directParent[3]}` : ''}.`;
+    }
+  }
+
+  if (ruleId === 'FT-WARN-016') {
+    const missingId = evidence.match(/^(aria-[a-z-]+) references missing ID (#[A-Za-z][\w:.-]*)\.$/i);
+    if (missingId) return `${missingId[1]} hace referencia al ID inexistente ${missingId[2]}.`;
+  }
+
+  if (ruleId === 'FT-WARN-020') {
+    const unsupported = evidence.match(/^(aria-[a-z-]+) is not supported by (role="[^"]+")\.$/i);
+    if (unsupported) return `${unsupported[1]} no es compatible con ${unsupported[2]}.`;
+  }
+
+  if (ruleId === 'FT-WARN-021') {
+    const contradiction = evidence.match(/^(aria-[a-z-]+="[^"]+") contradicts the current availability of (#[A-Za-z][\w:.-]*)\.$/i);
+    if (contradiction) return `${contradiction[1]} contradice la disponibilidad actual de ${contradiction[2]}.`;
+  }
+
+  const fallback = EXTRA_EVIDENCE_ES[ruleId];
+  if (!fallback) return undefined;
+  const tokens = technicalEvidenceTokens(evidence);
+  return tokens.length > 0 ? `${fallback} Datos técnicos: ${tokens.join(' · ')}.` : fallback;
+}
+
 export function localizedRuleTitle(ruleId: string, fallback: string, language: AppLanguage): string {
   if (language === 'es' && EXTRA_COPY_ES[ruleId]) return EXTRA_COPY_ES[ruleId].title;
   return baseLocalizedRuleTitle(ruleId, fallback, language);
@@ -82,5 +138,13 @@ export function localizedRuleTitle(ruleId: string, fallback: string, language: A
 export function localizedScanIssue(issue: ScanIssue, language: AppLanguage): ScanIssue {
   const copy = language === 'es' ? EXTRA_COPY_ES[issue.ruleId] : undefined;
   if (!copy) return baseLocalizedScanIssue(issue, language);
-  return baseLocalizedScanIssue({ ...issue, title: copy.title, description: copy.description }, language);
+
+  const localized = baseLocalizedScanIssue({
+    ...issue,
+    title: copy.title,
+    description: copy.description,
+  }, language);
+  if (!issue.evidence || localized.evidence !== issue.evidence) return localized;
+  const evidence = localizedExtraEvidence(issue.ruleId, issue.evidence);
+  return evidence ? { ...localized, evidence } : localized;
 }

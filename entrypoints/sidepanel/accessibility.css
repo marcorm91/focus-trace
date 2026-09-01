@@ -8,6 +8,34 @@ summary:focus-visible {
   outline-offset: 3px;
 }
 
+/* Keep hover affordance visible even when component-level rules reset the
+   button background shorthand. The translucent ink layer preserves the
+   component's own semantic background while making interactivity perceptible. */
+button:not(:disabled):hover {
+  background-image: linear-gradient(
+    color-mix(in srgb, currentColor 4%, transparent),
+    color-mix(in srgb, currentColor 4%, transparent)
+  );
+}
+
+/* Ready is a completed state, not an action. Keep the badge visually neutral
+   and replace the ambiguous status dot with a semantic check-circle glyph. */
+.quick-start-copy .status.ready {
+  border-color: var(--ft-border-soft);
+  background: color-mix(in srgb, var(--ft-surface-subtle) 78%, var(--ft-surface));
+  color: var(--ft-ink);
+}
+
+.quick-start-copy .status.ready > span {
+  width: 16px;
+  height: 16px;
+  flex: 0 0 16px;
+  border-radius: 0;
+  background: currentColor;
+  -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6.5' fill='none' stroke='black' stroke-width='1.4'/%3E%3Cpath d='M4.8 8.2 7 10.2l4.2-4.4' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+  mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Ccircle cx='8' cy='8' r='6.5' fill='none' stroke='black' stroke-width='1.4'/%3E%3Cpath d='M4.8 8.2 7 10.2l4.2-4.4' fill='none' stroke='black' stroke-width='1.6' stroke-linecap='round' stroke-linejoin='round'/%3E%3C/svg%3E") center / contain no-repeat;
+}
+
 @media (prefers-reduced-motion: reduce) {
   *,
   *::before,
