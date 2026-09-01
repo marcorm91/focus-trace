@@ -25,54 +25,90 @@ function inlineStyleFor(element: Element): CSSStyleDeclaration | undefined {
     : undefined;
 }
 
-function styleValue(
+function styleValues(
   computed: CSSStyleDeclaration,
   inline: CSSStyleDeclaration | undefined,
   property: string,
-): string {
-  return computed.getPropertyValue(property) || inline?.getPropertyValue(property) || '';
+): string[] {
+  const values = [computed.getPropertyValue(property), inline?.getPropertyValue(property)]
+    .map((value) => value?.trim() ?? '')
+    .filter(Boolean);
+  return [...new Set(values)];
+}
+
+function isZeroLegacyClip(value: string): boolean {
+  const normalized = value
+    .trim()
+    .toLowerCase()
+    .replace(/px/g, '')
+    .replace(/[,\s]+/g, ',');
+  return normalized === 'rect(0,0,0,0)';
 }
 
 function clipsAllRenderedContent(
   computed: CSSStyleDeclaration,
   inline: CSSStyleDeclaration | undefined,
 ): boolean {
-  const clip = normalizedCssValue(computed.clip || inline?.clip);
-  if (clip === 'rect(0px,0px,0px,0px)' || clip === 'rect(0,0,0,0)') return true;
+  const clipValues = [computed.clip, inline?.clip, ...styleValues(computed, inline, 'clip')]
+    .filter((value): value is string => Boolean(value?.trim()));
+  if (clipValues.some(isZeroLegacyClip)) return true;
 
-  const clipPath = normalizedCssValue(styleValue(computed, inline, 'clip-path'));
-  return clipPath === 'inset(50%)'
+  const clipPaths = styleValues(computed, inline, 'clip-path').map(normalizedCssValue);
+  return clipPaths.some((clipPath) => clipPath === 'inset(50%)'
     || clipPath === 'inset(50%50%50%50%)'
     || clipPath === 'inset(100%)'
     || clipPath === 'circle(0px)'
-    || clipPath === 'circle(0%)';
+    || clipPath === 'circle(0%)');
 }
 
 function fullyTransparentFilter(
   computed: CSSStyleDeclaration,
   inline: CSSStyleDeclaration | undefined,
 ): boolean {
-  const filter = (computed.filter || inline?.filter || '').toLowerCase();
-  return /opacity\(\s*(?:0(?:\.0+)?|0%)\s*\)/.test(filter);
+  return styleValues(computed, inline, 'filter').some((filter) =>
+    /opacity\(\s*(?:0(?:\.0+)?|0%)\s*\)/.test(filter.toLowerCase()),
+  );
+}
+
+function hasZeroNumericStyle(
+  computed: CSSStyleDeclaration,
+  inline: CSSStyleDeclaration | undefined,
+  property: string,
+): boolean {
+  return styleValues(computed, inline, property).some((value) => {
+    const numeric = Number.parseFloat(value);
+    return Number.isFinite(numeric) && numeric <= 0;
+  });
+}
+
+function hasClippingOverflow(
+  computed: CSSStyleDeclaration,
+  inline: CSSStyleDeclaration | undefined,
+  axis: 'x' | 'y',
+): boolean {
+  const axisProperty = axis === 'x' ? 'overflow-x' : 'overflow-y';
+  return [...styleValues(computed, inline, axisProperty), ...styleValues(computed, inline, 'overflow')]
+    .some((value) => ['hidden', 'clip'].includes(value.toLowerCase()));
 }
 
 function suppressesVisualRendering(element: Element): boolean {
   const computed = getComputedStyle(element);
   const inline = inlineStyleFor(element);
 
-  if (computed.display === 'none') return true;
-  if (styleValue(computed, inline, 'content-visibility').trim().toLowerCase() === 'hidden') return true;
+  if (element.hasAttribute('hidden') || computed.display === 'none') return true;
+  if (['hidden', 'collapse'].includes(computed.visibility)) return true;
+  if (styleValues(computed, inline, 'content-visibility')
+    .some((value) => value.toLowerCase() === 'hidden')) return true;
 
-  const opacity = Number.parseFloat(computed.opacity || inline?.opacity || '1');
-  if (Number.isFinite(opacity) && opacity <= 0) return true;
+  if (hasZeroNumericStyle(computed, inline, 'opacity')) return true;
   if (fullyTransparentFilter(computed, inline)) return true;
   if (clipsAllRenderedContent(computed, inline)) return true;
 
-  const width = Number.parseFloat(computed.width || inline?.width || '');
-  const height = Number.parseFloat(computed.height || inline?.height || '');
-  const overflowX = (computed.overflowX || inline?.overflowX || computed.overflow || inline?.overflow || '').toLowerCase();
-  const overflowY = (computed.overflowY || inline?.overflowY || computed.overflow || inline?.overflow || '').toLowerCase();
-  if (width === 0 && height === 0 && ['hidden', 'clip'].includes(overflowX) && ['hidden', 'clip'].includes(overflowY)) {
+  const zeroWidth = hasZeroNumericStyle(computed, inline, 'width');
+  const zeroHeight = hasZeroNumericStyle(computed, inline, 'height');
+  if (zeroWidth && zeroHeight
+    && hasClippingOverflow(computed, inline, 'x')
+    && hasClippingOverflow(computed, inline, 'y')) {
     return true;
   }
 
