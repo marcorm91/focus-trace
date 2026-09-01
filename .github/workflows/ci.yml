@@ -29,10 +29,12 @@ jobs:
           if grep -q '"languages": 0' generated/language-subtags.json \
             || grep -q '"active": 0' generated/wcag-catalog.json \
             || grep -q '"obsoleteElements": 0' generated/html-obsolete-catalog.json \
-            || grep -q '"sources": 0' generated/standards-sources.json; then
+            || grep -q '"sources": 0' generated/standards-sources.json \
+            || grep -q '"total": 0' generated/axe-rule-severities.json; then
             npm run standards:sync
           fi
       - run: npm run standards:validate
+      - run: npm run axe:validate
       - run: npm run check
       - run: npm run lint
       - run: npm test
@@ -48,6 +50,7 @@ jobs:
           path: |
             generated/act-catalog.json
             generated/aria-registry.json
+            generated/axe-rule-severities.json
             generated/language-subtags.json
             generated/wcag-catalog.json
             generated/html-obsolete-catalog.json

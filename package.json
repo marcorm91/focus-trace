@@ -20,7 +20,7 @@
     "test": "vitest run --exclude \"tests/e2e/**\"",
     "test:e2e": "playwright test",
     "e2e": "npm run build:e2e && npm run test:e2e",
-    "release:check": "npm run standards:validate && npm run check && npm run lint && npm test && npm run build && npm run build:edge && npm run build:firefox && npm run validate:builds",
+    "release:check": "npm run standards:validate && npm run axe:validate && npm run check && npm run lint && npm test && npm run build && npm run build:edge && npm run build:firefox && npm run validate:builds",
     "release:check:full": "npm run release:check && npm run e2e",
     "act:sync": "node tools/act-sync.mjs",
     "aria:sync": "node tools/aria-sync.mjs",
@@ -28,6 +28,8 @@
     "wcag:sync": "node tools/wcag-sync.mjs",
     "html:sync": "node tools/html-sync.mjs",
     "specs:sync": "node tools/specs-sync.mjs",
+    "axe:sync": "node tools/axe-sync.mjs",
+    "axe:validate": "node tools/axe-validate.mjs",
     "standards:sync": "node tools/standards-sync.mjs",
     "standards:validate": "node tools/standards-validate.mjs",
     "postinstall": "wxt prepare"

@@ -65,10 +65,10 @@ export const RULES = {
   imageName: {
     id: 'FT-WCAG-002',
     title: 'Image has an accessible name or is marked decorative',
-    severity: 'serious',
+    severity: 'critical',
     ...impact(
-      'An unnamed meaningful image can remove information for screen-reader users. FocusTrace uses one base severity for native images and role=img without assuming every image is a complete task blocker.',
-      'Una imagen significativa sin nombre puede eliminar información para usuarios de lector de pantalla. FocusTrace usa una única severidad base para imágenes nativas y role=img sin asumir que toda imagen bloquea por completo una tarea.',
+      'An unnamed meaningful image can remove its information completely for screen-reader users. FocusTrace aligns this broad image-name check to the highest equivalent axe-core impact, where image-alt is critical.',
+      'Una imagen significativa sin nombre puede eliminar por completo su información para usuarios de lector de pantalla. FocusTrace alinea esta comprobación amplia del nombre de imagen con el mayor impacto equivalente de axe-core, donde image-alt es crítico.',
     ),
     references: [wcag('1.1.1', 'Non-text Content', 'A', 'non-text-content'), act('23a2a8', 'Image has non-empty accessible name')],
   },

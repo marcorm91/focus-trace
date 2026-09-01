@@ -1,0 +1,1483 @@
+{
+  "schemaVersion": 1,
+  "source": {
+    "repository": "dequelabs/axe-core",
+    "release": "4.13.0",
+    "tag": "v4.13.0",
+    "publishedAt": "2026-08-05T16:52:19Z"
+  },
+  "summary": {
+    "total": 105,
+    "critical": 21,
+    "serious": 52,
+    "moderate": 18,
+    "minor": 14,
+    "unrated": 0
+  },
+  "rules": [
+    {
+      "id": "accesskeys",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.keyboard"
+      ]
+    },
+    {
+      "id": "area-alt",
+      "impact": "critical",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.2.4.4",
+        "EN-9.4.1.2",
+        "RGAA-1.1.2",
+        "RGAAv4",
+        "TT6.a",
+        "TTv5",
+        "cat.text-alternatives",
+        "section508",
+        "section508.22.a",
+        "wcag244",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "aria-allowed-attr",
+      "impact": "critical",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "RGAA-7.1.1",
+        "RGAAv4",
+        "cat.aria",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "aria-allowed-role",
+      "impact": "minor",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.aria"
+      ]
+    },
+    {
+      "id": "aria-braille-equivalent",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "cat.aria",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "aria-command-name",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "RGAA-11.9.1",
+        "RGAAv4",
+        "TT6.a",
+        "TTv5",
+        "cat.aria",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "aria-conditional-attr",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "RGAA-7.1.1",
+        "RGAAv4",
+        "cat.aria",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "aria-deprecated-role",
+      "impact": "minor",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "RGAA-7.1.1",
+        "RGAAv4",
+        "cat.aria",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "aria-dialog-name",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.aria"
+      ]
+    },
+    {
+      "id": "aria-hidden-body",
+      "impact": "critical",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.1.3.1",
+        "EN-9.4.1.2",
+        "RGAA-10.8.1",
+        "RGAAv4",
+        "cat.aria",
+        "wcag131",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "aria-hidden-focus",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "RGAA-10.8.1",
+        "RGAAv4",
+        "TT6.a",
+        "TTv5",
+        "cat.name-role-value",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "aria-input-field-name",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "RGAA-11.1.1",
+        "RGAAv4",
+        "TT5.c",
+        "TTv5",
+        "cat.aria",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "aria-meter-name",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.1.1.1",
+        "RGAA-11.1.1",
+        "RGAAv4",
+        "cat.aria",
+        "wcag111",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "aria-progressbar-name",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.1.1.1",
+        "RGAA-11.1.1",
+        "RGAAv4",
+        "cat.aria",
+        "wcag111",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "aria-prohibited-attr",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "RGAA-7.1.1",
+        "RGAAv4",
+        "cat.aria",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "aria-required-attr",
+      "impact": "critical",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "RGAA-7.1.1",
+        "RGAAv4",
+        "cat.aria",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "aria-required-children",
+      "impact": "critical",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.1.3.1",
+        "RGAA-9.3.1",
+        "RGAAv4",
+        "cat.aria",
+        "wcag131",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "aria-required-parent",
+      "impact": "critical",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.1.3.1",
+        "RGAA-9.3.1",
+        "RGAAv4",
+        "cat.aria",
+        "wcag131",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "aria-roledescription",
+      "impact": "serious",
+      "enabled": false,
+      "tags": [
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "cat.aria",
+        "deprecated",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "aria-roles",
+      "impact": "critical",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "RGAA-7.1.1",
+        "RGAAv4",
+        "cat.aria",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "aria-tab-name",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "RGAA-7.1.1",
+        "RGAAv4",
+        "TT5.c",
+        "TTv5",
+        "cat.aria",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "aria-text",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.aria"
+      ]
+    },
+    {
+      "id": "aria-toggle-field-name",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "RGAA-7.1.1",
+        "RGAAv4",
+        "TT5.c",
+        "TTv5",
+        "cat.aria",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "aria-tooltip-name",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "cat.aria",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "aria-treeitem-name",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.aria"
+      ]
+    },
+    {
+      "id": "aria-valid-attr",
+      "impact": "critical",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "RGAA-7.1.1",
+        "RGAAv4",
+        "cat.aria",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "aria-valid-attr-value",
+      "impact": "critical",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "RGAA-7.1.1",
+        "RGAAv4",
+        "cat.aria",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "audio-caption",
+      "impact": "critical",
+      "enabled": false,
+      "tags": [
+        "EN-301-549",
+        "EN-9.1.2.1",
+        "cat.time-and-media",
+        "deprecated",
+        "section508",
+        "section508.22.a",
+        "wcag121",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "autocomplete-valid",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.1.3.5",
+        "RGAA-11.13.1",
+        "RGAAv4",
+        "cat.forms",
+        "wcag135",
+        "wcag21aa"
+      ]
+    },
+    {
+      "id": "avoid-inline-spacing",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.1.4.12",
+        "cat.structure",
+        "wcag1412",
+        "wcag21aa"
+      ]
+    },
+    {
+      "id": "blink",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.2.2.2",
+        "RGAA-13.8.1",
+        "RGAAv4",
+        "TT2.b",
+        "TTv5",
+        "cat.time-and-media",
+        "section508",
+        "section508.22.j",
+        "wcag222",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "button-name",
+      "impact": "critical",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "RGAA-11.9.1",
+        "RGAAv4",
+        "TT6.a",
+        "TTv5",
+        "cat.name-role-value",
+        "section508",
+        "section508.22.a",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "bypass",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.2.4.1",
+        "RGAA-12.7.1",
+        "RGAAv4",
+        "TT9.a",
+        "TTv5",
+        "cat.keyboard",
+        "section508",
+        "section508.22.o",
+        "wcag241",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "color-contrast",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.1.4.3",
+        "RGAA-3.2.1",
+        "RGAAv4",
+        "TT13.c",
+        "TTv5",
+        "cat.color",
+        "wcag143",
+        "wcag2aa"
+      ]
+    },
+    {
+      "id": "color-contrast-enhanced",
+      "impact": "serious",
+      "enabled": false,
+      "tags": [
+        "ACT",
+        "cat.color",
+        "wcag146",
+        "wcag2aaa"
+      ]
+    },
+    {
+      "id": "css-orientation-lock",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.1.3.4",
+        "RGAA-13.9.1",
+        "RGAAv4",
+        "cat.structure",
+        "experimental",
+        "wcag134",
+        "wcag21aa"
+      ]
+    },
+    {
+      "id": "definition-list",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.1.3.1",
+        "RGAA-9.3.3",
+        "RGAAv4",
+        "cat.structure",
+        "wcag131",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "dlitem",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.1.3.1",
+        "RGAA-9.3.3",
+        "RGAAv4",
+        "cat.structure",
+        "wcag131",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "document-title",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.2.4.2",
+        "RGAA-8.5.1",
+        "RGAAv4",
+        "TT12.a",
+        "TTv5",
+        "cat.text-alternatives",
+        "wcag242",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "duplicate-id",
+      "impact": "minor",
+      "enabled": false,
+      "tags": [
+        "cat.parsing",
+        "deprecated",
+        "wcag2a-obsolete",
+        "wcag411"
+      ]
+    },
+    {
+      "id": "duplicate-id-active",
+      "impact": "serious",
+      "enabled": false,
+      "tags": [
+        "cat.parsing",
+        "deprecated",
+        "wcag2a-obsolete",
+        "wcag411"
+      ]
+    },
+    {
+      "id": "duplicate-id-aria",
+      "impact": "critical",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "RGAA-8.2.1",
+        "RGAAv4",
+        "cat.parsing",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "empty-heading",
+      "impact": "minor",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.name-role-value"
+      ]
+    },
+    {
+      "id": "empty-table-header",
+      "impact": "minor",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.name-role-value"
+      ]
+    },
+    {
+      "id": "focus-order-semantics",
+      "impact": "minor",
+      "enabled": true,
+      "tags": [
+        "RGAA-12.8.1",
+        "RGAAv4",
+        "best-practice",
+        "cat.keyboard",
+        "experimental"
+      ]
+    },
+    {
+      "id": "form-field-multiple-labels",
+      "impact": "moderate",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.3.3.2",
+        "RGAA-11.2.1",
+        "RGAAv4",
+        "TT5.c",
+        "TTv5",
+        "cat.forms",
+        "wcag2a",
+        "wcag332"
+      ]
+    },
+    {
+      "id": "frame-focusable-content",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.2.1.1",
+        "RGAA-7.3.2",
+        "RGAAv4",
+        "TT4.a",
+        "TTv5",
+        "cat.keyboard",
+        "wcag211",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "frame-tested",
+      "impact": "critical",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.structure",
+        "review-item"
+      ]
+    },
+    {
+      "id": "frame-title",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "RGAA-2.1.1",
+        "RGAAv4",
+        "TT12.d",
+        "TTv5",
+        "cat.text-alternatives",
+        "section508",
+        "section508.22.i",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "frame-title-unique",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "RGAA-2.2.1",
+        "RGAAv4",
+        "TT12.d",
+        "TTv5",
+        "cat.text-alternatives",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "heading-order",
+      "impact": "moderate",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.semantics"
+      ]
+    },
+    {
+      "id": "hidden-content",
+      "impact": "minor",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.structure",
+        "experimental",
+        "review-item"
+      ]
+    },
+    {
+      "id": "html-has-lang",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.3.1.1",
+        "RGAA-8.3.1",
+        "RGAAv4",
+        "TT11.a",
+        "TTv5",
+        "cat.language",
+        "wcag2a",
+        "wcag311"
+      ]
+    },
+    {
+      "id": "html-lang-valid",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.3.1.1",
+        "RGAA-8.4.1",
+        "RGAAv4",
+        "TT11.a",
+        "TTv5",
+        "cat.language",
+        "wcag2a",
+        "wcag311"
+      ]
+    },
+    {
+      "id": "html-xml-lang-mismatch",
+      "impact": "moderate",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.3.1.1",
+        "RGAA-8.3.1",
+        "RGAAv4",
+        "cat.language",
+        "wcag2a",
+        "wcag311"
+      ]
+    },
+    {
+      "id": "identical-links-same-purpose",
+      "impact": "minor",
+      "enabled": false,
+      "tags": [
+        "cat.semantics",
+        "wcag249",
+        "wcag2aaa"
+      ]
+    },
+    {
+      "id": "image-alt",
+      "impact": "critical",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.1.1.1",
+        "RGAA-1.1.1",
+        "RGAAv4",
+        "TT7.a",
+        "TT7.b",
+        "TTv5",
+        "cat.text-alternatives",
+        "section508",
+        "section508.22.a",
+        "wcag111",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "image-redundant-alt",
+      "impact": "minor",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.text-alternatives"
+      ]
+    },
+    {
+      "id": "input-button-name",
+      "impact": "critical",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "RGAA-11.9.1",
+        "RGAAv4",
+        "TT5.c",
+        "TTv5",
+        "cat.name-role-value",
+        "section508",
+        "section508.22.a",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "input-image-alt",
+      "impact": "critical",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.1.1.1",
+        "EN-9.4.1.2",
+        "RGAA-1.1.3",
+        "RGAAv4",
+        "TT7.a",
+        "TTv5",
+        "cat.text-alternatives",
+        "section508",
+        "section508.22.a",
+        "wcag111",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "label",
+      "impact": "critical",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "RGAA-11.1.1",
+        "RGAAv4",
+        "TT5.c",
+        "TTv5",
+        "cat.forms",
+        "section508",
+        "section508.22.n",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "label-content-name-mismatch",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.2.5.3",
+        "RGAA-6.1.5",
+        "RGAAv4",
+        "cat.semantics",
+        "experimental",
+        "wcag21a",
+        "wcag253"
+      ]
+    },
+    {
+      "id": "label-title-only",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.forms"
+      ]
+    },
+    {
+      "id": "landmark-banner-is-top-level",
+      "impact": "moderate",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.semantics"
+      ]
+    },
+    {
+      "id": "landmark-complementary-is-top-level",
+      "impact": "moderate",
+      "enabled": false,
+      "tags": [
+        "best-practice",
+        "cat.semantics",
+        "deprecated"
+      ]
+    },
+    {
+      "id": "landmark-contentinfo-is-top-level",
+      "impact": "moderate",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.semantics"
+      ]
+    },
+    {
+      "id": "landmark-main-is-top-level",
+      "impact": "moderate",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.semantics"
+      ]
+    },
+    {
+      "id": "landmark-no-duplicate-banner",
+      "impact": "moderate",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.semantics"
+      ]
+    },
+    {
+      "id": "landmark-no-duplicate-contentinfo",
+      "impact": "moderate",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.semantics"
+      ]
+    },
+    {
+      "id": "landmark-no-duplicate-main",
+      "impact": "moderate",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.semantics"
+      ]
+    },
+    {
+      "id": "landmark-one-main",
+      "impact": "moderate",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.semantics"
+      ]
+    },
+    {
+      "id": "landmark-unique",
+      "impact": "moderate",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.semantics"
+      ]
+    },
+    {
+      "id": "link-in-text-block",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.1.4.1",
+        "RGAA-10.6.1",
+        "RGAAv4",
+        "TT13.a",
+        "TTv5",
+        "cat.color",
+        "wcag141",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "link-name",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.2.4.4",
+        "EN-9.4.1.2",
+        "RGAA-6.2.1",
+        "RGAAv4",
+        "TT6.a",
+        "TTv5",
+        "cat.name-role-value",
+        "section508",
+        "section508.22.a",
+        "wcag244",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "list",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.1.3.1",
+        "RGAA-9.3.1",
+        "RGAAv4",
+        "cat.structure",
+        "wcag131",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "listitem",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.1.3.1",
+        "RGAA-9.3.1",
+        "RGAAv4",
+        "cat.structure",
+        "wcag131",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "marquee",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.2.2.2",
+        "RGAA-13.8.1",
+        "RGAAv4",
+        "TT2.b",
+        "TTv5",
+        "cat.parsing",
+        "wcag222",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "meta-refresh",
+      "impact": "critical",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.2.2.1",
+        "RGAA-13.1.2",
+        "RGAAv4",
+        "TT8.a",
+        "TTv5",
+        "cat.time-and-media",
+        "wcag221",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "meta-refresh-no-exceptions",
+      "impact": "minor",
+      "enabled": false,
+      "tags": [
+        "cat.time-and-media",
+        "wcag224",
+        "wcag2aaa",
+        "wcag325"
+      ]
+    },
+    {
+      "id": "meta-viewport",
+      "impact": "moderate",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.1.4.4",
+        "RGAA-10.4.2",
+        "RGAAv4",
+        "cat.sensory-and-visual-cues",
+        "wcag144",
+        "wcag2aa"
+      ]
+    },
+    {
+      "id": "meta-viewport-large",
+      "impact": "minor",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.sensory-and-visual-cues"
+      ]
+    },
+    {
+      "id": "nested-interactive",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "RGAA-7.1.1",
+        "RGAAv4",
+        "TT6.a",
+        "TTv5",
+        "cat.keyboard",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "no-autoplay-audio",
+      "impact": "moderate",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.1.4.2",
+        "RGAA-4.10.1",
+        "RGAAv4",
+        "TT2.a",
+        "TTv5",
+        "cat.time-and-media",
+        "wcag142",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "object-alt",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.1.1.1",
+        "RGAA-1.1.6",
+        "RGAAv4",
+        "cat.text-alternatives",
+        "section508",
+        "section508.22.a",
+        "wcag111",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "p-as-heading",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.1.3.1",
+        "RGAA-9.1.3",
+        "RGAAv4",
+        "cat.semantics",
+        "experimental",
+        "wcag131",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "page-has-heading-one",
+      "impact": "moderate",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.semantics"
+      ]
+    },
+    {
+      "id": "presentation-role-conflict",
+      "impact": "minor",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "best-practice",
+        "cat.aria"
+      ]
+    },
+    {
+      "id": "region",
+      "impact": "moderate",
+      "enabled": true,
+      "tags": [
+        "RGAA-9.2.1",
+        "RGAAv4",
+        "best-practice",
+        "cat.keyboard"
+      ]
+    },
+    {
+      "id": "role-img-alt",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.1.1.1",
+        "RGAA-1.1.1",
+        "RGAAv4",
+        "TT7.a",
+        "TTv5",
+        "cat.text-alternatives",
+        "section508",
+        "section508.22.a",
+        "wcag111",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "scope-attr-valid",
+      "impact": "moderate",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.tables"
+      ]
+    },
+    {
+      "id": "scrollable-region-focusable",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.2.1.1",
+        "EN-9.2.1.3",
+        "RGAA-7.3.2",
+        "RGAAv4",
+        "TT4.a",
+        "TTv5",
+        "cat.keyboard",
+        "wcag211",
+        "wcag213",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "select-name",
+      "impact": "critical",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "RGAA-11.1.1",
+        "RGAAv4",
+        "TT5.c",
+        "TTv5",
+        "cat.forms",
+        "section508",
+        "section508.22.n",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "server-side-image-map",
+      "impact": "minor",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.2.1.1",
+        "RGAA-1.1.4",
+        "RGAAv4",
+        "TT4.a",
+        "TTv5",
+        "cat.text-alternatives",
+        "section508",
+        "section508.22.f",
+        "wcag211",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "skip-link",
+      "impact": "moderate",
+      "enabled": true,
+      "tags": [
+        "RGAA-12.7.1",
+        "RGAAv4",
+        "best-practice",
+        "cat.keyboard"
+      ]
+    },
+    {
+      "id": "summary-name",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.4.1.2",
+        "TT6.a",
+        "TTv5",
+        "cat.name-role-value",
+        "section508",
+        "section508.22.a",
+        "wcag2a",
+        "wcag412"
+      ]
+    },
+    {
+      "id": "svg-img-alt",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.1.1.1",
+        "RGAA-1.1.5",
+        "RGAAv4",
+        "TT7.a",
+        "TTv5",
+        "cat.text-alternatives",
+        "section508",
+        "section508.22.a",
+        "wcag111",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "tabindex",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "best-practice",
+        "cat.keyboard"
+      ]
+    },
+    {
+      "id": "table-duplicate-name",
+      "impact": "minor",
+      "enabled": true,
+      "tags": [
+        "RGAA-5.2.1",
+        "RGAAv4",
+        "best-practice",
+        "cat.tables"
+      ]
+    },
+    {
+      "id": "table-fake-caption",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.1.3.1",
+        "RGAA-5.4.1",
+        "RGAAv4",
+        "cat.tables",
+        "experimental",
+        "section508",
+        "section508.22.g",
+        "wcag131",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "target-size",
+      "impact": "serious",
+      "enabled": false,
+      "tags": [
+        "cat.sensory-and-visual-cues",
+        "wcag22aa",
+        "wcag258"
+      ]
+    },
+    {
+      "id": "td-has-header",
+      "impact": "critical",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.1.3.1",
+        "RGAA-5.7.4",
+        "RGAAv4",
+        "TT14.b",
+        "TTv5",
+        "cat.tables",
+        "experimental",
+        "section508",
+        "section508.22.g",
+        "wcag131",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "td-headers-attr",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.1.3.1",
+        "RGAA-5.7.4",
+        "RGAAv4",
+        "TT14.b",
+        "TTv5",
+        "cat.tables",
+        "section508",
+        "section508.22.g",
+        "wcag131",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "th-has-data-cells",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.1.3.1",
+        "RGAA-5.7.1",
+        "RGAAv4",
+        "TT14.b",
+        "TTv5",
+        "cat.tables",
+        "section508",
+        "section508.22.g",
+        "wcag131",
+        "wcag2a"
+      ]
+    },
+    {
+      "id": "valid-lang",
+      "impact": "serious",
+      "enabled": true,
+      "tags": [
+        "ACT",
+        "EN-301-549",
+        "EN-9.3.1.2",
+        "RGAA-8.8.1",
+        "RGAAv4",
+        "TT11.b",
+        "TTv5",
+        "cat.language",
+        "wcag2aa",
+        "wcag312"
+      ]
+    },
+    {
+      "id": "video-caption",
+      "impact": "critical",
+      "enabled": true,
+      "tags": [
+        "EN-301-549",
+        "EN-9.1.2.2",
+        "RGAA-4.3.1",
+        "RGAAv4",
+        "TT17.a",
+        "TTv5",
+        "cat.text-alternatives",
+        "section508",
+        "section508.22.a",
+        "wcag122",
+        "wcag2a"
+      ]
+    }
+  ]
+}

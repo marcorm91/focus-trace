@@ -182,27 +182,28 @@ describe('UX polish contract', () => {
     expect(entry).not.toContain('MutationObserver');
   });
 
-  it('keeps the shipped severity model independent from third-party impact-comparison content', () => {
+  it('keeps axe as a versioned severity benchmark without making it a runtime dependency', () => {
     const guidance = source('entrypoints/sidepanel/components/FindingGuidance.tsx');
     const siteReport = source('lib/site-audit/text-report.ts');
     const catalog = source('shared/rule-catalog.ts');
-    const severityDocs = source('docs/SEVERITY.md');
-    const auditDocs = source('docs/SEVERITY-AUDIT.md');
-    const rulesDocs = source('docs/RULES.md');
-    const readme = source('README.md');
+    const benchmark = source('generated/axe-rule-severities.json');
+    const mappings = source('config/axe-equivalents.json');
+    const benchmarkDocs = source('docs/AXE-SEVERITY-BENCHMARK.md');
+    const packageJson = source('package.json');
 
     expect(guidance).not.toContain('impactReferences');
     expect(guidance).not.toContain('dequeuniversity.com');
-    expect(guidance).toContain('FocusTrace asigna este impacto base de forma independiente');
     expect(siteReport).not.toContain('Comparable impact reference');
     expect(siteReport).not.toContain('Referencia de impacto comparable');
     expect(catalog).not.toContain('impactReferences');
     expect(catalog).not.toContain('dequeuniversity.com');
-    expect(catalog).not.toContain('axe-core');
-    expect(severityDocs).not.toContain('axe-core');
-    expect(auditDocs).not.toContain('axe-core');
-    expect(rulesDocs).not.toContain('axe-core');
-    expect(readme).not.toContain('axe-core');
+    expect(benchmark).toContain('"repository": "dequelabs/axe-core"');
+    expect(benchmark).toMatch(/"tag": "v\d+\.\d+\.\d+/);
+    expect(mappings).toContain('"benchmark": "axe-core"');
+    expect(mappings).toContain('"focusTraceRuleId": "FT-WCAG-002"');
+    expect(mappings).toContain('"image-alt"');
+    expect(benchmarkDocs).toContain('does **not** mean FocusTrace runs axe-core');
+    expect(packageJson).not.toContain('"axe-core":');
   });
 
   it('renders the impact matrix directly from ScanView without a portal or duplicate session observer', () => {
