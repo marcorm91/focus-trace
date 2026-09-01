@@ -49,10 +49,11 @@ test('scans form values, placeholders, generated text and non-DOM graphics', asy
     'generated text',
   ]));
 
-  const graphicReviewTargets = scan.review
-    .filter((issue) => issue.ruleId === 'FT-WCAG-011')
-    .flatMap((issue) => issue.targets);
-  expect(graphicReviewTargets).toEqual(expect.arrayContaining(['#css-icon', '#chart']));
+  const unresolvedGraphicReviews = scan.review.filter((issue) =>
+    issue.ruleId === 'FT-WCAG-011'
+    && issue.targets.some((target) => target === '#css-icon' || target === '#chart'),
+  );
+  expect(unresolvedGraphicReviews).toEqual([]);
 
   const inactiveStateFindings = [...scan.issues, ...scan.review].filter((issue) =>
     issue.evidence?.includes('.state-target:hover'),

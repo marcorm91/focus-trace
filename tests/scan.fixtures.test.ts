@@ -238,15 +238,16 @@ describe('FocusTrace WCAG rule fixtures', () => {
     );
   });
 
-  it('sends complex gradient contrast to review instead of fail', () => {
+  it('drops complex gradient contrast when no deterministic background can be resolved', () => {
     render(
       'lang="en"',
       '<main><h1>Contrast</h1><p id="hero">Hero copy</p></main>',
       'html,body{background:#fff;color:#000;font-size:16px} #hero{color:rgb(119,119,119);background-image:linear-gradient(#fff,#ddd);font-size:16px}',
     );
     const result = runFocusTraceScan();
-    expect(result.issues.some((issue) => issue.ruleId === 'FT-WCAG-010' && issue.targets.includes('#hero'))).toBe(false);
-    const review = result.review.find((issue) => issue.ruleId === 'FT-WCAG-010' && issue.targets.includes('#hero'));
-    expect(review?.contrast?.reason).toContain('background image or gradient');
+    const matches = [...result.issues, ...result.review].filter((issue) =>
+      issue.ruleId === 'FT-WCAG-010' && issue.targets.includes('#hero'),
+    );
+    expect(matches).toEqual([]);
   });
 });

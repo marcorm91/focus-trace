@@ -30,6 +30,7 @@ describe('voluntary support configuration', () => {
     const link = footer?.querySelector('a');
     const icon = footer?.querySelector('svg.ft-support-footer-icon');
     expect(footer).not.toBeNull();
+    expect(document.body.classList.contains('ft-support-footer-host')).toBe(true);
     expect(link?.textContent).toContain('Apoyar FocusTrace');
     expect(link?.getAttribute('target')).toBe('_blank');
     expect(link?.getAttribute('rel')).toContain('noopener');
@@ -41,6 +42,14 @@ describe('voluntary support configuration', () => {
 
     cleanup();
     expect(document.querySelector('[data-focustrace-support-footer]')).toBeNull();
+    expect(document.body.classList.contains('ft-support-footer-host')).toBe(false);
+  });
+
+  it('keeps the support heart filled and outlined in red outside forced-colors mode', () => {
+    const supportCss = readFileSync(resolve(process.cwd(), 'shared/support-footer.css'), 'utf8');
+    expect(supportCss).toContain('color: #d93025');
+    expect(supportCss).toContain('fill: currentColor');
+    expect(supportCss).toContain('stroke: currentColor');
   });
 
   it('includes support in interactive surfaces but not printable reports', () => {

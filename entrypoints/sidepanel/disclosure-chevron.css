@@ -1,0 +1,26 @@
+.name-computation > summary {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 8px;
+  list-style: none;
+}
+
+.name-computation > summary::-webkit-details-marker {
+  display: none;
+}
+
+.name-computation > summary::after {
+  content: '';
+  width: 18px;
+  height: 18px;
+  justify-self: end;
+  background: currentColor;
+  -webkit-mask: var(--ft-i-chevron-right) center / contain no-repeat;
+  mask: var(--ft-i-chevron-right) center / contain no-repeat;
+}
+
+.name-computation[open] > summary::after {
+  -webkit-mask-image: var(--ft-i-chevron-down);
+  mask-image: var(--ft-i-chevron-down);
+}

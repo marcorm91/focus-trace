@@ -191,6 +191,22 @@ function pruneInactiveTextContrast(result: ScanResult, root: Document | Element)
   result.passes = Math.max(0, result.passes - removedPasses);
 }
 
+function pruneUnresolvedContrastReviews(result: ScanResult): void {
+  const removedByRule = new Map<string, number>();
+  result.review = result.review.filter((issue) => {
+    if (!CONTRAST_RULE_IDS.has(issue.ruleId) || !issue.contrast || issue.contrast.background) return true;
+    removedByRule.set(issue.ruleId, (removedByRule.get(issue.ruleId) ?? 0) + 1);
+    return false;
+  });
+
+  for (const [ruleId, removed] of removedByRule) {
+    const ruleResult = result.ruleResults?.find((entry) => entry.ruleId === ruleId);
+    if (!ruleResult) continue;
+    ruleResult.applicable = Math.max(0, ruleResult.applicable - removed);
+    ruleResult.reviews = Math.max(0, ruleResult.reviews - removed);
+  }
+}
+
 function annotateObservedContrastStates(result: ScanResult): void {
   for (const issue of [...result.issues, ...result.review]) {
     if (!CONTRAST_RULE_IDS.has(issue.ruleId)) continue;
@@ -210,6 +226,7 @@ export function runFocusTraceScan(scope?: ComponentScanScope): ScanResult {
   if (!root) return result;
 
   pruneInactiveTextContrast(result, root);
+  pruneUnresolvedContrastReviews(result);
   annotateObservedContrastStates(result);
 
   const signals = evaluateStructuralHtml(root, !componentScope);

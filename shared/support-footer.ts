@@ -3,6 +3,7 @@ import { SUPPORT_URL } from './project-links';
 import './support-footer.css';
 
 const SVG_NS = 'http://www.w3.org/2000/svg';
+const HOST_CLASS = 'ft-support-footer-host';
 
 function currentLanguage(): AppLanguage {
   return document.documentElement.lang === 'es' ? 'es' : 'en';
@@ -30,6 +31,8 @@ function createHeartIcon(): SVGSVGElement {
 export function mountSupportFooter(supportUrl: string | null = SUPPORT_URL): () => void {
   if (!supportUrl || !document.body) return () => undefined;
   if (document.querySelector('[data-focustrace-support-footer]')) return () => undefined;
+
+  document.body.classList.add(HOST_CLASS);
 
   const footer = document.createElement('footer');
   footer.className = 'ft-support-footer';
@@ -71,5 +74,6 @@ export function mountSupportFooter(supportUrl: string | null = SUPPORT_URL): () 
   return () => {
     languageObserver.disconnect();
     footer.remove();
+    document.body.classList.remove(HOST_CLASS);
   };
 }
