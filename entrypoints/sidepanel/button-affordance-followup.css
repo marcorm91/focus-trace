@@ -49,6 +49,12 @@
   box-shadow: var(--ft-shadow-sm);
 }
 
+.workspace-nav.tabs button.active:not(:disabled):hover {
+  border-color: var(--ft-ink);
+  background-color: var(--ft-ink);
+  color: var(--ft-surface);
+}
+
 .workspace-nav.tabs button:disabled {
   box-shadow: none;
   cursor: not-allowed;
