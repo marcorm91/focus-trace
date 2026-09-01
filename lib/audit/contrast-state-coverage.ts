@@ -25,34 +25,15 @@ function inlineStyleFor(element: Element): CSSStyleDeclaration | undefined {
     : undefined;
 }
 
-function authoredInlineStyleValues(element: Element, property: string): string[] {
-  const declaration = element.getAttribute('style');
-  if (!declaration) return [];
-
-  const values: string[] = [];
-  for (const chunk of declaration.split(';')) {
-    const separator = chunk.indexOf(':');
-    if (separator < 0) continue;
-    if (chunk.slice(0, separator).trim().toLowerCase() !== property) continue;
-    const value = chunk.slice(separator + 1).trim();
-    if (value) values.push(value);
-  }
-  return values;
-}
-
 function styleValues(
-  element: Element,
   computed: CSSStyleDeclaration,
   inline: CSSStyleDeclaration | undefined,
   property: string,
 ): string[] {
-  const computedValue = computed.getPropertyValue(property).trim();
-  const inlineValue = inline?.getPropertyValue(property).trim() ?? '';
-  // Some DOM implementations drop legacy or newer declarations from the CSSOM
-  // even though browsers preserve them. Fall back to the authored inline value
-  // only when the inline CSSOM did not expose that property.
-  const authoredFallback = inlineValue ? [] : authoredInlineStyleValues(element, property);
-  return [...new Set([computedValue, inlineValue, ...authoredFallback].filter(Boolean))];
+  const values = [computed.getPropertyValue(property), inline?.getPropertyValue(property)]
+    .map((value) => value?.trim() ?? '')
+    .filter(Boolean);
+  return [...new Set(values)];
 }
 
 function isZeroLegacyClip(value: string): boolean {
@@ -65,15 +46,14 @@ function isZeroLegacyClip(value: string): boolean {
 }
 
 function clipsAllRenderedContent(
-  element: Element,
   computed: CSSStyleDeclaration,
   inline: CSSStyleDeclaration | undefined,
 ): boolean {
-  const clipValues = [computed.clip, inline?.clip, ...styleValues(element, computed, inline, 'clip')]
+  const clipValues = [computed.clip, inline?.clip, ...styleValues(computed, inline, 'clip')]
     .filter((value): value is string => Boolean(value?.trim()));
   if (clipValues.some(isZeroLegacyClip)) return true;
 
-  const clipPaths = styleValues(element, computed, inline, 'clip-path').map(normalizedCssValue);
+  const clipPaths = styleValues(computed, inline, 'clip-path').map(normalizedCssValue);
   return clipPaths.some((clipPath) => clipPath === 'inset(50%)'
     || clipPath === 'inset(50%50%50%50%)'
     || clipPath === 'inset(100%)'
@@ -82,38 +62,33 @@ function clipsAllRenderedContent(
 }
 
 function fullyTransparentFilter(
-  element: Element,
   computed: CSSStyleDeclaration,
   inline: CSSStyleDeclaration | undefined,
 ): boolean {
-  return styleValues(element, computed, inline, 'filter').some((filter) =>
+  return styleValues(computed, inline, 'filter').some((filter) =>
     /opacity\(\s*(?:0(?:\.0+)?|0%)\s*\)/.test(filter.toLowerCase()),
   );
 }
 
 function hasZeroNumericStyle(
-  element: Element,
   computed: CSSStyleDeclaration,
   inline: CSSStyleDeclaration | undefined,
   property: string,
 ): boolean {
-  return styleValues(element, computed, inline, property).some((value) => {
+  return styleValues(computed, inline, property).some((value) => {
     const numeric = Number.parseFloat(value);
     return Number.isFinite(numeric) && numeric <= 0;
   });
 }
 
 function hasClippingOverflow(
-  element: Element,
   computed: CSSStyleDeclaration,
   inline: CSSStyleDeclaration | undefined,
   axis: 'x' | 'y',
 ): boolean {
   const axisProperty = axis === 'x' ? 'overflow-x' : 'overflow-y';
-  return [
-    ...styleValues(element, computed, inline, axisProperty),
-    ...styleValues(element, computed, inline, 'overflow'),
-  ].some((value) => ['hidden', 'clip'].includes(value.toLowerCase()));
+  return [...styleValues(computed, inline, axisProperty), ...styleValues(computed, inline, 'overflow')]
+    .some((value) => ['hidden', 'clip'].includes(value.toLowerCase()));
 }
 
 function suppressesVisualRendering(element: Element): boolean {
@@ -122,18 +97,18 @@ function suppressesVisualRendering(element: Element): boolean {
 
   if (element.hasAttribute('hidden') || computed.display === 'none') return true;
   if (['hidden', 'collapse'].includes(computed.visibility)) return true;
-  if (styleValues(element, computed, inline, 'content-visibility')
+  if (styleValues(computed, inline, 'content-visibility')
     .some((value) => value.toLowerCase() === 'hidden')) return true;
 
-  if (hasZeroNumericStyle(element, computed, inline, 'opacity')) return true;
-  if (fullyTransparentFilter(element, computed, inline)) return true;
-  if (clipsAllRenderedContent(element, computed, inline)) return true;
+  if (hasZeroNumericStyle(computed, inline, 'opacity')) return true;
+  if (fullyTransparentFilter(computed, inline)) return true;
+  if (clipsAllRenderedContent(computed, inline)) return true;
 
-  const zeroWidth = hasZeroNumericStyle(element, computed, inline, 'width');
-  const zeroHeight = hasZeroNumericStyle(element, computed, inline, 'height');
+  const zeroWidth = hasZeroNumericStyle(computed, inline, 'width');
+  const zeroHeight = hasZeroNumericStyle(computed, inline, 'height');
   if (zeroWidth && zeroHeight
-    && hasClippingOverflow(element, computed, inline, 'x')
-    && hasClippingOverflow(element, computed, inline, 'y')) {
+    && hasClippingOverflow(computed, inline, 'x')
+    && hasClippingOverflow(computed, inline, 'y')) {
     return true;
   }
 
