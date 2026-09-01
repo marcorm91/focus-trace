@@ -73,6 +73,10 @@ document.addEventListener('click', (event) => {
   const target = event.target instanceof Element ? event.target : null;
   if (!target) return;
 
+  for (const details of document.querySelectorAll<HTMLDetailsElement>('.report-more-formats[open]')) {
+    if (!details.contains(target)) details.open = false;
+  }
+
   if (target.closest('.settings-trigger')) {
     openFocusedSettingsView();
   }
