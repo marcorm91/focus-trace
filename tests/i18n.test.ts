@@ -44,6 +44,8 @@ describe('FocusTrace bilingual presentation', () => {
     expect(spanish.title).toContain('contexto semántico requerido');
     expect(spanish.description).toContain('HTML nativo');
     expect(spanish.evidence).toContain('<li>');
+    expect(spanish.evidence).toContain('requiere un padre directo');
+    expect(spanish.evidence).not.toContain('requires a direct');
   });
 
   it('localizes dynamic semantic evidence while preserving HTML and ARIA tokens', () => {
@@ -150,6 +152,8 @@ describe('FocusTrace bilingual presentation', () => {
     expect(spanish.description).toContain('relación ARIA');
     expect(spanish.evidence).toContain('aria-controls');
     expect(spanish.evidence).toContain('#dialog-panel');
+    expect(spanish.evidence).toContain('ID inexistente');
+    expect(spanish.evidence).not.toContain('references missing ID');
   });
 
   it('localizes the new ARIA semantic warnings in both supported languages', () => {
@@ -187,8 +191,10 @@ describe('FocusTrace bilingual presentation', () => {
     expect(relationshipEs.description).toContain('aria-invalid');
     expect(unsupportedEn.title).toBe(unsupported.title);
     expect(relationshipEn.title).toBe(relationship.title);
-    expect(unsupportedEs.evidence).toBe(unsupported.evidence);
-    expect(relationshipEs.evidence).toBe(relationship.evidence);
+    expect(unsupportedEn.evidence).toBe(unsupported.evidence);
+    expect(relationshipEn.evidence).toBe(relationship.evidence);
+    expect(unsupportedEs.evidence).toBe('aria-selected no es compatible con role="button".');
+    expect(relationshipEs.evidence).toBe('aria-expanded="true" contradice la disponibilidad actual de #panel.');
   });
 
   it('keeps English as the default explanation language', () => {
