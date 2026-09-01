@@ -24,7 +24,7 @@ async function fetchJson(url) {
 }
 
 async function mapLimit(items, concurrency, mapper) {
-  const results = new Array(items.length);
+  const results = Array.from({ length: items.length });
   let next = 0;
   const workers = Array.from({ length: Math.min(concurrency, items.length) }, async () => {
     while (next < items.length) {
