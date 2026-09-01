@@ -8,6 +8,8 @@ on:
     paths:
       - 'tools/act-sync.mjs'
       - 'tools/aria-sync.mjs'
+      - 'tools/axe-sync.mjs'
+      - 'tools/axe-validate.mjs'
       - 'tools/language-sync.mjs'
       - 'tools/wcag-sync.mjs'
       - 'tools/html-sync.mjs'
@@ -16,6 +18,7 @@ on:
       - 'tools/standards-sync.mjs'
       - 'tools/standards-utils.mjs'
       - 'tools/standards-validate.mjs'
+      - 'config/axe-equivalents.json'
       - '.github/workflows/standards-registry.yml'
 
 permissions:
@@ -45,18 +48,21 @@ jobs:
         run: |
           cp generated/act-catalog.json /tmp/act-before.json
           cp generated/aria-registry.json /tmp/aria-before.json
+          cp generated/axe-rule-severities.json /tmp/axe-before.json
           cp generated/language-subtags.json /tmp/language-before.json
           cp generated/wcag-catalog.json /tmp/wcag-before.json
           cp generated/html-obsolete-catalog.json /tmp/html-before.json
           cp generated/standards-sources.json /tmp/sources-before.json
 
-      - name: Sync public standards registries
+      - name: Sync public standards registries and axe benchmark
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: node tools/standards-sync.mjs
 
       - name: Validate generated registries and cross-links
-        run: node tools/standards-validate.mjs
+        run: |
+          node tools/standards-validate.mjs
+          node tools/axe-validate.mjs
 
       - name: Detect registry changes
         id: changes
@@ -65,6 +71,7 @@ jobs:
           FILES=(
             generated/act-catalog.json
             generated/aria-registry.json
+            generated/axe-rule-severities.json
             generated/language-subtags.json
             generated/wcag-catalog.json
             generated/html-obsolete-catalog.json
@@ -82,6 +89,9 @@ jobs:
               /tmp/html-before.json generated/html-obsolete-catalog.json \
               /tmp/sources-before.json generated/standards-sources.json \
               > /tmp/standards-report.md
+            node tools/axe-diff.mjs \
+              /tmp/axe-before.json generated/axe-rule-severities.json config/axe-equivalents.json \
+              >> /tmp/standards-report.md
             cat /tmp/standards-report.md >> "$GITHUB_STEP_SUMMARY"
           fi
 
@@ -91,9 +101,9 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add generated/act-catalog.json generated/aria-registry.json generated/language-subtags.json \
-            generated/wcag-catalog.json generated/html-obsolete-catalog.json generated/standards-sources.json
-          git commit -m 'chore: sync standards registries'
+          git add generated/act-catalog.json generated/aria-registry.json generated/axe-rule-severities.json \
+            generated/language-subtags.json generated/wcag-catalog.json generated/html-obsolete-catalog.json generated/standards-sources.json
+          git commit -m 'chore: sync standards registries and axe benchmark'
           git push origin "HEAD:${GITHUB_REF_NAME}"
 
       - name: Open or refresh upstream registry PR
@@ -106,24 +116,24 @@ jobs:
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git checkout -B "$BRANCH"
-          git add generated/act-catalog.json generated/aria-registry.json generated/language-subtags.json \
-            generated/wcag-catalog.json generated/html-obsolete-catalog.json generated/standards-sources.json
-          git commit -m 'chore: sync standards registries'
+          git add generated/act-catalog.json generated/aria-registry.json generated/axe-rule-severities.json \
+            generated/language-subtags.json generated/wcag-catalog.json generated/html-obsolete-catalog.json generated/standards-sources.json
+          git commit -m 'chore: sync standards registries and axe benchmark'
           git push origin "$BRANCH" --force
 
           PR_NUMBER="$(gh pr list --head "$BRANCH" --base main --state open --json number --jq '.[0].number // empty')"
           if [ -n "$PR_NUMBER" ]; then
             gh pr edit "$PR_NUMBER" \
-              --title 'chore: sync accessibility standards registries' \
+              --title 'chore: sync accessibility standards and axe benchmark' \
               --body-file /tmp/standards-report.md
           else
             if ! gh pr create \
               --base main \
               --head "$BRANCH" \
-              --title 'chore: sync accessibility standards registries' \
+              --title 'chore: sync accessibility standards and axe benchmark' \
               --body-file /tmp/standards-report.md; then
               gh issue create \
-                --title 'Accessibility standards registry changed' \
+                --title 'Accessibility standards or axe benchmark changed' \
                 --body-file /tmp/standards-report.md
               exit 1
             fi
