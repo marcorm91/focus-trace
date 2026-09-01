@@ -19,13 +19,28 @@ function normalizedCssValue(value: string | undefined): string {
   return (value ?? '').replace(/\s+/g, '').toLowerCase();
 }
 
-function clipsAllRenderedContent(style: CSSStyleDeclaration): boolean {
-  const clip = normalizedCssValue(style.clip);
+function inlineStyleFor(element: Element): CSSStyleDeclaration | undefined {
+  return element instanceof HTMLElement || element instanceof SVGElement
+    ? element.style
+    : undefined;
+}
+
+function styleValue(
+  computed: CSSStyleDeclaration,
+  inline: CSSStyleDeclaration | undefined,
+  property: string,
+): string {
+  return computed.getPropertyValue(property) || inline?.getPropertyValue(property) || '';
+}
+
+function clipsAllRenderedContent(
+  computed: CSSStyleDeclaration,
+  inline: CSSStyleDeclaration | undefined,
+): boolean {
+  const clip = normalizedCssValue(computed.clip || inline?.clip);
   if (clip === 'rect(0px,0px,0px,0px)' || clip === 'rect(0,0,0,0)') return true;
 
-  const clipPath = normalizedCssValue(
-    style.getPropertyValue('clip-path') || (style as CSSStyleDeclaration & { clipPath?: string }).clipPath,
-  );
+  const clipPath = normalizedCssValue(styleValue(computed, inline, 'clip-path'));
   return clipPath === 'inset(50%)'
     || clipPath === 'inset(50%50%50%50%)'
     || clipPath === 'inset(100%)'
@@ -33,24 +48,30 @@ function clipsAllRenderedContent(style: CSSStyleDeclaration): boolean {
     || clipPath === 'circle(0%)';
 }
 
-function fullyTransparentFilter(style: CSSStyleDeclaration): boolean {
-  const filter = style.filter?.toLowerCase() ?? '';
+function fullyTransparentFilter(
+  computed: CSSStyleDeclaration,
+  inline: CSSStyleDeclaration | undefined,
+): boolean {
+  const filter = (computed.filter || inline?.filter || '').toLowerCase();
   return /opacity\(\s*(?:0(?:\.0+)?|0%)\s*\)/.test(filter);
 }
 
-function suppressesVisualRendering(style: CSSStyleDeclaration): boolean {
-  if (style.display === 'none') return true;
-  if (style.getPropertyValue('content-visibility').trim().toLowerCase() === 'hidden') return true;
+function suppressesVisualRendering(element: Element): boolean {
+  const computed = getComputedStyle(element);
+  const inline = inlineStyleFor(element);
 
-  const opacity = Number.parseFloat(style.opacity || '1');
+  if (computed.display === 'none') return true;
+  if (styleValue(computed, inline, 'content-visibility').trim().toLowerCase() === 'hidden') return true;
+
+  const opacity = Number.parseFloat(computed.opacity || inline?.opacity || '1');
   if (Number.isFinite(opacity) && opacity <= 0) return true;
-  if (fullyTransparentFilter(style)) return true;
-  if (clipsAllRenderedContent(style)) return true;
+  if (fullyTransparentFilter(computed, inline)) return true;
+  if (clipsAllRenderedContent(computed, inline)) return true;
 
-  const width = Number.parseFloat(style.width);
-  const height = Number.parseFloat(style.height);
-  const overflowX = (style.overflowX || style.overflow).toLowerCase();
-  const overflowY = (style.overflowY || style.overflow).toLowerCase();
+  const width = Number.parseFloat(computed.width || inline?.width || '');
+  const height = Number.parseFloat(computed.height || inline?.height || '');
+  const overflowX = (computed.overflowX || inline?.overflowX || computed.overflow || inline?.overflow || '').toLowerCase();
+  const overflowY = (computed.overflowY || inline?.overflowY || computed.overflow || inline?.overflow || '').toLowerCase();
   if (width === 0 && height === 0 && ['hidden', 'clip'].includes(overflowX) && ['hidden', 'clip'].includes(overflowY)) {
     return true;
   }
@@ -91,7 +112,7 @@ export function isInactiveContrastElement(element: Element): boolean {
 
   let current: Element | null = element;
   while (current) {
-    if (suppressesVisualRendering(getComputedStyle(current))) return true;
+    if (suppressesVisualRendering(current)) return true;
     current = current.parentElement;
   }
 
