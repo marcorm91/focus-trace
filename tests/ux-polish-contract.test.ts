@@ -218,7 +218,7 @@ describe('UX polish contract', () => {
     expect(matrix).not.toContain('FOCUSTRACE_GET_SESSION');
     expect(matrix).not.toContain('SETTINGS_STORAGE_KEY');
     expect(matrix).toContain('Impacto por resultado');
-    expect(matrix).toContain('Ejemplo: un salto de nivel de encabezado');
+    expect(matrix).not.toContain('Ejemplo: un salto de nivel de encabezado');
     expect(matrixCss).not.toContain('severity-impact-summary');
     expect(matrixCss).not.toContain('!important');
     expect(entry).not.toContain('<ImpactMatrix />');
