@@ -115,18 +115,17 @@ describe('rendered contrast states', () => {
     expect(matches).toEqual([]);
   });
 
-  it('keeps genuinely visible unresolved backgrounds in review', () => {
+  it('removes genuinely visible unresolved backgrounds instead of surfacing review noise', () => {
     render(
       '<style>#visible-copy { color: #777; background: linear-gradient(white, black); }</style>',
       '<p id="visible-copy">Visible uncertain contrast</p>',
     );
 
     const scan = runFocusTraceScan();
-    const review = scan.review.find((issue) =>
+    const matches = [...scan.issues, ...scan.review].filter((issue) =>
       issue.ruleId === 'FT-WCAG-010' && issue.targets.includes('#visible-copy'),
     );
-    expect(review).toBeDefined();
-    expect(review?.outcome).toBe('review');
+    expect(matches).toEqual([]);
   });
 
   it('does not use viewport position to decide contrast applicability', () => {
