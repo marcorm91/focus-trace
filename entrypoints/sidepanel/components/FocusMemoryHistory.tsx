@@ -59,26 +59,29 @@ function FindingHistoryItem({
 }) {
   const resolveHintId = `focus-memory-resolve-${item.fingerprint}`;
   const title = findingTitle(item, language);
+  const canLocate = Boolean(selector) && item.state !== 'resolved';
 
   return (
-    <article className={`focus-memory-finding state-${item.state}${item.changedNow ? ' changed-now' : ''}`}>
+    <article className={`focus-memory-finding state-${item.state}${item.changedNow ? ' changed-now' : ''}${canLocate ? ' is-locatable' : ''}`}>
+      {canLocate && selector && (
+        <button
+          className="focus-memory-finding-link"
+          type="button"
+          aria-label={tr(language, `Locate ${title} on the page`, `Localizar ${title} en la página`)}
+          title={tr(language, 'Locate this finding on the page', 'Localizar este fallo en la página')}
+          onClick={() => void onLocate(item, selector)}
+        />
+      )}
+
       <div className="focus-memory-finding-head">
         <div>
           {item.ruleId && <code>{item.ruleId}</code>}
-          {selector ? (
-            <button
-              className="focus-memory-finding-link"
-              type="button"
-              title={tr(language, 'Locate this finding on the page', 'Localizar este fallo en la página')}
-              onClick={() => void onLocate(item, selector)}
-            >
-              {title}
-            </button>
-          ) : (
-            <strong>{title}</strong>
-          )}
+          <strong>{title}</strong>
         </div>
-        <span>{findingStateLabel(item.state, language)}</span>
+        <span>
+          {findingStateLabel(item.state, language)}
+          {canLocate && <span className="focus-memory-finding-card-chevron" aria-hidden="true" />}
+        </span>
       </div>
 
       <div className="focus-memory-evidence-table-wrap">
@@ -222,7 +225,7 @@ export function FocusMemoryHistory({
               aria-label={tr(language, 'Previous finding', 'Fallo anterior')}
               onClick={() => selectWalkthroughItem(activeIndex - 1)}
             >
-              ‹
+              <span className="focus-memory-pager-chevron is-previous" aria-hidden="true" />
             </button>
             <strong aria-live="polite">
               {tr(language, `${activeIndex + 1} of ${history.length}`, `${activeIndex + 1} de ${history.length}`)}
@@ -233,7 +236,7 @@ export function FocusMemoryHistory({
               aria-label={tr(language, 'Next finding', 'Fallo siguiente')}
               onClick={() => selectWalkthroughItem(activeIndex + 1)}
             >
-              ›
+              <span className="focus-memory-pager-chevron is-next" aria-hidden="true" />
             </button>
           </div>
         )}
