@@ -14,9 +14,9 @@ For `highest-impact` mappings, a FocusTrace rule that covers several axe rules a
 
 Rules with no reliable axe equivalent keep a FocusTrace-owned severity based on observed user impact and evidence strength. An unmapped axe critical rule therefore means “no declared equivalent” rather than automatically “missing implementation”.
 
-## Daily synchronization
+## Scheduled synchronization
 
-The Standards Registry workflow runs every day and:
+The Standards Registry workflow runs on the 1st and 15th of each month at 06:17 UTC and:
 
 1. resolves the latest stable axe-core GitHub release;
 2. downloads the rule metadata from that release;
@@ -26,7 +26,7 @@ The Standards Registry workflow runs every day and:
 6. reports the current critical axe list and which critical rules have no declared FocusTrace equivalent;
 7. opens or refreshes the existing registry PR when the upstream snapshot changes, falling back to a GitHub issue if a PR cannot be created.
 
-The workflow never silently rewrites FocusTrace detector logic. A changed axe impact is surfaced for review through the generated PR/diff.
+The workflow can also be dispatched manually at any time. It never silently rewrites FocusTrace detector logic. A changed axe impact is surfaced for review through the generated PR/diff.
 
 ## CI guardrail
 
