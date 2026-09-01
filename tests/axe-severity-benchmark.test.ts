@@ -17,6 +17,8 @@ import { RULES, type RuleDefinition } from '../shared/rule-catalog';
 import { STRUCTURAL_HTML_RULES } from '../shared/structural-html-rules';
 import type { Severity } from '../shared/types';
 
+type AxeImpact = Exclude<Severity, 'info'>;
+
 const HTML_RULES: RuleDefinition[] = [
   DUPLICATE_ID_RULE,
   OBSOLETE_HTML_ELEMENT_RULE,
@@ -34,18 +36,21 @@ const ALL_RULES = new Map(
   [...Object.values(RULES), ...HTML_RULES, ...ADVANCED_ARIA_RULES].map((rule) => [rule.id, rule] as const),
 );
 const AXE_RULES = new Map(axeRegistry.rules.map((rule) => [rule.id, rule] as const));
-const IMPACT_RANK: Record<Severity, number> = {
+const IMPACT_RANK: Record<AxeImpact, number> = {
   critical: 4,
   serious: 3,
   moderate: 2,
   minor: 1,
-  info: 0,
 };
 
-function highestAxeImpact(ids: string[]): Severity {
-  const impacts = ids.map((id) => AXE_RULES.get(id)?.impact).filter((impact): impact is Severity => impact != null && impact !== 'info');
+function highestAxeImpact(ids: string[]): AxeImpact {
+  const impacts = ids
+    .map((id) => AXE_RULES.get(id)?.impact)
+    .filter((impact): impact is AxeImpact => impact != null);
   expect(impacts.length, `No rated axe rules found for ${ids.join(', ')}`).toBeGreaterThan(0);
-  return impacts.sort((a, b) => IMPACT_RANK[b] - IMPACT_RANK[a])[0];
+  const highest = impacts.sort((a, b) => IMPACT_RANK[b] - IMPACT_RANK[a])[0];
+  if (!highest) throw new Error(`No rated axe rules found for ${ids.join(', ')}`);
+  return highest;
 }
 
 describe('axe-core severity benchmark', () => {
