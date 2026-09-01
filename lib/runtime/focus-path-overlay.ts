@@ -9,6 +9,7 @@ export interface FocusPathOverlayEntry {
   detail?: string;
   meta?: string;
   findingCount?: number;
+  findingSummary?: string;
 }
 
 export interface FocusPathOverlayResult {
@@ -128,9 +129,9 @@ export function showFocusPathInPage(
     status.textContent = selectedItem.entry.status ?? '';
     meta.textContent = selectedItem.entry.meta ?? selectedItem.entry.selector;
     detail.textContent = selectedItem.entry.detail ?? '';
-    count.textContent = selectedItem.entry.findingCount
+    count.textContent = selectedItem.entry.findingSummary ?? (selectedItem.entry.findingCount
       ? `${selectedItem.entry.findingCount} linked finding${selectedItem.entry.findingCount === 1 ? '' : 's'}`
-      : '';
+      : '');
 
     Object.assign(card.style, {
       position: 'fixed',
