@@ -13,7 +13,6 @@
     { "focusTraceRuleId": "FT-WCAG-008", "axeRuleIds": ["html-has-lang"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WCAG-009", "axeRuleIds": ["html-lang-valid"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WCAG-010", "axeRuleIds": ["color-contrast"], "policy": "highest-impact" },
-    { "focusTraceRuleId": "FT-WCAG-011", "axeRuleIds": ["non-text-contrast"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WARN-001", "axeRuleIds": ["aria-deprecated-role"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WARN-003", "axeRuleIds": ["aria-prohibited-attr"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WARN-012", "axeRuleIds": ["aria-roles"], "policy": "highest-impact" },
