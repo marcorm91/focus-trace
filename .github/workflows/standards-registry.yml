@@ -3,7 +3,7 @@ name: Standards Registry
 on:
   workflow_dispatch:
   schedule:
-    - cron: '17 6 * * *'
+    - cron: '17 6 1,15 * *'
   push:
     branches:
       - '**'
