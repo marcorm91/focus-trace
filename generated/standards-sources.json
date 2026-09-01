@@ -30,8 +30,8 @@
       "authority": "W3C",
       "url": "https://www.w3.org/TR/core-aam-1.2/",
       "role": "normative",
-      "contentHash": "434ae5cefae53e2476eb65caccbd7156f41f041f64cfe8f7d1ca354e2892cf76",
-      "lastModified": "Sat, 29 Aug 2026 17:23:25 GMT"
+      "contentHash": "6cfbd5a2371c156aeac12f3e1c59401a67305da35770126a27d243087e71135e",
+      "lastModified": "Thu, 27 Aug 2026 07:20:29 GMT"
     },
     {
       "id": "html",
@@ -39,9 +39,9 @@
       "authority": "WHATWG",
       "url": "https://html.spec.whatwg.org/multipage/",
       "role": "normative",
-      "contentHash": "efded796f166ac5d5b978e5b9dd475f692c743ab56a375d1f0fb0b6037866047",
-      "etag": "W/\"6a9586cc-25c4d\"",
-      "lastModified": "Mon, 31 Aug 2026 13:51:08 GMT"
+      "contentHash": "31e7b6cfc5b31f1a5e39653d0e44f9d4c80a871fbc8f39f0eb80d0540d6cc1aa",
+      "etag": "W/\"6a912e1f-25c4d\"",
+      "lastModified": "Fri, 28 Aug 2026 06:43:43 GMT"
     },
     {
       "id": "html-aam",
@@ -49,8 +49,8 @@
       "authority": "W3C",
       "url": "https://www.w3.org/TR/html-aam-1.0/",
       "role": "normative",
-      "contentHash": "a3731e22c67ded4932a09df786257e42efcfcfd83ca55cb81803d412f8e16883",
-      "lastModified": "Sat, 29 Aug 2026 17:25:04 GMT"
+      "contentHash": "c823185492e53d1a148c47b4ee63c309e37700e9196f9b50036db650e18ef353",
+      "lastModified": "Thu, 27 Aug 2026 07:23:51 GMT"
     },
     {
       "id": "html-obsolete",
@@ -58,9 +58,9 @@
       "authority": "WHATWG",
       "url": "https://html.spec.whatwg.org/multipage/obsolete.html",
       "role": "normative",
-      "contentHash": "ee57c600c6e7d56e1ce12ed05950b66d27aec63da3c05ce6786f72b04d0a8cc9",
-      "etag": "W/\"6a9586ce-2abb9\"",
-      "lastModified": "Mon, 31 Aug 2026 13:51:10 GMT"
+      "contentHash": "d0c424cd447a4813e3d84162ae723cba8ef3112cc3a17935aac04e40290c2ba1",
+      "etag": "W/\"6a912e21-2abb9\"",
+      "lastModified": "Fri, 28 Aug 2026 06:43:45 GMT"
     },
     {
       "id": "iana-language-subtags",
@@ -88,9 +88,9 @@
       "authority": "W3C",
       "url": "https://w3c.github.io/aria/",
       "role": "normative",
-      "contentHash": "b85e635bde9715c9cf4fb59458f6ece6f6c16efcc272c96257b44011cfca64ca",
-      "etag": "W/\"6a9316af-1d5b84\"",
-      "lastModified": "Sat, 29 Aug 2026 17:28:15 GMT"
+      "contentHash": "583b6a980f29e9676b7afa53ffa2af2ee11b00f0f33141f44fd428da6cd04c40",
+      "etag": "W/\"6a8fe61a-1cb238\"",
+      "lastModified": "Thu, 27 Aug 2026 07:24:10 GMT"
     },
     {
       "id": "wcag2-changelog",
