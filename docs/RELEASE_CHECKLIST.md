@@ -77,6 +77,8 @@ Production builds must not declare required global host permissions. Optional HT
 
 Confirm [`PRIVACY.md`](../PRIVACY.md) still matches the actual product behavior, especially storage, optional screenshot evidence, external services and any future sponsorship integration.
 
+If voluntary support is enabled, verify both the About support block and the compact global footer are keyboard accessible, retain visible focus at 200% zoom and open only the reviewed external HTTPS destination. The support link must remain absent while `SUPPORT_URL` is `null` and must not appear in printed/exported reports.
+
 Before changing repository visibility, scan the **entire Git history**, not only the current tree, with a dedicated secret scanner. This repository checklist does not claim that historical commits have already been scanned. Example local tools include gitleaks or TruffleHog.
 
 Also review generated build artifacts before attaching them to a GitHub release.
@@ -117,23 +119,7 @@ Before changing visibility:
 - Review Dependabot/security-alert settings and enable the ones appropriate for a public extension project.
 - Review issue and pull-request templates for public contributors.
 - Decide whether discussions should happen in GitHub Issues, Discussions or both.
-
-## Voluntary support readiness
-
-FocusTrace may accept voluntary support without gating features. See `SUPPORT_MODEL.md`.
-
-Before enabling the support link:
-
-- configure a real public `https://` destination in `shared/project-links.ts`;
-- verify the provider supports the intended contribution model and is ready to receive funds;
-- keep the support invitation optional and secondary to the product workflow;
-- confirm no Analyze, Trace, Replay, Report, Site Audit or Memory feature depends on payment;
-- update `PRIVACY.md` for the external support provider and confirm FocusTrace itself does not process payment details;
-- update `STORE_SUBMISSION.md` with the final destination;
-- keyboard-test the About support link and verify visible focus and 200% zoom behavior;
-- only add GitHub funding configuration after the destination is live.
-
-A disabled support destination is not a release blocker.
+- Do not add a funding configuration until the actual sponsorship destination is configured and ready to receive contributions.
 
 ## Release
 

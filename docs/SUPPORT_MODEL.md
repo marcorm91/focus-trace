@@ -26,7 +26,7 @@ Until a real public support destination exists, keep:
 export const SUPPORT_URL: string | null = null;
 ```
 
-With `null`, the support block is not rendered in the About view.
+With `null`, support UI is not rendered and no empty footer space is reserved.
 
 When the destination is ready:
 
@@ -34,18 +34,23 @@ When the destination is ready:
 2. Verify the destination works without requiring repository access.
 3. Update `PRIVACY.md` to state that voluntary support opens an external provider and that FocusTrace does not process payment details.
 4. Update `STORE_SUBMISSION.md` with the final support URL and keep store disclosures consistent with the external-payment behavior.
-5. Test the About link with keyboard navigation, visible focus and 200% zoom.
+5. Test both the About support block and compact global footer with keyboard navigation, visible focus and 200% zoom.
 6. Only then add a GitHub funding configuration if desired.
 
 ## UX placement
 
-The preferred placement is the About view. The support invitation should be visually secondary to product and privacy information and should not interrupt Analyze, Trace, Replay, Report or Site Audit.
+Support can appear in two deliberately low-pressure locations:
 
-Suggested copy:
+- **About**: the primary explanatory location, with context that FocusTrace remains free and support is voluntary.
+- **Global footer**: a compact **Support FocusTrace / Apoyar FocusTrace** link shown across the side-panel views and the separate Site Audit screen.
+
+The global footer must remain visually secondary to the active workflow and must not be fixed over content, interrupt navigation or appear in printed/exported reports.
+
+Suggested About copy:
 
 > FocusTrace remains free to use. If it helps your accessibility work, you can voluntarily support its continued development.
 
-The button label should remain concise: **Support development** / **Apoyar el desarrollo**.
+The About button label should remain concise: **Support development** / **Apoyar el desarrollo**. The global footer uses the shorter **Support FocusTrace** / **Apoyar FocusTrace** label.
 
 ## Release policy
 
