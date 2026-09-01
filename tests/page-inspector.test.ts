@@ -121,7 +121,8 @@ describe('page inspector entries', () => {
     }];
     const [entry] = buildPageInspectorEntries([target()], emptyScan, events, 'en');
     expect(entry).toMatchObject({ tone: 'fail', status: 'FAIL · FT-RUNTIME-002', findingCount: 1 });
-    expect(entry?.detail).toContain('Focus is obscured');
+    expect(entry?.detail).toContain('The focused control may be covered by other content');
+    expect(entry?.detail).not.toContain('Focus is obscured');
   });
 
   it('does not promote a serious runtime review to deterministic failure', () => {
