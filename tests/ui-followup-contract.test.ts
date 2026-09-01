@@ -24,9 +24,9 @@ describe('UI follow-up contract', () => {
     expect(app).toContain("? tr(language, 'Analysis ready', 'Análisis listo')");
     expect(css).toContain('.quick-start-copy .status.ready {');
     expect(css).toContain('.quick-start-copy .status.ready > span {');
-    expect(css).toContain("data:image/svg+xml");
-    expect(css).toContain("<circle");
-    expect(css).toContain("<path");
+    expect(css).toContain('data:image/svg+xml');
+    expect(css).toContain('%3Ccircle');
+    expect(css).toContain('%3Cpath');
     expect(css).toContain('background: currentColor;');
     expect(css).not.toContain('.quick-start-copy .status.ready > span {\n  width: 8px;');
   });
