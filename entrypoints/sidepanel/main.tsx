@@ -7,6 +7,7 @@ import { normalizeRuntimeBreakpointSettings } from '../../lib/runtime/breakpoint
 import { locateScanTargetInPage } from '../../lib/runtime/scan-target-overlay';
 import { SETTINGS_STORAGE_KEY } from '../../shared/i18n';
 import { RUNTIME_BREAKPOINT_SETTINGS_STORAGE_KEY } from '../../shared/runtime-breakpoint-preferences';
+import { mountSupportFooter } from '../../shared/support-footer';
 import type { ExtensionMessage, RuntimeBreakpointSettings } from '../../shared/types';
 import { normalizeUiScale, UI_SCALE_STORAGE_KEY } from '../../shared/ui-scale';
 import App from './App';
@@ -120,4 +121,5 @@ void (async () => {
       <App />
     </React.StrictMode>,
   );
+  mountSupportFooter();
 })();

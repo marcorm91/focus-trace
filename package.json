@@ -4,6 +4,7 @@
   "private": true,
   "type": "module",
   "description": "Local-first WCAG 2.2 accessibility rule engine and runtime focus debugger.",
+  "license": "GPL-3.0-only",
   "scripts": {
     "dev": "wxt",
     "dev:firefox": "wxt -b firefox --mv3",

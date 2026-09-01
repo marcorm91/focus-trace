@@ -75,7 +75,9 @@ Firefox uses `sidebar_action` generated from the WXT sidepanel entrypoint rather
 
 Production builds must not declare required global host permissions. Optional HTTP/HTTPS host access may be requested only from an explicit page action and must remain documented in the README and privacy policy. The localhost host permission used by E2E is test-only.
 
-Confirm [`PRIVACY.md`](../PRIVACY.md) still matches the actual product behavior, especially storage, optional screenshot evidence, external services and any future sponsorship integration.
+Confirm [`PRIVACY.md`](../PRIVACY.md) still matches the actual product behavior, especially storage, optional screenshot evidence, external services and sponsorship integration.
+
+Voluntary support is enabled through `https://github.com/sponsors/marcorm91`. Verify both the About support block and the compact global footer are keyboard accessible, retain visible focus at 200% zoom and open only that reviewed external HTTPS destination. Confirm the support link does not appear in printed/exported reports.
 
 Before changing repository visibility, scan the **entire Git history**, not only the current tree, with a dedicated secret scanner. This repository checklist does not claim that historical commits have already been scanned. Example local tools include gitleaks or TruffleHog.
 
@@ -117,7 +119,7 @@ Before changing visibility:
 - Review Dependabot/security-alert settings and enable the ones appropriate for a public extension project.
 - Review issue and pull-request templates for public contributors.
 - Decide whether discussions should happen in GitHub Issues, Discussions or both.
-- Do not add a funding configuration until the actual sponsorship destination is configured and ready to receive contributions.
+- Confirm `.github/FUNDING.yml` points only to the reviewed active GitHub Sponsors destination.
 
 ## Release
 
