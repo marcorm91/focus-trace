@@ -1,0 +1,107 @@
+/* Follow-up interaction polish: keep status information aligned with the
+   current page label and make clickable navigation/contact controls read as
+   buttons without introducing decorative color. */
+.quick-start-copy {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px 12px;
+  align-items: center;
+}
+
+.quick-start-copy > p {
+  grid-column: 1;
+  grid-row: 1;
+  min-width: 0;
+  margin: 0;
+}
+
+.quick-start-copy > .status {
+  grid-column: 2;
+  grid-row: 1;
+  justify-self: end;
+  margin: 0;
+}
+
+.workspace-nav.tabs button {
+  min-height: 58px;
+  border: 1.5px solid var(--ft-border);
+  background: var(--ft-surface);
+  color: var(--ft-ink);
+  box-shadow: var(--ft-shadow-sm);
+  cursor: pointer;
+}
+
+.workspace-nav.tabs button:not(:disabled):hover {
+  border-color: var(--ft-border);
+  background-color: color-mix(in srgb, var(--ft-ink) 4%, var(--ft-surface));
+  color: var(--ft-ink);
+}
+
+.workspace-nav.tabs button:not(:disabled):active {
+  box-shadow: none;
+  transform: translate(1px, 1px);
+}
+
+.workspace-nav.tabs button.active {
+  border-color: var(--ft-ink);
+  background: var(--ft-ink);
+  color: var(--ft-surface);
+  box-shadow: var(--ft-shadow-sm);
+}
+
+.workspace-nav.tabs button:disabled {
+  box-shadow: none;
+  cursor: not-allowed;
+}
+
+.settings-contact-link {
+  min-height: 40px;
+  border: 1.5px solid var(--ft-border);
+  border-radius: var(--ft-radius-sm);
+  background: var(--ft-surface);
+  color: var(--ft-ink);
+  box-shadow: var(--ft-shadow-sm);
+  cursor: pointer;
+  text-decoration: none;
+  transition:
+    transform 120ms ease,
+    box-shadow 120ms ease,
+    background-color 120ms ease,
+    border-color 120ms ease,
+    color 120ms ease;
+}
+
+.settings-contact-link:hover {
+  border-color: var(--ft-border);
+  background: color-mix(in srgb, var(--ft-ink) 4%, var(--ft-surface));
+  color: var(--ft-ink);
+  text-decoration: none;
+}
+
+.settings-contact-link:active {
+  box-shadow: none;
+  transform: translate(1px, 1px);
+}
+
+@media (max-width: 420px) {
+  .quick-start-copy {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .quick-start-copy > p {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .quick-start-copy > .status {
+    grid-column: 1;
+    grid-row: 2;
+    justify-self: end;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-contact-link {
+    transition: none;
+  }
+}
