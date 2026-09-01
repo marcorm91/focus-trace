@@ -6,6 +6,7 @@ import { manifestForBrowser } from '../wxt.config';
 type PackageManifest = {
   version: string;
   private: boolean;
+  license: string;
   scripts?: Record<string, string>;
   dependencies?: Record<string, string>;
   devDependencies?: Record<string, string>;
@@ -91,7 +92,8 @@ describe('v0.1.0 release contract', () => {
     expect(packageJson.scripts?.['release:check']).toContain('build:firefox');
   });
 
-  it('keeps npm publishing disabled for the extension package', () => {
+  it('keeps the release package private and GPL-3.0-only', () => {
     expect(packageJson.private).toBe(true);
+    expect(packageJson.license).toBe('GPL-3.0-only');
   });
 });
