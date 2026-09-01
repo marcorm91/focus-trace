@@ -5,7 +5,8 @@
 .scan-coverage-summary > div,
 .report-coverage > div,
 .focus-journey-summary > span,
-.report-scoreline > div {
+.report-scoreline > div,
+.trace-workspace .trace-metrics > span {
   position: relative;
   min-width: 0;
   padding: 8px 10px 8px 12px;
@@ -22,7 +23,8 @@
 .scan-coverage-summary > div::before,
 .report-coverage > div::before,
 .focus-journey-summary > span::before,
-.report-scoreline > div::before {
+.report-scoreline > div::before,
+.trace-workspace .trace-metrics > span::before {
   position: absolute;
   inset: 6px auto 6px 0;
   width: 2px;
@@ -36,12 +38,14 @@
 .scan-coverage-summary dd,
 .report-coverage strong,
 .focus-journey-summary strong,
-.report-scoreline strong {
+.report-scoreline strong,
+.trace-workspace .trace-metrics strong {
   font-variant-numeric: tabular-nums;
 }
 
 .report-scoreline > div.is-alert,
-.focus-journey-summary > span.has-warning {
+.focus-journey-summary > span.has-warning,
+.trace-workspace .trace-metrics > span.has-signal {
   border: 0;
   background: transparent;
 }
@@ -51,7 +55,8 @@
   background: var(--ft-danger);
 }
 
-.focus-journey-summary > span.has-warning::before {
+.focus-journey-summary > span.has-warning::before,
+.trace-workspace .trace-metrics > span.has-signal::before {
   width: 3px;
   background: var(--ft-warning);
 }
@@ -60,7 +65,8 @@
   color: var(--ft-danger);
 }
 
-.focus-journey-summary > span.has-warning strong {
+.focus-journey-summary > span.has-warning strong,
+.trace-workspace .trace-metrics > span.has-signal strong {
   color: var(--ft-warning);
 }
 
