@@ -103,6 +103,7 @@ export default defineContentScript({
     let pendingFocusIntent: 'forward' | 'backward' | 'programmatic' = 'programmatic';
     let hiddenFocusReported: Element | null = null;
     let focusWalkRunning = false;
+    let focusWalkCancelRequested = false;
     let observerActive = false;
     let routeTimer: number | undefined;
     const interactionTracker = new RuntimeInteractionTracker();
@@ -242,6 +243,8 @@ export default defineContentScript({
       });
 
     const sleep = (ms: number) => new Promise((resolve) => ctx.setTimeout(() => resolve(undefined), ms));
+    const isFocusWalkUiTarget = (target: EventTarget | null): boolean =>
+      target instanceof Element && Boolean(target.closest('[data-focustrace-focus-walk-backdrop]'));
 
     const runAutomaticFocusWalk = async (options: FocusWalkOptions = {}): Promise<FocusWalkResult> => {
       if (focusWalkRunning) {
@@ -249,10 +252,13 @@ export default defineContentScript({
       }
 
       focusWalkRunning = true;
+      focusWalkCancelRequested = false;
       const candidates = focusWalkCandidates();
-      const totalCandidates = Math.min(candidates.length, options.maxSteps ?? 80);
+      const totalCandidates = Math.min(candidates.length, options.maxSteps ?? candidates.length);
       const delayMs = Math.min(Math.max(options.delayMs ?? 180, 60), 1000);
-      const backdrop = showFocusWalkBackdropInPage(totalCandidates);
+      const backdrop = showFocusWalkBackdropInPage(totalCandidates, () => {
+        focusWalkCancelRequested = true;
+      });
       let focusedSteps = 0;
       let skipped = candidates.length - totalCandidates;
       let stopped = false;
@@ -261,7 +267,7 @@ export default defineContentScript({
 
       try {
         for (const [index, candidate] of candidates.slice(0, totalCandidates).entries()) {
-          if (!recording) {
+          if (!recording || focusWalkCancelRequested) {
             stopped = true;
             break;
           }
@@ -297,6 +303,7 @@ export default defineContentScript({
         emit(createFocusWalkEndEvent({ focusedSteps, totalCandidates, skipped, stopped }));
         backdrop.dispose();
         focusWalkRunning = false;
+        focusWalkCancelRequested = false;
       }
 
       return { totalCandidates, focusedSteps, skipped, stopped };
@@ -308,7 +315,7 @@ export default defineContentScript({
       (rawEvent) => {
         if (!recording) return;
         const event = rawEvent as PointerEvent;
-        if (!(event.target instanceof Element)) return;
+        if (!(event.target instanceof Element) || isFocusWalkUiTarget(event.target)) return;
         beginInteraction('pointer', actionTarget(event.target));
       },
       true,
@@ -320,7 +327,7 @@ export default defineContentScript({
       (rawEvent) => {
         if (!recording) return;
         const event = rawEvent as FocusEvent;
-        if (!(event.target instanceof Element)) return;
+        if (!(event.target instanceof Element) || isFocusWalkUiTarget(event.target)) return;
         focusVersion += 1;
         lastFocused = event.target;
         hiddenFocusReported = null;
@@ -360,6 +367,7 @@ export default defineContentScript({
       (rawEvent) => {
         if (!recording) return;
         const event = rawEvent as KeyboardEvent;
+        if (isFocusWalkUiTarget(event.target)) return;
         if (!['Tab', 'Enter', 'Escape', ' ', 'ArrowUp', 'ArrowDown', 'ArrowLeft', 'ArrowRight', 'Home', 'End'].includes(event.key)) return;
         if (event.key === 'Tab') pendingFocusIntent = event.shiftKey ? 'backward' : 'forward';
         const target = event.target instanceof Element ? actionTarget(event.target) : null;
@@ -392,7 +400,7 @@ export default defineContentScript({
       (rawEvent) => {
         if (!recording) return;
         const event = rawEvent as MouseEvent;
-        if (!(event.target instanceof Element)) return;
+        if (!(event.target instanceof Element) || isFocusWalkUiTarget(event.target)) return;
         const target = actionTarget(event.target);
         const clickSelector = selectorFor(target);
         const interactionId = interactionTracker.click(clickSelector);
@@ -473,6 +481,11 @@ export default defineContentScript({
       }
 
       for (const mutation of mutations) {
+        const mutationTargetElement = mutation.target instanceof Element
+          ? mutation.target
+          : mutation.target.parentElement;
+        if (mutationTargetElement && isFocusWalkUiTarget(mutationTargetElement)) continue;
+
         if (mutation.type === 'childList') {
           for (const node of mutation.addedNodes) {
             for (const added of findSignificantAddedElements(node)) {
@@ -487,9 +500,7 @@ export default defineContentScript({
           }
         }
 
-        const mutationElement = mutation.target instanceof Element
-          ? mutation.target
-          : mutation.target.parentElement;
+        const mutationElement = mutationTargetElement;
         if (!mutationElement) continue;
 
         const live = mutationElement.closest('[aria-live], [role="status"], [role="alert"]');
