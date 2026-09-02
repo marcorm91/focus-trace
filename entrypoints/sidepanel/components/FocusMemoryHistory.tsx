@@ -20,6 +20,15 @@ function formatHistoryDate(timestamp: number, language: AppLanguage): string {
   }).format(new Date(timestamp));
 }
 
+function formatRatio(value: number | undefined): string | undefined {
+  if (value == null || !Number.isFinite(value)) return undefined;
+  return Number(value.toFixed(2)).toString();
+}
+
+function findingReference(fingerprint: string): string {
+  return fingerprint.replace(/^finding-/, '').slice(-6).toUpperCase();
+}
+
 function findingStateLabel(state: FocusMemoryFindingState, language: AppLanguage): string {
   if (state === 'new') return tr(language, 'New', 'Nuevo');
   if (state === 'present') return tr(language, 'Still present', 'Sigue presente');
@@ -42,6 +51,77 @@ function timelinePointLabel(
   if (point.present) return tr(language, 'Present', 'Presente');
   if (index > 0 && !point.comparableToPrevious) return tr(language, 'Not comparable', 'No comparable');
   return tr(language, 'Not observed', 'No detectado');
+}
+
+function LastDetection({ item, language }: { item: FocusMemoryFindingHistory; language: AppLanguage }) {
+  if (item.lastDetectedAt == null) return null;
+
+  const contrast = item.lastKnownDetail?.contrast;
+  const ratio = formatRatio(contrast?.ratio);
+  const requiredRatio = formatRatio(contrast?.requiredRatio);
+  const hasTextMetrics = contrast?.fontSizePx != null || contrast?.fontWeight != null;
+
+  return (
+    <section
+      className="focus-memory-last-detection"
+      aria-label={tr(language, 'Last detected evidence', 'Última evidencia detectada')}
+    >
+      <div className="focus-memory-last-detection-head">
+        <strong>{tr(language, 'Last detection', 'Última detección')}</strong>
+        <code title={tr(language, 'Stable local finding reference', 'Referencia local estable del fallo')}>
+          {tr(language, 'Ref.', 'Ref.')} {findingReference(item.fingerprint)}
+        </code>
+      </div>
+
+      <dl>
+        <div>
+          <dt>{tr(language, 'Last seen', 'Última vez')}</dt>
+          <dd>
+            <time dateTime={new Date(item.lastDetectedAt).toISOString()}>
+              {formatHistoryDate(item.lastDetectedAt, language)}
+            </time>
+          </dd>
+        </div>
+
+        {contrast && ratio && requiredRatio && (
+          <div>
+            <dt>{tr(language, 'Evidence', 'Evidencia')}</dt>
+            <dd>
+              {tr(
+                language,
+                `Contrast ${ratio}:1 · required ${requiredRatio}:1`,
+                `Contraste ${ratio}:1 · requerido ${requiredRatio}:1`,
+              )}
+            </dd>
+          </div>
+        )}
+
+        {contrast && (contrast.foreground || contrast.background) && (
+          <div>
+            <dt>{tr(language, 'Colors', 'Colores')}</dt>
+            <dd>
+              {contrast.foreground ?? '—'}
+              {' / '}
+              {contrast.background ?? '—'}
+            </dd>
+          </div>
+        )}
+
+        {contrast && hasTextMetrics && (
+          <div>
+            <dt>{tr(language, 'Text', 'Texto')}</dt>
+            <dd>
+              {contrast.fontSizePx != null ? `${contrast.fontSizePx}px` : '—'}
+              {' · '}
+              {contrast.fontWeight != null
+                ? tr(language, `weight ${contrast.fontWeight}`, `peso ${contrast.fontWeight}`)
+                : tr(language, 'weight unknown', 'peso desconocido')}
+            </dd>
+          </div>
+        )}
+      </dl>
+    </section>
+  );
 }
 
 function FindingHistoryItem({
@@ -83,6 +163,8 @@ function FindingHistoryItem({
           {canLocate && <span className="focus-memory-finding-card-chevron" aria-hidden="true" />}
         </span>
       </div>
+
+      {item.state === 'resolved' && <LastDetection item={item} language={language} />}
 
       <div className="focus-memory-evidence-table-wrap">
         <table
