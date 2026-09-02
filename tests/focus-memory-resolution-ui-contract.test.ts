@@ -21,6 +21,18 @@ describe('FocusTrace Memory resolved finding UI', () => {
     expect(css).toContain(".focus-memory-resolve input[type='checkbox']");
   });
 
+  it('keeps the last detected context visible before a resolved finding is archived', () => {
+    const history = source('entrypoints/sidepanel/components/FocusMemoryHistory.tsx');
+    const css = source('entrypoints/sidepanel/components/focus-memory.css');
+
+    expect(history).toContain("'Last detection', 'Última detección'");
+    expect(history).toContain('item.lastDetectedAt');
+    expect(history).toContain('item.lastKnownDetail?.contrast');
+    expect(history).toContain("'Evidence', 'Evidencia'");
+    expect(history).toContain("'Colors', 'Colores'");
+    expect(css).toContain('.focus-memory-last-detection');
+  });
+
   it('clears resolved markers together with normal Memory history', () => {
     const storage = source('lib/focus-memory/storage.ts');
 

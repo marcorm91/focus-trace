@@ -36,7 +36,7 @@ export function manifestForBrowser(browser: string): UserManifest {
   return {
     name: 'FocusTrace',
     description: 'Run local WCAG 2.2 checks and debug focus, SPA transitions and dynamic accessibility behavior.',
-    version: '0.1.1',
+    version: '0.1.2',
     ...(firefox
       ? {
           browser_specific_settings: {

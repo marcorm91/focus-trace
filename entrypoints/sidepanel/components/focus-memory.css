@@ -221,6 +221,72 @@
 .focus-memory-finding.state-new .focus-memory-finding-head > span,
 .focus-memory-finding.state-changed .focus-memory-finding-head > span { color: var(--ft-warning); }
 
+.focus-memory-last-detection {
+  min-width: 0;
+  display: grid;
+  gap: 7px;
+  padding: 8px;
+  border: 1px solid var(--ft-border-soft);
+  border-radius: var(--ft-radius-xs);
+  background: var(--ft-surface-subtle);
+}
+
+.focus-memory-last-detection-head {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.focus-memory-last-detection-head strong {
+  color: var(--ft-text);
+  font-size: 14px;
+  font-weight: 850;
+}
+
+.focus-memory-last-detection-head code {
+  flex: 0 0 auto;
+  color: var(--ft-muted);
+  font-size: 14px;
+}
+
+.focus-memory-last-detection dl {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 6px 12px;
+  margin: 0;
+}
+
+.focus-memory-last-detection dl > div {
+  min-width: 0;
+  display: grid;
+  gap: 1px;
+}
+
+.focus-memory-last-detection dt,
+.focus-memory-last-detection dd {
+  min-width: 0;
+  margin: 0;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.focus-memory-last-detection dt {
+  color: var(--ft-muted);
+  font-weight: 700;
+}
+
+.focus-memory-last-detection dd {
+  color: var(--ft-text);
+}
+
+.focus-memory-last-detection time {
+  font-variant-numeric: tabular-nums;
+}
+
 .focus-memory-evidence-table-wrap {
   min-width: 0;
   overflow-x: auto;
@@ -375,5 +441,9 @@
   .focus-memory-history > summary::after {
     grid-column: 2;
     grid-row: 1 / span 2;
+  }
+
+  .focus-memory-last-detection dl {
+    grid-template-columns: minmax(0, 1fr);
   }
 }
