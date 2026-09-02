@@ -248,7 +248,7 @@
 .focus-memory-last-detection-head code {
   flex: 0 0 auto;
   color: var(--ft-muted);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .focus-memory-last-detection dl {
@@ -270,7 +270,7 @@
   min-width: 0;
   margin: 0;
   overflow-wrap: anywhere;
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.35;
 }
 
