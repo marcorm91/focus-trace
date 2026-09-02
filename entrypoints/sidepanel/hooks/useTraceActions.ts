@@ -205,7 +205,7 @@ export function useTraceActions({
 
       const result = (await browser.tabs.sendMessage(tabId, {
         type: 'FOCUSTRACE_RUN_FOCUS_WALK',
-        options: { delayMs: 180, maxSteps: 80 },
+        options: { delayMs: 180 },
       } satisfies ExtensionMessage)) as FocusWalkResult;
 
       await waitForRuntimeFlush(tabId);

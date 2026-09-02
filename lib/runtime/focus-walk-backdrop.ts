@@ -3,7 +3,10 @@ export interface FocusWalkBackdropController {
   dispose(): void;
 }
 
-export function showFocusWalkBackdropInPage(total: number): FocusWalkBackdropController {
+export function showFocusWalkBackdropInPage(
+  total: number,
+  onCancel?: () => void,
+): FocusWalkBackdropController {
   document.querySelector('[data-focustrace-focus-walk-backdrop]')?.remove();
 
   const root = document.createElement('div');
@@ -93,6 +96,31 @@ export function showFocusWalkBackdropInPage(total: number): FocusWalkBackdropCon
     transition: 'width 120ms ease',
   });
 
+  const cancelButton = document.createElement('button');
+  cancelButton.type = 'button';
+  cancelButton.setAttribute('data-focustrace-focus-walk-cancel', 'true');
+  cancelButton.textContent = 'Cancelar automatización';
+  Object.assign(cancelButton.style, {
+    marginTop: '12px',
+    padding: '8px 12px',
+    border: '1px solid #b91c1c',
+    borderRadius: '6px',
+    background: '#fff',
+    color: '#b91c1c',
+    font: '700 14px/1.2 system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif',
+    cursor: 'pointer',
+    pointerEvents: 'auto',
+  });
+  cancelButton.addEventListener('pointerdown', (event) => event.preventDefault());
+  cancelButton.addEventListener('click', () => {
+    if (cancelButton.disabled) return;
+    cancelButton.disabled = true;
+    cancelButton.textContent = 'Cancelando…';
+    cancelButton.style.cursor = 'default';
+    text.textContent = 'Cancelando el recorrido. Se conservarán los pasos registrados hasta este punto.';
+    onCancel?.();
+  });
+
   const updateFocusBox = (element: Element | null) => {
     if (!(element instanceof HTMLElement) && !(element instanceof SVGElement)) {
       focusBox.style.display = 'none';
@@ -116,7 +144,7 @@ export function showFocusWalkBackdropInPage(total: number): FocusWalkBackdropCon
   document.addEventListener('focusin', focusListener, true);
 
   bar.append(fill);
-  card.append(title, text, bar);
+  card.append(title, text, bar, cancelButton);
   root.append(focusBox, card);
   document.documentElement.append(root);
 
