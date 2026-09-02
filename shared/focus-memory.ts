@@ -17,9 +17,20 @@ export interface FocusMemorySettings {
   ignoreScansAtOrBefore?: number;
 }
 
+export interface FocusMemoryContrastSnapshot {
+  ratio?: number;
+  requiredRatio: number;
+  foreground?: string;
+  background?: string;
+  fontSizePx?: number;
+  fontWeight?: number;
+  largeText?: boolean;
+}
+
 export interface FocusMemoryFailureDescriptor {
   fingerprint: string;
   ruleId: string;
+  contrast?: FocusMemoryContrastSnapshot;
 }
 
 export interface FocusMemoryObservation {
@@ -71,6 +82,8 @@ export interface FocusMemoryFindingHistory {
   state: FocusMemoryFindingState;
   changedNow: boolean;
   timeline: FocusMemoryFindingTimelinePoint[];
+  lastDetectedAt?: number;
+  lastKnownDetail?: FocusMemoryFailureDescriptor;
 }
 
 export const DEFAULT_FOCUS_MEMORY_SETTINGS: FocusMemorySettings = {
@@ -156,6 +169,27 @@ function findingFingerprint(issue: ScanIssue): string {
   return `finding-${hashFingerprint(`${issue.ruleId}|${targets}`)}`;
 }
 
+function contrastSnapshot(issue: ScanIssue): FocusMemoryContrastSnapshot | undefined {
+  const contrast = issue.contrast;
+  if (!contrast || !Number.isFinite(contrast.requiredRatio)) return undefined;
+
+  return {
+    ...(typeof contrast.ratio === 'number' && Number.isFinite(contrast.ratio)
+      ? { ratio: contrast.ratio }
+      : {}),
+    requiredRatio: contrast.requiredRatio,
+    ...(contrast.foreground ? { foreground: contrast.foreground } : {}),
+    ...(contrast.background ? { background: contrast.background } : {}),
+    ...(typeof contrast.fontSizePx === 'number' && Number.isFinite(contrast.fontSizePx)
+      ? { fontSizePx: contrast.fontSizePx }
+      : {}),
+    ...(typeof contrast.fontWeight === 'number' && Number.isFinite(contrast.fontWeight)
+      ? { fontWeight: contrast.fontWeight }
+      : {}),
+    ...(typeof contrast.largeText === 'boolean' ? { largeText: contrast.largeText } : {}),
+  };
+}
+
 /**
  * Builds one compact descriptor per deterministic failure.
  *
@@ -174,12 +208,14 @@ export function focusMemoryFailureDescriptors(
     const baseFingerprint = findingFingerprint(issue);
     const occurrence = occurrences.get(baseFingerprint) ?? 0;
     occurrences.set(baseFingerprint, occurrence + 1);
+    const contrast = contrastSnapshot(issue);
 
     return {
       fingerprint: occurrence === 0
         ? baseFingerprint
         : `finding-${hashFingerprint(`${baseFingerprint}|occurrence:${occurrence + 1}`)}`,
       ruleId: issue.ruleId,
+      ...(contrast ? { contrast } : {}),
     };
   });
 }
@@ -208,10 +244,25 @@ export function buildFocusMemoryObservation(scan: ScanResult): FocusMemoryObserv
   };
 }
 
+function isContrastSnapshot(value: unknown): value is FocusMemoryContrastSnapshot {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Partial<FocusMemoryContrastSnapshot>;
+  return typeof candidate.requiredRatio === 'number'
+    && Number.isFinite(candidate.requiredRatio)
+    && (candidate.ratio == null || (typeof candidate.ratio === 'number' && Number.isFinite(candidate.ratio)))
+    && (candidate.foreground == null || typeof candidate.foreground === 'string')
+    && (candidate.background == null || typeof candidate.background === 'string')
+    && (candidate.fontSizePx == null || (typeof candidate.fontSizePx === 'number' && Number.isFinite(candidate.fontSizePx)))
+    && (candidate.fontWeight == null || (typeof candidate.fontWeight === 'number' && Number.isFinite(candidate.fontWeight)))
+    && (candidate.largeText == null || typeof candidate.largeText === 'boolean');
+}
+
 function isFailureDescriptor(value: unknown): value is FocusMemoryFailureDescriptor {
   if (!value || typeof value !== 'object') return false;
   const candidate = value as Partial<FocusMemoryFailureDescriptor>;
-  return typeof candidate.fingerprint === 'string' && typeof candidate.ruleId === 'string';
+  return typeof candidate.fingerprint === 'string'
+    && typeof candidate.ruleId === 'string'
+    && (candidate.contrast == null || isContrastSnapshot(candidate.contrast));
 }
 
 function isObservation(value: unknown): value is FocusMemoryObservation {
@@ -346,12 +397,14 @@ export function buildFocusMemoryFindingHistory(
     }));
 
     const descriptor = descriptors.get(fingerprint);
+    const lastDetectedAt = [...timeline].reverse().find((point) => point.present)?.observedAt;
     return {
       fingerprint,
-      ...(descriptor ? { ruleId: descriptor.ruleId } : {}),
+      ...(descriptor ? { ruleId: descriptor.ruleId, lastKnownDetail: descriptor } : {}),
       state,
       changedNow: previous ? currentPresent !== previousPresent : currentPresent,
       timeline,
+      ...(lastDetectedAt != null ? { lastDetectedAt } : {}),
     };
   });
 
