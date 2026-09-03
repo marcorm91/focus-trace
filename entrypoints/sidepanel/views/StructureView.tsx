@@ -116,6 +116,10 @@ function metricCopy(id: StructureMetricId, language: AppLanguage): MetricCopy {
   return copies[id];
 }
 
+function groupLocateSelector(metric: StructureMetricTarget, label: string): string {
+  return `__focustrace_group__:${encodeURIComponent(JSON.stringify({ selector: metric.selector, label }))}`;
+}
+
 function SnapshotEmpty({
   busy,
   language,
@@ -147,11 +151,11 @@ function SnapshotEmpty({
 function StructureMetricButton({
   metric,
   language,
-  onLocateMany,
+  onLocate,
 }: {
   metric: StructureMetricTarget;
   language: AppLanguage;
-  onLocateMany: (selector: string, label: string) => void | Promise<void>;
+  onLocate: (selector: string) => void | Promise<void>;
 }) {
   const copy = metricCopy(metric.id, language);
   return (
@@ -164,7 +168,7 @@ function StructureMetricButton({
         `Locate ${metric.count} ${copy.label.toLocaleLowerCase()}`,
         `Localizar ${metric.count} ${copy.label.toLocaleLowerCase()}`,
       )}
-      onClick={() => void onLocateMany(metric.selector, copy.label)}
+      onClick={() => void onLocate(groupLocateSelector(metric, copy.label))}
     >
       <strong>{metric.count}</strong>
       <span>{copy.label}</span>
@@ -180,7 +184,6 @@ export function StructureView({
   busy,
   onRefresh,
   onLocate,
-  onLocateMany,
 }: {
   snapshot?: StructureSnapshot;
   scan?: ScanResult;
@@ -188,7 +191,6 @@ export function StructureView({
   busy: boolean;
   onRefresh: () => void | Promise<void>;
   onLocate: (selector: string) => void | Promise<void>;
-  onLocateMany: (selector: string, label: string) => void | Promise<void>;
 }) {
   const componentScan = scan?.scope?.type === 'component';
   const [mode, setMode] = useState<StructureMode>(componentScan ? 'semantics' : 'headings');
@@ -318,7 +320,7 @@ export function StructureView({
                   key={metric.id}
                   metric={metric}
                   language={language}
-                  onLocateMany={onLocateMany}
+                  onLocate={onLocate}
                 />
               ))}
             </div>
