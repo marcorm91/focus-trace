@@ -12,10 +12,11 @@ Responsibilities include:
 
 - selecting full-page or component analysis;
 - starting/stopping Trace and Focus Walk;
-- rendering scan, heading, focus, replay and report views;
+- rendering scan, Structure, focus, replay and report views;
 - managing user-facing settings;
 - requesting optional HTTP/HTTPS page access directly from explicit user actions, before querying privileged tab URL fields on a fresh installation;
 - collecting bounded local Memory evidence for an explicit scan when Memory is enabled;
+- adding/replacing a full-page result and bounded local visual context in the active multipage audit;
 - presenting FocusTrace Memory comparisons without mutating scan history merely by rendering a view.
 
 The side panel treats the background session as the source of truth for the active tab. Asynchronous tab refreshes are guarded so a slow response from a previously selected tab cannot overwrite the current tab state.
@@ -49,24 +50,27 @@ Functions passed through `browser.scripting.executeScript({ func })` must be sel
 
 Site Audit reuses the real static rule engine rather than maintaining a second accessibility scanner.
 
-### Printable report
+### Printable reports
 
-`entrypoints/report-print/` and `lib/report/` own report assembly, optional local visual evidence and printable/export formats.
+`entrypoints/report-print/`, `entrypoints/audit-print/`, `lib/report/` and the multipage-audit storage boundary own report assembly, bounded local visual evidence and printable/export formats.
 
-Visual evidence is user initiated. Screenshot capability is requested for the export action and is not a permanent production host permission.
+Single-page printable visual evidence is user initiated. Broader screenshot capability is requested for the export action when the browser requires it and is not a permanent production host permission.
+
+Multipage audit visual evidence is different: an explicit full-page analysis can retain a small bounded crop set locally so a later audit PDF can preserve context after the user has navigated away. Those crops use the active analysis context and are stored with the audit review; they are not re-captured against whichever page is active during historical export.
 
 ## Library layout
 
 ### `lib/audit/`
 
-Deterministic static-analysis primitives and rule execution:
+Deterministic static-analysis primitives and rule execution, plus the multipage audit model/storage boundary:
 
 - accessible-name and DOM helpers;
 - text and non-text contrast;
 - label-in-name;
 - standards registry evaluation;
 - duplicate-ID authoring checks;
-- scan orchestration.
+- scan orchestration;
+- multipage audit URL/site identity, replacement rules and bounded local persistence.
 
 A static `FAIL` must be backed by evidence that the implemented expectation can evaluate deterministically. Context-dependent signals belong in `REVIEW`; authoring/maintenance signals that are not direct WCAG failures belong in `WARNING`.
 
@@ -86,7 +90,7 @@ When Memory is enabled, `visual-evidence.ts` can collect a compact locator for f
 
 ### `lib/report/`
 
-Shared report composition, evidence formatting and remediation guidance.
+Shared report composition, evidence formatting, visual-crop preparation and remediation guidance.
 
 ### `shared/`
 
@@ -114,21 +118,28 @@ FocusTrace uses two browser storage lifetimes for different purposes.
 - recording state;
 - breakpoint state.
 
+It is also used as a short-lived handoff for printable report evidence. Single-page visual evidence is trimmed by a data-size budget before that handoff, and a multipage audit is normalized/bounded before its print payload is stored. Printable payloads are consumed and removed by their print entrypoint.
+
 Runtime event history is capped at 500 events per tab.
 
 Closing a tab removes its session entry. **Start Over** clears the page/Trace evidence while preserving configured breakpoint preferences.
 
 ### Local storage
 
-`browser.storage.local` stores durable user choices such as:
+`browser.storage.local` stores durable user choices and bounded local history such as:
 
 - interface language and scale;
 - breakpoint preferences;
+- multipage audit history and bounded recent visual crops;
 - FocusTrace Memory opt-in, bounded history and optional bounded local evidence.
+
+Multipage audits retain the latest saved full-page result per normalized URL. Storage is bounded by audit/page counts, at most two visual crops per review, a shared visual-data budget and an overall serialized audit-store budget. Pruning prefers the newest active review: older inactive audit history is removed first, then older pages. A quota-write fallback attempts to preserve the newest active page without screenshot data rather than losing the latest static review entirely.
+
+Historical audit pages in 0.1.4 persist their static scan/headings and audit visual crops. They do **not** persist complete Trace or Structure snapshots; the UI must label those historical sections as unavailable rather than borrowing live evidence from the current tab.
 
 FocusTrace Memory is disabled by default. Its normal observation data includes hashed fingerprints, counts and timestamps. To preserve useful context for a resolved finding, it can also retain a compact target locator and, when available, a small local JPEG crop of the visible failing element. Memory does not store page HTML, a full DOM snapshot or a full-page screenshot.
 
-Current retention bounds are 8 observations per scope, 200 observations total, 24 visual previews across remembered findings and 90 days. Only the newest retained preview for a finding is kept. Age cleanup occurs when FocusTrace next reads Memory storage. Users can clear saved history and evidence from Settings even when Memory is disabled.
+Current Memory retention bounds are 8 observations per scope, 200 observations total, 24 visual previews across remembered findings and 90 days. Only the newest retained preview for a finding is kept. Age cleanup occurs when FocusTrace next reads Memory storage. Users can clear saved history and evidence from Settings even when Memory is disabled.
 
 ## Static scan flow
 
@@ -151,6 +162,10 @@ Background serializes per-tab write
         ├─ stores current scan in storage.session
         ├─ records eligible Memory observation/evidence in storage.local
         └─ broadcasts updated session
+        ↓
+For a full-page scan: collect bounded audit visual context and upsert normalized page in active audit
+        ↓
+browser.storage.local (bounded audit store)
 ```
 
 Component scans use the same rule engine with a selected subtree. Rules that need document context can still inspect the document when required. Duplicate-ID uniqueness, for example, is document-wide even when only occurrences inside the selected component are reported.
@@ -170,8 +185,10 @@ storage.session (bounded event list)
         ↓
 FOCUSTRACE_SESSION_UPDATED
         ↓
-Side panel views / graph / journey / replay / report
+Side panel views / graph / journey / replay / current report
 ```
+
+Trace is session evidence. It must not be silently attached to a historical audit page that did not persist that Trace.
 
 ## Selector invariant
 
@@ -181,14 +198,16 @@ A unique HTML ID can use the compact `#id` form. If the ID is duplicated, FocusT
 
 Memory locators deliberately retain only a bounded selector string as historical context. They are not treated as a stable DOM snapshot and are removed when the detailed resolved finding is archived or when Memory history is cleared.
 
+Historical report page-location actions are only exposed when that report corresponds to the live current page. A saved page must never locate its selectors against an unrelated active tab.
+
 ## Permission boundary
 
 Production builds intentionally avoid permanent global host access.
 
 - `activeTab` and `scripting` support explicit page analysis/runtime actions.
 - HTTP/HTTPS host access is optional and requested from the user action that needs it.
-- Memory visible-element previews are attempted only during an explicit scan using the active-tab/page-access context already established for that action; capture failure falls back to the locator and does not request persistent broad screenshot access.
-- broader `<all_urls>` screenshot access remains temporary and export-specific for printable-report evidence.
+- Multipage audit review crops and Memory visible-element previews are attempted only during an explicit scan using the active-tab/page-access context already established for that action; capture failure records an unavailable/fallback state and does not request persistent broad screenshot access.
+- broader `<all_urls>` screenshot access remains temporary and export-specific for single-page printable-report and Site Audit visual evidence.
 - E2E builds may include localhost access solely to exercise the extension in browser tests.
 
 Changes to these boundaries require a privacy/security review and corresponding documentation updates.
@@ -223,8 +242,8 @@ Before adding a new persistent feature, define:
 
 1. whether it belongs in session or local storage;
 2. its retention bound;
-3. whether it is opt-in;
+3. whether it is opt-in or part of an explicit user-requested workflow;
 4. which execution context is allowed to write it;
 5. how concurrent writes are serialized;
-6. how the user can clear it;
+6. how the user can clear it or how automatic pruning works;
 7. what privacy documentation must change.
