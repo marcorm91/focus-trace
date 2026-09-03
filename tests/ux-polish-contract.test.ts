@@ -209,7 +209,6 @@ describe('UX polish contract', () => {
     const matrix = source('entrypoints/sidepanel/components/ImpactMatrix.tsx');
     const matrixCss = source('entrypoints/sidepanel/components/impact-matrix.css');
     const scan = source('entrypoints/sidepanel/views/ScanView.tsx');
-    const entry = source('entrypoints/sidepanel/main.tsx');
 
     expect(scan).toContain('<ImpactMatrix scan={scan} language={language} />');
     expect(scan).not.toContain('severity-impact-summary');
