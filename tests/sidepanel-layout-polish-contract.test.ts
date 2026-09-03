@@ -7,7 +7,7 @@ function source(path: string): string {
 }
 
 describe('sidepanel layout polish contract', () => {
-  it('keeps four primary workspaces and groups headings inside Structure', () => {
+  it('keeps four primary workspaces and groups headings inside a simplified Structure view', () => {
     const structureNavigation = source('entrypoints/sidepanel/structure-navigation.css');
     const structureView = source('entrypoints/sidepanel/views/StructureView.tsx');
     const app = source('entrypoints/sidepanel/App.tsx');
@@ -17,18 +17,21 @@ describe('sidepanel layout polish contract', () => {
     expect(structureNavigation).toContain('grid-template-columns: repeat(4, minmax(0, 1fr));');
     expect(structureNavigation).toContain('--ft-i-structure');
     expect(structureNavigation).toContain('button:nth-child(4) > span');
-    expect(structureView).toContain("type StructureMode = 'map' | 'headings' | 'semantics' | 'metrics';");
+    expect(structureView).toContain("type StructureMode = 'headings' | 'semantics' | 'metrics';");
+    expect(structureView).not.toContain("'map'");
     expect(structureView).toContain('<HeadingTreeView scan={scan} language={language} onLocate={onLocate} />');
+    expect(structureView).toContain('structure-element-details');
+    expect(structureView).toContain('groupLocateSelector');
     expect(app).not.toContain("view === 'headings'");
     expect(about).not.toMatch(/(^|\n)\.tabs\s*\{/);
     expect(focusGraph).not.toMatch(/(^|\n)\.tabs\s*\{/);
   });
 
-  it('keeps Structure DOM collection explicitly on demand', () => {
+  it('keeps the semantic/metric Structure collection explicitly on demand', () => {
     const structureView = source('entrypoints/sidepanel/views/StructureView.tsx');
 
-    expect(structureView).toContain("tr(language, 'Generate structure', 'Generar estructura')");
-    expect(structureView).toContain("tr(language, 'Generate', 'Generar')");
+    expect(structureView).toContain("tr(language, 'Analyze structure', 'Analizar estructura')");
+    expect(structureView).toContain("tr(language, 'Refresh', 'Actualizar')");
     expect(structureView).not.toContain('if (!snapshot && !busy) void onRefresh();');
   });
 
