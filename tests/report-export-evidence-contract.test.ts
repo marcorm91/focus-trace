@@ -7,13 +7,34 @@ function source(path: string): string {
 }
 
 describe('report export evidence contract', () => {
-  it('captures every eligible visual evidence component without an arbitrary count cap', () => {
+  it('keeps single-page visual export uncapped while allowing a bounded audit snapshot', () => {
+    const evidence = source('lib/report/visual-evidence.ts');
+    const auditHook = source('entrypoints/sidepanel/hooks/useMultipageAudit.ts');
+
+    expect(evidence).toContain('maxVisuals = Number.POSITIVE_INFINITY');
+    expect(evidence).toContain('const bounded = Number.isFinite(maxVisuals);');
+    expect(evidence).toContain(': eligible;');
+    expect(evidence).not.toContain('DEFAULT_MAX_VISUALS');
+    expect(auditHook).toContain('MAX_AUDIT_VISUALS_PER_REVIEW = 2');
+    expect(auditHook).toContain('MAX_AUDIT_VISUALS_PER_REVIEW,');
+  });
+
+  it('does not reject valid activeTab capture just because optional all-URL permission was not granted', () => {
     const evidence = source('lib/report/visual-evidence.ts');
 
-    expect(evidence).not.toContain('MAX_VISUAL_EVIDENCE');
-    expect(evidence).not.toContain('eligible.slice(');
-    expect(evidence).toContain('for (const component of eligible)');
-    expect(evidence).toContain('return { visuals, limitReached: false };');
+    expect(evidence).toContain('settleTemporaryVisualCapturePermission');
+    expect(evidence).toContain('captureVisibleTab');
+    expect(evidence).not.toContain('if (!captureAllowed)');
+    expect(evidence).toContain('if (temporaryPermissionGranted) await releaseVisualCapturePermission();');
+  });
+
+  it('carries static and runtime finding tone into visual evidence eligibility', () => {
+    const components = source('lib/report/component-identity.ts');
+
+    expect(components).toContain('visualTone?: ReportComponentTone;');
+    expect(components).toContain("event.outcome === 'fail'");
+    expect(components).toContain("event.outcome === 'review'");
+    expect(components).toContain('Boolean(event.causes?.length)');
   });
 
   it('scales oversized evidence proportionally and constrains it again in print layout', () => {
