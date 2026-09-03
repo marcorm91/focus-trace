@@ -21,7 +21,7 @@ describe('neutral empty-state consistency', () => {
 
     expect(css).toContain('.empty,');
     expect(css).toContain('.focus-empty-state,');
-    expect(css).toContain('.notice:not(.structure-limit-note) {');
+    expect(css).toContain('.notice:not(.structure-limit-note)');
     expect(css).toContain('border: 1.5px dashed var(--ft-border-soft);');
     expect(css).toContain('padding: 34px 16px;');
     expect(css).toContain('text-align: center;');
@@ -29,10 +29,20 @@ describe('neutral empty-state consistency', () => {
     expect(css).toContain('max-width: 300px;');
   });
 
-  it('keeps real Structure safety notices outside the empty-state treatment', () => {
+  it('keeps informational and safety notices outside the empty-state treatment', () => {
     const css = source('entrypoints/sidepanel/empty-state-consistency.css');
     const structure = source('entrypoints/sidepanel/views/StructureView.tsx');
 
+    for (const className of [
+      'structure-limit-note',
+      'about-support',
+      'about-privacy',
+      'settings-note',
+      'graph-scope-note',
+      'instructions-note',
+    ]) {
+      expect(css).toContain(`:not(.${className})`);
+    }
     expect(structure).toContain('notice structure-limit-note');
     expect(css).toContain('.notice.structure-limit-note {');
     expect(css).toContain('min-height: 0;');
@@ -45,11 +55,15 @@ describe('neutral empty-state consistency', () => {
     const headings = source('entrypoints/sidepanel/views/HeadingTreeView.tsx');
     const structure = source('entrypoints/sidepanel/views/StructureView.tsx');
     const report = source('entrypoints/sidepanel/views/SessionReportView.tsx');
+    const auditReport = source('entrypoints/sidepanel/views/AuditReportWorkspace.tsx');
 
     expect(focus).toContain('focus-empty-state');
     expect(scan).toContain('No automated findings');
     expect(headings).toContain('No exposed headings');
     expect(structure).toContain('No semantic opportunities found');
     expect(report).toContain('Structure metrics not generated');
+    expect(auditReport).toContain('<Empty');
+    expect(auditReport).not.toContain('report-empty-panel');
+    expect(auditReport).not.toContain('report-empty-state');
   });
 });
