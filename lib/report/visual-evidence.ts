@@ -36,7 +36,6 @@ export const REPORT_EVIDENCE_STORAGE_PREFIX = 'focustrace:report-evidence:';
 const VISUAL_CAPTURE_HOST_PERMISSION = '<all_urls>';
 const MAX_CAPTURE_WIDTH_PX = 1100;
 const MAX_CAPTURE_HEIGHT_PX = 1400;
-const DEFAULT_MAX_VISUALS = 6;
 let pendingVisualCapturePermission: Promise<boolean> | undefined;
 
 function wait(ms: number) {
@@ -225,12 +224,16 @@ export async function captureReportVisualEvidence(
   scan: ScanResult | undefined,
   components: ReportComponentIdentity[],
   events: RuntimeEvent[] = [],
-  maxVisuals = DEFAULT_MAX_VISUALS,
+  maxVisuals = Number.POSITIVE_INFINITY,
 ): Promise<VisualEvidenceCaptureResult> {
   const eligible = components.filter((component) => Boolean(component.visualTone));
   const eligibleCount = eligible.length;
-  const limitReached = eligibleCount > maxVisuals;
-  const targets = eligible.slice(0, Math.max(0, maxVisuals));
+  const bounded = Number.isFinite(maxVisuals);
+  const normalizedLimit = bounded ? Math.max(0, maxVisuals) : Number.POSITIVE_INFINITY;
+  const limitReached = bounded && eligibleCount > normalizedLimit;
+  const targets = bounded
+    ? eligible.filter((_component, index) => index < normalizedLimit)
+    : eligible;
   if (!targets.length) {
     return { visuals: [], limitReached, eligibleCount, captureUnavailable: false };
   }
