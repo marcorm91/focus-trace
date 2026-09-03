@@ -77,8 +77,15 @@ jobs:
           NODE
       - name: Verify transformed report
         run: |
-          grep -q '<details className="report-section report-accordion-section report-priority" open>' entrypoints/sidepanel/views/SessionReportView.tsx
-          test "$(grep -c 'report-accordion-summary' entrypoints/sidepanel/views/SessionReportView.tsx)" -eq 5
+          node <<'NODE'
+          const fs = require('node:fs');
+          const source = fs.readFileSync('entrypoints/sidepanel/views/SessionReportView.tsx', 'utf8');
+          if (!source.includes('<details className="report-section report-accordion-section report-priority" open>')) {
+            throw new Error('Priority accordion was not generated.');
+          }
+          const summaries = source.match(/className="report-accordion-summary"/g) ?? [];
+          if (summaries.length !== 5) throw new Error(`Expected 5 report summaries, found ${summaries.length}.`);
+          NODE
           npm ci --no-audit --no-fund
           npm run check
       - name: Commit transformed report
