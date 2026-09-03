@@ -218,17 +218,6 @@
   line-height: 1.45;
 }
 
-.report-empty-panel {
-  padding: 0;
-  overflow: hidden;
-}
-
-.report-empty-state {
-  min-height: 140px;
-  border: 0;
-  border-radius: 0;
-}
-
 .audit-scope-context {
   display: grid;
   gap: 8px;
