@@ -18,7 +18,7 @@ describe('report export evidence contract', () => {
     expect(evidence).toContain('MAX_PRINT_VISUAL_DATA_CHARS = 5_500_000');
     expect(evidence).toContain('boundPrintableReportEvidence');
     expect(evidence).toContain('visualEvidenceLimitReached: bundle.visualEvidenceLimitReached || storageTrimmed');
-    expect(auditHook).toContain('MAX_AUDIT_VISUALS_PER_REVIEW = 2');
+    expect(auditHook).toContain('MAX_AUDIT_VISUALS_PER_REVIEW = 3');
     expect(auditHook).toContain('MAX_AUDIT_VISUALS_PER_REVIEW,');
   });
 
