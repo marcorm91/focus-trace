@@ -1,6 +1,8 @@
-# FocusTrace v0.1.0 release checklist
+# FocusTrace release checklist
 
-Use this checklist before making the repository public or publishing a release build.
+Current release candidate: **0.1.3**.
+
+Use this checklist before publishing a release build or submitting an updated package to a browser store. Keep the candidate version above aligned with `package.json`, `package-lock.json`, the browser manifests and the release contract test.
 
 ## Automated gate
 
@@ -30,6 +32,18 @@ The committed `package-lock.json` must remain synchronized with `package.json`, 
 - Record a Trace, inspect Replay and Report, reset the session, then confirm runtime evidence is empty while the latest Analyze result remains available; start another Trace and confirm focus numbering restarts at step 1.
 
 The automated side-panel E2E smoke test is a regression guard; it is not a substitute for the manual checks above.
+
+## FocusTrace Memory 0.1.3 smoke
+
+- Confirm Memory is still disabled by default after a clean installation/profile.
+- Enable **Remember accessibility history**, analyze a page with a visible deterministic failure and confirm the observation is stored locally.
+- Re-analyze after fixing that failure and confirm the resolved history shows useful visual context: a small saved preview when capture was possible, or a compact locator fallback when it was not.
+- Confirm resolved cards no longer expose an opaque `Ref. XXXXX` identifier.
+- Check that a saved preview remains usable by keyboard focus as well as pointer hover.
+- Confirm disabling Memory stops new observations/comparisons without deleting existing local history.
+- Mark a no-longer-reproduced finding as resolved and confirm its detailed preview/locator/history is removed while regression recognition remains available.
+- Clear saved Memory history from Settings and confirm both observation history and resolved markers are removed.
+- Inspect extension storage during the smoke test and confirm Memory does not persist full-page screenshots, page HTML or full DOM snapshots.
 
 ## Scanner confidence
 
@@ -75,7 +89,7 @@ Firefox uses `sidebar_action` generated from the WXT sidepanel entrypoint rather
 
 Production builds must not declare required global host permissions. Optional HTTP/HTTPS host access may be requested only from an explicit page action and must remain documented in the README and privacy policy. The localhost host permission used by E2E is test-only.
 
-Confirm [`PRIVACY.md`](../PRIVACY.md) still matches the actual product behavior, especially storage, optional screenshot evidence, external services and sponsorship integration.
+Confirm [`PRIVACY.md`](../PRIVACY.md) still matches the actual product behavior, especially storage, optional Memory visual context, optional report screenshot evidence, external services and sponsorship integration.
 
 Voluntary support is enabled through `https://github.com/sponsors/marcorm91`. Verify both the About support block and the compact global footer are keyboard accessible, retain visible focus at 200% zoom and open only that reviewed external HTTPS destination. Confirm the support link does not appear in printed/exported reports.
 
@@ -123,11 +137,17 @@ Before changing visibility:
 
 ## Release
 
-- Confirm `package.json`, `package-lock.json` and all browser manifests report `0.1.0`.
-- Confirm the release commit is on `main` and CI is green.
+For the current candidate, the release version is **0.1.3** and the intended tag is **`v0.1.3`**.
+
+- Confirm `package.json`, `package-lock.json` and all browser manifests report `0.1.3`.
+- Confirm `tests/release-contract.test.ts` targets `v0.1.3` and passes.
+- Confirm the release commit is on `main` and CI is green on that exact commit.
 - Build the production Chrome, Edge and Firefox MV3 artifacts from that commit.
 - Smoke-test the unpacked production build in supported Chromium browsers.
 - Complete the Firefox experimental smoke checklist before describing Firefox as officially supported.
-- Tag the exact commit as `v0.1.0`.
-- Write release notes that distinguish automated FAIL, REVIEW and runtime evidence.
-- Only then change repository visibility or publish/distribute the release artifact.
+- Tag the exact approved commit as `v0.1.3`.
+- Write release notes that distinguish automated FAIL, REVIEW and runtime evidence and describe the opt-in Memory visual-context behavior accurately.
+- Review the generated ZIPs before attaching/uploading them.
+- Only then publish/distribute the release artifacts or submit the updated packages to browser stores.
+
+After publishing 0.1.3, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.
