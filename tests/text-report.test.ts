@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { ReportComponentIdentity } from '../lib/report/component-identity';
+import type { StructureReportEvidence } from '../lib/report/structure-report';
 import {
   buildTextReportFilename,
   buildTextSessionReport,
@@ -68,13 +69,39 @@ const components: ReportComponentIdentity[] = [
   },
 ];
 
+const structure: StructureReportEvidence = {
+  capturedAt: 10,
+  metrics: {
+    totalElements: 240,
+    semanticElements: 52,
+    divCount: 96,
+    genericContainerCount: 112,
+    genericRatio: 46.7,
+    landmarkCount: 6,
+    interactiveCount: 18,
+    listCount: 4,
+    maxDepth: 12,
+    maxGenericChain: 5,
+    deepGenericChains: 1,
+  },
+  hints: [{
+    id: 'hint-1',
+    tone: 'info',
+    title: 'Deep generic wrapper chain',
+    description: 'Four or more single-child <div> wrappers are nested before meaningful content.',
+    suggestion: 'Review whether every wrapper is required.',
+  }],
+  truncated: false,
+};
+
 describe('text session report', () => {
-  it('creates a trace-first Spanish report with human component identity and no CSS selectors', () => {
+  it('creates a trace-first Spanish report with a compact document-structure summary', () => {
     const report = buildTextSessionReport({
       scan,
       events: [],
       language: 'es',
       components,
+      structure,
       generatedAt: Date.UTC(2026, 7, 25, 12, 0, 0),
     });
 
@@ -87,11 +114,24 @@ describe('text session report', () => {
     expect(report).toContain('Nombre / texto: Save changes');
     expect(report).toContain('Contexto: Products › Featured');
     expect(report).toContain('Color accesible sugerido: #767676');
-    expect(report).toContain('4. ESTRUCTURA DE ENCABEZADOS');
+    expect(report).toContain('4. ESTRUCTURA DEL DOCUMENTO');
+    expect(report).toContain('Elementos DOM: 240');
+    expect(report).toContain('Regiones semánticas: 6');
+    expect(report).toContain('Encabezados a revisar: 1');
     expect(report).toContain('H3: Featured [salto de nivel]');
+    expect(report).toContain('Cadena profunda de contenedores genéricos');
     expect(report).toContain('5. SUGERENCIAS DE MEJORA');
+    expect(report).not.toContain('H1: Products');
     expect(report).not.toContain('#save');
     expect(report).not.toContain('main > h1');
+  });
+
+  it('keeps the structure section passive when no DOM snapshot was generated', () => {
+    const report = buildTextSessionReport({ scan, events: [], language: 'es', components, generatedAt: 1 });
+    expect(report).toContain('4. ESTRUCTURA DEL DOCUMENTO');
+    expect(report).toContain('Las métricas de estructura no se han generado');
+    expect(report).toContain('H3: Featured [salto de nivel]');
+    expect(report).not.toContain('H1: Products');
   });
 
   it('includes automatic focus results in the executive summary', () => {
