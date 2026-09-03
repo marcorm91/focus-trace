@@ -3,6 +3,7 @@
 .structure-summary,
 .structure-mode-switcher,
 .structure-map-view,
+.structure-headings-view,
 .structure-tree,
 .structure-tree-branch,
 .structure-tree-children,
@@ -78,7 +79,7 @@
 
 .structure-mode-switcher {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 6px;
 }
 
@@ -101,10 +102,24 @@
   color: var(--ft-surface);
 }
 
+.structure-mode-switcher button:disabled {
+  opacity: .45;
+  cursor: not-allowed;
+}
+
 .structure-map-view,
+.structure-headings-view,
 .structure-hints {
   display: grid;
   gap: 10px;
+}
+
+.structure-headings-view > .heading-outline-panel {
+  gap: 12px;
+}
+
+.structure-headings-view > .heading-outline-panel > .section-heading {
+  display: none;
 }
 
 .structure-tree-controls {
@@ -285,6 +300,12 @@
   color: var(--ft-muted);
   font-size: 14px;
   overflow-wrap: anywhere;
+}
+
+@media (max-width: 420px) {
+  .structure-mode-switcher {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 @media (max-width: 360px) {
