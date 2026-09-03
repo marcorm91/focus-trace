@@ -28,7 +28,7 @@ interface PendingAuditScope {
 
 type PendingResolver = (plan: AuditAnalysisPlan | null) => void;
 type StorageChangeMap = Record<string, { newValue?: unknown; oldValue?: unknown }>;
-const MAX_AUDIT_VISUALS_PER_REVIEW = 2;
+const MAX_AUDIT_VISUALS_PER_REVIEW = 3;
 
 function staticVisualTargetCount(scan: ScanResult): number {
   return new Set(
