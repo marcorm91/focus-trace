@@ -7,13 +7,18 @@ function source(path: string): string {
 }
 
 describe('sidepanel layout polish contract', () => {
-  it('keeps the four workspace navigation actions at equal full width', () => {
+  it('keeps five workspace navigation actions readable and responsive', () => {
     const navigation = source('entrypoints/sidepanel/ux-polish.css');
+    const structureNavigation = source('entrypoints/sidepanel/structure-navigation.css');
     const about = source('entrypoints/sidepanel/about.css');
     const focusGraph = source('entrypoints/sidepanel/focus-graph.css');
 
     expect(navigation).toContain('.workspace-nav.tabs {');
-    expect(navigation).toContain('grid-template-columns: repeat(4, minmax(0, 1fr));');
+    expect(navigation).toContain('grid-template-columns: repeat(5, minmax(0, 1fr));');
+    expect(navigation).toContain('@media (max-width: 520px)');
+    expect(navigation).toContain('grid-template-columns: repeat(3, minmax(0, 1fr));');
+    expect(structureNavigation).toContain('--ft-i-structure');
+    expect(structureNavigation).toContain('button:nth-child(5) > span');
     expect(about).not.toMatch(/(^|\n)\.tabs\s*\{/);
     expect(focusGraph).not.toMatch(/(^|\n)\.tabs\s*\{/);
   });
