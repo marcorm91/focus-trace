@@ -37,9 +37,11 @@ El depurador runtime puede generar explicaciones causales deterministas para pat
 
 ### FocusTrace Memory
 
-FocusTrace Memory es un historial local y opcional para análisis repetidos de páginas y componentes. Está **desactivado por defecto**. Cuando el usuario activa **Recordar historial de accesibilidad**, FocusTrace guarda fingerprints hash compactos, contadores y marcas de tiempo para que los análisis posteriores puedan identificar fallos persistentes, cambios, problemas que ya no se reproducen y regresiones.
+FocusTrace Memory es un historial local y opcional para análisis repetidos de páginas y componentes. Está **desactivado por defecto**. Cuando el usuario activa **Recordar historial de accesibilidad**, FocusTrace guarda observaciones locales limitadas para que los análisis posteriores puedan identificar fallos persistentes, cambios, problemas que ya no se reproducen y regresiones.
 
-Memory no guarda HTML de la página, snapshots completos del DOM ni capturas. El historial está limitado a 8 observaciones por ámbito de página/componente y 200 en total; las observaciones de más de 90 días se eliminan cuando FocusTrace vuelve a leer el almacenamiento de Memory. El historial guardado puede borrarse desde Ajustes incluso cuando Memory está desactivado.
+Para que los hallazgos resueltos sigan siendo identificables, Memory puede conservar un localizador compacto como un id o selector CSS. Durante un análisis explícito, si un elemento con fallo está visible y el navegador permite capturar la pestaña visible, Memory también puede guardar un pequeño recorte JPEG local de ese elemento. Si la captura no está disponible, se mantiene el localizador como fallback. Memory no guarda el HTML de la página, un snapshot completo del DOM ni una captura de página completa.
+
+El historial está limitado a 8 observaciones por ámbito de página/componente, 200 observaciones en total y 24 vistas previas visuales entre los hallazgos recordados; las observaciones de más de 90 días se eliminan cuando FocusTrace vuelve a leer el almacenamiento de Memory. El historial y la evidencia local guardados pueden borrarse desde Ajustes incluso cuando Memory está desactivado.
 
 Memory es historial diagnóstico y no una prueba de conformidad WCAG. Consulta [`PRIVACY.md`](PRIVACY.md) para conocer el modelo de almacenamiento y activación voluntaria.
 
@@ -102,22 +104,26 @@ FocusTrace mantiene intencionadamente un conjunto reducido de permisos en produc
 
 | Permiso | Navegador | Para qué se necesita |
 | --- | --- | --- |
-| `activeTab` | Chrome / Edge / Firefox | Analizar la página sobre la que el usuario activa FocusTrace de forma explícita. |
+| `activeTab` | Chrome / Edge / Firefox | Analizar la página sobre la que el usuario activa FocusTrace y permitir evidencia de pestaña visible para un análisis explícito cuando esté disponible. |
 | `scripting` | Chrome / Edge / Firefox | Inyectar la instrumentación local de análisis/runtime en la página activa. |
-| `storage` | Chrome / Edge / Firefox | Guardar preferencias de la extensión y estado local. |
+| `storage` | Chrome / Edge / Firefox | Guardar preferencias, estado local y la evidencia opcional y limitada de FocusTrace Memory. |
 | `sidePanel` | Chrome / Edge | Mostrar la interfaz de depuración de FocusTrace en el panel lateral de Chromium. |
 
 Firefox utiliza su integración nativa de sidebar en el manifest en lugar de solicitar el permiso exclusivo de Chromium `sidePanel`.
 
-Los builds de producción no necesitan permisos globales de host. El acceso a páginas HTTP/HTTPS se declara como opcional y solo se solicita desde acciones explícitas del usuario. Los informes imprimibles pueden incluir evidencia visual opcional; cuando se utiliza esta opción, FocusTrace solicita desde el clic de Exportar PDF la capacidad `<all_urls>` necesaria para capturas, ya que `tabs.captureVisibleTab()` requiere `activeTab` o `<all_urls>`. Ese permiso amplio se elimina al finalizar la exportación. Solo el build de pruebas end-to-end incluye permiso de host para localhost.
+Los builds de producción no necesitan permisos globales de host. El acceso a páginas HTTP/HTTPS se declara como opcional y solo se solicita desde acciones explícitas del usuario.
+
+Cuando Memory está activo, un análisis explícito puede intentar capturar la pestaña visible para crear un pequeño recorte local de un elemento con fallo que esté visible. Este flujo de Memory no solicita acceso persistente y amplio `<all_urls>` para capturas; si la captura no está disponible, FocusTrace conserva el localizador compacto como fallback.
+
+Los informes imprimibles pueden incluir evidencia visual opcional; cuando se utiliza esta opción, FocusTrace solicita desde el clic de Exportar PDF la capacidad `<all_urls>` necesaria para capturas, ya que `tabs.captureVisibleTab()` requiere `activeTab` o `<all_urls>`. Ese permiso amplio se elimina al finalizar la exportación. Solo el build de pruebas end-to-end incluye permiso de host para localhost.
 
 ## Privacidad
 
 Todo el análisis se ejecuta localmente en el navegador. FocusTrace no envía contenido de la página, datos del DOM, capturas ni interacciones grabadas a un servidor de FocusTrace ni a una API de IA de terceros.
 
-La evidencia visual de los informes imprimibles es opcional. Los recortes de captura pueden contener contenido visible de la página, se preparan localmente únicamente para ese informe y FocusTrace no los transmite.
+FocusTrace Memory es opt-in y está desactivado por defecto. Al activarlo puede conservar historial local limitado, un localizador compacto del elemento y, cuando la captura funciona para un elemento con fallo que esté visible, un pequeño recorte de captura local. Esta evidencia permanece en el perfil del navegador y puede borrarse desde Ajustes.
 
-FocusTrace Memory es opt-in, está desactivado por defecto y guarda únicamente un historial local compacto y limitado. Puede desactivarse o borrarse desde Ajustes.
+La evidencia visual de los informes imprimibles es opcional. Los recortes de captura pueden contener contenido visible de la página, se preparan localmente y FocusTrace no los transmite.
 
 Consulta [`PRIVACY.md`](PRIVACY.md) para la política de privacidad canónica del proyecto y [`SECURITY.md`](SECURITY.md) para el proceso responsable de notificación de vulnerabilidades.
 
