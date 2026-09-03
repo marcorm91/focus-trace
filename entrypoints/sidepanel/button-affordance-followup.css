@@ -161,26 +161,39 @@
   text-transform: uppercase;
 }
 
-/* Match the neutral no-analysis notice instead of using the dashed highlighted
-   empty-state treatment for an empty focus journey. */
+/* Section subtitles are explanatory content. Let them wrap instead of hiding
+   the end of the sentence behind an ellipsis. */
+.section-heading p {
+  overflow: visible;
+  overflow-wrap: anywhere;
+  text-overflow: clip;
+  white-space: normal;
+}
+
+/* Keep the focus-journey empty state visually identical to the shared Empty
+   pattern used by Review, Structure and Report. */
 .focus-empty-state {
-  justify-items: start;
-  padding: 12px;
-  border: 1px solid color-mix(in srgb, CanvasText 14%, transparent);
-  border-radius: 9px;
-  background: var(--ft-surface);
+  justify-items: center;
+  padding: 34px 16px;
+  border: 1px dashed color-mix(in srgb, CanvasText 22%, transparent);
+  border-radius: 10px;
+  background: transparent;
   box-shadow: none;
   outline: 0;
-  text-align: left;
+  text-align: center;
 }
 
 .focus-empty-state strong {
   display: block;
+  margin-bottom: 6px;
+  font-size: 17px;
 }
 
 .focus-empty-state p {
-  margin: 4px 0 0;
-  color: var(--ft-muted);
+  max-width: 300px;
+  margin: 0 auto;
+  color: GrayText;
+  font-size: 14px;
 }
 
 @media (max-width: 420px) {
