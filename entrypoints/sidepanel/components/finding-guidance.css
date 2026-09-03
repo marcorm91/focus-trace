@@ -87,12 +87,16 @@
 }
 
 .finding-guidance-severity > summary::after {
-  content: '›';
+  content: '';
+  width: 18px;
+  height: 18px;
+  justify-self: end;
   color: var(--ft-ink, CanvasText);
-  font-size: 22px;
-  line-height: 1;
-  text-align: center;
+  background: currentColor;
+  -webkit-mask: var(--ft-i-chevron-right) center / contain no-repeat;
+  mask: var(--ft-i-chevron-right) center / contain no-repeat;
   transform: rotate(0deg);
+  transform-origin: center;
   transition: transform .12s ease;
 }
 
