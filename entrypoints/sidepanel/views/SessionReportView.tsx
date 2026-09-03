@@ -7,6 +7,7 @@ import {
 } from '../../../lib/runtime/audit-evidence';
 import { groupRuntimeInteractions } from '../../../lib/runtime/causality';
 import { buildFocusGraph } from '../../../lib/runtime/focus-graph';
+import type { StructureHint, StructureSnapshot } from '../../../lib/runtime/structure-map';
 import { type ReportComponentIdentity } from '../../../lib/report/component-identity';
 import { buildSessionReportModel } from '../../../lib/report/session-report';
 import { buildTextReportFilename, buildTextSessionReport } from '../../../lib/report/text-report';
@@ -24,6 +25,58 @@ function headingSignalLabel(signal: HeadingSignal, language: AppLanguage): strin
   if (signal === 'empty') return tr(language, 'Empty', 'Vacío');
   if (signal === 'level-jump') return tr(language, 'Level jump', 'Salto de nivel');
   return tr(language, 'Multiple H1', 'Varios H1');
+}
+
+function structureHintCopy(hint: StructureHint, language: AppLanguage): { title: string; description: string; suggestion?: string } {
+  if (language !== 'es') {
+    return {
+      title: hint.title,
+      description: hint.description,
+      ...(hint.suggestion ? { suggestion: hint.suggestion } : {}),
+    };
+  }
+
+  if (hint.title === 'Generic element used as a control') {
+    return {
+      title: 'Elemento genérico usado como control',
+      description: 'Se está usando un <div> o <span> con comportamiento similar a un botón.',
+      suggestion: 'Valora usar <button> cuando la interacción sea una acción de botón.',
+    };
+  }
+  if (hint.title === 'Repeated sibling structure') {
+    return {
+      title: 'Estructura repetida entre elementos hermanos',
+      description: 'Hay varios elementos hermanos con una estructura muy similar que podrían representar una lista semántica.',
+      suggestion: 'Valora <ul>/<ol> con <li> cuando los elementos formen una lista con significado.',
+    };
+  }
+  if (hint.title === 'Navigation-like link group') {
+    return {
+      title: 'Grupo de enlaces con aspecto de navegación',
+      description: 'La mayoría de elementos directos del contenedor son enlaces y podrían formar un bloque de navegación.',
+      suggestion: 'Valora <nav> o role="navigation" cuando el grupo sea realmente navegación del sitio o de la página.',
+    };
+  }
+  if (hint.title === 'Deep generic wrapper chain') {
+    return {
+      title: 'Cadena profunda de contenedores genéricos',
+      description: 'Hay cuatro o más <div> de un único hijo anidados antes de llegar a contenido con significado.',
+      suggestion: 'Revisa si todos los contenedores son necesarios para layout, estilos o comportamiento.',
+    };
+  }
+  if (hint.title === 'High <div> density') {
+    return {
+      title: 'Alta densidad de <div>',
+      description: 'Una proporción elevada del DOM analizado está formada por contenedores <div>. No es un error por sí mismo, pero puede indicar oportunidades de mejorar la semántica.',
+      suggestion: 'Revisa si HTML semántico puede sustituir contenedores genéricos cuando el contenido tenga una finalidad clara.',
+    };
+  }
+
+  return {
+    title: hint.title,
+    description: hint.description,
+    ...(hint.suggestion ? { suggestion: hint.suggestion } : {}),
+  };
 }
 
 function suggestionSourceLabel(source: string, language: AppLanguage): string {
@@ -59,11 +112,13 @@ function safeFilename(value: string | undefined): string {
 export function SessionReportView({
   scan,
   events,
+  structureSnapshot,
   language,
   onLocate,
 }: {
   scan?: ScanResult | undefined;
   events: RuntimeEvent[];
+  structureSnapshot?: StructureSnapshot | undefined;
   language: AppLanguage;
   onLocate: (selector: string) => void | Promise<void>;
 }) {
@@ -71,6 +126,11 @@ export function SessionReportView({
   const graph = useMemo(() => buildFocusGraph(events), [events]);
   const interactions = useMemo(() => groupRuntimeInteractions(events), [events]);
   const headings = scan?.headings ?? [];
+  const componentScope = scan?.scope?.type === 'component';
+  const reportStructureSnapshot = componentScope ? undefined : structureSnapshot;
+  const headingReviews = componentScope ? [] : headings.filter((heading) => heading.signals.length > 0);
+  const structureHints = reportStructureSnapshot?.hints ?? [];
+  const structureReviewCount = headingReviews.length + structureHints.length;
   const highPriority = model.suggestions.filter((suggestion) => suggestion.priority === 'high').slice(0, 4);
   const automatic = events.some((event) => event.kind === 'focus-walk-start');
   const [components, setComponents] = useState<ReportComponentIdentity[]>([]);
@@ -406,34 +466,119 @@ export function SessionReportView({
             <ReportScanCompact scan={scan} language={language} />
           </section>
 
-          <section className="report-section" aria-labelledby="report-headings-title">
+          <section className="report-section" aria-labelledby="report-structure-title">
             <div className="report-section-heading">
               <div>
                 <span className="report-section-index">03</span>
                 <div>
-                  <h3 id="report-headings-title">{tr(language, 'Heading structure', 'Estructura de encabezados')}</h3>
-                  <p>{tr(language, 'Visible H1-H6 elements in DOM order.', 'Elementos H1–H6 visibles en orden DOM.')}</p>
+                  <h3 id="report-structure-title">{tr(language, 'Document structure', 'Estructura del documento')}</h3>
+                  <p>{componentScope
+                    ? tr(
+                        language,
+                        'Document-level structure is not mixed into a component-scoped report.',
+                        'La estructura global del documento no se mezcla con un informe limitado a un componente.',
+                      )
+                    : reportStructureSnapshot
+                      ? tr(
+                          language,
+                          'Structural summary and only the signals that need review.',
+                          'Resumen estructural y únicamente las señales que requieren revisión.',
+                        )
+                      : tr(
+                          language,
+                          'Heading summary available. Generate Structure to add DOM metrics and semantic suggestions.',
+                          'Resumen de encabezados disponible. Genera Estructura para añadir métricas del DOM y sugerencias semánticas.',
+                        )}</p>
                 </div>
-                <span className="report-section-count">
-                  {headings.length} {tr(language, 'headings', 'encabezados')}
-                </span>
+                {!componentScope && (
+                  <span className="report-section-count">
+                    {structureReviewCount} {tr(language, 'to review', 'a revisar')}
+                  </span>
+                )}
               </div>
             </div>
 
-            {headings.length ? (
-              <ol className="report-heading-list">
-                {headings.map((heading) => (
-                  <li className={heading.signals.length ? 'has-signal' : ''} key={heading.id} style={{ marginInlineStart: `${(heading.level - 1) * 12}px` }}>
-                    <button type="button" onClick={() => void onLocate(heading.selector)}>
-                      <span>H{heading.level}</span>
-                      <strong>{heading.text || tr(language, 'Empty heading', 'Encabezado vacío')}</strong>
-                      {heading.signals.length > 0 && <small>{heading.signals.map((signal) => headingSignalLabel(signal, language)).join(' · ')}</small>}
-                    </button>
-                  </li>
-                ))}
-              </ol>
+            {componentScope ? (
+              <p className="report-empty-line">{tr(
+                language,
+                'Run a full-page analysis to include document structure evidence.',
+                'Ejecuta un análisis de página completa para incluir evidencia de la estructura del documento.',
+              )}</p>
             ) : (
-              <p className="report-empty-line">{tr(language, 'No visible headings were found.', 'No se han encontrado encabezados visibles.')}</p>
+              <>
+                <div className="report-inline-summary">
+                  <span><strong>{headings.length}</strong> {tr(language, 'headings', 'encabezados')}</span>
+                  <span><strong>{headingReviews.length}</strong> {tr(language, 'heading reviews', 'encabezados a revisar')}</span>
+                  {reportStructureSnapshot && (
+                    <>
+                      <span><strong>{reportStructureSnapshot.metrics.totalElements}</strong> {tr(language, 'DOM elements', 'elementos DOM')}</span>
+                      <span><strong>{reportStructureSnapshot.metrics.semanticElements}</strong> {tr(language, 'semantic elements', 'elementos semánticos')}</span>
+                      <span><strong>{reportStructureSnapshot.metrics.landmarkCount}</strong> {tr(language, 'semantic regions', 'regiones semánticas')}</span>
+                      <span><strong>{reportStructureSnapshot.metrics.listCount}</strong> {tr(language, 'lists', 'listas')}</span>
+                      <span><strong>{reportStructureSnapshot.metrics.maxDepth}</strong> {tr(language, 'maximum depth', 'profundidad máxima')}</span>
+                      <span><strong>{structureHints.length}</strong> {tr(language, 'structural suggestions', 'sugerencias estructurales')}</span>
+                    </>
+                  )}
+                </div>
+
+                {!reportStructureSnapshot && (
+                  <div className="notice">
+                    <strong>{tr(language, 'Structure metrics not generated', 'Métricas de estructura no generadas')}</strong>
+                    <p>{tr(
+                      language,
+                      'Open Structure and generate the map if you want DOM composition and semantic suggestions included in this report.',
+                      'Abre Estructura y genera el mapa si quieres incluir en este informe la composición del DOM y las sugerencias semánticas.',
+                    )}</p>
+                  </div>
+                )}
+
+                {headingReviews.length > 0 && (
+                  <>
+                    <p className="report-empty-line"><strong>{tr(language, 'Headings that need review', 'Encabezados que requieren revisión')}</strong></p>
+                    <ol className="report-heading-list">
+                      {headingReviews.map((heading) => (
+                        <li className="has-signal" key={heading.id}>
+                          <button type="button" onClick={() => void onLocate(heading.selector)}>
+                            <span>H{heading.level}</span>
+                            <strong>{heading.text || tr(language, 'Empty heading', 'Encabezado vacío')}</strong>
+                            <small>{heading.signals.map((signal) => headingSignalLabel(signal, language)).join(' · ')}</small>
+                          </button>
+                        </li>
+                      ))}
+                    </ol>
+                  </>
+                )}
+
+                {structureHints.length > 0 && (
+                  <>
+                    <p className="report-empty-line"><strong>{tr(language, 'Structural suggestions', 'Sugerencias estructurales')}</strong></p>
+                    <ol className="suggestion-list report-structure-hints">
+                      {structureHints.map((hint) => {
+                        const copy = structureHintCopy(hint, language);
+                        return (
+                          <li className="priority-medium" key={hint.id}>
+                            <div>
+                              <span>{hint.tone === 'review' ? tr(language, 'Review', 'Revisar') : tr(language, 'Suggestion', 'Sugerencia')}</span>
+                              <small>{tr(language, 'Structure', 'Estructura')}</small>
+                            </div>
+                            <strong>{copy.title}</strong>
+                            <p>{copy.description}</p>
+                            {copy.suggestion && <p>{copy.suggestion}</p>}
+                          </li>
+                        );
+                      })}
+                    </ol>
+                  </>
+                )}
+
+                {reportStructureSnapshot && structureReviewCount === 0 && (
+                  <p className="report-empty-line">{tr(
+                    language,
+                    'No structural review signals were found in the available evidence.',
+                    'No se han detectado señales estructurales que requieran revisión en la evidencia disponible.',
+                  )}</p>
+                )}
+              </>
             )}
           </section>
 
