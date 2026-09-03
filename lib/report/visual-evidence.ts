@@ -17,6 +17,13 @@ export interface ReportVisualEvidence {
   tone: VisualEvidenceTone;
 }
 
+export interface VisualEvidenceCaptureResult {
+  visuals: ReportVisualEvidence[];
+  limitReached: boolean;
+  eligibleCount: number;
+  captureUnavailable: boolean;
+}
+
 export interface PrintableReportEvidenceBundle {
   components: ReportComponentIdentity[];
   visuals: ReportVisualEvidence[];
@@ -29,6 +36,7 @@ export const REPORT_EVIDENCE_STORAGE_PREFIX = 'focustrace:report-evidence:';
 const VISUAL_CAPTURE_HOST_PERMISSION = '<all_urls>';
 const MAX_CAPTURE_WIDTH_PX = 1100;
 const MAX_CAPTURE_HEIGHT_PX = 1400;
+const DEFAULT_MAX_VISUALS = 6;
 let pendingVisualCapturePermission: Promise<boolean> | undefined;
 
 function wait(ms: number) {
@@ -53,11 +61,11 @@ export function armReportVisualEvidencePermissionRequest(target: EventTarget | n
   }).catch(() => false);
 }
 
-async function hasVisualCapturePermission(): Promise<boolean> {
+async function settleTemporaryVisualCapturePermission(): Promise<boolean> {
   const pending = pendingVisualCapturePermission;
   pendingVisualCapturePermission = undefined;
-  if (pending) return pending;
-  return browser.permissions.contains({ origins: [VISUAL_CAPTURE_HOST_PERMISSION] }).catch(() => false);
+  if (!pending) return false;
+  return pending;
 }
 
 async function releaseVisualCapturePermission() {
@@ -157,9 +165,6 @@ async function cropCapture(
   const sw = Math.max(1, Math.ceil((rightCss - leftCss) * scaleX));
   const sh = Math.max(1, Math.ceil((bottomCss - topCss) * scaleY));
 
-  // Constrain both axes before the image reaches print layout. Extremely tall
-  // or wide captures therefore keep their aspect ratio and cannot create an
-  // oversized intrinsic bitmap that pushes outside the printable page.
   const outputScale = visualEvidenceOutputScale(sw, sh);
   const canvas = document.createElement('canvas');
   canvas.width = Math.max(1, Math.round(sw * outputScale));
@@ -174,8 +179,6 @@ async function cropCapture(
   const targetH = metrics.rect.height * scaleY * outputScale;
   const color = evidenceColor(tone);
 
-  // De-emphasize the crop around the target, then redraw the target region at
-  // full brightness so the evidence remains obvious even in a busy UI.
   context.save();
   context.fillStyle = 'rgba(15, 23, 42, 0.38)';
   context.fillRect(0, 0, canvas.width, canvas.height);
@@ -217,47 +220,39 @@ async function cropCapture(
   return canvas.toDataURL('image/jpeg', 0.8);
 }
 
-function reportEvidenceSelectors(
-  scan: ScanResult | undefined,
-  events: RuntimeEvent[],
-): Set<string> {
-  const selectors = new Set<string>();
-  if (scan) {
-    for (const issue of [...scan.issues, ...scan.review, ...(scan.warnings ?? [])]) {
-      issue.targets.forEach((selector) => selectors.add(selector));
-    }
-  }
-  for (const event of events) {
-    if (!event.outcome && !event.causes?.length) continue;
-    if (event.element?.selector) selectors.add(event.element.selector);
-    if (event.mutation?.target.selector) selectors.add(event.mutation.target.selector);
-  }
-  return selectors;
-}
-
 export async function captureReportVisualEvidence(
   tabId: number,
   scan: ScanResult | undefined,
   components: ReportComponentIdentity[],
   events: RuntimeEvent[] = [],
-): Promise<{ visuals: ReportVisualEvidence[]; limitReached: boolean }> {
-  if (!components.length) return { visuals: [], limitReached: false };
-  const captureAllowed = await hasVisualCapturePermission();
-  if (!captureAllowed) return { visuals: [], limitReached: false };
+  maxVisuals = DEFAULT_MAX_VISUALS,
+): Promise<VisualEvidenceCaptureResult> {
+  const eligible = components.filter((component) => Boolean(component.visualTone));
+  const eligibleCount = eligible.length;
+  const limitReached = eligibleCount > maxVisuals;
+  const targets = eligible.slice(0, Math.max(0, maxVisuals));
+  if (!targets.length) {
+    return { visuals: [], limitReached, eligibleCount, captureUnavailable: false };
+  }
+
+  // Await an explicit export permission request when one was started, but do
+  // not abort here. captureVisibleTab can also succeed through activeTab; the
+  // previous preflight incorrectly returned zero captures in that valid case.
+  const temporaryPermissionGranted = await settleTemporaryVisualCapturePermission();
 
   try {
     const tab = await browser.tabs.get(tabId);
-    if (tab.windowId == null || !tab.active) return { visuals: [], limitReached: false };
+    if (tab.windowId == null || !tab.active) {
+      return { visuals: [], limitReached, eligibleCount, captureUnavailable: true };
+    }
 
-    const evidenceSelectors = reportEvidenceSelectors(scan, events);
-    const eligible = components.filter((component) => evidenceSelectors.has(component.selector));
     const original = await browser.scripting.executeScript({ target: { tabId }, func: readScrollPositionInPage })
       .then((results) => results[0]?.result)
       .catch(() => undefined);
     const visuals: ReportVisualEvidence[] = [];
 
     try {
-      for (const component of eligible) {
+      for (const component of targets) {
         const metrics = await browser.scripting.executeScript({
           target: { tabId },
           func: prepareCaptureTargetInPage,
@@ -267,7 +262,7 @@ export async function captureReportVisualEvidence(
         await wait(90);
         try {
           const screenshot = await browser.tabs.captureVisibleTab(tab.windowId, { format: 'jpeg', quality: 78 });
-          const tone = toneForSelector(component.selector, scan, events);
+          const tone = component.visualTone ?? toneForSelector(component.selector, scan, events);
           visuals.push({
             selector: component.selector,
             dataUrl: await cropCapture(screenshot, metrics, tone, component.componentId),
@@ -287,10 +282,14 @@ export async function captureReportVisualEvidence(
       }
     }
 
-    return { visuals, limitReached: false };
+    return {
+      visuals,
+      limitReached,
+      eligibleCount,
+      captureUnavailable: eligibleCount > 0 && visuals.length === 0,
+    };
   } finally {
-    // Screenshot access is intentionally scoped to this export operation.
-    await releaseVisualCapturePermission();
+    if (temporaryPermissionGranted) await releaseVisualCapturePermission();
   }
 }
 
