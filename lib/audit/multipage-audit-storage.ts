@@ -15,7 +15,7 @@ export const MULTIPAGE_AUDIT_STORAGE_KEY = 'focustrace:multipage-audits:v1';
 export const AUDIT_PRINT_EVIDENCE_PREFIX = 'focustrace:audit-print:';
 const MAX_AUDITS = 8;
 const MAX_PAGES_PER_AUDIT = 40;
-const MAX_VISUALS_PER_PAGE = 2;
+const MAX_VISUALS_PER_PAGE = 3;
 const MAX_VISUAL_DATA_CHARS = 3_000_000;
 const MAX_AUDIT_STORE_CHARS = 4_500_000;
 
