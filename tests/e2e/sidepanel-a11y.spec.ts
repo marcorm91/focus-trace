@@ -149,7 +149,7 @@ test('settings becomes a focused sub-view and Back restores the workspace', asyn
   await expect(panel.getByRole('navigation', { name: 'Secciones de FocusTrace' })).toBeVisible();
   await expect(panel.getByRole('region', { name: 'Herramientas de página' })).toBeVisible();
   await expect(panel.getByRole('button', { name: 'Revisión' })).toBeVisible();
-  await expect(panel.getByRole('button', { name: 'Encabezados' })).toBeVisible();
+  await expect(panel.getByRole('button', { name: 'Estructura' })).toBeVisible();
   await expect(panel.getByRole('button', { name: 'Informe' })).toBeVisible();
 });
 
@@ -241,6 +241,7 @@ test('report opens a formatted PDF preview without exposing CSS selectors', asyn
   }, { longHeadingText: longHeading, unbrokenHeadingText: unbrokenHeading });
 
   await panel.setViewportSize({ width: 360, height: 800 });
+  await panel.getByRole('button', { name: /Structure|Estructura/ }).click();
   await panel.getByRole('button', { name: /Headings|Encabezados/ }).click();
   await panel.getByRole('button', { name: /Expand all|Expandir todo/ }).click();
 
