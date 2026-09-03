@@ -1,0 +1,75 @@
+name: Release checklist restore
+
+on:
+  push:
+    branches:
+      - feat/memory-visual-evidence
+    paths:
+      - .github/workflows/release-checklist-restore.yml
+
+permissions:
+  contents: write
+
+jobs:
+  restore-checklist:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feat/memory-visual-evidence
+      - name: Restore release-specific checklist details
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('docs/RELEASE_CHECKLIST.md')
+          text = path.read_text(encoding='utf-8')
+
+          old_permission = 'Production builds must not declare required global host permissions. Optional HTTP/HTTPS host access may be requested only from an explicit user action and must remain documented in the README and privacy policy. The localhost host permission used by E2E is test-only.'
+          new_permission = 'Production builds must not declare required global host permissions. Optional HTTP/HTTPS host access may be requested only from an explicit page action and must remain documented in the README and privacy policy. The localhost host permission used by E2E is test-only.'
+          if text.count(old_permission) != 1:
+              raise SystemExit('Expected modified permission wording exactly once')
+          text = text.replace(old_permission, new_permission)
+
+          old_release = '''## Release
+
+- Confirm `package.json`, `package-lock.json` and all browser manifests report `0.1.3`.
+- Confirm the release commit is on `main` and CI is green.
+- Build the production Chrome, Edge and Firefox MV3 artifacts from that commit.
+- Smoke-test the unpacked production build in supported Chromium browsers.
+- Complete the Firefox experimental smoke checklist before describing Firefox as officially supported.
+- Tag the exact commit as `v0.1.3`.
+- Write release notes that distinguish automated FAIL, REVIEW and runtime evidence.
+- Only then publish/distribute the release artifacts and submit the updated packages to browser stores.
+'''
+          new_release = '''## Release
+
+For the current candidate, the release version is **0.1.3** and the intended tag is **`v0.1.3`**.
+
+- Confirm `package.json`, `package-lock.json` and all browser manifests report `0.1.3`.
+- Confirm `tests/release-contract.test.ts` targets `v0.1.3` and passes.
+- Confirm the release commit is on `main` and CI is green on that exact commit.
+- Build the production Chrome, Edge and Firefox MV3 artifacts from that commit.
+- Smoke-test the unpacked production build in supported Chromium browsers.
+- Complete the Firefox experimental smoke checklist before describing Firefox as officially supported.
+- Tag the exact approved commit as `v0.1.3`.
+- Write release notes that distinguish automated FAIL, REVIEW and runtime evidence and describe the opt-in Memory visual-context behavior accurately.
+- Review the generated ZIPs before attaching/uploading them.
+- Only then publish/distribute the release artifacts or submit the updated packages to browser stores.
+
+After publishing 0.1.3, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.
+'''
+          if text.count(old_release) != 1:
+              raise SystemExit('Expected shortened release block exactly once')
+          text = text.replace(old_release, new_release)
+          path.write_text(text, encoding='utf-8')
+          PY
+      - name: Commit restored checklist
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add docs/RELEASE_CHECKLIST.md
+          git diff --cached --check
+          git diff --cached --quiet && exit 0
+          git commit -m "docs: preserve 0.1.3 release checklist details"
+          git push origin HEAD:feat/memory-visual-evidence
