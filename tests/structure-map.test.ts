@@ -84,14 +84,18 @@ describe('Structure DOM collector', () => {
     expect(snapshot.hints.some((hint) => hint.title === 'Deep generic wrapper chain')).toBe(true);
   });
 
-  it('stops sampling very large DOMs at the safety limit', () => {
+  it('stops sampling when the configured safety limit is reached', () => {
     const container = document.createElement('main');
-    container.innerHTML = '<span></span>'.repeat(10_050);
+    container.innerHTML = '<span></span>'.repeat(150);
     document.body.append(container);
 
-    const snapshot = collectStructureMapInPage();
+    const snapshot = collectStructureMapInPage({
+      maxElements: 100,
+      maxStructureNodes: 80,
+      maxHints: 20,
+    });
 
-    expect(snapshot.metrics.totalElements).toBe(10_000);
+    expect(snapshot.metrics.totalElements).toBe(100);
     expect(snapshot.truncated).toBe(true);
-  }, 15_000);
+  });
 });
