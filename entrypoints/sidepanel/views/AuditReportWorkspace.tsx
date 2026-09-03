@@ -31,7 +31,7 @@ export function AuditReportWorkspace({
   onLocate: (selector: string) => void | Promise<void>;
 }) {
   const [exportingAudit, setExportingAudit] = useState(false);
-  const [openPageKeys, setOpenPageKeys] = useState<string[]>([]);
+  const [openPageKey, setOpenPageKey] = useState<string>();
   const summary = useMemo(() => audit ? auditSummary(audit) : undefined, [audit]);
   const currentPageKey = scan ? auditPageKey(scan.url) : undefined;
   const hasAuditPages = Boolean(audit?.pages.length);
@@ -51,9 +51,9 @@ export function AuditReportWorkspace({
   };
 
   const updatePageOpenState = (key: string, open: boolean) => {
-    setOpenPageKeys((current) => {
-      if (open) return current.includes(key) ? current : [...current, key];
-      return current.filter((item) => item !== key);
+    setOpenPageKey((current) => {
+      if (open) return key;
+      return current === key ? undefined : current;
     });
   };
 
@@ -67,8 +67,8 @@ export function AuditReportWorkspace({
               <h2 id="audit-overview-title">{audit.name}</h2>
               <p>{tr(
                 language,
-                'Open any reviewed page to inspect the complete saved report. Re-analyzing the same URL replaces its previous result.',
-                'Abre cualquier página revisada para consultar su informe completo guardado. Si vuelves a analizar la misma URL, se sustituye su resultado anterior.',
+                'Open a reviewed page to inspect its saved report. Only one review is expanded at a time, and re-analyzing the same URL replaces its previous result.',
+                'Abre una página revisada para consultar su informe guardado. Solo se despliega una revisión a la vez y, si vuelves a analizar la misma URL, se sustituye su resultado anterior.',
               )}</p>
             </div>
             <button
@@ -93,12 +93,13 @@ export function AuditReportWorkspace({
           <div className="audit-page-history" aria-label={tr(language, 'Reviewed pages', 'Páginas revisadas')}>
             {audit.pages.map((page, index) => {
               const active = currentPageKey === page.key;
-              const open = openPageKeys.includes(page.key);
+              const open = openPageKey === page.key;
               const warnings = page.scan.warnings?.length ?? 0;
               return (
                 <details
-                  className={`audit-page-report${active ? ' is-current' : ''}`}
+                  className={`audit-page-report${active ? ' is-current' : ' is-history'}`}
                   key={page.key}
+                  open={open}
                   onToggle={(event) => updatePageOpenState(page.key, event.currentTarget.open)}
                 >
                   <summary className="audit-page-summary">
@@ -121,8 +122,8 @@ export function AuditReportWorkspace({
                         <p className="audit-history-note">
                           {tr(
                             language,
-                            'Saved report from this review. Runtime and page-location actions are only live for the page currently analyzed in the panel.',
-                            'Informe guardado de esta revisión. Las acciones runtime y de localización sobre la página solo están activas para la página analizada actualmente en el panel.',
+                            'Saved static review. Live page actions, current Trace and current Structure are intentionally not mixed into this historical page. Use Export audit PDF for its persisted visual evidence.',
+                            'Revisión estática guardada. Las acciones sobre la página, el Trace actual y la Estructura actual no se mezclan con esta página histórica. Usa Exportar auditoría PDF para consultar su evidencia visual persistida.',
                           )}
                         </p>
                       )}
@@ -131,7 +132,8 @@ export function AuditReportWorkspace({
                         events={active ? events : []}
                         structureSnapshot={active ? structureSnapshot : undefined}
                         language={language}
-                        onLocate={active ? onLocate : () => undefined}
+                        onLocate={onLocate}
+                        livePage={active}
                       />
                     </div>
                   )}
