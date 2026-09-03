@@ -13,6 +13,7 @@ When you explicitly run an analysis or Trace session, FocusTrace may inspect inf
 - focus transitions and selected DOM mutations;
 - SPA route and dialog lifecycle evidence;
 - page title, URL and other report context;
+- optional visible-element screenshot crops stored locally by FocusTrace Memory when Memory is enabled;
 - optional visible-page screenshot crops when the user explicitly includes visual evidence in a printable report.
 
 ## Where that data goes
@@ -27,29 +28,37 @@ Session data and preferences may be stored using browser extension storage so th
 
 FocusTrace Memory is an optional local history feature for comparing accessibility observations over time. It is **disabled by default after installation** and does not begin remembering scan history until the user explicitly enables **Remember accessibility history** in Settings.
 
-When enabled, Memory stores compact local observation data such as hashed scope/finding fingerprints, generic FocusTrace rule identifiers, result counts, rule-coverage counts and timestamps. The rule identifier lets the interface describe which known finding changed across remembered observations without storing the failing selector. Memory does not store page HTML, full DOM snapshots, failing selectors or screenshots as part of the history.
+When enabled, Memory stores bounded local observation data such as hashed scope/finding fingerprints, generic FocusTrace rule identifiers, result counts, rule-coverage counts and timestamps. To make a historical finding understandable after it is no longer reproduced, Memory may also keep a compact locator for the affected element, such as an HTML id or CSS selector.
 
-Memory is bounded so it cannot grow without limit. The current observation limits are:
+During an explicit page or component analysis, if an affected element is currently visible and the browser permits visible-tab capture, Memory may save a small JPEG screenshot crop around that element. The crop is generated locally and is intended only to identify which visible component the historical finding referred to. FocusTrace does not store a full-page screenshot for Memory. If a preview cannot be captured, the compact element locator is used as the fallback context.
+
+Memory does not store page HTML or full DOM snapshots. A saved locator or screenshot crop can itself contain information derived from the inspected page, so users should enable Memory only when they are comfortable retaining this bounded evidence in the current browser profile.
+
+Memory is bounded so it cannot grow without limit. The current limits are:
 
 - up to 8 observations for the same remembered page/component scope;
 - up to 200 observations across the browser profile;
+- up to 24 visual previews across remembered findings, retaining only the newest preview for a given finding;
 - observations older than 90 days are removed the next time FocusTrace reads Memory storage.
 
-When a finding is no longer reproduced, the user can explicitly mark it as resolved. FocusTrace then removes that finding from the detailed remembered observations so it no longer appears in the normal finding history. To recognize the same finding if it returns later, FocusTrace keeps only a compact resolved marker containing the hashed scope/finding identity, the generic FocusTrace rule identifier when known, and the resolution timestamp. Resolved markers do not contain the failing selector, page text, HTML or DOM snapshots. They are also pruned after 90 days and capped at 200 compact markers.
+When a finding is no longer reproduced, the user can explicitly mark it as resolved. FocusTrace then removes that finding from the detailed remembered observations, including its stored locator and any saved visual preview, so it no longer appears in the normal finding history. To recognize the same finding if it returns later, FocusTrace keeps only a compact resolved marker containing the hashed scope/finding identity, the generic FocusTrace rule identifier when known, and the resolution timestamp. Resolved markers do not contain the failing locator, screenshot preview, page text, HTML or DOM snapshots. They are also pruned after 90 days and capped at 200 compact markers.
 
-Turning Memory off stops new observations and comparisons. Existing local Memory history remains local until it is removed by the retention cleanup or the user explicitly clears it. **Clear saved history** remains available in Settings even while Memory is disabled and clears both observation history and resolved markers.
+Turning Memory off stops new observations, locators, visual previews and comparisons. Existing local Memory history remains local until it is removed by the retention cleanup or the user explicitly clears it. **Clear saved history** remains available in Settings even while Memory is disabled and clears observation history, saved Memory evidence and resolved markers.
 
-Enabling Memory establishes the opt-in point and does not retroactively add an analysis that was already open before opt-in. Eligible observations are persisted when a scan is saved, independently of which FocusTrace results view the user opens afterwards.
+Enabling Memory establishes the opt-in point and does not retroactively add an analysis that was already open before opt-in. Eligible observations and their available local evidence are persisted when a scan is saved, independently of which FocusTrace results view the user opens afterwards.
 
 Memory comparisons are diagnostic history, not a WCAG conformance claim. A previously recorded deterministic failure that is no longer reproduced can be reported as a historical change, but absence from a later scan does not by itself prove that the whole page or component conforms to WCAG.
 
 ## Visual evidence
 
-Visual evidence in printable reports is optional and user initiated. When requested, FocusTrace may temporarily request the browser permission required to capture the visible page.
+FocusTrace has two local visual-evidence flows:
 
-Screenshot crops can contain information visible on the inspected page. They are prepared locally for the report and are not intentionally transmitted by FocusTrace.
+1. **Memory previews.** When Memory is enabled, an explicit analysis may retain a small crop of a currently visible failing element as described above. If capture is unavailable, Memory falls back to a compact locator.
+2. **Printable-report evidence.** Visual evidence in printable reports is optional and user initiated. When requested, FocusTrace may temporarily request the browser permission required to capture the visible page.
 
-Users should review exported reports before sharing them with third parties.
+Screenshot crops can contain information visible on the inspected page. They are prepared and stored locally for the feature that requested them and are not intentionally transmitted by FocusTrace.
+
+Users should review exported reports before sharing them with third parties and should clear Memory history when retained local evidence is no longer appropriate for the browser profile.
 
 ## Permissions
 
@@ -57,7 +66,9 @@ FocusTrace uses extension permissions only for product functionality such as ana
 
 Production builds do not require host access at installation. On the first explicit page action, FocusTrace may request optional HTTP/HTTPS page access before it can read the selected tab and inject the local runtime. Browsers can retain that optional grant until the user revokes it from the extension's site-access settings. The grant permits local inspection; it does not change the policy that inspected-page data is not intentionally transmitted by FocusTrace.
 
-Broader `<all_urls>` screenshot access, when required by the browser API, is requested from an explicit export action and removed after use.
+When Memory is enabled, FocusTrace may attempt a visible-tab capture during the explicit analysis to create a small local evidence crop. This Memory flow uses the active-tab/page-access context already established for the user-requested analysis and does not request persistent broad `<all_urls>` screenshot access. If capture is unavailable, Memory records only the compact locator fallback.
+
+Broader `<all_urls>` screenshot access, when required by the browser API for printable-report visual evidence, is requested from an explicit export action and removed after use.
 
 The current permission model is documented in [`README.md`](README.md) and validated by the repository's browser-build checks.
 
