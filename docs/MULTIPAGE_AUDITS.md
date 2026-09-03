@@ -34,7 +34,7 @@ Storage has several independent safeguards:
 
 - at most the newest 8 audits;
 - at most 40 pages per audit;
-- at most 2 screenshot crops for a reviewed page;
+- at most 3 screenshot crops for a reviewed page;
 - a shared visual-data budget that prefers the newest review evidence;
 - an overall serialized audit-store budget so scan history and screenshot data cannot grow toward the browser storage quota without pruning.
 
