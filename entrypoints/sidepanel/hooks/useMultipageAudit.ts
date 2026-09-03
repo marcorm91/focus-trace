@@ -22,11 +22,12 @@ interface PendingAuditScope {
 }
 
 type PendingResolver = (plan: AuditAnalysisPlan | null) => void;
+type StorageChangeMap = Record<string, { newValue?: unknown; oldValue?: unknown }>;
 
 export function useMultipageAudit() {
   const [store, setStore] = useState<MultipageAuditStore>();
   const [pendingScope, setPendingScope] = useState<PendingAuditScope>();
-  const pendingResolver = useRef<PendingResolver>();
+  const pendingResolver = useRef<PendingResolver | undefined>(undefined);
 
   const refresh = useCallback(async () => {
     const next = await loadMultipageAuditStore();
@@ -37,7 +38,7 @@ export function useMultipageAudit() {
   useEffect(() => {
     void refresh();
     const onChanged = (
-      changes: Record<string, browser.Storage.StorageChange>,
+      changes: StorageChangeMap,
       areaName: string,
     ) => {
       if (areaName !== 'local' || !changes[MULTIPAGE_AUDIT_STORAGE_KEY]) return;
