@@ -60,8 +60,21 @@ describe('button affordance follow-up', () => {
     expect(css).toContain('.replay-recording-state:not(.is-live) {');
     expect(css).toContain('text-transform: uppercase;');
     expect(css).toContain('.focus-empty-state {');
-    expect(css).toContain('border: 1px solid color-mix(in srgb, CanvasText 14%, transparent);');
-    expect(css).toContain('text-align: left;');
+    expect(css).toContain('border: 1px dashed color-mix(in srgb, CanvasText 22%, transparent);');
+    expect(css).toContain('text-align: center;');
+    expect(css).toContain('padding: 34px 16px;');
+  });
+
+  it('lets section subtitles wrap instead of truncating them with ellipses', () => {
+    const css = source('entrypoints/sidepanel/button-affordance-followup.css');
+    const subtitleRule = css.slice(css.indexOf('.section-heading p {'), css.indexOf('/* Keep the focus-journey empty state'));
+
+    expect(subtitleRule).toContain('overflow: visible;');
+    expect(subtitleRule).toContain('overflow-wrap: anywhere;');
+    expect(subtitleRule).toContain('text-overflow: clip;');
+    expect(subtitleRule).toContain('white-space: normal;');
+    expect(subtitleRule).not.toContain('text-overflow: ellipsis;');
+    expect(subtitleRule).not.toContain('white-space: nowrap;');
   });
 
   it('dismisses the report format menu when clicking elsewhere in the sidepanel', () => {
