@@ -64,12 +64,14 @@ export function SessionReportView({
   structureSnapshot,
   language,
   onLocate,
+  livePage = true,
 }: {
   scan?: ScanResult | undefined;
   events: RuntimeEvent[];
   structureSnapshot?: StructureSnapshot | undefined;
   language: AppLanguage;
   onLocate: (selector: string) => void | Promise<void>;
+  livePage?: boolean | undefined;
 }) {
   const model = useMemo(() => buildSessionReportModel(scan, events, language), [events, language, scan]);
   const graph = useMemo(() => buildFocusGraph(events), [events]);
@@ -93,7 +95,7 @@ export function SessionReportView({
 
   useEffect(() => {
     let cancelled = false;
-    if (!scan) {
+    if (!scan || !livePage) {
       setComponents([]);
       return () => { cancelled = true; };
     }
@@ -106,7 +108,7 @@ export function SessionReportView({
         if (!cancelled) setComponents([]);
       });
     return () => { cancelled = true; };
-  }, [events, scan]);
+  }, [events, livePage, scan]);
 
   const downloadTextReport = () => {
     const generatedAt = Date.now();
@@ -138,6 +140,7 @@ export function SessionReportView({
   };
 
   const openPrintableReport = async () => {
+    if (!livePage) return;
     const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
     if (tab?.id == null || !scan) return;
     setExportingPdf(true);
@@ -145,7 +148,7 @@ export function SessionReportView({
       const freshComponents = await collectReportComponents(tab.id, scan, events);
       setComponents(freshComponents);
       const capture = includeVisualEvidence
-        ? await captureReportVisualEvidence(tab.id, scan, freshComponents)
+        ? await captureReportVisualEvidence(tab.id, scan, freshComponents, events)
         : { visuals: [], limitReached: false };
       const token = await storePrintableReportEvidence({
         components: freshComponents,
@@ -171,62 +174,70 @@ export function SessionReportView({
           <h2 id="session-report-title">{tr(language, 'Accessibility report', 'Informe de accesibilidad')}</h2>
           <p>
             {scan
-              ? tr(
-                  language,
-                  'Static findings and runtime behavior combined into one actionable session report.',
-                  'Hallazgos estáticos y comportamiento runtime combinados en un único informe accionable.',
-                )
+              ? livePage
+                ? tr(
+                    language,
+                    'Static findings and runtime behavior combined into one actionable session report.',
+                    'Hallazgos estáticos y comportamiento runtime combinados en un único informe accionable.',
+                  )
+                : tr(
+                    language,
+                    'Saved static analysis from this review. Historical Trace and Structure evidence are not persisted in this version.',
+                    'Análisis estático guardado de esta revisión. En esta versión no se conserva el Trace ni la evidencia de Estructura históricos.',
+                  )
               : tr(language, 'Analyze the page to start the report.', 'Analiza la página para iniciar el informe.')}
           </p>
         </div>
-        <div className="report-export-tools">
-          <label className="report-visual-evidence-option">
-            <input
-              type="checkbox"
-              checked={includeVisualEvidence}
-              disabled={!scan || exportingPdf}
-              onChange={(event) => setIncludeVisualEvidence(event.currentTarget.checked)}
-            />
-            <span>
-              <strong>{tr(language, 'Include visual evidence', 'Incluir evidencia visual')}</strong>
-              <small>{tr(
-                language,
-                'PDF only. Crops may contain visible page content.',
-                'Solo PDF. Los recortes pueden contener contenido visible de la página.',
-              )}</small>
-            </span>
-          </label>
-          <div className="report-export-actions">
-            <button className="export-pdf-report" type="button" disabled={!scan || exportingPdf} onClick={() => void openPrintableReport()}>
-              <span aria-hidden="true">▤</span>
-              {exportingPdf ? tr(language, 'Preparing PDF…', 'Preparando PDF…') : tr(language, 'Export PDF', 'Exportar PDF')}
-            </button>
-            <details className="report-more-formats">
-              <summary>{tr(language, 'More formats', 'Más formatos')}</summary>
-              <div className="report-format-options">
-                <button className="export-text-report" type="button" disabled={!scan || exportingPdf} onClick={downloadTextReport}>
-                  <span aria-hidden="true">↓</span>
-                  {tr(language, 'Session report (.txt)', 'Informe de sesión (.txt)')}
-                </button>
-                <button type="button" disabled={graph.focusEvents === 0 || exportingPdf} onClick={() => downloadJourneyEvidence('markdown')}>
-                  <span aria-hidden="true">↓</span>
-                  {tr(language, 'Trace evidence (.md)', 'Evidencia de Trace (.md)')}
-                </button>
-                <button type="button" disabled={graph.focusEvents === 0 || exportingPdf} onClick={() => downloadJourneyEvidence('json')}>
-                  <span aria-hidden="true">↓</span>
-                  {tr(language, 'Trace evidence (.json)', 'Evidencia de Trace (.json)')}
-                </button>
-              </div>
-              <small className="report-format-note">
-                {tr(
+        {livePage && (
+          <div className="report-export-tools">
+            <label className="report-visual-evidence-option">
+              <input
+                type="checkbox"
+                checked={includeVisualEvidence}
+                disabled={!scan || exportingPdf}
+                onChange={(event) => setIncludeVisualEvidence(event.currentTarget.checked)}
+              />
+              <span>
+                <strong>{tr(language, 'Include visual evidence', 'Incluir evidencia visual')}</strong>
+                <small>{tr(
                   language,
-                  'TXT exports the session report. Markdown and JSON export the recorded Trace evidence.',
-                  'TXT exporta el informe de sesión. Markdown y JSON exportan la evidencia grabada de Trace.',
-                )}
-              </small>
-            </details>
+                  'PDF only. Crops may contain visible page content.',
+                  'Solo PDF. Los recortes pueden contener contenido visible de la página.',
+                )}</small>
+              </span>
+            </label>
+            <div className="report-export-actions">
+              <button className="export-pdf-report" type="button" disabled={!scan || exportingPdf} onClick={() => void openPrintableReport()}>
+                <span aria-hidden="true">▤</span>
+                {exportingPdf ? tr(language, 'Preparing PDF…', 'Preparando PDF…') : tr(language, 'Export PDF', 'Exportar PDF')}
+              </button>
+              <details className="report-more-formats">
+                <summary>{tr(language, 'More formats', 'Más formatos')}</summary>
+                <div className="report-format-options">
+                  <button className="export-text-report" type="button" disabled={!scan || exportingPdf} onClick={downloadTextReport}>
+                    <span aria-hidden="true">↓</span>
+                    {tr(language, 'Session report (.txt)', 'Informe de sesión (.txt)')}
+                  </button>
+                  <button type="button" disabled={graph.focusEvents === 0 || exportingPdf} onClick={() => downloadJourneyEvidence('markdown')}>
+                    <span aria-hidden="true">↓</span>
+                    {tr(language, 'Trace evidence (.md)', 'Evidencia de Trace (.md)')}
+                  </button>
+                  <button type="button" disabled={graph.focusEvents === 0 || exportingPdf} onClick={() => downloadJourneyEvidence('json')}>
+                    <span aria-hidden="true">↓</span>
+                    {tr(language, 'Trace evidence (.json)', 'Evidencia de Trace (.json)')}
+                  </button>
+                </div>
+                <small className="report-format-note">
+                  {tr(
+                    language,
+                    'TXT exports the session report. Markdown and JSON export the recorded Trace evidence.',
+                    'TXT exporta el informe de sesión. Markdown y JSON exportan la evidencia grabada de Trace.',
+                  )}
+                </small>
+              </details>
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       <div className="report-scoreline" aria-label={tr(language, 'Executive summary', 'Resumen ejecutivo')}>
@@ -314,7 +325,9 @@ export function SessionReportView({
                       ? automatic
                         ? tr(language, 'Automatic focus evidence plus correlated interactions.', 'Evidencia automática de foco e interacciones correlacionadas.')
                         : tr(language, 'Recorded interactions, focus movement and deterministic causes.', 'Interacciones grabadas, movimientos de foco y causas deterministas.')
-                      : tr(language, 'No focus journey has been recorded yet.', 'Todavía no se ha grabado ningún recorrido de foco.')}
+                      : livePage
+                        ? tr(language, 'No focus journey has been recorded yet.', 'Todavía no se ha grabado ningún recorrido de foco.')
+                        : tr(language, 'Historical Trace evidence was not stored for this review.', 'No se guardó evidencia histórica de Trace para esta revisión.')}
                   </p>
                 </div>
                 <span className="report-section-count">
@@ -396,7 +409,7 @@ export function SessionReportView({
                           </ol>
                         </details>
                       )}
-                      {story.selector && (
+                      {story.selector && livePage && (
                         <button type="button" onClick={() => void onLocate(story.selector!)}>
                           {tr(language, 'Locate evidence', 'Localizar evidencia')}
                         </button>
@@ -407,8 +420,12 @@ export function SessionReportView({
               </div>
             ) : (
               <div className="report-pending">
-                <strong>{tr(language, 'Trace evidence pending', 'Evidencia de Trace pendiente')}</strong>
-                <p>{tr(language, 'Record a real interaction or use Automate focus to add runtime context to this report.', 'Graba una interacción real o utiliza Automatizar foco para añadir contexto runtime al informe.')}</p>
+                <strong>{livePage
+                  ? tr(language, 'Trace evidence pending', 'Evidencia de Trace pendiente')
+                  : tr(language, 'Historical Trace unavailable', 'Trace histórico no disponible')}</strong>
+                <p>{livePage
+                  ? tr(language, 'Record a real interaction or use Automate focus to add runtime context to this report.', 'Graba una interacción real o utiliza Automatizar foco para añadir contexto runtime al informe.')
+                  : tr(language, 'This saved review keeps its static analysis, but Trace evidence was not persisted with historical pages in this version.', 'Esta revisión guardada conserva su análisis estático, pero en esta versión la evidencia de Trace no se persiste con las páginas históricas.')}</p>
               </div>
             )}
           </details>
@@ -442,7 +459,7 @@ export function SessionReportView({
               </div>
             )}
 
-            <ReportScanCompact scan={scan} language={language} />
+            <ReportScanCompact scan={scan} language={language} onLocate={livePage ? onLocate : undefined} />
           </details>
 
           <details className="report-section report-accordion-section">
@@ -470,11 +487,17 @@ export function SessionReportView({
                           'Structural summary and only the signals that need review.',
                           'Resumen estructural y únicamente las señales que requieren revisión.',
                         )
-                      : tr(
-                          language,
-                          'Heading summary available. Generate Structure to add DOM metrics and semantic suggestions.',
-                          'Resumen de encabezados disponible. Genera Estructura para añadir métricas del DOM y sugerencias semánticas.',
-                        )}</p>
+                      : livePage
+                        ? tr(
+                            language,
+                            'Heading summary available. Analyze Structure to add accessibility-oriented metrics and semantic suggestions.',
+                            'Resumen de encabezados disponible. Analiza Estructura para añadir métricas orientadas a accesibilidad y sugerencias semánticas.',
+                          )
+                        : tr(
+                            language,
+                            'Heading summary available. Historical Structure evidence was not stored for this review.',
+                            'Resumen de encabezados disponible. No se guardó evidencia histórica de Estructura para esta revisión.',
+                          )}</p>
                 </div>
                 {!componentScope && (
                   <span className="report-section-count">
@@ -512,12 +535,20 @@ export function SessionReportView({
 
                 {!reportStructureSnapshot && (
                   <div className="notice">
-                    <strong>{tr(language, 'Structure metrics not generated', 'Métricas de estructura no generadas')}</strong>
-                    <p>{tr(
-                      language,
-                      'Open Structure and analyze it if you want accessibility-oriented structural metrics and semantic suggestions included in this report.',
-                      'Abre Estructura y analízala si quieres incluir en este informe métricas estructurales orientadas a accesibilidad y sugerencias semánticas.',
-                    )}</p>
+                    <strong>{livePage
+                      ? tr(language, 'Structure metrics not generated', 'Métricas de estructura no generadas')
+                      : tr(language, 'Historical Structure unavailable', 'Estructura histórica no disponible')}</strong>
+                    <p>{livePage
+                      ? tr(
+                          language,
+                          'Open Structure and analyze it if you want accessibility-oriented structural metrics and semantic suggestions included in this report.',
+                          'Abre Estructura y analízala si quieres incluir en este informe métricas estructurales orientadas a accesibilidad y sugerencias semánticas.',
+                        )
+                      : tr(
+                          language,
+                          'This saved review keeps its heading summary, but the Structure snapshot was not persisted with historical pages in this version.',
+                          'Esta revisión guardada conserva el resumen de encabezados, pero en esta versión el snapshot de Estructura no se persiste con las páginas históricas.',
+                        )}</p>
                   </div>
                 )}
 
@@ -527,11 +558,19 @@ export function SessionReportView({
                     <ol className="report-heading-list">
                       {headingReviews.map((heading) => (
                         <li className="has-signal" key={heading.id}>
-                          <button type="button" onClick={() => void onLocate(heading.selector)}>
-                            <span>H{heading.level}</span>
-                            <strong>{heading.text || tr(language, 'Empty heading', 'Encabezado vacío')}</strong>
-                            <small>{heading.signals.map((signal) => headingSignalLabel(signal, language)).join(' · ')}</small>
-                          </button>
+                          {livePage ? (
+                            <button type="button" onClick={() => void onLocate(heading.selector)}>
+                              <span>H{heading.level}</span>
+                              <strong>{heading.text || tr(language, 'Empty heading', 'Encabezado vacío')}</strong>
+                              <small>{heading.signals.map((signal) => headingSignalLabel(signal, language)).join(' · ')}</small>
+                            </button>
+                          ) : (
+                            <div className="report-heading-static">
+                              <span>H{heading.level}</span>
+                              <strong>{heading.text || tr(language, 'Empty heading', 'Encabezado vacío')}</strong>
+                              <small>{heading.signals.map((signal) => headingSignalLabel(signal, language)).join(' · ')}</small>
+                            </div>
+                          )}
                         </li>
                       ))}
                     </ol>
@@ -614,11 +653,17 @@ export function SessionReportView({
           </details>
 
           <p className="report-scope-note">
-            {tr(
-              language,
-              'FocusTrace combines deterministic automated evidence and recorded runtime behavior. This report is not a complete WCAG conformance certificate.',
-              'FocusTrace combina evidencia automática determinista y comportamiento runtime registrado. Este informe no es un certificado completo de conformidad WCAG.',
-            )}
+            {livePage
+              ? tr(
+                  language,
+                  'FocusTrace combines deterministic automated evidence and recorded runtime behavior. This report is not a complete WCAG conformance certificate.',
+                  'FocusTrace combina evidencia automática determinista y comportamiento runtime registrado. Este informe no es un certificado completo de conformidad WCAG.',
+                )
+              : tr(
+                  language,
+                  'This historical view represents the saved static review only. Use the audit PDF for persisted historical evidence. Manual WCAG review is still required.',
+                  'Esta vista histórica representa únicamente la revisión estática guardada. Usa el PDF de auditoría para la evidencia histórica persistida. Sigue siendo necesaria una revisión WCAG manual.',
+                )}
           </p>
         </>
       )}

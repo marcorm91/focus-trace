@@ -8,7 +8,8 @@ function source(path: string): string {
 
 describe('sidepanel layout polish contract', () => {
   it('keeps four primary workspaces and groups headings inside a simplified Structure view', () => {
-    const structureNavigation = source('entrypoints/sidepanel/structure-navigation.css');
+    const icons = source('entrypoints/sidepanel/modern-icons.css');
+    const entry = source('entrypoints/sidepanel/index.css');
     const baseStyles = source('entrypoints/sidepanel/style.css');
     const structureView = source('entrypoints/sidepanel/views/StructureView.tsx');
     const app = source('entrypoints/sidepanel/App.tsx');
@@ -16,9 +17,11 @@ describe('sidepanel layout polish contract', () => {
     const focusGraph = source('entrypoints/sidepanel/focus-graph.css');
 
     expect(baseStyles).toContain('grid-template-columns: repeat(4, 1fr);');
-    expect(structureNavigation).not.toContain('grid-template-columns:');
-    expect(structureNavigation).toContain('--ft-i-structure');
-    expect(structureNavigation).toContain('button:nth-child(4) > span');
+    expect(icons).toContain('--ft-i-structure');
+    expect(icons).toContain('button:nth-child(2) > span { --ft-mask: var(--ft-i-structure); }');
+    expect(icons).toContain('button:nth-child(3) > span { --ft-mask: var(--ft-i-trace); }');
+    expect(icons).toContain('button:nth-child(4) > span { --ft-mask: var(--ft-i-report); }');
+    expect(entry).not.toContain('structure-navigation.css');
     expect(structureView).toContain("type StructureMode = 'headings' | 'semantics' | 'metrics';");
     expect(structureView).not.toContain("'map'");
     expect(structureView).toContain('<HeadingTreeView scan={scan} language={language} onLocate={onLocate} />');

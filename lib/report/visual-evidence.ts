@@ -36,6 +36,7 @@ export const REPORT_EVIDENCE_STORAGE_PREFIX = 'focustrace:report-evidence:';
 const VISUAL_CAPTURE_HOST_PERMISSION = '<all_urls>';
 const MAX_CAPTURE_WIDTH_PX = 1100;
 const MAX_CAPTURE_HEIGHT_PX = 1400;
+const MAX_PRINT_VISUAL_DATA_CHARS = 5_500_000;
 let pendingVisualCapturePermission: Promise<boolean> | undefined;
 
 function wait(ms: number) {
@@ -49,8 +50,9 @@ function wait(ms: number) {
  */
 export function armReportVisualEvidencePermissionRequest(target: EventTarget | null) {
   if (!(target instanceof Element)) return;
-  if (!target.closest('.export-pdf-report')) return;
-  const option = document.querySelector<HTMLInputElement>('.report-visual-evidence-option input');
+  const report = target.closest('.session-report');
+  if (!report || !target.closest('.export-pdf-report')) return;
+  const option = report.querySelector<HTMLInputElement>('.report-visual-evidence-option input');
   if (!option?.checked) {
     pendingVisualCapturePermission = undefined;
     return;
@@ -296,9 +298,33 @@ export async function captureReportVisualEvidence(
   }
 }
 
+export function boundPrintableReportEvidence(bundle: PrintableReportEvidenceBundle): PrintableReportEvidenceBundle {
+  let remaining = MAX_PRINT_VISUAL_DATA_CHARS;
+  const visuals: ReportVisualEvidence[] = [];
+  let storageTrimmed = false;
+
+  for (const visual of bundle.visuals) {
+    const cost = visual.dataUrl.length;
+    if (cost <= remaining) {
+      visuals.push(visual);
+      remaining -= cost;
+    } else {
+      storageTrimmed = true;
+    }
+  }
+
+  return {
+    ...bundle,
+    visuals,
+    visualEvidenceLimitReached: bundle.visualEvidenceLimitReached || storageTrimmed,
+  };
+}
+
 export async function storePrintableReportEvidence(bundle: PrintableReportEvidenceBundle): Promise<string> {
   const token = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
-  await browser.storage.session.set({ [`${REPORT_EVIDENCE_STORAGE_PREFIX}${token}`]: bundle });
+  await browser.storage.session.set({
+    [`${REPORT_EVIDENCE_STORAGE_PREFIX}${token}`]: boundPrintableReportEvidence(bundle),
+  });
   return token;
 }
 

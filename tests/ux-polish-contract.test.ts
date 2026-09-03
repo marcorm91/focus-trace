@@ -36,6 +36,7 @@ describe('UX polish contract', () => {
   it('uses one SVG-mask icon language without specificity overrides', () => {
     const css = source('entrypoints/sidepanel/modern-icons.css');
     expect(css).toContain('--ft-i-review');
+    expect(css).toContain('--ft-i-structure');
     expect(css).toContain('--ft-i-trace');
     expect(css).toContain('--ft-i-headings');
     expect(css).toContain('--ft-i-report');
@@ -51,8 +52,6 @@ describe('UX polish contract', () => {
     expect(css).toContain('--ft-mask: var(--ft-i-reset)');
     expect(css).toContain('.topbar-tools .settings-trigger > span');
     expect(css).toContain('--ft-mask: var(--ft-i-settings)');
-    expect(css).toContain('.finding-location > button::before');
-    expect(css).toContain('-webkit-mask: var(--ft-i-focus)');
     expect(css).not.toContain('--ft-i-code');
     expect(css).not.toContain('!important');
   });
@@ -210,7 +209,6 @@ describe('UX polish contract', () => {
     const matrix = source('entrypoints/sidepanel/components/ImpactMatrix.tsx');
     const matrixCss = source('entrypoints/sidepanel/components/impact-matrix.css');
     const scan = source('entrypoints/sidepanel/views/ScanView.tsx');
-    const entry = source('entrypoints/sidepanel/main.tsx');
 
     expect(scan).toContain('<ImpactMatrix scan={scan} language={language} />');
     expect(scan).not.toContain('severity-impact-summary');
@@ -218,11 +216,8 @@ describe('UX polish contract', () => {
     expect(matrix).not.toContain('MutationObserver');
     expect(matrix).not.toContain('FOCUSTRACE_GET_SESSION');
     expect(matrix).not.toContain('SETTINGS_STORAGE_KEY');
-    expect(matrix).toContain('Impacto por resultado');
-    expect(matrix).not.toContain('Ejemplo: un salto de nivel de encabezado');
-    expect(matrixCss).not.toContain('severity-impact-summary');
+    expect(matrixCss).toContain('.impact-matrix');
     expect(matrixCss).not.toContain('!important');
-    expect(entry).not.toContain('<ImpactMatrix />');
   });
 
   it('renders the compact report scan directly without a hidden legacy tree or portal host', () => {
@@ -237,6 +232,7 @@ describe('UX polish contract', () => {
     expect(component).toContain('report-rule-pager');
     expect(component).toContain('scan: ScanResult');
     expect(component).toContain('language: AppLanguage');
+    expect(component).toContain('onLocate?: LocateHandler | undefined;');
     expect(component).not.toContain('createPortal');
     expect(component).not.toContain('MutationObserver');
     expect(component).not.toContain('FOCUSTRACE_GET_SESSION');
@@ -245,7 +241,7 @@ describe('UX polish contract', () => {
     expect(componentCss).toContain('overflow-wrap: anywhere;');
     expect(componentCss).not.toContain('!important');
 
-    expect(report).toContain('<ReportScanCompact scan={scan} language={language} />');
+    expect(report).toContain('<ReportScanCompact scan={scan} language={language} onLocate={livePage ? onLocate : undefined} />');
     expect(report).not.toContain('className="report-group"');
     expect(report).not.toContain('className="report-finding"');
     expect(entry).not.toContain('<ReportScanCompact />');

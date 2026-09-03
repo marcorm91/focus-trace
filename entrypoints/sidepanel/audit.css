@@ -218,6 +218,46 @@
   line-height: 1.45;
 }
 
+.audit-page-report.is-history .report-heading-static {
+  width: 100%;
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 25px minmax(0, 1fr);
+  gap: 7px;
+  align-items: start;
+  padding: 8px 9px;
+  border: 1px solid var(--ft-border);
+  border-left: 4px solid var(--ft-warning);
+  border-radius: 9px;
+  background: var(--ft-surface);
+  color: var(--ft-text);
+  text-align: left;
+}
+
+.audit-page-report.is-history .report-heading-static > span {
+  min-width: 25px;
+  color: var(--ft-brand-strong);
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.audit-page-report.is-history .report-heading-static > strong,
+.audit-page-report.is-history .report-heading-static > small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  white-space: normal;
+}
+
+.audit-page-report.is-history .report-heading-static > strong {
+  font-size: 14px;
+}
+
+.audit-page-report.is-history .report-heading-static > small {
+  grid-column: 2;
+  color: var(--ft-muted);
+  font-size: 14px;
+}
+
 .audit-scope-context {
   display: grid;
   gap: 8px;

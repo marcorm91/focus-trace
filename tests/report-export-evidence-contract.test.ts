@@ -7,7 +7,7 @@ function source(path: string): string {
 }
 
 describe('report export evidence contract', () => {
-  it('keeps single-page visual export uncapped while allowing a bounded audit snapshot', () => {
+  it('keeps single-page capture uncapped by finding count while bounding the stored print payload by size', () => {
     const evidence = source('lib/report/visual-evidence.ts');
     const auditHook = source('entrypoints/sidepanel/hooks/useMultipageAudit.ts');
 
@@ -15,8 +15,19 @@ describe('report export evidence contract', () => {
     expect(evidence).toContain('const bounded = Number.isFinite(maxVisuals);');
     expect(evidence).toContain(': eligible;');
     expect(evidence).not.toContain('DEFAULT_MAX_VISUALS');
-    expect(auditHook).toContain('MAX_AUDIT_VISUALS_PER_REVIEW = 2');
+    expect(evidence).toContain('MAX_PRINT_VISUAL_DATA_CHARS = 5_500_000');
+    expect(evidence).toContain('boundPrintableReportEvidence');
+    expect(evidence).toContain('visualEvidenceLimitReached: bundle.visualEvidenceLimitReached || storageTrimmed');
+    expect(auditHook).toContain('MAX_AUDIT_VISUALS_PER_REVIEW = 3');
     expect(auditHook).toContain('MAX_AUDIT_VISUALS_PER_REVIEW,');
+  });
+
+  it('scopes export permission state to the report whose PDF button was clicked', () => {
+    const evidence = source('lib/report/visual-evidence.ts');
+
+    expect(evidence).toContain("const report = target.closest('.session-report');");
+    expect(evidence).toContain("report.querySelector<HTMLInputElement>('.report-visual-evidence-option input')");
+    expect(evidence).not.toContain("document.querySelector<HTMLInputElement>('.report-visual-evidence-option input')");
   });
 
   it('does not reject valid activeTab capture just because optional all-URL permission was not granted', () => {
@@ -30,11 +41,13 @@ describe('report export evidence contract', () => {
 
   it('carries static and runtime finding tone into visual evidence eligibility', () => {
     const components = source('lib/report/component-identity.ts');
+    const report = source('entrypoints/sidepanel/views/SessionReportView.tsx');
 
     expect(components).toContain('visualTone?: ReportComponentTone;');
     expect(components).toContain("event.outcome === 'fail'");
     expect(components).toContain("event.outcome === 'review'");
     expect(components).toContain('Boolean(event.causes?.length)');
+    expect(report).toContain('captureReportVisualEvidence(tab.id, scan, freshComponents, events)');
   });
 
   it('scales oversized evidence proportionally and constrains it again in print layout', () => {
