@@ -44,11 +44,18 @@ export type StructureSnapshot = {
   truncated: boolean;
 };
 
-export function collectStructureMapInPage(): StructureSnapshot {
-  const MAX_ELEMENTS = 10_000;
-  const MAX_STRUCTURE_NODES = 900;
-  const MAX_HINTS = 80;
+export type StructureCollectionOptions = {
+  maxElements?: number;
+  maxStructureNodes?: number;
+  maxHints?: number;
+};
+
+export function collectStructureMapInPage(options?: StructureCollectionOptions): StructureSnapshot {
+  const MAX_ELEMENTS = Math.max(1, Math.floor(options?.maxElements ?? 10_000));
+  const MAX_STRUCTURE_NODES = Math.max(1, Math.floor(options?.maxStructureNodes ?? 900));
+  const MAX_HINTS = Math.max(1, Math.floor(options?.maxHints ?? 80));
   const MAX_LABEL_LENGTH = 90;
+  const MAX_HEURISTIC_SIBLINGS = 60;
 
   const semanticTags = new Set([
     'header', 'nav', 'main', 'footer', 'aside', 'section', 'article',
@@ -159,16 +166,17 @@ export function collectStructureMapInPage(): StructureSnapshot {
 
   const isPossibleListGroup = (element: Element): boolean => {
     if (['ul', 'ol', 'dl', 'table'].includes(element.tagName.toLowerCase())) return false;
+    if (element.childElementCount < 3 || element.childElementCount > 40) return false;
     const children = [...element.children].filter((child) => !['script', 'style', 'template'].includes(child.tagName.toLowerCase()));
-    if (children.length < 3 || children.length > 40) return false;
+    if (children.length < 3) return false;
     const signatures = children.map(repeatedSignature);
     const first = signatures[0];
     return Boolean(first) && signatures.filter((signature) => signature === first).length / signatures.length >= 0.8;
   };
 
   const directLinkRatio = (element: Element): { links: number; ratio: number } => {
+    if (!element.childElementCount || element.childElementCount > MAX_HEURISTIC_SIBLINGS) return { links: 0, ratio: 0 };
     const children = [...element.children];
-    if (!children.length) return { links: 0, ratio: 0 };
     const links = children.filter((child) => child.matches('a[href]') || Boolean(child.querySelector(':scope > a[href]'))).length;
     return { links, ratio: links / children.length };
   };
