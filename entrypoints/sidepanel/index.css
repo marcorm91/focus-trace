@@ -14,6 +14,7 @@
 @import url('./scan-accordion.css') layer(components);
 @import url('./component-scan.css') layer(components);
 @import url('./heading-tree-visual.css') layer(components);
+@import url('./structure.css') layer(components);
 @import url('./information-summaries.css') layer(components);
 @import url('./instructions.css') layer(components);
 @import url('./modern-icons.css') layer(components);
