@@ -14,7 +14,8 @@ When you explicitly run an analysis, generate Structure evidence or record a Tra
 - SPA route and dialog lifecycle evidence;
 - page title, URL and other report context;
 - optional visible-element screenshot crops stored locally by FocusTrace Memory when Memory is enabled;
-- optional visible-page screenshot crops when the user explicitly includes visual evidence in a printable report.
+- bounded visible-element screenshot crops stored locally with multipage audit reviews so previously analyzed pages can retain visual evidence;
+- optional visible-page screenshot crops when the user explicitly includes visual evidence in a printable single-page report.
 
 ## Where that data goes
 
@@ -22,7 +23,7 @@ FocusTrace processes analysis, Structure and runtime evidence locally in the bro
 
 FocusTrace does not intentionally send inspected-page content, DOM evidence, screenshots or recorded interactions to a FocusTrace server or third-party AI service.
 
-Session data and preferences may be stored using browser extension storage so the product can preserve state and user settings. Browser storage is controlled by the browser profile and browser platform.
+Session data, multipage audit evidence and preferences may be stored using browser extension storage so the product can preserve state and user settings. Browser storage is controlled by the browser profile and browser platform.
 
 ## Structure evidence
 
@@ -33,6 +34,16 @@ The resulting Structure snapshot is kept in the current sidepanel/sidebar sessio
 When a session report is exported after Structure has already been analyzed, FocusTrace may reuse a compact report subset containing Structure metrics and semantic review suggestions. Generating or exporting a report does not trigger a second Structure collection automatically.
 
 Structure evidence is diagnostic context, not a WCAG conformance claim. Suggestions such as replacing a generic interactive element with native HTML still require human review of the element's actual purpose.
+
+## Multipage audits
+
+A full-page analysis can be retained as the latest review for that normalized URL inside the active multipage audit. Re-analyzing the same page replaces the saved page result rather than creating another duplicate audit section.
+
+To keep visual evidence available after the user navigates away, FocusTrace may also retain up to two local screenshot crops for eligible findings from that page review. These are element-level JPEG crops rather than full-page screenshots. A later review of the same URL replaces the previous crops together with the previous scan result so stale visual evidence is not intentionally kept as the current audit state.
+
+Audit visual evidence is bounded again at storage level. FocusTrace keeps at most 40 pages per audit, at most 8 audits, no more than two visual crops per reviewed page and a shared approximate visual-data budget of 3,000,000 data-URL characters. When that visual budget is exhausted, older crops can be discarded while the underlying text-based audit result remains available. The printable audit identifies reviews whose visual evidence was unavailable or trimmed instead of silently presenting stale captures.
+
+Audit screenshots remain local to extension storage and the generated local PDF preview. Users should review the PDF before sharing it because a crop can contain text or other information visible on the inspected page.
 
 ## FocusTrace Memory
 
@@ -61,24 +72,25 @@ Memory comparisons are diagnostic history, not a WCAG conformance claim. A previ
 
 ## Visual evidence
 
-FocusTrace has two local visual-evidence flows:
+FocusTrace has three local visual-evidence flows:
 
 1. **Memory previews.** When Memory is enabled, an explicit analysis may retain a small crop of a currently visible failing element as described above. If capture is unavailable, Memory falls back to a compact locator.
-2. **Printable-report evidence.** Visual evidence in printable reports is optional and user initiated. When requested, FocusTrace may temporarily request the browser permission required to capture the visible page.
+2. **Multipage audit evidence.** An explicit full-page analysis may retain up to two bounded local crops for eligible findings so the latest saved review can still include visual context after the user navigates to another audited page. If capture is unavailable, the audit keeps the text-based result and records that visual evidence was unavailable.
+3. **Printable single-page report evidence.** Visual evidence in the single-page printable report is optional and user initiated. When requested, FocusTrace may temporarily request the browser permission required to capture the visible page.
 
 Screenshot crops can contain information visible on the inspected page. They are prepared and stored locally for the feature that requested them and are not intentionally transmitted by FocusTrace.
 
-Users should review exported reports before sharing them with third parties and should clear Memory history when retained local evidence is no longer appropriate for the browser profile.
+Users should review exported reports before sharing them with third parties and should clear retained local history when local evidence is no longer appropriate for the browser profile.
 
 ## Permissions
 
 FocusTrace uses extension permissions only for product functionality such as analyzing web pages selected by the user, generating an explicitly requested Structure snapshot, injecting local instrumentation and storing preferences/session state.
 
-Production builds do not require host access at installation. On an explicit page action such as **Analyze this page** or **Generate / Refresh Structure**, FocusTrace may request optional HTTP/HTTPS page access before it can read the selected tab and inject or execute the required local runtime. Browsers can retain that optional grant until the user revokes it from the extension's site-access settings. The grant permits local inspection; it does not change the policy that inspected-page data is not intentionally transmitted by FocusTrace.
+Production builds do not require host access at installation. On an explicit page action such as **Analyze this page** or **Analyze / Refresh Structure**, FocusTrace may request optional HTTP/HTTPS page access before it can read the selected tab and inject or execute the required local runtime. Browsers can retain that optional grant until the user revokes it from the extension's site-access settings. The grant permits local inspection; it does not change the policy that inspected-page data is not intentionally transmitted by FocusTrace.
 
-When Memory is enabled, FocusTrace may attempt a visible-tab capture during the explicit analysis to create a small local evidence crop. This Memory flow uses the active-tab/page-access context already established for the user-requested analysis and does not request persistent broad `<all_urls>` screenshot access. If capture is unavailable, Memory records only the compact locator fallback.
+When Memory is enabled, or when a full-page review is being added to a multipage audit, FocusTrace may attempt a visible-tab capture during the explicit analysis to create small local evidence crops. These analysis-time flows first use the active-tab/page-access context already established for the user-requested analysis and do not require FocusTrace to keep a separate persistent `<all_urls>` screenshot grant. If capture is unavailable, the scan result remains usable without the missing crop.
 
-Broader `<all_urls>` screenshot access, when required by the browser API for printable-report visual evidence, is requested from an explicit export action and removed after use.
+Broader `<all_urls>` screenshot access, when required by the browser API for optional single-page printable-report visual evidence, is requested from an explicit export action and removed after use. The capture implementation also attempts valid active-tab capture instead of treating absence of that optional broad grant as an automatic capture failure.
 
 The current permission model is documented in [`README.md`](README.md) and validated by the repository's browser-build checks.
 
