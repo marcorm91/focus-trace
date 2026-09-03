@@ -59,7 +59,9 @@ describe('README language and instructions contract', () => {
     expect(instructions).toContain("'Site Audit', 'Análisis de sitio'");
     expect(instructions).toContain('title="Trace"');
     expect(instructions).toContain("'Automate focus', 'Automatizar foco'");
-    expect(instructions).toContain("'Headings', 'Encabezados'");
+    expect(instructions).toContain("'Structure', 'Estructura'");
+    expect(instructions).toContain('Use Headings for the H1–H6 outline');
+    expect(instructions).toContain('Usa Encabezados para el esquema H1–H6');
     expect(instructions).toContain("'Report', 'Informe'");
     expect(instructions).toContain('title="FocusTrace Memory"');
     expect(instructions).toContain("'Settings and privacy', 'Ajustes y privacidad'");
