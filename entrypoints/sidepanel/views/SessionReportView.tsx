@@ -264,7 +264,14 @@ export function SessionReportView({
         </div>
       ) : (
         <>
-          <section className="report-section report-priority" aria-labelledby="report-priority-title">
+          <details className="report-section report-accordion-section report-priority" open>
+            <summary className="report-accordion-summary">
+              <span className="report-section-index">!</span>
+              <span className="report-accordion-summary-copy">
+                <strong>{tr(language, 'Highest priority', 'Máxima prioridad')}</strong>
+                <small>{highPriority.length} {tr(language, 'priority suggestions', 'sugerencias prioritarias')}</small>
+              </span>
+            </summary>
             <div className="report-section-heading">
               <div>
                 <span className="report-section-index">!</span>
@@ -287,9 +294,16 @@ export function SessionReportView({
             ) : (
               <p className="report-empty-line">{tr(language, 'No high-priority automated recommendation was produced.', 'No se ha generado ninguna recomendación automática de prioridad alta.')}</p>
             )}
-          </section>
+          </details>
 
-          <section className="report-section report-trace-section" aria-labelledby="report-trace-title">
+          <details className="report-section report-accordion-section report-trace-section">
+            <summary className="report-accordion-summary">
+              <span className="report-section-index">01</span>
+              <span className="report-accordion-summary-copy">
+                <strong>{tr(language, 'Runtime trace', 'Traza runtime')}</strong>
+                <small>{model.runtimeFindings} {tr(language, 'findings', 'hallazgos')} · {model.focusSteps} {tr(language, 'focus steps', 'pasos de foco')}</small>
+              </span>
+            </summary>
             <div className="report-section-heading">
               <div>
                 <span className="report-section-index">01</span>
@@ -397,9 +411,16 @@ export function SessionReportView({
                 <p>{tr(language, 'Record a real interaction or use Automate focus to add runtime context to this report.', 'Graba una interacción real o utiliza Automatizar foco para añadir contexto runtime al informe.')}</p>
               </div>
             )}
-          </section>
+          </details>
 
-          <section className="report-section" aria-labelledby="report-analysis-title">
+          <details className="report-section report-accordion-section">
+            <summary className="report-accordion-summary">
+              <span className="report-section-index">02</span>
+              <span className="report-accordion-summary-copy">
+                <strong>{tr(language, 'Full page scan', 'Barrido completo de página')}</strong>
+                <small>{model.failures} {tr(language, 'failures', 'fallos')} · {model.reviews} {tr(language, 'reviews', 'revisiones')}</small>
+              </span>
+            </summary>
             <div className="report-section-heading">
               <div>
                 <span className="report-section-index">02</span>
@@ -422,9 +443,16 @@ export function SessionReportView({
             )}
 
             <ReportScanCompact scan={scan} language={language} />
-          </section>
+          </details>
 
-          <section className="report-section" aria-labelledby="report-structure-title">
+          <details className="report-section report-accordion-section">
+            <summary className="report-accordion-summary">
+              <span className="report-section-index">03</span>
+              <span className="report-accordion-summary-copy">
+                <strong>{tr(language, 'Document structure', 'Estructura del documento')}</strong>
+                <small>{componentScope ? tr(language, 'Component scope', 'Alcance de componente') : `${structureReviewCount} ${tr(language, 'to review', 'a revisar')}`}</small>
+              </span>
+            </summary>
             <div className="report-section-heading">
               <div>
                 <span className="report-section-index">03</span>
@@ -538,9 +566,16 @@ export function SessionReportView({
                 )}
               </>
             )}
-          </section>
+          </details>
 
-          <section className="report-section report-recommendations" aria-labelledby="report-suggestions-title">
+          <details className="report-section report-accordion-section report-recommendations">
+            <summary className="report-accordion-summary">
+              <span className="report-section-index">04</span>
+              <span className="report-accordion-summary-copy">
+                <strong>{tr(language, 'Recommended next steps', 'Sugerencias de mejora')}</strong>
+                <small>{model.suggestions.length} {tr(language, 'suggestions', 'sugerencias')}</small>
+              </span>
+            </summary>
             <div className="report-section-heading">
               <div>
                 <span className="report-section-index">04</span>
@@ -573,7 +608,7 @@ export function SessionReportView({
                 <p>{tr(language, 'Manual WCAG review is still required.', 'Sigue siendo necesaria una revisión WCAG manual.')}</p>
               </div>
             )}
-          </section>
+          </details>
 
           <p className="report-scope-note">
             {tr(
