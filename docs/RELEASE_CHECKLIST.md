@@ -1,6 +1,6 @@
 # FocusTrace release checklist
 
-Current release candidate: **0.1.3**.
+Current release candidate: **0.1.4**.
 
 Use this checklist before publishing a release build or submitting an updated package to a browser store. Keep the candidate version above aligned with `package.json`, `package-lock.json`, the browser manifests and the release contract test.
 
@@ -22,9 +22,9 @@ The committed `package-lock.json` must remain synchronized with `package.json`, 
 
 - Navigate the side panel/sidebar entirely with the keyboard.
 - Confirm every visible control has a readable accessible name.
-- Confirm focus remains clearly visible throughout Analyze, Trace, Replay, Report and Settings.
+- Confirm focus remains clearly visible throughout Analyze, Structure, Trace, Replay, Report and Settings.
 - Confirm the document language changes with the FocusTrace language setting.
-- Switch FocusTrace to Spanish and inspect representative FAIL, REVIEW and WARNING findings, including Site Audit/reference details; user-facing scanner/standards prose should be Spanish while technical identifiers such as rule IDs, HTML/ARIA tokens, selectors, ratios and colors remain unchanged.
+- Switch FocusTrace to Spanish and inspect representative FAIL, REVIEW and WARNING findings, including Structure/Site Audit/reference details; user-facing scanner/standards prose should be Spanish while technical identifiers such as rule IDs, HTML/ARIA tokens, selectors, ratios and colors remain unchanged.
 - Check the panel at 200% browser zoom and at its narrowest supported width.
 - Check both light and dark system appearance.
 - Check Windows/high-contrast or forced-colors behavior before public release when available.
@@ -34,7 +34,20 @@ The committed `package-lock.json` must remain synchronized with `package.json`, 
 
 The automated side-panel E2E smoke test is a regression guard; it is not a substitute for the manual checks above.
 
-## FocusTrace Memory 0.1.3 smoke
+## Structure 0.1.4 smoke
+
+- Open **Structure** and confirm that merely entering the workspace does not request page access or generate a DOM snapshot.
+- Open **Headings** inside Structure and confirm the existing H1–H6 tree, hierarchy signals, expand/collapse behavior and page overlay still work.
+- Generate Structure explicitly and confirm **Map**, **Semantics** and **Metrics** are populated only after that action.
+- Confirm repeated structural siblings are compacted where expected and generic wrappers do not overwhelm the default map.
+- Review semantic suggestions for generic controls, possible lists, navigation-like link groups, deep generic wrapper chains and high `div` density; verify they are presented as suggestions/review signals rather than automatic WCAG failures.
+- Test a large DOM and confirm safety limits produce a limited-snapshot notice instead of continuous processing or an unresponsive panel.
+- Open **Report** after generating Structure and confirm section 03 is **Document structure / Estructura del documento**, includes compact metrics and only headings that require review, and does not duplicate the complete heading tree.
+- Export PDF and TXT from the same session and confirm both reuse the available compact Structure evidence without triggering another DOM scan or exporting the full Structure tree.
+- Repeat the report flow without generating Structure and confirm the report remains passive and explains that DOM metrics are not available.
+- Run a component-scoped analysis and confirm page-global Structure evidence is not mixed into the component-only static report.
+
+## FocusTrace Memory smoke
 
 - Confirm Memory is still disabled by default after a clean installation/profile.
 - Enable **Remember accessibility history**, analyze a page with a visible deterministic failure and confirm the observation is stored locally.
@@ -61,6 +74,7 @@ The Firefox artifact remains experimental until these checks pass on Firefox 115
 - Load `.output/firefox-mv3/manifest.json` or the `focustrace-firefox-dev` artifact from `about:debugging#/runtime/this-firefox`.
 - Confirm clicking the FocusTrace toolbar action opens the Firefox sidebar.
 - Run Analyze and locate at least one finding on the inspected page.
+- Open Structure, inspect Headings, then explicitly generate the Structure map and confirm the sidebar remains responsive.
 - Start a manual Trace, leave the sidebar, interact with the page, then return and confirm recording continued.
 - Run the automatic Tab walk and confirm the focus journey is populated.
 - Select a recorded focus step and confirm the current page highlight/inspector appears.
@@ -90,7 +104,7 @@ Firefox uses `sidebar_action` generated from the WXT sidepanel entrypoint rather
 
 Production builds must not declare required global host permissions. Optional HTTP/HTTPS host access may be requested only from an explicit page action and must remain documented in the README and privacy policy. The localhost host permission used by E2E is test-only.
 
-Confirm [`PRIVACY.md`](../PRIVACY.md) still matches the actual product behavior, especially storage, optional Memory visual context, optional report screenshot evidence, external services and sponsorship integration.
+Confirm [`PRIVACY.md`](../PRIVACY.md) still matches the actual product behavior, especially storage, on-demand Structure evidence, optional Memory visual context, optional report screenshot evidence, external services and sponsorship integration.
 
 Voluntary support is enabled through `https://github.com/sponsors/marcorm91`. Verify both the About support block and the compact global footer are keyboard accessible, retain visible focus at 200% zoom and open only that reviewed external HTTPS destination. Confirm the support link does not appear in printed/exported reports.
 
@@ -126,7 +140,7 @@ Before changing visibility:
 - Confirm `README.md`, `LICENSE`, `CONTRIBUTING.md`, `SECURITY.md`, `PRIVACY.md` and `TRADEMARKS.md` reflect the release.
 - Confirm the README does not overclaim full WCAG conformance or browser support.
 - Confirm GitHub description, website and topics are set.
-- Add current screenshots or a short demo of Analyze and Trace.
+- Add current screenshots or a short demo of Analyze, Structure and Trace.
 - Verify author/contact links.
 - Enable branch protection or an equivalent ruleset for `main`.
 - Require the relevant CI checks before merge.
@@ -138,17 +152,17 @@ Before changing visibility:
 
 ## Release
 
-For the current candidate, the release version is **0.1.3** and the intended tag is **`v0.1.3`**.
+For the current candidate, the release version is **0.1.4** and the intended tag is **`v0.1.4`**.
 
-- Confirm `package.json`, `package-lock.json` and all browser manifests report `0.1.3`.
-- Confirm `tests/release-contract.test.ts` targets `v0.1.3` and passes.
+- Confirm `package.json`, `package-lock.json` and all browser manifests report `0.1.4`.
+- Confirm `tests/release-contract.test.ts` targets `v0.1.4` and passes.
+- Confirm `docs/RELEASE_NOTES_0.1.4.md` matches the shipped behavior and limitations.
 - Confirm the release commit is on `main` and CI is green on that exact commit.
 - Build the production Chrome, Edge and Firefox MV3 artifacts from that commit.
 - Smoke-test the unpacked production build in supported Chromium browsers.
 - Complete the Firefox experimental smoke checklist before describing Firefox as officially supported.
-- Tag the exact approved commit as `v0.1.3`.
-- Write release notes that distinguish automated FAIL, REVIEW and runtime evidence and describe the opt-in Memory visual-context behavior accurately.
+- Tag the exact approved commit as `v0.1.4`.
 - Review the generated ZIPs before attaching/uploading them.
 - Only then publish/distribute the release artifacts or submit the updated packages to browser stores.
 
-After publishing 0.1.3, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.
+After publishing 0.1.4, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.
