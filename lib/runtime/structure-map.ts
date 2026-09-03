@@ -68,6 +68,7 @@ export function collectStructureMapInPage(): StructureSnapshot {
   let hintSequence = 0;
   let structureSequence = 0;
   let structureNodeCount = 0;
+  let structureVisitedCount = 0;
   let truncated = false;
 
   const clip = (value: string | null | undefined, max = MAX_LABEL_LENGTH): string | undefined => {
@@ -92,7 +93,7 @@ export function collectStructureMapInPage(): StructureSnapshot {
         break;
       }
       let segment = tag;
-      const parent = current.parentElement;
+      const parent: Element | null = current.parentElement;
       if (parent) {
         const siblings = [...parent.children].filter((sibling) => sibling.tagName === current!.tagName);
         if (siblings.length > 1) segment += `:nth-of-type(${siblings.indexOf(current) + 1})`;
@@ -187,7 +188,7 @@ export function collectStructureMapInPage(): StructureSnapshot {
   };
 
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT);
-  let current = walker.currentNode as Element;
+  let current: Element | null = walker.currentNode as Element;
   let processed = 0;
   const deepChainStarts = new Set<Element>();
 
@@ -259,10 +260,10 @@ export function collectStructureMapInPage(): StructureSnapshot {
       }
     }
 
-    current = walker.nextNode() as Element;
+    current = walker.nextNode() as Element | null;
   }
 
-  if (walker.nextNode()) truncated = true;
+  if (current) truncated = true;
   metrics.genericRatio = metrics.totalElements ? Math.round((metrics.genericContainerCount / metrics.totalElements) * 1000) / 10 : 0;
 
   for (const element of deepChainStarts) {
@@ -315,11 +316,21 @@ export function collectStructureMapInPage(): StructureSnapshot {
   };
 
   const visit = (element: Element): StructureNode[] => {
-    if (structureNodeCount >= MAX_STRUCTURE_NODES) {
+    if (structureVisitedCount >= MAX_ELEMENTS || structureNodeCount >= MAX_STRUCTURE_NODES) {
       truncated = true;
       return [];
     }
-    const childNodes = groupNodes([...element.children].flatMap((child) => visit(child)));
+    structureVisitedCount += 1;
+
+    const rawChildren: StructureNode[] = [];
+    for (const child of element.children) {
+      if (structureVisitedCount >= MAX_ELEMENTS || structureNodeCount >= MAX_STRUCTURE_NODES) {
+        truncated = true;
+        break;
+      }
+      rawChildren.push(...visit(child));
+    }
+    const childNodes = groupNodes(rawChildren);
     if (!isRelevant(element)) return childNodes;
 
     structureNodeCount += 1;
@@ -339,7 +350,15 @@ export function collectStructureMapInPage(): StructureSnapshot {
     }];
   };
 
-  const roots = groupNodes([...document.body.children].flatMap((child) => visit(child)));
+  const rootNodes: StructureNode[] = [];
+  for (const child of document.body.children) {
+    if (structureVisitedCount >= MAX_ELEMENTS || structureNodeCount >= MAX_STRUCTURE_NODES) {
+      truncated = true;
+      break;
+    }
+    rootNodes.push(...visit(child));
+  }
+  const roots = groupNodes(rootNodes);
 
   return {
     url: location.href,
