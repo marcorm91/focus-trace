@@ -227,6 +227,13 @@ export interface ScanResult {
   rulesRun: number;
 }
 
+export interface FocusMemoryCapturedEvidence {
+  issueIndex: number;
+  locator: string;
+  dataUrl?: string;
+  capturedAt?: number;
+}
+
 export interface FocusWalkOptions {
   delayMs?: number;
   maxSteps?: number;
@@ -271,4 +278,4 @@ export type ExtensionMessage =
   | { type: 'FOCUSTRACE_SAVE_BREAKPOINTS'; tabId: number; breakpoints: RuntimeBreakpointSettings }
   | { type: 'FOCUSTRACE_RUN_SCAN'; scope?: ComponentScanScope }
   | { type: 'FOCUSTRACE_RUN_FOCUS_WALK'; options?: FocusWalkOptions }
-  | { type: 'FOCUSTRACE_SAVE_SCAN'; tabId: number; scan: ScanResult };
+  | { type: 'FOCUSTRACE_SAVE_SCAN'; tabId: number; scan: ScanResult; memoryEvidence?: FocusMemoryCapturedEvidence[] };
