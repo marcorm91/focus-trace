@@ -1,6 +1,6 @@
 # FocusTrace 0.1.3
 
-FocusTrace 0.1.3 improves FocusTrace Memory so historical failures remain understandable after they stop reproducing, while keeping the feature opt-in, bounded and local-first.
+FocusTrace 0.1.3 improves FocusTrace Memory so historical failures remain understandable after they stop reproducing, while keeping the feature opt-in, bounded and local-first. It also tightens Spanish localization so synchronized standards and generated scanner copy do not unexpectedly fall back to English in Spanish-facing results.
 
 ## FocusTrace Memory visual context
 
@@ -11,6 +11,15 @@ FocusTrace 0.1.3 improves FocusTrace Memory so historical failures remain unders
 - When visual capture is unavailable, Memory falls back to a compact local element locator.
 - Existing diagnostic evidence such as contrast ratio, colors, text metrics and the last detection time remains available when recorded.
 - Marking a no-longer-reproduced finding as resolved removes its detailed remembered history, locator and preview while retaining only the minimal hashed marker required to recognize a future regression.
+
+## Spanish localization consistency
+
+- Spanish-facing findings now localize known copy sourced from synchronized WCAG, ACT, HTML, WAI-ARIA and APG references instead of exposing their English display labels.
+- Generated scanner evidence now covers previously untranslated cases such as placeholder-only names, missing main landmarks and obsolete HTML modernization guidance.
+- Structured contrast review reasons are localized before being presented in Analyze, Site Audit and text/report surfaces.
+- Technical identifiers and evidence remain unchanged where translation would be harmful, including rule IDs, HTML/ARIA tokens, selectors, ratios, colors and element names.
+- A defensive Spanish presentation fallback prevents future generated English prose from silently leaking into the interface while preserving useful technical tokens for debugging.
+- Regression tests now guard the currently exposed standards labels and representative generated-evidence paths.
 
 ## Privacy and storage
 
