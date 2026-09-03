@@ -6,7 +6,7 @@ import { clearFocusPathInPage } from '../../lib/runtime/focus-path-overlay';
 import { clearHeadingOutlineInPage } from '../../lib/runtime/heading-overlay';
 import { pickComponentInPage, type ComponentPickerResult } from '../../lib/runtime/component-picker';
 import { locateScanTargetInPage } from '../../lib/runtime/scan-target-overlay';
-import { collectStructureMapInPage, type StructureSnapshot } from '../../lib/runtime/structure-map';
+import { collectStructureEvidenceInPage, type StructureSnapshot } from '../../lib/runtime/structure-evidence';
 import { tr } from '../../shared/i18n';
 import type {
   ExtensionMessage,
@@ -236,7 +236,7 @@ export default function App() {
       await requestPageAccess();
       const results = await browser.scripting.executeScript({
         target: { tabId },
-        func: collectStructureMapInPage,
+        func: collectStructureEvidenceInPage,
       });
       const snapshot = results[0]?.result as StructureSnapshot | undefined;
       if (!snapshot) throw new Error('FocusTrace could not collect the DOM structure snapshot.');

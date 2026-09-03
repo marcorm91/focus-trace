@@ -4,6 +4,7 @@ import { browser } from '#imports';
 import { auditSummary, type AccessibilityAudit } from '../../lib/audit/multipage-audit';
 import { readAuditPrintEvidence } from '../../lib/audit/multipage-audit-storage';
 import { guidanceForIssue, reportFindingDescription } from '../../lib/report/finding-guidance';
+import type { ReportVisualEvidence } from '../../lib/report/visual-evidence';
 import { localizedScanIssue, localizedSeverity, tr, type AppLanguage } from '../../shared/i18n';
 import { sortBySeverity } from '../../shared/severity';
 import type { HeadingSignal, ScanIssue, StandardReference } from '../../shared/types';
@@ -27,7 +28,15 @@ function formatDateTime(timestamp: number, language: AppLanguage): string {
   }).format(timestamp);
 }
 
-function Finding({ issue, language }: { issue: ScanIssue; language: AppLanguage }) {
+function Finding({
+  issue,
+  language,
+  visual,
+}: {
+  issue: ScanIssue;
+  language: AppLanguage;
+  visual?: ReportVisualEvidence;
+}) {
   const copy = localizedScanIssue(issue, language);
   const guidance = guidanceForIssue(issue, language);
   return (
@@ -47,6 +56,15 @@ function Finding({ issue, language }: { issue: ScanIssue; language: AppLanguage 
       )}
       {copy.evidence && (
         <p className="print-evidence"><strong>{tr(language, 'Evidence:', 'Evidencia:')}</strong> {copy.evidence}</p>
+      )}
+      {visual && (
+        <figure className={`print-visual-evidence tone-${visual.tone}`}>
+          <img
+            src={visual.dataUrl}
+            alt={tr(language, 'Visual evidence crop for this finding', 'Recorte de evidencia visual de este hallazgo')}
+          />
+          <figcaption>{visual.selector}</figcaption>
+        </figure>
       )}
       <div className="print-guidance">
         <div>
@@ -132,6 +150,20 @@ function AuditPrintReport({ audit, language }: { audit: AccessibilityAudit; lang
             { id: 'review', label: tr(language, 'Review', 'Revisión'), issues: sortBySeverity(scan.review) },
             { id: 'warning', label: tr(language, 'Warnings', 'Avisos'), issues: sortBySeverity(scan.warnings ?? []) },
           ];
+          const visualMap = new Map(page.visualEvidence?.visuals.map((visual) => [visual.selector, visual]) ?? []);
+          const visualByIssue = new Map<string, ReportVisualEvidence>();
+          const usedVisualSelectors = new Set<string>();
+          for (const group of groups) {
+            for (const issue of group.issues) {
+              const selector = issue.targets.find((target) => visualMap.has(target) && !usedVisualSelectors.has(target));
+              if (!selector) continue;
+              const visual = visualMap.get(selector);
+              if (!visual) continue;
+              visualByIssue.set(issue.id, visual);
+              usedVisualSelectors.add(selector);
+            }
+          }
+          const visualEvidence = page.visualEvidence;
           return (
             <section className="print-section audit-print-page" key={page.key} aria-labelledby={`audit-page-${index + 1}`}>
               <div className="print-section-title audit-print-page-title">
@@ -149,6 +181,28 @@ function AuditPrintReport({ audit, language }: { audit: AccessibilityAudit; lang
                 <span><strong>{scan.warnings?.length ?? 0}</strong> {tr(language, 'warnings', 'avisos')}</span>
                 <span><strong>{headings.length}</strong> {tr(language, 'headings', 'encabezados')}</span>
               </div>
+
+              {!visualEvidence && (
+                <p className="print-visual-summary">{tr(
+                  language,
+                  'Visual evidence was not stored for this earlier review.',
+                  'No se guardó evidencia visual para esta revisión anterior.',
+                )}</p>
+              )}
+              {visualEvidence && visualEvidence.eligibleCount > 0 && visualEvidence.visuals.length > 0 && (
+                <p className="print-visual-summary">
+                  {tr(language, 'Visual evidence', 'Evidencia visual')}: {visualEvidence.visuals.length} {tr(language, 'saved crops', 'recortes guardados')}
+                  {visualEvidence.limitReached ? ` · ${tr(language, 'per-page capture limit reached', 'límite de capturas por página alcanzado')}` : ''}
+                  {visualEvidence.storageTrimmed ? ` · ${tr(language, 'older crops trimmed to protect local storage', 'recortes antiguos limitados para proteger el almacenamiento local')}` : ''}
+                </p>
+              )}
+              {visualEvidence && visualEvidence.eligibleCount > 0 && visualEvidence.visuals.length === 0 && (
+                <p className="print-visual-unavailable">{tr(
+                  language,
+                  'Visual evidence could not be captured for this review. The browser may have restricted screenshot access or the target elements may no longer have been renderable.',
+                  'No se pudo capturar evidencia visual para esta revisión. El navegador pudo restringir el acceso a capturas o los elementos objetivo pudieron dejar de ser renderizables.',
+                )}</p>
+              )}
 
               {headingReviews.length > 0 && (
                 <div className="audit-print-headings">
@@ -169,7 +223,14 @@ function AuditPrintReport({ audit, language }: { audit: AccessibilityAudit; lang
                 <div className="print-finding-group" key={group.id}>
                   <h3>{group.label} <span>{group.issues.length}</span></h3>
                   {group.issues.length
-                    ? group.issues.map((issue) => <Finding key={issue.id} issue={issue} language={language} />)
+                    ? group.issues.map((issue) => (
+                        <Finding
+                          key={issue.id}
+                          issue={issue}
+                          language={language}
+                          visual={visualByIssue.get(issue.id)}
+                        />
+                      ))
                     : <p className="print-empty">{tr(language, 'No findings in this group.', 'No hay hallazgos en este grupo.')}</p>}
                 </div>
               ))}

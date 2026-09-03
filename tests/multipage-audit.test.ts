@@ -6,6 +6,7 @@ import {
   auditSiteKey,
   auditSummary,
   emptyMultipageAuditStore,
+  type AuditPageVisualEvidence,
 } from '../lib/audit/multipage-audit';
 import type { ScanResult } from '../shared/types';
 
@@ -35,6 +36,16 @@ function scan(url: string, scannedAt: number, failures = 1): ScanResult {
   };
 }
 
+function visualEvidence(capturedAt: number, marker: string): AuditPageVisualEvidence {
+  return {
+    capturedAt,
+    visuals: [{ selector: 'button', dataUrl: `data:image/jpeg;base64,${marker}`, tone: 'fail' }],
+    eligibleCount: 1,
+    limitReached: false,
+    captureUnavailable: false,
+  };
+}
+
 describe('multipage audit model', () => {
   it('normalizes ordinary fragments without discarding queries or SPA routes', () => {
     expect(auditPageKey('https://www.example.com/news?page=2#article')).toBe('https://www.example.com/news?page=2');
@@ -46,7 +57,7 @@ describe('multipage audit model', () => {
     expect(auditSiteKey('https://bidafarma.es/noticias/')).toBe('bidafarma.es');
   });
 
-  it('updates the same page instead of duplicating repeated analyses', () => {
+  it('updates the same page and its visual evidence instead of duplicating repeated analyses', () => {
     const firstPlan = auditScopeForUrl(emptyMultipageAuditStore(), 'https://www.bidafarma.es/');
     if (firstPlan.kind !== 'new') throw new Error('Expected a new audit plan.');
     const first = applyAuditAnalysis(
@@ -54,6 +65,7 @@ describe('multipage audit model', () => {
       scan('https://www.bidafarma.es/#top', 100, 3),
       firstPlan.plan,
       'audit-1',
+      visualEvidence(100, 'first'),
     );
     const secondScope = auditScopeForUrl(first, 'https://bidafarma.es/');
     if (secondScope.kind !== 'same-site') throw new Error('Expected the same audit site.');
@@ -62,12 +74,15 @@ describe('multipage audit model', () => {
       scan('https://www.bidafarma.es/#footer', 200, 1),
       secondScope.plan,
       'unused',
+      visualEvidence(200, 'second'),
     );
 
     expect(second.audits).toHaveLength(1);
     expect(second.audits[0]?.pages).toHaveLength(1);
     expect(second.audits[0]?.pages[0]?.reviewedAt).toBe(200);
     expect(second.audits[0]?.pages[0]?.scan.issues).toHaveLength(1);
+    expect(second.audits[0]?.pages[0]?.visualEvidence?.capturedAt).toBe(200);
+    expect(second.audits[0]?.pages[0]?.visualEvidence?.visuals[0]?.dataUrl).toContain('second');
   });
 
   it('asks for a decision on another site and can add it to the current audit', () => {

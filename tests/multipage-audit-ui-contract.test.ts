@@ -15,13 +15,18 @@ describe('multipage audit UI contract', () => {
     expect(dialog).toContain('Empezar una nueva auditoría');
   });
 
-  it('uses a shared empty-state pattern for Report and exposes themed audit PDF export', () => {
+  it('uses the shared Empty component for Report and exposes themed audit PDF export', () => {
     const report = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/views/AuditReportWorkspace.tsx'), 'utf8');
     const css = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/audit.css'), 'utf8');
-    expect(report).toContain('empty structure-empty report-empty-state');
+    expect(report).toContain("import { Empty } from '../components/Common';");
+    expect(report).toContain('<Empty');
+    expect(report).not.toContain('report-empty-state');
+    expect(report).not.toContain('report-empty-panel');
     expect(report).toContain('Todavía no hay datos de análisis');
     expect(report).toContain('Exportar auditoría PDF');
     expect(report).toContain('Revisión realizada');
+    expect(css).not.toContain('.report-empty-state');
+    expect(css).not.toContain('.report-empty-panel');
     expect(css).toContain('.export-audit-report {');
     expect(css).toContain('box-shadow: var(--ft-shadow-sm);');
     expect(css).toContain('border: 1.5px solid var(--ft-border, CanvasText);');
@@ -42,6 +47,20 @@ describe('multipage audit UI contract', () => {
     expect(css).toContain('var(--ft-i-chevron-right)');
     expect(css).toContain('.audit-page-report[open] > .audit-page-summary::after');
     expect(css).toContain('var(--ft-i-chevron-down)');
+  });
+
+  it('stores bounded visual evidence per review and renders it in the audit PDF', () => {
+    const hook = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/hooks/useMultipageAudit.ts'), 'utf8');
+    const printable = readFileSync(resolve(process.cwd(), 'entrypoints/audit-print/main.tsx'), 'utf8');
+    const storage = readFileSync(resolve(process.cwd(), 'lib/audit/multipage-audit-storage.ts'), 'utf8');
+
+    expect(hook).toContain('captureReportVisualEvidence');
+    expect(hook).toContain('MAX_AUDIT_VISUALS_PER_REVIEW = 2');
+    expect(storage).toContain('MAX_VISUAL_DATA_CHARS = 3_000_000');
+    expect(storage).toContain('storageTrimmed');
+    expect(printable).toContain('page.visualEvidence?.visuals');
+    expect(printable).toContain('print-visual-evidence');
+    expect(printable).toContain('No se pudo capturar evidencia visual para esta revisión');
   });
 
   it('renders audit pages through a dedicated printable entrypoint', () => {

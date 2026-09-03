@@ -1,7 +1,7 @@
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { collectStructureMapInPage } from '../lib/runtime/structure-map';
+import { collectStructureEvidenceInPage } from '../lib/runtime/structure-evidence';
 
 describe('Structure evidence collector', () => {
   beforeEach(() => {
@@ -23,7 +23,7 @@ describe('Structure evidence collector', () => {
       <footer>Footer</footer>
     `;
 
-    const snapshot = collectStructureMapInPage();
+    const snapshot = collectStructureEvidenceInPage();
     const metrics = snapshot.metrics;
 
     expect(metrics.headingCount).toBe(2);
@@ -50,7 +50,7 @@ describe('Structure evidence collector', () => {
       </main>
     `;
 
-    const snapshot = collectStructureMapInPage();
+    const snapshot = collectStructureEvidenceInPage();
     const titles = snapshot.hints.map((hint) => hint.title);
 
     expect(titles).toEqual(expect.arrayContaining([
@@ -72,7 +72,7 @@ describe('Structure evidence collector', () => {
     });
   });
 
-  it('does not run the previous repeated-sibling and wrapper-chain heuristics', () => {
+  it('does not run the removed repeated-sibling and wrapper-chain heuristics', () => {
     document.body.innerHTML = `
       <main>
         <div><div><div><div><div>Deep content</div></div></div></div></div>
@@ -84,14 +84,12 @@ describe('Structure evidence collector', () => {
       </main>
     `;
 
-    const snapshot = collectStructureMapInPage();
+    const snapshot = collectStructureEvidenceInPage();
     const titles = snapshot.hints.map((hint) => hint.title);
 
     expect(titles).not.toContain('Repeated sibling structure');
     expect(titles).not.toContain('Deep generic wrapper chain');
     expect(titles).not.toContain('High <div> density');
-    expect(snapshot.metrics.maxGenericChain).toBe(0);
-    expect(snapshot.metrics.deepGenericChains).toBe(0);
   });
 
   it('stops sampling when the configured safety limit is reached', () => {
@@ -99,12 +97,12 @@ describe('Structure evidence collector', () => {
     container.innerHTML = '<span></span>'.repeat(150);
     document.body.append(container);
 
-    const snapshot = collectStructureMapInPage({
+    const snapshot = collectStructureEvidenceInPage({
       maxElements: 100,
       maxHints: 20,
     });
 
-    expect(snapshot.metrics.totalElements).toBe(100);
+    expect(snapshot.sampledElements).toBe(100);
     expect(snapshot.truncated).toBe(true);
   });
 });

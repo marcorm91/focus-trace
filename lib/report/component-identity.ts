@@ -1,6 +1,8 @@
 import type { AppLanguage } from '../../shared/i18n';
 import type { RuntimeEvent, ScanIssue, ScanResult } from '../../shared/types';
 
+export type ReportComponentTone = 'fail' | 'review' | 'warning';
+
 export interface LiveComponentIdentity {
   selector: string;
   tag: string;
@@ -13,6 +15,7 @@ export interface LiveComponentIdentity {
 
 export interface ReportComponentIdentity extends LiveComponentIdentity {
   componentId: string;
+  visualTone?: ReportComponentTone;
 }
 
 function cleanText(value: string | null | undefined, limit = 180): string | undefined {
@@ -139,6 +142,22 @@ function runtimeFallback(selector: string, events: RuntimeEvent[]): LiveComponen
   };
 }
 
+function visualToneForSelector(
+  selector: string,
+  scan: ScanResult | undefined,
+  events: RuntimeEvent[],
+): ReportComponentTone | undefined {
+  if (scan?.issues.some((issue) => issue.targets.includes(selector))) return 'fail';
+  if (events.some((event) => event.element?.selector === selector && event.outcome === 'fail')) return 'fail';
+  if (scan?.review.some((issue) => issue.targets.includes(selector))) return 'review';
+  if (events.some((event) =>
+    (event.element?.selector === selector || event.mutation?.target.selector === selector)
+    && (event.outcome === 'review' || Boolean(event.causes?.length)),
+  )) return 'review';
+  if (scan?.warnings?.some((issue) => issue.targets.includes(selector))) return 'warning';
+  return undefined;
+}
+
 export function buildReportComponentIndex(
   scan: ScanResult | undefined,
   events: RuntimeEvent[],
@@ -152,9 +171,11 @@ export function buildReportComponentIndex(
       tag: 'element',
       context: [],
     };
+    const visualTone = visualToneForSelector(selector, scan, events);
     result.set(selector, {
       ...resolved,
       componentId: `E${String(index + 1).padStart(2, '0')}`,
+      ...(visualTone ? { visualTone } : {}),
     });
   });
   return result;

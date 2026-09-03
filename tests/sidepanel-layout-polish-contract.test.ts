@@ -9,12 +9,14 @@ function source(path: string): string {
 describe('sidepanel layout polish contract', () => {
   it('keeps four primary workspaces and groups headings inside a simplified Structure view', () => {
     const structureNavigation = source('entrypoints/sidepanel/structure-navigation.css');
+    const baseStyles = source('entrypoints/sidepanel/style.css');
     const structureView = source('entrypoints/sidepanel/views/StructureView.tsx');
     const app = source('entrypoints/sidepanel/App.tsx');
     const about = source('entrypoints/sidepanel/about.css');
     const focusGraph = source('entrypoints/sidepanel/focus-graph.css');
 
-    expect(structureNavigation).toContain('grid-template-columns: repeat(4, minmax(0, 1fr));');
+    expect(baseStyles).toContain('grid-template-columns: repeat(4, 1fr);');
+    expect(structureNavigation).not.toContain('grid-template-columns:');
     expect(structureNavigation).toContain('--ft-i-structure');
     expect(structureNavigation).toContain('button:nth-child(4) > span');
     expect(structureView).toContain("type StructureMode = 'headings' | 'semantics' | 'metrics';");

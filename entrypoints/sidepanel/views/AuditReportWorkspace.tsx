@@ -2,9 +2,10 @@ import { useMemo, useState } from 'react';
 import { browser } from '#imports';
 import { auditPageKey, auditSummary, type AccessibilityAudit } from '../../../lib/audit/multipage-audit';
 import { storeAuditPrintEvidence } from '../../../lib/audit/multipage-audit-storage';
-import type { StructureSnapshot } from '../../../lib/runtime/structure-map';
+import type { StructureSnapshot } from '../../../lib/runtime/structure-evidence';
 import { tr, type AppLanguage } from '../../../shared/i18n';
 import type { RuntimeEvent, ScanResult } from '../../../shared/types';
+import { Empty } from '../components/Common';
 import { SessionReportView } from './SessionReportView';
 
 function formatReviewTime(timestamp: number, language: AppLanguage): string {
@@ -142,16 +143,14 @@ export function AuditReportWorkspace({
       )}
 
       {!hasAuditPages && !scan && (
-        <section className="panel report-empty-panel" aria-labelledby="report-empty-title">
-          <div className="empty structure-empty report-empty-state">
-            <h2 id="report-empty-title">{tr(language, 'No analysis data yet', 'Todavía no hay datos de análisis')}</h2>
-            <p>{tr(
-              language,
-              'Analyze the current page to generate its report.',
-              'Analiza la página actual para generar su informe.',
-            )}</p>
-          </div>
-        </section>
+        <Empty
+          title={tr(language, 'No analysis data yet', 'Todavía no hay datos de análisis')}
+          text={tr(
+            language,
+            'Analyze the current page to generate its report.',
+            'Analiza la página actual para generar su informe.',
+          )}
+        />
       )}
 
       {!hasAuditPages && scan && (

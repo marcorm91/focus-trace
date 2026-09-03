@@ -14,7 +14,7 @@ h1 { margin: 0; font-size: 22px; } h2 { font-size: 17px; margin: 0; } h3 { font-
 .actions .primary { background: Highlight; color: HighlightText; border-color: Highlight; font-weight: 700; }
 .actions button:disabled { opacity: .55; cursor: wait; }
 .error { border: 1px solid #d93025; padding: 10px 12px; border-radius: 8px; margin-bottom: 14px; }
-.tabs { display: grid; grid-template-columns: repeat(5, 1fr); border-bottom: 1px solid color-mix(in srgb, CanvasText 16%, transparent); margin-bottom: 16px; }
+.tabs { display: grid; grid-template-columns: repeat(4, 1fr); border-bottom: 1px solid color-mix(in srgb, CanvasText 16%, transparent); margin-bottom: 16px; }
 .tabs button { min-height: 42px; border: 0; border-bottom: 3px solid transparent; background: transparent; color: inherit; text-transform: capitalize; cursor: pointer; padding-inline: 4px; font-size: 14px; }
 .tabs button.active { border-bottom-color: CanvasText; font-weight: 700; }
 .panel { display: grid; gap: 14px; }

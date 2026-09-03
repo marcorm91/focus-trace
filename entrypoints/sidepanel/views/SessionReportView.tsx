@@ -7,7 +7,7 @@ import {
 } from '../../../lib/runtime/audit-evidence';
 import { groupRuntimeInteractions } from '../../../lib/runtime/causality';
 import { buildFocusGraph } from '../../../lib/runtime/focus-graph';
-import type { StructureSnapshot } from '../../../lib/runtime/structure-map';
+import type { StructureSnapshot } from '../../../lib/runtime/structure-evidence';
 import { type ReportComponentIdentity } from '../../../lib/report/component-identity';
 import { buildSessionReportModel } from '../../../lib/report/session-report';
 import { buildStructureReportEvidence, structureHintCopy } from '../../../lib/report/structure-report';
@@ -497,11 +497,14 @@ export function SessionReportView({
                   <span><strong>{headingReviews.length}</strong> {tr(language, 'heading reviews', 'encabezados a revisar')}</span>
                   {reportStructureSnapshot && (
                     <>
-                      <span><strong>{reportStructureSnapshot.metrics.totalElements}</strong> {tr(language, 'DOM elements', 'elementos DOM')}</span>
-                      <span><strong>{reportStructureSnapshot.metrics.semanticElements}</strong> {tr(language, 'semantic elements', 'elementos semánticos')}</span>
                       <span><strong>{reportStructureSnapshot.metrics.landmarkCount}</strong> {tr(language, 'semantic regions', 'regiones semánticas')}</span>
                       <span><strong>{reportStructureSnapshot.metrics.listCount}</strong> {tr(language, 'lists', 'listas')}</span>
-                      <span><strong>{reportStructureSnapshot.metrics.maxDepth}</strong> {tr(language, 'maximum depth', 'profundidad máxima')}</span>
+                      <span><strong>{reportStructureSnapshot.metrics.formCount}</strong> {tr(language, 'forms', 'formularios')}</span>
+                      <span><strong>{reportStructureSnapshot.metrics.buttonCount}</strong> {tr(language, 'buttons', 'botones')}</span>
+                      <span><strong>{reportStructureSnapshot.metrics.linkCount}</strong> {tr(language, 'links', 'enlaces')}</span>
+                      <span><strong>{reportStructureSnapshot.metrics.formControlCount}</strong> {tr(language, 'form controls', 'campos de formulario')}</span>
+                      <span><strong>{reportStructureSnapshot.metrics.tableCount}</strong> {tr(language, 'tables', 'tablas')}</span>
+                      <span><strong>{reportStructureSnapshot.metrics.imageCount}</strong> {tr(language, 'images', 'imágenes')}</span>
                       <span><strong>{structureHints.length}</strong> {tr(language, 'structural suggestions', 'sugerencias estructurales')}</span>
                     </>
                   )}
@@ -512,8 +515,8 @@ export function SessionReportView({
                     <strong>{tr(language, 'Structure metrics not generated', 'Métricas de estructura no generadas')}</strong>
                     <p>{tr(
                       language,
-                      'Open Structure and generate the map if you want DOM composition and semantic suggestions included in this report.',
-                      'Abre Estructura y genera el mapa si quieres incluir en este informe la composición del DOM y las sugerencias semánticas.',
+                      'Open Structure and analyze it if you want accessibility-oriented structural metrics and semantic suggestions included in this report.',
+                      'Abre Estructura y analízala si quieres incluir en este informe métricas estructurales orientadas a accesibilidad y sugerencias semánticas.',
                     )}</p>
                   </div>
                 )}

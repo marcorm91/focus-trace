@@ -4,7 +4,7 @@ import type {
   StructureMetricId,
   StructureMetricTarget,
   StructureSnapshot,
-} from '../../../lib/runtime/structure-map';
+} from '../../../lib/runtime/structure-evidence';
 import { tr, type AppLanguage } from '../../../shared/i18n';
 import type { ScanResult } from '../../../shared/types';
 import { HeadingTreeView } from './HeadingTreeView';

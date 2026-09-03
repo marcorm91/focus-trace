@@ -26,12 +26,11 @@ Structure turns the current page DOM into a simplified, inspectable view without
 
 It combines:
 
-- a semantic/relevant DOM map;
 - the page heading outline;
-- bounded DOM composition metrics;
-- heuristic semantic suggestions that remain clearly separate from deterministic WCAG failures.
+- bounded accessibility-oriented structural metrics;
+- concrete semantic suggestions for generic interactive/heading markup that remain clearly separate from deterministic WCAG failures.
 
-Structure is generated on demand rather than continuously observing the page. Reports may reuse a compact subset of already-generated metrics and review suggestions, but should not duplicate or persist the complete DOM tree.
+Structure evidence is generated on demand rather than continuously observing the page. Reports may reuse a compact subset of already-generated metrics and review suggestions without creating or persisting a parallel DOM tree.
 
 The value of Structure is comprehension: help a developer understand how a page is organized and where semantic patterns deserve review, while preserving the distinction between code quality, semantics and actual accessibility failures.
 

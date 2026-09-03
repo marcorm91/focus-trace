@@ -296,13 +296,14 @@ export function buildTextSessionReport({
     if (reportStructure) {
       const labels = structureSummaryLabels(language);
       lines.push(
-        `${labels.domElements}: ${reportStructure.metrics.totalElements}`,
-        `${labels.semanticElements}: ${reportStructure.metrics.semanticElements}`,
         `${labels.landmarks}: ${reportStructure.metrics.landmarkCount}`,
         `${labels.lists}: ${reportStructure.metrics.listCount}`,
-        `${labels.maxDepth}: ${reportStructure.metrics.maxDepth}`,
-        `${labels.genericContainers}: ${reportStructure.metrics.genericContainerCount}`,
-        `${labels.genericRatio}: ${reportStructure.metrics.genericRatio}%`,
+        `${labels.forms}: ${reportStructure.metrics.formCount}`,
+        `${labels.buttons}: ${reportStructure.metrics.buttonCount}`,
+        `${labels.links}: ${reportStructure.metrics.linkCount}`,
+        `${labels.formControls}: ${reportStructure.metrics.formControlCount}`,
+        `${labels.tables}: ${reportStructure.metrics.tableCount}`,
+        `${labels.images}: ${reportStructure.metrics.imageCount}`,
         `${labels.structureHints}: ${reportStructure.hints.length}`,
       );
       if (reportStructure.truncated) {
@@ -315,8 +316,8 @@ export function buildTextSessionReport({
     } else {
       lines.push(lineLabel(
         language,
-        'Structure metrics were not generated. Open Structure and generate the map to include DOM composition and semantic suggestions.',
-        'Las métricas de estructura no se han generado. Abre Estructura y genera el mapa para incluir la composición del DOM y las sugerencias semánticas.',
+        'Structure metrics were not generated. Open Structure and analyze it to include accessibility-oriented metrics and semantic suggestions.',
+        'Las métricas de estructura no se han generado. Abre Estructura y analízala para incluir métricas orientadas a accesibilidad y sugerencias semánticas.',
       ));
     }
 

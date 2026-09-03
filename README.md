@@ -37,16 +37,15 @@ The runtime debugger can derive deterministic causal explanations for patterns s
 
 ### Structure
 
-Structure turns the current page DOM into a simplified, on-demand structural view rather than duplicating the browser's raw DOM inspector. The workspace groups four complementary views:
+Structure provides a compact, on-demand accessibility view of the current page instead of duplicating the browser's raw DOM inspector. The workspace groups three complementary views:
 
-- **Map** — a compact tree of landmarks, semantic elements and relevant containers, with repeated siblings collapsed where useful;
 - **Headings** — the existing H1–H6 outline, hierarchy signals and page-location overlay;
-- **Semantics** — heuristic review suggestions for patterns such as generic elements used as controls, repeated groups that may form lists, navigation-like link groups, deep generic wrapper chains and high `div` density;
-- **Metrics** — DOM composition context such as sampled elements, semantic elements, landmarks, lists, nesting depth and generic-container ratios.
+- **Semantics** — concrete review suggestions for generic `div`/`span` elements used as buttons, links or headings, inline click handlers and generic elements placed directly in the tab order;
+- **Metrics** — accessibility-oriented counts for semantic regions, lists, forms, buttons, links, form controls, tables and images. Selecting a metric locates and highlights matching elements on the page.
 
-Semantic observations are suggestions for review, **not automatic WCAG failures**. Whether a repeated group should really be a list, for example, still depends on the content's meaning.
+Semantic observations are suggestions for review, **not automatic WCAG failures**. Native HTML recommendations still depend on the actual purpose of the interaction.
 
-Opening Structure does not scan or continuously observe the DOM. Map, Semantics and Metrics are generated only when the user explicitly chooses **Generate** or **Refresh**. The collector defaults to a 10,000-element sample limit and the visual tree is capped at 900 relevant nodes so very large pages cannot turn the feature into continuous background work.
+Opening Structure does not continuously observe the DOM. Headings reuses the current page analysis, while Semantics and Metrics are generated only when the user explicitly chooses **Analyze structure** or **Refresh**. The collector samples at most 10,000 elements by default and does not build a parallel visual DOM tree or install a continuous MutationObserver.
 
 ### FocusTrace Memory
 

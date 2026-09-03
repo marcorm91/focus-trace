@@ -39,17 +39,8 @@ export type StructureMetricTarget = {
 };
 
 export type StructureMetrics = {
-  totalElements: number;
-  semanticElements: number;
-  divCount: number;
-  genericContainerCount: number;
-  genericRatio: number;
   landmarkCount: number;
-  interactiveCount: number;
   listCount: number;
-  maxDepth: number;
-  maxGenericChain: number;
-  deepGenericChains: number;
   headingCount: number;
   formCount: number;
   buttonCount: number;
@@ -66,13 +57,13 @@ export type StructureSnapshot = {
   hints: StructureHint[];
   metrics: StructureMetrics;
   metricTargets: StructureMetricTarget[];
+  sampledElements: number;
   truncated: boolean;
 };
 
 export type StructureCollectionOptions = {
   maxElements?: number;
   maxHints?: number;
-  maxStructureNodes?: number;
 };
 
 /**
@@ -82,20 +73,11 @@ export type StructureCollectionOptions = {
  * function passed to scripting.executeScript, so page-side helpers must live
  * inside the function body.
  */
-export function collectStructureMapInPage(options?: StructureCollectionOptions): StructureSnapshot {
+export function collectStructureEvidenceInPage(options?: StructureCollectionOptions): StructureSnapshot {
   const MAX_ELEMENTS = Math.max(1, Math.floor(options?.maxElements ?? 10_000));
   const MAX_HINTS = Math.max(1, Math.floor(options?.maxHints ?? 60));
   const MAX_LABEL_LENGTH = 90;
 
-  const semanticTags = new Set([
-    'header', 'nav', 'main', 'footer', 'aside', 'section', 'article',
-    'h1', 'h2', 'h3', 'h4', 'h5', 'h6',
-    'form', 'fieldset', 'legend',
-    'ul', 'ol', 'li', 'dl', 'dt', 'dd',
-    'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td',
-    'figure', 'figcaption', 'details', 'summary', 'dialog',
-    'button', 'a', 'input', 'select', 'textarea', 'img',
-  ]);
   const landmarkTags = new Set(['header', 'nav', 'main', 'footer', 'aside']);
   const landmarkRoles = new Set([
     'banner', 'navigation', 'main', 'contentinfo', 'complementary',
@@ -104,7 +86,6 @@ export function collectStructureMapInPage(options?: StructureCollectionOptions):
   const headingTags = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
   const genericTags = new Set(['div', 'span']);
   const hints: StructureHint[] = [];
-  const depthByElement = new WeakMap<Element, number>();
   let hintSequence = 0;
   let truncated = false;
 
@@ -210,17 +191,8 @@ export function collectStructureMapInPage(options?: StructureCollectionOptions):
   };
 
   const metrics: StructureMetrics = {
-    totalElements: 0,
-    semanticElements: 0,
-    divCount: 0,
-    genericContainerCount: 0,
-    genericRatio: 0,
     landmarkCount: 0,
-    interactiveCount: 0,
     listCount: 0,
-    maxDepth: 0,
-    maxGenericChain: 0,
-    deepGenericChains: 0,
     headingCount: 0,
     formCount: 0,
     buttonCount: 0,
@@ -236,19 +208,9 @@ export function collectStructureMapInPage(options?: StructureCollectionOptions):
 
   while (current && processed < MAX_ELEMENTS) {
     processed += 1;
-    metrics.totalElements += 1;
 
     const tag = current.tagName.toLowerCase();
     const role = current.getAttribute('role')?.trim().toLowerCase() || undefined;
-    const parent = current.parentElement;
-    const depth = parent ? (depthByElement.get(parent) ?? 0) + 1 : 0;
-    depthByElement.set(current, depth);
-    metrics.maxDepth = Math.max(metrics.maxDepth, depth);
-
-    if (semanticTags.has(tag) || role) metrics.semanticElements += 1;
-    if (tag === 'div') metrics.divCount += 1;
-    if (tag === 'div' || tag === 'span') metrics.genericContainerCount += 1;
-
     const isLandmark = landmarkTags.has(tag) || Boolean(role && landmarkRoles.has(role));
     const isHeading = headingTags.has(tag) || role === 'heading';
     const isList = tag === 'ul' || tag === 'ol' || tag === 'dl' || role === 'list';
@@ -271,7 +233,6 @@ export function collectStructureMapInPage(options?: StructureCollectionOptions):
     if (isFormControl) metrics.formControlCount += 1;
     if (isTable) metrics.tableCount += 1;
     if (isImage) metrics.imageCount += 1;
-    if (isButton || isLink || isFormControl || tag === 'summary') metrics.interactiveCount += 1;
 
     if (genericTags.has(tag)) {
       if (role === 'button') {
@@ -320,9 +281,6 @@ export function collectStructureMapInPage(options?: StructureCollectionOptions):
   }
 
   if (current) truncated = true;
-  metrics.genericRatio = metrics.totalElements
-    ? Math.round((metrics.genericContainerCount / metrics.totalElements) * 1000) / 10
-    : 0;
 
   const metricTargets: StructureMetricTarget[] = [
     { id: 'headings', count: metrics.headingCount, selector: 'h1,h2,h3,h4,h5,h6,[role="heading"]' },
@@ -355,6 +313,7 @@ export function collectStructureMapInPage(options?: StructureCollectionOptions):
     hints,
     metrics,
     metricTargets,
+    sampledElements: processed,
     truncated,
   };
 }

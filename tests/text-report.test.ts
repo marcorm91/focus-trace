@@ -72,17 +72,8 @@ const components: ReportComponentIdentity[] = [
 const structure: StructureReportEvidence = {
   capturedAt: 10,
   metrics: {
-    totalElements: 240,
-    semanticElements: 52,
-    divCount: 96,
-    genericContainerCount: 112,
-    genericRatio: 46.7,
     landmarkCount: 6,
-    interactiveCount: 18,
     listCount: 4,
-    maxDepth: 12,
-    maxGenericChain: 0,
-    deepGenericChains: 0,
     headingCount: 2,
     formCount: 1,
     buttonCount: 5,
@@ -122,7 +113,8 @@ describe('text session report', () => {
     expect(report).toContain('Contexto: Products › Featured');
     expect(report).toContain('Color accesible sugerido: #767676');
     expect(report).toContain('4. ESTRUCTURA DEL DOCUMENTO');
-    expect(report).toContain('Elementos DOM: 240');
+    expect(report).toContain('Botones: 5');
+    expect(report).toContain('Campos de formulario: 3');
     expect(report).toContain('Regiones semánticas: 6');
     expect(report).toContain('Encabezados a revisar: 1');
     expect(report).toContain('H3: Featured [salto de nivel]');

@@ -170,32 +170,6 @@
   white-space: normal;
 }
 
-/* Keep the focus-journey empty state visually identical to the shared Empty
-   pattern used by Review, Structure and Report. */
-.focus-empty-state {
-  justify-items: center;
-  padding: 34px 16px;
-  border: 1px dashed color-mix(in srgb, CanvasText 22%, transparent);
-  border-radius: 10px;
-  background: transparent;
-  box-shadow: none;
-  outline: 0;
-  text-align: center;
-}
-
-.focus-empty-state strong {
-  display: block;
-  margin-bottom: 6px;
-  font-size: 17px;
-}
-
-.focus-empty-state p {
-  max-width: 300px;
-  margin: 0 auto;
-  color: GrayText;
-  font-size: 14px;
-}
-
 @media (max-width: 420px) {
   .quick-start-copy {
     grid-template-columns: minmax(0, 1fr);

@@ -37,16 +37,15 @@ El depurador runtime puede generar explicaciones causales deterministas para pat
 
 ### Estructura
 
-Estructura convierte el DOM de la página actual en una vista estructural simplificada y bajo demanda, en lugar de duplicar el inspector DOM del navegador. El espacio agrupa cuatro vistas complementarias:
+Estructura ofrece una vista de accesibilidad compacta y bajo demanda de la página actual, sin duplicar el inspector DOM del navegador. El espacio agrupa tres vistas complementarias:
 
-- **Mapa** — árbol compacto de landmarks, elementos semánticos y contenedores relevantes, agrupando elementos hermanos repetidos cuando resulta útil;
 - **Encabezados** — el árbol H1–H6 existente, las señales de jerarquía y la localización visual sobre la página;
-- **Semántica** — sugerencias heurísticas para revisar patrones como elementos genéricos usados como controles, grupos repetidos que podrían ser listas, grupos de enlaces con aspecto de navegación, cadenas profundas de contenedores genéricos o una densidad elevada de `div`;
-- **Métricas** — contexto sobre la composición del DOM: elementos analizados, elementos semánticos, regiones, listas, profundidad de anidación y proporción de contenedores genéricos.
+- **Semántica** — sugerencias concretas para revisar `div`/`span` usados como botones, enlaces o encabezados, manejadores de clic inline y elementos genéricos incluidos directamente en el orden de tabulación;
+- **Métricas** — recuentos orientados a accesibilidad de regiones semánticas, listas, formularios, botones, enlaces, campos de formulario, tablas e imágenes. Al seleccionar una métrica se localizan y resaltan los elementos correspondientes en la página.
 
-Las observaciones semánticas son **sugerencias para revisar, no fallos WCAG automáticos**. Por ejemplo, que un grupo repetido deba convertirse realmente en una lista depende del significado del contenido.
+Las observaciones semánticas son **sugerencias para revisar, no fallos WCAG automáticos**. Las recomendaciones de HTML nativo siguen dependiendo de la función real de la interacción.
 
-Entrar en Estructura no analiza ni observa continuamente el DOM. Mapa, Semántica y Métricas solo se generan cuando el usuario pulsa explícitamente **Generar** o **Actualizar**. El colector limita por defecto la muestra a 10.000 elementos y el árbol visual a 900 nodos relevantes para evitar que una página muy grande convierta esta función en trabajo continuo en segundo plano.
+Entrar en Estructura no observa continuamente el DOM. Encabezados reutiliza el análisis actual de la página, mientras que Semántica y Métricas solo se generan cuando el usuario pulsa explícitamente **Analizar estructura** o **Actualizar**. El colector procesa como máximo 10.000 elementos por defecto y no construye un árbol DOM visual paralelo ni instala un MutationObserver continuo.
 
 ### FocusTrace Memory
 

@@ -1,4 +1,4 @@
-import type { StructureHint, StructureMetrics, StructureSnapshot } from '../runtime/structure-map';
+import type { StructureHint, StructureMetrics, StructureSnapshot } from '../runtime/structure-evidence';
 import { tr, type AppLanguage } from '../../shared/i18n';
 
 export type StructureReportEvidence = {
@@ -93,11 +93,5 @@ export function structureSummaryLabels(language: AppLanguage) {
     tables: tr(language, 'Tables', 'Tablas'),
     images: tr(language, 'Images', 'Imágenes'),
     structureHints: tr(language, 'Semantic suggestions', 'Sugerencias semánticas'),
-    // Retained for compatibility with any downstream/custom report consumer.
-    domElements: tr(language, 'DOM elements', 'Elementos DOM'),
-    semanticElements: tr(language, 'Semantic elements', 'Elementos semánticos'),
-    maxDepth: tr(language, 'Maximum DOM depth', 'Profundidad DOM máxima'),
-    genericContainers: tr(language, 'Generic containers', 'Contenedores genéricos'),
-    genericRatio: tr(language, 'Generic ratio', 'Proporción de elementos genéricos'),
   };
 }

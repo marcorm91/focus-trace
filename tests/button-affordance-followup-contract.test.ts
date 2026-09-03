@@ -50,7 +50,7 @@ describe('button affordance follow-up', () => {
     expect(css).not.toContain('!important');
   });
 
-  it('keeps Trace controls button-like while passive and empty states stay informational', () => {
+  it('keeps Trace controls button-like while passive replay state stays informational', () => {
     const css = source('entrypoints/sidepanel/button-affordance-followup.css');
 
     expect(css).toContain('.trace-workspace .trace-mode-switcher button,');
@@ -59,15 +59,13 @@ describe('button affordance follow-up', () => {
     expect(css).toContain('.trace-workspace .trace-mode-switcher button:not(.active) .trace-tab-count {');
     expect(css).toContain('.replay-recording-state:not(.is-live) {');
     expect(css).toContain('text-transform: uppercase;');
-    expect(css).toContain('.focus-empty-state {');
-    expect(css).toContain('border: 1px dashed color-mix(in srgb, CanvasText 22%, transparent);');
-    expect(css).toContain('text-align: center;');
-    expect(css).toContain('padding: 34px 16px;');
+    expect(css).not.toContain('.focus-empty-state {');
   });
 
   it('lets section subtitles wrap instead of truncating them with ellipses', () => {
     const css = source('entrypoints/sidepanel/button-affordance-followup.css');
-    const subtitleRule = css.slice(css.indexOf('.section-heading p {'), css.indexOf('/* Keep the focus-journey empty state'));
+    const start = css.indexOf('.section-heading p {');
+    const subtitleRule = css.slice(start, css.indexOf('@media (max-width: 420px)', start));
 
     expect(subtitleRule).toContain('overflow: visible;');
     expect(subtitleRule).toContain('overflow-wrap: anywhere;');

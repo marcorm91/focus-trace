@@ -44,6 +44,7 @@
 @import url('./memory-interactions.css') layer(policy);
 @import url('./shared-control-policy.css') layer(policy);
 @import url('./button-affordance-followup.css') layer(policy);
+@import url('./empty-state-consistency.css') layer(policy);
 
 @import url('./ui-scale.css') layer(accessibility);
 @import url('./accessibility.css') layer(accessibility);
