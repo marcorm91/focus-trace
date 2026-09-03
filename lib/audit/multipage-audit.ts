@@ -1,6 +1,16 @@
+import type { ReportVisualEvidence } from '../report/visual-evidence';
 import type { ScanResult } from '../../shared/types';
 
 export const MULTIPAGE_AUDIT_VERSION = 1 as const;
+
+export interface AuditPageVisualEvidence {
+  capturedAt: number;
+  visuals: ReportVisualEvidence[];
+  eligibleCount: number;
+  limitReached: boolean;
+  captureUnavailable: boolean;
+  storageTrimmed?: boolean;
+}
 
 export interface AuditPageRecord {
   key: string;
@@ -8,6 +18,7 @@ export interface AuditPageRecord {
   title: string;
   reviewedAt: number;
   scan: ScanResult;
+  visualEvidence?: AuditPageVisualEvidence;
 }
 
 export interface AccessibilityAudit {
@@ -94,18 +105,23 @@ export function auditScopeForUrl(store: MultipageAuditStore, url: string): Audit
   return { kind: 'different-site', audit: active, site, url };
 }
 
-function pageRecord(scan: ScanResult): AuditPageRecord {
+function pageRecord(scan: ScanResult, visualEvidence?: AuditPageVisualEvidence): AuditPageRecord {
   return {
     key: auditPageKey(scan.url),
     url: normalizeAuditPageUrl(scan.url),
     title: scan.title,
     reviewedAt: scan.scannedAt,
     scan,
+    ...(visualEvidence ? { visualEvidence } : {}),
   };
 }
 
-export function upsertAuditPage(audit: AccessibilityAudit, scan: ScanResult): AccessibilityAudit {
-  const record = pageRecord(scan);
+export function upsertAuditPage(
+  audit: AccessibilityAudit,
+  scan: ScanResult,
+  visualEvidence?: AuditPageVisualEvidence,
+): AccessibilityAudit {
+  const record = pageRecord(scan, visualEvidence);
   const index = audit.pages.findIndex((page) => page.key === record.key);
   const pages = [...audit.pages];
   if (index >= 0) pages[index] = record;
@@ -123,6 +139,7 @@ export function applyAuditAnalysis(
   scan: ScanResult,
   plan: AuditAnalysisPlan,
   auditId: string,
+  visualEvidence?: AuditPageVisualEvidence,
 ): MultipageAuditStore {
   if (plan.kind === 'new') {
     const reviewedAt = scan.scannedAt;
@@ -132,7 +149,7 @@ export function applyAuditAnalysis(
       createdAt: reviewedAt,
       updatedAt: reviewedAt,
       sites: [plan.site],
-      pages: [pageRecord(scan)],
+      pages: [pageRecord(scan, visualEvidence)],
     };
     return {
       version: MULTIPAGE_AUDIT_VERSION,
@@ -143,14 +160,14 @@ export function applyAuditAnalysis(
 
   const index = store.audits.findIndex((audit) => audit.id === plan.auditId);
   if (index < 0) {
-    return applyAuditAnalysis(store, scan, { kind: 'new', site: plan.site }, auditId);
+    return applyAuditAnalysis(store, scan, { kind: 'new', site: plan.site }, auditId, visualEvidence);
   }
 
   const current = store.audits[index]!;
   const sites = plan.addSite && !current.sites.includes(plan.site)
     ? [...current.sites, plan.site]
     : current.sites;
-  const nextAudit = upsertAuditPage({ ...current, sites }, scan);
+  const nextAudit = upsertAuditPage({ ...current, sites }, scan, visualEvidence);
   const audits = [...store.audits];
   audits[index] = nextAudit;
   return {
