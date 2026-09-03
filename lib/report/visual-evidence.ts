@@ -7,6 +7,7 @@ import {
   type LiveComponentIdentity,
   type ReportComponentIdentity,
 } from './component-identity';
+import type { StructureReportEvidence } from './structure-report';
 
 export type VisualEvidenceTone = 'fail' | 'review' | 'warning';
 
@@ -21,6 +22,7 @@ export interface PrintableReportEvidenceBundle {
   visuals: ReportVisualEvidence[];
   visualEvidenceRequested: boolean;
   visualEvidenceLimitReached: boolean;
+  structure?: StructureReportEvidence;
 }
 
 export const REPORT_EVIDENCE_STORAGE_PREFIX = 'focustrace:report-evidence:';
