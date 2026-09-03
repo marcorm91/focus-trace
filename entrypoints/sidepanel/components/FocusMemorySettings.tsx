@@ -8,6 +8,7 @@ import {
   DEFAULT_FOCUS_MEMORY_SETTINGS,
   FOCUS_MEMORY_MAX_OBSERVATIONS,
   FOCUS_MEMORY_MAX_PER_SCOPE,
+  FOCUS_MEMORY_MAX_VISUAL_PREVIEWS,
   FOCUS_MEMORY_RETENTION_DAYS,
 } from '../../../shared/focus-memory';
 import { tr, type AppLanguage } from '../../../shared/i18n';
@@ -43,8 +44,8 @@ export function FocusMemorySettings({ language }: { language: AppLanguage }) {
   const clearHistory = async () => {
     const confirmed = window.confirm(tr(
       language,
-      'Clear saved FocusTrace Memory history? This removes all remembered scan comparisons from this browser profile.',
-      '¿Borrar el historial guardado de FocusTrace Memory? Se eliminarán todas las comparaciones de análisis recordadas en este perfil del navegador.',
+      'Clear saved FocusTrace Memory history? This removes all remembered scan comparisons and local evidence previews from this browser profile.',
+      '¿Borrar el historial guardado de FocusTrace Memory? Se eliminarán todas las comparaciones de análisis recordadas y las vistas previas de evidencia locales de este perfil del navegador.',
     ));
     if (!confirmed) return;
     await clearFocusMemoryHistory();
@@ -57,8 +58,8 @@ export function FocusMemorySettings({ language }: { language: AppLanguage }) {
       <p className="settings-help">
         {tr(
           language,
-          'Optionally remember compact accessibility observations in this browser profile so future scans can identify fixes, persistent failures and regressions.',
-          'Opcionalmente, recuerda observaciones compactas de accesibilidad en este perfil del navegador para que futuros análisis puedan identificar correcciones, fallos persistentes y regresiones.',
+          'Optionally remember bounded accessibility observations in this browser profile so future scans can identify fixes, persistent failures and regressions.',
+          'Opcionalmente, recuerda observaciones limitadas de accesibilidad en este perfil del navegador para que futuros análisis puedan identificar correcciones, fallos persistentes y regresiones.',
         )}
       </p>
 
@@ -74,8 +75,8 @@ export function FocusMemorySettings({ language }: { language: AppLanguage }) {
           <small>
             {tr(
               language,
-              'Disabled by default. When enabled, FocusTrace stores only compact local fingerprints, counts and timestamps; it does not store page HTML, DOM snapshots or screenshots in Memory.',
-              'Deshabilitado por defecto. Al activarlo, FocusTrace guarda únicamente fingerprints compactos, recuentos y fechas de forma local; Memory no guarda el HTML de la página, snapshots del DOM ni capturas de pantalla.',
+              'Disabled by default. When enabled, Memory stores compact local history and may keep a small screenshot crop of a currently visible failing element. If no preview can be captured, it keeps a compact element locator such as an id or CSS selector instead. It does not store page HTML or a full DOM snapshot.',
+              'Deshabilitado por defecto. Al activarlo, Memory guarda un historial local compacto y puede conservar un pequeño recorte de captura de un elemento con fallo que esté visible. Si no puede obtener una vista previa, guarda en su lugar un localizador compacto del elemento, como un id o selector CSS. No almacena el HTML de la página ni un snapshot completo del DOM.',
             )}
           </small>
         </span>
@@ -84,8 +85,8 @@ export function FocusMemorySettings({ language }: { language: AppLanguage }) {
       <p className="settings-memory-note">
         {tr(
           language,
-          `Memory keeps at most ${FOCUS_MEMORY_MAX_PER_SCOPE} observations per page/component and ${FOCUS_MEMORY_MAX_OBSERVATIONS} in total. Observations older than ${FOCUS_MEMORY_RETENTION_DAYS} days are pruned the next time FocusTrace reads Memory storage. Turning Memory off stops comparisons and new observations without requiring you to delete existing history.`,
-          `Memory conserva como máximo ${FOCUS_MEMORY_MAX_PER_SCOPE} observaciones por página/componente y ${FOCUS_MEMORY_MAX_OBSERVATIONS} en total. Las observaciones de más de ${FOCUS_MEMORY_RETENTION_DAYS} días se eliminan la próxima vez que FocusTrace lee el almacenamiento de Memory. Desactivar Memory detiene las comparaciones y las nuevas observaciones sin obligarte a borrar el historial existente.`,
+          `Memory keeps at most ${FOCUS_MEMORY_MAX_PER_SCOPE} observations per page/component, ${FOCUS_MEMORY_MAX_OBSERVATIONS} observations in total and ${FOCUS_MEMORY_MAX_VISUAL_PREVIEWS} visual previews across remembered findings. Observations older than ${FOCUS_MEMORY_RETENTION_DAYS} days are pruned the next time FocusTrace reads Memory storage. Turning Memory off stops comparisons and new observations without requiring you to delete existing history.`,
+          `Memory conserva como máximo ${FOCUS_MEMORY_MAX_PER_SCOPE} observaciones por página/componente, ${FOCUS_MEMORY_MAX_OBSERVATIONS} observaciones en total y ${FOCUS_MEMORY_MAX_VISUAL_PREVIEWS} vistas previas visuales entre los hallazgos recordados. Las observaciones de más de ${FOCUS_MEMORY_RETENTION_DAYS} días se eliminan la próxima vez que FocusTrace lee el almacenamiento de Memory. Desactivar Memory detiene las comparaciones y las nuevas observaciones sin obligarte a borrar el historial existente.`,
         )}
       </p>
 
@@ -99,7 +100,7 @@ export function FocusMemorySettings({ language }: { language: AppLanguage }) {
         </button>
         <small aria-live="polite">
           {hasHistory
-            ? tr(language, 'Saved history is stored only in this browser profile.', 'El historial guardado solo se almacena en este perfil del navegador.')
+            ? tr(language, 'Saved history and evidence stay only in this browser profile.', 'El historial y la evidencia guardados permanecen solo en este perfil del navegador.')
             : tr(language, 'No saved Memory history.', 'No hay historial guardado en Memory.')}
         </small>
       </div>
