@@ -81,15 +81,22 @@ const structure: StructureReportEvidence = {
     interactiveCount: 18,
     listCount: 4,
     maxDepth: 12,
-    maxGenericChain: 5,
-    deepGenericChains: 1,
+    maxGenericChain: 0,
+    deepGenericChains: 0,
+    headingCount: 2,
+    formCount: 1,
+    buttonCount: 5,
+    linkCount: 12,
+    formControlCount: 3,
+    tableCount: 1,
+    imageCount: 4,
   },
   hints: [{
     id: 'hint-1',
-    tone: 'info',
-    title: 'Deep generic wrapper chain',
-    description: 'Four or more single-child <div> wrappers are nested before meaningful content.',
-    suggestion: 'Review whether every wrapper is required.',
+    tone: 'review',
+    title: 'Generic element used as a button',
+    description: 'A <div> is exposing button semantics instead of using the native button element.',
+    suggestion: 'Prefer <button> when the element performs an action.',
   }],
   truncated: false,
 };
@@ -119,7 +126,7 @@ describe('text session report', () => {
     expect(report).toContain('Regiones semánticas: 6');
     expect(report).toContain('Encabezados a revisar: 1');
     expect(report).toContain('H3: Featured [salto de nivel]');
-    expect(report).toContain('Cadena profunda de contenedores genéricos');
+    expect(report).toContain('Elemento genérico usado como botón');
     expect(report).toContain('5. SUGERENCIAS DE MEJORA');
     expect(report).not.toContain('H1: Products');
     expect(report).not.toContain('#save');

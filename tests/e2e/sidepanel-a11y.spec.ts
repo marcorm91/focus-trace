@@ -153,13 +153,14 @@ test('settings becomes a focused sub-view and Back restores the workspace', asyn
   await expect(panel.getByRole('button', { name: 'Informe' })).toBeVisible();
 });
 
-test('Structure stays idle until the user requests a DOM snapshot', async ({ context, extensionWorker }) => {
+test('Structure stays idle until the user requests semantic analysis', async ({ context, extensionWorker }) => {
   const panel = await openSidepanel(context, extensionWorker);
 
   await panel.getByRole('button', { name: /Structure|Estructura/ }).click();
 
   await expect(panel.getByRole('tab', { name: /Headings|Encabezados/ })).toBeVisible();
-  await expect(panel.getByRole('button', { name: /Generate structure|Generar estructura/ })).toBeVisible();
+  await panel.getByRole('tab', { name: /Semantics|Semántica/ }).click();
+  await expect(panel.getByRole('button', { name: /Analyze structure|Analizar estructura/ })).toBeVisible();
   await expect(panel.getByRole('alert')).toHaveCount(0);
 });
 

@@ -1,5 +1,16 @@
 export type StructureHintTone = 'review' | 'info';
 
+export type StructureHintElement = {
+  tag: string;
+  selector: string;
+  role?: string;
+  id?: string;
+  className?: string;
+  label?: string;
+  tabindex?: string;
+  trigger?: string;
+};
+
 export type StructureHint = {
   id: string;
   tone: StructureHintTone;
@@ -7,17 +18,24 @@ export type StructureHint = {
   description: string;
   selector?: string;
   suggestion?: string;
+  element?: StructureHintElement;
 };
 
-export type StructureNode = {
-  id: string;
-  tag: string;
+export type StructureMetricId =
+  | 'headings'
+  | 'landmarks'
+  | 'lists'
+  | 'forms'
+  | 'buttons'
+  | 'links'
+  | 'form-controls'
+  | 'tables'
+  | 'images';
+
+export type StructureMetricTarget = {
+  id: StructureMetricId;
+  count: number;
   selector: string;
-  role?: string;
-  label?: string;
-  className?: string;
-  count?: number;
-  children: StructureNode[];
 };
 
 export type StructureMetrics = {
@@ -32,30 +50,42 @@ export type StructureMetrics = {
   maxDepth: number;
   maxGenericChain: number;
   deepGenericChains: number;
+  headingCount: number;
+  formCount: number;
+  buttonCount: number;
+  linkCount: number;
+  formControlCount: number;
+  tableCount: number;
+  imageCount: number;
 };
 
 export type StructureSnapshot = {
   url: string;
   title: string;
   capturedAt: number;
-  roots: StructureNode[];
   hints: StructureHint[];
   metrics: StructureMetrics;
+  metricTargets: StructureMetricTarget[];
   truncated: boolean;
 };
 
 export type StructureCollectionOptions = {
   maxElements?: number;
-  maxStructureNodes?: number;
   maxHints?: number;
+  maxStructureNodes?: number;
 };
 
+/**
+ * Collect a small accessibility-oriented Structure snapshot.
+ *
+ * IMPORTANT: keep this function self-contained. Chromium serializes only the
+ * function passed to scripting.executeScript, so page-side helpers must live
+ * inside the function body.
+ */
 export function collectStructureMapInPage(options?: StructureCollectionOptions): StructureSnapshot {
   const MAX_ELEMENTS = Math.max(1, Math.floor(options?.maxElements ?? 10_000));
-  const MAX_STRUCTURE_NODES = Math.max(1, Math.floor(options?.maxStructureNodes ?? 900));
-  const MAX_HINTS = Math.max(1, Math.floor(options?.maxHints ?? 80));
+  const MAX_HINTS = Math.max(1, Math.floor(options?.maxHints ?? 60));
   const MAX_LABEL_LENGTH = 90;
-  const MAX_HEURISTIC_SIBLINGS = 60;
 
   const semanticTags = new Set([
     'header', 'nav', 'main', 'footer', 'aside', 'section', 'article',
@@ -64,18 +94,18 @@ export function collectStructureMapInPage(options?: StructureCollectionOptions):
     'ul', 'ol', 'li', 'dl', 'dt', 'dd',
     'table', 'thead', 'tbody', 'tfoot', 'tr', 'th', 'td',
     'figure', 'figcaption', 'details', 'summary', 'dialog',
-    'button', 'a', 'input', 'select', 'textarea',
+    'button', 'a', 'input', 'select', 'textarea', 'img',
   ]);
   const landmarkTags = new Set(['header', 'nav', 'main', 'footer', 'aside']);
-  const landmarkRoles = new Set(['banner', 'navigation', 'main', 'contentinfo', 'complementary', 'region', 'search', 'form']);
-  const interactiveTags = new Set(['button', 'a', 'input', 'select', 'textarea', 'summary']);
-  const interactiveRoles = new Set(['button', 'link', 'textbox', 'combobox', 'checkbox', 'radio', 'switch', 'tab', 'menuitem']);
-  const groupableTags = new Set(['article', 'li', 'tr', 'div']);
+  const landmarkRoles = new Set([
+    'banner', 'navigation', 'main', 'contentinfo', 'complementary',
+    'region', 'search', 'form',
+  ]);
+  const headingTags = new Set(['h1', 'h2', 'h3', 'h4', 'h5', 'h6']);
+  const genericTags = new Set(['div', 'span']);
   const hints: StructureHint[] = [];
+  const depthByElement = new WeakMap<Element, number>();
   let hintSequence = 0;
-  let structureSequence = 0;
-  let structureNodeCount = 0;
-  let structureVisitedCount = 0;
   let truncated = false;
 
   const clip = (value: string | null | undefined, max = MAX_LABEL_LENGTH): string | undefined => {
@@ -91,94 +121,92 @@ export function collectStructureMapInPage(options?: StructureCollectionOptions):
 
   const selectorFor = (element: Element): string => {
     if (element.id) return `#${cssEscape(element.id)}`;
+
     const parts: string[] = [];
     let current: Element | null = element;
-    while (current && current !== document.documentElement) {
+    let levels = 0;
+    while (current && current !== document.documentElement && levels < 5) {
       const tag = current.tagName.toLowerCase();
       if (current.id) {
         parts.unshift(`#${cssEscape(current.id)}`);
         break;
       }
-      let segment = tag;
-      const parent: Element | null = current.parentElement;
-      if (parent) {
-        const siblings = [...parent.children].filter((sibling) => sibling.tagName === current!.tagName);
-        if (siblings.length > 1) segment += `:nth-of-type(${siblings.indexOf(current) + 1})`;
+
+      let sameTagIndex = 1;
+      let previous = current.previousElementSibling;
+      while (previous) {
+        if (previous.tagName === current.tagName) sameTagIndex += 1;
+        previous = previous.previousElementSibling;
       }
-      parts.unshift(segment);
-      if (current === document.body) break;
-      current = parent;
+
+      const classTokens = [...current.classList]
+        .filter((token) => !token.startsWith('focustrace-'))
+        .slice(0, 2)
+        .map(cssEscape);
+      const classPart = classTokens.length ? `.${classTokens.join('.')}` : '';
+      parts.unshift(`${tag}${classPart}:nth-of-type(${sameTagIndex})`);
+      current = current.parentElement;
+      levels += 1;
     }
     return parts.join(' > ') || element.tagName.toLowerCase();
   };
 
-  const roleOf = (element: Element): string | undefined => clip(element.getAttribute('role'), 40)?.toLowerCase();
+  const directText = (element: Element): string | undefined => {
+    const pieces: string[] = [];
+    for (const node of [...element.childNodes].slice(0, 8)) {
+      if (node.nodeType !== Node.TEXT_NODE) continue;
+      const text = clip(node.textContent);
+      if (text) pieces.push(text);
+    }
+    return clip(pieces.join(' '));
+  };
 
   const labelOf = (element: Element): string | undefined => {
     const ariaLabel = clip(element.getAttribute('aria-label'));
     if (ariaLabel) return ariaLabel;
-    const labelledBy = element.getAttribute('aria-labelledby')?.trim();
-    if (labelledBy) {
-      const text = labelledBy
-        .split(/\s+/)
-        .map((id) => document.getElementById(id)?.textContent ?? '')
-        .join(' ');
-      const label = clip(text);
-      if (label) return label;
-    }
-    const tag = element.tagName.toLowerCase();
-    if (/^h[1-6]$/.test(tag) || ['button', 'a', 'legend', 'summary', 'figcaption'].includes(tag)) {
-      return clip(element.textContent);
-    }
-    if (['nav', 'section', 'article', 'aside', 'form'].includes(tag)) {
-      const heading = element.querySelector(':scope > h1, :scope > h2, :scope > h3, :scope > h4, :scope > h5, :scope > h6');
-      return clip(heading?.textContent);
-    }
-    return undefined;
+    const title = clip(element.getAttribute('title'));
+    if (title) return title;
+    return directText(element);
   };
 
-  const compactClassName = (element: Element): string | undefined => {
-    const tokens = [...element.classList].filter((token) => !token.startsWith('focustrace-')).slice(0, 2);
-    return tokens.length ? tokens.join(' ') : undefined;
+  const elementEvidence = (element: Element, trigger?: string): StructureHintElement => {
+    const role = clip(element.getAttribute('role'), 40)?.toLowerCase();
+    const id = clip(element.id, 80);
+    const className = clip(
+      [...element.classList]
+        .filter((token) => !token.startsWith('focustrace-'))
+        .slice(0, 3)
+        .join(' '),
+      100,
+    );
+    const tabindex = clip(element.getAttribute('tabindex'), 20);
+    const label = labelOf(element);
+    return {
+      tag: element.tagName.toLowerCase(),
+      selector: selectorFor(element),
+      ...(role ? { role } : {}),
+      ...(id ? { id } : {}),
+      ...(className ? { className } : {}),
+      ...(label ? { label } : {}),
+      ...(tabindex ? { tabindex } : {}),
+      ...(trigger ? { trigger } : {}),
+    };
   };
 
-  const isRelevant = (element: Element): boolean => {
-    const tag = element.tagName.toLowerCase();
-    if (semanticTags.has(tag) || element.hasAttribute('role')) return true;
-    if (tag !== 'div') return false;
-    if (element.id || element.hasAttribute('aria-label') || element.hasAttribute('aria-labelledby')) return true;
-    const parentTag = element.parentElement?.tagName.toLowerCase();
-    return ['body', 'main'].includes(parentTag ?? '') && element.children.length >= 2 && element.classList.length > 0;
-  };
-
-  const addHint = (hint: Omit<StructureHint, 'id'>): void => {
+  const addHint = (
+    element: Element,
+    hint: Omit<StructureHint, 'id' | 'selector' | 'element'>,
+    trigger?: string,
+  ): void => {
     if (hints.length >= MAX_HINTS) return;
+    const evidence = elementEvidence(element, trigger);
     hintSequence += 1;
-    hints.push({ id: `structure-hint-${hintSequence}`, ...hint });
-  };
-
-  const repeatedSignature = (element: Element): string => {
-    const tag = element.tagName.toLowerCase();
-    const classes = [...element.classList].slice(0, 2).sort().join('.');
-    const role = roleOf(element) ?? '';
-    return `${tag}|${classes}|${role}`;
-  };
-
-  const isPossibleListGroup = (element: Element): boolean => {
-    if (['ul', 'ol', 'dl', 'table'].includes(element.tagName.toLowerCase())) return false;
-    if (element.childElementCount < 3 || element.childElementCount > 40) return false;
-    const children = [...element.children].filter((child) => !['script', 'style', 'template'].includes(child.tagName.toLowerCase()));
-    if (children.length < 3) return false;
-    const signatures = children.map(repeatedSignature);
-    const first = signatures[0];
-    return Boolean(first) && signatures.filter((signature) => signature === first).length / signatures.length >= 0.8;
-  };
-
-  const directLinkRatio = (element: Element): { links: number; ratio: number } => {
-    if (!element.childElementCount || element.childElementCount > MAX_HEURISTIC_SIBLINGS) return { links: 0, ratio: 0 };
-    const children = [...element.children];
-    const links = children.filter((child) => child.matches('a[href]') || Boolean(child.querySelector(':scope > a[href]'))).length;
-    return { links, ratio: links / children.length };
+    hints.push({
+      id: `structure-hint-${hintSequence}`,
+      ...hint,
+      selector: evidence.selector,
+      element: evidence,
+    });
   };
 
   const metrics: StructureMetrics = {
@@ -193,78 +221,98 @@ export function collectStructureMapInPage(options?: StructureCollectionOptions):
     maxDepth: 0,
     maxGenericChain: 0,
     deepGenericChains: 0,
+    headingCount: 0,
+    formCount: 0,
+    buttonCount: 0,
+    linkCount: 0,
+    formControlCount: 0,
+    tableCount: 0,
+    imageCount: 0,
   };
 
   const walker = document.createTreeWalker(document.body, NodeFilter.SHOW_ELEMENT);
   let current: Element | null = walker.currentNode as Element;
   let processed = 0;
-  const deepChainStarts = new Set<Element>();
 
   while (current && processed < MAX_ELEMENTS) {
     processed += 1;
     metrics.totalElements += 1;
+
     const tag = current.tagName.toLowerCase();
-    const role = roleOf(current);
+    const role = current.getAttribute('role')?.trim().toLowerCase() || undefined;
+    const parent = current.parentElement;
+    const depth = parent ? (depthByElement.get(parent) ?? 0) + 1 : 0;
+    depthByElement.set(current, depth);
+    metrics.maxDepth = Math.max(metrics.maxDepth, depth);
+
     if (semanticTags.has(tag) || role) metrics.semanticElements += 1;
     if (tag === 'div') metrics.divCount += 1;
     if (tag === 'div' || tag === 'span') metrics.genericContainerCount += 1;
-    if (landmarkTags.has(tag) || (role && landmarkRoles.has(role))) metrics.landmarkCount += 1;
-    if ((interactiveTags.has(tag) && (tag !== 'a' || current.hasAttribute('href'))) || (role && interactiveRoles.has(role))) metrics.interactiveCount += 1;
-    if (tag === 'ul' || tag === 'ol' || tag === 'dl') metrics.listCount += 1;
 
-    let depth = 0;
-    let ancestor: Element | null = current;
-    while (ancestor && ancestor !== document.body) {
-      depth += 1;
-      ancestor = ancestor.parentElement;
-    }
-    metrics.maxDepth = Math.max(metrics.maxDepth, depth);
+    const isLandmark = landmarkTags.has(tag) || Boolean(role && landmarkRoles.has(role));
+    const isHeading = headingTags.has(tag) || role === 'heading';
+    const isList = tag === 'ul' || tag === 'ol' || tag === 'dl' || role === 'list';
+    const isForm = tag === 'form' || role === 'form';
+    const isButton = tag === 'button'
+      || (tag === 'input' && ['button', 'submit', 'reset', 'image'].includes((current.getAttribute('type') ?? '').toLowerCase()))
+      || role === 'button';
+    const isLink = (tag === 'a' && current.hasAttribute('href')) || role === 'link';
+    const isFormControl = ['input', 'select', 'textarea'].includes(tag)
+      || ['textbox', 'combobox', 'checkbox', 'radio', 'switch', 'slider', 'spinbutton'].includes(role ?? '');
+    const isTable = tag === 'table' || ['table', 'grid', 'treegrid'].includes(role ?? '');
+    const isImage = tag === 'img' || role === 'img';
 
-    if (tag === 'div') {
-      let chain = 1;
-      let chainNode: Element | null = current;
-      while (chainNode?.children.length === 1 && chainNode.firstElementChild?.tagName.toLowerCase() === 'div') {
-        chain += 1;
-        chainNode = chainNode.firstElementChild;
-        if (chain >= 30) break;
-      }
-      metrics.maxGenericChain = Math.max(metrics.maxGenericChain, chain);
-      if (chain >= 4 && current.parentElement?.tagName.toLowerCase() !== 'div') {
-        metrics.deepGenericChains += 1;
-        deepChainStarts.add(current);
-      }
-    }
+    if (isLandmark) metrics.landmarkCount += 1;
+    if (isHeading) metrics.headingCount += 1;
+    if (isList) metrics.listCount += 1;
+    if (isForm) metrics.formCount += 1;
+    if (isButton) metrics.buttonCount += 1;
+    if (isLink) metrics.linkCount += 1;
+    if (isFormControl) metrics.formControlCount += 1;
+    if (isTable) metrics.tableCount += 1;
+    if (isImage) metrics.imageCount += 1;
+    if (isButton || isLink || isFormControl || tag === 'summary') metrics.interactiveCount += 1;
 
-    if ((tag === 'div' || tag === 'span') && (current.hasAttribute('onclick') || role === 'button')) {
-      addHint({
-        tone: 'review',
-        title: 'Generic element used as a control',
-        description: `<${tag}> is being used with button-like interaction. Native controls usually provide keyboard and accessibility behavior with less custom code.`,
-        selector: selectorFor(current),
-        suggestion: 'Consider a native <button> when the interaction is a button action.',
-      });
-    }
-
-    if (isPossibleListGroup(current)) {
-      addHint({
-        tone: 'info',
-        title: 'Repeated sibling structure',
-        description: 'This container has three or more similarly structured sibling items. It may represent a semantic list, depending on the content.',
-        selector: selectorFor(current),
-        suggestion: 'Consider <ul>/<ol> with <li> when the repeated items form a meaningful list.',
-      });
-    }
-
-    if (tag !== 'nav' && !current.closest('nav,[role="navigation"]')) {
-      const linkGroup = directLinkRatio(current);
-      if (linkGroup.links >= 3 && linkGroup.ratio >= 0.75) {
-        addHint({
+    if (genericTags.has(tag)) {
+      if (role === 'button') {
+        addHint(current, {
+          tone: 'review',
+          title: 'Generic element used as a button',
+          description: `A <${tag}> is exposing button semantics instead of using the native button element.`,
+          suggestion: 'Prefer <button> when the element performs an action and native button semantics fit the interaction.',
+        }, 'role="button"');
+      } else if (role === 'link') {
+        addHint(current, {
+          tone: 'review',
+          title: 'Generic element used as a link',
+          description: `A <${tag}> is exposing link semantics instead of using a native link.`,
+          suggestion: 'Prefer <a href="…"> when the interaction navigates to another location.',
+        }, 'role="link"');
+      } else if (role === 'heading') {
+        addHint(current, {
           tone: 'info',
-          title: 'Navigation-like link group',
-          description: 'Most direct items in this container are links. If they form a navigation block, a navigation landmark may make the structure easier to understand.',
-          selector: selectorFor(current),
-          suggestion: 'Consider <nav> or role="navigation" when this group is actually site or page navigation.',
-        });
+          title: 'Generic element used as a heading',
+          description: `A <${tag}> is exposing heading semantics through ARIA.`,
+          suggestion: 'When the document hierarchy allows it, prefer a native <h1>–<h6> element.',
+        }, 'role="heading"');
+      } else if (current.hasAttribute('onclick')) {
+        addHint(current, {
+          tone: 'review',
+          title: 'Generic element with click handler',
+          description: `A <${tag}> has an inline click handler but no native interactive element semantics.`,
+          suggestion: 'Use <button> for actions or <a href="…"> for navigation when those native elements match the interaction.',
+        }, 'onclick');
+      } else {
+        const tabindexValue = current.getAttribute('tabindex');
+        const parsedTabindex = tabindexValue == null ? Number.NaN : Number(tabindexValue);
+        if (Number.isFinite(parsedTabindex) && parsedTabindex >= 0 && !role) {
+          addHint(current, {
+            tone: 'review',
+            title: 'Generic element in the tab order',
+            description: `A <${tag}> is directly included in sequential keyboard focus without exposing a semantic role.`,
+            suggestion: 'If this element is interactive, prefer the native interactive element that matches its action.',
+          }, `tabindex="${tabindexValue}"`);
+        }
       }
     }
 
@@ -272,109 +320,41 @@ export function collectStructureMapInPage(options?: StructureCollectionOptions):
   }
 
   if (current) truncated = true;
-  metrics.genericRatio = metrics.totalElements ? Math.round((metrics.genericContainerCount / metrics.totalElements) * 1000) / 10 : 0;
+  metrics.genericRatio = metrics.totalElements
+    ? Math.round((metrics.genericContainerCount / metrics.totalElements) * 1000) / 10
+    : 0;
 
-  for (const element of deepChainStarts) {
-    if (hints.length >= MAX_HINTS) break;
-    addHint({
-      tone: 'info',
-      title: 'Deep generic wrapper chain',
-      description: 'Four or more single-child <div> wrappers are nested before reaching meaningful content.',
-      selector: selectorFor(element),
-      suggestion: 'Review whether every wrapper is required for layout, styling or behavior.',
-    });
-  }
-
-  if (metrics.totalElements >= 100 && metrics.divCount / metrics.totalElements >= 0.6) {
-    addHint({
-      tone: 'info',
-      title: 'High <div> density',
-      description: `${Math.round((metrics.divCount / metrics.totalElements) * 100)}% of the sampled DOM elements are <div> containers.`,
-      suggestion: 'Review whether semantic HTML can replace generic containers where the content has a clear purpose.',
-    });
-  }
-
-  const groupNodes = (nodes: StructureNode[]): StructureNode[] => {
-    const grouped: StructureNode[] = [];
-    let index = 0;
-    while (index < nodes.length) {
-      const node = nodes[index]!;
-      if (!groupableTags.has(node.tag)) {
-        grouped.push(node);
-        index += 1;
-        continue;
-      }
-      let end = index + 1;
-      while (
-        end < nodes.length
-        && nodes[end]!.tag === node.tag
-        && nodes[end]!.role === node.role
-        && nodes[end]!.className === node.className
-      ) {
-        end += 1;
-      }
-      const count = end - index;
-      grouped.push(count >= 3 ? { ...node, count } : node);
-      if (count < 3) {
-        for (let extra = index + 1; extra < end; extra += 1) grouped.push(nodes[extra]!);
-      }
-      index = end;
-    }
-    return grouped;
-  };
-
-  const visit = (element: Element): StructureNode[] => {
-    if (structureVisitedCount >= MAX_ELEMENTS || structureNodeCount >= MAX_STRUCTURE_NODES) {
-      truncated = true;
-      return [];
-    }
-    structureVisitedCount += 1;
-
-    const rawChildren: StructureNode[] = [];
-    for (const child of element.children) {
-      if (structureVisitedCount >= MAX_ELEMENTS || structureNodeCount >= MAX_STRUCTURE_NODES) {
-        truncated = true;
-        break;
-      }
-      rawChildren.push(...visit(child));
-    }
-    const childNodes = groupNodes(rawChildren);
-    if (!isRelevant(element)) return childNodes;
-
-    structureNodeCount += 1;
-    structureSequence += 1;
-    const tag = element.tagName.toLowerCase();
-    const role = roleOf(element);
-    const label = labelOf(element);
-    const className = compactClassName(element);
-    return [{
-      id: `structure-node-${structureSequence}`,
-      tag,
-      selector: selectorFor(element),
-      ...(role ? { role } : {}),
-      ...(label ? { label } : {}),
-      ...(className ? { className } : {}),
-      children: childNodes,
-    }];
-  };
-
-  const rootNodes: StructureNode[] = [];
-  for (const child of document.body.children) {
-    if (structureVisitedCount >= MAX_ELEMENTS || structureNodeCount >= MAX_STRUCTURE_NODES) {
-      truncated = true;
-      break;
-    }
-    rootNodes.push(...visit(child));
-  }
-  const roots = groupNodes(rootNodes);
+  const metricTargets: StructureMetricTarget[] = [
+    { id: 'headings', count: metrics.headingCount, selector: 'h1,h2,h3,h4,h5,h6,[role="heading"]' },
+    {
+      id: 'landmarks',
+      count: metrics.landmarkCount,
+      selector: 'header,nav,main,footer,aside,[role="banner"],[role="navigation"],[role="main"],[role="contentinfo"],[role="complementary"],[role="region"],[role="search"],[role="form"]',
+    },
+    { id: 'lists', count: metrics.listCount, selector: 'ul,ol,dl,[role="list"]' },
+    { id: 'forms', count: metrics.formCount, selector: 'form,[role="form"]' },
+    {
+      id: 'buttons',
+      count: metrics.buttonCount,
+      selector: 'button,input[type="button"],input[type="submit"],input[type="reset"],input[type="image"],[role="button"]',
+    },
+    { id: 'links', count: metrics.linkCount, selector: 'a[href],[role="link"]' },
+    {
+      id: 'form-controls',
+      count: metrics.formControlCount,
+      selector: 'input,select,textarea,[role="textbox"],[role="combobox"],[role="checkbox"],[role="radio"],[role="switch"],[role="slider"],[role="spinbutton"]',
+    },
+    { id: 'tables', count: metrics.tableCount, selector: 'table,[role="table"],[role="grid"],[role="treegrid"]' },
+    { id: 'images', count: metrics.imageCount, selector: 'img,[role="img"]' },
+  ];
 
   return {
     url: location.href,
     title: document.title,
     capturedAt: Date.now(),
-    roots,
     hints,
     metrics,
+    metricTargets,
     truncated,
   };
 }

@@ -15,9 +15,11 @@ export interface ScanTargetHighlightResult {
 
 export function clearScanTargetHighlightInPage(): { removed: boolean } {
   const existing = document.querySelector('[data-focustrace-scan-highlight]');
-  if (!existing) return { removed: false };
-  existing.remove();
-  return { removed: true };
+  const group = document.querySelector('[data-focustrace-structure-highlights]');
+  const removed = Boolean(existing || group);
+  existing?.remove();
+  group?.remove();
+  return { removed };
 }
 
 /**
@@ -32,6 +34,100 @@ export function locateScanTargetInPage(
   options: ScanTargetHighlightOptions = {},
 ): ScanTargetHighlightResult {
   document.querySelector('[data-focustrace-scan-highlight]')?.remove();
+  document.querySelector('[data-focustrace-structure-highlights]')?.remove();
+
+  const GROUP_PREFIX = '__focustrace_group__:';
+  if (selector.startsWith(GROUP_PREFIX)) {
+    let payload: { selector: string; label?: string } | undefined;
+    try {
+      payload = JSON.parse(decodeURIComponent(selector.slice(GROUP_PREFIX.length))) as {
+        selector: string;
+        label?: string;
+      };
+    } catch {
+      return { found: false, selector, rendered: false };
+    }
+
+    let targets: Element[] = [];
+    try {
+      targets = [...document.querySelectorAll(payload.selector)];
+    } catch {
+      return { found: false, selector, rendered: false };
+    }
+    if (!targets.length) return { found: false, selector, rendered: false };
+
+    const renderedTargets = targets.filter((target) => {
+      const rect = target.getBoundingClientRect();
+      return rect.width > 0 && rect.height > 0;
+    });
+    if (!renderedTargets.length) return { found: true, selector, rendered: false };
+
+    renderedTargets[0]?.scrollIntoView({ block: 'center', inline: 'center', behavior: 'auto' });
+
+    const maxTargets = 60;
+    const shown = renderedTargets.slice(0, maxTargets);
+    const solid = '#14589f';
+    const ring = 'rgba(20, 88, 159, 0.24)';
+    const fill = 'rgba(20, 88, 159, 0.08)';
+    const root = document.createElement('div');
+    root.setAttribute('data-focustrace-structure-highlights', 'true');
+    root.setAttribute('aria-hidden', 'true');
+    Object.assign(root.style, {
+      position: 'absolute',
+      top: '0',
+      left: '0',
+      width: '0',
+      height: '0',
+      pointerEvents: 'none',
+      zIndex: '2147483646',
+    });
+
+    shown.forEach((target, index) => {
+      const rect = target.getBoundingClientRect();
+      const overlay = document.createElement('div');
+      Object.assign(overlay.style, {
+        position: 'absolute',
+        top: `${Math.max(0, rect.top + window.scrollY - 4)}px`,
+        left: `${Math.max(0, rect.left + window.scrollX - 4)}px`,
+        width: `${Math.max(0, rect.width + 8)}px`,
+        height: `${Math.max(0, rect.height + 8)}px`,
+        border: `3px solid ${solid}`,
+        borderRadius: '6px',
+        background: fill,
+        boxShadow: `0 0 0 4px ${ring}`,
+        boxSizing: 'border-box',
+        pointerEvents: 'none',
+      });
+
+      if (index === 0) {
+        const badge = document.createElement('div');
+        badge.textContent = `${payload.label || options.label || 'FocusTrace'} · ${targets.length}`;
+        Object.assign(badge.style, {
+          position: 'absolute',
+          top: rect.top + window.scrollY >= 40 ? '-32px' : '4px',
+          left: '-3px',
+          maxWidth: 'min(360px, calc(100vw - 24px))',
+          padding: '5px 8px',
+          borderRadius: '6px',
+          background: solid,
+          color: '#fff',
+          font: '700 13px/1.3 system-ui, sans-serif',
+          whiteSpace: 'nowrap',
+          overflow: 'hidden',
+          textOverflow: 'ellipsis',
+          boxShadow: '0 4px 14px rgba(0,0,0,.22)',
+        });
+        overlay.append(badge);
+      }
+
+      root.append(overlay);
+    });
+
+    document.documentElement.append(root);
+    const durationMs = options.durationMs ?? 7000;
+    if (durationMs > 0) window.setTimeout(() => root.remove(), durationMs);
+    return { found: true, selector, rendered: true };
+  }
 
   let target: Element | null = null;
   try {

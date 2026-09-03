@@ -38,39 +38,39 @@ export function structureHintCopy(
     };
   }
 
-  if (hint.title === 'Generic element used as a control') {
+  if (hint.title === 'Generic element used as a button') {
     return {
-      title: 'Elemento genérico usado como control',
-      description: 'Se está usando un <div> o <span> con comportamiento similar a un botón.',
-      suggestion: 'Valora usar <button> cuando la interacción sea una acción de botón.',
+      title: 'Elemento genérico usado como botón',
+      description: 'Se está usando un elemento genérico con semántica de botón en lugar del control nativo.',
+      suggestion: 'Cuando la interacción sea una acción, valora utilizar <button>.',
     };
   }
-  if (hint.title === 'Repeated sibling structure') {
+  if (hint.title === 'Generic element used as a link') {
     return {
-      title: 'Estructura repetida entre elementos hermanos',
-      description: 'Hay varios elementos hermanos con una estructura muy similar que podrían representar una lista semántica.',
-      suggestion: 'Valora <ul>/<ol> con <li> cuando los elementos formen una lista con significado.',
+      title: 'Elemento genérico usado como enlace',
+      description: 'Se está usando un elemento genérico con semántica de enlace.',
+      suggestion: 'Cuando la interacción navegue a otra ubicación, valora utilizar <a href="…">.',
     };
   }
-  if (hint.title === 'Navigation-like link group') {
+  if (hint.title === 'Generic element used as a heading') {
     return {
-      title: 'Grupo de enlaces con aspecto de navegación',
-      description: 'La mayoría de elementos directos del contenedor son enlaces y podrían formar un bloque de navegación.',
-      suggestion: 'Valora <nav> o role="navigation" cuando el grupo sea realmente navegación del sitio o de la página.',
+      title: 'Elemento genérico usado como encabezado',
+      description: 'Se está exponiendo semántica de encabezado mediante ARIA sobre un elemento genérico.',
+      suggestion: 'Cuando la jerarquía lo permita, valora utilizar un <h1>–<h6> nativo.',
     };
   }
-  if (hint.title === 'Deep generic wrapper chain') {
+  if (hint.title === 'Generic element with click handler') {
     return {
-      title: 'Cadena profunda de contenedores genéricos',
-      description: 'Hay cuatro o más <div> de un único hijo anidados antes de llegar a contenido con significado.',
-      suggestion: 'Revisa si todos los contenedores son necesarios para layout, estilos o comportamiento.',
+      title: 'Elemento genérico con evento de clic',
+      description: 'Se ha detectado un <div> o <span> con onclick sin utilizar un elemento interactivo nativo.',
+      suggestion: 'Utiliza <button> para acciones o <a href="…"> para navegación cuando corresponda.',
     };
   }
-  if (hint.title === 'High <div> density') {
+  if (hint.title === 'Generic element in the tab order') {
     return {
-      title: 'Alta densidad de <div>',
-      description: 'Una proporción elevada del DOM analizado está formada por contenedores <div>. No es un error por sí mismo, pero puede indicar oportunidades de mejorar la semántica.',
-      suggestion: 'Revisa si HTML semántico puede sustituir contenedores genéricos cuando el contenido tenga una finalidad clara.',
+      title: 'Elemento genérico incluido en el orden de tabulación',
+      description: 'Un elemento genérico entra directamente en el foco secuencial sin exponer un rol semántico.',
+      suggestion: 'Si es interactivo, valora sustituirlo por el elemento nativo que represente su función.',
     };
   }
 
@@ -83,13 +83,21 @@ export function structureHintCopy(
 
 export function structureSummaryLabels(language: AppLanguage) {
   return {
-    domElements: tr(language, 'DOM elements', 'Elementos DOM'),
-    semanticElements: tr(language, 'Semantic elements', 'Elementos semánticos'),
+    headings: tr(language, 'Headings', 'Encabezados'),
     landmarks: tr(language, 'Semantic regions', 'Regiones semánticas'),
     lists: tr(language, 'Lists', 'Listas'),
+    forms: tr(language, 'Forms', 'Formularios'),
+    buttons: tr(language, 'Buttons', 'Botones'),
+    links: tr(language, 'Links', 'Enlaces'),
+    formControls: tr(language, 'Form controls', 'Campos de formulario'),
+    tables: tr(language, 'Tables', 'Tablas'),
+    images: tr(language, 'Images', 'Imágenes'),
+    structureHints: tr(language, 'Semantic suggestions', 'Sugerencias semánticas'),
+    // Retained for compatibility with any downstream/custom report consumer.
+    domElements: tr(language, 'DOM elements', 'Elementos DOM'),
+    semanticElements: tr(language, 'Semantic elements', 'Elementos semánticos'),
     maxDepth: tr(language, 'Maximum DOM depth', 'Profundidad DOM máxima'),
     genericContainers: tr(language, 'Generic containers', 'Contenedores genéricos'),
     genericRatio: tr(language, 'Generic ratio', 'Proporción de elementos genéricos'),
-    structureHints: tr(language, 'Structural suggestions', 'Sugerencias estructurales'),
   };
 }

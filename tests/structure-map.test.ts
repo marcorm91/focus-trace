@@ -1,62 +1,85 @@
 // @vitest-environment jsdom
 
 import { beforeEach, describe, expect, it } from 'vitest';
-import { collectStructureMapInPage, type StructureNode } from '../lib/runtime/structure-map';
+import { collectStructureMapInPage } from '../lib/runtime/structure-map';
 
-function flatten(nodes: StructureNode[]): StructureNode[] {
-  return nodes.flatMap((node) => [node, ...flatten(node.children)]);
-}
-
-describe('Structure DOM collector', () => {
+describe('Structure evidence collector', () => {
   beforeEach(() => {
     document.title = 'Structure fixture';
     document.body.innerHTML = '';
   });
 
-  it('builds a simplified semantic tree and groups repeated structural siblings', () => {
+  it('collects accessibility-oriented structural metrics in one lightweight snapshot', () => {
     document.body.innerHTML = `
-      <div class="page-shell">
-        <header>
-          <nav aria-label="Primary"><a href="/">Home</a></nav>
-        </header>
-        <main>
-          <div class="layout-wrapper">
-            <section aria-label="News">
-              <article class="card"><h2>One</h2><a href="/one">Read</a></article>
-              <article class="card"><h2>Two</h2><a href="/two">Read</a></article>
-              <article class="card"><h2>Three</h2><a href="/three">Read</a></article>
-            </section>
-          </div>
-        </main>
-        <footer>Footer</footer>
-      </div>
+      <header><nav aria-label="Primary"><a href="/">Home</a></nav></header>
+      <main>
+        <h1>Title</h1>
+        <h2>Section</h2>
+        <ul><li>One</li><li>Two</li></ul>
+        <form aria-label="Search"><input aria-label="Query"><button>Go</button></form>
+        <table><tr><th>Column</th></tr></table>
+        <img alt="Example">
+      </main>
+      <footer>Footer</footer>
     `;
 
     const snapshot = collectStructureMapInPage();
-    const nodes = flatten(snapshot.roots);
+    const metrics = snapshot.metrics;
 
-    expect(nodes.some((node) => node.tag === 'header')).toBe(true);
-    expect(nodes.some((node) => node.tag === 'main')).toBe(true);
-    expect(nodes.some((node) => node.tag === 'footer')).toBe(true);
-    expect(nodes.find((node) => node.tag === 'nav')?.label).toBe('Primary');
-    expect(nodes.find((node) => node.tag === 'article')?.count).toBe(3);
-    expect(snapshot.metrics.landmarkCount).toBeGreaterThanOrEqual(4);
-    expect(snapshot.metrics.semanticElements).toBeGreaterThan(0);
+    expect(metrics.headingCount).toBe(2);
+    expect(metrics.landmarkCount).toBeGreaterThanOrEqual(4);
+    expect(metrics.listCount).toBe(1);
+    expect(metrics.formCount).toBe(1);
+    expect(metrics.buttonCount).toBe(1);
+    expect(metrics.linkCount).toBe(1);
+    expect(metrics.formControlCount).toBe(1);
+    expect(metrics.tableCount).toBe(1);
+    expect(metrics.imageCount).toBe(1);
+    expect(snapshot.metricTargets.find((metric) => metric.id === 'lists')).toMatchObject({ count: 1 });
+    expect(snapshot.metricTargets.find((metric) => metric.id === 'buttons')?.selector).toContain('[role="button"]');
   });
 
-  it('marks semantic opportunities as review hints instead of WCAG failures', () => {
+  it('keeps Semantics focused on concrete native-HTML opportunities with element evidence', () => {
     document.body.innerHTML = `
       <main>
-        <div id="fake-button" role="button" tabindex="0" onclick="void 0">Save</div>
-        <div id="items">
-          <div class="item"><span>One</span></div>
-          <div class="item"><span>Two</span></div>
-          <div class="item"><span>Three</span></div>
-        </div>
-        <div id="link-group">
-          <a href="/one">One</a>
-          <a href="/two">Two</a>
-          <a href="/three">Three</a>
+        <div id="fake-button" role="button" tabindex="0">Save</div>
+        <span id="fake-link" role="link">Open account</span>
+        <div id="fake-heading" role="heading" aria-level="2">Section title</div>
+        <div id="clickable" onclick="void 0">Open menu</div>
+        <span id="focusable" tabindex="0">Custom control</span>
+      </main>
+    `;
+
+    const snapshot = collectStructureMapInPage();
+    const titles = snapshot.hints.map((hint) => hint.title);
+
+    expect(titles).toEqual(expect.arrayContaining([
+      'Generic element used as a button',
+      'Generic element used as a link',
+      'Generic element used as a heading',
+      'Generic element with click handler',
+      'Generic element in the tab order',
+    ]));
+
+    const buttonHint = snapshot.hints.find((hint) => hint.title === 'Generic element used as a button');
+    expect(buttonHint?.selector).toBe('#fake-button');
+    expect(buttonHint?.element).toMatchObject({
+      tag: 'div',
+      role: 'button',
+      id: 'fake-button',
+      tabindex: '0',
+      trigger: 'role="button"',
+    });
+  });
+
+  it('does not run the previous repeated-sibling and wrapper-chain heuristics', () => {
+    document.body.innerHTML = `
+      <main>
+        <div><div><div><div><div>Deep content</div></div></div></div></div>
+        <div class="items">
+          <div class="item">One</div>
+          <div class="item">Two</div>
+          <div class="item">Three</div>
         </div>
       </main>
     `;
@@ -64,24 +87,11 @@ describe('Structure DOM collector', () => {
     const snapshot = collectStructureMapInPage();
     const titles = snapshot.hints.map((hint) => hint.title);
 
-    expect(titles).toContain('Generic element used as a control');
-    expect(titles).toContain('Repeated sibling structure');
-    expect(titles).toContain('Navigation-like link group');
-    expect(snapshot.hints.every((hint) => hint.tone === 'review' || hint.tone === 'info')).toBe(true);
-  });
-
-  it('detects deep generic wrapper chains', () => {
-    document.body.innerHTML = `
-      <main>
-        <div id="chain-start"><div><div><div><div><section aria-label="Target">Content</section></div></div></div></div></div>
-      </main>
-    `;
-
-    const snapshot = collectStructureMapInPage();
-
-    expect(snapshot.metrics.maxGenericChain).toBeGreaterThanOrEqual(4);
-    expect(snapshot.metrics.deepGenericChains).toBeGreaterThanOrEqual(1);
-    expect(snapshot.hints.some((hint) => hint.title === 'Deep generic wrapper chain')).toBe(true);
+    expect(titles).not.toContain('Repeated sibling structure');
+    expect(titles).not.toContain('Deep generic wrapper chain');
+    expect(titles).not.toContain('High <div> density');
+    expect(snapshot.metrics.maxGenericChain).toBe(0);
+    expect(snapshot.metrics.deepGenericChains).toBe(0);
   });
 
   it('stops sampling when the configured safety limit is reached', () => {
@@ -91,7 +101,6 @@ describe('Structure DOM collector', () => {
 
     const snapshot = collectStructureMapInPage({
       maxElements: 100,
-      maxStructureNodes: 80,
       maxHints: 20,
     });
 
