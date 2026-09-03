@@ -1,6 +1,6 @@
 # FocusTrace 0.1.4
 
-FocusTrace 0.1.4 adds a dedicated **Structure** workspace for understanding how a page is built and integrates that structural evidence into reports without duplicating the full DOM or heading outline.
+FocusTrace 0.1.4 adds a dedicated **Structure** workspace for understanding accessibility-relevant page structure and integrates that evidence into reports without duplicating the complete heading outline.
 
 The release keeps the product focused on local accessibility debugging: static findings, document structure, runtime behavior and historical evidence remain separate but connected workflows.
 
@@ -8,15 +8,15 @@ The release keeps the product focused on local accessibility debugging: static f
 
 ### Structure workspace
 
-The primary navigation is now **Review · Structure · Trace · Report**. The previous standalone Headings workspace is grouped under Structure with two complementary views:
+The primary navigation is now **Review · Structure · Trace · Report**. The previous standalone Headings workspace is grouped under Structure with three complementary views:
 
 - **Headings** — the existing H1–H6 hierarchy, review signals and page overlay;
 - **Semantics** — concrete review suggestions for generic `div`/`span` elements used as buttons, links or headings, inline click handlers and generic tab stops;
 - **Metrics** — accessibility-oriented counts for semantic regions, lists, forms, buttons, links, form controls, tables and images, with page highlighting from each metric.
 
-Semantic suggestions are intentionally **not treated as automatic WCAG failures**. They identify patterns worth reviewing while leaving content intent to human judgement.
+Semantic suggestions are intentionally **not treated as automatic WCAG failures**. They identify patterns worth reviewing while leaving content and interaction intent to human judgement.
 
-### On-demand DOM analysis
+### On-demand structural analysis
 
 Opening Structure does not inspect or continuously recalculate the DOM. Headings reuses the current page analysis; Semantics and Metrics are generated only from an explicit **Analyze structure** or **Refresh** action.
 
@@ -45,11 +45,22 @@ The sidepanel report, printable PDF and TXT export reuse the compact Structure e
 
 Component-scoped reports continue to avoid mixing page-global document structure into component-only static evidence.
 
+### Multipage audits and reports
+
+- Repeated scans of the same normalized URL update the saved page instead of duplicating it in the audit.
+- Each reviewed page keeps its own review timestamp.
+- Moving to another site lets the user add the page to the current audit or start a new audit.
+- The Report workspace keeps an expandable history of reviewed pages; opening a saved page reveals its report and summary.
+- Multipage PDF export uses one audit cover followed by one section per reviewed page.
+
 ### Navigation and UI consistency
 
 - Headings is now part of the broader Structure workspace instead of a fifth primary navigation item.
 - The main navigation remains four clear areas without shrinking the existing 14px label floor.
 - Structure receives a dedicated navigation icon while Trace and Report keep their existing mappings.
+- Neutral no-data / analyze-first states share the same visual treatment across Review, Structure, Trace, Replay, Runtime, Focus Graph, Headings and Report.
+- Section subtitles wrap instead of truncating explanatory copy with ellipses.
+- Report history and report sections use the shared FocusTrace disclosure chevrons.
 - English and Spanish copy has been updated across the workspace and report summaries.
 
 ### Test and reliability coverage
@@ -57,12 +68,14 @@ Component-scoped reports continue to avoid mixing page-global document structure
 The release adds or updates coverage for:
 
 - accessibility-oriented structural metric collection;
-- heuristic semantic suggestions;
-- large-DOM safety limits;
-- Structure remaining idle until explicitly generated;
+- concrete semantic suggestions;
+- large-DOM sampling safety limits;
+- Structure remaining idle until explicitly analyzed;
 - Headings interactions after moving under Structure;
 - compact document-structure reporting without duplicating the complete heading outline;
-- component reports excluding page-global structure evidence.
+- component reports excluding page-global structure evidence;
+- multipage audit deduplication and expandable report history;
+- consistent neutral empty states across the sidepanel.
 
 ## Privacy and permissions
 
