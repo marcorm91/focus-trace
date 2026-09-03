@@ -3,6 +3,20 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { locateScanTargetInPage } from '../lib/runtime/scan-target-overlay';
 
+function rect(top: number, left = 30, width = 120, height = 50) {
+  return {
+    top,
+    left,
+    right: left + width,
+    bottom: top + height,
+    width,
+    height,
+    x: left,
+    y: top,
+    toJSON: () => ({}),
+  };
+}
+
 function installFixture(): void {
   document.body.innerHTML = '<main><section id="card"><span>Broken item</span></section></main>';
 
@@ -14,22 +28,13 @@ function installFixture(): void {
   const target = document.querySelector('#card')!;
   Object.defineProperty(target, 'getBoundingClientRect', {
     configurable: true,
-    value: () => ({
-      top: 20,
-      left: 30,
-      right: 150,
-      bottom: 70,
-      width: 120,
-      height: 50,
-      x: 30,
-      y: 20,
-      toJSON: () => ({}),
-    }),
+    value: () => rect(20),
   });
 }
 
 afterEach(() => {
   document.querySelector('[data-focustrace-scan-highlight]')?.remove();
+  document.querySelector('[data-focustrace-structure-highlights]')?.remove();
   document.body.innerHTML = '';
   vi.restoreAllMocks();
   delete (Element.prototype as { scrollIntoView?: Element['scrollIntoView'] }).scrollIntoView;
@@ -59,6 +64,30 @@ describe('scan target page overlay', () => {
     expect(overlay?.style.pointerEvents).toBe('none');
   });
 
+  it('highlights all rendered targets for a Structure metric group', () => {
+    document.body.innerHTML = '<main><ul id="one"><li>One</li></ul><ol id="two"><li>Two</li></ol></main>';
+    Object.defineProperty(Element.prototype, 'scrollIntoView', {
+      configurable: true,
+      value: vi.fn(),
+    });
+    const one = document.querySelector('#one')!;
+    const two = document.querySelector('#two')!;
+    Object.defineProperty(one, 'getBoundingClientRect', { configurable: true, value: () => rect(20) });
+    Object.defineProperty(two, 'getBoundingClientRect', { configurable: true, value: () => rect(100) });
+
+    const groupSelector = `__focustrace_group__:${encodeURIComponent(JSON.stringify({
+      selector: 'ul,ol',
+      label: 'Listas',
+    }))}`;
+    const result = locateScanTargetInPage(groupSelector, { durationMs: 0, focusTarget: false });
+
+    expect(result).toEqual({ found: true, selector: groupSelector, rendered: true });
+    const group = document.querySelector<HTMLElement>('[data-focustrace-structure-highlights]');
+    expect(group).not.toBeNull();
+    expect(group?.children).toHaveLength(2);
+    expect(group?.textContent).toContain('Listas · 2');
+  });
+
   it('still works when serialized like chrome.scripting.executeScript', () => {
     installFixture();
 
@@ -77,17 +106,7 @@ describe('scan target page overlay', () => {
     const target = document.querySelector('#metadata')!;
     Object.defineProperty(target, 'getBoundingClientRect', {
       configurable: true,
-      value: () => ({
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        width: 0,
-        height: 0,
-        x: 0,
-        y: 0,
-        toJSON: () => ({}),
-      }),
+      value: () => rect(0, 0, 0, 0),
     });
 
     expect(locateScanTargetInPage('#metadata')).toEqual({
