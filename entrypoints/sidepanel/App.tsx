@@ -461,7 +461,13 @@ export default function App() {
         />
       )}
       {view === 'report' && (
-        <SessionReportView scan={scan} events={session.events} language={language} onLocate={locateScanTarget} />
+        <SessionReportView
+          scan={scan}
+          events={session.events}
+          structureSnapshot={structureSnapshot}
+          language={language}
+          onLocate={locateScanTarget}
+        />
       )}
       {view === 'about' && <AboutView language={language} />}
       {view === 'instructions' && <InstructionsView language={language} />}
