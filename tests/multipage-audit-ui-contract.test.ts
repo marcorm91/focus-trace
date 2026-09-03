@@ -15,13 +15,18 @@ describe('multipage audit UI contract', () => {
     expect(dialog).toContain('Empezar una nueva auditoría');
   });
 
-  it('uses a shared empty-state pattern for Report and exposes themed audit PDF export', () => {
+  it('uses the shared Empty component for Report and exposes themed audit PDF export', () => {
     const report = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/views/AuditReportWorkspace.tsx'), 'utf8');
     const css = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/audit.css'), 'utf8');
-    expect(report).toContain('empty structure-empty report-empty-state');
+    expect(report).toContain("import { Empty } from '../components/Common';");
+    expect(report).toContain('<Empty');
+    expect(report).not.toContain('report-empty-state');
+    expect(report).not.toContain('report-empty-panel');
     expect(report).toContain('Todavía no hay datos de análisis');
     expect(report).toContain('Exportar auditoría PDF');
     expect(report).toContain('Revisión realizada');
+    expect(css).not.toContain('.report-empty-state');
+    expect(css).not.toContain('.report-empty-panel');
     expect(css).toContain('.export-audit-report {');
     expect(css).toContain('box-shadow: var(--ft-shadow-sm);');
     expect(css).toContain('border: 1.5px solid var(--ft-border, CanvasText);');
