@@ -15,6 +15,7 @@
 @import url('./component-scan.css') layer(components);
 @import url('./heading-tree-visual.css') layer(components);
 @import url('./structure.css') layer(components);
+@import url('./audit.css') layer(components);
 @import url('./information-summaries.css') layer(components);
 @import url('./instructions.css') layer(components);
 @import url('./modern-icons.css') layer(components);
@@ -28,6 +29,7 @@
 @import url('./views/transition-semantics.css') layer(components);
 @import url('./views/replay.css') layer(components);
 @import url('./views/session-report.css') layer(components);
+@import url('./views/report-accordion.css') layer(components);
 @import url('./views/report-export.css') layer(components);
 @import url('./components/finding-guidance.css') layer(components);
 @import url('./components/focus-memory-settings.css') layer(components);

@@ -1,0 +1,56 @@
+.audit-print-sites {
+  display: block;
+  margin-top: 8px;
+  color: var(--print-muted, #475569);
+  font-weight: 700;
+}
+
+.audit-print-scope-note {
+  margin: 18px 0 0;
+  padding: 14px 16px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+  color: #334155;
+}
+
+.audit-print-page {
+  break-before: page;
+  page-break-before: always;
+}
+
+.audit-print-page:first-of-type {
+  break-before: auto;
+  page-break-before: auto;
+}
+
+.audit-print-page-title a {
+  display: block;
+  margin-top: 5px;
+  overflow-wrap: anywhere;
+}
+
+.audit-print-page-title p {
+  margin: 7px 0 0;
+  color: #475569;
+}
+
+.audit-print-page-metrics {
+  margin-bottom: 20px;
+}
+
+.audit-print-headings {
+  margin: 18px 0 24px;
+}
+
+@media print {
+  .audit-print-page {
+    break-before: page;
+    page-break-before: always;
+  }
+
+  .audit-print-page:first-of-type {
+    break-before: auto;
+    page-break-before: auto;
+  }
+}
