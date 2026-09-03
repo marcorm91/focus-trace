@@ -16,15 +16,17 @@ import type {
   SessionState,
 } from '../../shared/types';
 import { localizedUserError } from '../../shared/user-facing-errors';
+import { AuditScopeDialog } from './components/AuditScopeDialog';
+import { SiteAuditLauncher } from './components/SiteAuditLauncher';
+import { useMultipageAudit } from './hooks/useMultipageAudit';
 import { usePageRuntimeAccess } from './hooks/usePageRuntimeAccess';
 import { useSidepanelLanguage } from './hooks/useSidepanelLanguage';
 import { useSidepanelSession } from './hooks/useSidepanelSession';
 import { useTraceActions } from './hooks/useTraceActions';
-import { SiteAuditLauncher } from './components/SiteAuditLauncher';
 import { AboutView } from './views/AboutView';
+import { AuditReportWorkspace } from './views/AuditReportWorkspace';
 import { InstructionsView } from './views/InstructionsView';
 import { ScanView } from './views/ScanView';
-import { SessionReportView } from './views/SessionReportView';
 import { SettingsView } from './views/SettingsView';
 import { StructureView } from './views/StructureView';
 import { TraceView } from './views/TraceView';
@@ -63,6 +65,16 @@ export default function App() {
     onTabSelected: handleTabSelected,
   });
   const { requestPageAccess, ensureInjected } = usePageRuntimeAccess(tabId);
+  const {
+    activeAudit,
+    pendingScope,
+    decisionPending,
+    preparePageAnalysis,
+    recordPageAnalysis,
+    addPendingSiteToCurrentAudit,
+    startPendingSiteAsNewAudit,
+    cancelPendingAuditScope,
+  } = useMultipageAudit();
   const scan = session.scan;
   const componentScan = scan?.scope?.type === 'component' ? scan.scope : undefined;
   const openTrace = useCallback(() => setView('trace'), []);
@@ -90,10 +102,16 @@ export default function App() {
   }, [language, setSession, tabId]);
 
   const runScan = useCallback(async () => {
-    if (tabId == null) return;
-    setBusy(true);
+    if (tabId == null || decisionPending) return;
     setError(undefined);
     try {
+      await requestPageAccess();
+      const tab = await browser.tabs.get(tabId);
+      if (!tab.url) throw new Error('FocusTrace could not resolve the current page URL.');
+      const auditPlan = await preparePageAnalysis(tab.url);
+      if (!auditPlan) return;
+
+      setBusy(true);
       await ensureInjected();
       await browser.scripting.executeScript({
         target: { tabId },
@@ -104,13 +122,31 @@ export default function App() {
       } satisfies ExtensionMessage)) as ScanResult;
       const memoryEvidence = await collectFocusMemoryEvidence(tabId, result).catch(() => []);
       await saveScan(result, memoryEvidence);
+      try {
+        await recordPageAnalysis(result, auditPlan);
+      } catch {
+        setError(tr(
+          language,
+          'The page analysis is ready, but the current audit could not be updated.',
+          'El análisis de la página está listo, pero no se pudo actualizar la auditoría actual.',
+        ));
+      }
       setView('scan');
     } catch (reason) {
       setError(localizedUserError(reason, language, 'analysis'));
     } finally {
       setBusy(false);
     }
-  }, [ensureInjected, language, saveScan, tabId]);
+  }, [
+    decisionPending,
+    ensureInjected,
+    language,
+    preparePageAnalysis,
+    recordPageAnalysis,
+    requestPageAccess,
+    saveScan,
+    tabId,
+  ]);
 
   const runComponentScan = useCallback(async () => {
     if (tabId == null || session.recording) return;
@@ -338,6 +374,15 @@ export default function App() {
         </div>
       </header>
 
+      <AuditScopeDialog
+        audit={pendingScope?.audit}
+        site={pendingScope?.site}
+        language={language}
+        onAdd={addPendingSiteToCurrentAudit}
+        onNew={startPendingSiteAsNewAudit}
+        onCancel={cancelPendingAuditScope}
+      />
+
       <section className="quick-start" aria-label={tr(language, 'Page tools', 'Herramientas de página')}>
         <div className="quick-start-copy">
           <span className={`status ${session.recording ? 'live' : busy ? 'live' : 'ready'}`}>
@@ -367,7 +412,7 @@ export default function App() {
           </p>
         </div>
         <div className="quick-actions">
-          <button className="primary scan-action" type="button" onClick={() => void runScan()} disabled={busy || tabId == null}>
+          <button className="primary scan-action" type="button" onClick={() => void runScan()} disabled={busy || decisionPending || tabId == null}>
             <span aria-hidden="true">⌕</span>
             {tr(language, 'Analyze this page', 'Analizar esta página')}
           </button>
@@ -461,7 +506,8 @@ export default function App() {
         />
       )}
       {view === 'report' && (
-        <SessionReportView
+        <AuditReportWorkspace
+          audit={activeAudit}
           scan={scan}
           events={session.events}
           structureSnapshot={structureSnapshot}
