@@ -17,6 +17,7 @@ const MAX_AUDITS = 8;
 const MAX_PAGES_PER_AUDIT = 40;
 const MAX_VISUALS_PER_PAGE = 2;
 const MAX_VISUAL_DATA_CHARS = 3_000_000;
+const MAX_AUDIT_STORE_CHARS = 4_500_000;
 
 export interface AuditPrintEvidence {
   audit: AccessibilityAudit;
@@ -83,24 +84,72 @@ function trimVisualStorage(audits: AccessibilityAudit[]): AccessibilityAudit[] {
   return next;
 }
 
+function storeChars(audits: AccessibilityAudit[], activeAuditId?: string): number {
+  return JSON.stringify({
+    version: MULTIPAGE_AUDIT_VERSION,
+    audits,
+    ...(activeAuditId ? { activeAuditId } : {}),
+  }).length;
+}
+
+function trimAuditHistoryToBudget(
+  audits: AccessibilityAudit[],
+  activeAuditId?: string,
+): AccessibilityAudit[] {
+  const next = audits.map((audit) => ({ ...audit, pages: [...audit.pages] }));
+
+  while (storeChars(next, activeAuditId) > MAX_AUDIT_STORE_CHARS) {
+    const oldestInactiveIndex = next.findIndex((audit) => audit.id !== activeAuditId);
+    if (oldestInactiveIndex >= 0 && next.length > 1) {
+      next.splice(oldestInactiveIndex, 1);
+      continue;
+    }
+
+    const auditWithHistoryIndex = next.findIndex((audit) => audit.pages.length > 1);
+    if (auditWithHistoryIndex < 0) break;
+    const audit = next[auditWithHistoryIndex]!;
+    next[auditWithHistoryIndex] = {
+      ...audit,
+      pages: audit.pages.slice(1),
+    };
+  }
+
+  return next;
+}
+
+export function boundMultipageAuditStore(store: MultipageAuditStore): MultipageAuditStore {
+  const normalizedAudits = trimVisualStorage(store.audits
+    .map(normalizeAudit)
+    .slice(-MAX_AUDITS));
+  const candidateActiveAuditId = store.activeAuditId
+    && normalizedAudits.some((audit) => audit.id === store.activeAuditId)
+    ? store.activeAuditId
+    : normalizedAudits.at(-1)?.id;
+  const audits = trimAuditHistoryToBudget(normalizedAudits, candidateActiveAuditId);
+  const activeAuditId = candidateActiveAuditId && audits.some((audit) => audit.id === candidateActiveAuditId)
+    ? candidateActiveAuditId
+    : audits.at(-1)?.id;
+
+  return {
+    version: MULTIPAGE_AUDIT_VERSION,
+    audits,
+    ...(activeAuditId ? { activeAuditId } : {}),
+  };
+}
+
 function normalizeStore(value: unknown): MultipageAuditStore {
   if (!value || typeof value !== 'object') return emptyMultipageAuditStore();
   const candidate = value as Partial<MultipageAuditStore>;
   if (candidate.version !== MULTIPAGE_AUDIT_VERSION || !Array.isArray(candidate.audits)) {
     return emptyMultipageAuditStore();
   }
-  const audits = trimVisualStorage(candidate.audits
-    .filter((audit): audit is AccessibilityAudit => Boolean(audit && typeof audit === 'object' && audit.id))
-    .map(normalizeAudit)
-    .slice(-MAX_AUDITS));
-  const activeAuditId = candidate.activeAuditId && audits.some((audit) => audit.id === candidate.activeAuditId)
-    ? candidate.activeAuditId
-    : audits.at(-1)?.id;
-  return {
+  const audits = candidate.audits
+    .filter((audit): audit is AccessibilityAudit => Boolean(audit && typeof audit === 'object' && audit.id));
+  return boundMultipageAuditStore({
     version: MULTIPAGE_AUDIT_VERSION,
     audits,
-    ...(activeAuditId ? { activeAuditId } : {}),
-  };
+    ...(candidate.activeAuditId ? { activeAuditId: candidate.activeAuditId } : {}),
+  });
 }
 
 export async function loadMultipageAuditStore(): Promise<MultipageAuditStore> {
@@ -109,9 +158,31 @@ export async function loadMultipageAuditStore(): Promise<MultipageAuditStore> {
 }
 
 export async function saveMultipageAuditStore(store: MultipageAuditStore): Promise<void> {
-  await browser.storage.local.set({
-    [MULTIPAGE_AUDIT_STORAGE_KEY]: normalizeStore(store),
-  });
+  const bounded = boundMultipageAuditStore(store);
+  try {
+    await browser.storage.local.set({
+      [MULTIPAGE_AUDIT_STORAGE_KEY]: bounded,
+    });
+  } catch (reason) {
+    const active = activeAuditFromStore(bounded);
+    if (!active?.pages.length) throw reason;
+    const latestPage = active.pages.at(-1)!;
+    const visualEvidence = latestPage.visualEvidence
+      ? { ...latestPage.visualEvidence, visuals: [], storageTrimmed: true }
+      : undefined;
+    const fallback: MultipageAuditStore = {
+      version: MULTIPAGE_AUDIT_VERSION,
+      activeAuditId: active.id,
+      audits: [{
+        ...active,
+        pages: [{
+          ...latestPage,
+          ...(visualEvidence ? { visualEvidence } : {}),
+        }],
+      }],
+    };
+    await browser.storage.local.set({ [MULTIPAGE_AUDIT_STORAGE_KEY]: fallback });
+  }
 }
 
 function auditId(): string {
@@ -134,9 +205,16 @@ export async function readActiveAudit(): Promise<AccessibilityAudit | undefined>
 }
 
 export async function storeAuditPrintEvidence(audit: AccessibilityAudit): Promise<string> {
+  const bounded = boundMultipageAuditStore({
+    version: MULTIPAGE_AUDIT_VERSION,
+    activeAuditId: audit.id,
+    audits: [audit],
+  });
+  const printableAudit = bounded.audits[0];
+  if (!printableAudit) throw new Error('FocusTrace audit has no printable pages.');
   const token = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
   await browser.storage.session.set({
-    [`${AUDIT_PRINT_EVIDENCE_PREFIX}${token}`]: { audit } satisfies AuditPrintEvidence,
+    [`${AUDIT_PRINT_EVIDENCE_PREFIX}${token}`]: { audit: printableAudit } satisfies AuditPrintEvidence,
   });
   return token;
 }
