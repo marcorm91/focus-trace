@@ -34,6 +34,7 @@ Key capabilities include:
 - runtime keyboard-focus and interaction tracing;
 - SPA navigation and dialog lifecycle evidence;
 - read-only replay and consolidated reports;
+- multipage audit history with bounded local visual context for recent reviewed pages;
 - representative same-origin Site Audit sampling;
 - optional local accessibility history through FocusTrace Memory, including bounded element context for remembered failures.
 
@@ -49,15 +50,19 @@ Analyze, Structure, Trace, Replay, Report, Site Audit and Memory are complementa
 
 ### `activeTab`
 
-Used to access the current tab after an explicit user action such as Analyze, Generate Structure or Trace. FocusTrace does not require permanent access to every website for normal single-page use. When Memory is explicitly enabled, the same user-initiated analysis context may also be used to create a small local crop of a currently visible failing element.
+Used to access the current tab after an explicit user action such as Analyze, Analyze Structure or Trace. FocusTrace does not require permanent access to every website for normal single-page use. The same user-initiated analysis context may also be used for bounded local visual evidence when a full-page review is added to the multipage audit, and for a small Memory preview when Memory is explicitly enabled.
 
 ### `scripting`
 
-Used to run the local FocusTrace scanner, generate an explicitly requested Structure snapshot, run runtime instrumentation in pages the user chooses to inspect, and locate visible failing elements when optional Memory visual context is prepared.
+Used to run the local FocusTrace scanner, generate an explicitly requested Structure snapshot, run runtime instrumentation in pages the user chooses to inspect, locate current report targets, and prepare bounded local visual context where the corresponding feature allows it.
 
 ### `storage`
 
-Used for extension preferences, per-tab/session state and optional FocusTrace Memory. Memory is disabled by default. When enabled, it can store bounded local diagnostic observations, compact element locators and small compressed visual previews for selected remembered failures. It does not store page HTML, full DOM snapshots or full-page screenshots as Memory history.
+Used for extension preferences, per-tab/session state, multipage audit history and optional FocusTrace Memory.
+
+A full-page analysis can add or replace one page in the active multipage audit. Audit storage is bounded by audit/page counts, a visual-evidence budget and an overall serialized-size budget. A reviewed page can retain up to two small local visual crops so its audit PDF can preserve context after navigation. When storage pressure requires pruning, older audit history or visual crops are removed before the newest active review.
+
+Memory is disabled by default. When enabled, it can store bounded local diagnostic observations, compact element locators and small compressed visual previews for selected remembered failures. It does not store page HTML, full DOM snapshots or full-page screenshots as Memory history.
 
 Structure snapshots are generated on demand and remain in the active sidepanel/sidebar session. Reports can reuse compact Structure metrics and semantic suggestions; Structure does not persist a parallel DOM tree as report or Memory history.
 
@@ -67,11 +72,13 @@ Used to provide the main FocusTrace interface alongside the page being inspected
 
 ### Optional `http://*/*` and `https://*/*` host access
 
-Requested only from explicit user actions when functionality needs page access beyond the transient active-tab grant. This includes actions such as Analyze, Generate / Refresh Structure and Site Audit. Site Audit requests access for the selected same-origin site so it can discover and analyze representative pages.
+Requested only from explicit user actions when functionality needs page access beyond the transient active-tab grant. This includes actions such as Analyze, Analyze / Refresh Structure and Site Audit. Site Audit requests access for the selected same-origin site so it can discover and analyze representative pages.
 
 ### Optional `<all_urls>` visual-capture access
 
-Used when the user explicitly requests visual evidence for a printable report or Site Audit export and the browser requires broader screenshot capability. The broader capture permission is requested from the user action and is released after capture when FocusTrace did not already have it. FocusTrace Memory does not add a persistent `<all_urls>` grant for its small local previews; it uses the explicit active-tab analysis context and falls back to a compact locator when capture is unavailable.
+Used when the user explicitly requests visual evidence for a printable single-page report or Site Audit export and the browser requires broader screenshot capability. The broader capture permission is requested from the user action and is released after capture when FocusTrace acquired it for that operation.
+
+Multipage audit review crops and FocusTrace Memory previews do not add a persistent `<all_urls>` grant. They use the active-tab/page-access context already established for the explicit analysis and record an unavailable/fallback state when the browser cannot capture the visible tab.
 
 ## Remote code
 
@@ -79,9 +86,11 @@ FocusTrace does not intentionally execute remotely hosted JavaScript or download
 
 ## Data-use declaration basis
 
-FocusTrace may inspect website content necessary to provide its user-facing accessibility analysis, such as DOM structure and attributes, accessible-name/role information, rendered contrast evidence, focus transitions, selected runtime mutations, URL/title context and user-requested visual evidence.
+FocusTrace may inspect website content necessary to provide its user-facing accessibility analysis, such as DOM structure and attributes, accessible-name/role information, rendered contrast evidence, focus transitions, selected runtime mutations, URL/title context and local visual evidence associated with the requested feature.
 
 An explicitly generated Structure snapshot can include bounded accessibility-oriented metrics plus selectors and evidence for concrete semantic review suggestions. Reports may reuse the compact metrics/suggestions subset; exporting a report does not trigger another Structure scan.
+
+Multipage audits keep the latest saved full-page analysis for each normalized URL and may retain bounded local screenshot crops for recent reviews. Re-analyzing the same normalized URL replaces its prior scan and its saved audit visual evidence. Historical Trace and Structure snapshots are not persisted as part of a historical page review in 0.1.4.
 
 If the user explicitly enables FocusTrace Memory, bounded local history may include hashed finding/scope identities, generic rule identifiers, counts, timestamps, compact element locators and a limited number of small local visual previews. These values remain in the browser profile unless the user exports or otherwise shares data outside FocusTrace.
 
@@ -122,9 +131,9 @@ Before uploading the production ZIP for 0.1.4:
 
 1. Complete `npm run release:check:full` on the release candidate.
 2. Confirm CI is green on the exact commit intended for `v0.1.4`.
-3. Complete the manual accessibility/self-audit, Structure and FocusTrace Memory smoke items in `RELEASE_CHECKLIST.md`.
+3. Complete the manual accessibility/self-audit, Structure, multipage Report and FocusTrace Memory smoke items in `RELEASE_CHECKLIST.md`.
 4. Smoke-test the unpacked production Chromium build.
 5. Confirm production manifests contain only the intended required and optional permissions.
 6. Confirm the public privacy-policy, support/contact and voluntary-support URLs resolve without authentication.
-7. Review the final store declarations against `PRIVACY.md` and actual behavior, including on-demand Structure evidence and opt-in Memory previews/locators.
+7. Review the final store declarations against `PRIVACY.md` and actual behavior, including on-demand Structure evidence, bounded multipage-audit visual evidence and opt-in Memory previews/locators.
 8. Tag the exact approved commit as `v0.1.4` only after the release candidate is accepted.
