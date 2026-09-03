@@ -7,9 +7,10 @@ import {
 } from '../../../lib/runtime/audit-evidence';
 import { groupRuntimeInteractions } from '../../../lib/runtime/causality';
 import { buildFocusGraph } from '../../../lib/runtime/focus-graph';
-import type { StructureHint, StructureSnapshot } from '../../../lib/runtime/structure-map';
+import type { StructureSnapshot } from '../../../lib/runtime/structure-map';
 import { type ReportComponentIdentity } from '../../../lib/report/component-identity';
 import { buildSessionReportModel } from '../../../lib/report/session-report';
+import { buildStructureReportEvidence, structureHintCopy } from '../../../lib/report/structure-report';
 import { buildTextReportFilename, buildTextSessionReport } from '../../../lib/report/text-report';
 import {
   captureReportVisualEvidence,
@@ -25,58 +26,6 @@ function headingSignalLabel(signal: HeadingSignal, language: AppLanguage): strin
   if (signal === 'empty') return tr(language, 'Empty', 'Vacío');
   if (signal === 'level-jump') return tr(language, 'Level jump', 'Salto de nivel');
   return tr(language, 'Multiple H1', 'Varios H1');
-}
-
-function structureHintCopy(hint: StructureHint, language: AppLanguage): { title: string; description: string; suggestion?: string } {
-  if (language !== 'es') {
-    return {
-      title: hint.title,
-      description: hint.description,
-      ...(hint.suggestion ? { suggestion: hint.suggestion } : {}),
-    };
-  }
-
-  if (hint.title === 'Generic element used as a control') {
-    return {
-      title: 'Elemento genérico usado como control',
-      description: 'Se está usando un <div> o <span> con comportamiento similar a un botón.',
-      suggestion: 'Valora usar <button> cuando la interacción sea una acción de botón.',
-    };
-  }
-  if (hint.title === 'Repeated sibling structure') {
-    return {
-      title: 'Estructura repetida entre elementos hermanos',
-      description: 'Hay varios elementos hermanos con una estructura muy similar que podrían representar una lista semántica.',
-      suggestion: 'Valora <ul>/<ol> con <li> cuando los elementos formen una lista con significado.',
-    };
-  }
-  if (hint.title === 'Navigation-like link group') {
-    return {
-      title: 'Grupo de enlaces con aspecto de navegación',
-      description: 'La mayoría de elementos directos del contenedor son enlaces y podrían formar un bloque de navegación.',
-      suggestion: 'Valora <nav> o role="navigation" cuando el grupo sea realmente navegación del sitio o de la página.',
-    };
-  }
-  if (hint.title === 'Deep generic wrapper chain') {
-    return {
-      title: 'Cadena profunda de contenedores genéricos',
-      description: 'Hay cuatro o más <div> de un único hijo anidados antes de llegar a contenido con significado.',
-      suggestion: 'Revisa si todos los contenedores son necesarios para layout, estilos o comportamiento.',
-    };
-  }
-  if (hint.title === 'High <div> density') {
-    return {
-      title: 'Alta densidad de <div>',
-      description: 'Una proporción elevada del DOM analizado está formada por contenedores <div>. No es un error por sí mismo, pero puede indicar oportunidades de mejorar la semántica.',
-      suggestion: 'Revisa si HTML semántico puede sustituir contenedores genéricos cuando el contenido tenga una finalidad clara.',
-    };
-  }
-
-  return {
-    title: hint.title,
-    description: hint.description,
-    ...(hint.suggestion ? { suggestion: hint.suggestion } : {}),
-  };
 }
 
 function suggestionSourceLabel(source: string, language: AppLanguage): string {
@@ -128,6 +77,7 @@ export function SessionReportView({
   const headings = scan?.headings ?? [];
   const componentScope = scan?.scope?.type === 'component';
   const reportStructureSnapshot = componentScope ? undefined : structureSnapshot;
+  const reportStructureEvidence = buildStructureReportEvidence(reportStructureSnapshot);
   const headingReviews = componentScope ? [] : headings.filter((heading) => heading.signals.length > 0);
   const structureHints = reportStructureSnapshot?.hints ?? [];
   const structureReviewCount = headingReviews.length + structureHints.length;
@@ -160,7 +110,14 @@ export function SessionReportView({
 
   const downloadTextReport = () => {
     const generatedAt = Date.now();
-    const text = buildTextSessionReport({ scan, events, language, components, generatedAt });
+    const text = buildTextSessionReport({
+      scan,
+      events,
+      language,
+      components,
+      structure: reportStructureEvidence,
+      generatedAt,
+    });
     downloadFile(buildTextReportFilename(scan, generatedAt), text, 'text/plain', true);
   };
 
@@ -195,6 +152,7 @@ export function SessionReportView({
         visuals: capture.visuals,
         visualEvidenceRequested: includeVisualEvidence,
         visualEvidenceLimitReached: capture.limitReached,
+        ...(reportStructureEvidence ? { structure: reportStructureEvidence } : {}),
       });
       const params = new URLSearchParams({ tabId: String(tab.id), language, evidence: token });
       await browser.tabs.create({
