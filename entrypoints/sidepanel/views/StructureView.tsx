@@ -215,10 +215,6 @@ export function StructureView({
   const componentScan = scan?.scope?.type === 'component';
 
   useEffect(() => {
-    if (!snapshot && !busy) void onRefresh();
-  }, [busy, onRefresh, snapshot]);
-
-  useEffect(() => {
     setCollapsedIds(new Set(collapsibleIds));
     setSelectedId(undefined);
   }, [collapsibleIds, snapshot?.capturedAt]);
@@ -255,7 +251,11 @@ export function StructureView({
           )}</p>
         </div>
         <button className="structure-refresh" type="button" disabled={busy} onClick={() => void onRefresh()}>
-          {busy ? tr(language, 'Refreshing…', 'Actualizando…') : tr(language, 'Refresh', 'Actualizar')}
+          {busy
+            ? tr(language, 'Refreshing…', 'Actualizando…')
+            : snapshot
+              ? tr(language, 'Refresh', 'Actualizar')
+              : tr(language, 'Generate', 'Generar')}
         </button>
       </div>
 
