@@ -5,6 +5,7 @@ import {
   auditScopeForUrl,
   type AccessibilityAudit,
   type AuditAnalysisPlan,
+  type AuditPageVisualEvidence,
   type AuditScopeCheck,
   type MultipageAuditStore,
 } from '../../../lib/audit/multipage-audit';
@@ -13,6 +14,10 @@ import {
   MULTIPAGE_AUDIT_STORAGE_KEY,
   recordMultipageAuditScan,
 } from '../../../lib/audit/multipage-audit-storage';
+import {
+  captureReportVisualEvidence,
+  collectReportComponents,
+} from '../../../lib/report/visual-evidence';
 import type { ScanResult } from '../../../shared/types';
 
 interface PendingAuditScope {
@@ -23,6 +28,15 @@ interface PendingAuditScope {
 
 type PendingResolver = (plan: AuditAnalysisPlan | null) => void;
 type StorageChangeMap = Record<string, { newValue?: unknown; oldValue?: unknown }>;
+const MAX_AUDIT_VISUALS_PER_REVIEW = 2;
+
+function staticVisualTargetCount(scan: ScanResult): number {
+  return new Set(
+    [...scan.issues, ...scan.review, ...(scan.warnings ?? [])]
+      .flatMap((issue) => issue.targets)
+      .filter(Boolean),
+  ).size;
+}
 
 export function useMultipageAudit() {
   const [store, setStore] = useState<MultipageAuditStore>();
@@ -91,7 +105,41 @@ export function useMultipageAudit() {
 
   const recordPageAnalysis = useCallback(async (scan: ScanResult, plan: AuditAnalysisPlan) => {
     if (scan.scope?.type === 'component') return;
-    const next = await recordMultipageAuditScan(scan, plan);
+
+    const fallbackEligibleCount = staticVisualTargetCount(scan);
+    let visualEvidence: AuditPageVisualEvidence = {
+      capturedAt: Date.now(),
+      visuals: [],
+      eligibleCount: fallbackEligibleCount,
+      limitReached: fallbackEligibleCount > MAX_AUDIT_VISUALS_PER_REVIEW,
+      captureUnavailable: fallbackEligibleCount > 0,
+    };
+
+    try {
+      const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+      if (tab?.id != null) {
+        const components = await collectReportComponents(tab.id, scan, []);
+        const capture = await captureReportVisualEvidence(
+          tab.id,
+          scan,
+          components,
+          [],
+          MAX_AUDIT_VISUALS_PER_REVIEW,
+        );
+        visualEvidence = {
+          capturedAt: Date.now(),
+          visuals: capture.visuals,
+          eligibleCount: capture.eligibleCount,
+          limitReached: capture.limitReached,
+          captureUnavailable: capture.captureUnavailable,
+        };
+      }
+    } catch {
+      // The audit still keeps the analysis. The PDF will explicitly state that
+      // visual evidence was unavailable for this review instead of using stale crops.
+    }
+
+    const next = await recordMultipageAuditScan(scan, plan, visualEvidence);
     setStore(next);
   }, []);
 
