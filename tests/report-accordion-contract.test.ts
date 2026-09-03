@@ -35,9 +35,13 @@ describe('report accordion contract', () => {
     expect(reportView).toContain('report-accordion-section report-recommendations">');
   });
 
-  it('keeps the disclosure visible and keyboard-focusable through native summary', () => {
+  it('uses the shared SVG-mask chevrons and native keyboard-focusable summaries', () => {
     expect(accordionCss).toContain('.report-accordion-summary:focus-visible');
+    expect(accordionCss).toContain('.report-accordion-summary::after');
+    expect(accordionCss).toContain('var(--ft-i-chevron-right)');
     expect(accordionCss).toContain('.report-accordion-section[open] > .report-accordion-summary::after');
+    expect(accordionCss).toContain('var(--ft-i-chevron-down)');
+    expect(accordionCss).not.toContain("content: '⌄';");
     expect(sidepanelCss).toContain("@import url('./views/report-accordion.css') layer(components);");
   });
 
