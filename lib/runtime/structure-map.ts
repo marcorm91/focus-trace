@@ -82,7 +82,7 @@ export type StructureCollectionOptions = {
  * function passed to scripting.executeScript, so page-side helpers must live
  * inside the function body.
  */
-export function collectStructureEvidenceInPage(options?: StructureCollectionOptions): StructureSnapshot {
+export function collectStructureMapInPage(options?: StructureCollectionOptions): StructureSnapshot {
   const MAX_ELEMENTS = Math.max(1, Math.floor(options?.maxElements ?? 10_000));
   const MAX_HINTS = Math.max(1, Math.floor(options?.maxHints ?? 60));
   const MAX_LABEL_LENGTH = 90;
