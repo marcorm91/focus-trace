@@ -52,6 +52,9 @@ Component-scoped reports continue to avoid mixing page-global document structure
 - Moving to another site lets the user add the page to the current audit or start a new audit.
 - The Report workspace keeps an expandable history of reviewed pages; opening a saved page reveals its report and summary.
 - Multipage PDF export uses one audit cover followed by one section per reviewed page.
+- A full-page audit review can retain up to two bounded local screenshot crops for eligible findings, so visual evidence remains available after navigating to another audited page.
+- Re-analyzing a page replaces its previous visual crops together with the scan result; audit PDFs explicitly identify reviews whose visual evidence could not be captured or was trimmed by the local storage budget.
+- Single-page PDF visual capture now attempts valid active-tab capture instead of returning zero screenshots solely because the optional broad screenshot grant is absent. Runtime-only report findings are also eligible for visual evidence.
 
 ### Navigation and UI consistency
 
@@ -74,16 +77,17 @@ The release adds or updates coverage for:
 - Headings interactions after moving under Structure;
 - compact document-structure reporting without duplicating the complete heading outline;
 - component reports excluding page-global structure evidence;
-- multipage audit deduplication and expandable report history;
+- multipage audit deduplication, visual-evidence replacement and expandable report history;
+- uncapped single-page visual export with bounded multipage persistence;
 - consistent neutral empty states across the sidepanel.
 
 ## Privacy and permissions
 
 Structure follows the existing local-first model. Structure evidence is generated only after an explicit user action and stays in the current sidepanel session.
 
-Reports may reuse a compact subset of Structure evidence — metrics and semantic suggestions — without storing or exporting a parallel DOM tree. No page content or Structure data is sent to a FocusTrace server or third-party AI service.
+Reports may reuse a compact subset of Structure evidence — metrics and semantic suggestions — without storing or exporting a parallel DOM tree. Multipage audits may retain bounded local screenshot crops for the latest reviewed pages so their PDF can preserve visual context after navigation. No page content, screenshots or Structure data are intentionally sent to a FocusTrace server or third-party AI service.
 
-Production page access remains optional and is requested only from explicit page actions such as **Analyze this page** or **Analyze / Refresh Structure**.
+Production page access remains optional and is requested only from explicit page actions such as **Analyze this page** or **Analyze / Refresh Structure**. Optional broad screenshot access used by a single-page printable export remains scoped to that export operation.
 
 ## Browser targets
 
