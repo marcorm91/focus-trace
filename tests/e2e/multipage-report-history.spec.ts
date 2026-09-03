@@ -116,16 +116,21 @@ test('historical audit reports stay static, single-open and separate from live p
   const historicalScanSection = historical.locator('.report-accordion-section').filter({ hasText: /Full page scan|Barrido completo de página/ });
   await historicalScanSection.locator(':scope > summary').click();
   await expect(historicalScanSection).toHaveAttribute('open', '');
+  const historicalRule = historical.locator('.report-rule-group').first();
+  await historicalRule.locator(':scope > summary').click();
   await expect(historical.getByRole('button', { name: /Review on page|Revisar en la página/ })).toHaveCount(0);
   await expect(historical.getByText(/Historical Trace unavailable|Trace histórico no disponible/)).toBeAttached();
 
   await current.locator(':scope > summary').click();
   await expect(current).toHaveAttribute('open', '');
+  await expect(current).toHaveClass(/is-current/);
   await expect(historical).not.toHaveAttribute('open', '');
   await expect(panel.locator('.audit-page-report[open]')).toHaveCount(1);
 
   const currentScanSection = current.locator('.report-accordion-section').filter({ hasText: /Full page scan|Barrido completo de página/ });
   await currentScanSection.locator(':scope > summary').click();
+  const currentRule = current.locator('.report-rule-group').first();
+  await currentRule.locator(':scope > summary').click();
   await expect(current.getByRole('button', { name: /Review on page|Revisar en la página/ })).toBeVisible();
 
   const ids = await current.locator('.audit-page-report-body').evaluate((root) =>
