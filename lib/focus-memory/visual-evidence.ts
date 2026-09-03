@@ -143,7 +143,7 @@ export async function collectFocusMemoryEvidence(
 
   try {
     const tab = await browser.tabs.get(tabId);
-    if (!tab.active) return evidence;
+    if (tab.windowId == null || !tab.active) return evidence;
     const screenshot = await browser.tabs.captureVisibleTab(tab.windowId, {
       format: 'jpeg',
       quality: 70,
