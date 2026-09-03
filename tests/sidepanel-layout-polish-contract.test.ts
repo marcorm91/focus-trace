@@ -24,6 +24,14 @@ describe('sidepanel layout polish contract', () => {
     expect(focusGraph).not.toMatch(/(^|\n)\.tabs\s*\{/);
   });
 
+  it('keeps Structure DOM collection explicitly on demand', () => {
+    const structureView = source('entrypoints/sidepanel/views/StructureView.tsx');
+
+    expect(structureView).toContain("tr(language, 'Generate structure', 'Generar estructura')");
+    expect(structureView).toContain("tr(language, 'Generate', 'Generar')");
+    expect(structureView).not.toContain('if (!snapshot && !busy) void onRefresh();');
+  });
+
   it('renders four composed quick actions as 2x2 and one column when narrow', () => {
     const css = source('entrypoints/sidepanel/workspace-layout.css');
     const siteAudit = source('entrypoints/sidepanel/components/SiteAuditLauncher.tsx');
