@@ -211,7 +211,7 @@ export default defineBackground(() => {
         await saveSession(next);
         let warning: SaveScanResponse['warning'];
         try {
-          await recordFocusMemoryScan(message.scan);
+          await recordFocusMemoryScan(message.scan, message.memoryEvidence);
         } catch {
           warning = 'focus-memory-write-failed';
         }
