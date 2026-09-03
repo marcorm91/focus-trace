@@ -22,7 +22,6 @@ import { useSidepanelSession } from './hooks/useSidepanelSession';
 import { useTraceActions } from './hooks/useTraceActions';
 import { SiteAuditLauncher } from './components/SiteAuditLauncher';
 import { AboutView } from './views/AboutView';
-import { HeadingTreeView } from './views/HeadingTreeView';
 import { InstructionsView } from './views/InstructionsView';
 import { ScanView } from './views/ScanView';
 import { SessionReportView } from './views/SessionReportView';
@@ -30,14 +29,12 @@ import { SettingsView } from './views/SettingsView';
 import { StructureView } from './views/StructureView';
 import { TraceView } from './views/TraceView';
 
-type View = 'scan' | 'structure' | 'trace' | 'headings' | 'report' | 'about' | 'instructions' | 'settings';
+type View = 'scan' | 'structure' | 'trace' | 'report' | 'about' | 'instructions' | 'settings';
 
 type NavigationItem = {
-  id: 'scan' | 'structure' | 'trace' | 'headings' | 'report';
+  id: 'scan' | 'structure' | 'trace' | 'report';
   label: string;
   icon: string;
-  disabled?: boolean;
-  title?: string;
 };
 
 export default function App() {
@@ -290,21 +287,6 @@ export default function App() {
     { id: 'scan', label: tr(language, 'Review', 'Revisión'), icon: '⌕' },
     { id: 'structure', label: tr(language, 'Structure', 'Estructura'), icon: '▦' },
     { id: 'trace', label: 'Trace', icon: '◎' },
-    {
-      id: 'headings',
-      label: tr(language, 'Headings', 'Encabezados'),
-      icon: 'H',
-      disabled: Boolean(componentScan),
-      ...(componentScan
-        ? {
-            title: tr(
-              language,
-              'Heading outline is available for full-page scans.',
-              'El esquema de encabezados está disponible en análisis de página completa.',
-            ),
-          }
-        : {}),
-    },
     { id: 'report', label: tr(language, 'Report', 'Informe'), icon: '▤' },
   ];
 
@@ -426,8 +408,6 @@ export default function App() {
             type="button"
             className={view === item.id ? 'active' : ''}
             aria-current={view === item.id ? 'page' : undefined}
-            disabled={item.disabled}
-            title={item.title}
             onClick={() => setView(item.id)}
           >
             <span aria-hidden="true">{item.icon}</span>
@@ -449,6 +429,7 @@ export default function App() {
       {view === 'structure' && (
         <StructureView
           snapshot={structureSnapshot}
+          scan={scan}
           language={language}
           busy={busy}
           onRefresh={refreshStructure}
@@ -478,9 +459,6 @@ export default function App() {
           onBreakpointChange={setBreakpoint}
           onDeleteInteraction={deleteTraceInteraction}
         />
-      )}
-      {view === 'headings' && (
-        <HeadingTreeView scan={scan} language={language} onLocate={locateScanTarget} />
       )}
       {view === 'report' && (
         <SessionReportView scan={scan} events={session.events} language={language} onLocate={locateScanTarget} />
