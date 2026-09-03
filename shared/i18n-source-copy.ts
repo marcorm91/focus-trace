@@ -1,4 +1,4 @@
-import type { AppLanguage } from './i18n-base';
+import { localizedContrastReason, type AppLanguage } from './i18n-base';
 import type { ScanIssue, StandardReference } from './types';
 
 const REFERENCE_LABEL_ES: Record<string, string> = {
@@ -66,11 +66,11 @@ function technicalTokens(text: string): string[] {
 }
 
 function looksLikeEnglishProse(text: string): boolean {
-  return /\b(the|this|that|is|are|was|were|has|have|with|without|from|into|outside|inside|requires|required|recommended|current|detected|missing|obsolete|conforming|element|landmark|accessible|focus|page|property|state|should|could|cannot|must|used|authors|only)\b/i.test(text);
+  return /\b(the|this|that|is|are|was|were|has|have|with|without|from|into|outside|inside|requires|required|recommended|current|detected|missing|obsolete|conforming|element|landmark|accessible|focus|page|property|state|should|could|cannot|must|used|authors|only|unexpected|source|rule|title|generated|description|review|warning|failure|available|supported)\b/i.test(text);
 }
 
 function localizeObsoleteDetail(detail: string): string | undefined {
-  let localized = detail
+  const localized = detail
     .replace(/ is entirely obsolete and must not be used by authors\./g, ' está totalmente obsoleto y no debe utilizarse en código de autor.')
     .replace(/ is obsolete and must not be used by authors\./g, ' está obsoleto y no debe utilizarse en código de autor.')
     .replace(/ uses an obsolete-but-conforming JavaScript MIME declaration\./g, ' utiliza una declaración MIME de JavaScript obsoleta pero todavía conforme.')
@@ -162,6 +162,18 @@ function spanishFallbackDescription(): string {
   return 'FocusTrace ha detectado una condición de accesibilidad que requiere revisión. Consulta la evidencia técnica y las referencias normativas para determinar la corrección adecuada.';
 }
 
+function localizeContrast(
+  contrast: ScanIssue['contrast'],
+  language: AppLanguage,
+): ScanIssue['contrast'] {
+  if (!contrast?.reason || language === 'en') return contrast;
+  const reason = localizedContrastReason(contrast.reason, language)
+    ?? (looksLikeEnglishProse(contrast.reason)
+      ? 'El contexto visual no se ha podido resolver de forma determinista. Revisa este caso manualmente.'
+      : contrast.reason);
+  return { ...contrast, reason };
+}
+
 export function localizeIssueSourceCopy(
   source: ScanIssue,
   localized: ScanIssue,
@@ -178,12 +190,14 @@ export function localizeIssueSourceCopy(
   const evidence = localized.evidence && source.evidence && localized.evidence === source.evidence
     ? localizeResidualEvidence(source.ruleId, localized.evidence)
     : localized.evidence;
+  const contrast = localizeContrast(localized.contrast, language);
 
   return {
     ...localized,
     title,
     description,
     ...(evidence ? { evidence } : {}),
+    ...(contrast ? { contrast } : {}),
     references: localizeReferences(localized.references, language),
   };
 }
