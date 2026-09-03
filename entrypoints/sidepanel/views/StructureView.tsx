@@ -1,8 +1,10 @@
 import { useEffect, useMemo, useState, type CSSProperties } from 'react';
 import type { StructureHint, StructureNode, StructureSnapshot } from '../../../lib/runtime/structure-map';
 import { tr, type AppLanguage } from '../../../shared/i18n';
+import type { ScanResult } from '../../../shared/types';
+import { HeadingTreeView } from './HeadingTreeView';
 
-type StructureMode = 'map' | 'semantics' | 'metrics';
+type StructureMode = 'map' | 'headings' | 'semantics' | 'metrics';
 
 type HintCopy = {
   title: string;
@@ -169,14 +171,38 @@ function MetricsView({ snapshot, language }: { snapshot: StructureSnapshot; lang
   );
 }
 
+function SnapshotEmpty({
+  busy,
+  language,
+  onRefresh,
+}: {
+  busy: boolean;
+  language: AppLanguage;
+  onRefresh: () => void | Promise<void>;
+}) {
+  return (
+    <div className="empty structure-empty">
+      <h2>{busy ? tr(language, 'Building structure…', 'Generando estructura…') : tr(language, 'No structure snapshot yet', 'Todavía no hay snapshot de estructura')}</h2>
+      <p>{tr(language, 'Structure is generated only when needed, so it does not continuously watch or recalculate the page DOM.', 'La estructura se genera solo cuando hace falta, por lo que no vigila ni recalcula continuamente el DOM de la página.')}</p>
+      {!busy && (
+        <button type="button" onClick={() => void onRefresh()}>
+          {tr(language, 'Generate structure', 'Generar estructura')}
+        </button>
+      )}
+    </div>
+  );
+}
+
 export function StructureView({
   snapshot,
+  scan,
   language,
   busy,
   onRefresh,
   onLocate,
 }: {
   snapshot?: StructureSnapshot;
+  scan?: ScanResult;
   language: AppLanguage;
   busy: boolean;
   onRefresh: () => void | Promise<void>;
@@ -186,6 +212,7 @@ export function StructureView({
   const [selectedId, setSelectedId] = useState<string>();
   const collapsibleIds = useMemo(() => branchIds(snapshot?.roots ?? []), [snapshot?.roots]);
   const [collapsedIds, setCollapsedIds] = useState<Set<string>>(new Set());
+  const componentScan = scan?.scope?.type === 'component';
 
   useEffect(() => {
     if (!snapshot && !busy) void onRefresh();
@@ -195,6 +222,10 @@ export function StructureView({
     setCollapsedIds(new Set(collapsibleIds));
     setSelectedId(undefined);
   }, [collapsibleIds, snapshot?.capturedAt]);
+
+  useEffect(() => {
+    if (componentScan && mode === 'headings') setMode('map');
+  }, [componentScan, mode]);
 
   const toggleBranch = (id: string) => {
     setCollapsedIds((current) => {
@@ -210,28 +241,6 @@ export function StructureView({
     void onLocate(node.selector);
   };
 
-  if (!snapshot) {
-    return (
-      <section className="panel structure-panel" aria-labelledby="structure-title">
-        <div className="section-heading">
-          <div>
-            <h2 id="structure-title">{tr(language, 'Structure', 'Estructura')}</h2>
-            <p>{tr(language, 'A simplified semantic map of the current DOM.', 'Un mapa semántico simplificado del DOM actual.')}</p>
-          </div>
-        </div>
-        <div className="empty structure-empty">
-          <h2>{busy ? tr(language, 'Building structure…', 'Generando estructura…') : tr(language, 'No structure snapshot yet', 'Todavía no hay snapshot de estructura')}</h2>
-          <p>{tr(language, 'Structure is generated only when needed, so it does not continuously watch or recalculate the page DOM.', 'La estructura se genera solo cuando hace falta, por lo que no vigila ni recalcula continuamente el DOM de la página.')}</p>
-          {!busy && (
-            <button type="button" onClick={() => void onRefresh()}>
-              {tr(language, 'Generate structure', 'Generar estructura')}
-            </button>
-          )}
-        </div>
-      </section>
-    );
-  }
-
   const allCollapsed = collapsibleIds.length > 0 && collapsibleIds.every((id) => collapsedIds.has(id));
 
   return (
@@ -239,20 +248,26 @@ export function StructureView({
       <div className="section-heading structure-heading">
         <div>
           <h2 id="structure-title">{tr(language, 'Structure', 'Estructura')}</h2>
-          <p>{tr(language, 'A simplified semantic map of the current DOM.', 'Un mapa semántico simplificado del DOM actual.')}</p>
+          <p>{tr(
+            language,
+            'Understand the page through its DOM map, heading outline, semantics and composition metrics.',
+            'Entiende la página mediante su mapa DOM, árbol de encabezados, semántica y métricas de composición.',
+          )}</p>
         </div>
         <button className="structure-refresh" type="button" disabled={busy} onClick={() => void onRefresh()}>
           {busy ? tr(language, 'Refreshing…', 'Actualizando…') : tr(language, 'Refresh', 'Actualizar')}
         </button>
       </div>
 
-      <div className="structure-summary" aria-label={tr(language, 'Structure summary', 'Resumen de estructura')}>
-        <span><strong>{snapshot.metrics.totalElements}</strong> {tr(language, 'DOM elements', 'elementos DOM')}</span>
-        <span><strong>{snapshot.roots.length}</strong> {tr(language, 'root nodes', 'nodos raíz')}</span>
-        <span><strong>{snapshot.hints.length}</strong> {tr(language, 'semantic hints', 'sugerencias semánticas')}</span>
-      </div>
+      {snapshot && (
+        <div className="structure-summary" aria-label={tr(language, 'Structure summary', 'Resumen de estructura')}>
+          <span><strong>{snapshot.metrics.totalElements}</strong> {tr(language, 'DOM elements', 'elementos DOM')}</span>
+          <span><strong>{snapshot.roots.length}</strong> {tr(language, 'root nodes', 'nodos raíz')}</span>
+          <span><strong>{snapshot.hints.length}</strong> {tr(language, 'semantic hints', 'sugerencias semánticas')}</span>
+        </div>
+      )}
 
-      {snapshot.truncated && (
+      {snapshot?.truncated && (
         <div className="notice structure-limit-note" role="status">
           <strong>{tr(language, 'Large DOM: snapshot limited', 'DOM grande: snapshot limitado')}</strong>
           <p>{tr(
@@ -264,101 +279,117 @@ export function StructureView({
       )}
 
       <div className="structure-mode-switcher" role="tablist" aria-label={tr(language, 'Structure views', 'Vistas de estructura')}>
-        {([
-          ['map', tr(language, 'Map', 'Mapa')],
-          ['semantics', tr(language, 'Semantics', 'Semántica')],
-          ['metrics', tr(language, 'Metrics', 'Métricas')],
-        ] as const).map(([id, label]) => (
-          <button
-            key={id}
-            type="button"
-            role="tab"
-            aria-selected={mode === id}
-            className={mode === id ? 'active' : ''}
-            onClick={() => setMode(id)}
-          >
-            {label}
-          </button>
-        ))}
+        <button type="button" role="tab" aria-selected={mode === 'map'} className={mode === 'map' ? 'active' : ''} onClick={() => setMode('map')}>
+          {tr(language, 'Map', 'Mapa')}
+        </button>
+        <button
+          type="button"
+          role="tab"
+          aria-selected={mode === 'headings'}
+          className={mode === 'headings' ? 'active' : ''}
+          disabled={componentScan}
+          title={componentScan ? tr(language, 'Heading outline is available for full-page scans.', 'El esquema de encabezados está disponible en análisis de página completa.') : undefined}
+          onClick={() => setMode('headings')}
+        >
+          {tr(language, 'Headings', 'Encabezados')}
+        </button>
+        <button type="button" role="tab" aria-selected={mode === 'semantics'} className={mode === 'semantics' ? 'active' : ''} onClick={() => setMode('semantics')}>
+          {tr(language, 'Semantics', 'Semántica')}
+        </button>
+        <button type="button" role="tab" aria-selected={mode === 'metrics'} className={mode === 'metrics' ? 'active' : ''} onClick={() => setMode('metrics')}>
+          {tr(language, 'Metrics', 'Métricas')}
+        </button>
       </div>
 
       {mode === 'map' && (
-        <div className="structure-map-view" role="tabpanel">
-          <div className="structure-tree-controls" role="group" aria-label={tr(language, 'Structure tree display', 'Visualización del árbol de estructura')}>
-            <button type="button" disabled={collapsedIds.size === 0} onClick={() => setCollapsedIds(new Set())}>
-              {tr(language, 'Expand all', 'Expandir todo')}
-            </button>
-            <button type="button" disabled={allCollapsed} onClick={() => setCollapsedIds(new Set(collapsibleIds))}>
-              {tr(language, 'Collapse all', 'Contraer todo')}
-            </button>
-          </div>
+        snapshot ? (
+          <div className="structure-map-view" role="tabpanel">
+            <div className="structure-tree-controls" role="group" aria-label={tr(language, 'Structure tree display', 'Visualización del árbol de estructura')}>
+              <button type="button" disabled={collapsedIds.size === 0} onClick={() => setCollapsedIds(new Set())}>
+                {tr(language, 'Expand all', 'Expandir todo')}
+              </button>
+              <button type="button" disabled={allCollapsed} onClick={() => setCollapsedIds(new Set(collapsibleIds))}>
+                {tr(language, 'Collapse all', 'Contraer todo')}
+              </button>
+            </div>
 
-          {snapshot.roots.length ? (
-            <div className="structure-tree" role="tree" aria-label={tr(language, 'Page DOM structure', 'Estructura DOM de la página')}>
-              {snapshot.roots.map((node) => (
-                <StructureBranch
-                  key={node.id}
-                  node={node}
-                  depth={0}
-                  language={language}
-                  collapsedIds={collapsedIds}
-                  selectedId={selectedId}
-                  onToggle={toggleBranch}
-                  onSelect={selectNode}
-                />
-              ))}
-            </div>
-          ) : (
-            <div className="notice">
-              <strong>{tr(language, 'No relevant structure found', 'No se ha encontrado estructura relevante')}</strong>
-              <p>{tr(language, 'The current document did not expose semantic or relevant structural nodes in the sampled DOM.', 'El documento actual no expone nodos semánticos o estructurales relevantes en el DOM analizado.')}</p>
-            </div>
-          )}
+            {snapshot.roots.length ? (
+              <div className="structure-tree" role="tree" aria-label={tr(language, 'Page DOM structure', 'Estructura DOM de la página')}>
+                {snapshot.roots.map((node) => (
+                  <StructureBranch
+                    key={node.id}
+                    node={node}
+                    depth={0}
+                    language={language}
+                    collapsedIds={collapsedIds}
+                    selectedId={selectedId}
+                    onToggle={toggleBranch}
+                    onSelect={selectNode}
+                  />
+                ))}
+              </div>
+            ) : (
+              <div className="notice">
+                <strong>{tr(language, 'No relevant structure found', 'No se ha encontrado estructura relevante')}</strong>
+                <p>{tr(language, 'The current document did not expose semantic or relevant structural nodes in the sampled DOM.', 'El documento actual no expone nodos semánticos o estructurales relevantes en el DOM analizado.')}</p>
+              </div>
+            )}
+          </div>
+        ) : <SnapshotEmpty busy={busy} language={language} onRefresh={onRefresh} />
+      )}
+
+      {mode === 'headings' && (
+        <div className="structure-headings-view" role="tabpanel">
+          <HeadingTreeView scan={scan} language={language} onLocate={onLocate} />
         </div>
       )}
 
       {mode === 'semantics' && (
-        <div className="structure-hints" role="tabpanel">
-          <p className="structure-explainer">{tr(
-            language,
-            'These are heuristic suggestions, not automatic WCAG failures. Review the content intent before changing markup.',
-            'Estas son sugerencias heurísticas, no fallos WCAG automáticos. Revisa la intención del contenido antes de cambiar el marcado.',
-          )}</p>
-          {snapshot.hints.length ? snapshot.hints.map((hint) => {
-            const copy = hintCopy(hint, language);
-            return (
-              <article className={`structure-hint ${hint.tone}`} key={hint.id}>
-                <div>
-                  <span className="structure-hint-tone">{hint.tone === 'review' ? tr(language, 'Review', 'Revisar') : tr(language, 'Suggestion', 'Sugerencia')}</span>
-                  <h3>{copy.title}</h3>
-                  <p>{copy.description}</p>
-                  {copy.suggestion && <p className="structure-hint-suggestion">{copy.suggestion}</p>}
-                </div>
-                {hint.selector && (
-                  <button type="button" onClick={() => void onLocate(hint.selector!)}>
-                    {tr(language, 'Locate', 'Localizar')}
-                  </button>
-                )}
-              </article>
-            );
-          }) : (
-            <div className="notice">
-              <strong>{tr(language, 'No semantic hints in this sample', 'No hay sugerencias semánticas en esta muestra')}</strong>
-              <p>{tr(language, 'The heuristics did not find the generic patterns currently checked by Structure.', 'Las heurísticas no han encontrado los patrones genéricos que Structure comprueba actualmente.')}</p>
-            </div>
-          )}
-        </div>
+        snapshot ? (
+          <div className="structure-hints" role="tabpanel">
+            <p className="structure-explainer">{tr(
+              language,
+              'These are heuristic suggestions, not automatic WCAG failures. Review the content intent before changing markup.',
+              'Estas son sugerencias heurísticas, no fallos WCAG automáticos. Revisa la intención del contenido antes de cambiar el marcado.',
+            )}</p>
+            {snapshot.hints.length ? snapshot.hints.map((hint) => {
+              const copy = hintCopy(hint, language);
+              return (
+                <article className={`structure-hint ${hint.tone}`} key={hint.id}>
+                  <div>
+                    <span className="structure-hint-tone">{hint.tone === 'review' ? tr(language, 'Review', 'Revisar') : tr(language, 'Suggestion', 'Sugerencia')}</span>
+                    <h3>{copy.title}</h3>
+                    <p>{copy.description}</p>
+                    {copy.suggestion && <p className="structure-hint-suggestion">{copy.suggestion}</p>}
+                  </div>
+                  {hint.selector && (
+                    <button type="button" onClick={() => void onLocate(hint.selector!)}>
+                      {tr(language, 'Locate', 'Localizar')}
+                    </button>
+                  )}
+                </article>
+              );
+            }) : (
+              <div className="notice">
+                <strong>{tr(language, 'No semantic hints in this sample', 'No hay sugerencias semánticas en esta muestra')}</strong>
+                <p>{tr(language, 'The heuristics did not find the generic patterns currently checked by Structure.', 'Las heurísticas no han encontrado los patrones genéricos que Structure comprueba actualmente.')}</p>
+              </div>
+            )}
+          </div>
+        ) : <SnapshotEmpty busy={busy} language={language} onRefresh={onRefresh} />
       )}
 
       {mode === 'metrics' && (
-        <div role="tabpanel">
-          <MetricsView snapshot={snapshot} language={language} />
-          <p className="structure-explainer">{tr(
-            language,
-            'Metrics describe DOM composition; they are context for review, not a quality score.',
-            'Las métricas describen la composición del DOM; sirven como contexto de revisión, no como una puntuación de calidad.',
-          )}</p>
-        </div>
+        snapshot ? (
+          <div role="tabpanel">
+            <MetricsView snapshot={snapshot} language={language} />
+            <p className="structure-explainer">{tr(
+              language,
+              'Metrics describe DOM composition; they are context for review, not a quality score.',
+              'Las métricas describen la composición del DOM; sirven como contexto de revisión, no como una puntuación de calidad.',
+            )}</p>
+          </div>
+        ) : <SnapshotEmpty busy={busy} language={language} onRefresh={onRefresh} />
       )}
     </section>
   );
