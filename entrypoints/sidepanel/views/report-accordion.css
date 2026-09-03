@@ -5,7 +5,7 @@
 .report-accordion-summary {
   min-width: 0;
   display: grid;
-  grid-template-columns: auto minmax(0, 1fr) auto;
+  grid-template-columns: auto minmax(0, 1fr) 18px;
   gap: 10px;
   align-items: center;
   padding: 12px 14px;
@@ -18,25 +18,21 @@
 }
 
 .report-accordion-summary::after {
+  content: '';
   grid-column: 3;
   grid-row: 1;
   align-self: center;
-  width: 28px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 14%, transparent));
-  border-radius: 999px;
-  color: var(--ft-muted, GrayText);
-  content: '⌄';
-  font-size: 16px;
-  font-weight: 800;
-  line-height: 1;
-  transition: transform .16s ease;
+  width: 18px;
+  height: 18px;
+  justify-self: end;
+  background: currentColor;
+  -webkit-mask: var(--ft-i-chevron-right) center / contain no-repeat;
+  mask: var(--ft-i-chevron-right) center / contain no-repeat;
 }
 
 .report-accordion-section[open] > .report-accordion-summary::after {
-  transform: rotate(180deg);
+  -webkit-mask-image: var(--ft-i-chevron-down);
+  mask-image: var(--ft-i-chevron-down);
 }
 
 .report-accordion-summary > .report-section-index {
@@ -92,6 +88,6 @@
 
 @media (forced-colors: active) {
   .report-accordion-summary::after {
-    border-color: ButtonText;
+    background: ButtonText;
   }
 }
