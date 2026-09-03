@@ -1,7 +1,4 @@
 import { useEffect, useMemo, useState } from 'react';
-import { browser } from '#imports';
-import { requestActivePageAccess } from '../../../lib/extension/page-access';
-import { locateScanTargetInPage } from '../../../lib/runtime/scan-target-overlay';
 import { useRovingTabs } from '../../../lib/ui/roving-tabs';
 import { localizedScanIssue, localizedSeverity, tr, type AppLanguage } from '../../../shared/i18n';
 import type { FindingOutcome, ScanIssue, ScanResult } from '../../../shared/types';
@@ -13,6 +10,8 @@ type ReportGroup = {
   label: string;
   findings: ScanIssue[];
 };
+
+type LocateHandler = (selector: string) => void | Promise<void>;
 
 function groupedByRule(findings: ScanIssue[]): ScanIssue[][] {
   const groups = new Map<string, ScanIssue[]>();
@@ -30,22 +29,14 @@ function outcomeLabel(outcome: FindingOutcome, language: AppLanguage): string {
   return tr(language, 'Warnings', 'Avisos');
 }
 
-async function locateReportTarget(selector: string): Promise<void> {
-  const tab = await requestActivePageAccess().catch(() => undefined);
-  if (!tab) return;
-  await browser.scripting.executeScript({
-    target: { tabId: tab.id },
-    func: locateScanTargetInPage,
-    args: [selector, { tone: 'inspect', label: 'FocusTrace', focusTarget: false }],
-  });
-}
-
 function ReportRuleAccordion({
   issues,
   language,
+  onLocate,
 }: {
   issues: ScanIssue[];
   language: AppLanguage;
+  onLocate?: LocateHandler | undefined;
 }) {
   const [index, setIndex] = useState(0);
   const first = issues[0]!;
@@ -62,7 +53,7 @@ function ReportRuleAccordion({
     const bounded = Math.max(0, Math.min(issues.length - 1, next));
     setIndex(bounded);
     const nextTarget = issues[bounded]?.targets[0];
-    if (nextTarget) void locateReportTarget(nextTarget);
+    if (nextTarget && onLocate) void onLocate(nextTarget);
   };
 
   return (
@@ -104,9 +95,11 @@ function ReportRuleAccordion({
         {target && (
           <div className="report-rule-target">
             <code title={target}>{target}</code>
-            <button type="button" onClick={() => void locateReportTarget(target)}>
-              {tr(language, 'Review on page', 'Revisar en la página')}
-            </button>
+            {onLocate && (
+              <button type="button" onClick={() => void onLocate(target)}>
+                {tr(language, 'Review on page', 'Revisar en la página')}
+              </button>
+            )}
           </div>
         )}
       </div>
@@ -114,7 +107,15 @@ function ReportRuleAccordion({
   );
 }
 
-export function ReportScanCompact({ scan, language }: { scan: ScanResult; language: AppLanguage }) {
+export function ReportScanCompact({
+  scan,
+  language,
+  onLocate,
+}: {
+  scan: ScanResult;
+  language: AppLanguage;
+  onLocate?: LocateHandler | undefined;
+}) {
   const [filter, setFilter] = useState<ReportFilter>('fail');
 
   const groups = useMemo<ReportGroup[]>(() => [
@@ -176,6 +177,7 @@ export function ReportScanCompact({ scan, language }: { scan: ScanResult; langua
                     key={issues[0]!.ruleId}
                     issues={issues}
                     language={language}
+                    onLocate={onLocate}
                   />
                 ))}
               </div>
