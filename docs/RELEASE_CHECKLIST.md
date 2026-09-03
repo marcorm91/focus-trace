@@ -88,7 +88,7 @@ Firefox production permissions must remain:
 
 Firefox uses `sidebar_action` generated from the WXT sidepanel entrypoint rather than the Chromium `sidePanel` permission.
 
-Production builds must not declare required global host permissions. Optional HTTP/HTTPS host access may be requested only from an explicit user action and must remain documented in the README and privacy policy. The localhost host permission used by E2E is test-only.
+Production builds must not declare required global host permissions. Optional HTTP/HTTPS host access may be requested only from an explicit page action and must remain documented in the README and privacy policy. The localhost host permission used by E2E is test-only.
 
 Confirm [`PRIVACY.md`](../PRIVACY.md) still matches the actual product behavior, especially storage, optional Memory visual context, optional report screenshot evidence, external services and sponsorship integration.
 
@@ -138,11 +138,17 @@ Before changing visibility:
 
 ## Release
 
+For the current candidate, the release version is **0.1.3** and the intended tag is **`v0.1.3`**.
+
 - Confirm `package.json`, `package-lock.json` and all browser manifests report `0.1.3`.
-- Confirm the release commit is on `main` and CI is green.
+- Confirm `tests/release-contract.test.ts` targets `v0.1.3` and passes.
+- Confirm the release commit is on `main` and CI is green on that exact commit.
 - Build the production Chrome, Edge and Firefox MV3 artifacts from that commit.
 - Smoke-test the unpacked production build in supported Chromium browsers.
 - Complete the Firefox experimental smoke checklist before describing Firefox as officially supported.
-- Tag the exact commit as `v0.1.3`.
-- Write release notes that distinguish automated FAIL, REVIEW and runtime evidence.
-- Only then publish/distribute the release artifacts and submit the updated packages to browser stores.
+- Tag the exact approved commit as `v0.1.3`.
+- Write release notes that distinguish automated FAIL, REVIEW and runtime evidence and describe the opt-in Memory visual-context behavior accurately.
+- Review the generated ZIPs before attaching/uploading them.
+- Only then publish/distribute the release artifacts or submit the updated packages to browser stores.
+
+After publishing 0.1.3, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.
