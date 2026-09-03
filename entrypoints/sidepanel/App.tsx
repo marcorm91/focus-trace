@@ -1,5 +1,6 @@
 import { useCallback, useState } from 'react';
 import { browser } from '#imports';
+import { collectFocusMemoryEvidence } from '../../lib/focus-memory/visual-evidence';
 import { type ExplanationLevel } from '../../lib/runtime/explanations';
 import { clearFocusPathInPage } from '../../lib/runtime/focus-path-overlay';
 import { clearHeadingOutlineInPage } from '../../lib/runtime/heading-overlay';
@@ -8,6 +9,7 @@ import { locateScanTargetInPage } from '../../lib/runtime/scan-target-overlay';
 import { tr } from '../../shared/i18n';
 import type {
   ExtensionMessage,
+  FocusMemoryCapturedEvidence,
   SaveScanResponse,
   ScanResult,
   SessionState,
@@ -61,12 +63,16 @@ export default function App() {
   const componentScan = scan?.scope?.type === 'component' ? scan.scope : undefined;
   const openTrace = useCallback(() => setView('trace'), []);
 
-  const saveScan = useCallback(async (result: ScanResult) => {
+  const saveScan = useCallback(async (
+    result: ScanResult,
+    memoryEvidence: FocusMemoryCapturedEvidence[] = [],
+  ) => {
     if (tabId == null) return;
     const response = (await browser.runtime.sendMessage({
       type: 'FOCUSTRACE_SAVE_SCAN',
       tabId,
       scan: result,
+      memoryEvidence,
     } satisfies ExtensionMessage)) as SaveScanResponse | SessionState;
     const next = 'state' in response ? response.state : response;
     setSession(next);
@@ -92,7 +98,8 @@ export default function App() {
       const result = (await browser.tabs.sendMessage(tabId, {
         type: 'FOCUSTRACE_RUN_SCAN',
       } satisfies ExtensionMessage)) as ScanResult;
-      await saveScan(result);
+      const memoryEvidence = await collectFocusMemoryEvidence(tabId, result).catch(() => []);
+      await saveScan(result, memoryEvidence);
       setView('scan');
     } catch (reason) {
       setError(localizedUserError(reason, language, 'analysis'));
@@ -121,7 +128,8 @@ export default function App() {
       if (result.scope?.type !== 'component') {
         throw new Error('FocusTrace component scope handoff failed.');
       }
-      await saveScan(result);
+      const memoryEvidence = await collectFocusMemoryEvidence(tabId, result).catch(() => []);
+      await saveScan(result, memoryEvidence);
       setView('scan');
     } catch (reason) {
       const message = reason instanceof Error ? reason.message : String(reason);
