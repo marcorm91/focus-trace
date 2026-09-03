@@ -36,16 +36,29 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 
 ## Structure 0.1.4 smoke
 
-- Open **Structure** and confirm that merely entering the workspace does not request page access or generate a DOM snapshot.
+- Open **Structure** and confirm that merely entering the workspace does not request page access or generate a semantic/metrics snapshot.
 - Open **Headings** inside Structure and confirm the existing H1–H6 tree, hierarchy signals, expand/collapse behavior and page overlay still work.
-- Generate Structure explicitly and confirm **Map**, **Semantics** and **Metrics** are populated only after that action.
-- Confirm repeated structural siblings are compacted where expected and generic wrappers do not overwhelm the default map.
-- Review semantic suggestions for generic controls, possible lists, navigation-like link groups, deep generic wrapper chains and high `div` density; verify they are presented as suggestions/review signals rather than automatic WCAG failures.
+- Open **Semantics** or **Metrics**, run **Analyze structure** explicitly and confirm those views populate only after that action.
+- Review semantic suggestions for generic `div`/`span` controls or headings, inline click handlers and generic sequential tab stops; verify they are presented as suggestions/review signals rather than automatic WCAG failures.
+- Confirm Metrics reports the current accessibility-oriented groups: headings, semantic regions, lists, forms, buttons, links, form controls, tables and images.
 - Test a large DOM and confirm safety limits produce a limited-snapshot notice instead of continuous processing or an unresponsive panel.
-- Open **Report** after generating Structure and confirm section 03 is **Document structure / Estructura del documento**, includes compact metrics and only headings that require review, and does not duplicate the complete heading tree.
-- Export PDF and TXT from the same session and confirm both reuse the available compact Structure evidence without triggering another DOM scan or exporting the full Structure tree.
-- Repeat the report flow without generating Structure and confirm the report remains passive and explains that DOM metrics are not available.
+- Open **Report** after analyzing Structure and confirm section 03 is **Document structure / Estructura del documento**, includes compact accessibility-oriented metrics and only headings that require review, and does not duplicate the complete heading tree.
+- Export PDF and TXT from the same live session and confirm both reuse the available compact Structure evidence without triggering another DOM scan or exporting a full DOM tree.
+- Repeat the report flow without analyzing Structure and confirm the report remains passive and explains that accessibility-oriented Structure metrics/suggestions are not available.
 - Run a component-scoped analysis and confirm page-global Structure evidence is not mixed into the component-only static report.
+
+## Multipage Report 0.1.4 smoke
+
+- Analyze two different URLs on the same site and confirm the active audit contains two page entries with their own review timestamps.
+- Open the first review, then the second, and confirm only one saved review is expanded at a time.
+- Confirm the current page can still use live page-location actions, current Trace and the current Structure snapshot.
+- Open a historical page while another URL is active and confirm the historical review does not expose page-location controls that could target the current tab.
+- Confirm historical Trace and Structure are labelled as unavailable rather than displayed as if zero/live evidence belonged to the saved page.
+- Re-analyze one normalized URL and confirm it replaces that page's previous scan and audit screenshot evidence instead of adding a duplicate page.
+- Export the audit PDF after navigating away from the first page and confirm saved visual crops still appear next to their matching findings when capture was available.
+- Repeat with capture unavailable/restricted and confirm the PDF reports the unavailable state rather than implying screenshots were lost.
+- Exercise enough large audit data to trigger the storage-bound tests/fixtures and confirm older history is pruned before the newest active review.
+- Confirm the single-page PDF still exports current-session evidence independently of the audit PDF and that a large set of visual crops is bounded by payload size rather than an arbitrary finding-count cap.
 
 ## FocusTrace Memory smoke
 
@@ -74,12 +87,13 @@ The Firefox artifact remains experimental until these checks pass on Firefox 115
 - Load `.output/firefox-mv3/manifest.json` or the `focustrace-firefox-dev` artifact from `about:debugging#/runtime/this-firefox`.
 - Confirm clicking the FocusTrace toolbar action opens the Firefox sidebar.
 - Run Analyze and locate at least one finding on the inspected page.
-- Open Structure, inspect Headings, then explicitly generate the Structure map and confirm the sidebar remains responsive.
+- Open Structure, inspect Headings, then explicitly run **Analyze structure** and confirm Semantics/Metrics populate while the sidebar remains responsive.
 - Start a manual Trace, leave the sidebar, interact with the page, then return and confirm recording continued.
 - Run the automatic Tab walk and confirm the focus journey is populated.
 - Select a recorded focus step and confirm the current page highlight/inspector appears.
 - Check Replay and Report against the same runtime session.
-- Navigate to another tab and back; confirm state remains scoped to the inspected tab.
+- Add at least two pages to a multipage audit, revisit the historical report and open its audit PDF.
+- Navigate to another tab and back; confirm state remains scoped to the inspected tab while the active audit remains product-level history.
 - Test a full navigation while Trace is recording and confirm instrumentation is restored.
 - Change language and interface size, reload the sidebar and confirm both preferences persist.
 - Reset the Trace session and confirm Analyze remains available.
@@ -104,7 +118,9 @@ Firefox uses `sidebar_action` generated from the WXT sidepanel entrypoint rather
 
 Production builds must not declare required global host permissions. Optional HTTP/HTTPS host access may be requested only from an explicit page action and must remain documented in the README and privacy policy. The localhost host permission used by E2E is test-only.
 
-Confirm [`PRIVACY.md`](../PRIVACY.md) still matches the actual product behavior, especially storage, on-demand Structure evidence, optional Memory visual context, optional report screenshot evidence, external services and sponsorship integration.
+Confirm [`PRIVACY.md`](../PRIVACY.md) still matches the actual product behavior, especially storage, on-demand Structure evidence, bounded multipage-audit visual context, optional Memory visual context, optional single-page report screenshot evidence, external services and sponsorship integration.
+
+Before a browser-store submission, resolve the publication blockers in `STORE_SUBMISSION.md`: the public privacy-policy URL and public support/contact URL must be real, unauthenticated destinations rather than `TODO` placeholders.
 
 Voluntary support is enabled through `https://github.com/sponsors/marcorm91`. Verify both the About support block and the compact global footer are keyboard accessible, retain visible focus at 200% zoom and open only that reviewed external HTTPS destination. Confirm the support link does not appear in printed/exported reports.
 
