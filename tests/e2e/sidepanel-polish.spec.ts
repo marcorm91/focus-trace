@@ -146,6 +146,13 @@ test('sidepanel controls and finding surfaces expose their intended behavior', a
   expect(new Set(scorelineStyles).size).toBe(1);
   expect(scorelineStyles[0]).toContain('0px|0px|rgba(0, 0, 0, 0)|none');
 
+  const scanReportSection = panel.locator('details.report-accordion-section').filter({
+    hasText: /Full page scan|Barrido completo de página/,
+  }).first();
+  await expect(scanReportSection).not.toHaveAttribute('open', '');
+  await scanReportSection.locator(':scope > summary').click();
+  await expect(scanReportSection).toHaveAttribute('open', '');
+
   const reportTabs = panel.locator('.report-compact-tabs');
   await expect(reportTabs.getByRole('tab', { name: /Failures|Fallos/ })).toBeEnabled();
   await expect(reportTabs.getByRole('tab', { name: /Review|Revisión/ })).toBeDisabled();
@@ -155,14 +162,12 @@ test('sidepanel controls and finding surfaces expose their intended behavior', a
   await expect(reportFinding.locator('.severity-badge')).toBeVisible();
   await expect(reportFinding.locator('.report-rule-outcome')).toHaveCount(0);
 
-  const reportTabsBefore = await reportTabs.boundingBox();
-  if (!reportTabsBefore) throw new Error('Could not measure the report content before opening export formats.');
+  const reportTabsBefore = await reportTabs.evaluate((element) => element.getBoundingClientRect().top + window.scrollY);
   const moreFormats = panel.locator('.report-more-formats');
   await moreFormats.locator('summary').click();
   const formatOptions = moreFormats.locator('.report-format-options');
   await expect(formatOptions).toBeVisible();
   await expect(formatOptions).toHaveCSS('position', 'absolute');
-  const reportTabsAfter = await reportTabs.boundingBox();
-  if (!reportTabsAfter) throw new Error('Could not measure the report content after opening export formats.');
-  expect(Math.abs(reportTabsAfter.y - reportTabsBefore.y)).toBeLessThan(1);
+  const reportTabsAfter = await reportTabs.evaluate((element) => element.getBoundingClientRect().top + window.scrollY);
+  expect(Math.abs(reportTabsAfter - reportTabsBefore)).toBeLessThan(1);
 });

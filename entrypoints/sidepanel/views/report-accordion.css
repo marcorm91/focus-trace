@@ -1,0 +1,97 @@
+.report-accordion-section {
+  overflow: clip;
+}
+
+.report-accordion-summary {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 10px;
+  align-items: center;
+  padding: 12px 14px;
+  cursor: pointer;
+  list-style: none;
+}
+
+.report-accordion-summary::-webkit-details-marker {
+  display: none;
+}
+
+.report-accordion-summary::after {
+  grid-column: 3;
+  grid-row: 1;
+  align-self: center;
+  width: 28px;
+  height: 28px;
+  display: grid;
+  place-items: center;
+  border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 14%, transparent));
+  border-radius: 999px;
+  color: var(--ft-muted, GrayText);
+  content: '⌄';
+  font-size: 16px;
+  font-weight: 800;
+  line-height: 1;
+  transition: transform .16s ease;
+}
+
+.report-accordion-section[open] > .report-accordion-summary::after {
+  transform: rotate(180deg);
+}
+
+.report-accordion-summary > .report-section-index {
+  grid-column: 1;
+  grid-row: 1;
+}
+
+.report-accordion-summary-copy {
+  min-width: 0;
+  grid-column: 2;
+  grid-row: 1;
+  display: grid;
+  gap: 2px;
+}
+
+.report-accordion-summary-copy strong,
+.report-accordion-summary-copy small {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.report-accordion-summary-copy strong {
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.report-accordion-summary-copy small {
+  color: var(--ft-muted, GrayText);
+  font-size: 14px;
+  line-height: 1.35;
+}
+
+.report-accordion-section > .report-section-heading {
+  display: none;
+}
+
+.report-accordion-section[open] > :not(.report-accordion-summary):not(.report-section-heading) {
+  margin-inline: 14px;
+}
+
+.report-accordion-section[open] > :last-child {
+  margin-bottom: 14px;
+}
+
+.report-accordion-summary:hover {
+  background: var(--ft-surface-subtle, color-mix(in srgb, CanvasText 3%, Canvas));
+}
+
+.report-accordion-summary:focus-visible {
+  outline: 2px solid Highlight;
+  outline-offset: -3px;
+}
+
+@media (forced-colors: active) {
+  .report-accordion-summary::after {
+    border-color: ButtonText;
+  }
+}

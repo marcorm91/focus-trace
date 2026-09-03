@@ -128,12 +128,19 @@ test('Inspect, localized impact matrix, occurrence navigation and compact report
   await panel.getByRole('button', { name: /Report|Informe/ }).click();
   await expect(panel.getByRole('heading', { level: 2, name: /Accessibility report|Informe de accesibilidad/ })).toBeVisible();
   await expect(panel.locator('.report-priority-list > li > span').first()).toHaveText('Análisis');
+
+  const reportSection = panel.locator('details.report-accordion-section').filter({
+    hasText: /Full page scan|Barrido completo de página/,
+  }).first();
+  await expect(reportSection).not.toHaveAttribute('open', '');
+  await reportSection.locator(':scope > summary').click();
+  await expect(reportSection).toHaveAttribute('open', '');
+
   await expect(panel.locator('.report-compact-tabs')).toBeVisible();
   await expect(panel.locator('.report-rule-group')).toHaveCount(1);
   await expect(panel.locator('.report-rule-count')).toHaveText('2');
   await expect(panel.locator('.report-group').first()).not.toBeVisible();
 
-  const reportSection = panel.locator('#report-analysis-title').locator('..').locator('..').locator('..');
   const reportRule = panel.locator('.report-rule-group').first();
   const inset = await Promise.all([reportSection.boundingBox(), reportRule.boundingBox()]);
   expect(inset[0]).not.toBeNull();
