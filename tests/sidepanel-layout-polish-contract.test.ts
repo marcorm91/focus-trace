@@ -7,18 +7,19 @@ function source(path: string): string {
 }
 
 describe('sidepanel layout polish contract', () => {
-  it('keeps five workspace navigation actions readable and responsive', () => {
-    const navigation = source('entrypoints/sidepanel/ux-polish.css');
+  it('keeps four primary workspaces and groups headings inside Structure', () => {
     const structureNavigation = source('entrypoints/sidepanel/structure-navigation.css');
+    const structureView = source('entrypoints/sidepanel/views/StructureView.tsx');
+    const app = source('entrypoints/sidepanel/App.tsx');
     const about = source('entrypoints/sidepanel/about.css');
     const focusGraph = source('entrypoints/sidepanel/focus-graph.css');
 
-    expect(navigation).toContain('.workspace-nav.tabs {');
-    expect(navigation).toContain('grid-template-columns: repeat(5, minmax(0, 1fr));');
-    expect(navigation).toContain('@media (max-width: 520px)');
-    expect(navigation).toContain('grid-template-columns: repeat(3, minmax(0, 1fr));');
+    expect(structureNavigation).toContain('grid-template-columns: repeat(4, minmax(0, 1fr));');
     expect(structureNavigation).toContain('--ft-i-structure');
-    expect(structureNavigation).toContain('button:nth-child(5) > span');
+    expect(structureNavigation).toContain('button:nth-child(4) > span');
+    expect(structureView).toContain("type StructureMode = 'map' | 'headings' | 'semantics' | 'metrics';");
+    expect(structureView).toContain('<HeadingTreeView scan={scan} language={language} onLocate={onLocate} />');
+    expect(app).not.toContain("view === 'headings'");
     expect(about).not.toMatch(/(^|\n)\.tabs\s*\{/);
     expect(focusGraph).not.toMatch(/(^|\n)\.tabs\s*\{/);
   });
