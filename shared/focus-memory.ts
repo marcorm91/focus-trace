@@ -1,4 +1,4 @@
-import type { ScanIssue, ScanResult } from './types';
+import type { FocusMemoryCapturedEvidence, ScanIssue, ScanResult } from './types';
 
 export const FOCUS_MEMORY_STORAGE_KEY = 'focustrace:memory:v1';
 export const FOCUS_MEMORY_SETTINGS_STORAGE_KEY = 'focustrace:memory-settings:v1';
@@ -6,8 +6,10 @@ export const FOCUS_MEMORY_RETENTION_DAYS = 90;
 export const FOCUS_MEMORY_MAX_PER_SCOPE = 8;
 export const FOCUS_MEMORY_MAX_OBSERVATIONS = 200;
 export const FOCUS_MEMORY_MAX_FAILURE_FINGERPRINTS = 120;
+export const FOCUS_MEMORY_MAX_VISUAL_PREVIEWS = 24;
 
 const RETENTION_MS = FOCUS_MEMORY_RETENTION_DAYS * 24 * 60 * 60 * 1000;
+const MAX_MEMORY_LOCATOR_LENGTH = 240;
 
 export type FocusMemoryStatus = 'new' | 'open' | 'fixed' | 'regressed' | 'changed' | 'unchanged';
 export type FocusMemoryFindingState = 'new' | 'present' | 'resolved' | 'regressed' | 'changed';
@@ -31,6 +33,9 @@ export interface FocusMemoryFailureDescriptor {
   fingerprint: string;
   ruleId: string;
   contrast?: FocusMemoryContrastSnapshot;
+  locator?: string;
+  previewDataUrl?: string;
+  previewCapturedAt?: number;
 }
 
 export interface FocusMemoryObservation {
@@ -190,6 +195,11 @@ function contrastSnapshot(issue: ScanIssue): FocusMemoryContrastSnapshot | undef
   };
 }
 
+function compactLocator(issue: ScanIssue): string | undefined {
+  const locator = issue.targets[0]?.trim();
+  return locator ? locator.slice(0, MAX_MEMORY_LOCATOR_LENGTH) : undefined;
+}
+
 /**
  * Builds one compact descriptor per deterministic failure.
  *
@@ -201,14 +211,22 @@ function contrastSnapshot(issue: ScanIssue): FocusMemoryContrastSnapshot | undef
  */
 export function focusMemoryFailureDescriptors(
   scan: Pick<ScanResult, 'issues'>,
+  capturedEvidence: FocusMemoryCapturedEvidence[] = [],
 ): FocusMemoryFailureDescriptor[] {
   const occurrences = new Map<string, number>();
+  const evidenceByIssue = new Map(capturedEvidence.map((item) => [item.issueIndex, item]));
 
-  return scan.issues.map((issue) => {
+  return scan.issues.map((issue, issueIndex) => {
     const baseFingerprint = findingFingerprint(issue);
     const occurrence = occurrences.get(baseFingerprint) ?? 0;
     occurrences.set(baseFingerprint, occurrence + 1);
     const contrast = contrastSnapshot(issue);
+    const evidence = evidenceByIssue.get(issueIndex);
+    const locator = evidence?.locator?.trim().slice(0, MAX_MEMORY_LOCATOR_LENGTH) || compactLocator(issue);
+    const previewDataUrl = evidence?.dataUrl?.startsWith('data:image/') ? evidence.dataUrl : undefined;
+    const previewCapturedAt = previewDataUrl && typeof evidence?.capturedAt === 'number' && Number.isFinite(evidence.capturedAt)
+      ? evidence.capturedAt
+      : undefined;
 
     return {
       fingerprint: occurrence === 0
@@ -216,13 +234,19 @@ export function focusMemoryFailureDescriptors(
         : `finding-${hashFingerprint(`${baseFingerprint}|occurrence:${occurrence + 1}`)}`,
       ruleId: issue.ruleId,
       ...(contrast ? { contrast } : {}),
+      ...(locator ? { locator } : {}),
+      ...(previewDataUrl ? { previewDataUrl } : {}),
+      ...(previewCapturedAt != null ? { previewCapturedAt } : {}),
     };
   });
 }
 
-export function buildFocusMemoryObservation(scan: ScanResult): FocusMemoryObservation {
+export function buildFocusMemoryObservation(
+  scan: ScanResult,
+  capturedEvidence: FocusMemoryCapturedEvidence[] = [],
+): FocusMemoryObservation {
   const scopeKey = focusMemoryScopeKey(scan);
-  const allFailureDetails = focusMemoryFailureDescriptors(scan);
+  const allFailureDetails = focusMemoryFailureDescriptors(scan, capturedEvidence);
   const failureDetails = allFailureDetails.slice(0, FOCUS_MEMORY_MAX_FAILURE_FINGERPRINTS);
   const failureFingerprints = failureDetails.map((item) => item.fingerprint);
 
@@ -262,7 +286,11 @@ function isFailureDescriptor(value: unknown): value is FocusMemoryFailureDescrip
   const candidate = value as Partial<FocusMemoryFailureDescriptor>;
   return typeof candidate.fingerprint === 'string'
     && typeof candidate.ruleId === 'string'
-    && (candidate.contrast == null || isContrastSnapshot(candidate.contrast));
+    && (candidate.contrast == null || isContrastSnapshot(candidate.contrast))
+    && (candidate.locator == null || typeof candidate.locator === 'string')
+    && (candidate.previewDataUrl == null || (typeof candidate.previewDataUrl === 'string' && candidate.previewDataUrl.startsWith('data:image/')))
+    && (candidate.previewCapturedAt == null
+      || (typeof candidate.previewCapturedAt === 'number' && Number.isFinite(candidate.previewCapturedAt)));
 }
 
 function isObservation(value: unknown): value is FocusMemoryObservation {
@@ -311,6 +339,15 @@ export function normalizeFocusMemorySettings(value: unknown): FocusMemorySetting
   };
 }
 
+function stripVisualPreview(descriptor: FocusMemoryFailureDescriptor): FocusMemoryFailureDescriptor {
+  return {
+    fingerprint: descriptor.fingerprint,
+    ruleId: descriptor.ruleId,
+    ...(descriptor.contrast ? { contrast: descriptor.contrast } : {}),
+    ...(descriptor.locator ? { locator: descriptor.locator } : {}),
+  };
+}
+
 export function pruneFocusMemoryObservations(
   observations: FocusMemoryObservation[],
   now = Date.now(),
@@ -331,7 +368,25 @@ export function pruneFocusMemoryObservations(
     if (kept.length >= FOCUS_MEMORY_MAX_OBSERVATIONS) break;
   }
 
-  return kept;
+  const previewFingerprints = new Set<string>();
+  let previewCount = 0;
+
+  return kept.map((observation) => ({
+    ...observation,
+    ...(observation.failureDetails
+      ? {
+          failureDetails: observation.failureDetails.map((descriptor) => {
+            if (!descriptor.previewDataUrl) return descriptor;
+            if (previewFingerprints.has(descriptor.fingerprint) || previewCount >= FOCUS_MEMORY_MAX_VISUAL_PREVIEWS) {
+              return stripVisualPreview(descriptor);
+            }
+            previewFingerprints.add(descriptor.fingerprint);
+            previewCount += 1;
+            return descriptor;
+          }),
+        }
+      : {}),
+  }));
 }
 
 function observationsAreComparable(
@@ -500,13 +555,14 @@ export function recordFocusMemoryObservation(
   value: unknown,
   scan: ScanResult,
   now = Date.now(),
+  capturedEvidence: FocusMemoryCapturedEvidence[] = [],
 ): {
   store: FocusMemoryStore;
   comparison: FocusMemoryComparison;
   history: FocusMemoryFindingHistory[];
 } {
   const store = normalizeFocusMemoryStore(value);
-  const current = buildFocusMemoryObservation(scan);
+  const current = buildFocusMemoryObservation(scan, capturedEvidence);
   const existing = store.observations.filter((observation) => observation.id !== current.id);
   const previousHistory = existing
     .filter((observation) => observation.scopeKey === current.scopeKey)
