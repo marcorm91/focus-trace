@@ -60,7 +60,8 @@ describe('multipage audit UI contract', () => {
     const storage = readFileSync(resolve(process.cwd(), 'lib/audit/multipage-audit-storage.ts'), 'utf8');
 
     expect(hook).toContain('captureReportVisualEvidence');
-    expect(hook).toContain('MAX_AUDIT_VISUALS_PER_REVIEW = 2');
+    expect(hook).toContain('MAX_AUDIT_VISUALS_PER_REVIEW = 3');
+    expect(storage).toContain('MAX_VISUALS_PER_PAGE = 3');
     expect(storage).toContain('MAX_VISUAL_DATA_CHARS = 3_000_000');
     expect(storage).toContain('MAX_AUDIT_STORE_CHARS = 4_500_000');
     expect(storage).toContain('trimAuditHistoryToBudget');
