@@ -3,10 +3,7 @@ import {
   localizedScanIssue as baseLocalizedScanIssue,
 } from './i18n-base';
 import type { AppLanguage } from './i18n-base';
-import {
-  localizedReferenceLabel,
-  localizeIssueSourceCopy,
-} from './i18n-source-copy';
+import { localizeIssueSourceCopy } from './i18n-source-copy';
 import type { ScanIssue } from './types';
 
 export * from './i18n-base';
