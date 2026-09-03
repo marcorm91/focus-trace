@@ -25,10 +25,6 @@ function formatRatio(value: number | undefined): string | undefined {
   return Number(value.toFixed(2)).toString();
 }
 
-function findingReference(fingerprint: string): string {
-  return fingerprint.replace(/^finding-/, '').slice(-6).toUpperCase();
-}
-
 function findingStateLabel(state: FocusMemoryFindingState, language: AppLanguage): string {
   if (state === 'new') return tr(language, 'New', 'Nuevo');
   if (state === 'present') return tr(language, 'Still present', 'Sigue presente');
@@ -57,6 +53,8 @@ function LastDetection({ item, language }: { item: FocusMemoryFindingHistory; la
   if (item.lastDetectedAt == null) return null;
 
   const contrast = item.lastKnownDetail?.contrast;
+  const previewDataUrl = item.lastKnownDetail?.previewDataUrl;
+  const locator = item.lastKnownDetail?.locator;
   const ratio = formatRatio(contrast?.ratio);
   const requiredRatio = formatRatio(contrast?.requiredRatio);
   const hasTextMetrics = contrast?.fontSizePx != null || contrast?.fontWeight != null;
@@ -68,10 +66,31 @@ function LastDetection({ item, language }: { item: FocusMemoryFindingHistory; la
     >
       <div className="focus-memory-last-detection-head">
         <strong>{tr(language, 'Last detection', 'Última detección')}</strong>
-        <code title={tr(language, 'Stable local finding reference', 'Referencia local estable del fallo')}>
-          {tr(language, 'Ref.', 'Ref.')} {findingReference(item.fingerprint)}
-        </code>
       </div>
+
+      {previewDataUrl && (
+        <figure
+          className="focus-memory-preview"
+          tabIndex={0}
+          title={tr(language, 'Hover or focus to enlarge the saved preview', 'Pasa el cursor o enfoca para ampliar la vista previa guardada')}
+        >
+          <img
+            src={previewDataUrl}
+            alt={tr(
+              language,
+              'Saved local preview of the element affected by this finding',
+              'Vista previa local guardada del elemento afectado por este fallo',
+            )}
+          />
+          <figcaption>
+            {tr(
+              language,
+              'Local preview saved while the finding was present',
+              'Vista previa local guardada mientras el fallo estaba presente',
+            )}
+          </figcaption>
+        </figure>
+      )}
 
       <dl>
         <div>
@@ -82,6 +101,13 @@ function LastDetection({ item, language }: { item: FocusMemoryFindingHistory; la
             </time>
           </dd>
         </div>
+
+        {!previewDataUrl && locator && (
+          <div>
+            <dt>{tr(language, 'Element', 'Elemento')}</dt>
+            <dd><code>{locator}</code></dd>
+          </div>
+        )}
 
         {contrast && ratio && requiredRatio && (
           <div>
@@ -212,8 +238,8 @@ function FindingHistoryItem({
           <small id={resolveHintId}>
             {tr(
               language,
-              'Removes the detailed local history for this fixed finding. FocusTrace keeps only a minimal fingerprint so it can identify a future regression.',
-              'Elimina el historial local detallado de este fallo corregido. FocusTrace conserva solo una huella mínima para identificar una futura regresión.',
+              'Removes the detailed local history for this fixed finding, including any saved preview or locator. FocusTrace keeps only a minimal fingerprint so it can identify a future regression.',
+              'Elimina el historial local detallado de este fallo corregido, incluida cualquier vista previa o localizador guardado. FocusTrace conserva solo una huella mínima para identificar una futura regresión.',
             )}
           </small>
         </div>

@@ -286,7 +286,7 @@ describe('FocusTrace Memory', () => {
     expect(focusMemoryScopeKey(intro)).toBe(focusMemoryScopeKey(examples));
   });
 
-  it('stores compact hashes and generic rule ids instead of raw URLs and failing selectors', () => {
+  it('stores compact hashes and generic rule ids without retaining the raw page URL', () => {
     const result = scan({
       scannedAt: 1_000,
       url: 'https://private.example.test/customer/987654',
@@ -296,11 +296,11 @@ describe('FocusTrace Memory', () => {
     const serialized = JSON.stringify(observation);
 
     expect(serialized).not.toContain('private.example.test');
-    expect(serialized).not.toContain('customer-secret-button');
     expect(observation.failureFingerprints[0]).toMatch(/^finding-/);
     expect(observation.failureDetails?.[0]).toEqual({
       fingerprint: observation.failureFingerprints[0],
       ruleId: 'FT-WCAG-003',
+      locator: '#customer-secret-button',
     });
     expect(observation.scopeKey).toMatch(/^scope-/);
   });
@@ -326,7 +326,11 @@ describe('FocusTrace Memory', () => {
       'FT-WCAG-010',
       'FT-WCAG-010',
     ]);
-    expect(JSON.stringify(observation)).not.toContain('#stats');
+    expect(observation.failureDetails?.map((item) => item.locator)).toEqual([
+      '#stats > p:nth-of-type(1)',
+      '#stats > p:nth-of-type(2)',
+      '#stats > p:nth-of-type(3)',
+    ]);
 
     const first = recordFocusMemoryObservation(undefined, firstScan, 1_000);
     const second = recordFocusMemoryObservation(

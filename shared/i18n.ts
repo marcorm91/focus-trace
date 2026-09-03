@@ -3,9 +3,11 @@ import {
   localizedScanIssue as baseLocalizedScanIssue,
 } from './i18n-base';
 import type { AppLanguage } from './i18n-base';
+import { localizeIssueSourceCopy } from './i18n-source-copy';
 import type { ScanIssue } from './types';
 
 export * from './i18n-base';
+export { localizedReferenceLabel } from './i18n-source-copy';
 
 const EXTRA_COPY_ES: Record<string, { title: string; description: string }> = {
   'FT-WARN-008': {
@@ -137,14 +139,18 @@ export function localizedRuleTitle(ruleId: string, fallback: string, language: A
 
 export function localizedScanIssue(issue: ScanIssue, language: AppLanguage): ScanIssue {
   const copy = language === 'es' ? EXTRA_COPY_ES[issue.ruleId] : undefined;
-  if (!copy) return baseLocalizedScanIssue(issue, language);
+  if (!copy) {
+    return localizeIssueSourceCopy(issue, baseLocalizedScanIssue(issue, language), language);
+  }
 
-  const localized = baseLocalizedScanIssue({
+  let localized = baseLocalizedScanIssue({
     ...issue,
     title: copy.title,
     description: copy.description,
   }, language);
-  if (!issue.evidence || localized.evidence !== issue.evidence) return localized;
-  const evidence = localizedExtraEvidence(issue.ruleId, issue.evidence);
-  return evidence ? { ...localized, evidence } : localized;
+  if (issue.evidence && localized.evidence === issue.evidence) {
+    const evidence = localizedExtraEvidence(issue.ruleId, issue.evidence);
+    if (evidence) localized = { ...localized, evidence };
+  }
+  return localizeIssueSourceCopy(issue, localized, language);
 }

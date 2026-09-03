@@ -714,10 +714,10 @@ function FindingRow({
             <p>{remediationForIssue(finding.exampleIssue, language)}</p>
           </section>
 
-          {finding.references.length > 0 && (
+          {issue.references.length > 0 && (
             <section className="finding-references">
               <small>{tr(language, 'Standards references', 'Referencias normativas')}</small>
-              <ul>{finding.references.map((reference) => (
+              <ul>{issue.references.map((reference) => (
                 <li key={`${reference.type}-${reference.id}-${reference.url}`}>
                   <a href={reference.url} target="_blank" rel="noreferrer">
                     {reference.type} {reference.id}{reference.level ? ` (${reference.level})` : ''} · {reference.label}

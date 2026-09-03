@@ -15,6 +15,7 @@ Responsibilities include:
 - rendering scan, heading, focus, replay and report views;
 - managing user-facing settings;
 - requesting optional HTTP/HTTPS page access directly from explicit user actions, before querying privileged tab URL fields on a fresh installation;
+- collecting bounded local Memory evidence for an explicit scan when Memory is enabled;
 - presenting FocusTrace Memory comparisons without mutating scan history merely by rendering a view.
 
 The side panel treats the background session as the source of truth for the active tab. Asynchronous tab refreshes are guarded so a slow response from a previously selected tab cannot overwrite the current tab state.
@@ -25,7 +26,7 @@ The side panel treats the background session as the source of truth for the acti
 
 Per-tab writes are serialized before updating `browser.storage.session`. This is important in Manifest V3 because runtime events can arrive close together and the service worker itself can be suspended between periods of activity.
 
-The background stores a completed static scan before broadcasting the updated session. If FocusTrace Memory is enabled, the same save flow records the compact historical observation independently of which UI view the user opens afterwards.
+The background stores a completed static scan before broadcasting the updated session. If FocusTrace Memory is enabled, the same save flow records the compact historical observation and any bounded local evidence supplied by the explicit scan independently of which UI view the user opens afterwards.
 
 ### Inspected-page runtime
 
@@ -77,9 +78,11 @@ Runtime causal classifications explain recorded evidence. They do not automatica
 
 ### `lib/focus-memory/`
 
-Browser-storage lifecycle for FocusTrace Memory.
+Browser-storage lifecycle and optional local evidence capture for FocusTrace Memory.
 
 Memory persistence is deliberately separate from React presentation components. Saving a scan records an eligible observation; rendering a result reads history but does not create it.
+
+When Memory is enabled, `visual-evidence.ts` can collect a compact locator for failing targets and, for a bounded number of currently visible targets, attempt a visible-tab capture and local crop. Capture failure is non-fatal and leaves the locator as the fallback.
 
 ### `lib/report/`
 
@@ -121,9 +124,11 @@ Closing a tab removes its session entry. **Start Over** clears the page/Trace ev
 
 - interface language and scale;
 - breakpoint preferences;
-- FocusTrace Memory opt-in and bounded history.
+- FocusTrace Memory opt-in, bounded history and optional bounded local evidence.
 
-FocusTrace Memory is disabled by default. It stores hashed fingerprints, counts and timestamps rather than page HTML, full DOM snapshots or screenshots. Current retention bounds are 8 observations per scope, 200 total and 90 days; age cleanup occurs when FocusTrace next reads Memory storage. Users can clear saved history from Settings even when Memory is disabled.
+FocusTrace Memory is disabled by default. Its normal observation data includes hashed fingerprints, counts and timestamps. To preserve useful context for a resolved finding, it can also retain a compact target locator and, when available, a small local JPEG crop of the visible failing element. Memory does not store page HTML, a full DOM snapshot or a full-page screenshot.
+
+Current retention bounds are 8 observations per scope, 200 observations total, 24 visual previews across remembered findings and 90 days. Only the newest retained preview for a finding is kept. Age cleanup occurs when FocusTrace next reads Memory storage. Users can clear saved history and evidence from Settings even when Memory is disabled.
 
 ## Static scan flow
 
@@ -138,11 +143,13 @@ Run FocusTrace static scanner in inspected page
         ↓
 ScanResult returned to side panel
         ↓
+If Memory enabled: collect compact locators and bounded visible-element previews
+        ↓
 FOCUSTRACE_SAVE_SCAN
         ↓
 Background serializes per-tab write
         ├─ stores current scan in storage.session
-        ├─ records eligible compact Memory observation in storage.local
+        ├─ records eligible Memory observation/evidence in storage.local
         └─ broadcasts updated session
 ```
 
@@ -172,13 +179,16 @@ Selectors stored as evidence must resolve as specifically as practical to the el
 
 A unique HTML ID can use the compact `#id` form. If the ID is duplicated, FocusTrace must not use the ambiguous ID selector; it falls back to a structural selector (and can anchor that path to a unique ancestor ID). This matters for Inspect/highlight navigation, report occurrences, runtime correlation and historical fingerprints.
 
+Memory locators deliberately retain only a bounded selector string as historical context. They are not treated as a stable DOM snapshot and are removed when the detailed resolved finding is archived or when Memory history is cleared.
+
 ## Permission boundary
 
 Production builds intentionally avoid permanent global host access.
 
 - `activeTab` and `scripting` support explicit page analysis/runtime actions.
 - HTTP/HTTPS host access is optional and requested from the user action that needs it.
-- broader screenshot access is temporary and export-specific.
+- Memory visible-element previews are attempted only during an explicit scan using the active-tab/page-access context already established for that action; capture failure falls back to the locator and does not request persistent broad screenshot access.
+- broader `<all_urls>` screenshot access remains temporary and export-specific for printable-report evidence.
 - E2E builds may include localhost access solely to exercise the extension in browser tests.
 
 Changes to these boundaries require a privacy/security review and corresponding documentation updates.

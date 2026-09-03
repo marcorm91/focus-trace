@@ -37,9 +37,11 @@ The runtime debugger can derive deterministic causal explanations for patterns s
 
 ### FocusTrace Memory
 
-FocusTrace Memory is an optional, local history for repeated page and component scans. It is **disabled by default**. When the user enables **Remember accessibility history**, FocusTrace stores compact hashed fingerprints, counts and timestamps so later scans can identify persistent failures, changes, fixes that are no longer reproduced and regressions.
+FocusTrace Memory is an optional, local history for repeated page and component scans. It is **disabled by default**. When the user enables **Remember accessibility history**, FocusTrace stores bounded local observations so later scans can identify persistent failures, changes, fixes that are no longer reproduced and regressions.
 
-Memory does not store page HTML, full DOM snapshots or screenshots. History is bounded to 8 observations per page/component scope and 200 total; observations older than 90 days are pruned when Memory storage is next read. Saved history can be cleared from Settings even while Memory is disabled.
+To keep resolved findings understandable, Memory can retain a compact locator such as an id or CSS selector. During an explicit scan, if a failing element is currently visible and the browser permits visible-tab capture, Memory may also save a small local JPEG crop of that element. If capture is unavailable, the locator remains as the fallback. Memory does not store page HTML, a full DOM snapshot or a full-page screenshot.
+
+History is bounded to 8 observations per page/component scope, 200 observations total and 24 visual previews across remembered findings; observations older than 90 days are pruned when Memory storage is next read. Saved history and local evidence can be cleared from Settings even while Memory is disabled.
 
 Memory is diagnostic history rather than proof of WCAG conformance. See [`PRIVACY.md`](PRIVACY.md) for the storage and opt-in model.
 
@@ -102,14 +104,16 @@ FocusTrace intentionally keeps its production permission set narrow:
 
 | Permission | Browser | Why it is needed |
 | --- | --- | --- |
-| `activeTab` | Chrome / Edge / Firefox | Analyze the page the user explicitly activates FocusTrace on. |
+| `activeTab` | Chrome / Edge / Firefox | Analyze the page the user explicitly activates FocusTrace on and support visible-tab evidence for an explicit analysis when available. |
 | `scripting` | Chrome / Edge / Firefox | Inject the local analysis/runtime instrumentation into the active page. |
-| `storage` | Chrome / Edge / Firefox | Persist extension preferences and local state. |
+| `storage` | Chrome / Edge / Firefox | Persist extension preferences, local state and optional bounded FocusTrace Memory evidence. |
 | `sidePanel` | Chrome / Edge | Provide the FocusTrace debugging interface in the Chromium side panel. |
 
 Firefox uses its native sidebar manifest integration instead of requesting the Chromium-only `sidePanel` permission.
 
 Production builds do not require host access at installation. HTTP/HTTPS page access is declared as optional and requested from the first explicit page action, such as **Analyze this page**. Requesting it before reading the active tab is required because Chromium can hide `Tab.url` from a newly installed extension until host access exists. The granted access remains controlled by the browser and can be revoked from the extension's site-access settings.
+
+When Memory is enabled, an explicit scan may attempt a visible-tab capture to create a small local crop of a visible failing element. This Memory flow does not request persistent broad `<all_urls>` screenshot access; if visible-tab capture is unavailable, FocusTrace keeps the compact locator fallback instead.
 
 Printable reports can optionally include visual evidence; when that option is used, FocusTrace requests the browser's `<all_urls>` screenshot capability from the Export PDF click because `tabs.captureVisibleTab()` requires `activeTab` or `<all_urls>`. That broad screenshot permission is removed after the export operation. A localhost host permission is enabled only for the end-to-end test build.
 
@@ -117,9 +121,9 @@ Printable reports can optionally include visual evidence; when that option is us
 
 All analysis runs locally in the browser. FocusTrace does not send page content, DOM data, screenshots or recorded interactions to a FocusTrace server or third-party AI API.
 
-Visual evidence in printable reports is optional. Screenshot crops can contain visible page content, are prepared locally for that report only and are not transmitted by FocusTrace.
+FocusTrace Memory is opt-in and disabled by default. When enabled, it can retain bounded local history, a compact element locator and, when capture succeeds for a currently visible failing element, a small local screenshot crop. This evidence stays in the browser profile and can be cleared from Settings.
 
-FocusTrace Memory is opt-in, disabled by default and stores only bounded compact local history. It can be disabled or cleared from Settings.
+Visual evidence in printable reports is optional. Screenshot crops can contain visible page content, are prepared locally and are not transmitted by FocusTrace.
 
 See [`PRIVACY.md`](PRIVACY.md) for the canonical project privacy policy and [`SECURITY.md`](SECURITY.md) for responsible vulnerability reporting.
 

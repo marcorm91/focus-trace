@@ -29,11 +29,14 @@ describe('severity card presentation contracts', () => {
     }
   });
 
-  it('uses a neutral one-pixel border and chevron for impact rationale accordions', () => {
+  it('uses a neutral one-pixel border and the shared SVG chevron for impact rationale accordions', () => {
     const css = source('entrypoints/sidepanel/components/finding-guidance.css');
 
     expect(css).toContain('grid-template-columns: minmax(0, 1fr) auto 18px;');
-    expect(css).toContain("content: '›';");
+    expect(css).toContain("content: '';");
+    expect(css).toContain('-webkit-mask: var(--ft-i-chevron-right) center / contain no-repeat;');
+    expect(css).toContain('mask: var(--ft-i-chevron-right) center / contain no-repeat;');
+    expect(css).not.toContain("content: '›';");
     expect(css).toContain('.finding-guidance-severity[open] > summary::after');
     expect(css).not.toContain('.finding-guidance-severity.severity-critical');
     expect(css).not.toContain('border-left-width: 4px;');

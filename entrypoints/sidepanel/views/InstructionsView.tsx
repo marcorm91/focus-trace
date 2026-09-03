@@ -1,3 +1,5 @@
+import { useEffect, useState } from 'react';
+import { focusMemorySettingsState } from '../../../lib/focus-memory/storage';
 import { tr, type AppLanguage } from '../../../shared/i18n';
 import { ruleLegendCopy } from '../../../shared/rule-legend';
 import { closeFocusedInstructionsView } from '../settings-focus';
@@ -21,6 +23,20 @@ function InstructionCard({
 
 export function InstructionsView({ language }: { language: AppLanguage }) {
   const legend = ruleLegendCopy(language);
+  const [memoryEnabled, setMemoryEnabled] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    void focusMemorySettingsState()
+      .then(({ settings }) => {
+        if (!cancelled) setMemoryEnabled(settings.enabled);
+      })
+      .catch(() => undefined);
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
   return (
     <section className="panel instructions-panel" aria-labelledby="instructions-title">
       <button
@@ -133,6 +149,16 @@ export function InstructionsView({ language }: { language: AppLanguage }) {
         <InstructionCard title="FocusTrace Memory">
           <p>{tr(language, 'Memory is optional and disabled by default. When enabled in Settings, it keeps bounded local scan history so page or component findings can be compared over time.', 'Memory es opcional y está desactivado por defecto. Al activarlo en Ajustes, conserva un historial local limitado para comparar con el tiempo los hallazgos de una página o componente.')}</p>
           <p>{tr(language, 'Use it to identify persistent findings, changes, issues that are no longer reproduced and regressions. Memory history is diagnostic and does not prove WCAG conformance.', 'Úsalo para identificar hallazgos persistentes, cambios, problemas que ya no se reproducen y regresiones. El historial de Memory es diagnóstico y no demuestra conformidad WCAG.')}</p>
+          {memoryEnabled && (
+            <p className="instructions-memory-evidence-note">
+              <strong>{tr(language, 'Local visual evidence:', 'Evidencia visual local:')}</strong>{' '}
+              {tr(
+                language,
+                'while Memory is enabled, FocusTrace may save a small screenshot crop of a currently visible failing element so a resolved finding can still be recognized later. If a preview cannot be captured, Memory keeps a compact element locator such as an id or CSS selector. This evidence stays in this browser profile and is removed with the detailed finding history.',
+                'mientras Memory está activo, FocusTrace puede guardar un pequeño recorte de captura de un elemento con fallo que esté visible para poder reconocerlo después aunque el hallazgo ya no se reproduzca. Si no puede obtener una vista previa, Memory conserva un localizador compacto del elemento, como un id o selector CSS. Esta evidencia permanece en este perfil del navegador y se elimina junto con el historial detallado del fallo.',
+              )}
+            </p>
+          )}
         </InstructionCard>
 
         <InstructionCard title={tr(language, 'Settings and privacy', 'Ajustes y privacidad')}>

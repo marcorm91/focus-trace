@@ -18,7 +18,7 @@ import {
   normalizeFocusMemoryResolvedStore,
   pruneFocusMemoryResolvedFindings,
 } from '../../shared/focus-memory-resolution';
-import type { ScanResult } from '../../shared/types';
+import type { FocusMemoryCapturedEvidence, ScanResult } from '../../shared/types';
 
 export interface FocusMemoryViewState {
   enabled: boolean;
@@ -108,12 +108,15 @@ export function setFocusMemoryEnabled(enabled: boolean): Promise<FocusMemorySett
   });
 }
 
-export function recordFocusMemoryScan(scan: ScanResult): Promise<FocusMemoryComparison | undefined> {
+export function recordFocusMemoryScan(
+  scan: ScanResult,
+  capturedEvidence: FocusMemoryCapturedEvidence[] = [],
+): Promise<FocusMemoryComparison | undefined> {
   return serializeMemoryAccess(async () => {
     const { settings, store, resolvedFindings } = await loadMemoryStorage();
     if (!settings.enabled || scanIsSuppressed(settings, scan)) return undefined;
 
-    const result = recordFocusMemoryObservation(store, scan);
+    const result = recordFocusMemoryObservation(store, scan, Date.now(), capturedEvidence);
     const resolved = applyResolvedFindingMemory(
       result.comparison,
       result.history,

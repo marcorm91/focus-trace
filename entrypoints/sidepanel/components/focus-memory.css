@@ -245,10 +245,46 @@
   font-weight: 850;
 }
 
-.focus-memory-last-detection-head code {
-  flex: 0 0 auto;
+.focus-memory-preview {
+  width: min(180px, 100%);
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  outline: none;
+  transition: width 140ms ease;
+}
+
+.focus-memory-preview:hover,
+.focus-memory-preview:focus-visible {
+  width: 100%;
+}
+
+.focus-memory-preview img {
+  width: 100%;
+  max-height: 86px;
+  display: block;
+  object-fit: cover;
+  border: 1px solid var(--ft-border-soft);
+  border-radius: var(--ft-radius-xs);
+  background: var(--ft-surface);
+  transition: max-height 140ms ease;
+}
+
+.focus-memory-preview:hover img,
+.focus-memory-preview:focus-visible img {
+  max-height: 240px;
+  object-fit: contain;
+}
+
+.focus-memory-preview:focus-visible {
+  border-radius: var(--ft-radius-xs);
+  box-shadow: 0 0 0 2px var(--ft-focus-ring, Highlight);
+}
+
+.focus-memory-preview figcaption {
   color: var(--ft-muted);
   font-size: 14px;
+  line-height: 1.35;
 }
 
 .focus-memory-last-detection dl {
@@ -281,6 +317,15 @@
 
 .focus-memory-last-detection dd {
   color: var(--ft-text);
+}
+
+.focus-memory-last-detection dd code {
+  max-width: 100%;
+  display: inline-block;
+  color: var(--ft-text);
+  font-size: 14px;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .focus-memory-last-detection time {

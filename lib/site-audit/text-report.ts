@@ -67,9 +67,9 @@ function findingLines(finding: SiteAuditFindingAggregate, language: AppLanguage)
   output.push(`  ${line(es ? 'Descripción' : 'Description', issue.description)}`);
   if (issue.evidence) output.push(`  ${line(es ? 'Evidencia' : 'Evidence', issue.evidence)}`);
 
-  if (finding.references.length) {
+  if (issue.references.length) {
     output.push(`  ${es ? 'Criterios/fuentes' : 'Criteria/sources'}:`);
-    finding.references.forEach((reference) => {
+    issue.references.forEach((reference) => {
       output.push(`    - ${reference.type} ${reference.id}${reference.level ? ` (${reference.level})` : ''} · ${reference.label} · ${reference.url}`);
     });
   }
