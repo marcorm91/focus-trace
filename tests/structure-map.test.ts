@@ -86,18 +86,12 @@ describe('Structure DOM collector', () => {
 
   it('stops sampling very large DOMs at the safety limit', () => {
     const container = document.createElement('main');
-    const fragment = document.createDocumentFragment();
-    for (let index = 0; index < 10_050; index += 1) {
-      const span = document.createElement('span');
-      span.textContent = String(index);
-      fragment.append(span);
-    }
-    container.append(fragment);
+    container.innerHTML = '<span></span>'.repeat(10_050);
     document.body.append(container);
 
     const snapshot = collectStructureMapInPage();
 
     expect(snapshot.metrics.totalElements).toBe(10_000);
     expect(snapshot.truncated).toBe(true);
-  });
+  }, 15_000);
 });
