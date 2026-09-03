@@ -1,0 +1,172 @@
+name: Obsolete code cleanup
+
+on:
+  push:
+    branches:
+      - fix/empty-state-consistency
+    paths:
+      - .github/workflows/cleanup-obsolete-code.yml
+
+permissions:
+  contents: write
+
+jobs:
+  cleanup:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: fix/empty-state-consistency
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+      - name: Remove obsolete Structure and navigation remnants
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = require('node:path');
+
+          function read(file) { return fs.readFileSync(file, 'utf8'); }
+          function write(file, value) { fs.writeFileSync(file, value); }
+          function exact(file, from, to) {
+            const source = read(file);
+            if (!source.includes(from)) throw new Error(`Expected text not found in ${file}: ${from.slice(0, 120)}`);
+            write(file, source.replace(from, to));
+          }
+          function walk(dir, visit) {
+            for (const entry of fs.readdirSync(dir, { withFileTypes: true })) {
+              const full = path.join(dir, entry.name);
+              if (entry.isDirectory()) walk(full, visit);
+              else visit(full);
+            }
+          }
+
+          for (const root of ['entrypoints', 'lib', 'tests']) {
+            walk(root, (file) => {
+              if (!/\.(ts|tsx)$/.test(file)) return;
+              let source = read(file);
+              source = source.replaceAll('structure-map', 'structure-evidence');
+              source = source.replaceAll('collectStructureMapInPage', 'collectStructureEvidenceInPage');
+              write(file, source);
+            });
+          }
+
+          exact(
+            'lib/report/structure-report.ts',
+            `    structureHints: tr(language, 'Semantic suggestions', 'Sugerencias semánticas'),\n    // Retained for compatibility with any downstream/custom report consumer.\n    domElements: tr(language, 'DOM elements', 'Elementos DOM'),\n    semanticElements: tr(language, 'Semantic elements', 'Elementos semánticos'),\n    maxDepth: tr(language, 'Maximum DOM depth', 'Profundidad DOM máxima'),\n    genericContainers: tr(language, 'Generic containers', 'Contenedores genéricos'),\n    genericRatio: tr(language, 'Generic ratio', 'Proporción de elementos genéricos'),\n`,
+            `    structureHints: tr(language, 'Semantic suggestions', 'Sugerencias semánticas'),\n`,
+          );
+
+          exact(
+            'entrypoints/sidepanel/views/SessionReportView.tsx',
+            `                      <span><strong>{reportStructureSnapshot.metrics.totalElements}</strong> {tr(language, 'DOM elements', 'elementos DOM')}</span>\n                      <span><strong>{reportStructureSnapshot.metrics.semanticElements}</strong> {tr(language, 'semantic elements', 'elementos semánticos')}</span>\n                      <span><strong>{reportStructureSnapshot.metrics.landmarkCount}</strong> {tr(language, 'semantic regions', 'regiones semánticas')}</span>\n                      <span><strong>{reportStructureSnapshot.metrics.listCount}</strong> {tr(language, 'lists', 'listas')}</span>\n                      <span><strong>{reportStructureSnapshot.metrics.maxDepth}</strong> {tr(language, 'maximum depth', 'profundidad máxima')}</span>\n                      <span><strong>{structureHints.length}</strong> {tr(language, 'structural suggestions', 'sugerencias estructurales')}</span>`,
+            `                      <span><strong>{reportStructureSnapshot.metrics.landmarkCount}</strong> {tr(language, 'semantic regions', 'regiones semánticas')}</span>\n                      <span><strong>{reportStructureSnapshot.metrics.listCount}</strong> {tr(language, 'lists', 'listas')}</span>\n                      <span><strong>{reportStructureSnapshot.metrics.formCount}</strong> {tr(language, 'forms', 'formularios')}</span>\n                      <span><strong>{reportStructureSnapshot.metrics.buttonCount}</strong> {tr(language, 'buttons', 'botones')}</span>\n                      <span><strong>{reportStructureSnapshot.metrics.linkCount}</strong> {tr(language, 'links', 'enlaces')}</span>\n                      <span><strong>{reportStructureSnapshot.metrics.formControlCount}</strong> {tr(language, 'form controls', 'campos de formulario')}</span>\n                      <span><strong>{reportStructureSnapshot.metrics.tableCount}</strong> {tr(language, 'tables', 'tablas')}</span>\n                      <span><strong>{reportStructureSnapshot.metrics.imageCount}</strong> {tr(language, 'images', 'imágenes')}</span>\n                      <span><strong>{structureHints.length}</strong> {tr(language, 'structural suggestions', 'sugerencias estructurales')}</span>`,
+          );
+          exact(
+            'entrypoints/sidepanel/views/SessionReportView.tsx',
+            `'Open Structure and generate the map if you want DOM composition and semantic suggestions included in this report.',\n                      'Abre Estructura y genera el mapa si quieres incluir en este informe la composición del DOM y las sugerencias semánticas.',`,
+            `'Open Structure and analyze it if you want accessibility-oriented structural metrics and semantic suggestions included in this report.',\n                      'Abre Estructura y analízala si quieres incluir en este informe métricas estructurales orientadas a accesibilidad y sugerencias semánticas.',`,
+          );
+
+          exact(
+            'entrypoints/report-print/main.tsx',
+            `                      <span><strong>{structure.metrics.totalElements}</strong> {labels.domElements.toLocaleLowerCase()}</span>\n                      <span><strong>{structure.metrics.semanticElements}</strong> {labels.semanticElements.toLocaleLowerCase()}</span>\n                      <span><strong>{structure.metrics.landmarkCount}</strong> {labels.landmarks.toLocaleLowerCase()}</span>\n                      <span><strong>{structure.metrics.listCount}</strong> {labels.lists.toLocaleLowerCase()}</span>\n                      <span><strong>{structure.metrics.maxDepth}</strong> {labels.maxDepth.toLocaleLowerCase()}</span>\n                      <span><strong>{structureHints.length}</strong> {labels.structureHints.toLocaleLowerCase()}</span>`,
+            `                      <span><strong>{structure.metrics.landmarkCount}</strong> {labels.landmarks.toLocaleLowerCase()}</span>\n                      <span><strong>{structure.metrics.listCount}</strong> {labels.lists.toLocaleLowerCase()}</span>\n                      <span><strong>{structure.metrics.formCount}</strong> {labels.forms.toLocaleLowerCase()}</span>\n                      <span><strong>{structure.metrics.buttonCount}</strong> {labels.buttons.toLocaleLowerCase()}</span>\n                      <span><strong>{structure.metrics.linkCount}</strong> {labels.links.toLocaleLowerCase()}</span>\n                      <span><strong>{structure.metrics.formControlCount}</strong> {labels.formControls.toLocaleLowerCase()}</span>\n                      <span><strong>{structure.metrics.tableCount}</strong> {labels.tables.toLocaleLowerCase()}</span>\n                      <span><strong>{structure.metrics.imageCount}</strong> {labels.images.toLocaleLowerCase()}</span>\n                      <span><strong>{structureHints.length}</strong> {labels.structureHints.toLocaleLowerCase()}</span>`,
+          );
+          exact(
+            'entrypoints/report-print/main.tsx',
+            `'Heading summary available. Generate Structure before exporting to add DOM metrics and semantic suggestions.',\n                      'Resumen de encabezados disponible. Genera Estructura antes de exportar para añadir métricas del DOM y sugerencias semánticas.',`,
+            `'Heading summary available. Analyze Structure before exporting to add accessibility-oriented metrics and semantic suggestions.',\n                      'Resumen de encabezados disponible. Analiza Estructura antes de exportar para añadir métricas orientadas a accesibilidad y sugerencias semánticas.',`,
+          );
+          exact(
+            'entrypoints/report-print/main.tsx',
+            `'Structure metrics were not generated. Open Structure and generate the map before exporting if you want DOM composition and semantic suggestions included.',\n                  'Las métricas de estructura no se han generado. Abre Estructura y genera el mapa antes de exportar si quieres incluir la composición del DOM y las sugerencias semánticas.',`,
+            `'Structure metrics were not generated. Open Structure and analyze it before exporting if you want accessibility-oriented metrics and semantic suggestions included.',\n                  'Las métricas de estructura no se han generado. Abre Estructura y analízala antes de exportar si quieres incluir métricas orientadas a accesibilidad y sugerencias semánticas.',`,
+          );
+
+          exact(
+            'lib/report/text-report.ts',
+            `        \`${'${labels.domElements}: ${reportStructure.metrics.totalElements}'}\`,\n        \`${'${labels.semanticElements}: ${reportStructure.metrics.semanticElements}'}\`,\n        \`${'${labels.landmarks}: ${reportStructure.metrics.landmarkCount}'}\`,\n        \`${'${labels.lists}: ${reportStructure.metrics.listCount}'}\`,\n        \`${'${labels.maxDepth}: ${reportStructure.metrics.maxDepth}'}\`,\n        \`${'${labels.genericContainers}: ${reportStructure.metrics.genericContainerCount}'}\`,\n        \`${'${labels.genericRatio}: ${reportStructure.metrics.genericRatio}%'}\`,\n        \`${'${labels.structureHints}: ${reportStructure.hints.length}'}\`,`,
+            `        \`${'${labels.landmarks}: ${reportStructure.metrics.landmarkCount}'}\`,\n        \`${'${labels.lists}: ${reportStructure.metrics.listCount}'}\`,\n        \`${'${labels.forms}: ${reportStructure.metrics.formCount}'}\`,\n        \`${'${labels.buttons}: ${reportStructure.metrics.buttonCount}'}\`,\n        \`${'${labels.links}: ${reportStructure.metrics.linkCount}'}\`,\n        \`${'${labels.formControls}: ${reportStructure.metrics.formControlCount}'}\`,\n        \`${'${labels.tables}: ${reportStructure.metrics.tableCount}'}\`,\n        \`${'${labels.images}: ${reportStructure.metrics.imageCount}'}\`,\n        \`${'${labels.structureHints}: ${reportStructure.hints.length}'}\`,`,
+          );
+          exact(
+            'lib/report/text-report.ts',
+            `'Structure metrics were not generated. Open Structure and generate the map to include DOM composition and semantic suggestions.',\n        'Las métricas de estructura no se han generado. Abre Estructura y genera el mapa para incluir la composición del DOM y las sugerencias semánticas.',`,
+            `'Structure metrics were not generated. Open Structure and analyze it to include accessibility-oriented metrics and semantic suggestions.',\n        'Las métricas de estructura no se han generado. Abre Estructura y analízala para incluir métricas orientadas a accesibilidad y sugerencias semánticas.',`,
+          );
+
+          exact(
+            'tests/text-report.test.ts',
+            `    totalElements: 240,\n    semanticElements: 52,\n    divCount: 96,\n    genericContainerCount: 112,\n    genericRatio: 46.7,\n    landmarkCount: 6,\n    interactiveCount: 18,\n    listCount: 4,\n    maxDepth: 12,\n    maxGenericChain: 0,\n    deepGenericChains: 0,\n`,
+            `    landmarkCount: 6,\n    listCount: 4,\n`,
+          );
+          exact('tests/text-report.test.ts', `    expect(report).toContain('Elementos DOM: 240');\n`, `    expect(report).toContain('Botones: 5');\n    expect(report).toContain('Campos de formulario: 3');\n`);
+
+          exact('entrypoints/sidepanel/ux-polish.css', `.workspace-nav.tabs {\n  grid-template-columns: repeat(5, minmax(0, 1fr));\n}\n\n`, '');
+          exact('entrypoints/sidepanel/ux-polish.css', `  .workspace-nav.tabs {\n    grid-template-columns: repeat(3, minmax(0, 1fr));\n  }\n\n`, '');
+          exact(
+            'entrypoints/sidepanel/structure-navigation.css',
+            `/* Structure replaces the standalone Headings workspace. Keep four primary\n   areas and remap the positional icon contract without shrinking labels. */\n.workspace-nav.tabs {\n  grid-template-columns: repeat(4, minmax(0, 1fr));\n}\n\n`,
+            `/* Structure replaces the standalone Headings workspace. Remap the\n   positional icon contract; the shared navigation layout owns the columns. */\n`,
+          );
+          exact('entrypoints/sidepanel/style.css', '.tabs { display: grid; grid-template-columns: repeat(5, 1fr);', '.tabs { display: grid; grid-template-columns: repeat(4, 1fr);');
+
+          exact(
+            'README.md',
+            `Structure turns the current page DOM into a simplified, on-demand structural view rather than duplicating the browser's raw DOM inspector. The workspace groups four complementary views:\n\n- **Map** — a compact tree of landmarks, semantic elements and relevant containers, with repeated siblings collapsed where useful;\n- **Headings** — the existing H1–H6 outline, hierarchy signals and page-location overlay;\n- **Semantics** — heuristic review suggestions for patterns such as generic elements used as controls, repeated groups that may form lists, navigation-like link groups, deep generic wrapper chains and high \`div\` density;\n- **Metrics** — DOM composition context such as sampled elements, semantic elements, landmarks, lists, nesting depth and generic-container ratios.\n\nSemantic observations are suggestions for review, **not automatic WCAG failures**. Whether a repeated group should really be a list, for example, still depends on the content's meaning.\n\nOpening Structure does not scan or continuously observe the DOM. Map, Semantics and Metrics are generated only when the user explicitly chooses **Generate** or **Refresh**. The collector defaults to a 10,000-element sample limit and the visual tree is capped at 900 relevant nodes so very large pages cannot turn the feature into continuous background work.`,
+            `Structure provides a compact, on-demand accessibility view of the current page instead of duplicating the browser's raw DOM inspector. The workspace groups three complementary views:\n\n- **Headings** — the existing H1–H6 outline, hierarchy signals and page-location overlay;\n- **Semantics** — concrete review suggestions for generic \`div\`/\`span\` elements used as buttons, links or headings, inline click handlers and generic elements placed directly in the tab order;\n- **Metrics** — accessibility-oriented counts for semantic regions, lists, forms, buttons, links, form controls, tables and images. Selecting a metric locates and highlights matching elements on the page.\n\nSemantic observations are suggestions for review, **not automatic WCAG failures**. Native HTML recommendations still depend on the actual purpose of the interaction.\n\nOpening Structure does not continuously observe the DOM. Headings reuses the current page analysis, while Semantics and Metrics are generated only when the user explicitly chooses **Analyze structure** or **Refresh**. The collector samples at most 10,000 elements by default and does not build a parallel visual DOM tree or install a continuous MutationObserver.`,
+          );
+          exact(
+            'README.es.md',
+            `Estructura convierte el DOM de la página actual en una vista estructural simplificada y bajo demanda, en lugar de duplicar el inspector DOM del navegador. El espacio agrupa cuatro vistas complementarias:\n\n- **Mapa** — árbol compacto de landmarks, elementos semánticos y contenedores relevantes, agrupando elementos hermanos repetidos cuando resulta útil;\n- **Encabezados** — el árbol H1–H6 existente, las señales de jerarquía y la localización visual sobre la página;\n- **Semántica** — sugerencias heurísticas para revisar patrones como elementos genéricos usados como controles, grupos repetidos que podrían ser listas, grupos de enlaces con aspecto de navegación, cadenas profundas de contenedores genéricos o una densidad elevada de \`div\`;\n- **Métricas** — contexto sobre la composición del DOM: elementos analizados, elementos semánticos, regiones, listas, profundidad de anidación y proporción de contenedores genéricos.\n\nLas observaciones semánticas son **sugerencias para revisar, no fallos WCAG automáticos**. Por ejemplo, que un grupo repetido deba convertirse realmente en una lista depende del significado del contenido.\n\nEntrar en Estructura no analiza ni observa continuamente el DOM. Mapa, Semántica y Métricas solo se generan cuando el usuario pulsa explícitamente **Generar** o **Actualizar**. El colector limita por defecto la muestra a 10.000 elementos y el árbol visual a 900 nodos relevantes para evitar que una página muy grande convierta esta función en trabajo continuo en segundo plano.`,
+            `Estructura ofrece una vista de accesibilidad compacta y bajo demanda de la página actual, sin duplicar el inspector DOM del navegador. El espacio agrupa tres vistas complementarias:\n\n- **Encabezados** — el árbol H1–H6 existente, las señales de jerarquía y la localización visual sobre la página;\n- **Semántica** — sugerencias concretas para revisar \`div\`/\`span\` usados como botones, enlaces o encabezados, manejadores de clic inline y elementos genéricos incluidos directamente en el orden de tabulación;\n- **Métricas** — recuentos orientados a accesibilidad de regiones semánticas, listas, formularios, botones, enlaces, campos de formulario, tablas e imágenes. Al seleccionar una métrica se localizan y resaltan los elementos correspondientes en la página.\n\nLas observaciones semánticas son **sugerencias para revisar, no fallos WCAG automáticos**. Las recomendaciones de HTML nativo siguen dependiendo de la función real de la interacción.\n\nEntrar en Estructura no observa continuamente el DOM. Encabezados reutiliza el análisis actual de la página, mientras que Semántica y Métricas solo se generan cuando el usuario pulsa explícitamente **Analizar estructura** o **Actualizar**. El colector procesa como máximo 10.000 elementos por defecto y no construye un árbol DOM visual paralelo ni instala un MutationObserver continuo.`,
+          );
+
+          exact(
+            'PRIVACY.md',
+            `Structure is an on-demand view of the current page DOM. Opening the Structure workspace does not automatically traverse, observe or continuously recalculate the page DOM. The Structure Map, Semantics and Metrics views are generated only after an explicit **Generate** or **Refresh** action.\n\nThe resulting Structure snapshot is kept in the current sidepanel/sidebar session. It can contain a simplified tree with selectors, semantic roles, labels and bounded DOM-composition metrics that are needed to render the Structure workspace. The collector applies safety limits on large pages and does not use a continuous MutationObserver for Structure.\n\nWhen a session report is exported after Structure has already been generated, FocusTrace may reuse a compact report subset containing Structure metrics and semantic review suggestions. The report evidence intentionally omits the full Structure tree. Generating or exporting a report does not trigger a second Structure collection automatically.\n\nStructure evidence is diagnostic context, not a WCAG conformance claim. Heuristic observations such as possible semantic lists, navigation-like groups or high generic-container density require human review before markup changes are justified.`,
+            `Structure is an on-demand accessibility view of the current page. Opening the Structure workspace does not automatically traverse, observe or continuously recalculate the page DOM. Headings reuses the current page analysis; Semantics and Metrics are generated only after an explicit **Analyze structure** or **Refresh** action.\n\nThe resulting Structure snapshot is kept in the current sidepanel/sidebar session. It contains bounded accessibility-oriented counts plus the selectors, semantic roles, labels and evidence needed for the concrete semantic suggestions shown to the user. The collector applies a sampling safety limit on large pages and does not use a continuous MutationObserver for Structure.\n\nWhen a session report is exported after Structure has already been analyzed, FocusTrace may reuse a compact report subset containing Structure metrics and semantic review suggestions. Generating or exporting a report does not trigger a second Structure collection automatically.\n\nStructure evidence is diagnostic context, not a WCAG conformance claim. Suggestions such as replacing a generic interactive element with native HTML still require human review of the element's actual purpose.`,
+          );
+
+          exact('docs/STORE_SUBMISSION.md', '- on-demand Structure workspace with DOM map, heading outline, semantic suggestions and composition metrics;', '- on-demand Structure workspace with heading outline, concrete semantic suggestions and accessibility-oriented structural metrics;');
+          exact('docs/STORE_SUBMISSION.md', 'Reports can reuse compact Structure metrics and semantic suggestions, but the complete Structure tree is not persisted as report or Memory history.', 'Reports can reuse compact Structure metrics and semantic suggestions; Structure does not persist a parallel DOM tree as report or Memory history.');
+          exact('docs/STORE_SUBMISSION.md', 'An explicitly generated Structure snapshot can include a simplified local DOM tree plus bounded metrics and semantic review suggestions. Reports may reuse only the compact metrics/suggestions subset; exporting a report does not trigger another Structure scan or persist the complete tree.', 'An explicitly generated Structure snapshot can include bounded accessibility-oriented metrics plus selectors and evidence for concrete semantic review suggestions. Reports may reuse the compact metrics/suggestions subset; exporting a report does not trigger another Structure scan.');
+
+          exact(
+            'docs/PRODUCT.md',
+            `It combines:\n\n- a semantic/relevant DOM map;\n- the page heading outline;\n- bounded DOM composition metrics;\n- heuristic semantic suggestions that remain clearly separate from deterministic WCAG failures.\n\nStructure is generated on demand rather than continuously observing the page. Reports may reuse a compact subset of already-generated metrics and review suggestions, but should not duplicate or persist the complete DOM tree.`,
+            `It combines:\n\n- the page heading outline;\n- bounded accessibility-oriented structural metrics;\n- concrete semantic suggestions for generic interactive/heading markup that remain clearly separate from deterministic WCAG failures.\n\nStructure evidence is generated on demand rather than continuously observing the page. Reports may reuse a compact subset of already-generated metrics and review suggestions without creating or persisting a parallel DOM tree.`,
+          );
+
+          exact(
+            'docs/RELEASE_NOTES_0.1.4.md',
+            `The primary navigation is now **Review · Structure · Trace · Report**. The previous standalone Headings workspace is grouped under Structure alongside three new views:\n\n- **Map** — a simplified semantic DOM tree that keeps landmarks, meaningful elements and selected relevant containers while collapsing repeated structures such as repeated articles or list items;\n- **Headings** — the existing H1–H6 hierarchy, review signals and page overlay;\n- **Semantics** — heuristic review suggestions for generic controls, possible list structures, navigation-like link groups, deep generic wrapper chains and high \`div\` density;\n- **Metrics** — sampled DOM composition, semantic elements, landmarks, interactive elements, lists, nesting depth and generic-container context.`,
+            `The primary navigation is now **Review · Structure · Trace · Report**. The previous standalone Headings workspace is grouped under Structure with two complementary views:\n\n- **Headings** — the existing H1–H6 hierarchy, review signals and page overlay;\n- **Semantics** — concrete review suggestions for generic \`div\`/\`span\` elements used as buttons, links or headings, inline click handlers and generic tab stops;\n- **Metrics** — accessibility-oriented counts for semantic regions, lists, forms, buttons, links, form controls, tables and images, with page highlighting from each metric.`,
+          );
+          exact('docs/RELEASE_NOTES_0.1.4.md', 'Opening Structure does not inspect or continuously recalculate the DOM. Map, Semantics and Metrics are generated only from an explicit **Generate** or **Refresh** action.', 'Opening Structure does not inspect or continuously recalculate the DOM. Headings reuses the current page analysis; Semantics and Metrics are generated only from an explicit **Analyze structure** or **Refresh** action.');
+          exact(
+            'docs/RELEASE_NOTES_0.1.4.md',
+            `- up to 10,000 sampled DOM elements by default;\n- up to 900 relevant nodes in the visual structure tree;\n- bounded sibling heuristics for very large containers;\n- an explicit limited-snapshot notice when a safety threshold is reached.`,
+            `- up to 10,000 sampled DOM elements by default;\n- no parallel visual DOM tree;\n- no repeated-sibling or wrapper-chain heuristics;\n- an explicit limited-snapshot notice when the sampling threshold is reached.`,
+          );
+          exact('docs/RELEASE_NOTES_0.1.4.md', '- DOM and semantic metrics when Structure has already been generated;\n- structural suggestions such as possible lists or excessive generic wrappers;', '- accessibility-oriented structural metrics when Structure has already been analyzed;\n- concrete semantic suggestions for generic interactive/heading markup;');
+          exact('docs/RELEASE_NOTES_0.1.4.md', 'The sidepanel report, printable PDF and TXT export reuse the compact Structure evidence already available. Exporting a report does not trigger another DOM scan and does not persist or export the full Structure tree.', 'The sidepanel report, printable PDF and TXT export reuse the compact Structure evidence already available. Exporting a report does not trigger another DOM scan or persist a parallel DOM tree.');
+          exact('docs/RELEASE_NOTES_0.1.4.md', '- semantic DOM mapping and repeated-node grouping;', '- accessibility-oriented structural metric collection;');
+          exact('docs/RELEASE_NOTES_0.1.4.md', 'Structure follows the existing local-first model. DOM snapshots are generated only after an explicit user action and stay in the current sidepanel session.', 'Structure follows the existing local-first model. Structure evidence is generated only after an explicit user action and stays in the current sidepanel session.');
+          exact('docs/RELEASE_NOTES_0.1.4.md', 'Reports may reuse a compact subset of Structure evidence — metrics and semantic suggestions — but do not store or export the full DOM tree.', 'Reports may reuse a compact subset of Structure evidence — metrics and semantic suggestions — without storing or exporting a parallel DOM tree.');
+          exact('docs/RELEASE_NOTES_0.1.4.md', 'Production page access remains optional and is requested only from explicit page actions such as **Analyze this page** or **Generate / Refresh Structure**.', 'Production page access remains optional and is requested only from explicit page actions such as **Analyze this page** or **Analyze / Refresh Structure**.');
+          exact('docs/RELEASE_NOTES_0.1.4.md', 'npm run smoke:dist\n', '');
+
+          NODE
+
+          git rm lib/runtime/structure-map.ts tests/structure-map.test.ts
+          git diff --check
+      - name: Commit cleanup
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git diff --cached --quiet && exit 0
+          git commit -m "refactor: remove obsolete structure and layout remnants"
+          git push origin HEAD:fix/empty-state-consistency
