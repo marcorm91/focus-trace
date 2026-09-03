@@ -2,12 +2,12 @@
 
 This document keeps the Chrome Web Store and Microsoft Edge Add-ons submission copy aligned with the actual extension behavior. It is not a substitute for the public privacy policy or the release checklist.
 
-Current release candidate: **0.1.3**.
+Current release candidate: **0.1.4**.
 
 ## Release positioning
 
 - Product: FocusTrace
-- Version: 0.1.3
+- Version: 0.1.4
 - Supported targets: Chrome 114+ and Chromium-based Microsoft Edge
 - Firefox: keep experimental until the manual Firefox smoke checklist in `RELEASE_CHECKLIST.md` has passed
 - Architecture: Manifest V3, local-first, no required backend
@@ -16,20 +16,21 @@ FocusTrace should be positioned as an accessibility auditing and runtime debuggi
 
 ## Suggested short description
 
-Run local WCAG 2.2 checks and debug keyboard focus, SPA navigation, dialogs and dynamic accessibility behavior.
+Run local WCAG 2.2 checks, inspect document structure and debug keyboard focus, SPA navigation and dynamic accessibility behavior.
 
 ## Suggested store description
 
-FocusTrace helps developers investigate web accessibility with local static checks and runtime focus debugging.
+FocusTrace helps developers investigate web accessibility with local static checks, document-structure inspection and runtime focus debugging.
 
-Analyze a full page or a selected component, inspect deterministic failures and review signals, then use Trace to understand keyboard focus, SPA transitions, dialogs and dynamic DOM behavior as it happens. Replay and Report keep the recorded evidence understandable, while optional FocusTrace Memory can retain bounded local history and visual context for repeated checks.
+Analyze a full page or a selected component, inspect deterministic failures and review signals, use Structure to understand the page's semantic organization, then use Trace to understand keyboard focus, SPA transitions, dialogs and dynamic DOM behavior as it happens. Replay and Report keep the recorded evidence understandable, while optional FocusTrace Memory can retain bounded local history and visual context for repeated checks.
 
-FocusTrace separates deterministic failures from contextual review signals and authoring warnings. It is designed to support accessibility debugging and review, not to certify that a page conforms to WCAG.
+FocusTrace separates deterministic failures from contextual review signals, semantic suggestions and authoring warnings. It is designed to support accessibility debugging and review, not to certify that a page conforms to WCAG.
 
 Key capabilities include:
 
 - local WCAG 2.2-oriented page and component analysis;
 - accessible-name, language, contrast, ARIA and HTML authoring checks;
+- on-demand Structure workspace with DOM map, heading outline, semantic suggestions and composition metrics;
 - runtime keyboard-focus and interaction tracing;
 - SPA navigation and dialog lifecycle evidence;
 - read-only replay and consolidated reports;
@@ -40,23 +41,25 @@ By default, inspected page data is processed locally in the browser. FocusTrace 
 
 ## Single purpose
 
-FocusTrace has one purpose: help developers audit and debug accessibility behavior on web pages, including static accessibility signals and runtime keyboard-focus behavior.
+FocusTrace has one purpose: help developers audit, understand and debug accessibility behavior on web pages, including static accessibility signals, relevant document structure and runtime keyboard-focus behavior.
 
-Analyze, Trace, Replay, Report, Site Audit and Memory are complementary workflows for that same accessibility-debugging purpose.
+Analyze, Structure, Trace, Replay, Report, Site Audit and Memory are complementary workflows for that same accessibility-debugging purpose.
 
 ## Permission justifications
 
 ### `activeTab`
 
-Used to access the current tab after an explicit user action such as Analyze or Trace. FocusTrace does not require permanent access to every website for normal single-page use. When Memory is explicitly enabled, the same user-initiated analysis context may also be used to create a small local crop of a currently visible failing element.
+Used to access the current tab after an explicit user action such as Analyze, Generate Structure or Trace. FocusTrace does not require permanent access to every website for normal single-page use. When Memory is explicitly enabled, the same user-initiated analysis context may also be used to create a small local crop of a currently visible failing element.
 
 ### `scripting`
 
-Used to run the local FocusTrace scanner and runtime instrumentation in pages the user explicitly chooses to inspect, and to locate visible failing elements when optional Memory visual context is prepared.
+Used to run the local FocusTrace scanner, generate an explicitly requested Structure snapshot, run runtime instrumentation in pages the user chooses to inspect, and locate visible failing elements when optional Memory visual context is prepared.
 
 ### `storage`
 
 Used for extension preferences, per-tab/session state and optional FocusTrace Memory. Memory is disabled by default. When enabled, it can store bounded local diagnostic observations, compact element locators and small compressed visual previews for selected remembered failures. It does not store page HTML, full DOM snapshots or full-page screenshots as Memory history.
+
+Structure snapshots are generated on demand and remain in the active sidepanel/sidebar session. Reports can reuse compact Structure metrics and semantic suggestions, but the complete Structure tree is not persisted as report or Memory history.
 
 ### `sidePanel` (Chromium)
 
@@ -64,7 +67,7 @@ Used to provide the main FocusTrace interface alongside the page being inspected
 
 ### Optional `http://*/*` and `https://*/*` host access
 
-Requested only from explicit user actions when functionality needs page access beyond the transient active-tab grant. Site Audit requests access for the selected same-origin site so it can discover and analyze representative pages.
+Requested only from explicit user actions when functionality needs page access beyond the transient active-tab grant. This includes actions such as Analyze, Generate / Refresh Structure and Site Audit. Site Audit requests access for the selected same-origin site so it can discover and analyze representative pages.
 
 ### Optional `<all_urls>` visual-capture access
 
@@ -77,6 +80,8 @@ FocusTrace does not intentionally execute remotely hosted JavaScript or download
 ## Data-use declaration basis
 
 FocusTrace may inspect website content necessary to provide its user-facing accessibility analysis, such as DOM structure and attributes, accessible-name/role information, rendered contrast evidence, focus transitions, selected runtime mutations, URL/title context and user-requested visual evidence.
+
+An explicitly generated Structure snapshot can include a simplified local DOM tree plus bounded metrics and semantic review suggestions. Reports may reuse only the compact metrics/suggestions subset; exporting a report does not trigger another Structure scan or persist the complete tree.
 
 If the user explicitly enables FocusTrace Memory, bounded local history may include hashed finding/scope identities, generic rule identifiers, counts, timestamps, compact element locators and a limited number of small local visual previews. These values remain in the browser profile unless the user exports or otherwise shares data outside FocusTrace.
 
@@ -107,19 +112,19 @@ Record the final public URLs here before submission:
 ## Assets to prepare
 
 - current extension icon/logo in the store-required sizes;
-- screenshots showing Analyze and Trace as the primary workflows;
+- screenshots showing Analyze, Structure and Trace as the primary workflows;
 - optionally one screenshot for Report, Site Audit or FocusTrace Memory;
 - concise captions that describe observable functionality without claiming certification or complete WCAG coverage.
 
 ## Final submission gate
 
-Before uploading the production ZIP for 0.1.3:
+Before uploading the production ZIP for 0.1.4:
 
 1. Complete `npm run release:check:full` on the release candidate.
-2. Confirm CI is green on the exact commit intended for `v0.1.3`.
-3. Complete the manual accessibility/self-audit and FocusTrace Memory smoke items in `RELEASE_CHECKLIST.md`.
+2. Confirm CI is green on the exact commit intended for `v0.1.4`.
+3. Complete the manual accessibility/self-audit, Structure and FocusTrace Memory smoke items in `RELEASE_CHECKLIST.md`.
 4. Smoke-test the unpacked production Chromium build.
 5. Confirm production manifests contain only the intended required and optional permissions.
 6. Confirm the public privacy-policy, support/contact and voluntary-support URLs resolve without authentication.
-7. Review the final store declarations against `PRIVACY.md` and actual behavior, including opt-in Memory previews and locators.
-8. Tag the exact approved commit as `v0.1.3` only after the release candidate is accepted.
+7. Review the final store declarations against `PRIVACY.md` and actual behavior, including on-demand Structure evidence and opt-in Memory previews/locators.
+8. Tag the exact approved commit as `v0.1.4` only after the release candidate is accepted.
