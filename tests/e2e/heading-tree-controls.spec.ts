@@ -51,7 +51,9 @@ test('heading branches start collapsed and can be expanded independently', async
     });
   });
 
-  await panel.getByRole('button', { name: /Headings|Encabezados/ }).click();
+  await panel.getByRole('button', { name: /Structure|Estructura/ }).click();
+  await expect(panel.getByRole('alert')).toHaveCount(0);
+  await panel.getByRole('tab', { name: /Headings|Encabezados/ }).click();
 
   const firstDetail = panel.getByRole('button', { name: 'Long detail heading that must stay fully readable without an ellipsis', exact: true });
   const firstSection = panel.getByRole('button', { name: 'First section', exact: true });

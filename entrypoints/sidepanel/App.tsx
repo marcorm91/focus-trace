@@ -6,6 +6,7 @@ import { clearFocusPathInPage } from '../../lib/runtime/focus-path-overlay';
 import { clearHeadingOutlineInPage } from '../../lib/runtime/heading-overlay';
 import { pickComponentInPage, type ComponentPickerResult } from '../../lib/runtime/component-picker';
 import { locateScanTargetInPage } from '../../lib/runtime/scan-target-overlay';
+import { collectStructureMapInPage, type StructureSnapshot } from '../../lib/runtime/structure-map';
 import { tr } from '../../shared/i18n';
 import type {
   ExtensionMessage,
@@ -21,21 +22,19 @@ import { useSidepanelSession } from './hooks/useSidepanelSession';
 import { useTraceActions } from './hooks/useTraceActions';
 import { SiteAuditLauncher } from './components/SiteAuditLauncher';
 import { AboutView } from './views/AboutView';
-import { HeadingTreeView } from './views/HeadingTreeView';
 import { InstructionsView } from './views/InstructionsView';
 import { ScanView } from './views/ScanView';
 import { SessionReportView } from './views/SessionReportView';
 import { SettingsView } from './views/SettingsView';
+import { StructureView } from './views/StructureView';
 import { TraceView } from './views/TraceView';
 
-type View = 'scan' | 'trace' | 'headings' | 'report' | 'about' | 'instructions' | 'settings';
+type View = 'scan' | 'structure' | 'trace' | 'report' | 'about' | 'instructions' | 'settings';
 
 type NavigationItem = {
-  id: 'scan' | 'trace' | 'headings' | 'report';
+  id: 'scan' | 'structure' | 'trace' | 'report';
   label: string;
   icon: string;
-  disabled?: boolean;
-  title?: string;
 };
 
 export default function App() {
@@ -45,6 +44,7 @@ export default function App() {
   const [error, setError] = useState<string>();
   const [focusPathVisible, setFocusPathVisible] = useState(false);
   const [selectedFocusSelector, setSelectedFocusSelector] = useState<string>();
+  const [structureSnapshot, setStructureSnapshot] = useState<StructureSnapshot>();
 
   const { language, updateLanguage } = useSidepanelLanguage();
   const handleSessionError = useCallback((reason: unknown) => {
@@ -54,9 +54,13 @@ export default function App() {
     setFocusPathVisible(false);
     setSelectedFocusSelector(undefined);
   }, []);
+  const handleTabSelected = useCallback(() => {
+    resetFocusPathState();
+    setStructureSnapshot(undefined);
+  }, [resetFocusPathState]);
   const { tabId, session, setSession, refresh } = useSidepanelSession({
     onError: handleSessionError,
-    onTabSelected: resetFocusPathState,
+    onTabSelected: handleTabSelected,
   });
   const { requestPageAccess, ensureInjected } = usePageRuntimeAccess(tabId);
   const scan = session.scan;
@@ -188,6 +192,26 @@ export default function App() {
     }
   }, [language, requestPageAccess, resetFocusPathState, tabId]);
 
+  const refreshStructure = useCallback(async () => {
+    if (tabId == null) return;
+    setBusy(true);
+    setError(undefined);
+    try {
+      await requestPageAccess();
+      const results = await browser.scripting.executeScript({
+        target: { tabId },
+        func: collectStructureMapInPage,
+      });
+      const snapshot = results[0]?.result as StructureSnapshot | undefined;
+      if (!snapshot) throw new Error('FocusTrace could not collect the DOM structure snapshot.');
+      setStructureSnapshot(snapshot);
+    } catch (reason) {
+      setError(localizedUserError(reason, language, 'analysis'));
+    } finally {
+      setBusy(false);
+    }
+  }, [language, requestPageAccess, tabId]);
+
   const {
     breakpointSettings,
     interactions,
@@ -249,6 +273,7 @@ export default function App() {
       }).catch(() => undefined);
 
       setSession(next);
+      setStructureSnapshot(undefined);
       resetFocusPathState();
       setView('scan');
     } catch (reason) {
@@ -260,22 +285,8 @@ export default function App() {
 
   const navigation: NavigationItem[] = [
     { id: 'scan', label: tr(language, 'Review', 'Revisión'), icon: '⌕' },
+    { id: 'structure', label: tr(language, 'Structure', 'Estructura'), icon: '▦' },
     { id: 'trace', label: 'Trace', icon: '◎' },
-    {
-      id: 'headings',
-      label: tr(language, 'Headings', 'Encabezados'),
-      icon: 'H',
-      disabled: Boolean(componentScan),
-      ...(componentScan
-        ? {
-            title: tr(
-              language,
-              'Heading outline is available for full-page scans.',
-              'El esquema de encabezados está disponible en análisis de página completa.',
-            ),
-          }
-        : {}),
-    },
     { id: 'report', label: tr(language, 'Report', 'Informe'), icon: '▤' },
   ];
 
@@ -397,8 +408,6 @@ export default function App() {
             type="button"
             className={view === item.id ? 'active' : ''}
             aria-current={view === item.id ? 'page' : undefined}
-            disabled={item.disabled}
-            title={item.title}
             onClick={() => setView(item.id)}
           >
             <span aria-hidden="true">{item.icon}</span>
@@ -415,6 +424,16 @@ export default function App() {
           onLocate={locateScanTarget}
           onAnalyzePage={runScan}
           onSelectComponent={runComponentScan}
+        />
+      )}
+      {view === 'structure' && (
+        <StructureView
+          snapshot={structureSnapshot}
+          scan={scan}
+          language={language}
+          busy={busy}
+          onRefresh={refreshStructure}
+          onLocate={locateScanTarget}
         />
       )}
       {view === 'trace' && (
@@ -441,11 +460,14 @@ export default function App() {
           onDeleteInteraction={deleteTraceInteraction}
         />
       )}
-      {view === 'headings' && (
-        <HeadingTreeView scan={scan} language={language} onLocate={locateScanTarget} />
-      )}
       {view === 'report' && (
-        <SessionReportView scan={scan} events={session.events} language={language} onLocate={locateScanTarget} />
+        <SessionReportView
+          scan={scan}
+          events={session.events}
+          structureSnapshot={structureSnapshot}
+          language={language}
+          onLocate={locateScanTarget}
+        />
       )}
       {view === 'about' && <AboutView language={language} />}
       {view === 'instructions' && <InstructionsView language={language} />}

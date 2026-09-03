@@ -10,12 +10,18 @@ import {
   type ReportComponentIdentity,
 } from './component-identity';
 import { buildSessionReportModel } from './session-report';
+import {
+  structureHintCopy,
+  structureSummaryLabels,
+  type StructureReportEvidence,
+} from './structure-report';
 
 export interface TextSessionReportInput {
   scan?: ScanResult | undefined;
   events: RuntimeEvent[];
   language: AppLanguage;
   components?: ReportComponentIdentity[];
+  structure?: StructureReportEvidence | undefined;
   generatedAt?: number;
 }
 
@@ -143,12 +149,15 @@ export function buildTextSessionReport({
   events,
   language,
   components = [],
+  structure,
   generatedAt = Date.now(),
 }: TextSessionReportInput): string {
   const model = buildSessionReportModel(scan, events, language);
   const componentMap = new Map(components.map((component) => [component.selector, component]));
   const headings = scan?.headings ?? [];
+  const headingReviews = headings.filter((item) => item.signals.length > 0);
   const componentScope = scan?.scope?.type === 'component' ? scan.scope : undefined;
+  const reportStructure = componentScope ? undefined : structure;
   const title = lineLabel(
     language,
     'FOCUS TRACE - ACCESSIBILITY REPORT',
@@ -269,25 +278,75 @@ export function buildTextSessionReport({
     );
   }
 
-  lines.push(...heading(lineLabel(language, '4. HEADING STRUCTURE', '4. ESTRUCTURA DE ENCABEZADOS')));
+  lines.push(...heading(lineLabel(language, '4. DOCUMENT STRUCTURE', '4. ESTRUCTURA DEL DOCUMENTO')));
   if (componentScope) {
     lines.push(lineLabel(
       language,
-      'Not evaluated for component scope because heading hierarchy depends on document context. Run a full-page analysis to include the document heading outline.',
-      'No evaluada en el alcance de componente porque la jerarquía de encabezados depende del contexto del documento. Ejecuta un análisis de página completa para incluir el esquema de encabezados.',
+      'Document-level structure is not mixed into a component-scoped report. Run a full-page analysis to include it.',
+      'La estructura global del documento no se mezcla con un informe limitado a un componente. Ejecuta un análisis de página completa para incluirla.',
     ));
   } else if (!scan) {
-    lines.push(lineLabel(language, 'The heading outline was not collected.', 'No se ha recogido el árbol de encabezados.'));
-  } else if (!headings.length) {
-    lines.push(lineLabel(language, 'No visible H1-H6 headings were found.', 'No se han encontrado encabezados H1–H6 visibles.'));
+    lines.push(lineLabel(language, 'Document structure was not collected.', 'No se ha recogido la estructura del documento.'));
   } else {
-    headings.forEach((item) => {
-      const indentation = '  '.repeat(item.level - 1);
-      const signals = item.signals.length
-        ? ` [${item.signals.map((signal) => headingSignal(signal, language)).join(', ')}]`
-        : '';
-      lines.push(`${indentation}- H${item.level}: ${item.text || lineLabel(language, 'Empty heading', 'Encabezado vacío')}${signals}`);
-    });
+    lines.push(
+      `${lineLabel(language, 'Headings', 'Encabezados')}: ${headings.length}`,
+      `${lineLabel(language, 'Headings to review', 'Encabezados a revisar')}: ${headingReviews.length}`,
+    );
+
+    if (reportStructure) {
+      const labels = structureSummaryLabels(language);
+      lines.push(
+        `${labels.domElements}: ${reportStructure.metrics.totalElements}`,
+        `${labels.semanticElements}: ${reportStructure.metrics.semanticElements}`,
+        `${labels.landmarks}: ${reportStructure.metrics.landmarkCount}`,
+        `${labels.lists}: ${reportStructure.metrics.listCount}`,
+        `${labels.maxDepth}: ${reportStructure.metrics.maxDepth}`,
+        `${labels.genericContainers}: ${reportStructure.metrics.genericContainerCount}`,
+        `${labels.genericRatio}: ${reportStructure.metrics.genericRatio}%`,
+        `${labels.structureHints}: ${reportStructure.hints.length}`,
+      );
+      if (reportStructure.truncated) {
+        lines.push(lineLabel(
+          language,
+          'Structure snapshot was limited by the large-DOM safety thresholds.',
+          'El snapshot de estructura se limitó al alcanzar los umbrales de seguridad para DOM grandes.',
+        ));
+      }
+    } else {
+      lines.push(lineLabel(
+        language,
+        'Structure metrics were not generated. Open Structure and generate the map to include DOM composition and semantic suggestions.',
+        'Las métricas de estructura no se han generado. Abre Estructura y genera el mapa para incluir la composición del DOM y las sugerencias semánticas.',
+      ));
+    }
+
+    if (headingReviews.length) {
+      lines.push('', lineLabel(language, 'Headings that need review:', 'Encabezados que requieren revisión:'));
+      headingReviews.forEach((item) => {
+        const signals = item.signals.map((signal) => headingSignal(signal, language)).join(', ');
+        lines.push(`- H${item.level}: ${item.text || lineLabel(language, 'Empty heading', 'Encabezado vacío')} [${signals}]`);
+      });
+    }
+
+    if (reportStructure?.hints.length) {
+      lines.push('', lineLabel(language, 'Structural suggestions:', 'Sugerencias estructurales:'));
+      reportStructure.hints.forEach((hint, index) => {
+        const copy = structureHintCopy(hint, language);
+        lines.push(
+          `${index + 1}. ${copy.title}`,
+          `   ${copy.description}`,
+          ...(copy.suggestion ? [`   ${copy.suggestion}`] : []),
+        );
+      });
+    }
+
+    if (reportStructure && headingReviews.length === 0 && reportStructure.hints.length === 0) {
+      lines.push('', lineLabel(
+        language,
+        'No structural review signals were found in the available evidence.',
+        'No se han detectado señales estructurales que requieran revisión en la evidencia disponible.',
+      ));
+    }
   }
 
   lines.push(...heading(lineLabel(language, '5. RECOMMENDED IMPROVEMENTS', '5. SUGERENCIAS DE MEJORA')));

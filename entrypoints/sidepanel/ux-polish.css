@@ -60,7 +60,7 @@ body,
 }
 
 .workspace-nav.tabs {
-  grid-template-columns: repeat(4, minmax(0, 1fr));
+  grid-template-columns: repeat(5, minmax(0, 1fr));
 }
 
 .workspace-nav.tabs button {
@@ -83,7 +83,7 @@ body,
   line-height: 1;
 }
 
-.workspace-nav.tabs button:nth-child(3) > span {
+.workspace-nav.tabs button:nth-child(4) > span {
   font-weight: 900;
 }
 
@@ -262,7 +262,7 @@ body,
 
 @media (max-width: 520px) {
   .workspace-nav.tabs {
-    grid-template-columns: repeat(4, minmax(0, 1fr));
+    grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
   .workspace-nav.tabs button {

@@ -12,7 +12,7 @@ FocusTrace is free software licensed under **GNU GPL v3.0 only**. The source-cod
 
 ## What makes it different?
 
-FocusTrace combines complementary static, runtime and historical workflows instead of treating accessibility as a single scan.
+FocusTrace combines complementary static, structural, runtime and historical workflows instead of treating accessibility as a single scan.
 
 ### Full-page and component analysis
 
@@ -34,6 +34,19 @@ FocusTrace uses its own local rule engine and does not require a third-party acc
 Trace records what the user did, what had focus, what changed in the page and where focus moved afterwards. Recorded evidence can be inspected as a journey, correlated interactions, a focus graph or a read-only replay.
 
 The runtime debugger can derive deterministic causal explanations for patterns such as a focused node being removed, a modal opening without receiving focus or SPA navigation leaving focus behind. These explanations describe recorded evidence; they do not turn contextual behavior into an automatic WCAG conformance claim.
+
+### Structure
+
+Structure turns the current page DOM into a simplified, on-demand structural view rather than duplicating the browser's raw DOM inspector. The workspace groups four complementary views:
+
+- **Map** — a compact tree of landmarks, semantic elements and relevant containers, with repeated siblings collapsed where useful;
+- **Headings** — the existing H1–H6 outline, hierarchy signals and page-location overlay;
+- **Semantics** — heuristic review suggestions for patterns such as generic elements used as controls, repeated groups that may form lists, navigation-like link groups, deep generic wrapper chains and high `div` density;
+- **Metrics** — DOM composition context such as sampled elements, semantic elements, landmarks, lists, nesting depth and generic-container ratios.
+
+Semantic observations are suggestions for review, **not automatic WCAG failures**. Whether a repeated group should really be a list, for example, still depends on the content's meaning.
+
+Opening Structure does not scan or continuously observe the DOM. Map, Semantics and Metrics are generated only when the user explicitly chooses **Generate** or **Refresh**. The collector defaults to a 10,000-element sample limit and the visual tree is capped at 900 relevant nodes so very large pages cannot turn the feature into continuous background work.
 
 ### FocusTrace Memory
 
@@ -79,7 +92,7 @@ Runtime recording currently observes:
 - relevant DOM mutations and dialog lifecycle evidence;
 - accessibility breakpoints for selected deterministic runtime causes.
 
-Trace also includes a read-only replay of recorded evidence and a Trace-first report that combines static findings with runtime interaction stories and recommendations.
+Trace also includes a read-only replay of recorded evidence. The session report combines static findings with runtime interaction stories and recommendations, while **Document structure** summarizes headings instead of duplicating the full outline. If Structure has already been generated, the sidepanel, PDF and TXT reports reuse its compact metrics and semantic suggestions without running another DOM collection or exporting the full DOM tree.
 
 See [`docs/RULES.md`](docs/RULES.md) for methodology, sources and limitations and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the main runtime/data boundaries.
 
@@ -111,7 +124,7 @@ FocusTrace intentionally keeps its production permission set narrow:
 
 Firefox uses its native sidebar manifest integration instead of requesting the Chromium-only `sidePanel` permission.
 
-Production builds do not require host access at installation. HTTP/HTTPS page access is declared as optional and requested from the first explicit page action, such as **Analyze this page**. Requesting it before reading the active tab is required because Chromium can hide `Tab.url` from a newly installed extension until host access exists. The granted access remains controlled by the browser and can be revoked from the extension's site-access settings.
+Production builds do not require host access at installation. HTTP/HTTPS page access is declared as optional and requested from an explicit page action, such as **Analyze this page** or **Generate / Refresh Structure**. Requesting it before reading the active tab is required because Chromium can hide `Tab.url` from a newly installed extension until host access exists. The granted access remains controlled by the browser and can be revoked from the extension's site-access settings.
 
 When Memory is enabled, an explicit scan may attempt a visible-tab capture to create a small local crop of a visible failing element. This Memory flow does not request persistent broad `<all_urls>` screenshot access; if visible-tab capture is unavailable, FocusTrace keeps the compact locator fallback instead.
 
@@ -120,6 +133,8 @@ Printable reports can optionally include visual evidence; when that option is us
 ## Privacy
 
 All analysis runs locally in the browser. FocusTrace does not send page content, DOM data, screenshots or recorded interactions to a FocusTrace server or third-party AI API.
+
+Structure snapshots are generated only on explicit request and remain local to the current sidepanel session. Reports can reuse a compact subset of that evidence — metrics and semantic suggestions — but do not persist or export the full Structure tree.
 
 FocusTrace Memory is opt-in and disabled by default. When enabled, it can retain bounded local history, a compact element locator and, when capture succeeds for a currently visible failing element, a small local screenshot crop. This evidence stays in the browser profile and can be cleared from Settings.
 

@@ -4,7 +4,7 @@ FocusTrace is a local-first browser extension for accessibility debugging.
 
 **Positioning:** debug accessible behavior with the same evidence-driven mindset used to debug JavaScript.
 
-The product should help a developer or accessibility specialist answer not only **what is wrong**, but also **when it changed, how it happened and what evidence supports the conclusion**.
+The product should help a developer or accessibility specialist answer not only **what is wrong**, but also **how the page is structured, when behavior changed, how it happened and what evidence supports the conclusion**.
 
 ## Product pillars
 
@@ -20,7 +20,22 @@ Results are deliberately separated into:
 
 The goal is trustworthy evidence, not the largest possible rule count or an opaque accessibility score.
 
-### 2. Runtime accessibility debugging
+### 2. Document structure understanding
+
+Structure turns the current page DOM into a simplified, inspectable view without trying to replace browser DevTools.
+
+It combines:
+
+- a semantic/relevant DOM map;
+- the page heading outline;
+- bounded DOM composition metrics;
+- heuristic semantic suggestions that remain clearly separate from deterministic WCAG failures.
+
+Structure is generated on demand rather than continuously observing the page. Reports may reuse a compact subset of already-generated metrics and review suggestions, but should not duplicate or persist the complete DOM tree.
+
+The value of Structure is comprehension: help a developer understand how a page is organized and where semantic patterns deserve review, while preserving the distinction between code quality, semantics and actual accessibility failures.
+
+### 3. Runtime accessibility debugging
 
 Trace observes keyboard/pointer interaction, focus transitions, selected DOM mutations, SPA route changes and dialog lifecycle behavior.
 
@@ -28,7 +43,7 @@ It correlates those events so FocusTrace can explain causal patterns such as foc
 
 Runtime evidence should remain inspectable as events, interactions, journey, graph and replay rather than being reduced to a single pass/fail number.
 
-### 3. Historical comparison
+### 4. Historical comparison
 
 FocusTrace Memory is an opt-in local history for repeated static page/component scans.
 
@@ -44,7 +59,7 @@ Memory is disabled by default, bounded and local. It must never infer that repea
 
 Runtime behavioral memory is intentionally a later step. It should be built on explicit Interaction Contracts rather than learning repeated behavior as truth.
 
-### 4. Scale without pretending certainty
+### 5. Scale without pretending certainty
 
 Site Audit discovers same-origin routes, groups route families and samples representative pages using the real FocusTrace scanner.
 
@@ -55,6 +70,7 @@ Sampling and family aggregation should help users find repeated template-level p
 FocusTrace is not intended to become:
 
 - a generic HTML/CSS linter;
+- a replacement for browser DevTools or a raw full-DOM inspector;
 - an automated claim of complete WCAG conformance;
 - an AI service that uploads inspected DOM/content to explain findings;
 - a score-first replacement for expert accessibility review;
@@ -66,7 +82,7 @@ Best-practice or code-quality checks can be useful, but they should remain visib
 
 The local-first model is a product feature, not just an implementation detail.
 
-Core analysis, Trace evidence and FocusTrace Memory do not require a FocusTrace backend. Persistent features must have explicit retention boundaries and user controls. See [`../PRIVACY.md`](../PRIVACY.md) and [`ARCHITECTURE.md`](ARCHITECTURE.md).
+Core analysis, on-demand Structure evidence, Trace evidence and FocusTrace Memory do not require a FocusTrace backend. Persistent features must have explicit retention boundaries and user controls. See [`../PRIVACY.md`](../PRIVACY.md) and [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ## Near-term differentiation
 
@@ -88,6 +104,7 @@ The first Interaction Contract should stay narrow enough to be deterministic and
 A feature belongs in FocusTrace when it materially improves one or more of these outcomes:
 
 - discover a real accessibility risk;
+- understand the document structure relevant to accessibility;
 - explain evidence and causality;
 - reproduce behavior;
 - compare behavior over time;

@@ -10,6 +10,7 @@ import {
 } from '../../lib/report/component-identity';
 import { guidanceForIssue, reportFindingDescription } from '../../lib/report/finding-guidance';
 import { buildSessionReportModel } from '../../lib/report/session-report';
+import { structureHintCopy, structureSummaryLabels } from '../../lib/report/structure-report';
 import {
   readPrintableReportEvidence,
   type PrintableReportEvidenceBundle,
@@ -282,6 +283,10 @@ function PrintableReport({ report }: { report: LoadedReport }) {
   const findingSeverityCounts = useMemo(() => countBySeverity(staticFindings), [staticFindings]);
   const highPriority = model.suggestions.filter((suggestion) => suggestion.priority === 'high').slice(0, 6);
   const headings = scan.headings ?? [];
+  const headingReviews = componentScope ? [] : headings.filter((heading) => heading.signals.length > 0);
+  const structure = componentScope ? undefined : evidence?.structure;
+  const structureHints = structure?.hints ?? [];
+  const structureReviewCount = headingReviews.length + structureHints.length;
   const componentMap = useMemo(
     () => new Map((evidence?.components ?? []).map((component) => [component.selector, component])),
     [evidence?.components],
@@ -524,37 +529,118 @@ function PrintableReport({ report }: { report: LoadedReport }) {
           ))}
         </section>
 
-        <section className="print-section" aria-labelledby="headings-title">
+        <section className="print-section" aria-labelledby="structure-title">
           <div className="print-section-title">
             <span>03</span>
             <div>
-              <h2 id="headings-title">{tr(language, 'Heading structure', 'Estructura de encabezados')}</h2>
+              <h2 id="structure-title">{tr(language, 'Document structure', 'Estructura del documento')}</h2>
               <p>{componentScope
                 ? tr(
                     language,
-                    'Not evaluated for component scope because heading hierarchy depends on document context.',
-                    'No evaluada en el alcance de componente porque la jerarquía de encabezados depende del contexto del documento.',
+                    'Document-level structure is not mixed into a component-scoped report.',
+                    'La estructura global del documento no se mezcla con un informe limitado a un componente.',
                   )
-                : tr(language, 'H1–H6 elements captured in document order.', 'Elementos H1–H6 capturados en orden de documento.')}</p>
+                : structure
+                  ? tr(
+                      language,
+                      'Structural summary and only the signals that need review.',
+                      'Resumen estructural y únicamente las señales que requieren revisión.',
+                    )
+                  : tr(
+                      language,
+                      'Heading summary available. Generate Structure before exporting to add DOM metrics and semantic suggestions.',
+                      'Resumen de encabezados disponible. Genera Estructura antes de exportar para añadir métricas del DOM y sugerencias semánticas.',
+                    )}</p>
             </div>
           </div>
-          {componentScope
-            ? <p className="print-empty">{tr(
-                language,
-                'Run a full-page analysis to include the document heading outline.',
-                'Ejecuta un análisis de página completa para incluir el esquema de encabezados del documento.',
-              )}</p>
-            : headings.length ? (
-                <ol className="print-heading-list">
-                  {headings.map((heading) => (
-                    <li className={heading.signals.length ? 'has-signal' : ''} key={heading.id} style={{ paddingInlineStart: `${(heading.level - 1) * 14}px` }}>
-                      <span>H{heading.level}</span>
-                      <strong>{heading.text || tr(language, 'Empty heading', 'Encabezado vacío')}</strong>
-                      {heading.signals.length > 0 && <small>{heading.signals.map((signal) => headingSignalLabel(signal, language)).join(' · ')}</small>}
-                    </li>
-                  ))}
-                </ol>
-              ) : <p className="print-empty">{tr(language, 'No headings were captured.', 'No se han capturado encabezados.')}</p>}
+          {componentScope ? (
+            <p className="print-empty">{tr(
+              language,
+              'Run a full-page analysis to include document structure evidence.',
+              'Ejecuta un análisis de página completa para incluir evidencia de la estructura del documento.',
+            )}</p>
+          ) : (
+            <>
+              <div className="print-inline-metrics">
+                <span><strong>{headings.length}</strong> {tr(language, 'headings', 'encabezados')}</span>
+                <span><strong>{headingReviews.length}</strong> {tr(language, 'heading reviews', 'encabezados a revisar')}</span>
+                {structure && (() => {
+                  const labels = structureSummaryLabels(language);
+                  return (
+                    <>
+                      <span><strong>{structure.metrics.totalElements}</strong> {labels.domElements.toLocaleLowerCase()}</span>
+                      <span><strong>{structure.metrics.semanticElements}</strong> {labels.semanticElements.toLocaleLowerCase()}</span>
+                      <span><strong>{structure.metrics.landmarkCount}</strong> {labels.landmarks.toLocaleLowerCase()}</span>
+                      <span><strong>{structure.metrics.listCount}</strong> {labels.lists.toLocaleLowerCase()}</span>
+                      <span><strong>{structure.metrics.maxDepth}</strong> {labels.maxDepth.toLocaleLowerCase()}</span>
+                      <span><strong>{structureHints.length}</strong> {labels.structureHints.toLocaleLowerCase()}</span>
+                    </>
+                  );
+                })()}
+              </div>
+
+              {!structure && (
+                <p className="print-empty">{tr(
+                  language,
+                  'Structure metrics were not generated. Open Structure and generate the map before exporting if you want DOM composition and semantic suggestions included.',
+                  'Las métricas de estructura no se han generado. Abre Estructura y genera el mapa antes de exportar si quieres incluir la composición del DOM y las sugerencias semánticas.',
+                )}</p>
+              )}
+
+              {structure?.truncated && (
+                <p className="print-empty">{tr(
+                  language,
+                  'The structure snapshot was limited by the large-DOM safety thresholds.',
+                  'El snapshot de estructura se limitó al alcanzar los umbrales de seguridad para DOM grandes.',
+                )}</p>
+              )}
+
+              {headingReviews.length > 0 && (
+                <>
+                  <h3>{tr(language, 'Headings that need review', 'Encabezados que requieren revisión')}</h3>
+                  <ol className="print-heading-list">
+                    {headingReviews.map((heading) => (
+                      <li className="has-signal" key={heading.id}>
+                        <span>H{heading.level}</span>
+                        <strong>{heading.text || tr(language, 'Empty heading', 'Encabezado vacío')}</strong>
+                        <small>{heading.signals.map((signal) => headingSignalLabel(signal, language)).join(' · ')}</small>
+                      </li>
+                    ))}
+                  </ol>
+                </>
+              )}
+
+              {structureHints.length > 0 && (
+                <>
+                  <h3>{tr(language, 'Structural suggestions', 'Sugerencias estructurales')}</h3>
+                  <ol className="print-recommendation-list">
+                    {structureHints.map((hint) => {
+                      const copy = structureHintCopy(hint, language);
+                      return (
+                        <li key={hint.id}>
+                          <div>
+                            <span>{hint.tone === 'review' ? tr(language, 'Review', 'Revisar') : tr(language, 'Suggestion', 'Sugerencia')}</span>
+                            <small>{tr(language, 'Structure', 'Estructura')}</small>
+                          </div>
+                          <strong>{copy.title}</strong>
+                          <p>{copy.description}</p>
+                          {copy.suggestion && <p>{copy.suggestion}</p>}
+                        </li>
+                      );
+                    })}
+                  </ol>
+                </>
+              )}
+
+              {structure && structureReviewCount === 0 && (
+                <p className="print-empty">{tr(
+                  language,
+                  'No structural review signals were found in the available evidence.',
+                  'No se han detectado señales estructurales que requieran revisión en la evidencia disponible.',
+                )}</p>
+              )}
+            </>
+          )}
         </section>
 
         <section className="print-section" aria-labelledby="recommendations-title">

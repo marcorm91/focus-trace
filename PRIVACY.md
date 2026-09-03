@@ -4,7 +4,7 @@ FocusTrace is designed as a **local-first accessibility debugging tool**. Its de
 
 ## What FocusTrace analyzes
 
-When you explicitly run an analysis or Trace session, FocusTrace may inspect information from the active page that is necessary to provide the requested accessibility debugging feature, including:
+When you explicitly run an analysis, generate Structure evidence or record a Trace session, FocusTrace may inspect information from the active page that is necessary to provide the requested accessibility debugging feature, including:
 
 - DOM structure and element attributes;
 - accessible-name and role-related information;
@@ -18,11 +18,21 @@ When you explicitly run an analysis or Trace session, FocusTrace may inspect inf
 
 ## Where that data goes
 
-FocusTrace processes analysis and runtime evidence locally in the browser.
+FocusTrace processes analysis, Structure and runtime evidence locally in the browser.
 
 FocusTrace does not intentionally send inspected-page content, DOM evidence, screenshots or recorded interactions to a FocusTrace server or third-party AI service.
 
 Session data and preferences may be stored using browser extension storage so the product can preserve state and user settings. Browser storage is controlled by the browser profile and browser platform.
+
+## Structure evidence
+
+Structure is an on-demand view of the current page DOM. Opening the Structure workspace does not automatically traverse, observe or continuously recalculate the page DOM. The Structure Map, Semantics and Metrics views are generated only after an explicit **Generate** or **Refresh** action.
+
+The resulting Structure snapshot is kept in the current sidepanel/sidebar session. It can contain a simplified tree with selectors, semantic roles, labels and bounded DOM-composition metrics that are needed to render the Structure workspace. The collector applies safety limits on large pages and does not use a continuous MutationObserver for Structure.
+
+When a session report is exported after Structure has already been generated, FocusTrace may reuse a compact report subset containing Structure metrics and semantic review suggestions. The report evidence intentionally omits the full Structure tree. Generating or exporting a report does not trigger a second Structure collection automatically.
+
+Structure evidence is diagnostic context, not a WCAG conformance claim. Heuristic observations such as possible semantic lists, navigation-like groups or high generic-container density require human review before markup changes are justified.
 
 ## FocusTrace Memory
 
@@ -62,9 +72,9 @@ Users should review exported reports before sharing them with third parties and 
 
 ## Permissions
 
-FocusTrace uses extension permissions only for product functionality such as analyzing web pages selected by the user, injecting local instrumentation and storing preferences/session state.
+FocusTrace uses extension permissions only for product functionality such as analyzing web pages selected by the user, generating an explicitly requested Structure snapshot, injecting local instrumentation and storing preferences/session state.
 
-Production builds do not require host access at installation. On the first explicit page action, FocusTrace may request optional HTTP/HTTPS page access before it can read the selected tab and inject the local runtime. Browsers can retain that optional grant until the user revokes it from the extension's site-access settings. The grant permits local inspection; it does not change the policy that inspected-page data is not intentionally transmitted by FocusTrace.
+Production builds do not require host access at installation. On an explicit page action such as **Analyze this page** or **Generate / Refresh Structure**, FocusTrace may request optional HTTP/HTTPS page access before it can read the selected tab and inject or execute the required local runtime. Browsers can retain that optional grant until the user revokes it from the extension's site-access settings. The grant permits local inspection; it does not change the policy that inspected-page data is not intentionally transmitted by FocusTrace.
 
 When Memory is enabled, FocusTrace may attempt a visible-tab capture during the explicit analysis to create a small local evidence crop. This Memory flow uses the active-tab/page-access context already established for the user-requested analysis and does not request persistent broad `<all_urls>` screenshot access. If capture is unavailable, Memory records only the compact locator fallback.
 

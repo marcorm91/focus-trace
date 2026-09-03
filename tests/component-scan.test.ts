@@ -116,7 +116,7 @@ describe('component-scoped static analysis', () => {
     expect(document.documentElement.hasAttribute('data-focustrace-focus-component')).toBe(false);
   });
 
-  it('describes the selected component and omitted document-context checks in text exports', () => {
+  it('describes the selected component and keeps document structure out of component reports', () => {
     render('<main><section id="checkout" aria-label="Checkout"><button id="inside"></button></section></main>');
     const scan = runFocusTraceScan(checkoutScope());
 
@@ -131,7 +131,8 @@ describe('component-scoped static analysis', () => {
     expect(report).toContain('Componente: Checkout');
     expect(report).toContain('Selector del componente: #checkout');
     expect(report).toContain('3. ANÁLISIS DE COMPONENTE');
-    expect(report).toContain('No evaluada en el alcance de componente');
+    expect(report).toContain('4. ESTRUCTURA DEL DOCUMENTO');
+    expect(report).toContain('La estructura global del documento no se mezcla con un informe limitado a un componente');
     expect(report).toContain('La evidencia runtime sigue siendo de toda la sesión');
   });
 });
