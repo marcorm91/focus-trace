@@ -30,7 +30,7 @@ Key capabilities include:
 
 - local WCAG 2.2-oriented page and component analysis;
 - accessible-name, language, contrast, ARIA and HTML authoring checks;
-- on-demand Structure workspace with DOM map, heading outline, semantic suggestions and composition metrics;
+- on-demand Structure workspace with heading outline, concrete semantic suggestions and accessibility-oriented structural metrics;
 - runtime keyboard-focus and interaction tracing;
 - SPA navigation and dialog lifecycle evidence;
 - read-only replay and consolidated reports;
@@ -59,7 +59,7 @@ Used to run the local FocusTrace scanner, generate an explicitly requested Struc
 
 Used for extension preferences, per-tab/session state and optional FocusTrace Memory. Memory is disabled by default. When enabled, it can store bounded local diagnostic observations, compact element locators and small compressed visual previews for selected remembered failures. It does not store page HTML, full DOM snapshots or full-page screenshots as Memory history.
 
-Structure snapshots are generated on demand and remain in the active sidepanel/sidebar session. Reports can reuse compact Structure metrics and semantic suggestions, but the complete Structure tree is not persisted as report or Memory history.
+Structure snapshots are generated on demand and remain in the active sidepanel/sidebar session. Reports can reuse compact Structure metrics and semantic suggestions; Structure does not persist a parallel DOM tree as report or Memory history.
 
 ### `sidePanel` (Chromium)
 
@@ -81,7 +81,7 @@ FocusTrace does not intentionally execute remotely hosted JavaScript or download
 
 FocusTrace may inspect website content necessary to provide its user-facing accessibility analysis, such as DOM structure and attributes, accessible-name/role information, rendered contrast evidence, focus transitions, selected runtime mutations, URL/title context and user-requested visual evidence.
 
-An explicitly generated Structure snapshot can include a simplified local DOM tree plus bounded metrics and semantic review suggestions. Reports may reuse only the compact metrics/suggestions subset; exporting a report does not trigger another Structure scan or persist the complete tree.
+An explicitly generated Structure snapshot can include bounded accessibility-oriented metrics plus selectors and evidence for concrete semantic review suggestions. Reports may reuse the compact metrics/suggestions subset; exporting a report does not trigger another Structure scan.
 
 If the user explicitly enables FocusTrace Memory, bounded local history may include hashed finding/scope identities, generic rule identifiers, counts, timestamps, compact element locators and a limited number of small local visual previews. These values remain in the browser profile unless the user exports or otherwise shares data outside FocusTrace.
 

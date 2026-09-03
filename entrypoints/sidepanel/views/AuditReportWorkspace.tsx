@@ -2,7 +2,7 @@ import { useMemo, useState } from 'react';
 import { browser } from '#imports';
 import { auditPageKey, auditSummary, type AccessibilityAudit } from '../../../lib/audit/multipage-audit';
 import { storeAuditPrintEvidence } from '../../../lib/audit/multipage-audit-storage';
-import type { StructureSnapshot } from '../../../lib/runtime/structure-map';
+import type { StructureSnapshot } from '../../../lib/runtime/structure-evidence';
 import { tr, type AppLanguage } from '../../../shared/i18n';
 import type { RuntimeEvent, ScanResult } from '../../../shared/types';
 import { SessionReportView } from './SessionReportView';

@@ -59,10 +59,6 @@ body,
   border-radius: 12px;
 }
 
-.workspace-nav.tabs {
-  grid-template-columns: repeat(5, minmax(0, 1fr));
-}
-
 .workspace-nav.tabs button {
   min-width: 0;
   overflow: hidden;
@@ -261,10 +257,6 @@ body,
 }
 
 @media (max-width: 520px) {
-  .workspace-nav.tabs {
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-  }
-
   .workspace-nav.tabs button {
     min-height: 52px;
     display: grid;

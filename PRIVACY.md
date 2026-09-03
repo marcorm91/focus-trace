@@ -26,13 +26,13 @@ Session data and preferences may be stored using browser extension storage so th
 
 ## Structure evidence
 
-Structure is an on-demand view of the current page DOM. Opening the Structure workspace does not automatically traverse, observe or continuously recalculate the page DOM. The Structure Map, Semantics and Metrics views are generated only after an explicit **Generate** or **Refresh** action.
+Structure is an on-demand accessibility view of the current page. Opening the Structure workspace does not automatically traverse, observe or continuously recalculate the page DOM. Headings reuses the current page analysis; Semantics and Metrics are generated only after an explicit **Analyze structure** or **Refresh** action.
 
-The resulting Structure snapshot is kept in the current sidepanel/sidebar session. It can contain a simplified tree with selectors, semantic roles, labels and bounded DOM-composition metrics that are needed to render the Structure workspace. The collector applies safety limits on large pages and does not use a continuous MutationObserver for Structure.
+The resulting Structure snapshot is kept in the current sidepanel/sidebar session. It contains bounded accessibility-oriented counts plus the selectors, semantic roles, labels and evidence needed for the concrete semantic suggestions shown to the user. The collector applies a sampling safety limit on large pages and does not use a continuous MutationObserver for Structure.
 
-When a session report is exported after Structure has already been generated, FocusTrace may reuse a compact report subset containing Structure metrics and semantic review suggestions. The report evidence intentionally omits the full Structure tree. Generating or exporting a report does not trigger a second Structure collection automatically.
+When a session report is exported after Structure has already been analyzed, FocusTrace may reuse a compact report subset containing Structure metrics and semantic review suggestions. Generating or exporting a report does not trigger a second Structure collection automatically.
 
-Structure evidence is diagnostic context, not a WCAG conformance claim. Heuristic observations such as possible semantic lists, navigation-like groups or high generic-container density require human review before markup changes are justified.
+Structure evidence is diagnostic context, not a WCAG conformance claim. Suggestions such as replacing a generic interactive element with native HTML still require human review of the element's actual purpose.
 
 ## FocusTrace Memory
 

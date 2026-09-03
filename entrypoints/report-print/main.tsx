@@ -548,8 +548,8 @@ function PrintableReport({ report }: { report: LoadedReport }) {
                     )
                   : tr(
                       language,
-                      'Heading summary available. Generate Structure before exporting to add DOM metrics and semantic suggestions.',
-                      'Resumen de encabezados disponible. Genera Estructura antes de exportar para añadir métricas del DOM y sugerencias semánticas.',
+                      'Heading summary available. Analyze Structure before exporting to add accessibility-oriented metrics and semantic suggestions.',
+                      'Resumen de encabezados disponible. Analiza Estructura antes de exportar para añadir métricas orientadas a accesibilidad y sugerencias semánticas.',
                     )}</p>
             </div>
           </div>
@@ -568,11 +568,14 @@ function PrintableReport({ report }: { report: LoadedReport }) {
                   const labels = structureSummaryLabels(language);
                   return (
                     <>
-                      <span><strong>{structure.metrics.totalElements}</strong> {labels.domElements.toLocaleLowerCase()}</span>
-                      <span><strong>{structure.metrics.semanticElements}</strong> {labels.semanticElements.toLocaleLowerCase()}</span>
                       <span><strong>{structure.metrics.landmarkCount}</strong> {labels.landmarks.toLocaleLowerCase()}</span>
                       <span><strong>{structure.metrics.listCount}</strong> {labels.lists.toLocaleLowerCase()}</span>
-                      <span><strong>{structure.metrics.maxDepth}</strong> {labels.maxDepth.toLocaleLowerCase()}</span>
+                      <span><strong>{structure.metrics.formCount}</strong> {labels.forms.toLocaleLowerCase()}</span>
+                      <span><strong>{structure.metrics.buttonCount}</strong> {labels.buttons.toLocaleLowerCase()}</span>
+                      <span><strong>{structure.metrics.linkCount}</strong> {labels.links.toLocaleLowerCase()}</span>
+                      <span><strong>{structure.metrics.formControlCount}</strong> {labels.formControls.toLocaleLowerCase()}</span>
+                      <span><strong>{structure.metrics.tableCount}</strong> {labels.tables.toLocaleLowerCase()}</span>
+                      <span><strong>{structure.metrics.imageCount}</strong> {labels.images.toLocaleLowerCase()}</span>
                       <span><strong>{structureHints.length}</strong> {labels.structureHints.toLocaleLowerCase()}</span>
                     </>
                   );
@@ -582,8 +585,8 @@ function PrintableReport({ report }: { report: LoadedReport }) {
               {!structure && (
                 <p className="print-empty">{tr(
                   language,
-                  'Structure metrics were not generated. Open Structure and generate the map before exporting if you want DOM composition and semantic suggestions included.',
-                  'Las métricas de estructura no se han generado. Abre Estructura y genera el mapa antes de exportar si quieres incluir la composición del DOM y las sugerencias semánticas.',
+                  'Structure metrics were not generated. Open Structure and analyze it before exporting if you want accessibility-oriented metrics and semantic suggestions included.',
+                  'Las métricas de estructura no se han generado. Abre Estructura y analízala antes de exportar si quieres incluir métricas orientadas a accesibilidad y sugerencias semánticas.',
                 )}</p>
               )}
 
