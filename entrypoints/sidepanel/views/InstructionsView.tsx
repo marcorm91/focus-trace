@@ -136,14 +136,16 @@ export function InstructionsView({ language }: { language: AppLanguage }) {
           <p>{tr(language, 'Use the resulting journey as debugging evidence; it does not replace manual keyboard testing for context-sensitive behavior.', 'Usa el recorrido resultante como evidencia de depuración; no sustituye las pruebas manuales con teclado cuando el comportamiento depende del contexto.')}</p>
         </InstructionCard>
 
-        <InstructionCard title={tr(language, 'Headings', 'Encabezados')}>
-          <p>{tr(language, 'View the page heading outline, inspect hierarchy and locate headings on the page. Skipped levels are surfaced as structural review signals rather than automatic failures.', 'Consulta el esquema de encabezados de la página, revisa la jerarquía y localiza encabezados. Los saltos de nivel se muestran como señales estructurales para revisar, no como fallos automáticos.')}</p>
+        <InstructionCard title={tr(language, 'Structure', 'Estructura')}>
+          <p>{tr(language, 'Use Headings for the H1–H6 outline, Semantics for concrete native-HTML opportunities, and Metrics for bounded accessibility-oriented structural counts.', 'Usa Encabezados para el esquema H1–H6, Semántica para oportunidades concretas de HTML nativo y Métricas para recuentos estructurales limitados y orientados a accesibilidad.')}</p>
+          <p>{tr(language, 'Headings reuses the current page analysis. Semantics and Metrics stay idle until you explicitly analyze or refresh Structure.', 'Encabezados reutiliza el análisis actual de la página. Semántica y Métricas permanecen inactivas hasta que analizas o actualizas Estructura de forma explícita.')}</p>
         </InstructionCard>
 
         <InstructionCard title={tr(language, 'Report', 'Informe')}>
           <p>{tr(language, 'Combine static findings and runtime stories in a shareable review. Reports include the evidence FocusTrace recorded, not only a score or summary count.', 'Combina hallazgos estáticos e historias runtime en una revisión compartible. Los informes incluyen la evidencia registrada por FocusTrace, no solo una puntuación o un contador.')}</p>
           <p>{tr(language, 'The rule legend is included near the beginning of PDF, TXT and Markdown exports so identifiers can be interpreted without opening Instructions separately.', 'La leyenda de reglas se incluye al principio de las exportaciones PDF, TXT y Markdown para poder interpretar los identificadores sin tener que abrir Instrucciones aparte.')}</p>
-          <p>{tr(language, 'Optional visual evidence for printable reports is created only when you explicitly request it and should be reviewed before sharing.', 'La evidencia visual opcional para informes imprimibles solo se crea cuando la solicitas expresamente y debe revisarse antes de compartirla.')}</p>
+          <p>{tr(language, 'A full-page analysis can keep a bounded local visual crop for the multipage audit so its historical PDF retains context after navigation. Re-analyzing the same page replaces that saved audit evidence.', 'Un análisis de página completa puede conservar un recorte visual local y limitado para la auditoría multipágina, de modo que su PDF histórico mantenga contexto después de navegar. Al volver a analizar la misma página se sustituye esa evidencia guardada.')}</p>
+          <p>{tr(language, 'Single-page printable visual evidence remains optional and is created only when you explicitly include it while exporting that report. Review screenshots before sharing any PDF.', 'La evidencia visual del PDF de una sola página sigue siendo opcional y solo se crea cuando la incluyes expresamente al exportar ese informe. Revisa las capturas antes de compartir cualquier PDF.')}</p>
         </InstructionCard>
 
         <InstructionCard title="FocusTrace Memory">
