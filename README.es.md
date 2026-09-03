@@ -12,7 +12,7 @@ FocusTrace es software libre con licencia **GNU GPL v3.0 únicamente**. La licen
 
 ## ¿Qué lo hace diferente?
 
-FocusTrace combina flujos complementarios de análisis estático, depuración runtime e histórico, en lugar de tratar la accesibilidad como un único escaneo.
+FocusTrace combina flujos complementarios de análisis estático, estructura, depuración runtime e histórico, en lugar de tratar la accesibilidad como un único escaneo.
 
 ### Análisis de página completa y de componentes
 
@@ -34,6 +34,19 @@ FocusTrace utiliza su propio motor local de reglas y no necesita un scanner de a
 Trace registra qué hizo el usuario, qué elemento tenía el foco, qué cambió en la página y dónde se movió el foco después. La evidencia grabada puede revisarse como recorrido, interacciones correlacionadas, grafo de foco o replay de solo lectura.
 
 El depurador runtime puede generar explicaciones causales deterministas para patrones como la eliminación de un nodo con foco, la apertura de un modal sin recibir foco o una navegación SPA que deja el foco atrás. Estas explicaciones describen evidencia registrada; no convierten un comportamiento contextual en una afirmación automática de conformidad WCAG.
+
+### Estructura
+
+Estructura convierte el DOM de la página actual en una vista estructural simplificada y bajo demanda, en lugar de duplicar el inspector DOM del navegador. El espacio agrupa cuatro vistas complementarias:
+
+- **Mapa** — árbol compacto de landmarks, elementos semánticos y contenedores relevantes, agrupando elementos hermanos repetidos cuando resulta útil;
+- **Encabezados** — el árbol H1–H6 existente, las señales de jerarquía y la localización visual sobre la página;
+- **Semántica** — sugerencias heurísticas para revisar patrones como elementos genéricos usados como controles, grupos repetidos que podrían ser listas, grupos de enlaces con aspecto de navegación, cadenas profundas de contenedores genéricos o una densidad elevada de `div`;
+- **Métricas** — contexto sobre la composición del DOM: elementos analizados, elementos semánticos, regiones, listas, profundidad de anidación y proporción de contenedores genéricos.
+
+Las observaciones semánticas son **sugerencias para revisar, no fallos WCAG automáticos**. Por ejemplo, que un grupo repetido deba convertirse realmente en una lista depende del significado del contenido.
+
+Entrar en Estructura no analiza ni observa continuamente el DOM. Mapa, Semántica y Métricas solo se generan cuando el usuario pulsa explícitamente **Generar** o **Actualizar**. El colector limita por defecto la muestra a 10.000 elementos y el árbol visual a 900 nodos relevantes para evitar que una página muy grande convierta esta función en trabajo continuo en segundo plano.
 
 ### FocusTrace Memory
 
@@ -79,7 +92,7 @@ La grabación runtime observa actualmente:
 - mutaciones DOM relevantes y evidencia del ciclo de vida de diálogos;
 - breakpoints de accesibilidad para determinadas causas runtime deterministas.
 
-Trace también incluye un replay de solo lectura de la evidencia registrada y un informe orientado a Trace que combina hallazgos estáticos con historias de interacción runtime y recomendaciones.
+Trace también incluye un replay de solo lectura de la evidencia registrada. El informe de sesión combina hallazgos estáticos con historias de interacción runtime y recomendaciones, mientras **Estructura del documento** resume los encabezados sin repetir el árbol completo. Si Estructura ya se ha generado, el informe del panel, el PDF y el TXT reutilizan sus métricas compactas y sugerencias semánticas sin volver a recorrer el DOM ni exportar el árbol DOM completo.
 
 Consulta [`docs/RULES.md`](docs/RULES.md) para metodología, fuentes y limitaciones y [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) para los principales límites de arquitectura y datos.
 
@@ -111,7 +124,7 @@ FocusTrace mantiene intencionadamente un conjunto reducido de permisos en produc
 
 Firefox utiliza su integración nativa de sidebar en el manifest en lugar de solicitar el permiso exclusivo de Chromium `sidePanel`.
 
-Los builds de producción no necesitan permisos globales de host. El acceso a páginas HTTP/HTTPS se declara como opcional y solo se solicita desde acciones explícitas del usuario.
+Los builds de producción no necesitan permisos globales de host. El acceso a páginas HTTP/HTTPS se declara como opcional y solo se solicita desde acciones explícitas del usuario, como **Analizar esta página** o **Generar / Actualizar Estructura**. El permiso concedido sigue bajo control del navegador y puede revocarse desde los ajustes de acceso a sitios de la extensión.
 
 Cuando Memory está activo, un análisis explícito puede intentar capturar la pestaña visible para crear un pequeño recorte local de un elemento con fallo que esté visible. Este flujo de Memory no solicita acceso persistente y amplio `<all_urls>` para capturas; si la captura no está disponible, FocusTrace conserva el localizador compacto como fallback.
 
@@ -120,6 +133,8 @@ Los informes imprimibles pueden incluir evidencia visual opcional; cuando se uti
 ## Privacidad
 
 Todo el análisis se ejecuta localmente en el navegador. FocusTrace no envía contenido de la página, datos del DOM, capturas ni interacciones grabadas a un servidor de FocusTrace ni a una API de IA de terceros.
+
+Los snapshots de Estructura solo se generan mediante una acción explícita y permanecen locales en la sesión actual del panel. Los informes pueden reutilizar una parte compacta de esa evidencia —métricas y sugerencias semánticas—, pero no conservan ni exportan el árbol completo de Estructura.
 
 FocusTrace Memory es opt-in y está desactivado por defecto. Al activarlo puede conservar historial local limitado, un localizador compacto del elemento y, cuando la captura funciona para un elemento con fallo que esté visible, un pequeño recorte de captura local. Esta evidencia permanece en el perfil del navegador y puede borrarse desde Ajustes.
 
