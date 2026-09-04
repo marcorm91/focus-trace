@@ -1,0 +1,79 @@
+/* Top-level subtitles use every available column instead of inheriting the
+   legacy 260px cap. Header actions and status labels can still keep their own
+   column while the copy grows through the remaining space. */
+.section-heading > div,
+.replay-heading > div,
+.trace-hero-copy,
+.trace-first-report > .report-hero > div:first-child {
+  min-width: 0;
+  width: 100%;
+  max-width: 100%;
+  flex: 1 1 auto;
+}
+
+.section-heading p,
+.replay-heading > div > p:last-child,
+.trace-hero-copy p,
+.trace-first-report > .report-hero > div:first-child > p {
+  width: 100%;
+  max-width: none;
+}
+
+/* Language is a compact binary choice, so both options share one row. */
+.settings-language-group {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+}
+
+.settings-language-group > .settings-help {
+  grid-column: 1 / -1;
+}
+
+/* Neutral cards and accordion shells share the theme surface. This resolves
+   to white in the light theme and to the corresponding surface in dark mode. */
+.issue,
+.focus-card,
+.interaction,
+.breakpoint-panel,
+.graph-finding,
+.focus-node article,
+.trace-story,
+.report-priority-list li,
+.report-finding,
+.report-section,
+.heading-tree-row,
+.heading-selection,
+.settings-card,
+.about-card,
+.settings-group,
+.language-option,
+.settings-breakpoint-option,
+.settings-memory-option,
+.structure-hint,
+.structure-metric,
+.suggestion-list li,
+.replay-event,
+.trace-hero,
+.report-hero,
+.audit-page-report,
+.audit-page-report-body,
+.scan-rule-group,
+.scan-rule-group > summary,
+.scan-rule-body,
+.report-group,
+.report-group > summary,
+.report-rule-group,
+.report-rule-group > summary,
+.report-rule-body,
+.trace-accordion,
+.trace-accordion > summary,
+.trace-accordion-body,
+.finding-guidance-severity,
+.finding-guidance-severity > summary,
+.finding-guidance section,
+.instructions-start,
+.instructions-card,
+.instructions-card > summary,
+.instructions-card-body {
+  background: var(--ft-surface, #fff);
+  background-image: none;
+}
