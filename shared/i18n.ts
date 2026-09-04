@@ -105,6 +105,20 @@ const EXTRA_EVIDENCE_ES: Record<string, string> = {
   'FT-RUNTIME-006': 'Se observó un movimiento de arrastre real y debe revisarse si existe una alternativa equivalente sin arrastrar.',
 };
 
+const HELP_KIND_ES: Record<string, string> = {
+  'human contact details': 'datos de contacto humano',
+  'human contact mechanism': 'mecanismo de contacto humano',
+  'self-help option': 'opción de autoayuda',
+  'automated contact mechanism': 'mecanismo de contacto automatizado',
+};
+
+function localizeHelpOrder(order: string): string {
+  return order
+    .split(' → ')
+    .map((part) => HELP_KIND_ES[part.trim()] ?? part.trim())
+    .join(' → ');
+}
+
 function technicalEvidenceTokens(evidence: string): string[] {
   const matches = evidence.match(/<[^>]+>|aria-[a-z-]+(?:="[^"]*")?|role="[^"]*"|#[A-Za-z][\w:.-]*/gi) ?? [];
   return [...new Set(matches)];
@@ -134,6 +148,13 @@ function localizedExtraEvidence(ruleId: string, evidence: string): string | unde
   if (ruleId === 'FT-WARN-021') {
     const contradiction = evidence.match(/^(aria-[a-z-]+="[^"]+") contradicts the current availability of (#[A-Za-z][\w:.-]*)\.$/i);
     if (contradiction) return `${contradiction[1]} contradice la disponibilidad actual de ${contradiction[2]}.`;
+  }
+
+  if (ruleId === 'FT-REVIEW-011') {
+    const comparison = evidence.match(/^Observed order: (.+?)\. Comparison page (https?:\/\/\S+): (.+)\.$/);
+    if (comparison) {
+      return `Orden observado: ${localizeHelpOrder(comparison[1] ?? '')}. Página comparada ${comparison[2]}: ${localizeHelpOrder(comparison[3] ?? '')}.`;
+    }
   }
 
   const fallback = EXTRA_EVIDENCE_ES[ruleId];
