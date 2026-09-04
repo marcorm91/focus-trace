@@ -56,19 +56,33 @@ describe('multipage audit UI contract', () => {
     expect(compact).toContain('{onLocate && (');
   });
 
-  it('deletes saved page reports and keeps audit visual export explicit', () => {
+  it('deletes saved page reports and explains page-by-page audit image capture', () => {
     const workspace = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/views/AuditReportWorkspace.tsx'), 'utf8');
+    const report = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/views/SessionReportView.tsx'), 'utf8');
     const hook = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/hooks/useMultipageAudit.ts'), 'utf8');
     const storage = readFileSync(resolve(process.cwd(), 'lib/audit/multipage-audit-storage.ts'), 'utf8');
 
-    expect(workspace).toContain('Delete saved report');
-    expect(workspace).toContain('Eliminar informe guardado');
+    expect(report).toContain('Delete saved report');
+    expect(report).toContain('Eliminar informe guardado');
+    expect(report).toContain('className="delete-saved-report"');
     expect(workspace).toContain('onDeletePage(audit.id, pageKey)');
-    expect(workspace).toContain('Include saved images');
-    expect(workspace).toContain('Incluir imágenes guardadas');
-    expect(workspace).toContain('storeAuditPrintEvidence(audit, includeVisualEvidence)');
+    expect(workspace).not.toContain('Include saved images');
+    expect(workspace).not.toContain('Incluir imágenes guardadas');
+    expect(workspace).toContain('Las imágenes de la auditoría completa se guardan página a página.');
+    expect(workspace).toContain('storeAuditPrintEvidence(audit)');
     expect(hook).toContain('deleteMultipageAuditPage');
     expect(storage).toContain('removeAuditPage(current, auditId, pageKey)');
+  });
+
+  it('clears saved audits and reports when starting over', () => {
+    const app = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/App.tsx'), 'utf8');
+    const hook = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/hooks/useMultipageAudit.ts'), 'utf8');
+    const storage = readFileSync(resolve(process.cwd(), 'lib/audit/multipage-audit-storage.ts'), 'utf8');
+
+    expect(app).toContain('await clearAuditHistory()');
+    expect(app).toContain('todas las auditorías e informes guardados');
+    expect(hook).toContain('clearMultipageAudits');
+    expect(storage).toContain('browser.storage.local.remove(MULTIPAGE_AUDIT_STORAGE_KEY)');
   });
 
   it('stores bounded visual evidence per review and bounds the complete audit store', () => {
@@ -87,7 +101,7 @@ describe('multipage audit UI contract', () => {
     expect(storage).toContain('storageTrimmed: true');
     expect(printable).toContain('page.visualEvidence?.visuals');
     expect(printable).toContain('print-visual-evidence');
-    expect(printable).toContain('No se pudo capturar evidencia visual para esta revisión');
+    expect(printable).not.toContain('No se pudo capturar evidencia visual para esta revisión');
   });
 
   it('renders audit pages through a dedicated printable entrypoint', () => {
@@ -99,15 +113,20 @@ describe('multipage audit UI contract', () => {
     expect(printable).toContain('Audit index');
     expect(printable).toContain('Índice de la auditoría');
     expect(printable).toContain("id={`audit-page-${index + 1}-${group.id}`}");
+    expect(printable).toContain('measuredPrintPageNumbers');
+    expect(printable).toContain('audit-print-toc-leader');
+    expect(printable).not.toContain('<span>{section.count}</span>');
   });
 
-  it('uses flat report metrics, roomier spacing and no accordion hover fill', () => {
+  it('uses flat report metrics, compact accordions and no accordion hover fill', () => {
     const auditCss = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/audit.css'), 'utf8');
     const accordionCss = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/views/report-accordion.css'), 'utf8');
 
     expect(auditCss).toContain('.audit-overview-metrics span::before');
-    expect(auditCss).toContain('padding: 18px;');
+    expect(auditCss).toContain('padding: 12px;');
     expect(auditCss).not.toContain('.audit-page-summary:hover');
+    expect(accordionCss).toContain('padding: 8px 10px;');
+    expect(accordionCss).toContain('padding: 0;');
     expect(accordionCss).not.toContain('.report-accordion-summary:hover');
   });
 });

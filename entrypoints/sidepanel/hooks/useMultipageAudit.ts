@@ -12,6 +12,7 @@ import {
 import {
   loadMultipageAuditStore,
   MULTIPAGE_AUDIT_STORAGE_KEY,
+  clearMultipageAudits,
   deleteMultipageAuditPage,
   recordMultipageAuditScan,
 } from '../../../lib/audit/multipage-audit-storage';
@@ -136,8 +137,8 @@ export function useMultipageAudit() {
         };
       }
     } catch {
-      // The audit still keeps the analysis. The PDF will explicitly state that
-      // visual evidence was unavailable for this review instead of using stale crops.
+      // The audit still keeps the analysis. The Report workspace explains that
+      // this page must be analyzed again before images can be included.
     }
 
     const next = await recordMultipageAuditScan(scan, plan, visualEvidence);
@@ -149,6 +150,11 @@ export function useMultipageAudit() {
     setStore(next);
   }, []);
 
+  const clearAuditHistory = useCallback(async () => {
+    const next = await clearMultipageAudits();
+    setStore(next);
+  }, []);
+
   return {
     activeAudit,
     pendingScope,
@@ -156,6 +162,7 @@ export function useMultipageAudit() {
     preparePageAnalysis,
     recordPageAnalysis,
     deleteAuditPage,
+    clearAuditHistory,
     addPendingSiteToCurrentAudit,
     startPendingSiteAsNewAudit,
     cancelPendingAuditScope,

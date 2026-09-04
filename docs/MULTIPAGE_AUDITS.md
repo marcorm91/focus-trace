@@ -45,7 +45,7 @@ If the overall budget is exceeded, FocusTrace removes older inactive audit histo
 
 During an explicit full-page analysis, FocusTrace can capture a small bounded set of visual crops for the audit using the active page context already established for that analysis. These crops remain local in browser extension storage and may contain visible page content.
 
-A failed or unavailable capture is stored as an evidence state rather than being treated as if screenshots existed. Audit PDFs can therefore distinguish between:
+A failed or unavailable capture is stored as an evidence state rather than being treated as if screenshots existed. Before export, the Report workspace can therefore distinguish between:
 
 - saved visual evidence;
 - a page with no eligible visual target;
@@ -65,7 +65,9 @@ See `PRIVACY.md` for the complete local-data and permission description.
 - one section per normalized page URL;
 - the latest review time for every page;
 - the latest saved full-page findings for every page;
-- the bounded visual crops that were persisted with those page reviews when available and explicitly included for export.
+- the bounded visual crops that were persisted with those page reviews, included automatically when available.
+
+The Report workspace shows a warning that audit images are collected page by page. Pages without saved images must be opened and analyzed again before those images can appear in the complete PDF.
 
 The print payload is itself bounded before being placed in `browser.storage.session`, so a large historical audit cannot rely on exceeding the browser's session-storage quota just to open the print preview.
 

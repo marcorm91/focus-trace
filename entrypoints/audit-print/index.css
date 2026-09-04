@@ -54,6 +54,26 @@
   gap: 3px;
 }
 
+.audit-print-toc-line,
+.audit-print-toc ol ol a {
+  display: grid;
+  grid-template-columns: auto minmax(18px, 1fr) auto;
+  align-items: baseline;
+  gap: 7px;
+}
+
+.audit-print-toc-leader {
+  min-width: 18px;
+  border-bottom: 1px dotted currentColor;
+  opacity: .65;
+}
+
+.audit-print-toc-number {
+  color: #475569;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
 .audit-print-toc > ol > li > a strong {
   font-size: 13px;
 }
@@ -70,17 +90,36 @@
 }
 
 .audit-print-toc ol ol a {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 12px;
   color: #475569;
   font-size: 11px;
 }
 
-.audit-print-toc ol ol span {
+.audit-print-toc ol ol .audit-print-toc-number {
   color: #667085;
   font-variant-numeric: tabular-nums;
+}
+
+.audit-print-measure {
+  position: absolute;
+  inset: 0 auto auto -200vw;
+  width: 186mm;
+  margin: 0;
+  padding: 0;
+  visibility: hidden;
+  pointer-events: none;
+  box-shadow: none;
+}
+
+.audit-print-measure .print-section {
+  padding-block: 16px;
+}
+
+.audit-print-page-ruler {
+  position: absolute;
+  width: 1px;
+  height: 270mm;
+  visibility: hidden;
+  pointer-events: none;
 }
 
 .audit-print-page-title a {

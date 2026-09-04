@@ -101,6 +101,32 @@
   cursor: not-allowed;
 }
 
+.report-export-actions .delete-saved-report {
+  flex: 0 0 36px;
+  width: 36px;
+  min-width: 36px;
+  padding: 0;
+  border-color: color-mix(in srgb, var(--ft-danger) 55%, var(--ft-border));
+  color: var(--ft-danger);
+}
+
+.delete-saved-report > span {
+  width: 18px;
+  height: 18px;
+  background: currentColor;
+  -webkit-mask: var(--ft-i-trash) center / contain no-repeat;
+  mask: var(--ft-i-trash) center / contain no-repeat;
+}
+
+.delete-saved-report:not(:disabled):hover {
+  background: var(--ft-danger-soft);
+}
+
+.report-image-guidance {
+  grid-area: evidence;
+  justify-self: stretch;
+}
+
 .report-more-formats {
   position: relative;
   min-width: min(100%, 220px);
@@ -186,6 +212,22 @@
   border-bottom: 1px solid var(--ft-border-soft);
   border-radius: 0;
   background: transparent;
+}
+
+.audit-page-report-body .report-export-actions {
+  width: 100%;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) 36px;
+}
+
+.audit-page-report-body .report-export-actions > button,
+.audit-page-report-body .report-more-formats {
+  width: 100%;
+  max-width: none;
+}
+
+.audit-page-report-body .report-export-actions > .delete-saved-report {
+  width: 36px;
 }
 
 .audit-page-report-body .trace-first-report > .report-hero > div:first-child {

@@ -11,6 +11,95 @@ import type { HeadingSignal, ScanIssue, StandardReference } from '../../shared/t
 import '../report-print/index.css';
 import './index.css';
 
+type PrintPageNumbers = Record<string, number>;
+
+function initialPrintPageNumbers(audit: AccessibilityAudit): PrintPageNumbers {
+  return Object.fromEntries(audit.pages.flatMap((_page, index) => {
+    const pageId = `audit-page-${index + 1}`;
+    const pageNumber = index + 3;
+    return [
+      [pageId, pageNumber],
+      ...['headings', 'fail', 'review', 'warning'].map((section) => [`${pageId}-${section}`, pageNumber]),
+    ];
+  }));
+}
+
+function measuredPrintPageNumbers(audit: AccessibilityAudit): PrintPageNumbers | undefined {
+  const report = document.querySelector<HTMLElement>('.audit-print-report:not(.audit-print-measure)');
+  if (!report) return undefined;
+
+  const clone = report.cloneNode(true) as HTMLElement;
+  clone.classList.add('audit-print-measure');
+  clone.setAttribute('aria-hidden', 'true');
+  clone.setAttribute('inert', '');
+  const ruler = document.createElement('div');
+  ruler.className = 'audit-print-page-ruler';
+  document.body.append(clone, ruler);
+
+  try {
+    const pageHeight = ruler.getBoundingClientRect().height;
+    const cover = clone.querySelector<HTMLElement>('.audit-print-cover');
+    const toc = clone.querySelector<HTMLElement>('.audit-print-toc');
+    if (!cover || !toc || pageHeight <= 0) return undefined;
+
+    const pageSpan = (element: HTMLElement) => Math.max(
+      1,
+      Math.ceil((element.getBoundingClientRect().height - 0.5) / pageHeight),
+    );
+    const pageNumbers: PrintPageNumbers = {};
+    let nextPage = pageSpan(cover) + pageSpan(toc) + 1;
+
+    audit.pages.forEach((_page, index) => {
+      const pageId = `audit-page-${index + 1}`;
+      const title = clone.querySelector<HTMLElement>(`#${pageId}`);
+      const pageSection = title?.closest<HTMLElement>('.audit-print-page');
+      if (!pageSection) return;
+
+      const pageTop = pageSection.getBoundingClientRect().top;
+      const fragmentShifts: Array<{ offset: number; added: number }> = [];
+      let addedHeight = 0;
+      const unbreakableBlocks = [...pageSection.querySelectorAll<HTMLElement>(
+        '.print-finding, .print-heading-list li',
+      )].sort((first, second) => first.getBoundingClientRect().top - second.getBoundingClientRect().top);
+      for (const block of unbreakableBlocks) {
+        const rect = block.getBoundingClientRect();
+        if (rect.height >= pageHeight) continue;
+        const offset = Math.max(0, rect.top - pageTop);
+        const shiftedOffset = offset + addedHeight;
+        const offsetWithinPage = shiftedOffset % pageHeight;
+        if (offsetWithinPage <= 0 || offsetWithinPage + rect.height <= pageHeight) continue;
+        const added = pageHeight - offsetWithinPage;
+        addedHeight += added;
+        fragmentShifts.push({ offset, added });
+      }
+      const adjustedOffset = (element: HTMLElement) => {
+        const offset = Math.max(0, element.getBoundingClientRect().top - pageTop);
+        const fragmentation = fragmentShifts
+          .filter((shift) => shift.offset <= offset)
+          .reduce((total, shift) => total + shift.added, 0);
+        return offset + fragmentation;
+      };
+      pageNumbers[pageId] = nextPage;
+      for (const section of ['headings', 'fail', 'review', 'warning']) {
+        const sectionId = `${pageId}-${section}`;
+        const sectionElement = clone.querySelector<HTMLElement>(`#${sectionId}`);
+        if (!sectionElement) continue;
+        const offset = adjustedOffset(sectionElement);
+        pageNumbers[sectionId] = nextPage + Math.floor(offset / pageHeight);
+      }
+      nextPage += Math.max(
+        1,
+        Math.ceil((pageSection.getBoundingClientRect().height + addedHeight - 0.5) / pageHeight),
+      );
+    });
+
+    return pageNumbers;
+  } finally {
+    clone.remove();
+    ruler.remove();
+  }
+}
+
 function referenceLabel(reference: StandardReference): string {
   return `${reference.type} ${reference.id}${reference.level ? ` (${reference.level})` : ''}`;
 }
@@ -87,16 +176,36 @@ function Finding({
 function AuditPrintReport({
   audit,
   language,
-  includeVisualEvidence,
 }: {
   audit: AccessibilityAudit;
   language: AppLanguage;
-  includeVisualEvidence: boolean;
 }) {
   const summary = useMemo(() => auditSummary(audit), [audit]);
   const version = browser.runtime.getManifest().version;
   const generatedAt = Date.now();
   const generatedLabel = formatDateTime(generatedAt, language);
+  const [printPageNumbers, setPrintPageNumbers] = useState<PrintPageNumbers>(
+    () => initialPrintPageNumbers(audit),
+  );
+
+  useEffect(() => {
+    let cancelled = false;
+    let frame = 0;
+    const updatePageNumbers = () => {
+      frame = window.requestAnimationFrame(() => {
+        const measured = measuredPrintPageNumbers(audit);
+        if (!cancelled && measured) setPrintPageNumbers(measured);
+      });
+    };
+    updatePageNumbers();
+    void document.fonts?.ready.then(updatePageNumbers);
+    window.addEventListener('resize', updatePageNumbers);
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('resize', updatePageNumbers);
+    };
+  }, [audit]);
 
   return (
     <>
@@ -176,8 +285,19 @@ function AuditPrintReport({
               ].filter((section) => section.count > 0);
               return (
                 <li key={page.key}>
-                  <a href={`#audit-page-${pageNumber}`}>
-                    <strong>{pageNumber}. {page.title || tr(language, 'Analyzed page', 'Página analizada')}</strong>
+                  <a className="audit-print-toc-page-link" href={`#audit-page-${pageNumber}`}>
+                    <span className="audit-print-toc-line">
+                      <strong>{pageNumber}. {page.title || tr(language, 'Analyzed page', 'Página analizada')}</strong>
+                      <span className="audit-print-toc-leader" aria-hidden="true" />
+                      <span
+                        className="audit-print-toc-number"
+                        aria-label={tr(
+                          language,
+                          `Page ${printPageNumbers[`audit-page-${pageNumber}`] ?? pageNumber + 2}`,
+                          `Página ${printPageNumbers[`audit-page-${pageNumber}`] ?? pageNumber + 2}`,
+                        )}
+                      >{printPageNumbers[`audit-page-${pageNumber}`] ?? pageNumber + 2}</span>
+                    </span>
                     <small>{page.url}</small>
                   </a>
                   {sections.length > 0 && (
@@ -185,7 +305,16 @@ function AuditPrintReport({
                       {sections.map((section, sectionIndex) => (
                         <li key={section.id}>
                           <a href={`#audit-page-${pageNumber}-${section.id}`}>
-                            {pageNumber}.{sectionIndex + 1} {section.label} <span>{section.count}</span>
+                            <span>{pageNumber}.{sectionIndex + 1} {section.label}</span>
+                            <span className="audit-print-toc-leader" aria-hidden="true" />
+                            <span
+                              className="audit-print-toc-number"
+                              aria-label={tr(
+                                language,
+                                `Page ${printPageNumbers[`audit-page-${pageNumber}-${section.id}`] ?? printPageNumbers[`audit-page-${pageNumber}`] ?? pageNumber + 2}`,
+                                `Página ${printPageNumbers[`audit-page-${pageNumber}-${section.id}`] ?? printPageNumbers[`audit-page-${pageNumber}`] ?? pageNumber + 2}`,
+                              )}
+                            >{printPageNumbers[`audit-page-${pageNumber}-${section.id}`] ?? printPageNumbers[`audit-page-${pageNumber}`] ?? pageNumber + 2}</span>
                           </a>
                         </li>
                       ))}
@@ -207,9 +336,7 @@ function AuditPrintReport({
             { id: 'warning', label: tr(language, 'Warnings', 'Avisos'), issues: sortBySeverity(scan.warnings ?? []) },
           ];
           const visualMap = new Map(
-            includeVisualEvidence
-              ? page.visualEvidence?.visuals.map((visual) => [visual.selector, visual]) ?? []
-              : [],
+            page.visualEvidence?.visuals.map((visual) => [visual.selector, visual]) ?? [],
           );
           const visualByIssue = new Map<string, ReportVisualEvidence>();
           const usedVisualSelectors = new Set<string>();
@@ -223,7 +350,7 @@ function AuditPrintReport({
               usedVisualSelectors.add(selector);
             }
           }
-          const visualEvidence = includeVisualEvidence ? page.visualEvidence : undefined;
+          const visualEvidence = page.visualEvidence;
           return (
             <section className="print-section audit-print-page" key={page.key} aria-labelledby={`audit-page-${index + 1}`}>
               <div className="print-section-title audit-print-page-title">
@@ -242,26 +369,12 @@ function AuditPrintReport({
                 <span><strong>{headings.length}</strong> {tr(language, 'headings', 'encabezados')}</span>
               </div>
 
-              {includeVisualEvidence && !visualEvidence && (
-                <p className="print-visual-summary">{tr(
-                  language,
-                  'Visual evidence was not stored for this earlier review.',
-                  'No se guardó evidencia visual para esta revisión anterior.',
-                )}</p>
-              )}
               {visualEvidence && visualEvidence.eligibleCount > 0 && visualEvidence.visuals.length > 0 && (
                 <p className="print-visual-summary">
                   {tr(language, 'Visual evidence', 'Evidencia visual')}: {visualEvidence.visuals.length} {tr(language, 'saved crops', 'recortes guardados')}
                   {visualEvidence.limitReached ? ` · ${tr(language, 'per-page capture limit reached', 'límite de capturas por página alcanzado')}` : ''}
                   {visualEvidence.storageTrimmed ? ` · ${tr(language, 'older crops trimmed to protect local storage', 'recortes antiguos limitados para proteger el almacenamiento local')}` : ''}
                 </p>
-              )}
-              {visualEvidence && visualEvidence.eligibleCount > 0 && visualEvidence.visuals.length === 0 && (
-                <p className="print-visual-unavailable">{tr(
-                  language,
-                  'Visual evidence could not be captured for this review. The browser may have restricted screenshot access or the target elements may no longer have been renderable.',
-                  'No se pudo capturar evidencia visual para esta revisión. El navegador pudo restringir el acceso a capturas o los elementos objetivo pudieron dejar de ser renderizables.',
-                )}</p>
               )}
 
               {headingReviews.length > 0 && (
@@ -313,7 +426,6 @@ function AuditPrintReport({
 
 function App() {
   const [audit, setAudit] = useState<AccessibilityAudit>();
-  const [includeVisualEvidence, setIncludeVisualEvidence] = useState(true);
   const [error, setError] = useState<string>();
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
   const language: AppLanguage = params.get('language') === 'es' ? 'es' : 'en';
@@ -331,7 +443,6 @@ function App() {
         return;
       }
       setAudit(evidence.audit);
-      setIncludeVisualEvidence(evidence.includeVisualEvidence !== false);
       const date = new Date().toISOString().slice(0, 10);
       document.title = `FocusTrace-${evidence.audit.name}-${date}`;
     }).catch(() => {
@@ -343,7 +454,7 @@ function App() {
     return <main className="print-error"><img src="/icon/48.png" alt="" /><h1>FocusTrace</h1><p>{error}</p></main>;
   }
   if (!audit) return <main className="print-loading">FocusTrace…</main>;
-  return <AuditPrintReport audit={audit} language={language} includeVisualEvidence={includeVisualEvidence} />;
+  return <AuditPrintReport audit={audit} language={language} />;
 }
 
 createRoot(document.getElementById('root')!).render(<App />);

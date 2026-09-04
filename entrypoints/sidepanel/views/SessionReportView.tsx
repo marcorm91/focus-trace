@@ -68,6 +68,8 @@ export function SessionReportView({
   onLocate,
   livePage = true,
   savedVisualEvidence,
+  deletingSavedReport = false,
+  onDeleteSavedReport,
 }: {
   scan?: ScanResult | undefined;
   events: RuntimeEvent[];
@@ -76,6 +78,8 @@ export function SessionReportView({
   onLocate: (selector: string) => void | Promise<void>;
   livePage?: boolean | undefined;
   savedVisualEvidence?: AuditPageVisualEvidence | undefined;
+  deletingSavedReport?: boolean | undefined;
+  onDeleteSavedReport?: (() => void) | undefined;
 }) {
   const model = useMemo(() => buildSessionReportModel(scan, events, language), [events, language, scan]);
   const graph = useMemo(() => buildFocusGraph(events), [events]);
@@ -92,6 +96,8 @@ export function SessionReportView({
   const [components, setComponents] = useState<ReportComponentIdentity[]>([]);
   const [includeVisualEvidence, setIncludeVisualEvidence] = useState(true);
   const [exportingPdf, setExportingPdf] = useState(false);
+  const hasSavedVisualEvidence = Boolean(savedVisualEvidence?.visuals.length);
+  const canIncludeVisualEvidence = livePage || hasSavedVisualEvidence;
   const componentMap = useMemo(
     () => new Map(components.map((component) => [component.selector, component])),
     [components],
@@ -159,11 +165,12 @@ export function SessionReportView({
         ? await collectReportComponents(tab.id, scan, events)
         : [...buildReportComponentIndex(scan, events, []).values()];
       setComponents(freshComponents);
-      const capture = includeVisualEvidence && livePage && tab?.id != null
+      const shouldIncludeVisualEvidence = includeVisualEvidence && canIncludeVisualEvidence;
+      const capture = shouldIncludeVisualEvidence && livePage && tab?.id != null
         ? await captureReportVisualEvidence(tab.id, scan, freshComponents, events)
         : {
-            visuals: includeVisualEvidence ? savedVisualEvidence?.visuals ?? [] : [],
-            limitReached: includeVisualEvidence ? Boolean(savedVisualEvidence?.limitReached) : false,
+            visuals: shouldIncludeVisualEvidence ? savedVisualEvidence?.visuals ?? [] : [],
+            limitReached: shouldIncludeVisualEvidence ? Boolean(savedVisualEvidence?.limitReached) : false,
           };
       const token = await storePrintableReportEvidence({
         session: {
@@ -175,7 +182,7 @@ export function SessionReportView({
         },
         components: freshComponents,
         visuals: capture.visuals,
-        visualEvidenceRequested: includeVisualEvidence,
+        visualEvidenceRequested: shouldIncludeVisualEvidence,
         visualEvidenceLimitReached: capture.limitReached,
         ...(reportStructureEvidence ? { structure: reportStructureEvidence } : {}),
       });
@@ -216,26 +223,38 @@ export function SessionReportView({
         </div>
         {scan && (
           <div className="report-export-tools">
-            <label className="report-visual-evidence-option">
-              <input
-                type="checkbox"
-                checked={includeVisualEvidence}
-                disabled={!scan || exportingPdf || (!livePage && !(savedVisualEvidence?.visuals.length))}
-                onChange={(event) => setIncludeVisualEvidence(event.currentTarget.checked)}
-              />
-              <span>
-                <strong>{tr(language, 'Include visual evidence', 'Incluir evidencia visual')}</strong>
-                <small>{tr(
+            {canIncludeVisualEvidence && (
+              <label className="report-visual-evidence-option">
+                <input
+                  type="checkbox"
+                  checked={includeVisualEvidence}
+                  disabled={!scan || exportingPdf}
+                  onChange={(event) => setIncludeVisualEvidence(event.currentTarget.checked)}
+                />
+                <span>
+                  <strong>{tr(language, 'Include visual evidence', 'Incluir evidencia visual')}</strong>
+                  <small>{tr(
+                    language,
+                    livePage
+                      ? 'PDF only. Crops may contain visible page content.'
+                      : `${savedVisualEvidence?.visuals.length ?? 0} saved crops available for this historical review.`,
+                    livePage
+                      ? 'Solo PDF. Los recortes pueden contener contenido visible de la página.'
+                      : `${savedVisualEvidence?.visuals.length ?? 0} recortes guardados disponibles para esta revisión histórica.`,
+                  )}</small>
+                </span>
+              </label>
+            )}
+            {!canIncludeVisualEvidence && (
+              <div className="report-image-guidance" role="note">
+                <span aria-hidden="true">!</span>
+                <p>{tr(
                   language,
-                  livePage
-                    ? 'PDF only. Crops may contain visible page content.'
-                    : `${savedVisualEvidence?.visuals.length ?? 0} saved crops available for this historical review.`,
-                  livePage
-                    ? 'Solo PDF. Los recortes pueden contener contenido visible de la página.'
-                    : `${savedVisualEvidence?.visuals.length ?? 0} recortes guardados disponibles para esta revisión histórica.`,
-                )}</small>
-              </span>
-            </label>
+                  'This review has no saved images. Open this page and analyze it again to add images to the complete audit PDF.',
+                  'Esta revisión no tiene imágenes guardadas. Abre esta página y vuelve a analizarla para añadir imágenes al PDF de la auditoría completa.',
+                )}</p>
+              </div>
+            )}
             <div className="report-export-actions">
               <button className="export-pdf-report" type="button" disabled={!scan || exportingPdf} onClick={() => void openPrintableReport()}>
                 <span aria-hidden="true">▤</span>
@@ -265,6 +284,18 @@ export function SessionReportView({
                   )}
                 </small>
               </details>
+              {onDeleteSavedReport && (
+                <button
+                  className="delete-saved-report"
+                  type="button"
+                  disabled={deletingSavedReport || exportingPdf}
+                  aria-label={tr(language, 'Delete saved report', 'Eliminar informe guardado')}
+                  title={tr(language, 'Delete saved report', 'Eliminar informe guardado')}
+                  onClick={onDeleteSavedReport}
+                >
+                  <span aria-hidden="true" />
+                </button>
+              )}
             </div>
           </div>
         )}
