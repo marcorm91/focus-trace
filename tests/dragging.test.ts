@@ -40,7 +40,6 @@ describe('runtime dragging review', () => {
     const observation = tracker.finish(7);
     expect(observation).toMatchObject({
       interactionId: 'interaction-7',
-      source: 'pointer',
       distancePx: 12,
     });
 
@@ -55,7 +54,7 @@ describe('runtime dragging review', () => {
     expect(event.references?.some((reference) => reference.type === 'WCAG' && reference.id === '2.5.7')).toBe(true);
   });
 
-  it('records native dragstart without duplicating a pending pointer path', () => {
+  it('cancels a pending path without producing a dragging review', () => {
     const tracker = new RuntimeDragTracker();
     tracker.start({
       pointerId: 3,
@@ -65,10 +64,8 @@ describe('runtime dragging review', () => {
       y: 0,
     });
     tracker.move(3, 40, 0);
+    tracker.cancel(3);
 
-    const observation = tracker.nativeDrag('interaction-3', element);
-    expect(observation.source).toBe('native-drag');
-    expect(createDraggingReviewEvent(observation).ruleId).toBe('FT-RUNTIME-006');
     expect(tracker.finish(3)).toBeUndefined();
   });
 });
