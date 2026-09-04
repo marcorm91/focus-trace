@@ -7,7 +7,7 @@ import {
 import type { AppLanguage } from '../../shared/i18n';
 import type { ExtensionMessage, ScanResult } from '../../shared/types';
 import { localizedUserError } from '../../shared/user-facing-errors';
-import type { SiteAuditPageResult, SitePageStructure } from './model';
+import type { SiteAuditPageResult, SiteHelpMechanismKind, SitePageStructure } from './model';
 
 const PAGE_LOAD_TIMEOUT = 18_000;
 
@@ -52,6 +52,55 @@ export function collectSitePageStructureInPage(): SitePageStructure {
     if (landmarks.has(tag) || ['banner', 'navigation', 'main', 'contentinfo', 'complementary'].includes(role ?? '')) landmarkCount += 1;
   }
 
+  const normalizeHelpText = (value: string) => value
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .toLowerCase();
+  const helpSelector = (element: Element) => {
+    if (element.id) {
+      const escaped = typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
+        ? CSS.escape(element.id)
+        : element.id.replace(/[^a-zA-Z0-9_-]/g, '\\$&');
+      return `#${escaped}`;
+    }
+    const tag = element.tagName.toLowerCase();
+    const parent = element.parentElement;
+    if (!parent) return tag;
+    const siblings = [...parent.children].filter((candidate) => candidate.tagName === element.tagName);
+    return `${tag}:nth-of-type(${Math.max(1, siblings.indexOf(element) + 1)})`;
+  };
+  const classifyHelp = (element: Element): SiteHelpMechanismKind | undefined => {
+    const href = element instanceof HTMLAnchorElement ? element.getAttribute('href') ?? '' : '';
+    const label = element.getAttribute('aria-label') || element.textContent || '';
+    const haystack = normalizeHelpText(`${label} ${href}`);
+    if (/chatbot|virtual assistant|asistente virtual|bot de ayuda|bot de soporte/.test(haystack)) return 'automated-contact';
+    if (/^(?:tel|mailto):/i.test(href.trim())) return 'human-contact-details';
+    if (/contact|contacto|support|soporte|customer service|atencion al cliente|live chat|chat en vivo|hablar con|talk to/.test(haystack)) return 'human-contact';
+    if (/\bfaq\b|preguntas frecuentes|help center|centro de ayuda|knowledge base|base de conocimiento|documentation|documentacion|\bdocs\b|\bhelp\b|\bayuda\b/.test(haystack)) return 'self-help';
+    return undefined;
+  };
+
+  const helpMechanisms: SitePageStructure['helpMechanisms'] = [];
+  const seenHelpKinds = new Set<SiteHelpMechanismKind>();
+  const helpCandidates = document.querySelectorAll('a[href], button, [role="button"], [role="link"]');
+  for (const element of [...helpCandidates].slice(0, 500)) {
+    if (element.getAttribute('aria-hidden') === 'true' || element.hasAttribute('hidden')) continue;
+    const style = getComputedStyle(element);
+    if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') continue;
+    const kind = classifyHelp(element);
+    if (!kind || seenHelpKinds.has(kind)) continue;
+    const label = (element.getAttribute('aria-label') || element.textContent || kind).replace(/\s+/g, ' ').trim();
+    helpMechanisms.push({
+      kind,
+      selector: helpSelector(element),
+      label: label.slice(0, 120) || kind,
+    });
+    seenHelpKinds.add(kind);
+    if (seenHelpKinds.size === 4) break;
+  }
+
   const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href;
   const source = `${semanticTokens.slice(0, 360).join('|')}::h=${headingLevels.join(',')}::i=${Math.min(interactiveCount, 99)}::l=${Math.min(landmarkCount, 30)}`;
   let hash = 2166136261;
@@ -67,6 +116,7 @@ export function collectSitePageStructureInPage(): SitePageStructure {
     headingLevels,
     interactiveCount,
     landmarkCount,
+    ...(helpMechanisms.length ? { helpMechanisms } : {}),
   };
 }
 
