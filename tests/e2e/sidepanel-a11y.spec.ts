@@ -289,7 +289,7 @@ test('report opens a formatted PDF preview without exposing CSS selectors', asyn
   const printable = await newPage;
   await printable.waitForLoadState('domcontentloaded');
 
-  await expect(printable).toHaveURL(/report-print\.html\?tabId=/);
+  await expect(printable).toHaveURL(/report-print\.html\?language=(?:en|es)&evidence=[^&]+$/);
   await expect(printable.getByRole('heading', { level: 1, name: 'Checkout accessibility fixture' })).toBeVisible();
   await expect(printable.getByRole('button', { name: /Print \/ Save as PDF|Imprimir \/ Guardar como PDF/ })).toBeVisible();
   await expect(printable.getByRole('link', { name: 'WCAG 4.1.2 (A)' })).toBeVisible();

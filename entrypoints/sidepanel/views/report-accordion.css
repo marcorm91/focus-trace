@@ -77,10 +77,6 @@
   margin-bottom: 14px;
 }
 
-.report-accordion-summary:hover {
-  background: var(--ft-surface-subtle, color-mix(in srgb, CanvasText 3%, Canvas));
-}
-
 .report-accordion-summary:focus-visible {
   outline: 2px solid Highlight;
   outline-offset: -3px;

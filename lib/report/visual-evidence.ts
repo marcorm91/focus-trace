@@ -1,5 +1,5 @@
 import { browser } from '#imports';
-import type { RuntimeEvent, ScanResult } from '../../shared/types';
+import type { RuntimeEvent, ScanResult, SessionState } from '../../shared/types';
 import {
   buildReportComponentIndex,
   collectComponentIdentitiesInPage,
@@ -25,6 +25,7 @@ export interface VisualEvidenceCaptureResult {
 }
 
 export interface PrintableReportEvidenceBundle {
+  session?: SessionState;
   components: ReportComponentIdentity[];
   visuals: ReportVisualEvidence[];
   visualEvidenceRequested: boolean;
@@ -52,6 +53,10 @@ export function armReportVisualEvidencePermissionRequest(target: EventTarget | n
   if (!(target instanceof Element)) return;
   const report = target.closest('.session-report');
   if (!report || !target.closest('.export-pdf-report')) return;
+  if (report.getAttribute('data-live-page') !== 'true') {
+    pendingVisualCapturePermission = undefined;
+    return;
+  }
   const option = report.querySelector<HTMLInputElement>('.report-visual-evidence-option input');
   if (!option?.checked) {
     pendingVisualCapturePermission = undefined;

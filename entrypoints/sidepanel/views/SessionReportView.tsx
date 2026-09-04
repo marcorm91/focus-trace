@@ -6,9 +6,10 @@ import {
   renderAuditEvidenceMarkdown,
 } from '../../../lib/runtime/audit-evidence';
 import { groupRuntimeInteractions } from '../../../lib/runtime/causality';
+import { defaultRuntimeBreakpointSettings } from '../../../lib/runtime/breakpoints';
 import { buildFocusGraph } from '../../../lib/runtime/focus-graph';
 import type { StructureSnapshot } from '../../../lib/runtime/structure-evidence';
-import { type ReportComponentIdentity } from '../../../lib/report/component-identity';
+import { buildReportComponentIndex, type ReportComponentIdentity } from '../../../lib/report/component-identity';
 import { buildSessionReportModel } from '../../../lib/report/session-report';
 import { buildStructureReportEvidence, structureHintCopy } from '../../../lib/report/structure-report';
 import { buildTextReportFilename, buildTextSessionReport } from '../../../lib/report/text-report';
@@ -19,6 +20,7 @@ import {
 } from '../../../lib/report/visual-evidence';
 import { tr, type AppLanguage } from '../../../shared/i18n';
 import type { HeadingSignal, RuntimeEvent, ScanResult } from '../../../shared/types';
+import type { AuditPageVisualEvidence } from '../../../lib/audit/multipage-audit';
 import { ReportComponentIdentityView } from '../components/ReportComponentIdentity';
 import { ReportScanCompact } from '../components/ReportScanCompact';
 
@@ -65,6 +67,7 @@ export function SessionReportView({
   language,
   onLocate,
   livePage = true,
+  savedVisualEvidence,
 }: {
   scan?: ScanResult | undefined;
   events: RuntimeEvent[];
@@ -72,6 +75,7 @@ export function SessionReportView({
   language: AppLanguage;
   onLocate: (selector: string) => void | Promise<void>;
   livePage?: boolean | undefined;
+  savedVisualEvidence?: AuditPageVisualEvidence | undefined;
 }) {
   const model = useMemo(() => buildSessionReportModel(scan, events, language), [events, language, scan]);
   const graph = useMemo(() => buildFocusGraph(events), [events]);
@@ -95,8 +99,12 @@ export function SessionReportView({
 
   useEffect(() => {
     let cancelled = false;
-    if (!scan || !livePage) {
+    if (!scan) {
       setComponents([]);
+      return () => { cancelled = true; };
+    }
+    if (!livePage) {
+      setComponents([...buildReportComponentIndex(scan, events, []).values()]);
       return () => { cancelled = true; };
     }
     void browser.tabs.query({ active: true, currentWindow: true })
@@ -140,24 +148,38 @@ export function SessionReportView({
   };
 
   const openPrintableReport = async () => {
-    if (!livePage) return;
-    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-    if (tab?.id == null || !scan) return;
+    if (!scan) return;
     setExportingPdf(true);
     try {
-      const freshComponents = await collectReportComponents(tab.id, scan, events);
+      const [tab] = livePage
+        ? await browser.tabs.query({ active: true, currentWindow: true })
+        : [];
+      if (livePage && tab?.id == null) return;
+      const freshComponents = livePage && tab?.id != null
+        ? await collectReportComponents(tab.id, scan, events)
+        : [...buildReportComponentIndex(scan, events, []).values()];
       setComponents(freshComponents);
-      const capture = includeVisualEvidence
+      const capture = includeVisualEvidence && livePage && tab?.id != null
         ? await captureReportVisualEvidence(tab.id, scan, freshComponents, events)
-        : { visuals: [], limitReached: false };
+        : {
+            visuals: includeVisualEvidence ? savedVisualEvidence?.visuals ?? [] : [],
+            limitReached: includeVisualEvidence ? Boolean(savedVisualEvidence?.limitReached) : false,
+          };
       const token = await storePrintableReportEvidence({
+        session: {
+          tabId: tab?.id ?? -1,
+          recording: false,
+          events,
+          breakpoints: defaultRuntimeBreakpointSettings(),
+          scan,
+        },
         components: freshComponents,
         visuals: capture.visuals,
         visualEvidenceRequested: includeVisualEvidence,
         visualEvidenceLimitReached: capture.limitReached,
         ...(reportStructureEvidence ? { structure: reportStructureEvidence } : {}),
       });
-      const params = new URLSearchParams({ tabId: String(tab.id), language, evidence: token });
+      const params = new URLSearchParams({ language, evidence: token });
       await browser.tabs.create({
         url: browser.runtime.getURL(`/report-print.html?${params.toString()}`),
       });
@@ -167,7 +189,11 @@ export function SessionReportView({
   };
 
   return (
-    <section className="panel session-report trace-first-report" aria-labelledby="session-report-title">
+    <section
+      className="panel session-report trace-first-report"
+      data-live-page={livePage ? 'true' : 'false'}
+      aria-labelledby="session-report-title"
+    >
       <div className="report-hero">
         <div>
           <span className="report-kicker">FocusTrace</span>
@@ -188,21 +214,25 @@ export function SessionReportView({
               : tr(language, 'Analyze the page to start the report.', 'Analiza la página para iniciar el informe.')}
           </p>
         </div>
-        {livePage && (
+        {scan && (
           <div className="report-export-tools">
             <label className="report-visual-evidence-option">
               <input
                 type="checkbox"
                 checked={includeVisualEvidence}
-                disabled={!scan || exportingPdf}
+                disabled={!scan || exportingPdf || (!livePage && !(savedVisualEvidence?.visuals.length))}
                 onChange={(event) => setIncludeVisualEvidence(event.currentTarget.checked)}
               />
               <span>
                 <strong>{tr(language, 'Include visual evidence', 'Incluir evidencia visual')}</strong>
                 <small>{tr(
                   language,
-                  'PDF only. Crops may contain visible page content.',
-                  'Solo PDF. Los recortes pueden contener contenido visible de la página.',
+                  livePage
+                    ? 'PDF only. Crops may contain visible page content.'
+                    : `${savedVisualEvidence?.visuals.length ?? 0} saved crops available for this historical review.`,
+                  livePage
+                    ? 'Solo PDF. Los recortes pueden contener contenido visible de la página.'
+                    : `${savedVisualEvidence?.visuals.length ?? 0} recortes guardados disponibles para esta revisión histórica.`,
                 )}</small>
               </span>
             </label>

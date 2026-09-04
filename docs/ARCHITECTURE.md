@@ -56,7 +56,7 @@ Site Audit reuses the real static rule engine rather than maintaining a second a
 
 Single-page printable visual evidence is user initiated. Broader screenshot capability is requested for the export action when the browser requires it and is not a permanent production host permission.
 
-Multipage audit visual evidence is different: an explicit full-page analysis can retain a small bounded crop set locally so a later audit PDF can preserve context after the user has navigated away. Those crops use the active analysis context and are stored with the audit review; they are not re-captured against whichever page is active during historical export.
+Multipage audit visual evidence is different: an explicit full-page analysis can retain a small bounded crop set locally so a later individual or audit PDF can preserve context after the user has navigated away. Those crops use the active analysis context and are stored with the audit review; they are not re-captured against whichever page is active during historical export.
 
 ## Library layout
 

@@ -18,14 +18,23 @@ describe('report export evidence contract', () => {
     expect(evidence).toContain('MAX_PRINT_VISUAL_DATA_CHARS = 5_500_000');
     expect(evidence).toContain('boundPrintableReportEvidence');
     expect(evidence).toContain('visualEvidenceLimitReached: bundle.visualEvidenceLimitReached || storageTrimmed');
+    expect(evidence).toContain('session?: SessionState;');
     expect(auditHook).toContain('MAX_AUDIT_VISUALS_PER_REVIEW = 3');
     expect(auditHook).toContain('MAX_AUDIT_VISUALS_PER_REVIEW,');
+  });
+
+  it('loads a stored report snapshot when its original browser tab is no longer active', () => {
+    const printable = source('entrypoints/report-print/main.tsx');
+
+    expect(printable).toContain('let state = evidence?.session;');
+    expect(printable).toContain("const tabIdParam = params.get('tabId');");
   });
 
   it('scopes export permission state to the report whose PDF button was clicked', () => {
     const evidence = source('lib/report/visual-evidence.ts');
 
     expect(evidence).toContain("const report = target.closest('.session-report');");
+    expect(evidence).toContain("report.getAttribute('data-live-page') !== 'true'");
     expect(evidence).toContain("report.querySelector<HTMLInputElement>('.report-visual-evidence-option input')");
     expect(evidence).not.toContain("document.querySelector<HTMLInputElement>('.report-visual-evidence-option input')");
   });

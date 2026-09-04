@@ -185,3 +185,30 @@ export function auditSummary(audit: AccessibilityAudit): AuditSummary {
     warnings: summary.warnings + (page.scan.warnings?.length ?? 0),
   }), { pages: 0, failures: 0, reviews: 0, warnings: 0 });
 }
+
+export function removeAuditPage(
+  store: MultipageAuditStore,
+  auditId: string,
+  pageKey: string,
+): MultipageAuditStore {
+  const audits = store.audits.flatMap((audit) => {
+    if (audit.id !== auditId) return [audit];
+    const pages = audit.pages.filter((page) => page.key !== pageKey);
+    if (pages.length === 0) return [];
+    return [{
+      ...audit,
+      updatedAt: Math.max(audit.createdAt, ...pages.map((page) => page.reviewedAt)),
+      sites: [...new Set(pages.map((page) => auditSiteKey(page.url)))],
+      pages,
+    }];
+  });
+  const activeAuditId = audits.some((audit) => audit.id === store.activeAuditId)
+    ? store.activeAuditId
+    : audits.at(-1)?.id;
+
+  return {
+    version: MULTIPAGE_AUDIT_VERSION,
+    audits,
+    ...(activeAuditId ? { activeAuditId } : {}),
+  };
+}

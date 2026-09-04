@@ -84,7 +84,15 @@ function Finding({
   );
 }
 
-function AuditPrintReport({ audit, language }: { audit: AccessibilityAudit; language: AppLanguage }) {
+function AuditPrintReport({
+  audit,
+  language,
+  includeVisualEvidence,
+}: {
+  audit: AccessibilityAudit;
+  language: AppLanguage;
+  includeVisualEvidence: boolean;
+}) {
   const summary = useMemo(() => auditSummary(audit), [audit]);
   const version = browser.runtime.getManifest().version;
   const generatedAt = Date.now();
@@ -141,6 +149,54 @@ function AuditPrintReport({ audit, language }: { audit: AccessibilityAudit; lang
           )}</p>
         </header>
 
+        <nav className="audit-print-toc" aria-labelledby="audit-toc-title">
+          <div className="print-section-title">
+            <span>00</span>
+            <div>
+              <h2 id="audit-toc-title">{tr(language, 'Audit index', 'Índice de la auditoría')}</h2>
+              <p>{tr(
+                language,
+                'Reviewed pages and the result sections included for each one.',
+                'Páginas revisadas y secciones de resultados incluidas en cada una.',
+              )}</p>
+            </div>
+          </div>
+          <ol>
+            {audit.pages.map((page, index) => {
+              const pageNumber = index + 1;
+              const sections = [
+                {
+                  id: 'headings',
+                  label: tr(language, 'Headings that need review', 'Encabezados que requieren revisión'),
+                  count: (page.scan.headings ?? []).filter((heading) => heading.signals.length > 0).length,
+                },
+                { id: 'fail', label: tr(language, 'Failures', 'Fallos'), count: page.scan.issues.length },
+                { id: 'review', label: tr(language, 'Review', 'Revisiones'), count: page.scan.review.length },
+                { id: 'warning', label: tr(language, 'Warnings', 'Avisos'), count: page.scan.warnings?.length ?? 0 },
+              ].filter((section) => section.count > 0);
+              return (
+                <li key={page.key}>
+                  <a href={`#audit-page-${pageNumber}`}>
+                    <strong>{pageNumber}. {page.title || tr(language, 'Analyzed page', 'Página analizada')}</strong>
+                    <small>{page.url}</small>
+                  </a>
+                  {sections.length > 0 && (
+                    <ol>
+                      {sections.map((section, sectionIndex) => (
+                        <li key={section.id}>
+                          <a href={`#audit-page-${pageNumber}-${section.id}`}>
+                            {pageNumber}.{sectionIndex + 1} {section.label} <span>{section.count}</span>
+                          </a>
+                        </li>
+                      ))}
+                    </ol>
+                  )}
+                </li>
+              );
+            })}
+          </ol>
+        </nav>
+
         {audit.pages.map((page, index) => {
           const scan = page.scan;
           const headings = scan.headings ?? [];
@@ -150,7 +206,11 @@ function AuditPrintReport({ audit, language }: { audit: AccessibilityAudit; lang
             { id: 'review', label: tr(language, 'Review', 'Revisión'), issues: sortBySeverity(scan.review) },
             { id: 'warning', label: tr(language, 'Warnings', 'Avisos'), issues: sortBySeverity(scan.warnings ?? []) },
           ];
-          const visualMap = new Map(page.visualEvidence?.visuals.map((visual) => [visual.selector, visual]) ?? []);
+          const visualMap = new Map(
+            includeVisualEvidence
+              ? page.visualEvidence?.visuals.map((visual) => [visual.selector, visual]) ?? []
+              : [],
+          );
           const visualByIssue = new Map<string, ReportVisualEvidence>();
           const usedVisualSelectors = new Set<string>();
           for (const group of groups) {
@@ -163,7 +223,7 @@ function AuditPrintReport({ audit, language }: { audit: AccessibilityAudit; lang
               usedVisualSelectors.add(selector);
             }
           }
-          const visualEvidence = page.visualEvidence;
+          const visualEvidence = includeVisualEvidence ? page.visualEvidence : undefined;
           return (
             <section className="print-section audit-print-page" key={page.key} aria-labelledby={`audit-page-${index + 1}`}>
               <div className="print-section-title audit-print-page-title">
@@ -182,7 +242,7 @@ function AuditPrintReport({ audit, language }: { audit: AccessibilityAudit; lang
                 <span><strong>{headings.length}</strong> {tr(language, 'headings', 'encabezados')}</span>
               </div>
 
-              {!visualEvidence && (
+              {includeVisualEvidence && !visualEvidence && (
                 <p className="print-visual-summary">{tr(
                   language,
                   'Visual evidence was not stored for this earlier review.',
@@ -205,7 +265,7 @@ function AuditPrintReport({ audit, language }: { audit: AccessibilityAudit; lang
               )}
 
               {headingReviews.length > 0 && (
-                <div className="audit-print-headings">
+                <div className="audit-print-headings" id={`audit-page-${index + 1}-headings`}>
                   <h3>{tr(language, 'Headings that need review', 'Encabezados que requieren revisión')}</h3>
                   <ol className="print-heading-list">
                     {headingReviews.map((heading) => (
@@ -220,7 +280,7 @@ function AuditPrintReport({ audit, language }: { audit: AccessibilityAudit; lang
               )}
 
               {groups.map((group) => (
-                <div className="print-finding-group" key={group.id}>
+                <div className="print-finding-group" id={`audit-page-${index + 1}-${group.id}`} key={group.id}>
                   <h3>{group.label} <span>{group.issues.length}</span></h3>
                   {group.issues.length
                     ? group.issues.map((issue) => (
@@ -253,6 +313,7 @@ function AuditPrintReport({ audit, language }: { audit: AccessibilityAudit; lang
 
 function App() {
   const [audit, setAudit] = useState<AccessibilityAudit>();
+  const [includeVisualEvidence, setIncludeVisualEvidence] = useState(true);
   const [error, setError] = useState<string>();
   const params = useMemo(() => new URLSearchParams(window.location.search), []);
   const language: AppLanguage = params.get('language') === 'es' ? 'es' : 'en';
@@ -270,6 +331,7 @@ function App() {
         return;
       }
       setAudit(evidence.audit);
+      setIncludeVisualEvidence(evidence.includeVisualEvidence !== false);
       const date = new Date().toISOString().slice(0, 10);
       document.title = `FocusTrace-${evidence.audit.name}-${date}`;
     }).catch(() => {
@@ -281,7 +343,7 @@ function App() {
     return <main className="print-error"><img src="/icon/48.png" alt="" /><h1>FocusTrace</h1><p>{error}</p></main>;
   }
   if (!audit) return <main className="print-loading">FocusTrace…</main>;
-  return <AuditPrintReport audit={audit} language={language} />;
+  return <AuditPrintReport audit={audit} language={language} includeVisualEvidence={includeVisualEvidence} />;
 }
 
 createRoot(document.getElementById('root')!).render(<App />);

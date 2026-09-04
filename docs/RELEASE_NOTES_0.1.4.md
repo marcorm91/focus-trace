@@ -52,7 +52,7 @@ Component-scoped reports continue to avoid mixing page-global document structure
 - Moving to another site lets the user add the page to the current audit or start a new audit.
 - The Report workspace keeps an expandable history of reviewed pages; opening a saved page reveals its report and summary.
 - Multipage PDF export uses one audit cover followed by one section per reviewed page.
-- A full-page audit review can retain up to two bounded local screenshot crops for eligible findings, so visual evidence remains available after navigating to another audited page.
+- A full-page audit review can retain up to three bounded local screenshot crops for eligible findings, so visual evidence remains available after navigating to another audited page.
 - Re-analyzing a page replaces its previous visual crops together with the scan result; audit PDFs explicitly identify reviews whose visual evidence could not be captured or was trimmed by the local storage budget.
 - Single-page PDF visual capture now attempts valid active-tab capture instead of returning zero screenshots solely because the optional broad screenshot grant is absent. Runtime-only report findings are also eligible for visual evidence.
 

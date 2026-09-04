@@ -19,9 +19,68 @@
   page-break-before: always;
 }
 
-.audit-print-page:first-of-type {
-  break-before: auto;
-  page-break-before: auto;
+.audit-print-toc {
+  display: grid;
+  gap: 18px;
+  padding: 22px 0;
+  break-before: page;
+  page-break-before: always;
+}
+
+.audit-print-toc > ol,
+.audit-print-toc ol ol {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.audit-print-toc > ol {
+  display: grid;
+  gap: 14px;
+}
+
+.audit-print-toc > ol > li {
+  padding-bottom: 12px;
+  border-bottom: 1px solid #e2e6ef;
+}
+
+.audit-print-toc a {
+  color: inherit;
+  text-decoration: none;
+}
+
+.audit-print-toc > ol > li > a {
+  display: grid;
+  gap: 3px;
+}
+
+.audit-print-toc > ol > li > a strong {
+  font-size: 13px;
+}
+
+.audit-print-toc > ol > li > a small {
+  color: #667085;
+  overflow-wrap: anywhere;
+}
+
+.audit-print-toc ol ol {
+  display: grid;
+  gap: 5px;
+  margin: 8px 0 0 18px;
+}
+
+.audit-print-toc ol ol a {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+  color: #475569;
+  font-size: 11px;
+}
+
+.audit-print-toc ol ol span {
+  color: #667085;
+  font-variant-numeric: tabular-nums;
 }
 
 .audit-print-page-title a {
@@ -49,8 +108,5 @@
     page-break-before: always;
   }
 
-  .audit-print-page:first-of-type {
-    break-before: auto;
-    page-break-before: auto;
-  }
+  .audit-print-toc { break-before: page; page-break-before: always; }
 }

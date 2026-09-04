@@ -54,8 +54,12 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 - Confirm the current page can still use live page-location actions, current Trace and the current Structure snapshot.
 - Open a historical page while another URL is active and confirm the historical review does not expose page-location controls that could target the current tab.
 - Confirm historical Trace and Structure are labelled as unavailable rather than displayed as if zero/live evidence belonged to the saved page.
+- Export an individual historical page PDF after changing tabs and confirm its saved static scan remains available without borrowing live Trace or Structure evidence.
+- Delete one saved page review, confirm its analysis and crops are removed, and confirm deleting the final page removes the empty audit.
 - Re-analyze one normalized URL and confirm it replaces that page's previous scan and audit screenshot evidence instead of adding a duplicate page.
 - Export the audit PDF after navigating away from the first page and confirm saved visual crops still appear next to their matching findings when capture was available.
+- Toggle saved images off for the audit PDF and confirm no crop or misleading unavailable-image message is printed.
+- Confirm the audit PDF index links each reviewed page to its non-empty heading/failure/review/warning sections.
 - Repeat with capture unavailable/restricted and confirm the PDF reports the unavailable state rather than implying screenshots were lost.
 - Exercise enough large audit data to trigger the storage-bound tests/fixtures and confirm older history is pruned before the newest active review.
 - Confirm the single-page PDF still exports current-session evidence independently of the audit PDF and that a large set of visual crops is bounded by payload size rather than an arbitrary finding-count cap.
