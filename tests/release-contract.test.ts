@@ -35,14 +35,14 @@ const edgeManifest = manifestForBrowser('edge');
 const firefoxManifest = manifestForBrowser('firefox');
 const OPTIONAL_HOSTS = ['http://*/*', 'https://*/*', '<all_urls>'];
 
-describe('v0.1.4 release contract', () => {
+describe('v0.2.0 release contract', () => {
   it('keeps package, lockfile and browser manifests on the same version', () => {
     expect(chromeManifest.version).toBe(packageJson.version);
     expect(edgeManifest.version).toBe(packageJson.version);
     expect(firefoxManifest.version).toBe(packageJson.version);
     expect(packageLock.version).toBe(packageJson.version);
     expect(packageLock.packages?.['']?.version).toBe(packageJson.version);
-    expect(packageJson.version).toBe('0.1.4');
+    expect(packageJson.version).toBe('0.2.0');
   });
 
   it('keeps the committed dependency lock aligned with package.json', () => {

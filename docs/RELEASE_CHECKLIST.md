@@ -1,6 +1,6 @@
 # FocusTrace release checklist
 
-Current release candidate: **0.1.4**.
+Current release candidate: **0.2.0**.
 
 Use this checklist before publishing a release build or submitting an updated package to a browser store. Keep the candidate version above aligned with `package.json`, `package-lock.json`, the browser manifests and the release contract test.
 
@@ -34,7 +34,34 @@ The committed `package-lock.json` must remain synchronized with `package.json`, 
 
 The automated side-panel E2E smoke test is a regression guard; it is not a substitute for the manual checks above.
 
-## Structure 0.1.4 smoke
+## WCAG 2.2 runtime and Site Audit 0.2.0 smoke
+
+### WCAG 2.4.11 Focus Not Obscured (Minimum)
+
+- Start Trace, move keyboard focus to a visible control, then scroll or introduce a fixed/sticky overlay so the already-focused control becomes completely covered without moving focus.
+- Confirm FocusTrace records `FT-RUNTIME-002` as `REVIEW` and identifies the affected target.
+- Confirm the finding exposes **How to fix / Cómo corregirlo** guidance and a verification step in both English and Spanish.
+- Partially cover the focused control while leaving sampled visible area exposed and confirm FocusTrace does not report the complete-obscuration review solely for that partial overlap.
+- Repeat with a visually transparent/non-rendered overlay and confirm it is not treated as a blocker.
+- Confirm FocusTrace's own page overlay/highlight UI never becomes the reported covering element.
+
+### WCAG 2.5.7 Dragging Movements
+
+- Start Trace on a representative drag-capable control and perform a deliberate pointer drag beyond the movement threshold; confirm `FT-RUNTIME-006` appears as `REVIEW`.
+- Confirm the finding exposes equivalent single-pointer alternatives and validation guidance in both English and Spanish.
+- Click the same control without dragging and repeat with only small pointer jitter; confirm neither interaction is classified as dragging.
+- Drag a normal browser-draggable image/link that is not identified as a drag-capable interaction and confirm native `dragstart` alone does not create the review signal.
+- Confirm the guidance preserves the possibility that dragging can be essential and does not claim an automatic WCAG failure.
+
+### WCAG 3.2.6 Consistent Help
+
+- Run Site Audit over two sampled pages that expose at least two shared help mechanism categories in different relative order; confirm `FT-REVIEW-011` is generated as `REVIEW` for the affected comparison.
+- Confirm the evidence preserves the observed order, comparison URL and compared order in both English and Spanish.
+- Confirm the remediation guidance recommends keeping applicable help mechanisms in the same relative order and is available in both languages.
+- Repeat with the same relative order and confirm the review disappears.
+- Repeat with only one shared help mechanism category and confirm FocusTrace does not infer an order inconsistency from insufficient evidence.
+
+## Structure smoke
 
 - Open **Structure** and confirm that merely entering the workspace does not request page access or generate a semantic/metrics snapshot.
 - Open **Headings** inside Structure and confirm the existing H1–H6 tree, hierarchy signals, expand/collapse behavior and page overlay still work.
@@ -47,7 +74,7 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 - Repeat the report flow without analyzing Structure and confirm the report remains passive and explains that accessibility-oriented Structure metrics/suggestions are not available.
 - Run a component-scoped analysis and confirm page-global Structure evidence is not mixed into the component-only static report.
 
-## Multipage Report 0.1.4 smoke
+## Multipage Report smoke
 
 - Analyze two different URLs on the same site and confirm the active audit contains two page entries with their own review timestamps.
 - Open the first review, then the second, and confirm only one saved review is expanded at a time.
@@ -174,17 +201,17 @@ Before changing visibility:
 
 ## Release
 
-For the current candidate, the release version is **0.1.4** and the intended tag is **`v0.1.4`**.
+For the current candidate, the release version is **0.2.0** and the intended tag is **`v0.2.0`**.
 
-- Confirm `package.json`, `package-lock.json` and all browser manifests report `0.1.4`.
-- Confirm `tests/release-contract.test.ts` targets `v0.1.4` and passes.
-- Confirm `docs/RELEASE_NOTES_0.1.4.md` matches the shipped behavior and limitations.
+- Confirm `package.json`, `package-lock.json` and all browser manifests report `0.2.0`.
+- Confirm `tests/release-contract.test.ts` targets `v0.2.0` and passes.
+- Confirm `docs/RELEASE_NOTES_0.2.0.md` matches the shipped behavior and limitations.
 - Confirm the release commit is on `main` and CI is green on that exact commit.
 - Build the production Chrome, Edge and Firefox MV3 artifacts from that commit.
 - Smoke-test the unpacked production build in supported Chromium browsers.
 - Complete the Firefox experimental smoke checklist before describing Firefox as officially supported.
-- Tag the exact approved commit as `v0.1.4`.
+- Tag the exact approved commit as `v0.2.0`.
 - Review the generated ZIPs before attaching/uploading them.
 - Only then publish/distribute the release artifacts or submit the updated packages to browser stores.
 
-After publishing 0.1.4, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.
+After publishing 0.2.0, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.
