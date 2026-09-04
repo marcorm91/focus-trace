@@ -20,7 +20,6 @@ export interface DragObservation {
   interactionId: string;
   element: ElementSnapshot;
   distancePx: number;
-  source: 'pointer' | 'native-drag';
 }
 
 interface PendingDrag {
@@ -91,17 +90,6 @@ export class RuntimeDragTracker {
       interactionId: pending.interactionId,
       element: pending.element,
       distancePx: pending.maxDistancePx,
-      source: 'pointer',
-    };
-  }
-
-  nativeDrag(interactionId: string, element: ElementSnapshot): DragObservation {
-    this.pending = undefined;
-    return {
-      interactionId,
-      element,
-      distancePx: 0,
-      source: 'native-drag',
     };
   }
 
@@ -116,10 +104,6 @@ export class RuntimeDragTracker {
 
 export function createDraggingReviewEvent(observation: DragObservation): PendingRuntimeEvent {
   const rule = RULES.draggingMovement;
-  const distanceEvidence = observation.source === 'pointer'
-    ? `Observed pointer movement of approximately ${Math.round(observation.distancePx)} CSS px.`
-    : 'Observed a native dragstart interaction.';
-
   return {
     kind: 'dragging',
     severity: rule.severity,
@@ -128,6 +112,6 @@ export function createDraggingReviewEvent(observation: DragObservation): Pending
     ruleId: rule.id,
     references: rule.references,
     element: observation.element,
-    detail: `${distanceEvidence} Review whether the same functionality is available without a dragging movement.`,
+    detail: `Observed pointer movement of approximately ${Math.round(observation.distancePx)} CSS px. Review whether the same functionality is available without a dragging movement.`,
   };
 }
