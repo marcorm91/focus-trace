@@ -343,7 +343,7 @@ export default defineContentScript({
         if (!(event.target instanceof Element) || isFocusWalkUiTarget(event.target)) return;
         const target = actionTarget(event.target);
         const interactionId = beginInteraction('pointer', target);
-        if (isPotentialDraggingTarget(target)) {
+        if (isPotentialDraggingTarget(event.target) || isPotentialDraggingTarget(target)) {
           dragTracker.start({
             pointerId: event.pointerId,
             interactionId,
@@ -387,21 +387,6 @@ export default defineContentScript({
       (rawEvent) => {
         const event = rawEvent as PointerEvent;
         dragTracker.cancel(event.pointerId);
-      },
-      true,
-    );
-
-    ctx.addEventListener(
-      document,
-      'dragstart',
-      (rawEvent) => {
-        if (!recording) return;
-        const event = rawEvent as DragEvent;
-        if (!(event.target instanceof Element) || isFocusWalkUiTarget(event.target)) return;
-        const target = actionTarget(event.target);
-        const interactionId = activeInteractionId() ?? beginInteraction('pointer', target);
-        const observation = dragTracker.nativeDrag(interactionId, snapshot(target));
-        emit(createDraggingReviewEvent(observation), interactionId);
       },
       true,
     );
