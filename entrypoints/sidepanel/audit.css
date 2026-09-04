@@ -144,14 +144,14 @@
 
 .audit-page-report {
   overflow: clip;
-  border: 1.5px solid var(--ft-border-soft, color-mix(in srgb, CanvasText 16%, transparent));
+  border: 1px solid var(--ft-border, CanvasText);
   border-radius: var(--ft-radius-md, 9px);
   background: var(--ft-surface, Canvas);
 }
 
 .audit-page-report.is-current {
-  border-color: var(--ft-accent, Highlight);
-  box-shadow: inset 3px 0 0 var(--ft-accent, Highlight);
+  border-color: var(--ft-border, CanvasText);
+  box-shadow: none;
 }
 
 .audit-page-summary {
