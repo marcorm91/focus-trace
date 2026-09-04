@@ -13,9 +13,10 @@ describe('README language and instructions contract', () => {
 
     expect(english).toContain('<strong>English</strong>');
     expect(english).toContain('href="./README.es.md"');
+    expect(english).toContain('## Functional capability API');
     expect(spanish).toContain('href="./README.md"');
     expect(spanish).toContain('<strong>Español</strong>');
-    expect(spanish).toContain('## ¿Qué lo hace diferente?');
+    expect(spanish).toContain('## API funcional de capacidades');
     expect(spanish).toContain('## Privacidad');
   });
 

@@ -35,6 +35,7 @@ jobs:
           fi
       - run: npm run standards:validate
       - run: npm run axe:validate
+      - run: npm run capabilities:validate
       - run: npm run check
       - run: npm run lint
       - run: npm test

@@ -2,6 +2,8 @@
 
 FocusTrace implements its own local analysis engine and maps each rule to the standards source that justifies the expectation.
 
+The public, bilingual capability inventory lives in [`README.md`](../README.md) and [`README.es.md`](../README.es.md). Keep this methodology document and those catalogs aligned whenever rule behavior or applicability changes.
+
 ## Sources
 
 1. **WCAG 2.2** is the conformance standard and normative source for success criteria.
@@ -126,7 +128,9 @@ Advanced ARIA validation adds deterministic checks for:
 - `FT-WARN-016` — empty/missing ID references, invalid `aria-owns` ownership, or invalid `aria-activedescendant` relationships;
 - `FT-WARN-017` — a role is outside its required accessibility-parent context;
 - `FT-WARN-018` — an explicit ARIA container exposes an incompatible accessibility child role;
-- `FT-WARN-019` — ARIA range, position or set metadata contradicts itself.
+- `FT-WARN-019` — ARIA range, position or set metadata contradicts itself;
+- `FT-WARN-020` — a known ARIA state/property is not supported by the resolved role;
+- `FT-WARN-021` — a resolved ARIA relationship contradicts the state exposed by its owner or related content.
 
 Role parsing follows WAI-ARIA fallback-token semantics: an unknown future token before a valid fallback role is not itself an error. Required parent/child validation resolves accessibility relationships rather than comparing only DOM parents: transparent generic/presentation wrappers and valid `aria-owns` ownership are considered. Custom `aria-current` tokens are deliberately not rejected because WAI-ARIA maps unknown token values to `true`.
 
@@ -197,9 +201,9 @@ The result remains `REVIEW`: sampled hit-testing is evidence of complete observe
 
 ## Dragging Movements runtime scope
 
-`FT-RUNTIME-006` provides observed runtime evidence for WCAG 2.5.7 Dragging Movements. Trace watches likely drag-capable targets and records a review only after either a native `dragstart` or a pointer path exceeding the small movement threshold used to distinguish dragging from click/tap jitter.
+`FT-RUNTIME-006` provides observed runtime evidence for WCAG 2.5.7 Dragging Movements. Trace watches likely drag-capable targets and records a review only after an observed pointer path exceeds the small movement threshold used to distinguish dragging from click/tap jitter.
 
-The runtime event stores the target plus a compact movement-distance summary; it does not persist the raw pointer path. The outcome is always `REVIEW`, because observing a drag does not prove that the functionality requires dragging: an equivalent single-pointer operation may be available elsewhere, and the WCAG exception for essential dragging still requires context.
+The runtime event stores the target plus a compact movement-distance summary; it does not persist the raw pointer path. Native browser `dragstart` alone does not emit this review. The outcome is always `REVIEW`, because observing a drag does not prove that the functionality requires dragging: an equivalent single-pointer operation may be available elsewhere, and the WCAG exception for essential dragging still requires context.
 
 ## Consistent Help Site Audit scope
 
@@ -243,6 +247,8 @@ This is deliberately a `REVIEW`, not a `FAIL`. Text heuristics cannot prove that
 | FT-WARN-017 Missing required accessibility parent role | WARNING | WAI-ARIA 1.3 |
 | FT-WARN-018 Incompatible accessibility child role | WARNING | WAI-ARIA 1.3 |
 | FT-WARN-019 Internally inconsistent ARIA range/set state | WARNING | WAI-ARIA 1.3 |
+| FT-WARN-020 ARIA state/property unsupported by resolved role | WARNING | WAI-ARIA 1.3 |
+| FT-WARN-021 ARIA relationship and exposed state are inconsistent | WARNING | WAI-ARIA 1.3 |
 | FT-REVIEW-001 Positive tabindex | REVIEW | WCAG 2.4.3 |
 | FT-REVIEW-002 Heading-level jump | REVIEW | WCAG 1.3.1 / 2.4.6 |
 | FT-REVIEW-003 Placeholder-only form label | REVIEW | WCAG 3.3.2 |
