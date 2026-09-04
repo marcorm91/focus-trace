@@ -17,6 +17,7 @@ import type {
   RuntimeEvent,
   RuntimeInteraction,
 } from '../../../shared/types';
+import { ActionableRemediation } from '../components/ActionableRemediation';
 import { Empty, ReferenceList, timeLabel } from '../components/Common';
 
 export function RuntimeView({
@@ -372,6 +373,9 @@ function RuntimeEventRow({
         </div>
         <strong>{title}</strong>
         {level !== 'simple' && detail && <p>{detail}</p>}
+        {event.outcome && (
+          <ActionableRemediation ruleId={event.ruleId} language={language} />
+        )}
         {level === 'developer' && event.mutation?.attribute && (
           <p className="mutation-values">
             <code>{event.mutation.attribute}</code> {JSON.stringify(event.mutation.previousValue)} →{' '}
