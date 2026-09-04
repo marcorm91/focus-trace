@@ -13,7 +13,6 @@ describe('sidepanel layout polish contract', () => {
     const baseStyles = source('entrypoints/sidepanel/style.css');
     const structureView = source('entrypoints/sidepanel/views/StructureView.tsx');
     const app = source('entrypoints/sidepanel/App.tsx');
-    const about = source('entrypoints/sidepanel/about.css');
     const focusGraph = source('entrypoints/sidepanel/focus-graph.css');
 
     expect(baseStyles).toContain('grid-template-columns: repeat(4, 1fr);');
@@ -28,7 +27,8 @@ describe('sidepanel layout polish contract', () => {
     expect(structureView).toContain('structure-element-details');
     expect(structureView).toContain('groupLocateSelector');
     expect(app).not.toContain("view === 'headings'");
-    expect(about).not.toMatch(/(^|\n)\.tabs\s*\{/);
+    expect(app).not.toContain("'about'");
+    expect(entry).not.toContain('about.css');
     expect(focusGraph).not.toMatch(/(^|\n)\.tabs\s*\{/);
   });
 
@@ -54,7 +54,7 @@ describe('sidepanel layout polish contract', () => {
   it('keeps component context compact and removes duplicated actions from the rendered layout', () => {
     const css = source('entrypoints/sidepanel/component-scan.css');
 
-    expect(css).toContain(":has(.scan-scope-banner) #scan-title + p");
+    expect(css).toContain('.component-scan-panel #scan-title + p');
     expect(css).toContain('.scan-scope-copy strong');
     expect(css).toContain('.scan-scope-actions button + button');
     expect(css).toContain('align-items: start;');

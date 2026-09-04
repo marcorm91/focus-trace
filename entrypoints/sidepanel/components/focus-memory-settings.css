@@ -19,7 +19,7 @@
   border-color: var(--ft-border);
 }
 
-.settings-memory-option:has(input:focus-visible) {
+.settings-memory-option:focus-within {
   outline: 3px solid var(--ft-focus);
   outline-offset: 3px;
 }

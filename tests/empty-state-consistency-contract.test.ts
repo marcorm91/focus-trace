@@ -35,8 +35,6 @@ describe('neutral empty-state consistency', () => {
 
     for (const className of [
       'structure-limit-note',
-      'about-support',
-      'about-privacy',
       'settings-note',
       'graph-scope-note',
       'instructions-note',

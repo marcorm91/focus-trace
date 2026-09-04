@@ -134,7 +134,7 @@
 .replay-trigger-context,
 .replay-detail {
   margin: 0;
-  color: var(--text-secondary, #475467);
+  color: var(--ft-muted);
 }
 
 .replay-target {

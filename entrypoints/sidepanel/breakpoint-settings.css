@@ -19,7 +19,7 @@
 }
 
 .settings-trace-heading > span {
-  color: var(--muted, #5f6672);
+  color: var(--ft-muted);
   font-size: .875rem;
   white-space: nowrap;
 }
@@ -35,9 +35,9 @@
   align-items: start;
   gap: 10px;
   padding: 10px 11px;
-  border: 1px solid var(--border, #c8cbd1);
-  border-radius: var(--radius-sm, 6px);
-  background: var(--surface, #fff);
+  border: 1px solid var(--ft-border-soft);
+  border-radius: var(--ft-radius-sm);
+  background: var(--ft-surface);
   cursor: pointer;
 }
 
@@ -45,8 +45,8 @@
   border-color: var(--ft-border, CanvasText);
 }
 
-.settings-breakpoint-option:has(input:focus-visible) {
-  outline: 2px solid var(--focus, #1769e0);
+.settings-breakpoint-option:focus-within {
+  outline: 2px solid var(--ft-focus);
   outline-offset: 2px;
 }
 
@@ -66,13 +66,13 @@
 }
 
 .settings-breakpoint-option small {
-  color: var(--muted, #5f6672);
+  color: var(--ft-muted);
   line-height: 1.45;
 }
 
 .settings-breakpoint-note {
   margin: 0;
-  color: var(--muted, #5f6672);
+  color: var(--ft-muted);
   font-size: .875rem;
   line-height: 1.45;
 }

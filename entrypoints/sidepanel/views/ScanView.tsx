@@ -233,7 +233,7 @@ export function ScanView({
   );
 
   return (
-    <section className="panel" aria-labelledby="scan-title">
+    <section className={`panel${componentScope ? ' component-scan-panel' : ''}`} aria-labelledby="scan-title">
       <div className="section-heading">
         <div>
           <h2 id="scan-title">

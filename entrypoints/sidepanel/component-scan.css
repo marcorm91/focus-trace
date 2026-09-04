@@ -12,7 +12,7 @@
 /* The active page/component is already summarized in the quick-start area.
    Component scans keep the section heading compact instead of repeating a
    potentially long accessible label above the component context. */
-.panel[aria-labelledby='scan-title']:has(.scan-scope-banner) #scan-title + p {
+.component-scan-panel #scan-title + p {
   display: none;
 }
 

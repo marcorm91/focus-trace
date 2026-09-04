@@ -21,7 +21,6 @@
 @import url('./modern-icons.css') layer(components);
 @import url('./disclosure-chevron.css') layer(components);
 @import url('./breakpoint-settings.css') layer(components);
-@import url('./about.css') layer(components);
 @import url('./views/trace.css') layer(components);
 @import url('./views/trace-reset.css') layer(components);
 @import url('./views/trace-polish.css') layer(components);

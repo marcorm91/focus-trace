@@ -179,7 +179,7 @@ export function SettingsView({
           )}
         </p>
 
-        <label className="language-option">
+        <label className={`language-option${language === 'en' ? ' is-selected' : ''}`}>
           <input
             type="radio"
             name="language"
@@ -189,7 +189,7 @@ export function SettingsView({
           />
           <span><strong>English</strong><small>English</small></span>
         </label>
-        <label className="language-option">
+        <label className={`language-option${language === 'es' ? ' is-selected' : ''}`}>
           <input
             type="radio"
             name="language"

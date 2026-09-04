@@ -23,7 +23,6 @@ import { usePageRuntimeAccess } from './hooks/usePageRuntimeAccess';
 import { useSidepanelLanguage } from './hooks/useSidepanelLanguage';
 import { useSidepanelSession } from './hooks/useSidepanelSession';
 import { useTraceActions } from './hooks/useTraceActions';
-import { AboutView } from './views/AboutView';
 import { AuditReportWorkspace } from './views/AuditReportWorkspace';
 import { InstructionsView } from './views/InstructionsView';
 import { ScanView } from './views/ScanView';
@@ -31,7 +30,7 @@ import { SettingsView } from './views/SettingsView';
 import { StructureView } from './views/StructureView';
 import { TraceView } from './views/TraceView';
 
-type View = 'scan' | 'structure' | 'trace' | 'report' | 'about' | 'instructions' | 'settings';
+type View = 'scan' | 'structure' | 'trace' | 'report' | 'instructions' | 'settings';
 
 type NavigationItem = {
   id: 'scan' | 'structure' | 'trace' | 'report';
@@ -515,7 +514,6 @@ export default function App() {
           onLocate={locateScanTarget}
         />
       )}
-      {view === 'about' && <AboutView language={language} />}
       {view === 'instructions' && <InstructionsView language={language} />}
       {view === 'settings' && <SettingsView language={language} onLanguageChange={updateLanguage} />}
     </main>

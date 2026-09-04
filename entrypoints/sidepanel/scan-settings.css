@@ -396,7 +396,7 @@
   cursor: pointer;
 }
 
-.language-option:has(input:checked) {
+.language-option.is-selected {
   border-color: var(--ft-brand, Highlight);
   background: var(--ft-brand-soft, color-mix(in srgb, Highlight 7%, Canvas));
 }
