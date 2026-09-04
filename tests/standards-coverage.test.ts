@@ -110,6 +110,24 @@ describe('standards registry coverage', () => {
       implemented: true,
     });
     expect(wcagCoverageForCriterion('2.4.3')?.coverage).toEqual(expect.arrayContaining(['review', 'runtime']));
+    expect(wcagCoverageForCriterion('2.4.11')).toMatchObject({
+      level: 'AA',
+      coverage: ['runtime'],
+      ruleIds: ['FT-RUNTIME-002'],
+      implemented: true,
+    });
+    expect(wcagCoverageForCriterion('2.5.7')).toMatchObject({
+      level: 'AA',
+      coverage: ['runtime'],
+      ruleIds: ['FT-RUNTIME-006'],
+      implemented: true,
+    });
+    expect(wcagCoverageForCriterion('3.2.6')).toMatchObject({
+      level: 'A',
+      coverage: ['review'],
+      ruleIds: ['FT-REVIEW-011'],
+      implemented: true,
+    });
   });
 
   it('makes WCAG coverage gaps explicit instead of implying full automated conformance', () => {
