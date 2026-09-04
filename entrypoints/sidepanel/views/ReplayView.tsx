@@ -21,6 +21,7 @@ import {
 } from '../../../lib/runtime/scan-target-overlay';
 import { localeFor, tr, type AppLanguage } from '../../../shared/i18n';
 import type { RuntimeEvent, RuntimeInteraction } from '../../../shared/types';
+import { ActionableRemediation } from '../components/ActionableRemediation';
 import { Empty, ReferenceList } from '../components/Common';
 
 function phaseLabel(phase: RuntimeReplayPhase, language: AppLanguage): string {
@@ -301,6 +302,9 @@ export function ReplayView({
         )}
 
         {eventDetail && <p className="replay-detail">{eventDetail}</p>}
+        {current.event.outcome && (
+          <ActionableRemediation ruleId={current.event.ruleId} language={language} />
+        )}
 
         {currentSemantics.length > 0 && (
           <section className="replay-transition-results" aria-label={tr(language, 'Transition result', 'Resultado de la transición')}>
