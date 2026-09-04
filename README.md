@@ -35,6 +35,8 @@ Trace records what the user did, what had focus, what changed in the page and wh
 
 The runtime debugger can derive deterministic causal explanations for patterns such as a focused node being removed, a modal opening without receiving focus or SPA navigation leaving focus behind. These explanations describe recorded evidence; they do not turn contextual behavior into an automatic WCAG conformance claim.
 
+Trace also observes runtime evidence relevant to newer WCAG 2.2 interaction criteria. While a component keeps focus, FocusTrace rechecks whether it becomes completely obscured after focus changes, scrolling, viewport resizing or relevant DOM mutations for WCAG 2.4.11. Trace can also recognize observed dragging interactions and surface WCAG 2.5.7 as a **REVIEW** signal; the extension does not claim failure because an equivalent single-pointer alternative may exist elsewhere in the interface.
+
 ### Structure
 
 Structure provides a compact, on-demand accessibility view of the current page instead of duplicating the browser's raw DOM inspector. The workspace groups three complementary views:
@@ -63,6 +65,8 @@ Site Audit discovers same-origin pages from sitemaps, robots.txt, internal links
 
 The current Site Audit safety limits are 500 discovered URLs, 30 scanned pages and 3 representative samples per route family. Template-wide findings are reported only when the same normalized target signal appears across every successfully scanned sample in that family. Representative sampling is not proof that every URL is identical, and runtime Trace is not automatically exercised across the whole site.
 
+Site Audit can also collect a bounded summary of repeated help mechanisms from sampled pages. When at least two of the same observed help mechanism categories appear in a different relative order, FocusTrace surfaces a **REVIEW** for WCAG 3.2.6 Consistent Help. The signal is intentionally contextual: text heuristics identify candidates such as contact details, human contact, self-help and automated contact, but final applicability still belongs to human review.
+
 ## Current rule engine
 
 Current static coverage includes:
@@ -86,12 +90,18 @@ Runtime recording currently observes:
 - keyboard and pointer interactions;
 - focus movement, backward navigation, loops and unexpected jumps;
 - focused nodes removed or made hidden;
+- focused components that become completely obscured while focus remains on them, including rechecks after scroll, resize and relevant DOM changes (WCAG 2.4.11 review evidence);
+- observed dragging interactions on likely drag-capable controls, surfaced as contextual WCAG 2.5.7 reviews;
 - SPA route changes;
 - modal dialog initial focus, focus escape and restoration;
 - relevant DOM mutations and dialog lifecycle evidence;
 - accessibility breakpoints for selected deterministic runtime causes.
 
+Site Audit additionally compares repeated observed help-mechanism categories across sampled pages and can surface contextual WCAG 3.2.6 Consistent Help reviews when their relative order changes.
+
 Trace also includes a read-only replay of recorded evidence. The session report combines static findings with runtime interaction stories and recommendations, while **Document structure** summarizes headings instead of duplicating the full outline. If Structure has already been generated, the sidepanel, PDF and TXT reports reuse its compact metrics and semantic suggestions without running another DOM collection or exporting the full DOM tree.
+
+FocusTrace follows WCAG 2.2 as its conformance source. WCAG 2.2 criteria are also reflected in the web requirements of EN 301 549 V4.1.1; FocusTrace's implemented rules and reviews cover only the explicitly documented observable subsets and **do not constitute complete EN 301 549 evaluation, certification or proof of conformance**.
 
 See [`docs/RULES.md`](docs/RULES.md) for methodology, sources and limitations and [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) for the main runtime/data boundaries.
 
