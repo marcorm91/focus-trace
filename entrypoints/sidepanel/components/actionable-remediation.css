@@ -1,0 +1,25 @@
+.actionable-remediation {
+  margin-top: 12px;
+  padding: 12px 14px;
+  border: 1px solid var(--border-subtle, #d9dee7);
+  border-radius: 10px;
+  background: var(--surface-elevated, #fff);
+}
+
+.actionable-remediation > strong {
+  display: block;
+  margin-bottom: 8px;
+}
+
+.actionable-remediation ul {
+  margin: 0;
+  padding-left: 20px;
+}
+
+.actionable-remediation li + li {
+  margin-top: 6px;
+}
+
+.actionable-remediation p {
+  margin: 10px 0 0;
+}
