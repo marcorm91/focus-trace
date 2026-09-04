@@ -111,6 +111,23 @@ describe('Spanish localization of synced/source copy', () => {
     expect(localized.evidence).not.toContain('Prefer a native');
   });
 
+  it('localizes consistent-help evidence while preserving compared page and order', () => {
+    const localized = localizedScanIssue(issue({
+      ruleId: 'FT-REVIEW-011',
+      title: 'Repeated help mechanisms may change order across pages',
+      description: 'The same observed help mechanisms appear in a different relative order across sampled pages.',
+      evidence: 'Observed order: human contact mechanism → self-help option. Comparison page https://example.com/help-b: self-help option → human contact mechanism.',
+    }), 'es');
+
+    expect(localized.title).toContain('mecanismos de ayuda');
+    expect(localized.description).toContain('WCAG 3.2.6');
+    expect(localized.evidence).toBe(
+      'Orden observado: mecanismo de contacto humano → opción de autoayuda. Página comparada https://example.com/help-b: opción de autoayuda → mecanismo de contacto humano.',
+    );
+    expect(localized.evidence).not.toContain('Observed order');
+    expect(localized.evidence).not.toContain('Comparison page');
+  });
+
   it('localizes obsolete HTML evidence and modernization guidance', () => {
     const localized = localizedScanIssue(issue({
       ruleId: 'FT-WARN-007',
