@@ -135,6 +135,10 @@ function sampledAxisPoints(start: number, end: number): number[] {
     .map((ratio) => start + inset + ((end - start - (2 * inset)) * ratio));
 }
 
+function isFocusTraceUi(element: Element): boolean {
+  return Boolean(element.closest('[data-focustrace-focus-walk-backdrop]'));
+}
+
 export function mayBeCompletelyObscured(element: Element): { obscured: boolean; evidence?: string } {
   const rect = element.getBoundingClientRect();
   const left = Math.max(0, rect.left);
@@ -150,12 +154,15 @@ export function mayBeCompletelyObscured(element: Element): { obscured: boolean; 
 
   const blockers = new Map<Element, number>();
   const covered = points.every(({ x, y }) => {
-    const candidates = document.elementsFromPoint(x, y).filter(isVisuallyRendered);
+    const candidates = document.elementsFromPoint(x, y)
+      .filter((candidate) => !isFocusTraceUi(candidate))
+      .filter(isVisuallyRendered);
     const targetIndex = candidates.findIndex((candidate) => candidate === element || element.contains(candidate));
     if (targetIndex === 0) return false;
 
     const blocker = candidates.find((candidate, index) => {
       if (targetIndex >= 0 && index >= targetIndex) return false;
+      if (candidate === document.body || candidate === document.documentElement) return false;
       if (candidate === element || element.contains(candidate) || candidate.contains(element)) return false;
       return true;
     });
