@@ -32,7 +32,7 @@ describe('multipage audit UI contract', () => {
     expect(css).toContain('border: 1.5px solid var(--ft-border, CanvasText);');
   });
 
-  it('keeps only one saved report expanded and never mixes live page actions into history', () => {
+  it('keeps one saved report expanded, preserves historical export and never mixes live page actions into history', () => {
     const workspace = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/views/AuditReportWorkspace.tsx'), 'utf8');
     const report = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/views/SessionReportView.tsx'), 'utf8');
     const compact = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/components/ReportScanCompact.tsx'), 'utf8');
@@ -43,15 +43,32 @@ describe('multipage audit UI contract', () => {
     expect(workspace).toContain("className={`audit-page-report${active ? ' is-current' : ' is-history'}`}");
     expect(workspace).toContain('events={active ? events : []}');
     expect(workspace).toContain('structureSnapshot={active ? structureSnapshot : undefined}');
+    expect(workspace).toContain('savedVisualEvidence={page.visualEvidence}');
     expect(report).toContain('livePage = true');
-    expect(report).toContain('if (!scan || !livePage)');
-    expect(report).toContain('if (!livePage) return;');
+    expect(report).toContain('buildReportComponentIndex(scan, events, [])');
+    expect(report).toContain('session: {');
+    expect(report).toContain('savedVisualEvidence?.visuals');
     expect(report).toContain('onLocate={livePage ? onLocate : undefined}');
     expect(report).toContain('Historical Trace unavailable');
     expect(report).toContain('Historical Structure unavailable');
     expect(compact).not.toContain('requestActivePageAccess');
     expect(compact).not.toContain('locateScanTargetInPage');
     expect(compact).toContain('{onLocate && (');
+  });
+
+  it('deletes saved page reports and keeps audit visual export explicit', () => {
+    const workspace = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/views/AuditReportWorkspace.tsx'), 'utf8');
+    const hook = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/hooks/useMultipageAudit.ts'), 'utf8');
+    const storage = readFileSync(resolve(process.cwd(), 'lib/audit/multipage-audit-storage.ts'), 'utf8');
+
+    expect(workspace).toContain('Delete saved report');
+    expect(workspace).toContain('Eliminar informe guardado');
+    expect(workspace).toContain('onDeletePage(audit.id, pageKey)');
+    expect(workspace).toContain('Include saved images');
+    expect(workspace).toContain('Incluir imágenes guardadas');
+    expect(workspace).toContain('storeAuditPrintEvidence(audit, includeVisualEvidence)');
+    expect(hook).toContain('deleteMultipageAuditPage');
+    expect(storage).toContain('removeAuditPage(current, auditId, pageKey)');
   });
 
   it('stores bounded visual evidence per review and bounds the complete audit store', () => {
@@ -79,5 +96,18 @@ describe('multipage audit UI contract', () => {
     expect(printable).toContain('Review performed');
     expect(printable).toContain('Revisión realizada');
     expect(printable).toContain('Repeated analyses of the same normalized URL replace the previous result');
+    expect(printable).toContain('Audit index');
+    expect(printable).toContain('Índice de la auditoría');
+    expect(printable).toContain("id={`audit-page-${index + 1}-${group.id}`}");
+  });
+
+  it('uses flat report metrics, roomier spacing and no accordion hover fill', () => {
+    const auditCss = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/audit.css'), 'utf8');
+    const accordionCss = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/views/report-accordion.css'), 'utf8');
+
+    expect(auditCss).toContain('.audit-overview-metrics span::before');
+    expect(auditCss).toContain('padding: 18px;');
+    expect(auditCss).not.toContain('.audit-page-summary:hover');
+    expect(accordionCss).not.toContain('.report-accordion-summary:hover');
   });
 });

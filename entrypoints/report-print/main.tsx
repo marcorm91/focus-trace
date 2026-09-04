@@ -686,25 +686,28 @@ function App() {
 
   useEffect(() => {
     const params = new URLSearchParams(window.location.search);
-    const tabId = Number(params.get('tabId'));
+    const tabIdParam = params.get('tabId');
+    const tabId = tabIdParam == null ? undefined : Number(tabIdParam);
     const language: AppLanguage = params.get('language') === 'es' ? 'es' : 'en';
     const evidenceToken = params.get('evidence');
     document.documentElement.lang = language;
 
-    if (!Number.isInteger(tabId) || tabId < 0) {
-      setError(tr(language, 'The source tab for this report is not available.', 'La pestaña de origen de este informe no está disponible.'));
-      return;
-    }
-
-    const sessionPromise = browser.runtime.sendMessage({
-      type: 'FOCUSTRACE_GET_SESSION',
-      tabId,
-    } satisfies ExtensionMessage) as Promise<SessionState>;
     const evidencePromise = evidenceToken
       ? readPrintableReportEvidence(evidenceToken)
       : Promise.resolve(undefined);
 
-    void Promise.all([sessionPromise, evidencePromise]).then(([state, evidence]) => {
+    void evidencePromise.then(async (evidence) => {
+      let state = evidence?.session;
+      if (!state) {
+        if (tabId == null || !Number.isInteger(tabId) || tabId < 0) {
+          setError(tr(language, 'The source tab for this report is not available.', 'La pestaña de origen de este informe no está disponible.'));
+          return;
+        }
+        state = await browser.runtime.sendMessage({
+          type: 'FOCUSTRACE_GET_SESSION',
+          tabId,
+        } satisfies ExtensionMessage) as SessionState;
+      }
       if (!state.scan) {
         setError(tr(language, 'No page analysis is available for this report.', 'No hay un análisis de página disponible para este informe.'));
         return;

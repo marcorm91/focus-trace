@@ -22,7 +22,8 @@ The current page can reuse its live Trace, Structure snapshot and page-location 
 - the historical view shows the saved static analysis and heading evidence for that review;
 - current-page locate/highlight actions are not exposed for the historical review;
 - historical Trace and Structure snapshots are not persisted with audit pages in 0.1.4 and are labelled as unavailable rather than displayed as zero/live evidence;
-- persisted historical screenshot crops are consumed by **Export audit PDF**, not by a new capture against the current tab.
+- persisted historical screenshot crops can be reused by the page's individual PDF and by **Export audit PDF**, without capturing an unrelated active tab;
+- each saved page review can be deleted explicitly; deleting the final page also removes the empty audit.
 
 Persisting complete historical Trace and Structure snapshots is a future extension of the audit model, not something the 0.1.4 UI should infer or silently mix.
 
@@ -59,11 +60,12 @@ See `PRIVACY.md` for the complete local-data and permission description.
 **Export audit PDF** uses a dedicated printable entrypoint with:
 
 - one audit cover;
+- a hierarchical index of reviewed pages and their non-empty result sections;
 - aggregate failure/review/warning totals;
 - one section per normalized page URL;
 - the latest review time for every page;
 - the latest saved full-page findings for every page;
-- the bounded visual crops that were persisted with those page reviews when available.
+- the bounded visual crops that were persisted with those page reviews when available and explicitly included for export.
 
 The print payload is itself bounded before being placed in `browser.storage.session`, so a large historical audit cannot rely on exceeding the browser's session-storage quota just to open the print preview.
 

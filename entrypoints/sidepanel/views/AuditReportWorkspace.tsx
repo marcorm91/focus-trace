@@ -22,6 +22,7 @@ export function AuditReportWorkspace({
   structureSnapshot,
   language,
   onLocate,
+  onDeletePage,
 }: {
   audit?: AccessibilityAudit | undefined;
   scan?: ScanResult | undefined;
@@ -29,24 +30,48 @@ export function AuditReportWorkspace({
   structureSnapshot?: StructureSnapshot | undefined;
   language: AppLanguage;
   onLocate: (selector: string) => void | Promise<void>;
+  onDeletePage: (auditId: string, pageKey: string) => void | Promise<void>;
 }) {
   const [exportingAudit, setExportingAudit] = useState(false);
+  const [deletingPageKey, setDeletingPageKey] = useState<string>();
+  const [includeVisualEvidence, setIncludeVisualEvidence] = useState(true);
   const [openPageKey, setOpenPageKey] = useState<string>();
   const summary = useMemo(() => audit ? auditSummary(audit) : undefined, [audit]);
   const currentPageKey = scan ? auditPageKey(scan.url) : undefined;
   const hasAuditPages = Boolean(audit?.pages.length);
+  const savedVisualCount = audit?.pages.reduce(
+    (count, page) => count + (page.visualEvidence?.visuals.length ?? 0),
+    0,
+  ) ?? 0;
 
   const exportAuditPdf = async () => {
     if (!audit?.pages.length || exportingAudit) return;
     setExportingAudit(true);
     try {
-      const evidence = await storeAuditPrintEvidence(audit);
+      const evidence = await storeAuditPrintEvidence(audit, includeVisualEvidence);
       const params = new URLSearchParams({ language, evidence });
       await browser.tabs.create({
         url: browser.runtime.getURL(`/audit-print.html?${params.toString()}`),
       });
     } finally {
       setExportingAudit(false);
+    }
+  };
+
+  const deletePage = async (pageKey: string, pageTitle: string) => {
+    if (!audit || deletingPageKey) return;
+    const confirmed = window.confirm(tr(
+      language,
+      `Delete the saved report for “${pageTitle}”? This removes its analysis and saved visual evidence from the current audit.`,
+      `¿Eliminar el informe guardado de «${pageTitle}»? Se borrarán de la auditoría actual su análisis y la evidencia visual guardada.`,
+    ));
+    if (!confirmed) return;
+    setDeletingPageKey(pageKey);
+    try {
+      await onDeletePage(audit.id, pageKey);
+      setOpenPageKey((current) => current === pageKey ? undefined : current);
+    } finally {
+      setDeletingPageKey(undefined);
     }
   };
 
@@ -71,16 +96,32 @@ export function AuditReportWorkspace({
                 'Abre una página revisada para consultar su informe guardado. Solo se despliega una revisión a la vez y, si vuelves a analizar la misma URL, se sustituye su resultado anterior.',
               )}</p>
             </div>
-            <button
-              className="export-audit-report"
-              type="button"
-              disabled={!audit.pages.length || exportingAudit}
-              onClick={() => void exportAuditPdf()}
-            >
-              {exportingAudit
-                ? tr(language, 'Preparing audit…', 'Preparando auditoría…')
-                : tr(language, 'Export audit PDF', 'Exportar auditoría PDF')}
-            </button>
+            <div className="audit-overview-actions">
+              <label className="audit-visual-evidence-option">
+                <input
+                  type="checkbox"
+                  checked={includeVisualEvidence}
+                  disabled={savedVisualCount === 0 || exportingAudit}
+                  onChange={(event) => setIncludeVisualEvidence(event.currentTarget.checked)}
+                />
+                <span>
+                  <strong>{tr(language, 'Include saved images', 'Incluir imágenes guardadas')}</strong>
+                  <small>{savedVisualCount > 0
+                    ? tr(language, `${savedVisualCount} crops available`, `${savedVisualCount} recortes disponibles`)
+                    : tr(language, 'Re-analyze pages to capture them', 'Vuelve a analizar las páginas para capturarlas')}</small>
+                </span>
+              </label>
+              <button
+                className="export-audit-report"
+                type="button"
+                disabled={!audit.pages.length || exportingAudit}
+                onClick={() => void exportAuditPdf()}
+              >
+                {exportingAudit
+                  ? tr(language, 'Preparing audit…', 'Preparando auditoría…')
+                  : tr(language, 'Export audit PDF', 'Exportar auditoría PDF')}
+              </button>
+            </div>
           </div>
 
           <div className="audit-overview-metrics" aria-label={tr(language, 'Audit summary', 'Resumen de auditoría')}>
@@ -118,6 +159,17 @@ export function AuditReportWorkspace({
 
                   {open && (
                     <div className="audit-page-report-body">
+                      <div className="audit-page-actions">
+                        <button
+                          type="button"
+                          disabled={Boolean(deletingPageKey)}
+                          onClick={() => void deletePage(page.key, page.title || page.url)}
+                        >
+                          {deletingPageKey === page.key
+                            ? tr(language, 'Deleting…', 'Eliminando…')
+                            : tr(language, 'Delete saved report', 'Eliminar informe guardado')}
+                        </button>
+                      </div>
                       {!active && (
                         <p className="audit-history-note">
                           {tr(
@@ -134,6 +186,7 @@ export function AuditReportWorkspace({
                         language={language}
                         onLocate={onLocate}
                         livePage={active}
+                        savedVisualEvidence={page.visualEvidence}
                       />
                     </div>
                   )}

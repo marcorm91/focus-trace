@@ -6,6 +6,7 @@ import {
   auditSiteKey,
   auditSummary,
   emptyMultipageAuditStore,
+  removeAuditPage,
   type AuditPageVisualEvidence,
 } from '../lib/audit/multipage-audit';
 import type { ScanResult } from '../shared/types';
@@ -123,5 +124,28 @@ describe('multipage audit model', () => {
     );
     const summary = auditSummary(store.audits[0]!);
     expect(summary).toMatchObject({ pages: 2, failures: 6, reviews: 0, warnings: 0 });
+  });
+
+  it('removes saved page reports and drops an audit when its final page is deleted', () => {
+    let store = applyAuditAnalysis(
+      emptyMultipageAuditStore(),
+      scan('https://bidafarma.es/', 100),
+      { kind: 'new', site: 'bidafarma.es' },
+      'audit-1',
+    );
+    store = applyAuditAnalysis(
+      store,
+      scan('https://bidafarma.es/servicios/', 200),
+      { kind: 'existing', auditId: 'audit-1', site: 'bidafarma.es', addSite: false },
+      'unused',
+    );
+
+    store = removeAuditPage(store, 'audit-1', auditPageKey('https://bidafarma.es/'));
+    expect(store.audits[0]?.pages.map((page) => page.url)).toEqual(['https://bidafarma.es/servicios/']);
+    expect(store.activeAuditId).toBe('audit-1');
+
+    store = removeAuditPage(store, 'audit-1', auditPageKey('https://bidafarma.es/servicios/'));
+    expect(store.audits).toEqual([]);
+    expect(store.activeAuditId).toBeUndefined();
   });
 });

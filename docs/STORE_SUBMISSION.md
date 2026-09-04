@@ -60,7 +60,7 @@ Used to run the local FocusTrace scanner, generate an explicitly requested Struc
 
 Used for extension preferences, per-tab/session state, multipage audit history and optional FocusTrace Memory.
 
-A full-page analysis can add or replace one page in the active multipage audit. Audit storage is bounded by audit/page counts, a visual-evidence budget and an overall serialized-size budget. A reviewed page can retain up to two small local visual crops so its audit PDF can preserve context after navigation. When storage pressure requires pruning, older audit history or visual crops are removed before the newest active review.
+A full-page analysis can add or replace one page in the active multipage audit. Audit storage is bounded by audit/page counts, a visual-evidence budget and an overall serialized-size budget. A reviewed page can retain up to three small local visual crops so its audit PDF can preserve context after navigation. When storage pressure requires pruning, older audit history or visual crops are removed before the newest active review.
 
 Memory is disabled by default. When enabled, it can store bounded local diagnostic observations, compact element locators and small compressed visual previews for selected remembered failures. It does not store page HTML, full DOM snapshots or full-page screenshots as Memory history.
 

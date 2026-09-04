@@ -39,9 +39,9 @@ Structure evidence is diagnostic context, not a WCAG conformance claim. Suggesti
 
 A full-page analysis can be retained as the latest review for that normalized URL inside the active multipage audit. Re-analyzing the same page replaces the saved page result rather than creating another duplicate audit section.
 
-To keep visual evidence available after the user navigates away, FocusTrace may also retain up to two local screenshot crops for eligible findings from that page review. These are element-level JPEG crops rather than full-page screenshots. A later review of the same URL replaces the previous crops together with the previous scan result so stale visual evidence is not intentionally kept as the current audit state.
+To keep visual evidence available after the user navigates away, FocusTrace may also retain up to three local screenshot crops for eligible findings from that page review. These are element-level JPEG crops rather than full-page screenshots. A later review of the same URL replaces the previous crops together with the previous scan result so stale visual evidence is not intentionally kept as the current audit state. Users can delete a saved page review, including its retained crops, from the Report workspace.
 
-Audit visual evidence is bounded again at storage level. FocusTrace keeps at most 40 pages per audit, at most 8 audits, no more than two visual crops per reviewed page and a shared approximate visual-data budget of 3,000,000 data-URL characters. When that visual budget is exhausted, older crops can be discarded while the underlying text-based audit result remains available. The printable audit identifies reviews whose visual evidence was unavailable or trimmed instead of silently presenting stale captures.
+Audit visual evidence is bounded again at storage level. FocusTrace keeps at most 40 pages per audit, at most 8 audits, no more than three visual crops per reviewed page and a shared approximate visual-data budget of 3,000,000 data-URL characters. When that visual budget is exhausted, older crops can be discarded while the underlying text-based audit result remains available. The printable audit identifies reviews whose visual evidence was unavailable or trimmed instead of silently presenting stale captures.
 
 Audit screenshots remain local to extension storage and the generated local PDF preview. Users should review the PDF before sharing it because a crop can contain text or other information visible on the inspected page.
 
@@ -75,7 +75,7 @@ Memory comparisons are diagnostic history, not a WCAG conformance claim. A previ
 FocusTrace has three local visual-evidence flows:
 
 1. **Memory previews.** When Memory is enabled, an explicit analysis may retain a small crop of a currently visible failing element as described above. If capture is unavailable, Memory falls back to a compact locator.
-2. **Multipage audit evidence.** An explicit full-page analysis may retain up to two bounded local crops for eligible findings so the latest saved review can still include visual context after the user navigates to another audited page. If capture is unavailable, the audit keeps the text-based result and records that visual evidence was unavailable.
+2. **Multipage audit evidence.** An explicit full-page analysis may retain up to three bounded local crops for eligible findings so the latest saved review can still include visual context after the user navigates to another audited page. If capture is unavailable, the audit keeps the text-based result and records that visual evidence was unavailable.
 3. **Printable single-page report evidence.** Visual evidence in the single-page printable report is optional and user initiated. When requested, FocusTrace may temporarily request the browser permission required to capture the visible page.
 
 Screenshot crops can contain information visible on the inspected page. They are prepared and stored locally for the feature that requested them and are not intentionally transmitted by FocusTrace.
@@ -100,7 +100,7 @@ FocusTrace may provide links to standards documentation, the project repository,
 
 ## Voluntary sponsorship
 
-FocusTrace provides optional links to the project's public GitHub Sponsors page at `https://github.com/sponsors/marcorm91` from interactive support surfaces such as About, the global side-panel footer and Site Audit. These support links do not appear in printed/exported reports.
+FocusTrace provides optional links to the project's public GitHub Sponsors page at `https://github.com/sponsors/marcorm91` from the global side-panel footer and Site Audit. These support links do not appear in printed/exported reports.
 
 Sponsorship is entirely optional. It does not unlock features, remove limits or change FocusTrace analysis behavior.
 

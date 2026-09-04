@@ -112,6 +112,8 @@ test('historical audit reports stay static, single-open and separate from live p
   await expect(historical).toHaveAttribute('open', '');
   await expect(panel.locator('.audit-page-report[open]')).toHaveCount(1);
   await expect(historical.getByText(/Saved static review|Revisión estática guardada/)).toBeVisible();
+  await expect(historical.getByRole('button', { name: /Export PDF|Exportar PDF/ })).toBeVisible();
+  await expect(historical.getByRole('button', { name: /Delete saved report|Eliminar informe guardado/ })).toBeVisible();
 
   const historicalScanSection = historical.locator('.report-accordion-section').filter({ hasText: /Full page scan|Barrido completo de página/ });
   await historicalScanSection.locator(':scope > summary').click();
@@ -137,4 +139,8 @@ test('historical audit reports stay static, single-open and separate from live p
     [...root.querySelectorAll('[id]')].map((element) => element.id).filter(Boolean),
   );
   expect(new Set(ids).size).toBe(ids.length);
+
+  panel.once('dialog', (dialog) => dialog.accept());
+  await current.getByRole('button', { name: /Delete saved report|Eliminar informe guardado/ }).click();
+  await expect(reports).toHaveCount(1);
 });

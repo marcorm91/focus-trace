@@ -70,6 +70,7 @@ export default function App() {
     decisionPending,
     preparePageAnalysis,
     recordPageAnalysis,
+    deleteAuditPage,
     addPendingSiteToCurrentAudit,
     startPendingSiteAsNewAudit,
     cancelPendingAuditScope,
@@ -512,6 +513,7 @@ export default function App() {
           structureSnapshot={structureSnapshot}
           language={language}
           onLocate={locateScanTarget}
+          onDeletePage={deleteAuditPage}
         />
       )}
       {view === 'instructions' && <InstructionsView language={language} />}

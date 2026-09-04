@@ -12,6 +12,7 @@ import {
 import {
   loadMultipageAuditStore,
   MULTIPAGE_AUDIT_STORAGE_KEY,
+  deleteMultipageAuditPage,
   recordMultipageAuditScan,
 } from '../../../lib/audit/multipage-audit-storage';
 import {
@@ -143,12 +144,18 @@ export function useMultipageAudit() {
     setStore(next);
   }, []);
 
+  const deleteAuditPage = useCallback(async (auditId: string, pageKey: string) => {
+    const next = await deleteMultipageAuditPage(auditId, pageKey);
+    setStore(next);
+  }, []);
+
   return {
     activeAudit,
     pendingScope,
     decisionPending: Boolean(pendingScope),
     preparePageAnalysis,
     recordPageAnalysis,
+    deleteAuditPage,
     addPendingSiteToCurrentAudit,
     startPendingSiteAsNewAudit,
     cancelPendingAuditScope,
