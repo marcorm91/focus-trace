@@ -1,4 +1,5 @@
 import { suggestAccessibleForeground } from '../audit/contrast';
+import { actionableRemediationText } from '../report/actionable-remediation';
 import type { AppLanguage } from '../../shared/i18n';
 import type { ScanIssue } from '../../shared/types';
 
@@ -7,6 +8,9 @@ function t(language: AppLanguage, en: string, es: string) {
 }
 
 export function remediationForIssue(issue: ScanIssue, language: AppLanguage): string {
+  const actionable = actionableRemediationText(issue.ruleId, language);
+  if (actionable) return actionable;
+
   if (issue.ruleId === 'FT-WCAG-001') return t(language,
     'Add a concise, descriptive and page-specific <title> that identifies the current view or task.',
     'Añade un <title> conciso, descriptivo y específico de la página que identifique la vista o tarea actual.');
