@@ -35,6 +35,7 @@ Useful validation commands:
 
 ```bash
 npm run standards:validate
+npm run capabilities:validate
 npm run check
 npm run lint
 npm test
@@ -58,6 +59,23 @@ Keep pull requests focused on one product or technical concern. A good PR should
 - how the change was validated.
 
 Prefer regression tests for bug fixes. Do not bundle unrelated formatting, refactors or dependency changes into a feature PR.
+
+## Capability catalog maintenance
+
+`README.md` and `README.es.md` contain the public functional capability catalog for FocusTrace. Keep them aligned with actual product behavior.
+
+Update both catalogs in the same PR whenever you add, remove or materially change:
+
+- a `FT-*` rule, standards mapping, outcome or detector behavior;
+- a scanner, Trace, Structure, Focus Walk, Replay, Journey, Graph, Site Audit, Memory or reporting capability;
+- user-visible limits, browser support, permissions, privacy behavior or export behavior;
+- any new user-facing workflow even when it has no rule ID.
+
+Run `npm run capabilities:validate` before opening the PR. CI checks that every source-defined FocusTrace rule ID is represented in both README catalogs. Features without a rule ID must still be maintained manually through this contributor contract and the PR checklist.
+
+If rule methodology or applicability changes, update [`docs/RULES.md`](docs/RULES.md) as well. Keep the English and Spanish catalogs semantically equivalent rather than allowing one language to become a reduced version of the other.
+
+Automated agents must also follow [`AGENTS.md`](AGENTS.md).
 
 ## Accessibility requirements
 

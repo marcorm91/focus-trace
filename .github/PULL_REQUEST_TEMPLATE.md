@@ -14,6 +14,13 @@
 - [ ] Keyboard and focus behavior was considered
 - [ ] English and Spanish user-facing copy remain aligned
 
+## Capability catalog
+
+- [ ] `README.md` and `README.es.md` capability tables were updated for any added/removed/changed user-visible capability or `FT-*` rule
+- [ ] `docs/RULES.md` was updated when rule behavior, applicability or standards methodology changed
+- [ ] `npm run capabilities:validate` passes
+- [ ] If the catalog is not affected, the PR explains why
+
 ## Privacy / permissions
 
 - [ ] No new data collection or external transmission
@@ -23,6 +30,7 @@
 ## Validation
 
 - [ ] `npm run standards:validate`
+- [ ] `npm run capabilities:validate`
 - [ ] `npm run check`
 - [ ] `npm run lint`
 - [ ] `npm test`
