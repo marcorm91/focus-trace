@@ -1,3 +1,4 @@
+import { actionableRemediationText } from '../report/actionable-remediation';
 import { tr, type AppLanguage } from '../../shared/i18n';
 import type { RuntimeEvent, RuntimeEventKind } from '../../shared/types';
 import type { FocusJourneyDirection } from './focus-journey';
@@ -31,6 +32,16 @@ export function focusDirectionLabel(direction: FocusJourneyDirection, language: 
   return tr(language, 'Journey start', 'Inicio del recorrido');
 }
 
+function runtimeDetailWithRemediation(
+  event: RuntimeEvent,
+  language: AppLanguage,
+  detail: string,
+): string {
+  const remediation = actionableRemediationText(event.ruleId, language);
+  if (!remediation) return detail;
+  return `${detail} ${tr(language, 'How to fix:', 'Cómo corregirlo:')} ${remediation}`;
+}
+
 export function humanRuntimeEventDetail(event: RuntimeEvent, language: AppLanguage): string | undefined {
   if (event.kind === 'virtual-focus') {
     const target = event.element?.name?.trim() || event.element?.role || event.element?.tag;
@@ -54,11 +65,12 @@ export function humanRuntimeEventDetail(event: RuntimeEvent, language: AppLangua
 
   if (event.kind === 'dragging') {
     const selector = event.element?.selector;
-    return tr(
+    const detail = tr(
       language,
       `A dragging interaction${selector ? ` was observed on ${selector}` : ' was observed'}. Review whether the same functionality is available with a single pointer without dragging.`,
       `Se observó una interacción de arrastre${selector ? ` en ${selector}` : ''}. Revisa si la misma funcionalidad está disponible con un puntero sencillo sin necesidad de arrastrar.`,
     );
+    return runtimeDetailWithRemediation(event, language, detail);
   }
 
   if (event.kind === 'focus-walk-start') {
@@ -121,11 +133,12 @@ export function humanRuntimeEventDetail(event: RuntimeEvent, language: AppLangua
   }
 
   if (event.kind === 'focus-obscured') {
-    return tr(
+    const detail = tr(
       language,
       'The focused control may be completely covered by other page content. Review its visible focus indication and operability.',
       'El control con foco puede estar completamente cubierto por otro contenido de la página. Revisa la visibilidad del foco y su operabilidad.',
     );
+    return runtimeDetailWithRemediation(event, language, detail);
   }
 
   if (event.kind === 'route' && event.outcome) {
