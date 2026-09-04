@@ -7,6 +7,7 @@ export type RuntimeEventKind =
   | 'virtual-focus'
   | 'keydown'
   | 'click'
+  | 'dragging'
   | 'route'
   | 'dom-mutation'
   | 'focus-lost'

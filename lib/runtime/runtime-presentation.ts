@@ -7,6 +7,7 @@ export function runtimeEventKindLabel(kind: RuntimeEventKind, language: AppLangu
   if (kind === 'virtual-focus') return tr(language, 'Virtual focus', 'Foco virtual');
   if (kind === 'keydown') return tr(language, 'Keyboard', 'Teclado');
   if (kind === 'click') return tr(language, 'Activation', 'Activación');
+  if (kind === 'dragging') return tr(language, 'Dragging', 'Arrastre');
   if (kind === 'route') return tr(language, 'Navigation', 'Navegación');
   if (kind === 'dom-mutation') return tr(language, 'DOM change', 'Cambio DOM');
   if (kind === 'focus-lost') return tr(language, 'Focus lost', 'Foco perdido');
@@ -49,6 +50,15 @@ export function humanRuntimeEventDetail(event: RuntimeEvent, language: AppLangua
   if (event.kind === 'live-region') {
     // Live-region content belongs to the inspected page, not to FocusTrace. Preserve it verbatim.
     return event.detail;
+  }
+
+  if (event.kind === 'dragging') {
+    const selector = event.element?.selector;
+    return tr(
+      language,
+      `A dragging interaction${selector ? ` was observed on ${selector}` : ' was observed'}. Review whether the same functionality is available with a single pointer without dragging.`,
+      `Se observó una interacción de arrastre${selector ? ` en ${selector}` : ''}. Revisa si la misma funcionalidad está disponible con un puntero sencillo sin necesidad de arrastrar.`,
+    );
   }
 
   if (event.kind === 'focus-walk-start') {

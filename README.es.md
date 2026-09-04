@@ -35,6 +35,8 @@ Trace registra qué hizo el usuario, qué elemento tenía el foco, qué cambió 
 
 El depurador runtime puede generar explicaciones causales deterministas para patrones como la eliminación de un nodo con foco, la apertura de un modal sin recibir foco o una navegación SPA que deja el foco atrás. Estas explicaciones describen evidencia registrada; no convierten un comportamiento contextual en una afirmación automática de conformidad WCAG.
 
+Trace también observa evidencia runtime relevante para criterios de interacción incorporados en WCAG 2.2. Mientras un componente mantiene el foco, FocusTrace vuelve a comprobar si queda completamente tapado después de cambios de foco, scroll, redimensionado del viewport o mutaciones DOM relevantes para WCAG 2.4.11. Trace también puede reconocer interacciones de arrastre observadas y presentar WCAG 2.5.7 como señal de **REVIEW**; la extensión no afirma un fallo porque puede existir en otra parte de la interfaz una alternativa equivalente mediante puntero sencillo.
+
 ### Estructura
 
 Estructura ofrece una vista de accesibilidad compacta y bajo demanda de la página actual, sin duplicar el inspector DOM del navegador. El espacio agrupa tres vistas complementarias:
@@ -63,6 +65,8 @@ Site Audit descubre páginas del mismo origen a partir de sitemaps, robots.txt, 
 
 Los límites de seguridad actuales de Site Audit son 500 URLs descubiertas, 30 páginas analizadas y 3 muestras representativas por familia de rutas. Los hallazgos de plantilla se presentan como compartidos únicamente cuando la misma señal normalizada aparece en todas las muestras analizadas correctamente de esa familia. El muestreo representativo no demuestra que todas las URLs sean idénticas y Trace runtime no se ejecuta automáticamente sobre todo el sitio.
 
+Site Audit también puede recopilar un resumen limitado de mecanismos de ayuda repetidos en las páginas muestreadas. Cuando aparecen al menos dos de las mismas categorías de ayuda observadas pero cambia su orden relativo, FocusTrace presenta un **REVIEW** de WCAG 3.2.6 Ayuda coherente. La señal es intencionadamente contextual: heurísticas de texto identifican candidatos como datos de contacto, contacto humano, autoayuda y contacto automatizado, pero la aplicabilidad final requiere revisión humana.
+
 ## Motor de reglas actual
 
 La cobertura estática actual incluye:
@@ -86,12 +90,18 @@ La grabación runtime observa actualmente:
 - interacciones de teclado y puntero;
 - movimiento de foco, navegación hacia atrás, bucles y saltos inesperados;
 - nodos con foco eliminados u ocultados;
+- componentes con foco que pasan a quedar completamente tapados mientras mantienen el foco, con nuevas comprobaciones tras scroll, resize y cambios DOM relevantes (evidencia de revisión para WCAG 2.4.11);
+- interacciones de arrastre observadas sobre controles con señales de arrastre, presentadas como revisiones contextuales de WCAG 2.5.7;
 - cambios de ruta SPA;
 - foco inicial, escape de foco y restauración de foco en diálogos modales;
 - mutaciones DOM relevantes y evidencia del ciclo de vida de diálogos;
 - breakpoints de accesibilidad para determinadas causas runtime deterministas.
 
+Site Audit compara además categorías de mecanismos de ayuda repetidos entre páginas muestreadas y puede presentar revisiones contextuales de WCAG 3.2.6 Ayuda coherente cuando cambia su orden relativo.
+
 Trace también incluye un replay de solo lectura de la evidencia registrada. El informe de sesión combina hallazgos estáticos con historias de interacción runtime y recomendaciones, mientras **Estructura del documento** resume los encabezados sin repetir el árbol completo. Si Estructura ya se ha generado, el informe del panel, el PDF y el TXT reutilizan sus métricas compactas y sugerencias semánticas sin volver a recorrer el DOM ni exportar el árbol DOM completo.
+
+FocusTrace utiliza WCAG 2.2 como fuente de conformidad. Los criterios WCAG 2.2 también quedan reflejados en los requisitos web de EN 301 549 V4.1.1; las reglas y revisiones implementadas por FocusTrace cubren únicamente los subconjuntos observables que se documentan de forma explícita y **no constituyen una evaluación completa de EN 301 549, una certificación ni una prueba de conformidad**.
 
 Consulta [`docs/RULES.md`](docs/RULES.md) para metodología, fuentes y limitaciones y [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) para los principales límites de arquitectura y datos.
 

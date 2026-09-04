@@ -22,6 +22,11 @@ import {
   createDialogOpenEvent,
   createDialogRestoreFocusEvent,
 } from '../lib/runtime/dialog-events';
+import {
+  createDraggingReviewEvent,
+  isPotentialDraggingTarget,
+  RuntimeDragTracker,
+} from '../lib/runtime/dragging';
 import { createRuntimeEventId as uid } from '../lib/runtime/events';
 import {
   createFocusEvent,
@@ -102,11 +107,14 @@ export default defineContentScript({
     let focusVersion = 0;
     let pendingFocusIntent: 'forward' | 'backward' | 'programmatic' = 'programmatic';
     let hiddenFocusReported: Element | null = null;
+    let obscuredFocusReported: Element | null = null;
+    let focusObscuredFrame: number | undefined;
     let focusWalkRunning = false;
     let focusWalkCancelRequested = false;
     let observerActive = false;
     let routeTimer: number | undefined;
     const interactionTracker = new RuntimeInteractionTracker();
+    const dragTracker = new RuntimeDragTracker();
     const dialogs = new Map<Element, DialogState>();
     const emittedAriaWidgetFindings = new Set<string>();
     const pendingEventDeliveries = new Set<Promise<unknown>>();
@@ -176,6 +184,7 @@ export default defineContentScript({
         recording = false;
         stopInstrumentation();
         interactionTracker.reset();
+        dragTracker.reset();
       }
     };
 
@@ -228,19 +237,35 @@ export default defineContentScript({
       emit(createMutationEvent(mutation, detail), explicitInteractionId);
     };
 
-    const inspectFocusObscured = (element: Element, interactionId?: string) =>
-      requestAnimationFrame(() => {
-        if (!recording || document.activeElement !== element) return;
-        const result = mayBeCompletelyObscured(element);
-        if (!result.obscured) return;
-        emit(
-          createFocusObscuredEvent({
-            element: snapshot(element),
-            ...(result.evidence ? { evidence: result.evidence } : {}),
-          }),
-          interactionId,
-        );
+    const inspectFocusObscured = (element: Element, interactionId?: string) => {
+      if (!recording || document.activeElement !== element) return;
+      const result = mayBeCompletelyObscured(element);
+      if (!result.obscured) {
+        if (obscuredFocusReported === element) obscuredFocusReported = null;
+        return;
+      }
+      if (obscuredFocusReported === element) return;
+      obscuredFocusReported = element;
+      emit(
+        createFocusObscuredEvent({
+          element: snapshot(element),
+          ...(result.evidence ? { evidence: result.evidence } : {}),
+        }),
+        interactionId,
+      );
+    };
+
+    const scheduleFocusObscuredInspection = (
+      element = document.activeElement instanceof Element ? document.activeElement : null,
+      interactionId = activeInteractionId(),
+    ) => {
+      if (!recording || !element || element === document.body) return;
+      if (focusObscuredFrame != null) cancelAnimationFrame(focusObscuredFrame);
+      focusObscuredFrame = requestAnimationFrame(() => {
+        focusObscuredFrame = undefined;
+        inspectFocusObscured(element, interactionId);
       });
+    };
 
     const sleep = (ms: number) => new Promise((resolve) => ctx.setTimeout(() => resolve(undefined), ms));
     const isFocusWalkUiTarget = (target: EventTarget | null): boolean =>
@@ -316,7 +341,52 @@ export default defineContentScript({
         if (!recording) return;
         const event = rawEvent as PointerEvent;
         if (!(event.target instanceof Element) || isFocusWalkUiTarget(event.target)) return;
-        beginInteraction('pointer', actionTarget(event.target));
+        const target = actionTarget(event.target);
+        const interactionId = beginInteraction('pointer', target);
+        if (isPotentialDraggingTarget(event.target) || isPotentialDraggingTarget(target)) {
+          dragTracker.start({
+            pointerId: event.pointerId,
+            interactionId,
+            element: snapshot(target),
+            x: event.clientX,
+            y: event.clientY,
+          });
+        } else {
+          dragTracker.reset();
+        }
+      },
+      true,
+    );
+
+    ctx.addEventListener(
+      document,
+      'pointermove',
+      (rawEvent) => {
+        if (!recording) return;
+        const event = rawEvent as PointerEvent;
+        dragTracker.move(event.pointerId, event.clientX, event.clientY);
+      },
+      true,
+    );
+
+    ctx.addEventListener(
+      document,
+      'pointerup',
+      (rawEvent) => {
+        if (!recording) return;
+        const event = rawEvent as PointerEvent;
+        const observation = dragTracker.finish(event.pointerId);
+        if (observation) emit(createDraggingReviewEvent(observation), observation.interactionId);
+      },
+      true,
+    );
+
+    ctx.addEventListener(
+      document,
+      'pointercancel',
+      (rawEvent) => {
+        const event = rawEvent as PointerEvent;
+        dragTracker.cancel(event.pointerId);
       },
       true,
     );
@@ -331,6 +401,7 @@ export default defineContentScript({
         focusVersion += 1;
         lastFocused = event.target;
         hiddenFocusReported = null;
+        obscuredFocusReported = null;
         const interactionId = activeInteractionId();
         const focusIntent = pendingFocusIntent;
         pendingFocusIntent = 'programmatic';
@@ -356,8 +427,22 @@ export default defineContentScript({
           );
         }
 
-        inspectFocusObscured(event.target, interactionId);
+        scheduleFocusObscuredInspection(event.target, interactionId);
       },
+      true,
+    );
+
+    ctx.addEventListener(
+      document,
+      'scroll',
+      () => scheduleFocusObscuredInspection(),
+      true,
+    );
+
+    ctx.addEventListener(
+      window,
+      'resize',
+      () => scheduleFocusObscuredInspection(),
       true,
     );
 
@@ -598,6 +683,7 @@ export default defineContentScript({
       }
 
       inspectClosedDialogs();
+      scheduleFocusObscuredInspection();
     });
 
     const inspectRouteChange = () => {
@@ -668,6 +754,7 @@ export default defineContentScript({
         observerActive = true;
       }
       if (routeTimer == null) routeTimer = ctx.setInterval(inspectRouteChange, 250);
+      scheduleFocusObscuredInspection();
     }
 
     function stopInstrumentation() {
@@ -679,6 +766,11 @@ export default defineContentScript({
         clearInterval(routeTimer);
         routeTimer = undefined;
       }
+      if (focusObscuredFrame != null) {
+        cancelAnimationFrame(focusObscuredFrame);
+        focusObscuredFrame = undefined;
+      }
+      dragTracker.reset();
     }
 
     ctx.onInvalidated(stopInstrumentation);
@@ -705,8 +797,10 @@ export default defineContentScript({
         lastTitle = document.title;
         focusVersion = 0;
         hiddenFocusReported = null;
+        obscuredFocusReported = null;
         emittedAriaWidgetFindings.clear();
         interactionTracker.reset();
+        dragTracker.reset();
         resetObservedDialogs();
         if (recording) startInstrumentation();
         else stopInstrumentation();
@@ -730,6 +824,8 @@ export default defineContentScript({
       lastFocused = document.activeElement instanceof Element ? document.activeElement : null;
       lastUrl = location.href;
       lastTitle = document.title;
+      obscuredFocusReported = null;
+      dragTracker.reset();
       resetObservedDialogs();
       if (recording) startInstrumentation();
       else stopInstrumentation();

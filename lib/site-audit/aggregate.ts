@@ -1,5 +1,6 @@
 import type { ReportComponentIdentity } from '../report/component-identity';
 import type { ScanIssue } from '../../shared/types';
+import { buildConsistentHelpReviewByUrl } from './consistent-help';
 import type {
   SiteAuditFindingAggregate,
   SiteAuditPageResult,
@@ -17,16 +18,19 @@ export function normalizeTargetShape(selector: string): string {
     .trim();
 }
 
-function allIssues(page: SiteAuditPageResult): ScanIssue[] {
+function allIssues(page: SiteAuditPageResult, additionalIssues: ScanIssue[] = []): ScanIssue[] {
   if (!page.scan) return [];
-  return [...page.scan.issues, ...page.scan.review, ...(page.scan.warnings ?? [])];
+  return [...page.scan.issues, ...page.scan.review, ...(page.scan.warnings ?? []), ...additionalIssues];
 }
 
 function componentForSelector(page: SiteAuditPageResult, selector: string): ReportComponentIdentity | undefined {
   return page.components?.find((component) => component.selector === selector);
 }
 
-function aggregateFindings(pages: SiteAuditPageResult[]): SiteAuditFindingAggregate[] {
+function aggregateFindings(
+  pages: SiteAuditPageResult[],
+  additionalIssuesByUrl: Map<string, ScanIssue[]> = new Map(),
+): SiteAuditFindingAggregate[] {
   const successful = pages.filter((page) => page.scan);
   const totalSamples = successful.length;
   const groups = new Map<string, {
@@ -40,7 +44,7 @@ function aggregateFindings(pages: SiteAuditPageResult[]): SiteAuditFindingAggreg
 
   for (const page of successful) {
     const seenOnPage = new Set<string>();
-    for (const issue of allIssues(page)) {
+    for (const issue of allIssues(page, additionalIssuesByUrl.get(page.url))) {
       const exampleSelector = issue.targets[0] ?? 'page';
       const targetShape = normalizeTargetShape(exampleSelector);
       const key = `${issue.ruleId}|${issue.outcome}|${targetShape}`;
@@ -99,11 +103,12 @@ export function buildSiteAuditTemplates(
   families: SiteAuditRouteFamily[],
   pages: SiteAuditPageResult[],
 ): SiteAuditTemplate[] {
+  const consistentHelpReviews = buildConsistentHelpReviewByUrl(pages);
   return families.map((family, index) => {
     const sampledPages = pages.filter((page) => page.routeFamilyId === family.id);
     const successful = sampledPages.filter((page) => page.scan);
     const fingerprints = new Set(successful.flatMap((page) => page.structure?.fingerprint ? [page.structure.fingerprint] : []));
-    const findings = aggregateFindings(sampledPages);
+    const findings = aggregateFindings(sampledPages, consistentHelpReviews);
     return {
       id: `T${String(index + 1).padStart(2, '0')}`,
       label: family.pattern,

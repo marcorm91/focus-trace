@@ -74,6 +74,14 @@ const EXTRA_COPY_ES: Record<string, { title: string; description: string }> = {
     title: 'Los landmarks repetidos deberían tener nombres accesibles diferenciables',
     description: 'Hay varios landmarks con el mismo rol y este no tiene un nombre accesible diferenciable. Revisa sus etiquetas para que los usuarios puedan distinguir las regiones al navegar por landmarks.',
   },
+  'FT-REVIEW-011': {
+    title: 'Los mecanismos de ayuda repetidos pueden cambiar de orden entre páginas',
+    description: 'Los mismos mecanismos de ayuda observados aparecen en distinto orden relativo entre páginas muestreadas. Revisa si entran en el alcance de WCAG 3.2.6 y, si es así, conserva un orden relativo coherente.',
+  },
+  'FT-RUNTIME-006': {
+    title: 'La interacción de arrastre requiere revisar una alternativa de puntero sencillo',
+    description: 'Trace observó un arrastre real. Revisa si la misma funcionalidad puede realizarse con un puntero sencillo sin movimiento de arrastre, teniendo en cuenta las excepciones de WCAG 2.5.7.',
+  },
 };
 
 const EXTRA_EVIDENCE_ES: Record<string, string> = {
@@ -93,7 +101,23 @@ const EXTRA_EVIDENCE_ES: Record<string, string> = {
   'FT-WARN-021': 'La relación ARIA del elemento señalado resuelve, pero el estado expuesto contradice esa relación o el contenido relacionado.',
   'FT-REVIEW-009': 'La sección señalada no tiene un encabezado propio ni un nombre accesible calculado y necesita revisión contextual.',
   'FT-REVIEW-010': 'El landmark señalado repite un rol sin un nombre accesible suficientemente diferenciable.',
+  'FT-REVIEW-011': 'El orden relativo observado de los mecanismos de ayuda no coincide entre las páginas comparadas.',
+  'FT-RUNTIME-006': 'Se observó un movimiento de arrastre real y debe revisarse si existe una alternativa equivalente sin arrastrar.',
 };
+
+const HELP_KIND_ES: Record<string, string> = {
+  'human contact details': 'datos de contacto humano',
+  'human contact mechanism': 'mecanismo de contacto humano',
+  'self-help option': 'opción de autoayuda',
+  'automated contact mechanism': 'mecanismo de contacto automatizado',
+};
+
+function localizeHelpOrder(order: string): string {
+  return order
+    .split(' → ')
+    .map((part) => HELP_KIND_ES[part.trim()] ?? part.trim())
+    .join(' → ');
+}
 
 function technicalEvidenceTokens(evidence: string): string[] {
   const matches = evidence.match(/<[^>]+>|aria-[a-z-]+(?:="[^"]*")?|role="[^"]*"|#[A-Za-z][\w:.-]*/gi) ?? [];
@@ -124,6 +148,13 @@ function localizedExtraEvidence(ruleId: string, evidence: string): string | unde
   if (ruleId === 'FT-WARN-021') {
     const contradiction = evidence.match(/^(aria-[a-z-]+="[^"]+") contradicts the current availability of (#[A-Za-z][\w:.-]*)\.$/i);
     if (contradiction) return `${contradiction[1]} contradice la disponibilidad actual de ${contradiction[2]}.`;
+  }
+
+  if (ruleId === 'FT-REVIEW-011') {
+    const comparison = evidence.match(/^Observed order: (.+?)\. Comparison page (https?:\/\/\S+): (.+)\.$/);
+    if (comparison) {
+      return `Orden observado: ${localizeHelpOrder(comparison[1] ?? '')}. Página comparada ${comparison[2]}: ${localizeHelpOrder(comparison[3] ?? '')}.`;
+    }
   }
 
   const fallback = EXTRA_EVIDENCE_ES[ruleId];

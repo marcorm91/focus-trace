@@ -114,6 +114,31 @@ export function isModalDialog(dialog: Element): boolean {
   return false;
 }
 
+function isVisuallyRendered(element: Element): boolean {
+  let current: Element | null = element;
+  let effectiveOpacity = 1;
+  while (current) {
+    const style = getComputedStyle(current);
+    if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') return false;
+    const opacity = Number.parseFloat(style.opacity);
+    if (Number.isFinite(opacity)) effectiveOpacity *= opacity;
+    if (effectiveOpacity <= 0.01) return false;
+    current = current.parentElement;
+  }
+  return true;
+}
+
+function sampledAxisPoints(start: number, end: number): number[] {
+  const inset = Math.min(1, Math.max(0, (end - start) / 4));
+  if (end - start <= 2) return [(start + end) / 2];
+  return [0, 0.25, 0.5, 0.75, 1]
+    .map((ratio) => start + inset + ((end - start - (2 * inset)) * ratio));
+}
+
+function isFocusTraceUi(element: Element): boolean {
+  return Boolean(element.closest('[data-focustrace-focus-walk-backdrop]'));
+}
+
 export function mayBeCompletelyObscured(element: Element): { obscured: boolean; evidence?: string } {
   const rect = element.getBoundingClientRect();
   const left = Math.max(0, rect.left);
@@ -122,19 +147,27 @@ export function mayBeCompletelyObscured(element: Element): { obscured: boolean; 
   const bottom = Math.min(window.innerHeight, rect.bottom);
   if (right <= left || bottom <= top) return { obscured: false };
 
-  const inset = 1;
-  const xs = [left + inset, (left + right) / 2, right - inset].filter((x) => x >= left && x <= right);
-  const ys = [top + inset, (top + bottom) / 2, bottom - inset].filter((y) => y >= top && y <= bottom);
+  const xs = sampledAxisPoints(left, right);
+  const ys = sampledAxisPoints(top, bottom);
   const points = xs.flatMap((x) => ys.map((y) => ({ x, y })));
   if (!points.length) return { obscured: false };
 
   const blockers = new Map<Element, number>();
   const covered = points.every(({ x, y }) => {
-    const topCandidate = document.elementsFromPoint(x, y)[0];
-    if (topCandidate && (topCandidate === element || element.contains(topCandidate))) return false;
-    if (topCandidate && !topCandidate.contains(element) && !element.contains(topCandidate)) {
-      blockers.set(topCandidate, (blockers.get(topCandidate) ?? 0) + 1);
-    }
+    const candidates = document.elementsFromPoint(x, y)
+      .filter((candidate) => !isFocusTraceUi(candidate))
+      .filter(isVisuallyRendered);
+    const targetIndex = candidates.findIndex((candidate) => candidate === element || element.contains(candidate));
+    if (targetIndex === 0) return false;
+
+    const blocker = candidates.find((candidate, index) => {
+      if (targetIndex >= 0 && index >= targetIndex) return false;
+      if (candidate === document.body || candidate === document.documentElement) return false;
+      if (candidate === element || element.contains(candidate) || candidate.contains(element)) return false;
+      return true;
+    });
+    if (!blocker) return false;
+    blockers.set(blocker, (blockers.get(blocker) ?? 0) + 1);
     return true;
   });
 
@@ -143,7 +176,7 @@ export function mayBeCompletelyObscured(element: Element): { obscured: boolean; 
   return {
     obscured: true,
     evidence: blocker
-      ? `All sampled points were covered. Most common covering element: ${selectorFor(blocker)}.`
-      : 'All sampled points were covered by other rendered content.',
+      ? `All ${points.length} sampled points in the visible focused area were covered. Most common covering element: ${selectorFor(blocker)}.`
+      : `All ${points.length} sampled points in the visible focused area were covered by other rendered content.`,
   };
 }

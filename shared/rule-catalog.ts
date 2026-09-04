@@ -222,6 +222,16 @@ export const RULES = {
     ),
     references: [wcag('3.3.2', 'Labels or Instructions', 'A', 'labels-or-instructions')],
   },
+  consistentHelp: {
+    id: 'FT-REVIEW-011',
+    title: 'Repeated help mechanisms may change relative order across pages',
+    severity: 'moderate',
+    ...impact(
+      'Changing the relative order of repeated help mechanisms can make assistance harder to locate for people who rely on predictable placement across a process or site.',
+      'Cambiar el orden relativo de mecanismos de ayuda repetidos puede dificultar localizar la asistencia a personas que dependen de una ubicación predecible durante un proceso o sitio.',
+    ),
+    references: [wcag('3.2.6', 'Consistent Help', 'A', 'consistent-help')],
+  },
   focusLost: {
     id: 'FT-RUNTIME-001',
     title: 'Focused element removed during interaction',
@@ -271,6 +281,16 @@ export const RULES = {
       'Cuando el elemento con foco pasa a estar oculto, los usuarios pueden perder tanto su posición visible como un destino fiable para la tecnología de asistencia.',
     ),
     references: [wcag('2.4.3', 'Focus Order', 'A', 'focus-order'), wcag('4.1.2', 'Name, Role, Value', 'A', 'name-role-value')],
+  },
+  draggingMovement: {
+    id: 'FT-RUNTIME-006',
+    title: 'Dragging interaction requires review for a single-pointer alternative',
+    severity: 'moderate',
+    ...impact(
+      'A drag-only interaction can block people who cannot perform a path-based pointer gesture. FocusTrace reports observed dragging for review because an equivalent single-pointer alternative may exist elsewhere in the interface.',
+      'Una interacción que dependa solo de arrastrar puede bloquear a personas que no pueden realizar un gesto de puntero basado en trayectoria. FocusTrace presenta el arrastre observado para revisión porque puede existir una alternativa de puntero sencillo en otra parte de la interfaz.',
+    ),
+    references: [wcag('2.5.7', 'Dragging Movements', 'AA', 'dragging-movements')],
   },
   dialogInitialFocus: {
     id: 'FT-APG-001',

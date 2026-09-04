@@ -22,6 +22,18 @@ export interface SiteAuditRouteFamily {
   sampleUrls: string[];
 }
 
+export type SiteHelpMechanismKind =
+  | 'human-contact-details'
+  | 'human-contact'
+  | 'self-help'
+  | 'automated-contact';
+
+export interface SiteHelpMechanism {
+  kind: SiteHelpMechanismKind;
+  selector: string;
+  label: string;
+}
+
 export interface SitePageStructure {
   fingerprint: string;
   canonical?: string;
@@ -29,6 +41,7 @@ export interface SitePageStructure {
   headingLevels: number[];
   interactiveCount: number;
   landmarkCount: number;
+  helpMechanisms?: SiteHelpMechanism[];
 }
 
 export interface SiteAuditPageResult {

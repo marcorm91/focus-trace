@@ -12,6 +12,8 @@ FocusTrace implements its own local analysis engine and maps each rule to the st
 6. **IANA Language Subtag Registry** supplies the primary language subtags used by the ACT rule behind `FT-WCAG-009`.
 7. **HTML Living Standard** supplies host-language authoring requirements and native element semantics. FocusTrace can surface these as warnings or review guidance when they are not, by themselves, a WCAG 2.2 failure.
 
+WCAG 2.2 criteria are also reflected in the web requirements of EN 301 549 V4.1.1. FocusTrace does not currently model EN 301 549 as a separate conformance catalog: the implemented rules below describe only their explicit observable WCAG subsets and must not be read as complete EN 301 549 evaluation or certification.
+
 ## Outcomes
 
 ### FAIL
@@ -171,9 +173,10 @@ FocusTrace records only compact evidence needed for debugging:
 - focus-affecting attribute changes;
 - route transitions;
 - dialog/focus events;
+- observed dragging summary evidence;
 - deterministic root-cause classifications.
 
-The runtime engine does **not** persist full DOM snapshots. It also does not use AI to infer root causes. Current causal classifications are deterministic signals such as:
+The runtime engine does **not** persist full DOM snapshots or a pointer-coordinate trail. It also does not use AI to infer root causes. Current causal classifications are deterministic signals such as:
 
 - `FOCUSED_NODE_REMOVED`;
 - `FOCUS_FELL_BACK_TO_BODY`;
@@ -184,7 +187,29 @@ The runtime engine does **not** persist full DOM snapshots. It also does not use
 
 A causal classification explains the recorded chain; the linked runtime WCAG/APG outcome can still remain `REVIEW` where conformance depends on workflow context.
 
-## Static rule set
+## Focus Not Obscured runtime scope
+
+`FT-RUNTIME-002` provides observed runtime evidence for WCAG 2.4.11 Focus Not Obscured (Minimum). FocusTrace clips the currently focused element to the visible viewport and samples a bounded grid across that visible area. A review is emitted only when every sampled point is covered by another rendered element.
+
+The check runs when focus moves and is re-run while that element remains focused after scroll events, viewport resize and relevant DOM mutations. This matters for sticky headers, banners, drawers and other dynamic overlays that can cover an already-focused component after the original focus event.
+
+The result remains `REVIEW`: sampled hit-testing is evidence of complete observed coverage, not a proof of every visual/compositing condition or every exception in the complete success criterion.
+
+## Dragging Movements runtime scope
+
+`FT-RUNTIME-006` provides observed runtime evidence for WCAG 2.5.7 Dragging Movements. Trace watches likely drag-capable targets and records a review only after either a native `dragstart` or a pointer path exceeding the small movement threshold used to distinguish dragging from click/tap jitter.
+
+The runtime event stores the target plus a compact movement-distance summary; it does not persist the raw pointer path. The outcome is always `REVIEW`, because observing a drag does not prove that the functionality requires dragging: an equivalent single-pointer operation may be available elsewhere, and the WCAG exception for essential dragging still requires context.
+
+## Consistent Help Site Audit scope
+
+`FT-REVIEW-011` provides multipage review evidence for WCAG 3.2.6 Consistent Help. During the existing Site Audit structure collection, FocusTrace identifies a bounded set of candidate help mechanisms using observable link/control text and href patterns. Candidates are grouped into four categories: human contact details, human contact mechanisms, self-help options and automated contact mechanisms.
+
+FocusTrace compares the relative order only when at least two of the same observed categories occur on both sampled pages. A single shared mechanism is never enough to emit the review. When a mismatch is observed, the report keeps the compared page URL and both observed orders as evidence.
+
+This is deliberately a `REVIEW`, not a `FAIL`. Text heuristics cannot prove that a candidate belongs to the success criterion, whether two differently labelled controls are semantically the same mechanism, or whether a contextual exception applies. Site Audit sampling also does not prove that every page on the site has been evaluated.
+
+## Static and structural rule set
 
 | FocusTrace rule | Outcome | Source |
 | --- | --- | --- |
@@ -228,6 +253,7 @@ A causal classification explains the recorded chain; the linked runtime WCAG/APG
 | FT-REVIEW-008 Ambiguous generic interaction | REVIEW | WAI-ARIA APG |
 | FT-REVIEW-009 Unidentified section/article structure | REVIEW | HTML Living Standard |
 | FT-REVIEW-010 Repeated landmarks without distinguishable names | REVIEW | WAI-ARIA APG |
+| FT-REVIEW-011 Repeated help mechanisms change relative order across sampled pages | REVIEW | WCAG 3.2.6 |
 
 ## Runtime rules
 
@@ -238,11 +264,12 @@ A causal classification explains the recorded chain; the linked runtime WCAG/APG
 | FT-RUNTIME-003 SPA route changed without title change | REVIEW | WCAG 2.4.2 |
 | FT-RUNTIME-004 SPA route changed without moving focus | REVIEW | WCAG 2.4.3 |
 | FT-RUNTIME-005 Focused element became hidden | REVIEW | WCAG 2.4.3 / 4.1.2 |
+| FT-RUNTIME-006 Dragging interaction observed | REVIEW | WCAG 2.5.7 |
 | FT-APG-001 Dialog initial focus remains outside | REVIEW | WAI-ARIA APG Dialog Modal |
 | FT-APG-002 Focus escapes modal dialog | REVIEW | WAI-ARIA APG Dialog Modal |
 | FT-APG-003 Focus not restored after dialog close | REVIEW | WAI-ARIA APG Dialog Modal |
 
-## Known limitations of v0.1
+## Known limitations
 
 - FocusTrace implements a targeted subset of the complete AccName algorithm, not a user-agent-level reimplementation.
 - CSS-generated content, slots/Shadow DOM, complex embedded-control recursion and cross-origin iframe traversal are not fully covered.
@@ -250,6 +277,9 @@ A causal classification explains the recorded chain; the linked runtime WCAG/APG
 - `FT-WCAG-009` checks the ACT primary-language expectation, not full BCP 47 syntax/semantics.
 - `FT-WCAG-010` covers DOM text with deterministically resolvable computed foreground/background colors. Images of text, pseudo-element text and complex visual composition remain outside deterministic FAIL coverage.
 - `FT-WCAG-011` does not programmatically exercise every hover, pressed, checked or focus state. Multi-color graphics, CSS pseudo-element icons, complex shadows, images/canvas and contextual “required visual information” decisions remain REVIEW/manual territory.
+- `FT-RUNTIME-002` uses bounded viewport hit-testing of the observed focused element; it is not a rendering-engine proof of every possible overlap/compositing case.
+- `FT-RUNTIME-006` recognizes observed drag interaction signals but does not automatically prove whether an equivalent non-dragging operation or an essential-dragging exception exists.
+- `FT-REVIEW-011` uses bounded, text-based help-mechanism candidates over Site Audit samples and therefore cannot establish full WCAG 3.2.6 applicability or site-wide conformance.
 - Structural HTML checks operate on the parsed live DOM. Browser parser repair can normalize invalid source before FocusTrace runs; the tool does not infer source-level errors that are no longer observable. See [`STRUCTURAL_HTML.md`](STRUCTURAL_HTML.md).
 - Advanced ARIA checks operate on the live accessibility relationships FocusTrace can derive from DOM semantics and `aria-owns`; they do not claim to reproduce the browser accessibility tree or a screen reader's spoken output. See [`ARIA_VALIDATION.md`](ARIA_VALIDATION.md).
 - Automated static checks are intentionally narrower than the corresponding full WCAG success criteria.
