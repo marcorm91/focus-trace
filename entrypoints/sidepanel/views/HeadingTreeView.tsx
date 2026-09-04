@@ -242,7 +242,7 @@ export function HeadingTreeView({
         <strong>{headings.length}</strong>
       </div>
 
-      <label className="heading-overlay-toggle">
+      <label className={`heading-overlay-toggle${overlayVisible ? ' is-selected' : ''}`}>
         <input
           type="checkbox"
           checked={overlayVisible}

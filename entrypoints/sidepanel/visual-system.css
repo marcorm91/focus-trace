@@ -651,7 +651,7 @@ button:disabled {
   background: var(--ft-surface);
 }
 
-.heading-overlay-toggle:has(input:checked) {
+.heading-overlay-toggle.is-selected {
   border-color: var(--ft-success);
   border-left-color: var(--ft-success);
   background: var(--ft-success-soft);

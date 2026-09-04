@@ -77,9 +77,9 @@
   width: min(360px, calc(100vw - 32px));
   max-width: 100%;
   padding: 0;
-  border: 1px solid var(--border, #d8dde6);
+  border: 1px solid var(--ft-border-soft);
   border-radius: 16px;
-  background: var(--panel, #fff);
+  background: var(--ft-surface);
   color: inherit;
   box-shadow: 0 20px 60px rgba(0, 0, 0, 0.24);
 }

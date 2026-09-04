@@ -7,7 +7,7 @@
   display: grid;
   gap: 16px;
   padding: 18px;
-  border: 1px solid var(--border, #d8dde6);
+  border: 1px solid var(--ft-border-soft);
   border-radius: 16px;
   background: linear-gradient(180deg, rgba(65, 84, 255, 0.08), rgba(65, 84, 255, 0.02));
 }
@@ -46,9 +46,9 @@
   gap: 2px;
   min-width: 0;
   padding: 12px;
-  border: 1px solid var(--border, #d8dde6);
+  border: 1px solid var(--ft-border-soft);
   border-radius: 12px;
-  background: var(--panel, #fff);
+  background: var(--ft-surface);
   font-size: 14px;
 }
 
@@ -66,9 +66,9 @@
 .trace-interaction-strip,
 .trace-cause {
   padding: 14px;
-  border: 1px solid var(--border, #d8dde6);
+  border: 1px solid var(--ft-border-soft);
   border-radius: 14px;
-  background: var(--panel, #fff);
+  background: var(--ft-surface);
 }
 
 .trace-preview-heading {
@@ -76,63 +76,6 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 12px;
-}
-
-.trace-flow {
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  margin: 14px 0 0;
-  padding: 0;
-  overflow-x: auto;
-  list-style: none;
-  scrollbar-width: thin;
-}
-
-.trace-flow li {
-  display: flex;
-  flex: 0 0 auto;
-  align-items: center;
-  gap: 4px;
-}
-
-.trace-flow button {
-  display: grid;
-  grid-template-columns: 24px auto;
-  align-items: center;
-  gap: 6px;
-  max-width: 150px;
-  padding: 7px 9px;
-  border: 1px solid var(--border, #d8dde6);
-  border-radius: 999px;
-  background: var(--panel, #fff);
-  text-align: left;
-}
-
-.trace-flow button[aria-current='step'] {
-  outline: 2px solid currentColor;
-  outline-offset: 1px;
-}
-
-.trace-flow button strong {
-  display: inline-grid;
-  place-items: center;
-  width: 24px;
-  height: 24px;
-  border-radius: 50%;
-  background: rgba(65, 84, 255, 0.12);
-  font-size: 14px;
-}
-
-.trace-flow button span {
-  overflow: hidden;
-  font-size: 14px;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.trace-flow li.has-signal button {
-  border-color: rgba(196, 107, 0, 0.55);
 }
 
 .trace-direction {
@@ -216,7 +159,7 @@
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   padding: 4px;
-  border: 1px solid var(--border, #d8dde6);
+  border: 1px solid var(--ft-border-soft);
   border-radius: 12px;
   background: rgba(0, 0, 0, 0.03);
 }
@@ -236,7 +179,7 @@
 }
 
 .trace-mode-switcher button.active {
-  background: var(--panel, #fff);
+  background: var(--ft-surface);
   box-shadow: 0 1px 4px rgba(0, 0, 0, 0.08);
   font-weight: 700;
 }
@@ -275,4 +218,3 @@
     font-size: 14px;
   }
 }
-

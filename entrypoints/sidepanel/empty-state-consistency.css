@@ -3,7 +3,7 @@
    normal notice treatment. */
 .empty,
 .focus-empty-state,
-.notice:not(.structure-limit-note):not(.about-support):not(.about-privacy):not(.settings-note):not(.graph-scope-note):not(.instructions-note) {
+.notice:not(.structure-limit-note):not(.settings-note):not(.graph-scope-note):not(.instructions-note) {
   display: grid;
   justify-items: center;
   gap: 6px;
@@ -20,7 +20,7 @@
 
 .empty h2,
 .focus-empty-state strong,
-.notice:not(.structure-limit-note):not(.about-support):not(.about-privacy):not(.settings-note):not(.graph-scope-note):not(.instructions-note) > strong {
+.notice:not(.structure-limit-note):not(.settings-note):not(.graph-scope-note):not(.instructions-note) > strong {
   display: block;
   margin: 0;
   color: var(--ft-ink);
@@ -31,7 +31,7 @@
 
 .empty p,
 .focus-empty-state p,
-.notice:not(.structure-limit-note):not(.about-support):not(.about-privacy):not(.settings-note):not(.graph-scope-note):not(.instructions-note) > p {
+.notice:not(.structure-limit-note):not(.settings-note):not(.graph-scope-note):not(.instructions-note) > p {
   max-width: 300px;
   margin: 0 auto;
   color: var(--ft-muted);

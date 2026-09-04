@@ -581,14 +581,6 @@ summary:focus-visible {
   content: "";
 }
 
-.issue:has(.outcome.review)::before {
-  background: var(--ft-warning);
-}
-
-.issue:has(.outcome.warning)::before {
-  background: #826b13;
-}
-
 .issue h3 {
   color: var(--ft-text);
   font-size: 14px;

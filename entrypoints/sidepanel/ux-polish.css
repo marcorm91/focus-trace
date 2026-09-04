@@ -134,9 +134,9 @@ body,
   cursor: pointer;
 }
 
-.heading-overlay-toggle:has(input:checked) {
-  border-color: #047857;
-  background: color-mix(in srgb, #047857 7%, Canvas);
+.heading-overlay-toggle.is-selected {
+  border-color: var(--ft-success);
+  background: var(--ft-success-soft);
 }
 
 .heading-overlay-toggle input {
