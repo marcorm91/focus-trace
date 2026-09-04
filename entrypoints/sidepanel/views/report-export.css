@@ -146,6 +146,17 @@
   list-style: none;
 }
 
+.report-more-formats > summary,
+.report-export-actions .delete-saved-report {
+  box-shadow: var(--ft-shadow-sm);
+}
+
+.report-more-formats > summary:active,
+.report-export-actions .delete-saved-report:not(:disabled):active {
+  box-shadow: none;
+  transform: translate(1px, 1px);
+}
+
 .report-more-formats > summary::-webkit-details-marker {
   display: none;
 }

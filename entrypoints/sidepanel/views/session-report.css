@@ -300,6 +300,15 @@
   background: var(--ft-surface-subtle, color-mix(in srgb, CanvasText 3%, Canvas));
 }
 
+.report-section > .notice,
+.report-section > .report-pending {
+  margin-block: 8px;
+}
+
+.report-section > .notice {
+  border-block-end: 0;
+}
+
 .trace-story > button {
   min-height: 34px;
   border: 1px solid var(--ft-border, color-mix(in srgb, CanvasText 14%, transparent));

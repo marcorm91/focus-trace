@@ -23,7 +23,7 @@ describe('multipage audit UI contract', () => {
     expect(report).not.toContain('report-empty-state');
     expect(report).not.toContain('report-empty-panel');
     expect(report).toContain('Todavía no hay datos de análisis');
-    expect(report).toContain('Exportar auditoría PDF');
+    expect(report).toContain('Exportar auditoría PDF completa');
     expect(report).toContain('Revisión realizada');
     expect(css).not.toContain('.report-empty-state');
     expect(css).not.toContain('.report-empty-panel');
@@ -144,6 +144,12 @@ describe('multipage audit UI contract', () => {
     expect(exportCss).toContain('box-shadow: none;');
     expect(exportCss).not.toContain('border-bottom: 1px solid var(--ft-border-soft);');
     expect(exportCss).toContain('.audit-page-report-body .report-visual-evidence-option {\n  justify-self: end;');
+    expect(exportCss).toContain('.report-more-formats > summary,\n.report-export-actions .delete-saved-report {\n  box-shadow: var(--ft-shadow-sm);');
+    const sessionCss = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/views/session-report.css'), 'utf8');
+    const emptyCss = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/empty-state-consistency.css'), 'utf8');
+    expect(sessionCss).toContain('.report-section > .notice,\n.report-section > .report-pending {\n  margin-block: 8px;');
+    expect(sessionCss).toContain('.report-section > .notice {\n  border-block-end: 0;');
+    expect(emptyCss).toContain('.focus-empty-state,\n.report-pending,');
     expect(printCss).toContain('.audit-print-summary {');
     expect(printCss).toContain('grid-template-columns: repeat(4, minmax(0, 1fr));');
     expect(printCss).toContain('.audit-print-summary > div + div');
