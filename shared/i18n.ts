@@ -74,6 +74,14 @@ const EXTRA_COPY_ES: Record<string, { title: string; description: string }> = {
     title: 'Los landmarks repetidos deberían tener nombres accesibles diferenciables',
     description: 'Hay varios landmarks con el mismo rol y este no tiene un nombre accesible diferenciable. Revisa sus etiquetas para que los usuarios puedan distinguir las regiones al navegar por landmarks.',
   },
+  'FT-REVIEW-011': {
+    title: 'Los mecanismos de ayuda repetidos pueden cambiar de orden entre páginas',
+    description: 'Los mismos mecanismos de ayuda observados aparecen en distinto orden relativo entre páginas muestreadas. Revisa si entran en el alcance de WCAG 3.2.6 y, si es así, conserva un orden relativo coherente.',
+  },
+  'FT-RUNTIME-006': {
+    title: 'La interacción de arrastre requiere revisar una alternativa de puntero sencillo',
+    description: 'Trace observó un arrastre real. Revisa si la misma funcionalidad puede realizarse con un puntero sencillo sin movimiento de arrastre, teniendo en cuenta las excepciones de WCAG 2.5.7.',
+  },
 };
 
 const EXTRA_EVIDENCE_ES: Record<string, string> = {
@@ -93,6 +101,8 @@ const EXTRA_EVIDENCE_ES: Record<string, string> = {
   'FT-WARN-021': 'La relación ARIA del elemento señalado resuelve, pero el estado expuesto contradice esa relación o el contenido relacionado.',
   'FT-REVIEW-009': 'La sección señalada no tiene un encabezado propio ni un nombre accesible calculado y necesita revisión contextual.',
   'FT-REVIEW-010': 'El landmark señalado repite un rol sin un nombre accesible suficientemente diferenciable.',
+  'FT-REVIEW-011': 'El orden relativo observado de los mecanismos de ayuda no coincide entre las páginas comparadas.',
+  'FT-RUNTIME-006': 'Se observó un movimiento de arrastre real y debe revisarse si existe una alternativa equivalente sin arrastrar.',
 };
 
 function technicalEvidenceTokens(evidence: string): string[] {
