@@ -93,11 +93,6 @@ export function AuditReportWorkspace({
             <div>
               <span className="report-kicker">{tr(language, 'Current audit', 'Auditoría actual')}</span>
               <h2 id="audit-overview-title">{audit.name}</h2>
-              <p>{tr(
-                language,
-                'Open a reviewed page to inspect its saved report. Only one review is expanded at a time, and re-analyzing the same URL replaces its previous result.',
-                'Abre una página revisada para consultar su informe guardado. Solo se despliega una revisión a la vez y, si vuelves a analizar la misma URL, se sustituye su resultado anterior.',
-              )}</p>
             </div>
             <div className="audit-overview-actions">
               <button

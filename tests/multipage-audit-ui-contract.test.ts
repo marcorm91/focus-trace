@@ -129,4 +129,23 @@ describe('multipage audit UI contract', () => {
     expect(accordionCss).toContain('padding: 0;');
     expect(accordionCss).not.toContain('.report-accordion-summary:hover');
   });
+
+  it('keeps saved-report chrome minimal and formats the printable audit summary', () => {
+    const workspace = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/views/AuditReportWorkspace.tsx'), 'utf8');
+    const auditCss = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/audit.css'), 'utf8');
+    const exportCss = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/views/report-export.css'), 'utf8');
+    const printCss = readFileSync(resolve(process.cwd(), 'entrypoints/audit-print/index.css'), 'utf8');
+
+    expect(workspace).not.toContain('Open a reviewed page to inspect its saved report.');
+    expect(workspace).not.toContain('Abre una página revisada para consultar su informe guardado.');
+    expect(auditCss).toContain('border: 1px solid var(--ft-border, CanvasText);');
+    expect(auditCss).toContain('.audit-page-report.is-current {\n  border-color: var(--ft-border, CanvasText);\n  box-shadow: none;');
+    expect(exportCss).toContain('.audit-page-report-body .trace-first-report > .report-hero');
+    expect(exportCss).toContain('box-shadow: none;');
+    expect(exportCss).not.toContain('border-bottom: 1px solid var(--ft-border-soft);');
+    expect(exportCss).toContain('.audit-page-report-body .report-visual-evidence-option {\n  justify-self: end;');
+    expect(printCss).toContain('.audit-print-summary {');
+    expect(printCss).toContain('grid-template-columns: repeat(4, minmax(0, 1fr));');
+    expect(printCss).toContain('.audit-print-summary > div + div');
+  });
 });
