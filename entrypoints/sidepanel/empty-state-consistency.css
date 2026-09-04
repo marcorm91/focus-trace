@@ -3,6 +3,7 @@
    normal notice treatment. */
 .empty,
 .focus-empty-state,
+.report-pending,
 .notice:not(.structure-limit-note):not(.settings-note):not(.graph-scope-note):not(.instructions-note) {
   display: grid;
   justify-items: center;
@@ -20,6 +21,7 @@
 
 .empty h2,
 .focus-empty-state strong,
+.report-pending > strong,
 .notice:not(.structure-limit-note):not(.settings-note):not(.graph-scope-note):not(.instructions-note) > strong {
   display: block;
   margin: 0;
@@ -31,6 +33,7 @@
 
 .empty p,
 .focus-empty-state p,
+.report-pending > p,
 .notice:not(.structure-limit-note):not(.settings-note):not(.graph-scope-note):not(.instructions-note) > p {
   max-width: 300px;
   margin: 0 auto;

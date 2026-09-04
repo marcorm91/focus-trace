@@ -103,7 +103,7 @@ export function AuditReportWorkspace({
               >
                 {exportingAudit
                   ? tr(language, 'Preparing audit…', 'Preparando auditoría…')
-                  : tr(language, 'Export audit PDF', 'Exportar auditoría PDF')}
+                  : tr(language, 'Export complete audit PDF', 'Exportar auditoría PDF completa')}
               </button>
             </div>
           </div>

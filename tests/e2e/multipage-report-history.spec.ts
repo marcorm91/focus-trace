@@ -107,7 +107,7 @@ test('historical audit reports stay static, single-open and separate from live p
   await expect(reports).toHaveCount(2);
 
   const auditPreviewPromise = context.waitForEvent('page');
-  await panel.getByRole('button', { name: /Export audit PDF|Exportar auditoría PDF/ }).click();
+  await panel.getByRole('button', { name: /Export complete audit PDF|Exportar auditoría PDF completa/ }).click();
   const auditPreview = await auditPreviewPromise;
   await expect(auditPreview.getByRole('heading', { name: /Audit index|Índice de la auditoría/ })).toBeVisible();
   const indexPages = auditPreview.locator('.audit-print-toc-page-link .audit-print-toc-number');
