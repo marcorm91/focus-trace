@@ -71,6 +71,7 @@ export default function App() {
     preparePageAnalysis,
     recordPageAnalysis,
     deleteAuditPage,
+    clearAuditHistory,
     addPendingSiteToCurrentAudit,
     startPendingSiteAsNewAudit,
     cancelPendingAuditScope,
@@ -283,8 +284,8 @@ export default function App() {
     if (tabId == null || busy) return;
     const confirmed = window.confirm(tr(
       language,
-      'Start over? This clears the current page analysis, Trace, Replay, focus journey and breakpoint state. Language and interface size are kept.',
-      '¿Empezar de cero? Se borrarán el análisis actual, Trace, Replay, recorrido de foco y estado de breakpoints. Se conservarán el idioma y el tamaño de interfaz.',
+      'Start over? This clears every saved audit and report, the current page analysis, Trace, Replay, focus journey and breakpoint state. Language and interface size are kept.',
+      '¿Empezar de cero? Se borrarán todas las auditorías e informes guardados, el análisis actual, Trace, Replay, recorrido de foco y estado de breakpoints. Se conservarán el idioma y el tamaño de interfaz.',
     ));
     if (!confirmed) return;
 
@@ -295,6 +296,7 @@ export default function App() {
         type: 'FOCUSTRACE_RESET_TAB',
         tabId,
       } satisfies ExtensionMessage)) as SessionState;
+      await clearAuditHistory();
 
       await browser.scripting.executeScript({ target: { tabId }, func: clearFocusPathInPage }).catch(() => undefined);
       await browser.scripting.executeScript({ target: { tabId }, func: clearHeadingOutlineInPage }).catch(() => undefined);
@@ -317,7 +319,7 @@ export default function App() {
     } finally {
       setBusy(false);
     }
-  }, [busy, language, resetFocusPathState, setSession, tabId]);
+  }, [busy, clearAuditHistory, language, resetFocusPathState, setSession, tabId]);
 
   const navigation: NavigationItem[] = [
     { id: 'scan', label: tr(language, 'Review', 'Revisión'), icon: '⌕' },

@@ -1,14 +1,16 @@
 .report-accordion-section {
   overflow: clip;
+  gap: 0;
+  padding: 0;
 }
 
 .report-accordion-summary {
   min-width: 0;
   display: grid;
   grid-template-columns: auto minmax(0, 1fr) 18px;
-  gap: 10px;
+  gap: 8px;
   align-items: center;
-  padding: 12px 14px;
+  padding: 8px 10px;
   cursor: pointer;
   list-style: none;
 }
@@ -38,6 +40,9 @@
 .report-accordion-summary > .report-section-index {
   grid-column: 1;
   grid-row: 1;
+  width: 24px;
+  height: 24px;
+  font-size: 14px;
 }
 
 .report-accordion-summary-copy {
@@ -70,11 +75,11 @@
 }
 
 .report-accordion-section[open] > :not(.report-accordion-summary):not(.report-section-heading) {
-  margin-inline: 14px;
+  margin-inline: 10px;
 }
 
 .report-accordion-section[open] > :last-child {
-  margin-bottom: 14px;
+  margin-bottom: 10px;
 }
 
 .report-accordion-summary:focus-visible {

@@ -106,12 +106,21 @@ test('historical audit reports stay static, single-open and separate from live p
   const reports = panel.locator('.audit-page-report');
   await expect(reports).toHaveCount(2);
 
+  const auditPreviewPromise = context.waitForEvent('page');
+  await panel.getByRole('button', { name: /Export audit PDF|Exportar auditoría PDF/ }).click();
+  const auditPreview = await auditPreviewPromise;
+  await expect(auditPreview.getByRole('heading', { name: /Audit index|Índice de la auditoría/ })).toBeVisible();
+  const indexPages = auditPreview.locator('.audit-print-toc-page-link .audit-print-toc-number');
+  await expect(indexPages).toHaveText(['3', '4']);
+  await expect(auditPreview.locator('.audit-print-toc-leader')).not.toHaveCount(0);
+  await auditPreview.close();
+
   const historical = reports.nth(0);
   const current = reports.nth(1);
   await historical.locator(':scope > summary').click();
   await expect(historical).toHaveAttribute('open', '');
   await expect(panel.locator('.audit-page-report[open]')).toHaveCount(1);
-  await expect(historical.getByText(/Saved static review|Revisión estática guardada/)).toBeVisible();
+  await expect(historical.getByText(/has no saved images|no tiene imágenes guardadas/)).toBeVisible();
   await expect(historical.getByRole('button', { name: /Export PDF|Exportar PDF/ })).toBeVisible();
   await expect(historical.getByRole('button', { name: /Delete saved report|Eliminar informe guardado/ })).toBeVisible();
 
@@ -143,4 +152,9 @@ test('historical audit reports stay static, single-open and separate from live p
   panel.once('dialog', (dialog) => dialog.accept());
   await current.getByRole('button', { name: /Delete saved report|Eliminar informe guardado/ }).click();
   await expect(reports).toHaveCount(1);
+
+  panel.once('dialog', (dialog) => dialog.accept());
+  await panel.getByRole('button', { name: /Start over|Empezar de cero/ }).click();
+  await panel.getByRole('button', { name: /Report|Informe/ }).click();
+  await expect(panel.locator('.audit-page-report')).toHaveCount(0);
 });

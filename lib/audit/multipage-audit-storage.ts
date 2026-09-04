@@ -22,7 +22,6 @@ const MAX_AUDIT_STORE_CHARS = 4_500_000;
 
 export interface AuditPrintEvidence {
   audit: AccessibilityAudit;
-  includeVisualEvidence?: boolean;
 }
 
 function normalizeAudit(audit: AccessibilityAudit): AccessibilityAudit {
@@ -209,32 +208,30 @@ export async function deleteMultipageAuditPage(auditId: string, pageKey: string)
   return loadMultipageAuditStore();
 }
 
+export async function clearMultipageAudits(): Promise<MultipageAuditStore> {
+  const next = emptyMultipageAuditStore();
+  await browser.storage.local.remove(MULTIPAGE_AUDIT_STORAGE_KEY);
+  return next;
+}
+
 export async function readActiveAudit(): Promise<AccessibilityAudit | undefined> {
   return activeAuditFromStore(await loadMultipageAuditStore());
 }
 
 export async function storeAuditPrintEvidence(
   audit: AccessibilityAudit,
-  includeVisualEvidence = true,
 ): Promise<string> {
   const bounded = boundMultipageAuditStore({
     version: MULTIPAGE_AUDIT_VERSION,
     activeAuditId: audit.id,
     audits: [audit],
   });
-  const storedAudit = bounded.audits[0];
-  const printableAudit = storedAudit && !includeVisualEvidence
-    ? {
-        ...storedAudit,
-        pages: storedAudit.pages.map(({ visualEvidence: _visualEvidence, ...page }) => page),
-      }
-    : storedAudit;
+  const printableAudit = bounded.audits[0];
   if (!printableAudit) throw new Error('FocusTrace audit has no printable pages.');
   const token = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
   await browser.storage.session.set({
     [`${AUDIT_PRINT_EVIDENCE_PREFIX}${token}`]: {
       audit: printableAudit,
-      includeVisualEvidence,
     } satisfies AuditPrintEvidence,
   });
   return token;

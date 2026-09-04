@@ -122,7 +122,7 @@ It is also used as a short-lived handoff for printable report evidence. Single-p
 
 Runtime event history is capped at 500 events per tab.
 
-Closing a tab removes its session entry. **Start Over** clears the page/Trace evidence while preserving configured breakpoint preferences.
+Closing a tab removes its session entry. **Start Over** clears the page/Trace evidence together with all saved multipage audits and reports while preserving language and interface-size preferences.
 
 ### Local storage
 

@@ -58,9 +58,11 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 - Delete one saved page review, confirm its analysis and crops are removed, and confirm deleting the final page removes the empty audit.
 - Re-analyze one normalized URL and confirm it replaces that page's previous scan and audit screenshot evidence instead of adding a duplicate page.
 - Export the audit PDF after navigating away from the first page and confirm saved visual crops still appear next to their matching findings when capture was available.
-- Toggle saved images off for the audit PDF and confirm no crop or misleading unavailable-image message is printed.
+- Confirm the Report workspace warns that complete-audit images are collected page by page and identifies how many saved pages still need to be analyzed again.
 - Confirm the audit PDF index links each reviewed page to its non-empty heading/failure/review/warning sections.
-- Repeat with capture unavailable/restricted and confirm the PDF reports the unavailable state rather than implying screenshots were lost.
+- Confirm the audit PDF index uses dotted leaders and calculated A4 page numbers rather than result counts.
+- Repeat with capture unavailable/restricted and confirm the disabled image selector is replaced by the page-by-page guidance.
+- Use **Start Over** and confirm the current session plus every saved audit and report are removed.
 - Exercise enough large audit data to trigger the storage-bound tests/fixtures and confirm older history is pruned before the newest active review.
 - Confirm the single-page PDF still exports current-session evidence independently of the audit PDF and that a large set of visual crops is bounded by payload size rather than an arbitrary finding-count cap.
 

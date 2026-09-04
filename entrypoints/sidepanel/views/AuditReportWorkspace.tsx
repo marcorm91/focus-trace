@@ -34,7 +34,6 @@ export function AuditReportWorkspace({
 }) {
   const [exportingAudit, setExportingAudit] = useState(false);
   const [deletingPageKey, setDeletingPageKey] = useState<string>();
-  const [includeVisualEvidence, setIncludeVisualEvidence] = useState(true);
   const [openPageKey, setOpenPageKey] = useState<string>();
   const summary = useMemo(() => audit ? auditSummary(audit) : undefined, [audit]);
   const currentPageKey = scan ? auditPageKey(scan.url) : undefined;
@@ -43,12 +42,16 @@ export function AuditReportWorkspace({
     (count, page) => count + (page.visualEvidence?.visuals.length ?? 0),
     0,
   ) ?? 0;
+  const pagesNeedingVisualRecapture = audit?.pages.filter(
+    (page) => !page.visualEvidence
+      || (page.visualEvidence.eligibleCount > 0 && page.visualEvidence.visuals.length === 0),
+  ).length ?? 0;
 
   const exportAuditPdf = async () => {
     if (!audit?.pages.length || exportingAudit) return;
     setExportingAudit(true);
     try {
-      const evidence = await storeAuditPrintEvidence(audit, includeVisualEvidence);
+      const evidence = await storeAuditPrintEvidence(audit);
       const params = new URLSearchParams({ language, evidence });
       await browser.tabs.create({
         url: browser.runtime.getURL(`/audit-print.html?${params.toString()}`),
@@ -97,20 +100,6 @@ export function AuditReportWorkspace({
               )}</p>
             </div>
             <div className="audit-overview-actions">
-              <label className="audit-visual-evidence-option">
-                <input
-                  type="checkbox"
-                  checked={includeVisualEvidence}
-                  disabled={savedVisualCount === 0 || exportingAudit}
-                  onChange={(event) => setIncludeVisualEvidence(event.currentTarget.checked)}
-                />
-                <span>
-                  <strong>{tr(language, 'Include saved images', 'Incluir imágenes guardadas')}</strong>
-                  <small>{savedVisualCount > 0
-                    ? tr(language, `${savedVisualCount} crops available`, `${savedVisualCount} recortes disponibles`)
-                    : tr(language, 'Re-analyze pages to capture them', 'Vuelve a analizar las páginas para capturarlas')}</small>
-                </span>
-              </label>
               <button
                 className="export-audit-report"
                 type="button"
@@ -121,6 +110,32 @@ export function AuditReportWorkspace({
                   ? tr(language, 'Preparing audit…', 'Preparando auditoría…')
                   : tr(language, 'Export audit PDF', 'Exportar auditoría PDF')}
               </button>
+            </div>
+          </div>
+
+          <div className="audit-image-guidance" role="note">
+            <span aria-hidden="true">!</span>
+            <div>
+              <strong>{tr(
+                language,
+                'Images for the complete audit are saved page by page.',
+                'Las imágenes de la auditoría completa se guardan página a página.',
+              )}</strong>
+              <p>{pagesNeedingVisualRecapture > 0
+                ? tr(
+                    language,
+                    `Re-open and analyze the ${pagesNeedingVisualRecapture} page${pagesNeedingVisualRecapture === 1 ? '' : 's'} without saved images before exporting the PDF.`,
+                    `Vuelve a abrir y analizar ${pagesNeedingVisualRecapture === 1 ? 'la página' : `las ${pagesNeedingVisualRecapture} páginas`} sin imágenes guardadas antes de exportar el PDF.`,
+                  )
+                : savedVisualCount > 0 ? tr(
+                    language,
+                    `${savedVisualCount} saved crops will be included automatically in the PDF.`,
+                    `Los ${savedVisualCount} recortes guardados se incluirán automáticamente en el PDF.`,
+                  ) : tr(
+                    language,
+                    'No eligible image crops were found; the complete PDF will contain the text audit.',
+                    'No se han encontrado recortes de imagen elegibles; el PDF completo contendrá la auditoría textual.',
+                  )}</p>
             </div>
           </div>
 
@@ -159,26 +174,6 @@ export function AuditReportWorkspace({
 
                   {open && (
                     <div className="audit-page-report-body">
-                      <div className="audit-page-actions">
-                        <button
-                          type="button"
-                          disabled={Boolean(deletingPageKey)}
-                          onClick={() => void deletePage(page.key, page.title || page.url)}
-                        >
-                          {deletingPageKey === page.key
-                            ? tr(language, 'Deleting…', 'Eliminando…')
-                            : tr(language, 'Delete saved report', 'Eliminar informe guardado')}
-                        </button>
-                      </div>
-                      {!active && (
-                        <p className="audit-history-note">
-                          {tr(
-                            language,
-                            'Saved static review. Live page actions, current Trace and current Structure are intentionally not mixed into this historical page. Use Export audit PDF for its persisted visual evidence.',
-                            'Revisión estática guardada. Las acciones sobre la página, el Trace actual y la Estructura actual no se mezclan con esta página histórica. Usa Exportar auditoría PDF para consultar su evidencia visual persistida.',
-                          )}
-                        </p>
-                      )}
                       <SessionReportView
                         scan={page.scan}
                         events={active ? events : []}
@@ -187,6 +182,8 @@ export function AuditReportWorkspace({
                         onLocate={onLocate}
                         livePage={active}
                         savedVisualEvidence={page.visualEvidence}
+                        deletingSavedReport={deletingPageKey === page.key}
+                        onDeleteSavedReport={() => void deletePage(page.key, page.title || page.url)}
                       />
                     </div>
                   )}
