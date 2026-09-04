@@ -169,7 +169,7 @@ export function SettingsView({
         </div>
       </div>
 
-      <fieldset className="settings-group">
+      <fieldset className="settings-group settings-language-group">
         <legend>{tr(language, 'Language', 'Idioma')}</legend>
         <p className="settings-help">
           {tr(
@@ -315,17 +315,6 @@ export function SettingsView({
           {tr(language, 'Contact Marco on LinkedIn', 'Contactar con Marco en LinkedIn')} <span aria-hidden="true">↗</span>
         </a>
       </section>
-
-      <div className="notice settings-note">
-        <strong>{tr(language, 'Standards stay canonical', 'Los estándares mantienen su nomenclatura oficial')}</strong>
-        <p>
-          {tr(
-            language,
-            'Identifiers such as WCAG 1.1.1, ACT 23a2a8, rule IDs and CSS selectors are not translated. FocusTrace translates the explanation around that evidence.',
-            'Identificadores como WCAG 1.1.1, ACT 23a2a8, los IDs de reglas y los selectores CSS no se traducen. FocusTrace traduce la explicación que acompaña a esa evidencia.',
-          )}
-        </p>
-      </div>
 
       <footer
         className="settings-meta"
