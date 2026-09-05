@@ -131,8 +131,10 @@ const translatedReferenceLabels = new Set(
 );
 const referenceLabels = new Set();
 for (const helper of ['wcag', 'act']) {
-  const pattern = new RegExp(`${helper}\\(\\s*'[^']+'\\s*,\\s*'([^']+)'`, 'g');
-  for (const match of catalog.matchAll(pattern)) referenceLabels.add(match[1]);
+  for (const call of findCalls(catalog, helper)) {
+    const label = literalValue(call.args[1] ?? '');
+    if (label) referenceLabels.add(label);
+  }
 }
 for (const label of referenceLabels) {
   if (!translatedReferenceLabels.has(label)) {
@@ -144,11 +146,12 @@ const types = readFileSync('shared/types.ts', 'utf8');
 const runtimeKindBlock = types.match(/export type RuntimeEventKind\s*=([\s\S]*?);/)?.[1] ?? '';
 const runtimeKinds = new Set([...runtimeKindBlock.matchAll(/'([^']+)'/g)].map((match) => match[1]));
 const presentation = readFileSync('lib/runtime/runtime-presentation.ts', 'utf8');
-const presentedKinds = new Set([...presentation.matchAll(/kind\s*===\s*'([^']+)'/g)].map((match) => match[1]));
+const labelFunction = presentation.match(/export function runtimeEventKindLabel[\s\S]*?(?=export function focusDirectionLabel)/)?.[0] ?? '';
+const presentedKinds = new Set([...labelFunction.matchAll(/kind\s*===\s*'([^']+)'/g)].map((match) => match[1]));
 const missingRuntimeKinds = [...runtimeKinds].filter((kind) => !presentedKinds.has(kind));
 const legacyFocusWalkFallback = missingRuntimeKinds.length === 1
   && missingRuntimeKinds[0] === 'focus-walk-end'
-  && presentation.includes("tr(language, 'Focus walk finished', 'Recorrido de foco finalizado')");
+  && labelFunction.includes("tr(language, 'Focus walk finished', 'Recorrido de foco finalizado')");
 if (!legacyFocusWalkFallback) {
   for (const kind of missingRuntimeKinds) errors.push(`Runtime event kind “${kind}” has no bilingual label.`);
 }
