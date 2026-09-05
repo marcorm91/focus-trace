@@ -76,6 +76,21 @@ export async function startRecording(worker: Worker, page: Page): Promise<number
       });
     }
 
+    let statusReady = false;
+    try {
+      statusReady = await chromeApi.tabs.sendMessage(id, {
+        type: 'FOCUSTRACE_STATUS_MESSAGES_PING',
+      }) === 'FOCUSTRACE_STATUS_MESSAGES_READY';
+    } catch {
+      statusReady = false;
+    }
+    if (!statusReady) {
+      await chromeApi.scripting.executeScript({
+        target: { tabId: id },
+        files: ['/content-scripts/status-messages.js'],
+      });
+    }
+
     await chromeApi.tabs.sendMessage(id, {
       type: 'FOCUSTRACE_SET_RECORDING',
       enabled: true,
