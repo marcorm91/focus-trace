@@ -1,0 +1,14 @@
+{
+  "extensionName": {
+    "message": "FocusTrace",
+    "description": "FocusTrace extension name."
+  },
+  "extensionDescription": {
+    "message": "Run local WCAG 2.2 checks and debug focus, SPA transitions and dynamic accessibility behavior.",
+    "description": "FocusTrace extension description shown by the browser."
+  },
+  "actionTitle": {
+    "message": "Open FocusTrace",
+    "description": "Tooltip for the FocusTrace browser toolbar action."
+  }
+}
