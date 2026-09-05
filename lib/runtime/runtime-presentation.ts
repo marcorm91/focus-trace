@@ -18,6 +18,7 @@ export function runtimeEventKindLabel(kind: RuntimeEventKind, language: AppLangu
   if (kind === 'dialog-focus-escape') return tr(language, 'Modal focus escape', 'Foco fuera del modal');
   if (kind === 'aria-widget') return tr(language, 'Widget state', 'Estado del widget');
   if (kind === 'live-region') return tr(language, 'Live region', 'Región dinámica');
+  if (kind === 'status-message') return tr(language, 'Status message', 'Mensaje de estado');
   if (kind === 'focus-walk-start') return tr(language, 'Focus walk started', 'Recorrido de foco iniciado');
   return tr(language, 'Focus walk finished', 'Recorrido de foco finalizado');
 }
@@ -29,6 +30,10 @@ export function focusDirectionLabel(direction: FocusJourneyDirection, language: 
   if (direction === 'jump') return tr(language, 'Forward jump', 'Salto hacia delante');
   if (direction === 'forward') return tr(language, 'Forward', 'Hacia delante');
   return tr(language, 'Journey start', 'Inicio del recorrido');
+}
+
+function statusMessageText(detail: string | undefined): string | undefined {
+  return detail?.match(/Observed status-like text “(.+?)” after an interaction/)?.[1];
 }
 
 export function humanRuntimeEventDetail(event: RuntimeEvent, language: AppLanguage): string | undefined {
@@ -50,6 +55,16 @@ export function humanRuntimeEventDetail(event: RuntimeEvent, language: AppLangua
   if (event.kind === 'live-region') {
     // Live-region content belongs to the inspected page, not to FocusTrace. Preserve it verbatim.
     return event.detail;
+  }
+
+  if (event.kind === 'status-message') {
+    // The observed page message is evidence from the inspected page. Preserve it verbatim while localizing FocusTrace copy around it.
+    const message = statusMessageText(event.detail);
+    return tr(
+      language,
+      `FocusTrace observed${message ? ` “${message}”` : ' a short status-like message'} after this action, but did not find live-region/status semantics or an aria-errormessage relationship. Review whether this content is a WCAG 4.1.3 status message that needs programmatic exposure without moving focus.`,
+      `FocusTrace observó${message ? ` “${message}”` : ' un mensaje breve con apariencia de estado'} tras esta acción, pero no encontró semántica de región dinámica/estado ni una relación aria-errormessage. Revisa si este contenido es un mensaje de estado de WCAG 4.1.3 que necesita exposición programática sin mover el foco.`,
+    );
   }
 
   if (event.kind === 'dragging') {
