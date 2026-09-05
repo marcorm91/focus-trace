@@ -87,6 +87,7 @@ interface StatusActivation {
 const DIALOG_SELECTOR = 'dialog, [role="dialog"], [role="alertdialog"]';
 const DIALOG_STATE_ATTRIBUTES = new Set(['open', 'role', 'aria-hidden', 'hidden', 'class', 'style']);
 const STATUS_MESSAGE_STABILIZATION_MS = 240;
+const STATUS_MESSAGE_ACTIVATION_GRACE_MS = 80;
 
 function keyboardEventLabel(event: KeyboardEvent): string {
   const parts: string[] = [];
@@ -255,10 +256,7 @@ export default defineContentScript({
       observedAt: number,
       interactionId: string | undefined,
     ) => {
-      const activation = lastStatusActivation;
-      if (!recording || !activation || !interactionId) return;
-      if (activation.interactionId !== interactionId) return;
-      if (observedAt < activation.timestamp || observedAt - activation.timestamp > INTERACTION_WINDOW_MS) return;
+      if (!recording || !interactionId) return;
 
       const observedFocusVersion = focusVersion;
       const observedDialogVersion = dialogVersion;
@@ -269,6 +267,13 @@ export default defineContentScript({
       const timer = ctx.setTimeout(() => {
         pendingStatusMessageTimers.delete(element);
         if (!recording || !element.isConnected) return;
+
+        const activation = lastStatusActivation;
+        if (!activation || activation.interactionId !== interactionId) return;
+        if (
+          observedAt < activation.timestamp - STATUS_MESSAGE_ACTIVATION_GRACE_MS
+          || observedAt - activation.timestamp > INTERACTION_WINDOW_MS
+        ) return;
         if (focusVersion !== observedFocusVersion || dialogVersion !== observedDialogVersion || location.href !== observedUrl) return;
 
         const active = document.activeElement instanceof Element ? document.activeElement : null;
