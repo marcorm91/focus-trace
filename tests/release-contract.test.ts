@@ -54,11 +54,28 @@ describe('v0.2.1 release contract', () => {
   it('ships release documentation for the exact package version', () => {
     const releaseNotesPath = resolve(process.cwd(), `docs/RELEASE_NOTES_${packageJson.version}.md`);
     const changelogPath = resolve(process.cwd(), 'CHANGELOG.md');
+    const checklistPath = resolve(process.cwd(), 'docs/RELEASE_CHECKLIST.md');
+    const storeSubmissionPath = resolve(process.cwd(), 'docs/STORE_SUBMISSION.md');
 
     expect(existsSync(releaseNotesPath)).toBe(true);
     expect(existsSync(changelogPath)).toBe(true);
-    expect(readFileSync(releaseNotesPath, 'utf8')).toContain(`# FocusTrace ${packageJson.version}`);
-    expect(readFileSync(changelogPath, 'utf8')).toContain(`## ${packageJson.version}`);
+    expect(existsSync(checklistPath)).toBe(true);
+    expect(existsSync(storeSubmissionPath)).toBe(true);
+
+    const releaseNotes = readFileSync(releaseNotesPath, 'utf8');
+    const changelog = readFileSync(changelogPath, 'utf8');
+    const checklist = readFileSync(checklistPath, 'utf8');
+    const storeSubmission = readFileSync(storeSubmissionPath, 'utf8');
+
+    expect(releaseNotes).toContain(`# FocusTrace ${packageJson.version}`);
+    expect(changelog).toContain(`## ${packageJson.version}`);
+    expect(checklist).toContain(`Current release candidate: **${packageJson.version}**.`);
+    expect(checklist).toContain(`the release version is **${packageJson.version}**`);
+    expect(checklist).toContain(`**\`v${packageJson.version}\`**`);
+    expect(storeSubmission).toContain(`Current release candidate: **${packageJson.version}**.`);
+    expect(storeSubmission).toContain(`- Version: ${packageJson.version}`);
+    expect(storeSubmission).toContain(`production ZIP for ${packageJson.version}`);
+    expect(storeSubmission).toContain(`\`v${packageJson.version}\``);
   });
 
   it('keeps Chromium production permissions minimal and page/screenshot access optional', () => {
