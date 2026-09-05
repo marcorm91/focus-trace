@@ -1,8 +1,6 @@
 import type { AppLanguage } from '../../shared/i18n';
 import type { ComponentScanScope } from '../../shared/types';
 
-export const COMPONENT_SCAN_SCOPE_ATTRIBUTE = 'data-focustrace-scan-component';
-
 export interface ComponentPickerResult {
   cancelled: boolean;
   scope?: ComponentScanScope;
