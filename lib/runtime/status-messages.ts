@@ -1,12 +1,27 @@
 import { isProgrammaticallyHidden, selectorFor, semanticRole } from '../audit/dom';
-import { RULES } from '../../shared/rule-catalog';
-import type { RuntimeEvent } from '../../shared/types';
+import type { RuntimeEvent, StandardReference } from '../../shared/types';
 import { snapshot } from './page-inspection';
 
 type PendingRuntimeEvent = Omit<RuntimeEvent, 'id' | 'timestamp'>;
 
 const MAX_STATUS_TEXT_LENGTH = 240;
 const MAX_CANDIDATES_PER_MUTATION = 8;
+
+const STATUS_MESSAGE_REFERENCE: StandardReference = {
+  type: 'WCAG',
+  id: '4.1.3',
+  label: 'Status Messages',
+  level: 'AA',
+  status: 'normative',
+  url: 'https://www.w3.org/TR/WCAG22/#status-messages',
+};
+
+const STATUS_MESSAGE_RULE = {
+  id: 'FT-RUNTIME-007',
+  title: 'Observed status message may not be programmatically exposed',
+  severity: 'moderate' as const,
+  references: [STATUS_MESSAGE_REFERENCE],
+};
 
 const STRONG_STRUCTURE_SIGNAL = /(?:^|[-_\s])(status|toast|snackbar|notification|notice|feedback|flash|success|error|warning|progress|loading|busy)(?:$|[-_\s])/i;
 const WEAK_STRUCTURE_SIGNAL = /(?:^|[-_\s])(message|result)(?:$|[-_\s])/i;
@@ -143,15 +158,14 @@ export function createStatusMessageReviewEvent(element: Element): PendingRuntime
   if (!isPotentialStatusMessage(element) || hasProgrammaticStatusExposure(element)) return undefined;
 
   const text = normalizedText(element);
-  const rule = RULES.statusMessageExposure;
   return {
     kind: 'status-message',
-    severity: rule.severity,
-    title: rule.title,
+    severity: STATUS_MESSAGE_RULE.severity,
+    title: STATUS_MESSAGE_RULE.title,
     detail: `Observed status-like text “${text}” after an interaction, but no live-region/status semantics or aria-errormessage relationship were found. FocusTrace keeps this as REVIEW because deciding whether the content is a WCAG status message requires context.`,
     element: snapshot(element),
     outcome: 'review',
-    ruleId: rule.id,
-    references: rule.references,
+    ruleId: 'FT-RUNTIME-007',
+    references: STATUS_MESSAGE_RULE.references,
   };
 }
