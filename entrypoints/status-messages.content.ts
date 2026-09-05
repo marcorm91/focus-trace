@@ -16,6 +16,10 @@ type PendingCandidate = {
   observedAt: number;
 };
 
+type StatusMessageControlMessage =
+  | ExtensionMessage
+  | { type: 'FOCUSTRACE_STATUS_MESSAGES_PING' };
+
 function isActivationTrigger(event: RuntimeEvent): boolean {
   if (!event.interactionId) return false;
   if (event.kind === 'click') return true;
@@ -152,7 +156,8 @@ export default defineContentScript({
 
     ctx.onInvalidated(stop);
 
-    browser.runtime.onMessage.addListener((message: ExtensionMessage | { type: 'FOCUSTRACE_PING' }) => {
+    browser.runtime.onMessage.addListener((message: StatusMessageControlMessage) => {
+      if (message.type === 'FOCUSTRACE_STATUS_MESSAGES_PING') return 'FOCUSTRACE_STATUS_MESSAGES_READY';
       if (message.type !== 'FOCUSTRACE_SET_RECORDING') return;
       explicitStateVersion += 1;
       recording = message.enabled;
