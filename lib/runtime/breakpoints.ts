@@ -78,14 +78,6 @@ export function normalizeRuntimeBreakpointSettings(
   return defaults;
 }
 
-export function runtimeBreakpointDefinition(
-  id: RuntimeBreakpointId,
-): RuntimeBreakpointDefinition {
-  const definition = RUNTIME_BREAKPOINTS.find((breakpoint) => breakpoint.id === id);
-  if (!definition) throw new Error(`Unknown runtime breakpoint: ${id}`);
-  return definition;
-}
-
 export function enabledBreakpointsForCauses(
   causes: RuntimeCause[] | undefined,
   settings: RuntimeBreakpointSettings,
