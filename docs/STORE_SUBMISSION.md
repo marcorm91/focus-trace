@@ -2,12 +2,12 @@
 
 This document keeps the Chrome Web Store and Microsoft Edge Add-ons submission copy aligned with the actual extension behavior. It is not a substitute for the public privacy policy or the release checklist.
 
-Current release candidate: **0.2.0**.
+Current release candidate: **0.2.1**.
 
 ## Release positioning
 
 - Product: FocusTrace
-- Version: 0.2.0
+- Version: 0.2.1
 - Supported targets: Chrome 114+ and Chromium-based Microsoft Edge
 - Firefox: keep experimental until the manual Firefox smoke checklist in `RELEASE_CHECKLIST.md` has passed
 - Architecture: Manifest V3, local-first, no required backend
@@ -29,15 +29,16 @@ FocusTrace separates deterministic failures from contextual review signals, sema
 Key capabilities include:
 
 - local WCAG 2.2-oriented page and component analysis;
-- accessible-name, language, contrast, ARIA and HTML authoring checks;
+- accessible-name, language, text/non-text contrast, target-size/spacing, ARIA and HTML authoring checks;
 - on-demand Structure workspace with heading outline, concrete semantic suggestions and accessibility-oriented structural metrics;
 - runtime keyboard-focus and interaction tracing;
-- runtime review evidence for completely obscured focus and dragging interactions;
+- conservative runtime review evidence for completely obscured focus, dragging interactions and potentially unexposed status messages;
 - SPA navigation and dialog lifecycle evidence;
 - read-only replay and consolidated reports;
 - multipage audit history with bounded local visual context for recent reviewed pages;
 - representative same-origin Site Audit sampling, including cross-page Consistent Help review evidence;
-- actionable English/Spanish remediation guidance for selected runtime and Site Audit review findings;
+- actionable English/Spanish remediation guidance for selected static, runtime and Site Audit findings;
+- native English/Spanish WebExtension metadata for extension name, description and toolbar action title;
 - optional local accessibility history through FocusTrace Memory, including bounded element context for remembered failures.
 
 By default, inspected page data is processed locally in the browser. FocusTrace does not require an account or a FocusTrace backend to run its analysis.
@@ -88,7 +89,7 @@ FocusTrace does not intentionally execute remotely hosted JavaScript or download
 
 ## Data-use declaration basis
 
-FocusTrace may inspect website content necessary to provide its user-facing accessibility analysis, such as DOM structure and attributes, accessible-name/role information, rendered contrast evidence, focus transitions, selected runtime mutations, URL/title context and local visual evidence associated with the requested feature.
+FocusTrace may inspect website content necessary to provide its user-facing accessibility analysis, such as DOM structure and attributes, accessible-name/role information, rendered contrast and target-geometry evidence, focus transitions, selected runtime mutations, status-message candidates, URL/title context and local visual evidence associated with the requested feature.
 
 An explicitly generated Structure snapshot can include bounded accessibility-oriented metrics plus selectors and evidence for concrete semantic review suggestions. Reports may reuse the compact metrics/suggestions subset; exporting a report does not trigger another Structure scan.
 
@@ -129,13 +130,13 @@ Record the final public URLs here before submission:
 
 ## Final submission gate
 
-Before uploading the production ZIP for 0.2.0:
+Before uploading the production ZIP for 0.2.1:
 
 1. Complete `npm run release:check:full` on the release candidate.
-2. Confirm CI is green on the exact commit intended for `v0.2.0`.
-3. Complete the manual accessibility/self-audit, 0.2.0 WCAG runtime/Site Audit, Structure, multipage Report and FocusTrace Memory smoke items in `RELEASE_CHECKLIST.md`.
+2. Confirm CI is green on the exact commit intended for `v0.2.1`.
+3. Complete the manual WCAG 2.2 regression, native EN/ES browser i18n, Structure, multipage Report and FocusTrace Memory smoke items in `RELEASE_CHECKLIST.md`.
 4. Smoke-test the unpacked production Chromium build.
 5. Confirm production manifests contain only the intended required and optional permissions.
 6. Confirm the public privacy-policy, support/contact and voluntary-support URLs resolve without authentication.
-7. Review the final store declarations against `PRIVACY.md` and actual behavior, including on-demand Structure evidence, bounded multipage-audit visual evidence and opt-in Memory previews/locators.
-8. Tag the exact approved commit as `v0.2.0` only after the release candidate is accepted.
+7. Review the final store declarations against `PRIVACY.md` and actual behavior, including target-geometry evidence, runtime status-message candidates, on-demand Structure evidence, bounded multipage-audit visual evidence and opt-in Memory previews/locators.
+8. Tag the exact approved commit as `v0.2.1` only after the release candidate is accepted.
