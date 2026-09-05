@@ -63,6 +63,33 @@ export function actionableRemediationForRule(
     };
   }
 
+  if (ruleId === 'FT-RUNTIME-007') {
+    return {
+      options: [
+        tr(
+          language,
+          'Expose the existing message with semantics that match its purpose. Use role="status" for ordinary results or success feedback, role="alert" or an appropriate live region for time-sensitive errors, and log/progress semantics when those patterns genuinely apply.',
+          'Expón el mensaje existente con una semántica acorde a su propósito. Usa role="status" para resultados o confirmaciones normales, role="alert" o una región dinámica apropiada para errores urgentes, y semántica de log/progreso cuando esos patrones se apliquen realmente.',
+        ),
+        tr(
+          language,
+          'Keep focus where the workflow expects it. Do not fix every toast or status message by moving focus to it; WCAG 4.1.3 is specifically about making the message programmatically available without receiving focus.',
+          'Mantén el foco donde corresponda dentro del flujo. No corrijas cada toast o mensaje de estado moviendo el foco hasta él; WCAG 4.1.3 busca precisamente que el mensaje esté disponible programáticamente sin recibir el foco.',
+        ),
+        tr(
+          language,
+          'Make the announcement concise and avoid unnecessary assertive live regions. When a live region is used, ensure the region exists before the status text changes so assistive technology can observe the update reliably.',
+          'Haz que el anuncio sea conciso y evita regiones dinámicas assertive innecesarias. Cuando uses una región dinámica, asegúrate de que exista antes de cambiar el texto del estado para que las tecnologías de asistencia puedan observar la actualización de forma fiable.',
+        ),
+      ],
+      validation: tr(
+        language,
+        'Repeat the same Trace interaction and verify with accessibility inspection and, when practical, a screen reader that the status can be presented without moving focus and without duplicate or unnecessary announcements.',
+        'Repite la misma interacción en Trace y verifica con inspección de accesibilidad y, cuando sea práctico, con un lector de pantalla que el estado pueda presentarse sin mover el foco y sin anuncios duplicados o innecesarios.',
+      ),
+    };
+  }
+
   if (ruleId === 'FT-REVIEW-011') {
     return {
       options: [

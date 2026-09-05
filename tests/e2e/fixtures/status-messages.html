@@ -1,0 +1,50 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Status message runtime fixture</title>
+</head>
+<body>
+  <main>
+    <h1>Status message runtime</h1>
+
+    <button id="save-bad" type="button">Save without status semantics</button>
+    <button id="save-good" type="button">Save with status semantics</button>
+    <button id="open-dialog" type="button">Open confirmation dialog</button>
+
+    <div id="output"></div>
+    <div id="good-status" role="status"></div>
+
+    <dialog id="confirmation" aria-labelledby="confirmation-title">
+      <h2 id="confirmation-title">Saved</h2>
+      <button id="close-dialog" type="button">Close</button>
+    </dialog>
+  </main>
+
+  <script>
+    const output = document.getElementById('output');
+    const goodStatus = document.getElementById('good-status');
+    const dialog = document.getElementById('confirmation');
+
+    document.getElementById('save-bad').addEventListener('click', () => {
+      output.replaceChildren();
+      const toast = document.createElement('div');
+      toast.id = 'plain-toast';
+      toast.className = 'toast success';
+      toast.textContent = 'Saved';
+      output.append(toast);
+    });
+
+    document.getElementById('save-good').addEventListener('click', () => {
+      goodStatus.textContent = 'Saved with live status';
+    });
+
+    document.getElementById('open-dialog').addEventListener('click', () => {
+      dialog.showModal();
+      document.getElementById('close-dialog').focus();
+    });
+
+    document.getElementById('close-dialog').addEventListener('click', () => dialog.close());
+  </script>
+</body>
+</html>

@@ -15,7 +15,7 @@ import {
   defaultRuntimeBreakpointSettings,
   normalizeRuntimeBreakpointSettings,
 } from '../lib/runtime/breakpoints';
-import { RuntimeInteractionTracker } from '../lib/runtime/causality';
+import { INTERACTION_WINDOW_MS, RuntimeInteractionTracker } from '../lib/runtime/causality';
 import {
   createDialogCloseEvent,
   createDialogFocusEscapeEvent,
@@ -58,6 +58,11 @@ import {
   sequentialFocusPosition,
 } from '../lib/runtime/focus-walk';
 import { showFocusWalkBackdropInPage } from '../lib/runtime/focus-walk-backdrop';
+import {
+  createStatusMessageReviewEvent,
+  findPotentialStatusMessages,
+  statusMessageFingerprint,
+} from '../lib/runtime/status-messages';
 import { runFocusTraceScan } from '../lib/audit/scan';
 import type {
   ExtensionMessage,
@@ -74,8 +79,15 @@ interface DialogState {
   openedAt: number;
 }
 
+interface StatusActivation {
+  interactionId: string;
+  timestamp: number;
+}
+
 const DIALOG_SELECTOR = 'dialog, [role="dialog"], [role="alertdialog"]';
 const DIALOG_STATE_ATTRIBUTES = new Set(['open', 'role', 'aria-hidden', 'hidden', 'class', 'style']);
+const STATUS_MESSAGE_STABILIZATION_MS = 240;
+const STATUS_MESSAGE_ACTIVATION_GRACE_MS = 80;
 
 function keyboardEventLabel(event: KeyboardEvent): string {
   const parts: string[] = [];
@@ -105,6 +117,8 @@ export default defineContentScript({
     let lastUrl = location.href;
     let lastTitle = document.title;
     let focusVersion = 0;
+    let dialogVersion = 0;
+    let lastStatusActivation: StatusActivation | undefined;
     let pendingFocusIntent: 'forward' | 'backward' | 'programmatic' = 'programmatic';
     let hiddenFocusReported: Element | null = null;
     let obscuredFocusReported: Element | null = null;
@@ -117,9 +131,17 @@ export default defineContentScript({
     const dragTracker = new RuntimeDragTracker();
     const dialogs = new Map<Element, DialogState>();
     const emittedAriaWidgetFindings = new Set<string>();
+    const emittedStatusMessageFindings = new Set<string>();
+    const pendingStatusMessageTimers = new Map<Element, number>();
     const pendingEventDeliveries = new Set<Promise<unknown>>();
 
+    const clearPendingStatusMessageTimers = () => {
+      for (const timer of pendingStatusMessageTimers.values()) clearTimeout(timer);
+      pendingStatusMessageTimers.clear();
+    };
+
     const resetObservedDialogs = () => {
+      dialogVersion = 0;
       dialogs.clear();
       for (const dialog of document.querySelectorAll(DIALOG_SELECTOR)) {
         if (!isDialogOpen(dialog)) continue;
@@ -227,6 +249,44 @@ export default defineContentScript({
           emitAriaWidgetFinding(evaluateKeyboardFocusProbe(probe), interactionId);
         }
       }, 320);
+    };
+
+    const scheduleStatusMessageEvaluation = (
+      element: Element,
+      observedAt: number,
+      interactionId: string | undefined,
+    ) => {
+      if (!recording || !interactionId) return;
+
+      const observedFocusVersion = focusVersion;
+      const observedDialogVersion = dialogVersion;
+      const observedUrl = location.href;
+      const existingTimer = pendingStatusMessageTimers.get(element);
+      if (existingTimer != null) clearTimeout(existingTimer);
+
+      const timer = ctx.setTimeout(() => {
+        pendingStatusMessageTimers.delete(element);
+        if (!recording || !element.isConnected) return;
+
+        const activation = lastStatusActivation;
+        if (!activation || activation.interactionId !== interactionId) return;
+        if (
+          observedAt < activation.timestamp - STATUS_MESSAGE_ACTIVATION_GRACE_MS
+          || observedAt - activation.timestamp > INTERACTION_WINDOW_MS
+        ) return;
+        if (focusVersion !== observedFocusVersion || dialogVersion !== observedDialogVersion || location.href !== observedUrl) return;
+
+        const active = document.activeElement instanceof Element ? document.activeElement : null;
+        if (active === element || (active && element.contains(active))) return;
+
+        const finding = createStatusMessageReviewEvent(element);
+        if (!finding) return;
+        const key = `${interactionId}|${statusMessageFingerprint(element)}`;
+        if (emittedStatusMessageFindings.has(key)) return;
+        emittedStatusMessageFindings.add(key);
+        emit(finding, interactionId);
+      }, STATUS_MESSAGE_STABILIZATION_MS);
+      pendingStatusMessageTimers.set(element, timer);
     };
 
     const emitMutation = (
@@ -466,6 +526,9 @@ export default defineContentScript({
           metaKey: event.metaKey,
         };
         const interactionId = beginInteraction('keyboard', target, keyLabel);
+        if (event.key === 'Enter' || event.key === ' ') {
+          lastStatusActivation = { interactionId, timestamp: Date.now() };
+        }
         if (target && ['Enter', ' ', 'ArrowUp', 'ArrowDown'].includes(event.key)) lastActionElement = target;
         emit(
           createKeydownEvent({
@@ -491,6 +554,7 @@ export default defineContentScript({
         const interactionId = interactionTracker.click(clickSelector);
 
         lastActionElement = target;
+        lastStatusActivation = { interactionId, timestamp: Date.now() };
         emit(
           createClickEvent({
             label: accessibleName(target) || target.tagName.toLowerCase(),
@@ -505,6 +569,7 @@ export default defineContentScript({
 
     const registerDialog = (dialog: Element, interactionId = activeInteractionId()) => {
       if (dialogs.has(dialog) || !isDialogOpen(dialog)) return;
+      dialogVersion += 1;
       const trigger = lastActionElement ?? lastFocused;
       dialogs.set(dialog, { element: dialog, trigger, openedAt: Date.now() });
       queueMicrotask(() => {
@@ -542,7 +607,8 @@ export default defineContentScript({
 
     const observer = new MutationObserver((mutations) => {
       if (!recording) return;
-      const interactionId = activeInteractionId();
+      const observedAt = Date.now();
+      const interactionId = activeInteractionId(observedAt);
       const virtualFocusOwners = new Set<Element>();
 
       if (lastFocused && lastFocused !== document.body && !lastFocused.isConnected) {
@@ -573,6 +639,9 @@ export default defineContentScript({
 
         if (mutation.type === 'childList') {
           for (const node of mutation.addedNodes) {
+            for (const candidate of findPotentialStatusMessages(node)) {
+              scheduleStatusMessageEvaluation(candidate, observedAt, interactionId);
+            }
             for (const added of findSignificantAddedElements(node)) {
               const addedSnapshot = snapshot(added);
               emitMutation(
@@ -587,6 +656,12 @@ export default defineContentScript({
 
         const mutationElement = mutationTargetElement;
         if (!mutationElement) continue;
+
+        if (mutation.type === 'attributes') {
+          for (const candidate of findPotentialStatusMessages(mutationElement)) {
+            scheduleStatusMessageEvaluation(candidate, observedAt, interactionId);
+          }
+        }
 
         const live = mutationElement.closest('[aria-live], [role="status"], [role="alert"]');
         if (live) {
@@ -743,6 +818,7 @@ export default defineContentScript({
             'open',
             'role',
             'aria-live',
+            'aria-busy',
             'aria-modal',
             'aria-hidden',
             'aria-activedescendant',
@@ -770,6 +846,7 @@ export default defineContentScript({
         cancelAnimationFrame(focusObscuredFrame);
         focusObscuredFrame = undefined;
       }
+      clearPendingStatusMessageTimers();
       dragTracker.reset();
     }
 
@@ -796,9 +873,13 @@ export default defineContentScript({
         lastUrl = location.href;
         lastTitle = document.title;
         focusVersion = 0;
+        dialogVersion = 0;
+        lastStatusActivation = undefined;
         hiddenFocusReported = null;
         obscuredFocusReported = null;
         emittedAriaWidgetFindings.clear();
+        emittedStatusMessageFindings.clear();
+        clearPendingStatusMessageTimers();
         interactionTracker.reset();
         dragTracker.reset();
         resetObservedDialogs();
@@ -824,7 +905,12 @@ export default defineContentScript({
       lastFocused = document.activeElement instanceof Element ? document.activeElement : null;
       lastUrl = location.href;
       lastTitle = document.title;
+      focusVersion = 0;
+      dialogVersion = 0;
+      lastStatusActivation = undefined;
       obscuredFocusReported = null;
+      emittedStatusMessageFindings.clear();
+      clearPendingStatusMessageTimers();
       dragTracker.reset();
       resetObservedDialogs();
       if (recording) startInstrumentation();

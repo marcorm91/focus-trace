@@ -302,6 +302,16 @@ export const RULES = {
     ),
     references: [wcag('2.5.7', 'Dragging Movements', 'AA', 'dragging-movements')],
   },
+  statusMessageExposure: {
+    id: 'FT-RUNTIME-007',
+    title: 'Observed status message may not be programmatically exposed',
+    severity: 'moderate',
+    ...impact(
+      'A visual status update that is not programmatically exposed can leave screen-reader users unaware of success, errors, progress or other important changes unless focus is moved unnecessarily.',
+      'Una actualización visual de estado que no se expone programáticamente puede dejar a usuarios de lector de pantalla sin información sobre éxitos, errores, progreso u otros cambios importantes, salvo que el foco se mueva innecesariamente.',
+    ),
+    references: [wcag('4.1.3', 'Status Messages', 'AA', 'status-messages')],
+  },
   dialogInitialFocus: {
     id: 'FT-APG-001',
     title: 'Dialog opened while focus remained outside',
