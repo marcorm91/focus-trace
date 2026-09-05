@@ -21,7 +21,7 @@
     "rules:validate": "node tools/validate-rule-contracts.mjs",
     "i18n:validate": "node tools/validate-i18n-parity.mjs",
     "deadcode:validate": "npx --yes knip@6.34.0 --config knip.json",
-    "coverage:critical": "npx --yes --package=vitest@4.1.11 --package=@vitest/coverage-v8@4.1.11 vitest run --config vitest.coverage.config.ts --exclude \"tests/e2e/**\" --coverage",
+    "coverage:critical": "npm install --no-save --no-package-lock --ignore-scripts --no-audit --no-fund @vitest/coverage-v8@4.1.11 && vitest run --config vitest.coverage.config.ts --exclude \"tests/e2e/**\" --coverage",
     "quality:validate": "npm run rules:validate && npm run i18n:validate && npm run deadcode:validate && npm run coverage:critical",
     "check": "tsc --noEmit",
     "lint": "oxlint --deny-warnings entrypoints lib shared tests tools playwright.config.ts vitest.coverage.config.ts wxt.config.ts",
