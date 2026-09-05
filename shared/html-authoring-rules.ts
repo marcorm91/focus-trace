@@ -1,3 +1,4 @@
+import { HTML_OBSOLETE_REFERENCE_URL } from './obsolete-html-registry';
 import type { RuleDefinition } from './rule-catalog';
 import type { StandardReference } from './types';
 
@@ -38,7 +39,7 @@ const htmlObsoleteReference: StandardReference = {
   id: 'obsolete',
   label: 'HTML Living Standard · Obsolete features',
   status: 'normative',
-  url: 'https://html.spec.whatwg.org/multipage/obsolete.html',
+  url: HTML_OBSOLETE_REFERENCE_URL,
 };
 
 const ariaAuthoringReference: StandardReference = {

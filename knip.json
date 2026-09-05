@@ -1,0 +1,21 @@
+{
+  "$schema": "https://unpkg.com/knip@6/schema.json",
+  "entry": [
+    "entrypoints/*/main.tsx",
+    "tests/**/*.test.ts",
+    "tests/**/*.spec.ts",
+    "tools/**/*.mjs"
+  ],
+  "project": [
+    "entrypoints/**/*.{ts,tsx}",
+    "lib/**/*.{ts,tsx}",
+    "shared/**/*.{ts,tsx}",
+    "tests/**/*.{ts,tsx}",
+    "tools/**/*.mjs",
+    "*.config.ts"
+  ],
+  "ignoreExportsUsedInFile": true,
+  "ignoreUnresolved": [
+    "#imports"
+  ]
+}

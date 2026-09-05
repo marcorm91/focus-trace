@@ -34,8 +34,9 @@ export function manifestForBrowser(browser: string): UserManifest {
   const firefox = browser === 'firefox';
 
   return {
-    name: 'FocusTrace',
-    description: 'Run local WCAG 2.2 checks and debug focus, SPA transitions and dynamic accessibility behavior.',
+    name: '__MSG_extensionName__',
+    description: '__MSG_extensionDescription__',
+    default_locale: 'en',
     version: '0.2.0',
     ...(firefox
       ? {
@@ -64,7 +65,7 @@ export function manifestForBrowser(browser: string): UserManifest {
     ...(e2eHostPermissions ? { host_permissions: e2eHostPermissions } : {}),
     icons,
     action: {
-      default_title: 'Open FocusTrace',
+      default_title: '__MSG_actionTitle__',
       default_icon: actionIcons,
     },
   };

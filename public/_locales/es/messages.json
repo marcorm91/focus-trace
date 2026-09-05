@@ -1,0 +1,14 @@
+{
+  "extensionName": {
+    "message": "FocusTrace",
+    "description": "Nombre de la extensión FocusTrace."
+  },
+  "extensionDescription": {
+    "message": "Ejecuta comprobaciones locales de WCAG 2.2 y depura el foco, las transiciones SPA y el comportamiento dinámico de accesibilidad.",
+    "description": "Descripción de FocusTrace que muestra el navegador."
+  },
+  "actionTitle": {
+    "message": "Abrir FocusTrace",
+    "description": "Texto de ayuda de la acción de FocusTrace en la barra del navegador."
+  }
+}

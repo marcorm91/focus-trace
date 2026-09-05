@@ -78,10 +78,6 @@ export function isAbstractAriaRole(name: string): boolean {
   return ABSTRACT_ARIA_ROLES.has(name.trim().toLowerCase());
 }
 
-export function knownAriaPropertyNames(): ReadonlySet<string> {
-  return new Set(Object.keys(ariaRegistryJson.properties));
-}
-
 /**
  * Resolves role tokens using ARIA fallback semantics: the first recognised,
  * non-abstract role wins. Unknown tokens may intentionally precede a fallback

@@ -3,26 +3,53 @@ import { resolve } from 'node:path';
 
 const packageJson = JSON.parse(readFileSync(resolve('package.json'), 'utf8'));
 const EXPECTED_OPTIONAL_HOSTS = ['http://*/*', 'https://*/*', '<all_urls>'];
+const CHROMIUM_PERMISSIONS = ['activeTab', 'scripting', 'storage', 'sidePanel'];
+const FIREFOX_PERMISSIONS = ['activeTab', 'scripting', 'storage'];
 const BUILD_TARGETS = ['chrome-mv3', 'edge-mv3', 'firefox-mv3'];
+const REQUIRED_LOCALES = ['en', 'es'];
+const REQUIRED_LOCALE_MESSAGES = ['extensionName', 'extensionDescription', 'actionTitle'];
 
 function readManifest(target) {
   return JSON.parse(readFileSync(resolve('.output', target, 'manifest.json'), 'utf8'));
+}
+
+function readLocaleMessages(target, locale) {
+  return JSON.parse(
+    readFileSync(resolve('.output', target, '_locales', locale, 'messages.json'), 'utf8'),
+  );
 }
 
 function assert(condition, message) {
   if (!condition) throw new Error(message);
 }
 
-function sameHosts(actual) {
+function sameValues(actual, expected) {
   if (!Array.isArray(actual)) return false;
   const left = [...actual].sort();
-  const right = [...EXPECTED_OPTIONAL_HOSTS].sort();
-  return left.length === right.length && left.every((permission, index) => permission === right[index]);
+  const right = [...expected].sort();
+  return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function hasRequiredLocaleMessages(messages) {
+  return REQUIRED_LOCALE_MESSAGES.every(
+    (key) => typeof messages[key]?.message === 'string' && messages[key].message.trim().length > 0,
+  );
 }
 
 function hasNoRequiredHosts(manifest) {
   return manifest.host_permissions == null
     || (Array.isArray(manifest.host_permissions) && manifest.host_permissions.length === 0);
+}
+
+function hasNoPersistentContentScripts(manifest) {
+  return manifest.content_scripts == null
+    || (Array.isArray(manifest.content_scripts) && manifest.content_scripts.length === 0);
+}
+
+function hasSafeExtensionCsp(manifest) {
+  const extensionPages = manifest.content_security_policy?.extension_pages;
+  if (!extensionPages) return true;
+  return !extensionPages.includes("'unsafe-eval'") && !/https?:\/\//i.test(extensionPages);
 }
 
 const chrome = readManifest('chrome-mv3');
@@ -35,12 +62,14 @@ console.log(JSON.stringify({
     permissions: chrome.permissions,
     host_permissions: chrome.host_permissions,
     optional_host_permissions: chrome.optional_host_permissions,
+    content_scripts: chrome.content_scripts,
     side_panel: chrome.side_panel,
   },
   edge: {
     permissions: edge.permissions,
     host_permissions: edge.host_permissions,
     optional_host_permissions: edge.optional_host_permissions,
+    content_scripts: edge.content_scripts,
     side_panel: edge.side_panel,
   },
   firefox: {
@@ -48,6 +77,7 @@ console.log(JSON.stringify({
     host_permissions: firefox.host_permissions,
     optional_permissions: firefox.optional_permissions,
     optional_host_permissions: firefox.optional_host_permissions,
+    content_scripts: firefox.content_scripts,
     sidebar_action: firefox.sidebar_action,
     browser_specific_settings: firefox.browser_specific_settings,
   },
@@ -56,32 +86,51 @@ console.log(JSON.stringify({
 for (const [name, manifest] of Object.entries({ chrome, edge, firefox })) {
   assert(manifest.manifest_version === 3, `${name} must be Manifest V3`);
   assert(manifest.version === packageJson.version, `${name} version must match package.json`);
+  assert(manifest.default_locale === 'en', `${name} must declare English as the default extension locale`);
+  assert(manifest.name === '__MSG_extensionName__', `${name} extension name must use native i18n metadata`);
+  assert(manifest.description === '__MSG_extensionDescription__', `${name} extension description must use native i18n metadata`);
+  assert(manifest.action?.default_title === '__MSG_actionTitle__', `${name} action title must use native i18n metadata`);
   assert(hasNoRequiredHosts(manifest), `${name} production build must not require permanent host access`);
+  assert(hasNoPersistentContentScripts(manifest), `${name} must not auto-inject persistent content scripts; runtime analysis is user-triggered`);
+  assert(hasSafeExtensionCsp(manifest), `${name} extension-page CSP must not allow unsafe-eval or remote HTTP(S) script sources`);
 }
 
 for (const target of BUILD_TARGETS) {
   assert(existsSync(resolve('.output', target, 'site-audit.html')), `${target} must include site-audit.html`);
   assert(existsSync(resolve('.output', target, 'report-print.html')), `${target} must include report-print.html`);
   assert(existsSync(resolve('.output', target, 'sidepanel.html')), `${target} must include sidepanel.html`);
+  assert(existsSync(resolve('.output', target, 'background.js')), `${target} must include background.js`);
+  assert(existsSync(resolve('.output', target, 'content-scripts', 'runtime.js')), `${target} must include the on-demand runtime content script`);
+
+  for (const locale of REQUIRED_LOCALES) {
+    const messagesPath = resolve('.output', target, '_locales', locale, 'messages.json');
+    assert(existsSync(messagesPath), `${target} must include ${locale} native extension messages`);
+    assert(
+      hasRequiredLocaleMessages(readLocaleMessages(target, locale)),
+      `${target} ${locale} native extension messages must define ${REQUIRED_LOCALE_MESSAGES.join(', ')}`,
+    );
+  }
+
+  const englishMessages = readLocaleMessages(target, 'en');
+  const spanishMessages = readLocaleMessages(target, 'es');
+  assert(
+    sameValues(Object.keys(englishMessages), Object.keys(spanishMessages)),
+    `${target} native extension locale catalogs must keep EN/ES key parity`,
+  );
 }
 
 for (const [name, manifest] of Object.entries({ chrome, edge })) {
   assert(manifest.minimum_chrome_version === '114', `${name} must require Chromium 114+`);
-  assert(manifest.permissions?.includes('activeTab'), `${name} must request activeTab`);
-  assert(manifest.permissions?.includes('scripting'), `${name} must request scripting`);
-  assert(manifest.permissions?.includes('storage'), `${name} must request storage`);
-  assert(manifest.permissions?.includes('sidePanel'), `${name} must request sidePanel`);
-  assert(sameHosts(manifest.optional_host_permissions), `${name} must expose HTTP/HTTPS plus temporary visual-capture access as optional hosts`);
+  assert(sameValues(manifest.permissions, CHROMIUM_PERMISSIONS), `${name} permissions must exactly match the reviewed Chromium permission set`);
+  assert(sameValues(manifest.optional_host_permissions, EXPECTED_OPTIONAL_HOSTS), `${name} must expose HTTP/HTTPS plus temporary visual-capture access as optional hosts`);
   assert(manifest.side_panel?.default_path === 'sidepanel.html', `${name} must expose sidepanel.html`);
 }
 
 assert(!firefox.minimum_chrome_version, 'Firefox manifest must not contain minimum_chrome_version');
-assert(firefox.permissions?.includes('activeTab'), 'Firefox must request activeTab');
-assert(firefox.permissions?.includes('scripting'), 'Firefox must request scripting');
-assert(firefox.permissions?.includes('storage'), 'Firefox must request storage');
-assert(!firefox.permissions?.includes('sidePanel'), 'Firefox must not request Chromium sidePanel');
+assert(sameValues(firefox.permissions, FIREFOX_PERMISSIONS), 'Firefox permissions must exactly match the reviewed Firefox permission set');
 assert(
-  sameHosts(firefox.optional_permissions) || sameHosts(firefox.optional_host_permissions),
+  sameValues(firefox.optional_permissions, EXPECTED_OPTIONAL_HOSTS)
+    || sameValues(firefox.optional_host_permissions, EXPECTED_OPTIONAL_HOSTS),
   'Firefox must expose HTTP/HTTPS plus temporary visual-capture access as optional hosts',
 );
 assert(firefox.sidebar_action?.default_panel === 'sidepanel.html', 'Firefox must expose sidepanel.html as sidebar_action');
@@ -93,4 +142,4 @@ assert(
   'Firefox must declare that it does not collect/transmit data',
 );
 
-console.log('Browser builds validated: chrome-mv3, edge-mv3, firefox-mv3 (including sidepanel, printable report and Site Audit entrypoints)');
+console.log('Browser builds validated: exact permissions, native EN/ES extension metadata, optional host access, no persistent content scripts, safe CSP, and required entrypoints for chrome-mv3, edge-mv3 and firefox-mv3.');
