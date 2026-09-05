@@ -55,7 +55,6 @@ describe('WCAG 4.1.3 runtime status-message review', () => {
     ['aria-live', '<div id="message" aria-live="polite">Saved</div>'],
     ['role=log', '<div id="message" role="log">1 result</div>'],
     ['progress', '<progress id="message" value="40" max="100">40%</progress>'],
-    ['aria-busy', '<div aria-busy="true"><div id="message">Loading</div></div>'],
   ])('does not review an already exposed status mechanism: %s', (_label, markup) => {
     render(markup);
     const message = element('#message');
@@ -63,12 +62,31 @@ describe('WCAG 4.1.3 runtime status-message review', () => {
     expect(createStatusMessageReviewEvent(message)).toBeUndefined();
   });
 
-  it('recognizes an aria-errormessage relationship as programmatic error exposure', () => {
+  it('does not treat aria-busy alone as programmatic exposure of a status message', () => {
+    render('<div aria-busy="true"><div id="message" class="loading">Loading</div></div>');
+    const message = element('#message');
+
+    expect(hasProgrammaticStatusExposure(message)).toBe(false);
+    expect(createStatusMessageReviewEvent(message)).toMatchObject({
+      ruleId: 'FT-RUNTIME-007',
+      outcome: 'review',
+    });
+  });
+
+  it('recognizes an active aria-errormessage relationship as programmatic error exposure', () => {
     render('<input id="email" aria-invalid="true" aria-errormessage="email-error"><div id="email-error" class="error">Invalid email</div>');
     const error = element('#email-error');
 
     expect(hasProgrammaticStatusExposure(error)).toBe(true);
     expect(createStatusMessageReviewEvent(error)).toBeUndefined();
+  });
+
+  it('does not treat an inactive aria-errormessage relationship as exposed error status', () => {
+    render('<input id="email" aria-invalid="false" aria-errormessage="email-error"><div id="email-error" class="error">Invalid email</div>');
+    const error = element('#email-error');
+
+    expect(hasProgrammaticStatusExposure(error)).toBe(false);
+    expect(createStatusMessageReviewEvent(error)).toMatchObject({ ruleId: 'FT-RUNTIME-007' });
   });
 
   it('does not reinterpret dialogs or widget state containers as status messages', () => {
