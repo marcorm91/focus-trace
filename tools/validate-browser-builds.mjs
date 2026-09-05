@@ -6,9 +6,17 @@ const EXPECTED_OPTIONAL_HOSTS = ['http://*/*', 'https://*/*', '<all_urls>'];
 const CHROMIUM_PERMISSIONS = ['activeTab', 'scripting', 'storage', 'sidePanel'];
 const FIREFOX_PERMISSIONS = ['activeTab', 'scripting', 'storage'];
 const BUILD_TARGETS = ['chrome-mv3', 'edge-mv3', 'firefox-mv3'];
+const REQUIRED_LOCALES = ['en', 'es'];
+const REQUIRED_LOCALE_MESSAGES = ['extensionName', 'extensionDescription', 'actionTitle'];
 
 function readManifest(target) {
   return JSON.parse(readFileSync(resolve('.output', target, 'manifest.json'), 'utf8'));
+}
+
+function readLocaleMessages(target, locale) {
+  return JSON.parse(
+    readFileSync(resolve('.output', target, '_locales', locale, 'messages.json'), 'utf8'),
+  );
 }
 
 function assert(condition, message) {
@@ -20,6 +28,12 @@ function sameValues(actual, expected) {
   const left = [...actual].sort();
   const right = [...expected].sort();
   return left.length === right.length && left.every((value, index) => value === right[index]);
+}
+
+function hasRequiredLocaleMessages(messages) {
+  return REQUIRED_LOCALE_MESSAGES.every(
+    (key) => typeof messages[key]?.message === 'string' && messages[key].message.trim().length > 0,
+  );
 }
 
 function hasNoRequiredHosts(manifest) {
@@ -72,6 +86,10 @@ console.log(JSON.stringify({
 for (const [name, manifest] of Object.entries({ chrome, edge, firefox })) {
   assert(manifest.manifest_version === 3, `${name} must be Manifest V3`);
   assert(manifest.version === packageJson.version, `${name} version must match package.json`);
+  assert(manifest.default_locale === 'en', `${name} must declare English as the default extension locale`);
+  assert(manifest.name === '__MSG_extensionName__', `${name} extension name must use native i18n metadata`);
+  assert(manifest.description === '__MSG_extensionDescription__', `${name} extension description must use native i18n metadata`);
+  assert(manifest.action?.default_title === '__MSG_actionTitle__', `${name} action title must use native i18n metadata`);
   assert(hasNoRequiredHosts(manifest), `${name} production build must not require permanent host access`);
   assert(hasNoPersistentContentScripts(manifest), `${name} must not auto-inject persistent content scripts; runtime analysis is user-triggered`);
   assert(hasSafeExtensionCsp(manifest), `${name} extension-page CSP must not allow unsafe-eval or remote HTTP(S) script sources`);
@@ -83,6 +101,22 @@ for (const target of BUILD_TARGETS) {
   assert(existsSync(resolve('.output', target, 'sidepanel.html')), `${target} must include sidepanel.html`);
   assert(existsSync(resolve('.output', target, 'background.js')), `${target} must include background.js`);
   assert(existsSync(resolve('.output', target, 'content-scripts', 'runtime.js')), `${target} must include the on-demand runtime content script`);
+
+  for (const locale of REQUIRED_LOCALES) {
+    const messagesPath = resolve('.output', target, '_locales', locale, 'messages.json');
+    assert(existsSync(messagesPath), `${target} must include ${locale} native extension messages`);
+    assert(
+      hasRequiredLocaleMessages(readLocaleMessages(target, locale)),
+      `${target} ${locale} native extension messages must define ${REQUIRED_LOCALE_MESSAGES.join(', ')}`,
+    );
+  }
+
+  const englishMessages = readLocaleMessages(target, 'en');
+  const spanishMessages = readLocaleMessages(target, 'es');
+  assert(
+    sameValues(Object.keys(englishMessages), Object.keys(spanishMessages)),
+    `${target} native extension locale catalogs must keep EN/ES key parity`,
+  );
 }
 
 for (const [name, manifest] of Object.entries({ chrome, edge })) {
@@ -108,4 +142,4 @@ assert(
   'Firefox must declare that it does not collect/transmit data',
 );
 
-console.log('Browser builds validated: exact permissions, optional host access, no persistent content scripts, safe CSP, and required entrypoints for chrome-mv3, edge-mv3 and firefox-mv3.');
+console.log('Browser builds validated: exact permissions, native EN/ES extension metadata, optional host access, no persistent content scripts, safe CSP, and required entrypoints for chrome-mv3, edge-mv3 and firefox-mv3.');
