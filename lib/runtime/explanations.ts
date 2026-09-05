@@ -169,7 +169,7 @@ function ariaWidgetEventTitle(event: RuntimeEvent, language: AppLanguage): strin
     case 'FT-APG-018':
       return tr(language, 'Menu arrow navigation did not reach the expected item', 'La navegación con flechas del menú no llegó al elemento esperado');
     case 'FT-APG-019':
-      return tr(language, 'Listbox arrow navigation did not reach the expected option', 'La navegación con flechas del listbox no llegó a la opción esperada');
+      return tr(language, 'Listbox arrow navigation did not reach the expected option', 'La navegación con flechas del listbox no llegó al elemento esperado');
     case 'FT-APG-020':
       return tr(language, 'Escape did not close the open modal dialog', 'Escape no cerró el diálogo modal abierto');
     case 'FT-APG-021':
@@ -227,6 +227,12 @@ export function humanRuntimeEventTitle(event: RuntimeEvent, language: AppLanguag
       return ariaWidgetEventTitle(event, language);
     case 'live-region':
       return tr(language, 'A screen reader announcement region updated', 'Se actualizó una región de anuncios para lectores de pantalla');
+    case 'status-message':
+      return tr(
+        language,
+        'A status message may not be exposed to assistive technology',
+        'Es posible que un mensaje de estado no esté expuesto a las tecnologías de asistencia',
+      );
     default:
       return event.title;
   }
