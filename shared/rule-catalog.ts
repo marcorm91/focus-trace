@@ -162,6 +162,16 @@ export const RULES = {
     ),
     references: [wcag('1.4.11', 'Non-text Contrast', 'AA', 'non-text-contrast')],
   },
+  targetSizeMinimum: {
+    id: 'FT-WCAG-012',
+    title: 'Pointer target size and spacing',
+    severity: 'moderate',
+    ...impact(
+      'Small pointer targets that are too close to neighboring targets can increase accidental activation and make controls difficult to operate for people with limited fine motor precision.',
+      'Los objetivos de puntero pequeños y demasiado próximos a otros objetivos pueden aumentar las activaciones accidentales y dificultar el uso a personas con precisión motora fina limitada.',
+    ),
+    references: [wcag('2.5.8', 'Target Size (Minimum)', 'AA', 'target-size-minimum')],
+  },
   deprecatedAriaRole: {
     id: 'FT-WARN-001',
     title: 'Deprecated ARIA role is used',

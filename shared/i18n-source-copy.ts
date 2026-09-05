@@ -19,6 +19,7 @@ const REFERENCE_LABEL_ES: Record<string, string> = {
   'HTML page lang attribute has valid language tag': 'El atributo lang de la página HTML contiene una etiqueta de idioma válida',
   'Contrast (Minimum)': 'Contraste (mínimo)',
   'Non-text Contrast': 'Contraste no textual',
+  'Target Size (Minimum)': 'Tamaño del objetivo (mínimo)',
   'Focus Order': 'Orden del foco',
   'Info and Relationships': 'Información y relaciones',
   'Headings and Labels': 'Encabezados y etiquetas',

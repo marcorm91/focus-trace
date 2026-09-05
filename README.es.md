@@ -35,6 +35,7 @@ FocusTrace utiliza WCAG 2.2 como fuente de conformidad. Los criterios WCAG 2.2 t
 | **Nombre accesible** | Controles compatibles | Calcula el nombre accesible y conserva la fuente que ganó en la resolución. | Rol, nombre calculado, fuente y candidatos inspeccionados. |
 | **Contraste de texto** | Texto renderizado con colores resolubles | Calcula ratio, umbral, foreground/background, tamaño y peso. | Evidencia estructurada reutilizable en UI e informes. |
 | **Contraste no textual** | Límites, estados, gráficos o indicadores observables | Evalúa señales deterministas y mantiene como REVIEW las composiciones ambiguas. | Ratio, tipo de señal y contexto visual. |
+| **Tamaño de objetivos de puntero** | Objetivos de puntero renderizados y observables | Mide la geometría del objetivo y la separación de WCAG 2.5.8, conservando las excepciones contextuales como REVIEW. | Tamaño en píxeles CSS, objetivo vecino y justificación de PASS/REVIEW. |
 | **Sugerencia de color** | Fallos deterministas de contraste | Propone un ajuste sRGB pequeño que alcance el ratio requerido cuando puede calcularse con seguridad. | HEX/RGB medido, propuesta y copia. |
 | **Cómo corregirlo** | Hallazgos con remediación disponible | Muestra estrategias concretas de corrección y una comprobación posterior. | Guía localizada ES/EN. |
 | **Estructura** | Página actual | Expone encabezados, semántica y métricas estructurales bajo demanda. | Árbol H1-H6, sugerencias y recuentos. |
@@ -65,6 +66,7 @@ FocusTrace utiliza WCAG 2.2 como fuente de conformidad. Los criterios WCAG 2.2 t
 | `FT-WCAG-009` | El `lang` usa un subtag primario de idioma reconocido. | FAIL / PASS | WCAG 3.1.1 · ACT bf051a · IANA |
 | `FT-WCAG-010` | El contraste de texto alcanza el ratio requerido cuando foreground/background pueden resolverse con certeza. | FAIL / REVIEW / PASS | WCAG 1.4.3 AA |
 | `FT-WCAG-011` | La información visual no textual necesaria alcanza el contraste requerido cuando existe evidencia determinista. | FAIL / REVIEW / PASS | WCAG 1.4.11 AA |
+| `FT-WCAG-012` | Los objetivos de puntero contienen un área verificable de 24 × 24 CSS px o cumplen una excepción observable de separación/inline; las excepciones semánticas no resolubles quedan para revisión. | REVIEW / PASS | WCAG 2.5.8 AA |
 
 ### Revisiones contextuales y estructurales
 
@@ -137,7 +139,7 @@ Trace almacena evidencia compacta: selector, rol, nombre accesible, tag, cambios
 | `FT-RUNTIME-005` | El elemento que conserva el foco pasa a estar oculto durante la interacción. | REVIEW | WCAG 2.4.3 / 4.1.2 |
 | `FT-RUNTIME-006` | Se observa un arrastre significativo sobre un objetivo con señales de ser arrastrable y debe revisarse si existe una alternativa de puntero sencillo. | REVIEW | WCAG 2.5.7 |
 
-`FT-RUNTIME-002` vuelve a comprobar el elemento mientras mantiene el foco tras scroll, resize y mutaciones DOM relevantes. `FT-RUNTIME-006` requiere movimiento real de puntero por encima del umbral de jitter; un `dragstart` nativo por sí solo no se utiliza para generar la revisión.
+`FT-RUNTIME-002` vuelve a comprobar el elemento mientras mantiene el foco tras scroll, resize y mutaciones DOM relevantes. `FT-RUNTIME-006` requiere movimiento real del puntero por encima del umbral de jitter; un `dragstart` nativo por sí solo no se utiliza para emitir la revisión.
 
 ### Avisos ARIA runtime
 
@@ -332,6 +334,7 @@ Memory no almacena HTML de página, snapshots completos del DOM ni capturas de p
 | Shadow DOM / slots | Cobertura no completa. |
 | Iframes cross-origin | No se recorre por completo su contenido. |
 | Contraste | Composiciones visuales complejas permanecen como REVIEW cuando no pueden resolverse con certeza. |
+| Tamaño de objetivos | Usa geometría observable del DOM/layout y descubrimiento conservador de objetivos. Las excepciones por control equivalente, necesidad esencial o control del navegador, listeners de puntero exclusivos de frameworks y áreas de impacto no rectangulares complejas pueden seguir requiriendo revisión manual. |
 | Estados dinámicos | El análisis estático no fuerza sistemáticamente todos los estados hover, pressed, checked o focus. |
 | HTML | Opera sobre el DOM vivo ya parseado; el navegador puede haber reparado errores del HTML fuente. |
 | ARIA | Deriva relaciones observables, pero no reproduce exactamente el árbol de accesibilidad interno ni la salida hablada de un lector de pantalla. |

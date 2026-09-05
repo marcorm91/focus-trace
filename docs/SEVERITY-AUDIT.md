@@ -53,6 +53,7 @@ Existing equivalent rules that already matched axe keep their severity, includin
 | `FT-WCAG-009` Page lang known | serious | fail | Aligned with axe `html-lang-valid`. |
 | `FT-WCAG-010` Text contrast | serious | fail / review | Aligned with axe `color-contrast`. |
 | `FT-WCAG-011` Non-text contrast | serious | fail / review | FocusTrace-owned WCAG 1.4.11 detector; axe-core 4.13 has no equivalent rule to enforce. |
+| `FT-WCAG-012` Target size minimum | moderate | review | FocusTrace-owned WCAG 2.5.8 geometry/spacing detector. Contextual WCAG exceptions prevent geometric risk alone from becoming an automatic failure. |
 | `FT-WARN-001` Deprecated ARIA role | minor | warning | Aligned with axe `aria-deprecated-role`. |
 | `FT-WARN-002` Deprecated ARIA property | minor | warning | No exact impact mapping is enforced; deprecation alone is treated as an authoring/compatibility warning. |
 | `FT-WARN-003` Prohibited ARIA property | serious | warning | Aligned with axe `aria-prohibited-attr`. |

@@ -50,6 +50,9 @@ export function remediationForIssue(issue: ScanIssue, language: AppLanguage): st
       `Adjust the relevant foreground, boundary or graphical color until the measured contrast reaches at least ${contrast?.requiredRatio ?? 'the required'}:1, then verify it in the final rendered state.`,
       `Ajusta el color de primer plano, límite o gráfico relevante hasta que el contraste medido alcance al menos ${contrast?.requiredRatio ?? 'el valor requerido'}:1 y verifícalo en el estado final renderizado.`);
   }
+  if (issue.ruleId === 'FT-WCAG-012') return t(language,
+    'Increase the active pointer target so it contains at least a 24 × 24 CSS px area, or increase spacing so a 24 CSS px circle centered on the undersized target does not intersect another target. If an equivalent, inline, user-agent-control or essential exception is being relied on, document and verify that exception manually.',
+    'Aumenta el área activa del objetivo de puntero para que contenga al menos 24 × 24 CSS px, o aumenta la separación para que un círculo de 24 CSS px centrado en el objetivo pequeño no interseque con otro objetivo. Si se aplica una excepción por control equivalente, contenido inline, control del navegador o necesidad esencial, documéntala y verifícala manualmente.');
   if (issue.ruleId === 'FT-WARN-001') return t(language,
     'Replace the deprecated ARIA role with its current supported semantic equivalent and retest the accessible name and interaction model.',
     'Sustituye el rol ARIA obsoleto por su equivalente semántico actual compatible y vuelve a probar el nombre accesible y el modelo de interacción.');

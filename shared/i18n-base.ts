@@ -60,6 +60,7 @@ function withCriteria(description: string, issue: ScanIssue, language: AppLangua
 const RULE_TITLES_EN: Record<string, string> = {
   'FT-WCAG-010': 'Text color contrast',
   'FT-WCAG-011': 'Non-text visual contrast',
+  'FT-WCAG-012': 'Pointer target size and spacing',
 };
 
 const RULE_TITLES_ES: Record<string, string> = {
@@ -74,6 +75,7 @@ const RULE_TITLES_ES: Record<string, string> = {
   'FT-WCAG-009': 'El atributo lang contiene una etiqueta de idioma principal conocida',
   'FT-WCAG-010': 'Contraste de color del texto',
   'FT-WCAG-011': 'Contraste visual no textual',
+  'FT-WCAG-012': 'Tamaño y separación de objetivos de puntero',
   'FT-WARN-001': 'Se utiliza un rol ARIA obsoleto',
   'FT-WARN-002': 'El estado o propiedad ARIA está obsoleto para este rol',
   'FT-WARN-003': 'El estado o propiedad ARIA está prohibido para este rol',
@@ -177,6 +179,9 @@ const SCAN_COPY_ES: Record<string, { description: string; evidence?: string }> =
   'FT-WCAG-009': {
     description: 'El valor lang de la página no comienza por una subetiqueta de idioma principal registrada por IANA.',
     evidence: 'La etiqueta de idioma principal no se reconoce en el registro IANA utilizado por FocusTrace.',
+  },
+  'FT-WCAG-012': {
+    description: 'Este objetivo de puntero no tiene un área de 24 × 24 CSS px verificada de forma determinista y su círculo de separación de 24 CSS px interseca con otro objetivo observado. Revisa las excepciones de WCAG antes de tratarlo como un incumplimiento.',
   },
   'FT-WARN-001': {
     description: 'Este rol ARIA explícito está marcado como obsoleto en el registro WAI-ARIA actual.',
@@ -336,10 +341,27 @@ function localizedContrastEvidence(issue: ScanIssue): string | undefined {
   return undefined;
 }
 
+function localizedTargetSizeEvidence(evidence: string): string {
+  return evidence
+    .replace(/^Target measures /, 'El objetivo mide ')
+    .replace(/; its (\d+(?:\.\d+)?) CSS px spacing circle intersects /, '; su círculo de separación de $1 CSS px interseca con ')
+    .replace(
+      'The user-agent-control exception may apply if the author has not modified the native target size. ',
+      'Puede aplicarse la excepción de control del navegador si el autor no ha modificado el tamaño nativo del objetivo. ',
+    )
+    .replace(
+      'Equivalent or essential exceptions may also apply, so FocusTrace does not mark this as an automatic WCAG failure.',
+      'También pueden aplicarse las excepciones por control equivalente o necesidad esencial, por lo que FocusTrace no lo marca como un fallo WCAG automático.',
+    );
+}
+
 function localizedDynamicEvidence(issue: ScanIssue): string | undefined {
   if (!issue.evidence) return undefined;
   if (['FT-REVIEW-006', 'FT-REVIEW-007', 'FT-REVIEW-008'].includes(issue.ruleId)) {
     return localizedSemanticEvidence(issue.evidence) ?? issue.evidence;
+  }
+  if (issue.ruleId === 'FT-WCAG-012') {
+    return localizedTargetSizeEvidence(issue.evidence);
   }
   if (issue.ruleId === 'FT-WARN-001') {
     return issue.evidence.replace('; deprecated since ARIA ', '; obsoleto desde ARIA ');

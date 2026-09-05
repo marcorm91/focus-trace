@@ -31,6 +31,7 @@ import { textContrastSubjectsForElement } from './contrast';
 import { evaluateStructuralHtml, type StructuralHtmlSignalKind } from './content-model';
 import { isProgrammaticallyHidden, selectorFor } from './dom';
 import { collectHeadingOutline, runFocusTraceScan as runBaseFocusTraceScan } from './scan-base';
+import { evaluateTargetSize, type TargetSizeEvaluation } from './target-size';
 
 export { collectHeadingOutline };
 
@@ -135,6 +136,21 @@ function ariaIssueFor(kind: AriaValidationSignalKind, element: Element, detail: 
     outcome: 'warning',
     targets: [selectorFor(element)],
     evidence: detail,
+    references: rule.references,
+  };
+}
+
+function targetSizeIssueFor(evaluation: TargetSizeEvaluation): ScanIssue {
+  const rule = RULES.targetSizeMinimum;
+  return {
+    id: uid(),
+    ruleId: rule.id,
+    title: rule.title,
+    description: 'This pointer target does not have a deterministically verified 24 × 24 CSS px target area, and its 24 CSS px spacing circle intersects another observed pointer target. Review the WCAG exceptions before treating this as a failure.',
+    severity: rule.severity,
+    outcome: 'review',
+    targets: [selectorFor(evaluation.element)],
+    evidence: evaluation.detail,
     references: rule.references,
   };
 }
@@ -271,5 +287,25 @@ export function runFocusTraceScan(scope?: ComponentScanScope): ScanResult {
     }),
   ];
   result.rulesRun += ADVANCED_ARIA_RULES.length;
+
+  const targetSizeEvaluations = evaluateTargetSize(root);
+  const targetSizeReviews = targetSizeEvaluations
+    .filter((evaluation) => evaluation.status === 'review')
+    .map(targetSizeIssueFor);
+  const targetSizePasses = targetSizeEvaluations.filter((evaluation) => evaluation.status === 'pass').length;
+  result.review.push(...targetSizeReviews);
+  result.ruleResults = [
+    ...(result.ruleResults ?? []),
+    {
+      ruleId: RULES.targetSizeMinimum.id,
+      applicable: targetSizeEvaluations.length,
+      passed: targetSizePasses,
+      failures: 0,
+      reviews: targetSizeReviews.length,
+      warnings: 0,
+    },
+  ];
+  result.passes += targetSizePasses;
+  result.rulesRun += 1;
   return result;
 }
