@@ -223,10 +223,6 @@ export function outgoingFocusEdges(graph: FocusGraph, nodeIdValue: string): Focu
   return graph.edges.filter((edge) => edge.from === nodeIdValue);
 }
 
-export function incomingFocusEdges(graph: FocusGraph, nodeIdValue: string): FocusGraphEdge[] {
-  return graph.edges.filter((edge) => edge.to === nodeIdValue);
-}
-
 export function focusGraphNodeById(graph: FocusGraph, nodeIdValue: string): FocusGraphNode | undefined {
   return graph.nodes.find((node) => node.id === nodeIdValue);
 }
