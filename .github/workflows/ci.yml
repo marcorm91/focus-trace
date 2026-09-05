@@ -36,6 +36,9 @@ jobs:
       - run: npm run standards:validate
       - run: npm run axe:validate
       - run: npm run capabilities:validate
+      - run: npm run rules:validate
+      - run: npm run i18n:validate
+      - run: npm run deadcode:validate
       - run: npm run check
       - run: npm run lint
       - run: npm test
