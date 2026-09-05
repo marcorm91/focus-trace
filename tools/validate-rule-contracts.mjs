@@ -179,14 +179,12 @@ for (const [id, paths] of literalReferences) {
   }
 }
 
-const rulesDocument = readFileSync('docs/RULES.md', 'utf8');
-const missingRulesDoc = [...declaredRuleIds].filter((id) => !rulesDocument.includes(id));
-if (missingRulesDoc.length > 0) errors.push(`docs/RULES.md is missing rule IDs: ${missingRulesDoc.join(', ')}`);
-
-const severityAudit = readFileSync('docs/SEVERITY-AUDIT.md', 'utf8');
-const missingSeverityAudit = [...objectDefinitions.keys()].filter((id) => !severityAudit.includes(id));
-if (missingSeverityAudit.length > 0) {
-  errors.push(`docs/SEVERITY-AUDIT.md is missing object-defined rule IDs: ${missingSeverityAudit.join(', ')}`);
+for (const docPath of ['docs/RULES.md', 'docs/SEVERITY-AUDIT.md']) {
+  const document = readFileSync(docPath, 'utf8');
+  const missing = [...objectDefinitions.keys()].filter((id) => !document.includes(id));
+  if (missing.length > 0) {
+    errors.push(`${docPath} is missing object-defined rule IDs: ${missing.join(', ')}`);
+  }
 }
 
 if (errors.length > 0) {
