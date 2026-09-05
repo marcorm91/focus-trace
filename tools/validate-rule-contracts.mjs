@@ -4,9 +4,9 @@ import { join } from 'node:path';
 const SOURCE_ROOTS = ['entrypoints', 'lib', 'shared'];
 const SOURCE_EXTENSIONS = /\.(?:ts|tsx)$/;
 const RULE_ID = 'FT-(?:(?:WCAG|WARN|REVIEW|APG)-\\d{3}|RUNTIME(?:-ARIA)?-\\d{3})';
-const DEFINITION_PATTERN = new RegExp(`\\bid\\s*:\\s*(['\"])(?<id>${RULE_ID})\\1`, 'g');
-const DECLARATION_PATTERN = new RegExp(`\\b(?:id|ruleId)\\s*:\\s*(['\"])(?<id>${RULE_ID})\\1`, 'g');
-const LITERAL_PATTERN = new RegExp(`(['\"])(?<id>${RULE_ID})\\1`, 'g');
+const DEFINITION_PATTERN = new RegExp(`\\bid\\s*:\\s*(['"])(?<id>${RULE_ID})\\1`, 'g');
+const DECLARATION_PATTERN = new RegExp(`\\b(?:id|ruleId)\\s*:\\s*(['"])(?<id>${RULE_ID})\\1`, 'g');
+const LITERAL_PATTERN = new RegExp(`(['"])(?<id>${RULE_ID})\\1`, 'g');
 const ALLOWED_SEVERITIES = new Set(['critical', 'serious', 'moderate', 'minor', 'info']);
 
 function sourceFiles(root) {
@@ -147,7 +147,7 @@ for (const path of files) {
       continue;
     }
 
-    const severity = object.match(/\bseverity\s*:\s*['\"]([^'\"]+)['\"]/i)?.[1];
+    const severity = object.match(/\bseverity\s*:\s*['"]([^'"]+)['"]/i)?.[1];
     const references = object.match(/\breferences\s*:\s*\[([\s\S]*?)\]/i)?.[1]?.trim();
     const hasRationale = /\bseverityRationale\s*:|\.\.\.impact\s*\(/.test(object);
 
