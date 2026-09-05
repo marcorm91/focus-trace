@@ -275,16 +275,3 @@ export function outcomeLabel(
   if (outcome === 'review') return tr(language, 'needs review', 'requiere revisión');
   return tr(language, 'warning', 'aviso');
 }
-
-export function explanationLevelDescription(
-  level: ExplanationLevel,
-  language: AppLanguage = 'en',
-): string {
-  if (level === 'simple') {
-    return tr(language, 'Plain-language impact and next steps. Technical identifiers stay hidden.', 'Impacto y siguientes pasos en lenguaje claro. Los identificadores técnicos permanecen ocultos.');
-  }
-  if (level === 'accessibility') {
-    return tr(language, 'Adds standards references, outcomes and audit evidence.', 'Añade referencias normativas, resultados y evidencia de auditoría.');
-  }
-  return tr(language, 'Shows selectors, event details, mutations, routes and internal cause identifiers.', 'Muestra selectores, detalles de eventos, mutaciones, rutas e identificadores internos de causa.');
-}
