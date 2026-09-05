@@ -138,11 +138,11 @@ Trace stores compact evidence: selector, role, accessible name, tag, relevant ch
 | `FT-RUNTIME-004` | SPA route changes without moving focus into the new context. | REVIEW | WCAG 2.4.3 |
 | `FT-RUNTIME-005` | Element keeping focus becomes hidden during interaction. | REVIEW | WCAG 2.4.3 / 4.1.2 |
 | `FT-RUNTIME-006` | Significant pointer dragging is observed on a likely drag-capable target and a single-pointer alternative must be reviewed. | REVIEW | WCAG 2.5.7 |
-| `FT-RUNTIME-007` | After a real activation, a short visible status-like message appears without observable live/status semantics or an `aria-errormessage` relationship. | REVIEW | WCAG 4.1.3 |
+| `FT-RUNTIME-007` | After a real activation, a short visible status-like message appears without observable live/status semantics or an active `aria-errormessage` relationship. | REVIEW | WCAG 4.1.3 |
 
 `FT-RUNTIME-002` rechecks the element while it keeps focus after scroll, resize and relevant DOM mutations. `FT-RUNTIME-006` requires real pointer movement above the jitter threshold; native `dragstart` alone is not used to emit the review.
 
-`FT-RUNTIME-007` is interaction-correlated and stabilized. It excludes dialogs, modeled widget-state containers, messages that receive focus or are followed by a focus/navigation/dialog context change, and messages already exposed through `role="status"`, `role="alert"`, `role="log"`, progress semantics, active `aria-live`, `aria-busy` or `aria-errormessage`. Status-message classification still depends on meaning, so the rule stays **REVIEW** and does not manufacture an automatic WCAG FAIL.
+`FT-RUNTIME-007` is interaction-correlated and stabilized. It excludes dialogs, modeled widget-state containers, messages that receive focus or are followed by a focus/navigation/dialog context change, and messages already exposed through `role="status"`, `role="alert"`, `role="log"`, progress semantics, active `aria-live` or an active `aria-errormessage` relationship. `aria-busy` alone is not treated as sufficient status-message exposure. Status-message classification still depends on meaning, so the rule stays **REVIEW** and does not manufacture an automatic WCAG FAIL.
 
 ### Runtime ARIA warnings
 
