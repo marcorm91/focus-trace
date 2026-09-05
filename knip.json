@@ -4,7 +4,8 @@
     "entrypoints/*/main.tsx",
     "tests/**/*.test.ts",
     "tests/**/*.spec.ts",
-    "tools/**/*.mjs"
+    "tools/**/*.mjs",
+    "vitest.coverage.config.ts"
   ],
   "project": [
     "entrypoints/**/*.{ts,tsx}",
