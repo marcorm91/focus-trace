@@ -55,7 +55,7 @@ async function broadcast(state: SessionState) {
   }
 }
 
-async function ensureRuntimeInjected(tabId: number): Promise<boolean> {
+async function ensureInjected(tabId: number): Promise<boolean> {
   try {
     await browser.tabs.sendMessage(tabId, { type: 'FOCUSTRACE_PING' });
     return false;
@@ -63,23 +63,6 @@ async function ensureRuntimeInjected(tabId: number): Promise<boolean> {
     await browser.scripting.executeScript({ target: { tabId }, files: ['/content-scripts/runtime.js'] });
     return true;
   }
-}
-
-async function ensureStatusMessagesInjected(tabId: number): Promise<boolean> {
-  try {
-    const response = await browser.tabs.sendMessage(tabId, { type: 'FOCUSTRACE_STATUS_MESSAGES_PING' });
-    if (response === 'FOCUSTRACE_STATUS_MESSAGES_READY') return false;
-  } catch {
-    // Missing runtime listener is handled by the injection below.
-  }
-  await browser.scripting.executeScript({ target: { tabId }, files: ['/content-scripts/status-messages.js'] });
-  return true;
-}
-
-async function ensureInjected(tabId: number): Promise<boolean> {
-  const runtimeInjected = await ensureRuntimeInjected(tabId);
-  const statusMessagesInjected = await ensureStatusMessagesInjected(tabId);
-  return runtimeInjected || statusMessagesInjected;
 }
 
 async function syncContentState(tabId: number, suppliedState?: SessionState) {
