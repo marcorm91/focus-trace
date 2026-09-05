@@ -1,5 +1,6 @@
 import { isProgrammaticallyHidden, selectorFor, semanticRole } from '../audit/dom';
-import type { RuntimeEvent, StandardReference } from '../../shared/types';
+import { RULES } from '../../shared/rule-catalog';
+import type { RuntimeEvent } from '../../shared/types';
 import { snapshot } from './page-inspection';
 
 type PendingRuntimeEvent = Omit<RuntimeEvent, 'id' | 'timestamp'>;
@@ -7,25 +8,9 @@ type PendingRuntimeEvent = Omit<RuntimeEvent, 'id' | 'timestamp'>;
 const MAX_STATUS_TEXT_LENGTH = 240;
 const MAX_CANDIDATES_PER_MUTATION = 8;
 
-const STATUS_MESSAGE_REFERENCE: StandardReference = {
-  type: 'WCAG',
-  id: '4.1.3',
-  label: 'Status Messages',
-  level: 'AA',
-  status: 'normative',
-  url: 'https://www.w3.org/TR/WCAG22/#status-messages',
-};
-
-const STATUS_MESSAGE_RULE = {
-  id: 'FT-RUNTIME-007',
-  title: 'Observed status message may not be programmatically exposed',
-  severity: 'moderate' as const,
-  references: [STATUS_MESSAGE_REFERENCE],
-};
-
 const STRONG_STRUCTURE_SIGNAL = /(?:^|[-_\s])(status|toast|snackbar|notification|notice|feedback|flash|success|error|warning|progress|loading|busy)(?:$|[-_\s])/i;
 const WEAK_STRUCTURE_SIGNAL = /(?:^|[-_\s])(message|result)(?:$|[-_\s])/i;
-const STATUS_TEXT_SIGNAL = /^(?:saved|save complete|success|successful|successfully|updated|added|removed|deleted|sent|submitted|complete|completed|done|error|errors|invalid|failed|failure|loading|searching|processing|saving|sending|uploading|downloading|please wait|waiting|no results|\d+[\d.,]*\s+(?:results?|items?)|progress|guardad[oa]s?|guardado correctamente|éxito|correctamente|actualizad[oa]s?|añadid[oa]s?|agregad[oa]s?|eliminad[oa]s?|enviad[oa]s?|completad[oa]s?|hecho|errores|inválid[oa]s?|no válido|no válida|falló|fallo|cargando|buscando|procesando|guardando|enviando|subiendo|descargando|espera|esperando|sin resultados|no hay resultados|\d+[\d.,]*\s+(?:resultados?|elementos?|artículos?)|progreso)(?:\b|\s|[.!:,-])/i;
+const STATUS_TEXT_SIGNAL = /^(?:saved(?:\s+successfully)?|save complete|success(?:ful|fully)?|updated|added|removed|deleted|sent|submitted|complete|completed|done|error|errors|invalid|failed|failure|loading|searching|processing|saving|sending|uploading|downloading|please wait|waiting|no results|\d+[\d.,]*\s+(?:results?|items?)|progress|guardad[oa]s?|guardado correctamente|éxito|correctamente|actualizad[oa]s?|añadid[oa]s?|agregad[oa]s?|eliminad[oa]s?|enviad[oa]s?|completad[oa]s?|hecho|error|errores|inválid[oa]s?|no válido|no válida|falló|fallo|cargando|buscando|procesando|guardando|enviando|subiendo|descargando|espera|esperando|sin resultados|no hay resultados|\d+[\d.,]*\s+(?:resultados?|elementos?|artículos?)|progreso)(?:\b|\s|[.!:,-])/i;
 
 const EXCLUDED_CONTAINER_ROLES = new Set([
   'dialog',
@@ -130,14 +115,13 @@ function hasLiveRegionSemantics(element: Element): boolean {
     if (ariaLive !== 'off') return true;
   }
 
-  if (element.closest('[aria-busy="true"]')) return true;
-
   if (element.id) {
     const escapedId = typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
       ? CSS.escape(element.id)
       : element.id.replace(/(["\\])/g, '\\$1');
     try {
-      if (document.querySelector(`[aria-errormessage~="${escapedId}"]`)) return true;
+      const relationship = document.querySelector(`[aria-invalid="true"][aria-errormessage~="${escapedId}"]`);
+      if (relationship) return true;
     } catch {
       // Unusual IDs can be impossible to represent safely in a selector.
     }
@@ -158,14 +142,15 @@ export function createStatusMessageReviewEvent(element: Element): PendingRuntime
   if (!isPotentialStatusMessage(element) || hasProgrammaticStatusExposure(element)) return undefined;
 
   const text = normalizedText(element);
+  const rule = RULES.statusMessageExposure;
   return {
     kind: 'status-message',
-    severity: STATUS_MESSAGE_RULE.severity,
-    title: STATUS_MESSAGE_RULE.title,
-    detail: `Observed status-like text “${text}” after an interaction, but no live-region/status semantics or aria-errormessage relationship were found. FocusTrace keeps this as REVIEW because deciding whether the content is a WCAG status message requires context.`,
+    severity: rule.severity,
+    title: rule.title,
+    detail: `Observed status-like text “${text}” after an interaction, but no live-region/status semantics or active aria-errormessage relationship were found. FocusTrace keeps this as REVIEW because deciding whether the content is a WCAG status message requires context.`,
     element: snapshot(element),
     outcome: 'review',
-    ruleId: 'FT-RUNTIME-007',
-    references: STATUS_MESSAGE_RULE.references,
+    ruleId: rule.id,
+    references: rule.references,
   };
 }
