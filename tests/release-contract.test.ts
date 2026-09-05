@@ -1,4 +1,4 @@
-import { readFileSync } from 'node:fs';
+import { existsSync, readFileSync } from 'node:fs';
 import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import { manifestForBrowser } from '../wxt.config';
@@ -35,20 +35,30 @@ const edgeManifest = manifestForBrowser('edge');
 const firefoxManifest = manifestForBrowser('firefox');
 const OPTIONAL_HOSTS = ['http://*/*', 'https://*/*', '<all_urls>'];
 
-describe('v0.2.0 release contract', () => {
+describe('v0.2.1 release contract', () => {
   it('keeps package, lockfile and browser manifests on the same version', () => {
     expect(chromeManifest.version).toBe(packageJson.version);
     expect(edgeManifest.version).toBe(packageJson.version);
     expect(firefoxManifest.version).toBe(packageJson.version);
     expect(packageLock.version).toBe(packageJson.version);
     expect(packageLock.packages?.['']?.version).toBe(packageJson.version);
-    expect(packageJson.version).toBe('0.2.0');
+    expect(packageJson.version).toBe('0.2.1');
   });
 
   it('keeps the committed dependency lock aligned with package.json', () => {
     expect(packageLock.lockfileVersion).toBe(3);
     expect(packageLock.packages?.['']?.dependencies).toEqual(packageJson.dependencies);
     expect(packageLock.packages?.['']?.devDependencies).toEqual(packageJson.devDependencies);
+  });
+
+  it('ships release documentation for the exact package version', () => {
+    const releaseNotesPath = resolve(process.cwd(), `docs/RELEASE_NOTES_${packageJson.version}.md`);
+    const changelogPath = resolve(process.cwd(), 'CHANGELOG.md');
+
+    expect(existsSync(releaseNotesPath)).toBe(true);
+    expect(existsSync(changelogPath)).toBe(true);
+    expect(readFileSync(releaseNotesPath, 'utf8')).toContain(`# FocusTrace ${packageJson.version}`);
+    expect(readFileSync(changelogPath, 'utf8')).toContain(`## ${packageJson.version}`);
   });
 
   it('keeps Chromium production permissions minimal and page/screenshot access optional', () => {
