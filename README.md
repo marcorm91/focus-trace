@@ -39,7 +39,7 @@ FocusTrace uses WCAG 2.2 as its conformance source. WCAG 2.2 criteria are also r
 | **Color suggestion** | Deterministic contrast failure | Suggests a small sRGB adjustment that reaches the required ratio when it can be computed safely. | Measured HEX/RGB, suggestion and copy action. |
 | **How to fix** | Findings with remediation guidance | Shows concrete remediation strategies and a verification step. | Localized EN/ES guidance. |
 | **Structure** | Current page | Exposes headings, semantic review and structural metrics on demand. | H1-H6 outline, suggestions and counts. |
-| **Trace** | Real interaction | Records keyboard/pointer input, focus, relevant mutations, SPA routes, dialogs, ARIA widgets and causal evidence. | Events correlated by interaction. |
+| **Trace** | Real interaction | Records keyboard/pointer input, focus, relevant mutations, SPA routes, dialogs, status-message candidates, ARIA widgets and causal evidence. | Events correlated by interaction. |
 | **Virtual focus** | Compatible `aria-activedescendant` widgets | Records valid virtual-focus changes as informational evidence without treating them as DOM focus movement or a finding. | Virtual destination available in Trace, Journey and Graph. |
 | **Focus Walk** | Active page | Automates sequential focus traversal to build navigation evidence. | Journey of reachable focus targets. |
 | **Replay** | Recorded Trace session | Reconstructs evidence read-only without replaying actions against the page. | Runtime sequence. |
@@ -138,8 +138,11 @@ Trace stores compact evidence: selector, role, accessible name, tag, relevant ch
 | `FT-RUNTIME-004` | SPA route changes without moving focus into the new context. | REVIEW | WCAG 2.4.3 |
 | `FT-RUNTIME-005` | Element keeping focus becomes hidden during interaction. | REVIEW | WCAG 2.4.3 / 4.1.2 |
 | `FT-RUNTIME-006` | Significant pointer dragging is observed on a likely drag-capable target and a single-pointer alternative must be reviewed. | REVIEW | WCAG 2.5.7 |
+| `FT-RUNTIME-007` | After a real activation, a short visible status-like message appears without observable live/status semantics or an `aria-errormessage` relationship. | REVIEW | WCAG 4.1.3 |
 
 `FT-RUNTIME-002` rechecks the element while it keeps focus after scroll, resize and relevant DOM mutations. `FT-RUNTIME-006` requires real pointer movement above the jitter threshold; native `dragstart` alone is not used to emit the review.
+
+`FT-RUNTIME-007` is interaction-correlated and stabilized. It excludes dialogs, modeled widget-state containers, messages that receive focus or are followed by a focus/navigation/dialog context change, and messages already exposed through `role="status"`, `role="alert"`, `role="log"`, progress semantics, active `aria-live`, `aria-busy` or `aria-errormessage`. Status-message classification still depends on meaning, so the rule stays **REVIEW** and does not manufacture an automatic WCAG FAIL.
 
 ### Runtime ARIA warnings
 
@@ -307,7 +310,7 @@ Memory does not store page HTML, full DOM snapshots or full-page screenshots.
 | Capability | Content / behavior |
 | --- | --- |
 | **Session report** | Combines static findings and runtime evidence from the current session. |
-| **Interaction stories** | Includes Trace chains, including runtime ARIA warnings and APG reviews. |
+| **Interaction stories** | Includes Trace chains, including status-message reviews, runtime ARIA warnings and APG reviews. |
 | **Document structure** | Reuses compact metrics/suggestions when Structure was already generated. |
 | **Rule legend** | Explains `FT-WCAG-*`, `FT-WARN-*`, `FT-REVIEW-*`, `FT-RUNTIME-*`, `FT-RUNTIME-ARIA-*` and `FT-APG-*` families. |
 | **PDF** | Printable single-page or multipage-audit export. |
@@ -339,6 +342,7 @@ Memory does not store page HTML, full DOM snapshots or full-page screenshots.
 | HTML | Operates on the parsed live DOM; browser parser repair may normalize invalid source before FocusTrace runs. |
 | ARIA | Derives observable relationships but does not reproduce the exact browser accessibility tree or a screen reader's spoken output. |
 | Runtime ARIA | Evaluates modeled patterns only after relevant real interactions and uses a stabilization window; it does not simulate arbitrary actions. |
+| Status messages | Runtime review is limited to short visible EN/ES status-like text and observable structural signals after real activation. It cannot prove every message's meaning, non-text-only status, exact accessibility-tree exposure or screen-reader announcement. |
 | APG | APG is informative guidance and optional variants are not forced as universal requirements. |
 | Grid / Treegrid | Reviews stay conservative for irregular/virtualized grids, spans and explicit indexes. |
 | Runtime | Can report only interaction paths that were actually observed. |
