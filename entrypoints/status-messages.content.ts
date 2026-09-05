@@ -52,7 +52,7 @@ function isFocusTraceUi(element: Element): boolean {
 }
 
 export default defineContentScript({
-  registration: 'runtime',
+  registration: 'status-messages',
   matches: ['http://*/*', 'https://*/*'],
   runAt: 'document_idle',
   main(ctx) {
