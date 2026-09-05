@@ -57,7 +57,7 @@ Enabling these checks also removed residual exports/helpers and added missing re
 
 Browser manifests now read the extension version from `package.json` instead of duplicating a hard-coded version in `wxt.config.ts`.
 
-The release contract also verifies that the package, lockfile, generated browser manifests, release notes and changelog all describe the same candidate version.
+The release contract also verifies that the package, lockfile, generated browser manifests and operational release documentation describe the same candidate version, including release notes, changelog, release checklist and store-submission guidance.
 
 ## Test and reliability coverage
 
@@ -70,7 +70,8 @@ The 0.2.1 regression suite adds or strengthens coverage for:
 - isolated-world mutation/click ordering in the runtime detector;
 - conservative dragging-target classification;
 - native EN/ES manifest locale catalogs;
-- dead-code, rule, i18n, workflow, manifest and bundle contracts.
+- dead-code, rule, i18n, workflow, manifest and bundle contracts;
+- operational release-document version alignment.
 
 ## Privacy and permissions
 
