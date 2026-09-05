@@ -230,7 +230,7 @@ The runtime event stores the target plus a compact movement-distance summary; it
 
 The review is evaluated only while **Trace** is recording and is correlated to a recent real activation (`click`, Enter or Space) through the existing `interactionId`. Candidate content is stabilized briefly before evaluation and must be a short rendered text message with observable status-oriented structure or a bounded EN/ES status-text signal.
 
-FocusTrace suppresses the review when observable evidence already indicates programmatic exposure, including `role="status"`, `role="alert"`, `role="log"`, progress semantics, active `aria-live`, `aria-busy="true"` or an `aria-errormessage` relationship. Dialogs, modeled widget-state containers and interactive containers are excluded so WCAG 4.1.3 is not conflated with context changes or WCAG 4.1.2 widget state.
+FocusTrace suppresses the review when observable evidence already indicates programmatic exposure, including `role="status"`, `role="alert"`, `role="log"`, progress semantics, active `aria-live` or an active `aria-errormessage` relationship. `aria-busy="true"` alone is not treated as sufficient status-message exposure: it can indicate that a region is being updated, but it does not by itself identify the status message or provide its semantics. Dialogs, modeled widget-state containers and interactive containers are excluded so WCAG 4.1.3 is not conflated with context changes or WCAG 4.1.2 widget state.
 
 A candidate is also discarded when it receives focus or Trace observes a subsequent focus transition, route change or dialog opening inside the stabilization/correlation window. This reflects the WCAG definition: a message that changes context falls outside the status-message requirement.
 
