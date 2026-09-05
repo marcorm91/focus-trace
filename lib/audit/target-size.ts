@@ -150,6 +150,7 @@ function borderRadiusValues(style: CSSStyleDeclaration): number[] {
     style.borderTopRightRadius,
     style.borderBottomRightRadius,
     style.borderBottomLeftRadius,
+    style.borderRadius,
   ].flatMap((value) => value.split(/\s+/).map((part) => Number.parseFloat(part)).filter(Number.isFinite));
 }
 
