@@ -34,6 +34,7 @@ const chromeManifest = manifestForBrowser('chrome');
 const edgeManifest = manifestForBrowser('edge');
 const firefoxManifest = manifestForBrowser('firefox');
 const OPTIONAL_HOSTS = ['http://*/*', 'https://*/*', '<all_urls>'];
+const CHROME_WEB_STORE_URL = 'https://chromewebstore.google.com/detail/focustrace/efmfklamjafbknbmadpfmlbhobnoffnn';
 
 describe('v0.2.1 release contract', () => {
   it('keeps package, lockfile and browser manifests on the same version', () => {
@@ -76,6 +77,14 @@ describe('v0.2.1 release contract', () => {
     expect(storeSubmission).toContain(`- Version: ${packageJson.version}`);
     expect(storeSubmission).toContain(`production ZIP for ${packageJson.version}`);
     expect(storeSubmission).toContain(`\`v${packageJson.version}\``);
+  });
+
+  it('keeps the official Chrome Web Store link aligned across both READMEs', () => {
+    const readme = readFileSync(resolve(process.cwd(), 'README.md'), 'utf8');
+    const readmeEs = readFileSync(resolve(process.cwd(), 'README.es.md'), 'utf8');
+
+    expect(readme).toContain(`](${CHROME_WEB_STORE_URL})`);
+    expect(readmeEs).toContain(`](${CHROME_WEB_STORE_URL})`);
   });
 
   it('keeps Chromium production permissions minimal and page/screenshot access optional', () => {
