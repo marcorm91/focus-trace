@@ -1,0 +1,9 @@
+{
+  "maxGrowthPercent": 20,
+  "baseline": {
+    "totalBytes": 1330000,
+    "runtimeBytes": 329000,
+    "sidepanelJsBytes": 281000,
+    "sidepanelCssBytes": 191000
+  }
+}
