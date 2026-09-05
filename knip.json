@@ -1,14 +1,10 @@
 {
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": [
-    "entrypoints/background.ts",
-    "entrypoints/runtime.content.ts",
     "entrypoints/*/main.tsx",
     "tests/**/*.test.ts",
     "tests/**/*.spec.ts",
-    "tools/**/*.mjs",
-    "playwright.config.ts",
-    "wxt.config.ts"
+    "tools/**/*.mjs"
   ],
   "project": [
     "entrypoints/**/*.{ts,tsx}",
@@ -18,6 +14,7 @@
     "tools/**/*.mjs",
     "*.config.ts"
   ],
+  "ignoreExportsUsedInFile": true,
   "ignoreUnresolved": [
     "#imports"
   ]
