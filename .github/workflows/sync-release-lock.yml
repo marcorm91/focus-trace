@@ -1,0 +1,46 @@
+name: Sync release lock
+
+on:
+  push:
+    branches:
+      - release/v0.2.1
+
+permissions:
+  contents: write
+
+jobs:
+  sync-lock:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: release/v0.2.1
+      - name: Sync lockfile release metadata
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+          const path = 'package-lock.json';
+          let source = fs.readFileSync(path, 'utf8');
+          const from = '"version": "0.2.0"';
+          const to = '"version": "0.2.1"';
+          for (let i = 0; i < 2; i += 1) {
+            const index = source.indexOf(from);
+            if (index < 0) throw new Error(`Expected release version occurrence ${i + 1} was not found`);
+            source = source.slice(0, index) + to + source.slice(index + from.length);
+          }
+          fs.writeFileSync(path, source);
+          NODE
+          git diff --check
+          git diff -- package-lock.json
+      - name: Commit synchronized lockfile
+        run: |
+          if git diff --quiet -- package-lock.json; then
+            echo "package-lock.json already synchronized"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add package-lock.json
+          git commit -m "chore: sync lockfile for 0.2.1"
+          git push origin HEAD:release/v0.2.1
