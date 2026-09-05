@@ -66,6 +66,8 @@ Existing equivalent rules that already matched axe keep their severity, includin
 | `FT-RUNTIME-003` SPA title unchanged | moderate | runtime | Context depends on the SPA transition. |
 | `FT-RUNTIME-004` SPA focus unchanged | moderate | runtime | Context depends on the SPA transition. |
 | `FT-RUNTIME-005` Focused element became hidden | serious | runtime | FocusTrace runtime evidence. |
+| `FT-RUNTIME-006` Dragging observed | moderate | runtime / review | A drag can be a substantial pointer barrier, but the rule cannot prove whether an equivalent single-pointer operation or essential exception exists. |
+| `FT-RUNTIME-007` Status message exposure | moderate | runtime / review | Missing status exposure can hide success, result, progress or error feedback from assistive-technology users. The observed text still requires contextual status-message classification, so it remains REVIEW. |
 | `FT-APG-001` Dialog opened without focus | serious | runtime | APG/runtime behavior rather than an axe-equivalent static rule. |
 | `FT-APG-002` Modal focus escape | serious | runtime | APG/runtime behavior rather than an axe-equivalent static rule. |
 | `FT-APG-003` Dialog focus restore | moderate | runtime | APG/runtime behavior rather than an axe-equivalent static rule. |
