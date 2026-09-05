@@ -677,7 +677,3 @@ export function textContrastSubjectsForElement(element: Element): TextContrastSu
 
   return subjects;
 }
-
-export function elementHasRenderedText(element: Element): boolean {
-  return textContrastSubjectsForElement(element).length > 0;
-}
