@@ -1,6 +1,6 @@
 # FocusTrace release checklist
 
-Current release candidate: **0.2.0**.
+Current release candidate: **0.2.1**.
 
 Use this checklist before publishing a release build or submitting an updated package to a browser store. Keep the candidate version above aligned with `package.json`, `package-lock.json`, the browser manifests and the release contract test.
 
@@ -12,7 +12,7 @@ Run the complete local release gate:
 npm run release:check:full
 ```
 
-A release candidate is blocked if standards validation, TypeScript, unit tests, Chrome/Edge/Firefox MV3 builds or browser E2E tests fail.
+A release candidate is blocked if standards validation, rule/i18n/dead-code checks, critical coverage, TypeScript, lint, unit tests, Chrome/Edge/Firefox MV3 builds, manifest/build validation, bundle budgets or browser E2E tests fail.
 
 CI must also be green on the exact commit that will be tagged.
 
@@ -34,7 +34,7 @@ The committed `package-lock.json` must remain synchronized with `package.json`, 
 
 The automated side-panel E2E smoke test is a regression guard; it is not a substitute for the manual checks above.
 
-## WCAG 2.2 runtime and Site Audit 0.2.0 smoke
+## WCAG 2.2 regression smoke
 
 ### WCAG 2.4.11 Focus Not Obscured (Minimum)
 
@@ -53,6 +53,14 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 - Drag a normal browser-draggable image/link that is not identified as a drag-capable interaction and confirm native `dragstart` alone does not create the review signal.
 - Confirm the guidance preserves the possibility that dragging can be essential and does not claim an automatic WCAG failure.
 
+### WCAG 2.5.8 Target Size (Minimum)
+
+- Analyze a representative interactive target smaller than 24 × 24 CSS px and confirm `FT-WCAG-012` is presented as `REVIEW`, not deterministic `FAIL`.
+- Confirm measured target geometry/spacing evidence is shown without claiming that FocusTrace resolved every WCAG exception.
+- Check a sufficiently large target and confirm the rule can pass its modeled size expectation.
+- Verify inline, equivalent-target, user-agent-control and essential-presentation possibilities are not incorrectly promoted to automatic failures.
+- Switch EN/ES and confirm the criterion title, explanation and remediation remain semantically equivalent while selectors/numeric evidence stay unchanged.
+
 ### WCAG 3.2.6 Consistent Help
 
 - Run Site Audit over two sampled pages that expose at least two shared help mechanism categories in different relative order; confirm `FT-REVIEW-011` is generated as `REVIEW` for the affected comparison.
@@ -60,6 +68,22 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 - Confirm the remediation guidance recommends keeping applicable help mechanisms in the same relative order and is available in both languages.
 - Repeat with the same relative order and confirm the review disappears.
 - Repeat with only one shared help mechanism category and confirm FocusTrace does not infer an order inconsistency from insufficient evidence.
+
+### WCAG 4.1.3 Status Messages
+
+- Start Trace, trigger a save/loading/result message that updates after a real user interaction without moving focus or changing context, and confirm an unexposed candidate can produce `FT-RUNTIME-007` as `REVIEW`.
+- Repeat with `role="status"`, `role="alert"`, `role="log"`, active `aria-live`, native `<progress>`/`role="progressbar"` and active `aria-errormessage`; confirm valid programmatic exposure suppresses the review.
+- Confirm `aria-busy="true"` alone does not suppress the review merely because the region is marked busy.
+- Trigger a dialog, focus move, navigation/context change or modeled widget-state update and confirm ordinary context changes are not misclassified as status messages.
+- Switch EN/ES and confirm FocusTrace's explanation/remediation is translated while the inspected page's original message text remains verbatim.
+
+## Native browser i18n smoke
+
+- Inspect the production Chrome, Edge and Firefox manifests and confirm `default_locale` is `en` and browser-facing name/description/action title use `__MSG_*__` references.
+- Confirm `_locales/en/messages.json` and `_locales/es/messages.json` exist in every production build with matching keys.
+- Load the extension in a browser/profile using English UI and verify browser-owned extension metadata resolves to the English catalog.
+- Repeat with Spanish browser UI and verify the browser-owned metadata resolves to Spanish.
+- Confirm changing the FocusTrace in-product language remains independent of the browser UI locale.
 
 ## Structure smoke
 
@@ -201,17 +225,18 @@ Before changing visibility:
 
 ## Release
 
-For the current candidate, the release version is **0.2.0** and the intended tag is **`v0.2.0`**.
+For the current candidate, the release version is **0.2.1** and the intended tag is **`v0.2.1`**.
 
-- Confirm `package.json`, `package-lock.json` and all browser manifests report `0.2.0`.
-- Confirm `tests/release-contract.test.ts` targets `v0.2.0` and passes.
-- Confirm `docs/RELEASE_NOTES_0.2.0.md` matches the shipped behavior and limitations.
+- Confirm `package.json`, `package-lock.json` and all browser manifests report `0.2.1`.
+- Confirm `tests/release-contract.test.ts` targets `v0.2.1` and passes.
+- Confirm `docs/RELEASE_NOTES_0.2.1.md` and `CHANGELOG.md` match the shipped behavior and limitations.
+- Confirm the version shown in Settings comes from the installed manifest and displays `0.2.1` in the packaged candidate.
 - Confirm the release commit is on `main` and CI is green on that exact commit.
 - Build the production Chrome, Edge and Firefox MV3 artifacts from that commit.
 - Smoke-test the unpacked production build in supported Chromium browsers.
 - Complete the Firefox experimental smoke checklist before describing Firefox as officially supported.
-- Tag the exact approved commit as `v0.2.0`.
+- Tag the exact approved commit as `v0.2.1`.
 - Review the generated ZIPs before attaching/uploading them.
 - Only then publish/distribute the release artifacts or submit the updated packages to browser stores.
 
-After publishing 0.2.0, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.
+After publishing 0.2.1, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.

@@ -10,6 +10,14 @@ The project is in active development. Automated results are intentionally separa
 
 FocusTrace is free software licensed under **GNU GPL v3.0 only**. The source-code license and the FocusTrace project identity are intentionally separate; see [License and project identity](#license-and-project-identity).
 
+## Install
+
+FocusTrace is available from the official Chrome Web Store:
+
+- [Install FocusTrace from the Chrome Web Store](https://chromewebstore.google.com/detail/focustrace/efmfklamjafbknbmadpfmlbhobnoffnn)
+
+The store listing may temporarily show an earlier version while a newer release is under review.
+
 ## Functional capability API
 
 This section is the canonical functional inventory of FocusTrace: what the extension can analyze, observe, detect, retain and export, and what kind of evidence each capability produces.
