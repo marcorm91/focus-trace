@@ -111,6 +111,25 @@ User-agent appearance is not modified merely to perform this scan. FocusTrace do
 
 The same structured contrast evidence used by text contrast is reused here with an explicit kind (`ui-boundary`, `graphic`, or `focus-indicator`) and subject. Deterministic failures can therefore reuse the HEX/RGB converter, copy controls and accessible-color suggestion without conflating text and non-text semantics.
 
+## Target Size (Minimum) scope
+
+`FT-WCAG-012` evaluates an observable subset of WCAG 2.2 2.5.8 Target Size (Minimum) in the normal **Analysis** engine. WCAG requires pointer targets to contain at least a `24 × 24` CSS px area unless one of its spacing, equivalent, inline, user-agent-control or essential exceptions applies.
+
+FocusTrace evaluates rendered pointer targets it can identify from native interactive elements, supported interactive roles, inline pointer-handler attributes and focusable elements with an observable pointer signal. Disabled, inert, non-rendered, zero-area and `pointer-events: none` targets are excluded.
+
+A target records `PASS` when FocusTrace can demonstrate one of the observable expectations it models:
+
+- a rectangular target contains an axis-aligned `24 × 24` CSS px area;
+- a rounded target is sufficiently large that the same square is geometrically guaranteed to fit;
+- an undersized target meets the WCAG spacing exception: a `24` CSS px diameter circle centered on its bounding box does not intersect another target or the corresponding circle of another undersized target;
+- the target is an inline target embedded in surrounding non-target text under the modeled inline exception.
+
+Spacing remains document-contextual during component analysis. FocusTrace limits the reported finding to the selected component, but it still compares that target with relevant pointer targets outside the component so a nearby external control cannot be silently ignored.
+
+When a target cannot be proven to meet the modeled size/spacing/inline expectations and its spacing circle intersects another observed target, FocusTrace emits `REVIEW`, not `FAIL`. The equivalent and essential exceptions require functional/content context, and user-agent-control applicability can depend on whether the author modified native rendering. FocusTrace therefore does not convert geometric risk alone into an automatic WCAG failure.
+
+Non-rectangular geometry is handled conservatively. SVG hit areas, `clip-path`, transforms and smaller rounded shapes are not treated as passing merely because their bounding rectangle is at least `24 × 24` CSS px. Bounding-box size alone is not sufficient evidence that an axis-aligned `24 × 24` square fits inside the actual target.
+
 ## ARIA authoring warnings
 
 The scan consumes `generated/aria-registry.json` instead of maintaining role/property lists by hand where the synced registry contains the required information. Existing role-specific rules report:
@@ -228,6 +247,7 @@ This is deliberately a `REVIEW`, not a `FAIL`. Text heuristics cannot prove that
 | FT-WCAG-009 Page lang has a known primary language tag | FAIL/PASS | WCAG 3.1.1 · ACT bf051a · IANA |
 | FT-WCAG-010 Text color contrast | FAIL/REVIEW/PASS | WCAG 1.4.3 AA |
 | FT-WCAG-011 Required non-text visual information has sufficient contrast | FAIL/REVIEW/PASS | WCAG 1.4.11 AA |
+| FT-WCAG-012 Pointer target size and spacing | REVIEW/PASS | WCAG 2.5.8 AA |
 | FT-WARN-001 Deprecated ARIA role | WARNING/PASS | WAI-ARIA registry |
 | FT-WARN-002 Deprecated ARIA property for role | WARNING/PASS | WAI-ARIA registry |
 | FT-WARN-003 Prohibited ARIA property for role | WARNING/PASS | WAI-ARIA registry |
@@ -283,6 +303,7 @@ This is deliberately a `REVIEW`, not a `FAIL`. Text heuristics cannot prove that
 - `FT-WCAG-009` checks the ACT primary-language expectation, not full BCP 47 syntax/semantics.
 - `FT-WCAG-010` covers DOM text with deterministically resolvable computed foreground/background colors. Images of text, pseudo-element text and complex visual composition remain outside deterministic FAIL coverage.
 - `FT-WCAG-011` does not programmatically exercise every hover, pressed, checked or focus state. Multi-color graphics, CSS pseudo-element icons, complex shadows, images/canvas and contextual “required visual information” decisions remain REVIEW/manual territory.
+- `FT-WCAG-012` uses observable DOM/layout geometry and conservative target discovery. Equivalent, essential and user-agent-control exceptions, arbitrary framework-only pointer listeners and complex non-rectangular hit areas can still require manual review; the rule therefore does not currently emit automatic FAIL solely from undersized/overlapping geometry.
 - `FT-RUNTIME-002` uses bounded viewport hit-testing of the observed focused element; it is not a rendering-engine proof of every possible overlap/compositing case.
 - `FT-RUNTIME-006` recognizes observed drag interaction signals but does not automatically prove whether an equivalent non-dragging operation or an essential-dragging exception exists.
 - `FT-REVIEW-011` uses bounded, text-based help-mechanism candidates over Site Audit samples and therefore cannot establish full WCAG 3.2.6 applicability or site-wide conformance.

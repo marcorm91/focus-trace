@@ -35,6 +35,7 @@ FocusTrace uses WCAG 2.2 as its conformance source. WCAG 2.2 criteria are also r
 | **Accessible name** | Supported controls | Computes the accessible name and records the winning source. | Role, computed name, source and inspected candidates. |
 | **Text contrast** | Rendered text with resolvable colors | Calculates ratio, required threshold, foreground/background, font size and weight. | Structured evidence reusable by UI and reports. |
 | **Non-text contrast** | Observable boundaries, states, graphics or focus cues | Evaluates deterministic signals and keeps ambiguous visual composition as REVIEW. | Ratio, signal kind and visual context. |
+| **Pointer target size** | Observable rendered pointer targets | Measures target geometry and WCAG 2.5.8 spacing while preserving contextual exceptions as REVIEW. | CSS-pixel size, neighboring target and pass/review rationale. |
 | **Color suggestion** | Deterministic contrast failure | Suggests a small sRGB adjustment that reaches the required ratio when it can be computed safely. | Measured HEX/RGB, suggestion and copy action. |
 | **How to fix** | Findings with remediation guidance | Shows concrete remediation strategies and a verification step. | Localized EN/ES guidance. |
 | **Structure** | Current page | Exposes headings, semantic review and structural metrics on demand. | H1-H6 outline, suggestions and counts. |
@@ -65,6 +66,7 @@ FocusTrace uses WCAG 2.2 as its conformance source. WCAG 2.2 criteria are also r
 | `FT-WCAG-009` | `lang` uses a known primary language subtag. | FAIL / PASS | WCAG 3.1.1 · ACT bf051a · IANA |
 | `FT-WCAG-010` | Text reaches the required contrast ratio when foreground/background can be resolved safely. | FAIL / REVIEW / PASS | WCAG 1.4.3 AA |
 | `FT-WCAG-011` | Required non-text visual information reaches the required contrast when deterministic evidence exists. | FAIL / REVIEW / PASS | WCAG 1.4.11 AA |
+| `FT-WCAG-012` | Pointer targets contain a verifiable 24 × 24 CSS px area or meet an observable spacing/inline exception; unresolved semantic exceptions remain for review. | REVIEW / PASS | WCAG 2.5.8 AA |
 
 ### Contextual and structural reviews
 
@@ -332,6 +334,7 @@ Memory does not store page HTML, full DOM snapshots or full-page screenshots.
 | Shadow DOM / slots | Not fully covered. |
 | Cross-origin iframes | Content is not fully traversed. |
 | Contrast | Complex visual composition remains REVIEW when it cannot be resolved safely. |
+| Target size | Uses observable DOM/layout geometry and conservative target discovery. Equivalent, essential and user-agent-control exceptions, arbitrary framework-only pointer listeners and complex non-rectangular hit areas can still require manual review. |
 | Dynamic states | Static analysis does not systematically force every hover, pressed, checked or focus state. |
 | HTML | Operates on the parsed live DOM; browser parser repair may normalize invalid source before FocusTrace runs. |
 | ARIA | Derives observable relationships but does not reproduce the exact browser accessibility tree or a screen reader's spoken output. |
