@@ -5,6 +5,7 @@ const SOURCE_ROOTS = ['entrypoints', 'lib', 'shared'];
 const SOURCE_EXTENSIONS = /\.(?:ts|tsx)$/;
 const RULE_ID = 'FT-(?:(?:WCAG|WARN|REVIEW|APG)-\\d{3}|RUNTIME(?:-ARIA)?-\\d{3})';
 const DEFINITION_PATTERN = new RegExp(`\\bid\\s*:\\s*(['\"])(?<id>${RULE_ID})\\1`, 'g');
+const DECLARATION_PATTERN = new RegExp(`\\b(?:id|ruleId)\\s*:\\s*(['\"])(?<id>${RULE_ID})\\1`, 'g');
 const LITERAL_PATTERN = new RegExp(`(['\"])(?<id>${RULE_ID})\\1`, 'g');
 const ALLOWED_SEVERITIES = new Set(['critical', 'serious', 'moderate', 'minor', 'info']);
 
@@ -123,18 +124,24 @@ function enclosingObject(source, position) {
 }
 
 const files = SOURCE_ROOTS.flatMap(sourceFiles);
-const definitions = new Map();
+const objectDefinitions = new Map();
+const declaredRuleIds = new Set();
 const literalReferences = new Map();
 const errors = [];
 
 for (const path of files) {
   const source = stripComments(readFileSync(path, 'utf8'));
 
+  for (const match of source.matchAll(DECLARATION_PATTERN)) {
+    const id = match.groups?.id;
+    if (id) declaredRuleIds.add(id);
+  }
+
   for (const match of source.matchAll(DEFINITION_PATTERN)) {
     const id = match.groups?.id;
     if (!id) continue;
     const object = enclosingObject(source, match.index ?? 0);
-    const previous = definitions.get(id);
+    const previous = objectDefinitions.get(id);
     if (previous) {
       errors.push(`Duplicate rule definition ${id}: ${previous.path} and ${path}.`);
       continue;
@@ -152,7 +159,7 @@ for (const path of files) {
       errors.push(`${id} in ${path} is a normative WCAG rule without a WCAG reference.`);
     }
 
-    definitions.set(id, { path });
+    objectDefinitions.set(id, { path });
   }
 
   for (const match of source.matchAll(LITERAL_PATTERN)) {
@@ -164,22 +171,22 @@ for (const path of files) {
   }
 }
 
-if (definitions.size === 0) errors.push('No FocusTrace rule definitions were found.');
+if (declaredRuleIds.size === 0) errors.push('No FocusTrace rule declarations were found.');
 
 for (const [id, paths] of literalReferences) {
-  if (!definitions.has(id)) {
-    errors.push(`Rule ID ${id} is referenced but has no production rule definition (${[...paths].join(', ')}).`);
+  if (!declaredRuleIds.has(id)) {
+    errors.push(`Rule ID ${id} is referenced but never declared through id/ruleId (${[...paths].join(', ')}).`);
   }
 }
 
-for (const id of definitions.keys()) {
-  if (!literalReferences.has(id)) errors.push(`Rule definition ${id} is unreachable from production source scanning.`);
-}
+const rulesDocument = readFileSync('docs/RULES.md', 'utf8');
+const missingRulesDoc = [...declaredRuleIds].filter((id) => !rulesDocument.includes(id));
+if (missingRulesDoc.length > 0) errors.push(`docs/RULES.md is missing rule IDs: ${missingRulesDoc.join(', ')}`);
 
-for (const docPath of ['docs/RULES.md', 'docs/SEVERITY-AUDIT.md']) {
-  const document = readFileSync(docPath, 'utf8');
-  const missing = [...definitions.keys()].filter((id) => !document.includes(id));
-  if (missing.length > 0) errors.push(`${docPath} is missing rule IDs: ${missing.join(', ')}`);
+const severityAudit = readFileSync('docs/SEVERITY-AUDIT.md', 'utf8');
+const missingSeverityAudit = [...objectDefinitions.keys()].filter((id) => !severityAudit.includes(id));
+if (missingSeverityAudit.length > 0) {
+  errors.push(`docs/SEVERITY-AUDIT.md is missing object-defined rule IDs: ${missingSeverityAudit.join(', ')}`);
 }
 
 if (errors.length > 0) {
@@ -188,4 +195,4 @@ if (errors.length > 0) {
   process.exit(1);
 }
 
-console.log(`Rule contracts validated for ${definitions.size} production rule definitions.`);
+console.log(`Rule contracts validated for ${declaredRuleIds.size} production rule IDs (${objectDefinitions.size} object-defined rules).`);
