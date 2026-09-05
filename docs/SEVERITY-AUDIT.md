@@ -1,6 +1,6 @@
 # FocusTrace severity audit
 
-Audit date: 2026-09-01
+Audit date: 2026-09-05
 
 This document records the rule-by-rule review behind the base severity values used by FocusTrace.
 
@@ -71,6 +71,26 @@ Existing equivalent rules that already matched axe keep their severity, includin
 | `FT-APG-001` Dialog opened without focus | serious | runtime | APG/runtime behavior rather than an axe-equivalent static rule. |
 | `FT-APG-002` Modal focus escape | serious | runtime | APG/runtime behavior rather than an axe-equivalent static rule. |
 | `FT-APG-003` Dialog focus restore | moderate | runtime | APG/runtime behavior rather than an axe-equivalent static rule. |
+
+## Structural and authoring rule audit
+
+| FocusTrace rule | Base impact | Outcome family | Audit note |
+| --- | --- | --- | --- |
+| `FT-WARN-005` Entirely obsolete HTML element | moderate | warning | Non-conforming legacy markup can preserve ambiguous or poorly supported semantics, but its presence alone is not a WCAG failure. |
+| `FT-WARN-006` Obsolete non-conforming HTML attribute | minor | warning | Current HTML authoring error with limited proven user impact unless it contributes to another accessibility failure. |
+| `FT-WARN-007` Obsolete-but-conforming HTML feature | minor | warning | Legacy markup retained only for compatibility/conformance-warning purposes; modernization is recommended without overstating immediate user impact. |
+| `FT-REVIEW-004` Missing primary main landmark | moderate | review | Can make orientation and repeated navigation harder, while still requiring page-context judgement. |
+| `FT-REVIEW-005` Multiple exposed main landmarks | moderate | review | Several main regions can make primary content ambiguous unless the page structure clearly distinguishes them. |
+| `FT-REVIEW-006` Button-like custom interaction | moderate | review | Native button behavior is more reliable, but a custom implementation can still be accessible when its keyboard, focus and semantics are complete. |
+| `FT-REVIEW-007` Link-like custom interaction | moderate | review | Native anchors provide expected navigation behavior; custom links remain contextual rather than automatically invalid. |
+| `FT-REVIEW-008` Generic interactive element | moderate | review | The observed interaction is insufficient to determine whether button, link or another widget semantics are intended. |
+| `FT-REVIEW-011` Consistent help across sampled pages | moderate | review | Relative help order can affect predictability, but FocusTrace samples pages and therefore keeps the result contextual. |
+| `FT-WARN-008` Invalid native parent/ancestor context | moderate | warning | Native semantics may be lost or distorted outside their required HTML context; the rule reports a deterministic authoring contradiction, not a WCAG failure. |
+| `FT-WARN-009` Native content-model/group/order violation | moderate | warning | Invalid grouping/order can produce browser DOM repair or inconsistent semantic relationships. |
+| `FT-WARN-010` Conflicting nested interactive/label structure | serious | warning | Conflicting interactive structures can directly create ambiguous activation, focus and accessibility-tree behavior. |
+| `FT-WARN-011` Invalid native main hierarchy | serious | warning | Invalid placement of the dominant main region can make the primary document structure materially misleading. |
+| `FT-REVIEW-009` Unidentified section/article structure | minor | review | Missing structural identification is a weak signal and does not by itself prove invalid or inaccessible sectioning. |
+| `FT-REVIEW-010` Repeated landmarks without distinguishable names | moderate | review | Duplicate landmark roles/names can make landmark navigation ambiguous and require contextual review. |
 
 ## Advanced ARIA audit
 
