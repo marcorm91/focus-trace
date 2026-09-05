@@ -214,10 +214,6 @@ export async function clearMultipageAudits(): Promise<MultipageAuditStore> {
   return next;
 }
 
-export async function readActiveAudit(): Promise<AccessibilityAudit | undefined> {
-  return activeAuditFromStore(await loadMultipageAuditStore());
-}
-
 export async function storeAuditPrintEvidence(
   audit: AccessibilityAudit,
 ): Promise<string> {
