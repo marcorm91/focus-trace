@@ -26,6 +26,7 @@ const REFERENCE_LABEL_ES: Record<string, string> = {
   'Labels or Instructions': 'Etiquetas o instrucciones',
   'Focus Not Obscured (Minimum)': 'Foco no oculto (mínimo)',
   'Dragging Movements': 'Movimientos de arrastre',
+  'Status Messages': 'Mensajes de estado',
   'Consistent Help': 'Ayuda coherente',
   'WAI-ARIA 1.3 Editor Draft': 'WAI-ARIA 1.3 · borrador editorial',
   'WAI-ARIA 1.3 Editor Draft · Roles model': 'WAI-ARIA 1.3 · borrador editorial · Modelo de roles',
