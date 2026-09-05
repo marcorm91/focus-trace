@@ -10,10 +10,7 @@ const MAX_CANDIDATES_PER_MUTATION = 8;
 
 const STRONG_STRUCTURE_SIGNAL = /(?:^|[-_\s])(status|toast|snackbar|notification|notice|feedback|flash|success|error|warning|progress|loading|busy)(?:$|[-_\s])/i;
 const WEAK_STRUCTURE_SIGNAL = /(?:^|[-_\s])(message|result)(?:$|[-_\s])/i;
-const STATUS_TEXT_SIGNAL = /^(?:
-  saved|save complete|success|successful|successfully|updated|added|removed|deleted|sent|submitted|complete|completed|done|error|errors|invalid|failed|failure|loading|searching|processing|saving|sending|uploading|downloading|please wait|waiting|no results|\d+[\d.,]*\s+(?:results?|items?)|progress|
-  guardad[oa]s?|guardado correctamente|éxito|correctamente|actualizad[oa]s?|añadid[oa]s?|agregad[oa]s?|eliminad[oa]s?|enviad[oa]s?|completad[oa]s?|hecho|error|errores|inválid[oa]s?|no válido|no válida|falló|fallo|cargando|buscando|procesando|guardando|enviando|subiendo|descargando|espera|esperando|sin resultados|no hay resultados|\d+[\d.,]*\s+(?:resultados?|elementos?|artículos?)|progreso
-)(?:\b|\s|[.!:,-])/ix;
+const STATUS_TEXT_SIGNAL = /^(?:saved|save complete|success|successful|successfully|updated|added|removed|deleted|sent|submitted|complete|completed|done|error|errors|invalid|failed|failure|loading|searching|processing|saving|sending|uploading|downloading|please wait|waiting|no results|\d+[\d.,]*\s+(?:results?|items?)|progress|guardad[oa]s?|guardado correctamente|éxito|correctamente|actualizad[oa]s?|añadid[oa]s?|agregad[oa]s?|eliminad[oa]s?|enviad[oa]s?|completad[oa]s?|hecho|errores|inválid[oa]s?|no válido|no válida|falló|fallo|cargando|buscando|procesando|guardando|enviando|subiendo|descargando|espera|esperando|sin resultados|no hay resultados|\d+[\d.,]*\s+(?:resultados?|elementos?|artículos?)|progreso)(?:\b|\s|[.!:,-])/i;
 
 const EXCLUDED_CONTAINER_ROLES = new Set([
   'dialog',
@@ -81,7 +78,7 @@ function statusSignalScore(element: Element, text: string): number {
   let score = 0;
   if (STRONG_STRUCTURE_SIGNAL.test(structure)) score += 2;
   else if (WEAK_STRUCTURE_SIGNAL.test(structure)) score += 1;
-  if (STATUS_TEXT_SIGNAL.test(text.toLowerCase())) score += 2;
+  if (STATUS_TEXT_SIGNAL.test(text)) score += 2;
   return score;
 }
 
@@ -118,8 +115,7 @@ function hasLiveRegionSemantics(element: Element): boolean {
     if (ariaLive !== 'off') return true;
   }
 
-  const busyOwner = element.closest('[aria-busy="true"]');
-  if (busyOwner) return true;
+  if (element.closest('[aria-busy="true"]')) return true;
 
   if (element.id) {
     const escapedId = typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
