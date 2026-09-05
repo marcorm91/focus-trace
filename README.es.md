@@ -138,11 +138,11 @@ Trace almacena evidencia compacta: selector, rol, nombre accesible, tag, cambios
 | `FT-RUNTIME-004` | Una navegación SPA cambia de ruta sin mover el foco a un nuevo contexto. | REVIEW | WCAG 2.4.3 |
 | `FT-RUNTIME-005` | El elemento que conserva el foco pasa a estar oculto durante la interacción. | REVIEW | WCAG 2.4.3 / 4.1.2 |
 | `FT-RUNTIME-006` | Se observa un arrastre significativo sobre un objetivo con señales de ser arrastrable y debe revisarse si existe una alternativa de puntero sencillo. | REVIEW | WCAG 2.5.7 |
-| `FT-RUNTIME-007` | Tras una activación real aparece un mensaje visible y breve con apariencia de estado, sin semántica live/status observable ni relación `aria-errormessage`. | REVIEW | WCAG 4.1.3 |
+| `FT-RUNTIME-007` | Tras una activación real aparece un mensaje visible y breve con apariencia de estado, sin semántica live/status observable ni una relación activa `aria-errormessage`. | REVIEW | WCAG 4.1.3 |
 
 `FT-RUNTIME-002` vuelve a comprobar el elemento mientras mantiene el foco tras scroll, resize y mutaciones DOM relevantes. `FT-RUNTIME-006` requiere movimiento real del puntero por encima del umbral de jitter; un `dragstart` nativo por sí solo no se utiliza para emitir la revisión.
 
-`FT-RUNTIME-007` está correlacionada con la interacción real y usa una ventana breve de estabilización. Excluye diálogos, contenedores de estado de widgets ya modelados, mensajes que reciben foco o van seguidos de un cambio de foco/navegación/diálogo, y mensajes ya expuestos mediante `role="status"`, `role="alert"`, `role="log"`, semántica de progreso, `aria-live` activo, `aria-busy` o `aria-errormessage`. La clasificación de un mensaje como “estado” sigue dependiendo del significado, por lo que la regla permanece como **REVIEW** y no fabrica un FAIL WCAG automático.
+`FT-RUNTIME-007` está correlacionada con la interacción real y usa una ventana breve de estabilización. Excluye diálogos, contenedores de estado de widgets ya modelados, mensajes que reciben foco o van seguidos de un cambio de foco/navegación/diálogo, y mensajes ya expuestos mediante `role="status"`, `role="alert"`, `role="log"`, semántica de progreso, `aria-live` activo o una relación `aria-errormessage` activa. `aria-busy` por sí solo no se considera exposición suficiente de un mensaje de estado. La clasificación de un mensaje como “estado” sigue dependiendo del significado, por lo que la regla permanece como **REVIEW** y no fabrica un FAIL WCAG automático.
 
 ### Avisos ARIA runtime
 
