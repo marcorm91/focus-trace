@@ -18,6 +18,7 @@ export type RuntimeEventKind =
   | 'dialog-focus-escape'
   | 'aria-widget'
   | 'live-region'
+  | 'status-message'
   | 'focus-walk-start'
   | 'focus-walk-end';
 
