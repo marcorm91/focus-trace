@@ -224,6 +224,18 @@ The result remains `REVIEW`: sampled hit-testing is evidence of complete observe
 
 The runtime event stores the target plus a compact movement-distance summary; it does not persist the raw pointer path. Native browser `dragstart` alone does not emit this review. The outcome is always `REVIEW`, because observing a drag does not prove that the functionality requires dragging: an equivalent single-pointer operation may be available elsewhere, and the WCAG exception for essential dragging still requires context.
 
+## Status Messages runtime scope
+
+`FT-RUNTIME-007` provides conservative observed runtime evidence for WCAG 4.1.3 Status Messages. The criterion applies to content changes that communicate action results, waiting states, progress or the existence of errors without constituting a change of context. FocusTrace therefore does not treat every DOM update as a status message.
+
+The review is evaluated only while **Trace** is recording and is correlated to a recent real activation (`click`, Enter or Space) through the existing `interactionId`. Candidate content is stabilized briefly before evaluation and must be a short rendered text message with observable status-oriented structure or a bounded EN/ES status-text signal.
+
+FocusTrace suppresses the review when observable evidence already indicates programmatic exposure, including `role="status"`, `role="alert"`, `role="log"`, progress semantics, active `aria-live`, `aria-busy="true"` or an `aria-errormessage` relationship. Dialogs, modeled widget-state containers and interactive containers are excluded so WCAG 4.1.3 is not conflated with context changes or WCAG 4.1.2 widget state.
+
+A candidate is also discarded when it receives focus or Trace observes a subsequent focus transition, route change or dialog opening inside the stabilization/correlation window. This reflects the WCAG definition: a message that changes context falls outside the status-message requirement.
+
+The result is always `REVIEW`, never automatic `FAIL`. FocusTrace can observe status-like content and missing common exposure mechanisms, but it cannot deterministically prove from DOM text alone that the content is a WCAG status message or exhaust every equivalent accessibility-tree mechanism. The current subset is intentionally limited to short visible text and EN/ES lexical/structural signals; non-text-only status, arbitrary natural language, disappearance-only state and exact screen-reader announcement remain manual territory.
+
 ## Consistent Help Site Audit scope
 
 `FT-REVIEW-011` provides multipage review evidence for WCAG 3.2.6 Consistent Help. During the existing Site Audit structure collection, FocusTrace identifies a bounded set of candidate help mechanisms using observable link/control text and href patterns. Candidates are grouped into four categories: human contact details, human contact mechanisms, self-help options and automated contact mechanisms.
@@ -291,6 +303,7 @@ This is deliberately a `REVIEW`, not a `FAIL`. Text heuristics cannot prove that
 | FT-RUNTIME-004 SPA route changed without moving focus | REVIEW | WCAG 2.4.3 |
 | FT-RUNTIME-005 Focused element became hidden | REVIEW | WCAG 2.4.3 / 4.1.2 |
 | FT-RUNTIME-006 Dragging interaction observed | REVIEW | WCAG 2.5.7 |
+| FT-RUNTIME-007 Status-like message may not be programmatically exposed | REVIEW | WCAG 4.1.3 |
 | FT-APG-001 Dialog initial focus remains outside | REVIEW | WAI-ARIA APG Dialog Modal |
 | FT-APG-002 Focus escapes modal dialog | REVIEW | WAI-ARIA APG Dialog Modal |
 | FT-APG-003 Focus not restored after dialog close | REVIEW | WAI-ARIA APG Dialog Modal |
@@ -306,6 +319,7 @@ This is deliberately a `REVIEW`, not a `FAIL`. Text heuristics cannot prove that
 - `FT-WCAG-012` uses observable DOM/layout geometry and conservative target discovery. Equivalent, essential and user-agent-control exceptions, arbitrary framework-only pointer listeners and complex non-rectangular hit areas can still require manual review; the rule therefore does not currently emit automatic FAIL solely from undersized/overlapping geometry.
 - `FT-RUNTIME-002` uses bounded viewport hit-testing of the observed focused element; it is not a rendering-engine proof of every possible overlap/compositing case.
 - `FT-RUNTIME-006` recognizes observed drag interaction signals but does not automatically prove whether an equivalent non-dragging operation or an essential-dragging exception exists.
+- `FT-RUNTIME-007` reviews only short visible EN/ES status-like text with observable structural signals after real activation. It cannot prove the meaning of every message, non-text-only status, disappearance-only state, equivalent accessibility-tree exposure or actual screen-reader announcement.
 - `FT-REVIEW-011` uses bounded, text-based help-mechanism candidates over Site Audit samples and therefore cannot establish full WCAG 3.2.6 applicability or site-wide conformance.
 - Structural HTML checks operate on the parsed live DOM. Browser parser repair can normalize invalid source before FocusTrace runs; the tool does not infer source-level errors that are no longer observable. See [`STRUCTURAL_HTML.md`](STRUCTURAL_HTML.md).
 - Advanced ARIA checks operate on the live accessibility relationships FocusTrace can derive from DOM semantics and `aria-owns`; they do not claim to reproduce the browser accessibility tree or a screen reader's spoken output. See [`ARIA_VALIDATION.md`](ARIA_VALIDATION.md).
