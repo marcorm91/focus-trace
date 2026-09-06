@@ -5,7 +5,7 @@ const rules = Object.values(RULES);
 
 describe('rule severity rationale', () => {
   it('documents every FocusTrace rule in both supported languages', () => {
-    expect(rules).toHaveLength(29);
+    expect(rules).toHaveLength(31);
     for (const rule of rules) {
       expect(rule.severityRationale.en.trim().length, `${rule.id} English rationale`).toBeGreaterThan(24);
       expect(rule.severityRationale.es.trim().length, `${rule.id} Spanish rationale`).toBeGreaterThan(24);
@@ -38,6 +38,8 @@ describe('rule severity rationale', () => {
     expect(RULES.placeholderOnlyLabel.severity).toBe('moderate');
     expect(RULES.draggingMovement.severity).toBe('moderate');
     expect(RULES.statusMessageExposure.severity).toBe('moderate');
+    expect(RULES.onFocusContextChange.severity).toBe('moderate');
+    expect(RULES.onInputContextChange.severity).toBe('moderate');
     expect(RULES.consistentHelp.severity).toBe('moderate');
   });
 });
