@@ -16,6 +16,21 @@ describe('runtime route event builders', () => {
     });
   });
 
+  it('redacts query, fragment and URL credentials before route evidence is retained', () => {
+    const event = createRouteChangeEvent(
+      'https://user:password@app.test/search?q=private@example.com#before-secret',
+      'https://app.test/search?token=session-secret#after-secret',
+    );
+
+    expect(event).toMatchObject({
+      fromUrl: 'https://app.test/search?[redacted]#[redacted]',
+      toUrl: 'https://app.test/search?[redacted]#[redacted]',
+    });
+    expect(JSON.stringify(event)).not.toContain('private@example.com');
+    expect(JSON.stringify(event)).not.toContain('session-secret');
+    expect(JSON.stringify(event)).not.toContain('password');
+  });
+
   it('creates a review event when route focus does not move', () => {
     const event = createRouteFocusUnchangedEvent({
       fromUrl: 'https://app.test/home',
