@@ -201,6 +201,20 @@ export function humanRuntimeEventTitle(event: RuntimeEvent, language: AppLanguag
     }
     case 'click':
       return target ? tr(language, `Activated ${target}`, `Se activó ${target}`) : tr(language, 'Activated a control', 'Se activó un control');
+    case 'input-change':
+      return tr(language, 'A control setting changed', 'Cambió el valor de un control');
+    case 'context-change':
+      return event.ruleId === 'FT-RUNTIME-008'
+        ? tr(
+            language,
+            'Receiving focus may have initiated a change of context',
+            'Recibir el foco puede haber iniciado un cambio de contexto',
+          )
+        : tr(
+            language,
+            'Changing a control may have initiated a change of context',
+            'Cambiar un control puede haber iniciado un cambio de contexto',
+          );
     case 'route':
       return event.causes?.some((cause) => cause.type === 'ROUTE_CHANGED_WITHOUT_FOCUS_MOVE')
         ? tr(language, 'The view changed but keyboard focus did not', 'La vista cambió pero el foco de teclado no')
