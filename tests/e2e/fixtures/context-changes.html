@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Context change runtime</title>
+</head>
+<body>
+  <h1>Context change runtime</h1>
+
+  <button id="before-focus">Before focus target</button>
+  <input id="focus-route" aria-label="Focus route target">
+
+  <label for="input-route">Input route</label>
+  <select id="input-route">
+    <option value="one">One</option>
+    <option value="two">Two</option>
+  </select>
+
+  <label for="input-focus">Input focus</label>
+  <input id="input-focus">
+  <h2 id="results-heading" tabindex="-1">Results</h2>
+
+  <button id="explicit-route">Explicit navigation</button>
+
+  <label for="safe-select">Safe inline update</label>
+  <select id="safe-select">
+    <option value="alpha">Alpha</option>
+    <option value="beta">Beta</option>
+  </select>
+  <p id="safe-output">Alpha selected</p>
+
+  <script>
+    document.querySelector('#focus-route').addEventListener('focus', () => {
+      history.pushState({}, '', '#focus-context');
+    });
+
+    document.querySelector('#input-route').addEventListener('change', () => {
+      history.pushState({}, '', '#input-context');
+    });
+
+    document.querySelector('#input-focus').addEventListener('input', () => {
+      document.querySelector('#results-heading').focus();
+    });
+
+    document.querySelector('#explicit-route').addEventListener('click', () => {
+      history.pushState({}, '', '#explicit-context');
+    });
+
+    document.querySelector('#safe-select').addEventListener('change', (event) => {
+      document.querySelector('#safe-output').textContent = `${event.target.value} selected`;
+    });
+  </script>
+</body>
+</html>
