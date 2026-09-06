@@ -51,6 +51,17 @@ const NON_SETTING_INPUT_TYPES = new Set([
   'submit',
 ]);
 
+const TEXT_EDIT_INPUT_TYPES = new Set([
+  'email',
+  'number',
+  'password',
+  'range',
+  'search',
+  'tel',
+  'text',
+  'url',
+]);
+
 export function isSettingChangeTarget(element: Element): boolean {
   const tag = element.tagName.toLowerCase();
   if (tag === 'select' || tag === 'textarea') return true;
@@ -78,6 +89,23 @@ export function createSettingChangeEvent(
     element,
     inputEventType,
   };
+}
+
+function causalSettingEventType(
+  element: ElementSnapshot,
+  inputEventType: SettingChangeEventKind,
+): SettingChangeEventKind {
+  if (inputEventType !== 'change') return inputEventType;
+
+  // Text-entry controls can emit a blur-driven `change` while focus is moving
+  // because of the earlier edit. Keep raw Trace evidence untouched, but model
+  // that terminal change as input causality so it cannot replace the edit that
+  // actually triggered the programmatic context change.
+  if (element.tag === 'textarea') return 'input';
+  if (element.tag !== 'input') return inputEventType;
+
+  const type = element.attributes?.type?.trim().toLowerCase() || 'text';
+  return TEXT_EDIT_INPUT_TYPES.has(type) ? 'input' : inputEventType;
 }
 
 function signalEvidence(
@@ -211,15 +239,17 @@ export class RuntimeContextChangeTracker {
     // question. Do not also blame the control merely for having focus.
     this.focusTrigger = undefined;
 
-    // Text controls commonly fire `input` first and a follow-up `change` while
-    // losing focus. Keep the earliest same-control input as the causal trigger
-    // instead of letting the blur-driven change overwrite it.
+    const causalInputEventType = causalSettingEventType(input.element, input.inputEventType);
+
+    // Controls can fire both `input` and `change` for one edit. Preserve the
+    // input causality for the same control instead of letting the later commit
+    // event overwrite it.
     const existing = this.inputTrigger;
     if (
       existing
       && existing.element.selector === input.element.selector
       && existing.inputEventType === 'input'
-      && input.inputEventType === 'change'
+      && causalInputEventType === 'input'
       && input.timestamp >= existing.timestamp
       && input.timestamp - existing.timestamp <= this.windowMs
     ) {
@@ -230,7 +260,7 @@ export class RuntimeContextChangeTracker {
       kind: 'input',
       element: input.element,
       timestamp: input.timestamp,
-      inputEventType: input.inputEventType,
+      inputEventType: causalInputEventType,
       ...(input.interactionId ? { interactionId: input.interactionId } : {}),
     };
   }
