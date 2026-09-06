@@ -4,6 +4,7 @@ import type {
   RuntimeContextChangeEvidence,
   RuntimeEvent,
 } from '../../shared/types';
+import { sanitizeRuntimeUrl } from './url-privacy';
 
 type PendingRuntimeEvent = Omit<RuntimeEvent, 'id' | 'timestamp'>;
 
@@ -271,7 +272,11 @@ export class RuntimeContextChangeTracker {
     timestamp: number,
   ): RuntimeContextChangeFinding | undefined {
     if (fromUrl === toUrl) return undefined;
-    return this.resolve({ kind: 'route', fromUrl, toUrl }, timestamp);
+    return this.resolve({
+      kind: 'route',
+      fromUrl: sanitizeRuntimeUrl(fromUrl),
+      toUrl: sanitizeRuntimeUrl(toUrl),
+    }, timestamp);
   }
 
   recordDialogOpen(
