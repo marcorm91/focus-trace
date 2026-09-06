@@ -10,6 +10,7 @@ export default defineConfig({
         'lib/audit/non-text-contrast.ts',
         'lib/audit/target-size.ts',
         'lib/runtime/causality.ts',
+        'lib/runtime/context-change.ts',
         'lib/runtime/dialog-events.ts',
         'lib/runtime/dragging.ts',
         'lib/runtime/focus-events.ts',
