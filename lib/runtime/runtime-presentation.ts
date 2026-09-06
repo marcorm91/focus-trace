@@ -7,6 +7,7 @@ export function runtimeEventKindLabel(kind: RuntimeEventKind, language: AppLangu
   if (kind === 'virtual-focus') return tr(language, 'Virtual focus', 'Foco virtual');
   if (kind === 'keydown') return tr(language, 'Keyboard', 'Teclado');
   if (kind === 'click') return tr(language, 'Activation', 'Activación');
+  if (kind === 'input-change') return tr(language, 'Setting change', 'Cambio de valor');
   if (kind === 'dragging') return tr(language, 'Dragging', 'Arrastre');
   if (kind === 'route') return tr(language, 'Navigation', 'Navegación');
   if (kind === 'dom-mutation') return tr(language, 'DOM change', 'Cambio DOM');
@@ -19,8 +20,10 @@ export function runtimeEventKindLabel(kind: RuntimeEventKind, language: AppLangu
   if (kind === 'aria-widget') return tr(language, 'Widget state', 'Estado del widget');
   if (kind === 'live-region') return tr(language, 'Live region', 'Región dinámica');
   if (kind === 'status-message') return tr(language, 'Status message', 'Mensaje de estado');
+  if (kind === 'context-change') return tr(language, 'Context change', 'Cambio de contexto');
   if (kind === 'focus-walk-start') return tr(language, 'Focus walk started', 'Recorrido de foco iniciado');
-  return tr(language, 'Focus walk finished', 'Recorrido de foco finalizado');
+  if (kind === 'focus-walk-end') return tr(language, 'Focus walk finished', 'Recorrido de foco finalizado');
+  return tr(language, 'Runtime event', 'Evento runtime');
 }
 
 export function focusDirectionLabel(direction: FocusJourneyDirection, language: AppLanguage): string {
@@ -34,6 +37,49 @@ export function focusDirectionLabel(direction: FocusJourneyDirection, language: 
 
 function statusMessageText(detail: string | undefined): string | undefined {
   return detail?.match(/Observed status-like text “(.+?)” after an interaction/)?.[1];
+}
+
+function contextChangeDetail(event: RuntimeEvent, language: AppLanguage): string | undefined {
+  const evidence = event.contextChange;
+  if (!evidence) return undefined;
+
+  const source = event.element?.selector ?? tr(language, 'the observed control', 'el control observado');
+  const destination = evidence.destination?.selector;
+  const criterion = evidence.triggerKind === 'focus' ? 'WCAG 3.2.1' : 'WCAG 3.2.2';
+
+  let change: string;
+  if (evidence.changeKind === 'route') {
+    change = event.fromUrl && event.toUrl
+      ? tr(
+          language,
+          `a route change from ${event.fromUrl} to ${event.toUrl}`,
+          `un cambio de ruta de ${event.fromUrl} a ${event.toUrl}`,
+        )
+      : tr(language, 'a route change', 'un cambio de ruta');
+  } else if (evidence.changeKind === 'dialog-open') {
+    change = destination
+      ? tr(language, `the dialog ${destination} opening`, `la apertura del diálogo ${destination}`)
+      : tr(language, 'a dialog opening', 'la apertura de un diálogo');
+  } else {
+    change = destination
+      ? tr(language, `focus moving programmatically to ${destination}`, `el movimiento programático del foco a ${destination}`)
+      : tr(language, 'a programmatic focus move', 'un movimiento programático del foco');
+  }
+
+  if (evidence.triggerKind === 'focus') {
+    return tr(
+      language,
+      `Receiving focus on ${source} was followed by ${change} without a separate observed activation. Review this sequence under ${criterion}; runtime ordering is strong evidence but does not by itself prove which author handler initiated the context change.`,
+      `Recibir el foco en ${source} fue seguido por ${change} sin observarse una activación independiente. Revisa esta secuencia según ${criterion}; el orden runtime aporta evidencia sólida, pero por sí solo no demuestra qué manejador inició el cambio de contexto.`,
+    );
+  }
+
+  const eventType = evidence.inputEventType ?? event.inputEventType ?? 'input';
+  return tr(
+    language,
+    `A trusted ${eventType} event on ${source} was followed by ${change}. Review this sequence under ${criterion}; an automatic context change can be allowed when the user was advised before the control is used, which this runtime evidence cannot always establish.`,
+    `Un evento ${eventType} de confianza en ${source} fue seguido por ${change}. Revisa esta secuencia según ${criterion}; un cambio automático de contexto puede estar permitido si el usuario fue advertido antes de utilizar el control, algo que esta evidencia runtime no siempre puede determinar.`,
+  );
 }
 
 export function humanRuntimeEventDetail(event: RuntimeEvent, language: AppLanguage): string | undefined {
@@ -66,6 +112,18 @@ export function humanRuntimeEventDetail(event: RuntimeEvent, language: AppLangua
       `FocusTrace observó${message ? ` “${message}”` : ' un mensaje breve con apariencia de estado'} tras esta acción, pero no encontró semántica de región dinámica/estado ni una relación aria-errormessage. Revisa si este contenido es un mensaje de estado de WCAG 4.1.3 que necesita exposición programática sin mover el foco.`,
     );
   }
+
+  if (event.kind === 'input-change') {
+    const selector = event.element?.selector;
+    const eventType = event.inputEventType ?? 'input';
+    return tr(
+      language,
+      `A trusted ${eventType} event changed${selector ? ` ${selector}` : ' this control'}. FocusTrace records the control identity and event type, not its value.`,
+      `Un evento ${eventType} de confianza cambió${selector ? ` ${selector}` : ' este control'}. FocusTrace registra la identidad del control y el tipo de evento, pero no guarda su valor.`,
+    );
+  }
+
+  if (event.kind === 'context-change') return contextChangeDetail(event, language);
 
   if (event.kind === 'dragging') {
     const selector = event.element?.selector;
