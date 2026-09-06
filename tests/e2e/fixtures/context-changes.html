@@ -31,11 +31,11 @@
 
   <script>
     document.querySelector('#focus-route').addEventListener('focus', () => {
-      history.pushState({}, '', '#focus-context');
+      history.pushState({}, '', '?token=focus-secret#focus-context');
     });
 
     document.querySelector('#input-route').addEventListener('change', () => {
-      history.pushState({}, '', '#input-context');
+      history.pushState({}, '', '?email=private@example.com#input-context');
     });
 
     document.querySelector('#input-focus').addEventListener('input', () => {
@@ -43,7 +43,7 @@
     });
 
     document.querySelector('#explicit-route').addEventListener('click', () => {
-      history.pushState({}, '', '#explicit-context');
+      history.pushState({}, '', '?token=explicit-secret#explicit-context');
     });
 
     document.querySelector('#safe-select').addEventListener('change', (event) => {
