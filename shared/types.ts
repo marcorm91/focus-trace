@@ -7,6 +7,7 @@ export type RuntimeEventKind =
   | 'virtual-focus'
   | 'keydown'
   | 'click'
+  | 'input-change'
   | 'dragging'
   | 'route'
   | 'dom-mutation'
@@ -19,10 +20,14 @@ export type RuntimeEventKind =
   | 'aria-widget'
   | 'live-region'
   | 'status-message'
+  | 'context-change'
   | 'focus-walk-start'
   | 'focus-walk-end';
 
 export type RuntimeMutationKind = 'node-added' | 'node-removed' | 'attribute-changed';
+export type RuntimeInputEventType = 'input' | 'change';
+export type RuntimeContextChangeTriggerKind = 'focus' | 'input';
+export type RuntimeContextChangeKind = 'focus-move' | 'route' | 'dialog-open';
 
 export type RuntimeCauseType =
   | 'FOCUSED_NODE_REMOVED'
@@ -80,6 +85,13 @@ export interface RuntimeMutationSnapshot {
   currentValue?: string | null;
 }
 
+export interface RuntimeContextChangeEvidence {
+  triggerKind: RuntimeContextChangeTriggerKind;
+  changeKind: RuntimeContextChangeKind;
+  inputEventType?: RuntimeInputEventType;
+  destination?: ElementSnapshot;
+}
+
 export interface RuntimeCause {
   type: RuntimeCauseType;
   confidence: 'deterministic';
@@ -111,6 +123,8 @@ export interface RuntimeEvent {
   breakpointHits?: RuntimeBreakpointHit[];
   fromUrl?: string;
   toUrl?: string;
+  inputEventType?: RuntimeInputEventType;
+  contextChange?: RuntimeContextChangeEvidence;
   outcome?: FindingOutcome;
   ruleId?: string;
   references?: StandardReference[];
