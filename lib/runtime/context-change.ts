@@ -210,6 +210,22 @@ export class RuntimeContextChangeTracker {
     // Once a control setting changes, WCAG 3.2.2 is the more specific causal
     // question. Do not also blame the control merely for having focus.
     this.focusTrigger = undefined;
+
+    // Text controls commonly fire `input` first and a follow-up `change` while
+    // losing focus. Keep the earliest same-control input as the causal trigger
+    // instead of letting the blur-driven change overwrite it.
+    const existing = this.inputTrigger;
+    if (
+      existing
+      && existing.element.selector === input.element.selector
+      && existing.inputEventType === 'input'
+      && input.inputEventType === 'change'
+      && input.timestamp >= existing.timestamp
+      && input.timestamp - existing.timestamp <= this.windowMs
+    ) {
+      return;
+    }
+
     this.inputTrigger = {
       kind: 'input',
       element: input.element,
