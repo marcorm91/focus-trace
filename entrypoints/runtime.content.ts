@@ -17,6 +17,13 @@ import {
 } from '../lib/runtime/breakpoints';
 import { INTERACTION_WINDOW_MS, RuntimeInteractionTracker } from '../lib/runtime/causality';
 import {
+  createSettingChangeEvent,
+  isSettingChangeTarget,
+  RuntimeContextChangeTracker,
+  type RuntimeContextChangeFinding,
+  type SettingChangeEventKind,
+} from '../lib/runtime/context-change';
+import {
   createDialogCloseEvent,
   createDialogFocusEscapeEvent,
   createDialogOpenEvent,
@@ -128,6 +135,7 @@ export default defineContentScript({
     let observerActive = false;
     let routeTimer: number | undefined;
     const interactionTracker = new RuntimeInteractionTracker();
+    const contextChangeTracker = new RuntimeContextChangeTracker();
     const dragTracker = new RuntimeDragTracker();
     const dialogs = new Map<Element, DialogState>();
     const emittedAriaWidgetFindings = new Set<string>();
@@ -156,12 +164,14 @@ export default defineContentScript({
       source: 'keyboard' | 'pointer',
       target: Element | null,
       activationKey?: string,
-    ): string =>
-      interactionTracker.begin(
+    ): string => {
+      contextChangeTracker.beginUserAction(Date.now());
+      return interactionTracker.begin(
         source,
         target ? selectorFor(target) : undefined,
         activationKey,
       );
+    };
 
     const queueRuntimeEventDelivery = (message: ExtensionMessage) => {
       const delivery = browser.runtime.sendMessage(message).catch(() => undefined);
@@ -206,8 +216,14 @@ export default defineContentScript({
         recording = false;
         stopInstrumentation();
         interactionTracker.reset();
+        contextChangeTracker.reset();
         dragTracker.reset();
       }
+    };
+
+    const emitContextChangeFinding = (finding: RuntimeContextChangeFinding | undefined) => {
+      if (!finding) return;
+      emit(finding.event, finding.interactionId);
     };
 
     const emitAriaWidgetFinding = (
@@ -462,19 +478,28 @@ export default defineContentScript({
         lastFocused = event.target;
         hiddenFocusReported = null;
         obscuredFocusReported = null;
-        const interactionId = activeInteractionId();
+        const timestamp = Date.now();
+        const interactionId = activeInteractionId(timestamp);
         const focusIntent = pendingFocusIntent;
         pendingFocusIntent = 'programmatic';
         const focusPosition = sequentialFocusPosition(event.target);
+        const focusedSnapshot = snapshot(event.target, focusPosition);
 
         emit(
           createFocusEvent({
             label: accessibleName(event.target) || event.target.tagName.toLowerCase(),
-            element: snapshot(event.target, focusPosition),
+            element: focusedSnapshot,
             intent: focusIntent,
           }),
           interactionId,
         );
+
+        emitContextChangeFinding(contextChangeTracker.recordFocus({
+          element: focusedSnapshot,
+          timestamp,
+          ...(interactionId ? { interactionId } : {}),
+          userInitiatedFocusMove: focusIntent !== 'programmatic',
+        }));
 
         for (const state of dialogs.values()) {
           if (!isDialogOpen(state.element) || !isModalDialog(state.element) || state.element.contains(event.target)) continue;
@@ -489,6 +514,37 @@ export default defineContentScript({
 
         scheduleFocusObscuredInspection(event.target, interactionId);
       },
+      true,
+    );
+
+    const recordSettingChange = (rawEvent: Event, inputEventType: SettingChangeEventKind) => {
+      if (!recording || !rawEvent.isTrusted) return;
+      if (!(rawEvent.target instanceof Element) || isFocusWalkUiTarget(rawEvent.target)) return;
+      if (!isSettingChangeTarget(rawEvent.target)) return;
+
+      const timestamp = Date.now();
+      const interactionId = activeInteractionId(timestamp);
+      const element = snapshot(rawEvent.target);
+      contextChangeTracker.recordSettingChange({
+        element,
+        inputEventType,
+        timestamp,
+        ...(interactionId ? { interactionId } : {}),
+      });
+      emit(createSettingChangeEvent(element, inputEventType), interactionId);
+    };
+
+    ctx.addEventListener(
+      document,
+      'input',
+      (rawEvent) => recordSettingChange(rawEvent as Event, 'input'),
+      true,
+    );
+
+    ctx.addEventListener(
+      document,
+      'change',
+      (rawEvent) => recordSettingChange(rawEvent as Event, 'change'),
       true,
     );
 
@@ -527,6 +583,7 @@ export default defineContentScript({
         };
         const interactionId = beginInteraction('keyboard', target, keyLabel);
         if (event.key === 'Enter' || event.key === ' ') {
+          contextChangeTracker.recordActivation(Date.now());
           lastStatusActivation = { interactionId, timestamp: Date.now() };
         }
         if (target && ['Enter', ' ', 'ArrowUp', 'ArrowDown'].includes(event.key)) lastActionElement = target;
@@ -553,6 +610,7 @@ export default defineContentScript({
         const clickSelector = selectorFor(target);
         const interactionId = interactionTracker.click(clickSelector);
 
+        contextChangeTracker.recordActivation(Date.now());
         lastActionElement = target;
         lastStatusActivation = { interactionId, timestamp: Date.now() };
         emit(
@@ -575,7 +633,13 @@ export default defineContentScript({
       queueMicrotask(() => {
         if (!recording || !isDialogOpen(dialog)) return;
         const focusedInside = document.activeElement instanceof Element && dialog.contains(document.activeElement);
-        emit(createDialogOpenEvent({ dialog: snapshot(dialog), focusedInside }), interactionId);
+        const dialogSnapshot = snapshot(dialog);
+        emit(createDialogOpenEvent({ dialog: dialogSnapshot, focusedInside }), interactionId);
+        emitContextChangeFinding(contextChangeTracker.recordDialogOpen(
+          dialogSnapshot,
+          Date.now(),
+          { suppressFocusTrigger: focusedInside },
+        ));
         ctx.setTimeout(() => {
           if (!recording || !isDialogOpen(dialog)) return;
           emitAriaWidgetFinding(createDynamicDialogNameReview(dialog), interactionId);
@@ -769,10 +833,12 @@ export default defineContentScript({
       const routeFocusVersion = focusVersion;
       const routeFocus = document.activeElement instanceof Element ? document.activeElement : null;
       const routeInteractionId = activeInteractionId();
+      const toUrl = location.href;
 
-      lastUrl = location.href;
+      lastUrl = toUrl;
       lastTitle = document.title;
       emit(createRouteChangeEvent(fromUrl, lastUrl), routeInteractionId);
+      emitContextChangeFinding(contextChangeTracker.recordRouteChange(fromUrl, toUrl, Date.now()));
 
       ctx.setTimeout(() => {
         if (!recording || focusVersion !== routeFocusVersion) return;
@@ -847,6 +913,7 @@ export default defineContentScript({
         focusObscuredFrame = undefined;
       }
       clearPendingStatusMessageTimers();
+      contextChangeTracker.reset();
       dragTracker.reset();
     }
 
@@ -881,6 +948,7 @@ export default defineContentScript({
         emittedStatusMessageFindings.clear();
         clearPendingStatusMessageTimers();
         interactionTracker.reset();
+        contextChangeTracker.reset();
         dragTracker.reset();
         resetObservedDialogs();
         if (recording) startInstrumentation();
@@ -911,6 +979,7 @@ export default defineContentScript({
       obscuredFocusReported = null;
       emittedStatusMessageFindings.clear();
       clearPendingStatusMessageTimers();
+      contextChangeTracker.reset();
       dragTracker.reset();
       resetObservedDialogs();
       if (recording) startInstrumentation();

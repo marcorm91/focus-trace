@@ -47,7 +47,7 @@ FocusTrace utiliza WCAG 2.2 como fuente de conformidad. Los criterios WCAG 2.2 t
 | **Sugerencia de color** | Fallos deterministas de contraste | Propone un ajuste sRGB pequeño que alcance el ratio requerido cuando puede calcularse con seguridad. | HEX/RGB medido, propuesta y copia. |
 | **Cómo corregirlo** | Hallazgos con remediación disponible | Muestra estrategias concretas de corrección y una comprobación posterior. | Guía localizada ES/EN. |
 | **Estructura** | Página actual | Expone encabezados, semántica y métricas estructurales bajo demanda. | Árbol H1-H6, sugerencias y recuentos. |
-| **Trace** | Interacción real | Registra teclado/puntero, foco, mutaciones relevantes, rutas SPA, diálogos, candidatos a mensajes de estado, widgets ARIA y causalidad. | Eventos correlacionados por interacción. |
+| **Trace** | Interacción real | Registra teclado/puntero, foco, cambios no sensibles de controles, mutaciones relevantes, rutas SPA, diálogos, candidatos a mensajes de estado, widgets ARIA y evidencia de causalidad/cambios de contexto. | Eventos correlacionados por interacción; el seguimiento de cambios de contexto no conserva valores de controles. |
 | **Foco virtual** | Widgets con `aria-activedescendant` compatibles | Registra cambios válidos de foco virtual como evidencia informativa sin convertirlos en movimiento de foco DOM ni hallazgo. | Destino virtual disponible en Trace, Journey y Graph. |
 | **Focus Walk** | Página activa | Automatiza el recorrido secuencial de foco para generar evidencia de navegación. | Recorrido de destinos alcanzables. |
 | **Replay** | Sesión Trace grabada | Reproduce la evidencia como lectura sin reejecutar acciones sobre la página. | Secuencia runtime reconstruida. |
@@ -147,10 +147,14 @@ Trace almacena evidencia compacta: selector, rol, nombre accesible, tag, cambios
 | `FT-RUNTIME-005` | El elemento que conserva el foco pasa a estar oculto durante la interacción. | REVIEW | WCAG 2.4.3 / 4.1.2 |
 | `FT-RUNTIME-006` | Se observa un arrastre significativo sobre un objetivo con señales de ser arrastrable y debe revisarse si existe una alternativa de puntero sencillo. | REVIEW | WCAG 2.5.7 |
 | `FT-RUNTIME-007` | Tras una activación real aparece un mensaje visible y breve con apariencia de estado, sin semántica live/status observable ni una relación activa `aria-errormessage`. | REVIEW | WCAG 4.1.3 |
+| `FT-RUNTIME-008` | Recibir el foco va seguido de un cambio de ruta, apertura de diálogo o movimiento programático de foco observado sin una activación independiente. | REVIEW | WCAG 3.2.1 |
+| `FT-RUNTIME-009` | Un evento `input`/`change` de confianza sobre un control de configuración va seguido de un cambio de ruta, apertura de diálogo o movimiento programático de foco observado. | REVIEW | WCAG 3.2.2 |
 
 `FT-RUNTIME-002` vuelve a comprobar el elemento mientras mantiene el foco tras scroll, resize y mutaciones DOM relevantes. `FT-RUNTIME-006` requiere movimiento real del puntero por encima del umbral de jitter; un `dragstart` nativo por sí solo no se utiliza para emitir la revisión.
 
 `FT-RUNTIME-007` está correlacionada con la interacción real y usa una ventana breve de estabilización. Excluye diálogos, contenedores de estado de widgets ya modelados, mensajes que reciben foco o van seguidos de un cambio de foco/navegación/diálogo, y mensajes ya expuestos mediante `role="status"`, `role="alert"`, `role="log"`, semántica de progreso, `aria-live` activo o una relación `aria-errormessage` activa. `aria-busy` por sí solo no se considera exposición suficiente de un mensaje de estado. La clasificación de un mensaje como “estado” sigue dependiendo del significado, por lo que la regla permanece como **REVIEW** y no fabrica un FAIL WCAG automático.
+
+`FT-RUNTIME-008` y `FT-RUNTIME-009` usan una ventana acotada de correlación de 1,2 segundos. Las acciones independientes del usuario eliminan atribuciones antiguas, la activación explícita no se trata como fallo de On Focus y el movimiento secuencial normal del foco no se atribuye al control anterior. `FT-RUNTIME-009` registra la identidad del control y el tipo de evento `input`/`change` de confianza, no el valor del control. Ambas reglas permanecen como **REVIEW** porque el orden runtime no demuestra la causalidad del manejador para 3.2.1 ni permite establecer siempre si hubo aviso previo al usuario para 3.2.2.
 
 ### Avisos ARIA runtime
 
@@ -351,6 +355,7 @@ Memory no almacena HTML de página, snapshots completos del DOM ni capturas de p
 | ARIA | Deriva relaciones observables, pero no reproduce exactamente el árbol de accesibilidad interno ni la salida hablada de un lector de pantalla. |
 | Runtime ARIA | Solo evalúa patrones modelados después de interacciones relevantes y usa una ventana de estabilización; no simula acciones arbitrarias. |
 | Mensajes de estado | La revisión runtime se limita a texto visible y breve con señales de estado en ES/EN tras una activación real. No puede demostrar el significado de todos los mensajes, estados solo visuales/no textuales, la exposición exacta en el árbol de accesibilidad ni el anuncio real de un lector de pantalla. |
+| Cambios de contexto | Trace correlaciona foco/input con rutas, diálogos y movimientos de foco DOM dentro de una ventana acotada. No demuestra causalidad del código de autor ni si un aviso previo satisface WCAG 3.2.2. |
 | APG | Es orientación informativa y las variantes opcionales no se fuerzan como si fueran requisitos universales. |
 | Grid / Treegrid | La revisión es conservadora ante grids irregulares, virtualizados, spans e índices explícitos. |
 | Runtime | Solo puede informar sobre caminos de interacción realmente observados. |

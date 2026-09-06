@@ -197,6 +197,7 @@ FocusTrace records only compact evidence needed for debugging:
 - route transitions;
 - dialog/focus events;
 - observed dragging summary evidence;
+- trusted setting-change event type and target identity, never the control value;
 - deterministic root-cause classifications.
 
 The runtime engine does **not** persist full DOM snapshots or a pointer-coordinate trail. It also does not use AI to infer root causes. Current causal classifications are deterministic signals such as:
@@ -235,6 +236,14 @@ FocusTrace suppresses the review when observable evidence already indicates prog
 A candidate is also discarded when it receives focus or Trace observes a subsequent focus transition, route change or dialog opening inside the stabilization/correlation window. This reflects the WCAG definition: a message that changes context falls outside the status-message requirement.
 
 The result is always `REVIEW`, never automatic `FAIL`. FocusTrace can observe status-like content and missing common exposure mechanisms, but it cannot deterministically prove from DOM text alone that the content is a WCAG status message or exhaust every equivalent accessibility-tree mechanism. The current subset is intentionally limited to short visible text and EN/ES lexical/structural signals; non-text-only status, arbitrary natural language, disappearance-only state and exact screen-reader announcement remain manual territory.
+
+## On Focus and On Input runtime context-change scope
+
+`FT-RUNTIME-008` provides conservative runtime review evidence for WCAG 3.2.1 On Focus. When a component receives focus, FocusTrace watches a bounded 1.2-second correlation window for an observed SPA route change, dialog opening or programmatic DOM-focus move. A separate observed activation or a new user action clears the pending focus attribution, and ordinary sequential focus movement is not reinterpreted as a context change caused by the previous component.
+
+`FT-RUNTIME-009` provides the corresponding runtime review evidence for WCAG 3.2.2 On Input. A trusted `input` or `change` event on a setting control can become the trigger for a later observed route change, dialog opening or programmatic focus move inside the same bounded window. The setting-change event records only the compact control identity and event type; FocusTrace does not read or persist the control value for this rule.
+
+Both rules remain `REVIEW`. For 3.2.1, observed ordering does not by itself prove which author handler caused the context change. For 3.2.2, the criterion allows an automatic context change when the user was advised before using the control, and that prior advice cannot always be established from runtime evidence alone. Explicit user activation is therefore not presented as a violation of either rule.
 
 ## Consistent Help Site Audit scope
 
@@ -304,6 +313,8 @@ This is deliberately a `REVIEW`, not a `FAIL`. Text heuristics cannot prove that
 | FT-RUNTIME-005 Focused element became hidden | REVIEW | WCAG 2.4.3 / 4.1.2 |
 | FT-RUNTIME-006 Dragging interaction observed | REVIEW | WCAG 2.5.7 |
 | FT-RUNTIME-007 Status-like message may not be programmatically exposed | REVIEW | WCAG 4.1.3 |
+| FT-RUNTIME-008 Receiving focus may initiate a context change | REVIEW | WCAG 3.2.1 |
+| FT-RUNTIME-009 Changing a control may initiate a context change | REVIEW | WCAG 3.2.2 |
 | FT-APG-001 Dialog initial focus remains outside | REVIEW | WAI-ARIA APG Dialog Modal |
 | FT-APG-002 Focus escapes modal dialog | REVIEW | WAI-ARIA APG Dialog Modal |
 | FT-APG-003 Focus not restored after dialog close | REVIEW | WAI-ARIA APG Dialog Modal |
@@ -320,6 +331,7 @@ This is deliberately a `REVIEW`, not a `FAIL`. Text heuristics cannot prove that
 - `FT-RUNTIME-002` uses bounded viewport hit-testing of the observed focused element; it is not a rendering-engine proof of every possible overlap/compositing case.
 - `FT-RUNTIME-006` recognizes observed drag interaction signals but does not automatically prove whether an equivalent non-dragging operation or an essential-dragging exception exists.
 - `FT-RUNTIME-007` reviews only short visible EN/ES status-like text with observable structural signals after real activation. It cannot prove the meaning of every message, non-text-only status, disappearance-only state, equivalent accessibility-tree exposure or actual screen-reader announcement.
+- `FT-RUNTIME-008` and `FT-RUNTIME-009` correlate only observed focus/input events with route, dialog and DOM-focus changes inside a bounded window. They cannot prove author-handler causation, and `FT-RUNTIME-009` cannot always establish whether prior user advice satisfies WCAG 3.2.2.
 - `FT-REVIEW-011` uses bounded, text-based help-mechanism candidates over Site Audit samples and therefore cannot establish full WCAG 3.2.6 applicability or site-wide conformance.
 - Structural HTML checks operate on the parsed live DOM. Browser parser repair can normalize invalid source before FocusTrace runs; the tool does not infer source-level errors that are no longer observable. See [`STRUCTURAL_HTML.md`](STRUCTURAL_HTML.md).
 - Advanced ARIA checks operate on the live accessibility relationships FocusTrace can derive from DOM semantics and `aria-owns`; they do not claim to reproduce the browser accessibility tree or a screen reader's spoken output. See [`ARIA_VALIDATION.md`](ARIA_VALIDATION.md).

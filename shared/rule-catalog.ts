@@ -312,6 +312,26 @@ export const RULES = {
     ),
     references: [wcag('4.1.3', 'Status Messages', 'AA', 'status-messages')],
   },
+  onFocusContextChange: {
+    id: 'FT-RUNTIME-008',
+    title: 'Receiving focus may have initiated a change of context',
+    severity: 'moderate',
+    ...impact(
+      'A context change caused merely by receiving focus can disorient keyboard, screen-reader and magnification users who were only navigating to the component. FocusTrace keeps this as REVIEW because runtime ordering does not prove which author handler caused the transition.',
+      'Un cambio de contexto provocado únicamente al recibir el foco puede desorientar a usuarios de teclado, lector de pantalla o ampliación que solo estaban navegando hasta el componente. FocusTrace lo mantiene como REVIEW porque el orden observado en runtime no demuestra qué manejador de autor inició la transición.',
+    ),
+    references: [wcag('3.2.1', 'On Focus', 'A', 'on-focus')],
+  },
+  onInputContextChange: {
+    id: 'FT-RUNTIME-009',
+    title: 'Changing a control may have initiated a change of context',
+    severity: 'moderate',
+    ...impact(
+      'An unexpected context change after changing a control can interrupt data entry or navigation. FocusTrace keeps this as REVIEW because WCAG 3.2.2 permits the behavior when the user was advised before using the control, which runtime evidence alone cannot always establish.',
+      'Un cambio de contexto inesperado tras modificar un control puede interrumpir la entrada de datos o la navegación. FocusTrace lo mantiene como REVIEW porque WCAG 3.2.2 permite ese comportamiento cuando el usuario fue advertido antes de utilizar el control, algo que la evidencia runtime no siempre puede determinar.',
+    ),
+    references: [wcag('3.2.2', 'On Input', 'A', 'on-input')],
+  },
   dialogInitialFocus: {
     id: 'FT-APG-001',
     title: 'Dialog opened while focus remained outside',

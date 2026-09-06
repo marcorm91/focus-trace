@@ -1,6 +1,6 @@
 # FocusTrace severity audit
 
-Audit date: 2026-09-05
+Audit date: 2026-09-06
 
 This document records the rule-by-rule review behind the base severity values used by FocusTrace.
 
@@ -68,6 +68,8 @@ Existing equivalent rules that already matched axe keep their severity, includin
 | `FT-RUNTIME-005` Focused element became hidden | serious | runtime | FocusTrace runtime evidence. |
 | `FT-RUNTIME-006` Dragging observed | moderate | runtime / review | A drag can be a substantial pointer barrier, but the rule cannot prove whether an equivalent single-pointer operation or essential exception exists. |
 | `FT-RUNTIME-007` Status message exposure | moderate | runtime / review | Missing status exposure can hide success, result, progress or error feedback from assistive-technology users. The observed text still requires contextual status-message classification, so it remains REVIEW. |
+| `FT-RUNTIME-008` On Focus context change | moderate | runtime / review | A context change caused merely by receiving focus can disorient users, but observed ordering cannot prove which author handler initiated it. |
+| `FT-RUNTIME-009` On Input context change | moderate | runtime / review | An unexpected context change after changing a control can interrupt a task, but runtime evidence cannot always establish whether the user was advised beforehand as allowed by WCAG 3.2.2. |
 | `FT-APG-001` Dialog opened without focus | serious | runtime | APG/runtime behavior rather than an axe-equivalent static rule. |
 | `FT-APG-002` Modal focus escape | serious | runtime | APG/runtime behavior rather than an axe-equivalent static rule. |
 | `FT-APG-003` Dialog focus restore | moderate | runtime | APG/runtime behavior rather than an axe-equivalent static rule. |

@@ -90,6 +90,50 @@ export function actionableRemediationForRule(
     };
   }
 
+  if (ruleId === 'FT-RUNTIME-008') {
+    return {
+      options: [
+        tr(
+          language,
+          'Do not initiate navigation, open a dialog or move focus to another component merely because this component receives focus. Require an explicit user activation for the context change.',
+          'No inicies una navegación, abras un diálogo ni muevas el foco a otro componente únicamente porque este componente recibe el foco. Exige una activación explícita del usuario para el cambio de contexto.',
+        ),
+        tr(
+          language,
+          'Move behavior that changes context out of focus/focusin handlers and into an explicit action such as activating a button or link, while keeping ordinary focus styling and disclosure behavior non-disruptive.',
+          'Saca de los manejadores focus/focusin el comportamiento que cambia el contexto y llévalo a una acción explícita, como activar un botón o enlace, manteniendo el estilo de foco y los cambios no disruptivos separados.',
+        ),
+      ],
+      validation: tr(
+        language,
+        'Reach the component with keyboard and pointer focus without activating it. Confirm that receiving focus alone does not navigate, open a dialog or move focus elsewhere; then verify that the explicit user activation performs the intended change.',
+        'Llega al componente mediante foco de teclado y de puntero sin activarlo. Confirma que recibir el foco por sí solo no navega, abre un diálogo ni mueve el foco a otro lugar; después verifica que la activación explícita realiza el cambio previsto.',
+      ),
+    };
+  }
+
+  if (ruleId === 'FT-RUNTIME-009') {
+    return {
+      options: [
+        tr(
+          language,
+          'Avoid changing context automatically when a user changes a control setting. Prefer an explicit submit, apply or continue action when the change would navigate, open a dialog or move focus to a new context.',
+          'Evita cambiar el contexto automáticamente cuando el usuario modifica el valor o estado de un control. Prefiere una acción explícita de enviar, aplicar o continuar cuando el cambio vaya a navegar, abrir un diálogo o mover el foco a un contexto nuevo.',
+        ),
+        tr(
+          language,
+          'If the automatic context change is genuinely required, provide clear instructions before the control is used so the user knows what will happen when its setting changes.',
+          'Si el cambio automático de contexto es realmente necesario, proporciona instrucciones claras antes de utilizar el control para que el usuario sepa qué ocurrirá cuando cambie su valor o estado.',
+        ),
+      ],
+      validation: tr(
+        language,
+        'Change the control using keyboard and pointer input. Confirm that the setting can change without an unexpected context change, or that the required context change was clearly described before the control is used.',
+        'Cambia el control con teclado y puntero. Confirma que su valor o estado puede cambiar sin provocar un cambio de contexto inesperado, o que el cambio de contexto necesario se describió claramente antes de utilizar el control.',
+      ),
+    };
+  }
+
   if (ruleId === 'FT-REVIEW-011') {
     return {
       options: [
