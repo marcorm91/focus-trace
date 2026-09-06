@@ -37,8 +37,10 @@ test('reviews an SPA route change initiated when a control receives focus', asyn
       changeKind: 'route',
     },
   });
-  expect(finding?.toUrl).toContain('#[redacted]');
-  expect(JSON.stringify(session.events)).not.toContain('#focus-context');
+  expect(finding?.toUrl).toContain('?[redacted]#[redacted]');
+  const serializedEvents = JSON.stringify(session.events);
+  expect(serializedEvents).not.toContain('focus-secret');
+  expect(serializedEvents).not.toContain('#focus-context');
   expect(session.events.some((event) =>
     event.kind === 'keydown' && event.interactionId === finding?.interactionId,
   )).toBe(true);
@@ -69,8 +71,10 @@ test('reviews a trusted select setting change followed by SPA navigation', async
       changeKind: 'route',
     },
   });
-  expect(finding?.toUrl).toContain('#[redacted]');
-  expect(JSON.stringify(session.events)).not.toContain('#input-context');
+  expect(finding?.toUrl).toContain('?[redacted]#[redacted]');
+  const serializedEvents = JSON.stringify(session.events);
+  expect(serializedEvents).not.toContain('private@example.com');
+  expect(serializedEvents).not.toContain('#input-context');
   expect(session.events.some((event) =>
     event.kind === 'input-change'
       && event.element?.selector === '#input-route'
@@ -120,7 +124,7 @@ test('does not flag explicit activation or an inline setting update as a context
     extensionWorker,
     tabId,
     (state) => state.events.some((event) =>
-      event.kind === 'route' && event.toUrl?.includes('#[redacted]'),
+      event.kind === 'route' && event.toUrl?.includes('?[redacted]#[redacted]'),
     ),
   );
 
@@ -137,6 +141,7 @@ test('does not flag explicit activation or an inline setting update as a context
     ),
   );
 
+  expect(JSON.stringify(session.events)).not.toContain('explicit-secret');
   expect(session.events.filter((event) =>
     event.ruleId === 'FT-RUNTIME-008' || event.ruleId === 'FT-RUNTIME-009',
   )).toHaveLength(0);
