@@ -62,8 +62,8 @@ export function isSettingChangeTarget(element: Element): boolean {
   const contentEditable = element.getAttribute('contenteditable')?.trim().toLowerCase();
   if (contentEditable === '' || contentEditable === 'true' || contentEditable === 'plaintext-only') return true;
 
-  const role = element.getAttribute('role')?.trim().toLowerCase();
-  return Boolean(role && SETTING_CHANGE_ROLES.has(role));
+  const roles = element.getAttribute('role')?.trim().toLowerCase().split(/\s+/).filter(Boolean) ?? [];
+  return roles.some((role) => SETTING_CHANGE_ROLES.has(role));
 }
 
 export function createSettingChangeEvent(
