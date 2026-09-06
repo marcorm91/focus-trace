@@ -10,6 +10,14 @@ El proyecto se encuentra en desarrollo activo. Los resultados automáticos se se
 
 FocusTrace es software libre con licencia **GNU GPL v3.0 únicamente**. La licencia del código fuente y la identidad del proyecto FocusTrace se tratan por separado; consulta [Licencia e identidad del proyecto](#licencia-e-identidad-del-proyecto).
 
+## Instalar
+
+FocusTrace está disponible en la página oficial de Chrome Web Store:
+
+- [Instalar FocusTrace desde Chrome Web Store](https://chromewebstore.google.com/detail/focustrace/efmfklamjafbknbmadpfmlbhobnoffnn)
+
+La ficha de la tienda puede mostrar temporalmente una versión anterior mientras una nueva release está en revisión.
+
 ## API funcional de capacidades
 
 Esta sección es el inventario funcional canónico de FocusTrace: qué puede analizar, observar, detectar, conservar y exportar la extensión, y qué tipo de evidencia produce cada capacidad.

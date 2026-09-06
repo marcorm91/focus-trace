@@ -1,4 +1,5 @@
 import { defineConfig, type UserManifest } from 'wxt';
+import packageJson from './package.json';
 
 const OPTIONAL_PAGE_HOST_PERMISSIONS = ['http://*/*', 'https://*/*'];
 const OPTIONAL_VISUAL_CAPTURE_HOST_PERMISSION = '<all_urls>';
@@ -37,7 +38,7 @@ export function manifestForBrowser(browser: string): UserManifest {
     name: '__MSG_extensionName__',
     description: '__MSG_extensionDescription__',
     default_locale: 'en',
-    version: '0.2.0',
+    version: packageJson.version,
     ...(firefox
       ? {
           browser_specific_settings: {

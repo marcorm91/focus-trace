@@ -36,9 +36,11 @@ The value of Structure is comprehension: help a developer understand how a page 
 
 ### 3. Runtime accessibility debugging
 
-Trace observes keyboard/pointer interaction, focus transitions, selected DOM mutations, SPA route changes and dialog lifecycle behavior.
+Trace observes keyboard/pointer interaction, focus transitions, selected DOM mutations, SPA route changes, dialog lifecycle behavior and conservative status-message candidates.
 
-It correlates those events so FocusTrace can explain causal patterns such as focus being removed, falling back to the document body, escaping a modal or remaining behind after SPA navigation.
+It correlates those events so FocusTrace can explain causal patterns such as focus being removed, falling back to the document body, escaping a modal, remaining behind after SPA navigation or a likely WCAG 4.1.3 status update appearing without observable programmatic exposure.
+
+Status-message evidence remains `REVIEW`: FocusTrace can observe DOM semantics and interaction context, but it does not claim to reproduce the browser accessibility tree or a screen reader's spoken output.
 
 Runtime evidence should remain inspectable as events, interactions, journey, graph and replay rather than being reduced to a single pass/fail number.
 
@@ -93,7 +95,7 @@ Candidate direction:
 2. **Focus Regression Diff** — compare known-good and current runtime behavior.
 3. **Trace → Playwright** — turn reproduced behavior into a regression test scaffold.
 4. **Accessibility State Timeline** — make behavior changes inspectable over time.
-5. **Live Region Trace** — expose announcement-related runtime evidence where it can be measured reliably.
+5. **Announcement timeline / deeper Live Region Trace** — extend beyond the current conservative status-message review into richer, inspectable announcement-related evidence where it can be measured reliably.
 6. **Debug/Repro Bundle** — package reproducible accessibility evidence for a developer or QA workflow.
 
 The first Interaction Contract should stay narrow enough to be deterministic and demonstrable, with Dialog as the strongest candidate.
