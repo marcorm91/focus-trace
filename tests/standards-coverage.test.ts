@@ -100,7 +100,7 @@ describe('standards registry coverage', () => {
         continue;
       }
       for (const element of definition.elements) {
-        expect(upstream.has(`${definition.attribute}|${element}`), `Missing upstream pair ${element}|${element}`).toBe(true);
+        expect(upstream.has(`${definition.attribute}|${element}`), `Missing upstream pair ${definition.attribute}|${element}`).toBe(true);
       }
     }
   });
@@ -145,7 +145,7 @@ describe('standards registry coverage', () => {
     expect(wcagCoverageForCriterion('3.1.2')).toMatchObject({
       level: 'AA',
       coverage: ['automated'],
-      ruleIds: ['FT-WCAG-009'],
+      ruleIds: ['FT-WCAG-013'],
       implemented: true,
     });
     expect(wcagCoverageForCriterion('3.2.3')).toMatchObject({
