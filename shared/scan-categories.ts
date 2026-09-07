@@ -23,6 +23,7 @@ const RULE_CATEGORY: Record<string, Exclude<ScanCategory, 'all'>> = {
   'FT-WCAG-010': 'contrast',
   'FT-WCAG-011': 'contrast',
   'FT-WCAG-012': 'other',
+  'FT-WCAG-013': 'structure',
   'FT-WARN-001': 'aria',
   'FT-WARN-002': 'aria',
   'FT-WARN-003': 'aria',
