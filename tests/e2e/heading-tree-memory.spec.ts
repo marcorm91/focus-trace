@@ -94,48 +94,47 @@ async function sampleMemory(cdp: CDPSession, panel: Page, cycle: number): Promis
   };
 }
 
-async function runCycles(panel: Page, cycles: number): Promise<void> {
-  await panel.evaluate(async (count) => {
-    const button = (label: string) => [...document.querySelectorAll('button')]
-      .find((candidate) => candidate.textContent?.trim() === label) as HTMLButtonElement | undefined;
-    const update = async () => {
-      await Promise.resolve();
-      document.querySelector('.heading-tree')?.getBoundingClientRect();
-    };
-    for (let cycle = 0; cycle < count; cycle++) {
-      button('Expand all')?.click();
-      await update();
-      button('Collapse all')?.click();
-      await update();
+for (const layout of ['grid', 'block'] as const) {
+  test(`profiles one manual H1-H6 expansion using ${layout} branch layout`, async ({ context, extensionWorker }) => {
+    test.setTimeout(60_000);
+    const panel = await openSidepanel(context, extensionWorker);
+    await saveSixLevelHeadingScan(panel);
+    await panel.getByRole('button', { name: /Structure|Estructura/ }).click();
+    await expect(panel.getByRole('tree').getByRole('treeitem')).toHaveCount(1);
+
+    if (layout === 'block') {
+      await panel.evaluate(() => {
+        const style = document.createElement('style');
+        style.textContent = `
+          .heading-tree, .heading-tree-branch, .heading-tree-children { display: block !important; }
+          .heading-tree-branch + .heading-tree-branch, .heading-tree-children { margin-top: 7px; }
+        `;
+        document.head.append(style);
+      });
     }
-  }, cycles);
+
+    const cdp = await context.newCDPSession(panel);
+    await cdp.send('Performance.enable');
+    await cdp.send('HeapProfiler.enable');
+    const samples: MemorySample[] = [await sampleMemory(cdp, panel, 0)];
+
+    for (let level = 1; level < 6; level++) {
+      const startedAt = Date.now();
+      await panel.getByRole('button', { name: `Expand heading branch: Heading ${level} with representative wrapping text` }).click();
+      await expect(panel.getByRole('button', { name: `Heading ${level + 1} with representative wrapping text`, exact: true })).toBeVisible();
+      samples.push(await sampleMemory(cdp, panel, level));
+      console.log(`HEADING_MEMORY_LEVEL ${JSON.stringify({ layout, level, elapsedMs: Date.now() - startedAt })}`);
+    }
+
+    await panel.getByRole('button', { name: 'Collapse all' }).click();
+    await expect(panel.getByRole('tree').getByRole('treeitem')).toHaveCount(1);
+    samples.push(await sampleMemory(cdp, panel, 6));
+    console.log(`HEADING_MEMORY_DIAGNOSTIC ${JSON.stringify({ layout, samples })}`);
+
+    const baseline = samples[0]!;
+    const collapsed = samples.at(-1)!;
+    expect(collapsed.documents).toBe(baseline.documents);
+    expect(collapsed.nodes).toBe(baseline.nodes);
+    expect(collapsed.jsEventListeners).toBe(baseline.jsEventListeners);
+  });
 }
-
-test('diagnoses retained resources while repeatedly expanding headings', async ({ context, extensionWorker }) => {
-  test.setTimeout(120_000);
-  const panel = await openSidepanel(context, extensionWorker);
-  await saveSixLevelHeadingScan(panel);
-  await panel.getByRole('button', { name: /Structure|Estructura/ }).click();
-  await expect(panel.getByRole('tree').getByRole('treeitem')).toHaveCount(1);
-
-  const cdp = await context.newCDPSession(panel);
-  await cdp.send('Performance.enable');
-  await cdp.send('HeapProfiler.enable');
-  const samples: MemorySample[] = [await sampleMemory(cdp, panel, 0)];
-  let completed = 0;
-  for (const batch of [25, 25, 50, 100]) {
-    const startedAt = Date.now();
-    await runCycles(panel, batch);
-    completed += batch;
-    expect(await panel.getByRole('tree').getByRole('treeitem').count()).toBe(1);
-    samples.push(await sampleMemory(cdp, panel, completed));
-    console.log(`HEADING_MEMORY_BATCH ${JSON.stringify({ completed, elapsedMs: Date.now() - startedAt })}`);
-  }
-
-  console.log(`HEADING_MEMORY_DIAGNOSTIC ${JSON.stringify(samples)}`);
-  const baseline = samples[0]!;
-  const final = samples.at(-1)!;
-  expect(final.documents).toBe(baseline.documents);
-  expect(final.nodes).toBe(baseline.nodes);
-  expect(final.jsEventListeners).toBe(baseline.jsEventListeners);
-});
