@@ -1,7 +1,7 @@
 import type { RuleDefinition } from './rule-catalog';
 
 export const LANGUAGE_PARTS_RULE: RuleDefinition = {
-  id: 'FT-WCAG-009',
+  id: 'FT-WCAG-013',
   title: 'Declared content language has a known primary language tag',
   severity: 'serious',
   severityRationale: {
