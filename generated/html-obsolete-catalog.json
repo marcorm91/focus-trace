@@ -5,10 +5,10 @@
     "specification": "HTML Living Standard",
     "url": "https://html.spec.whatwg.org/multipage/obsolete.html",
     "approvedSnapshotDate": "2026-08-28",
-    "snapshotLabel": "1 September 2026",
-    "lastModified": "Tue, 01 Sep 2026 14:39:11 GMT",
-    "etag": "W/\"6a96e38f-2abbb\"",
-    "obsoleteSectionHash": "9759f1968399789f3c7dbf1ea9ad36a713c29013e6efb44736d9f228839ab8f9"
+    "snapshotLabel": "7 September 2026",
+    "lastModified": "Mon, 07 Sep 2026 13:36:57 GMT",
+    "etag": "W/\"6a9ebdf9-2abbb\"",
+    "obsoleteSectionHash": "3fb41c73a9b41c9ef96ba78a5db0cd8e987adeaa46f6e7580c7de20f9fce63e5"
   },
   "summary": {
     "obsoleteElements": 29,
