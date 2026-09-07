@@ -2,6 +2,21 @@
 
 All notable FocusTrace release changes are summarized here. Detailed release notes remain under `docs/RELEASE_NOTES_<version>.md`.
 
+## 0.2.3
+
+### Fixed
+
+- Prevented the Structure heading tree from triggering pathological browser layout work and excessive native memory use as nested H1–H6 branches were expanded.
+- Preserved heading hierarchy, row alignment, expand/collapse controls and page-overlay behavior while replacing recursively nested layout grids with block-flow branch containers.
+
+### Reliability
+
+- Added browser regression coverage that expands every heading level at narrow and regular panel widths.
+- Added a Chromium memory guard that verifies expanded heading branches stay within a bounded native-memory budget and that collapse restores the baseline DOM/listener footprint.
+- No new production permission, backend, analytics or persisted data.
+
+See `docs/RELEASE_NOTES_0.2.3.md` for the full 0.2.3 notes and validation scope.
+
 ## 0.2.2
 
 ### Added
