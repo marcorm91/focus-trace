@@ -253,6 +253,14 @@ FocusTrace compares the relative order only when at least two of the same observ
 
 This is deliberately a `REVIEW`, not a `FAIL`. Text heuristics cannot prove that a candidate belongs to the success criterion, whether two differently labelled controls are semantically the same mechanism, or whether a contextual exception applies. Site Audit sampling also does not prove that every page on the site has been evaluated.
 
+## Bypass Blocks keyboard review scope
+
+`FT-REVIEW-012` provides conservative page-level review evidence for WCAG 2.4.1 Bypass Blocks. It does not search for a literal label such as “Skip to content”. Instead, FocusTrace looks for an exposed primary `main` landmark, a substantial navigation landmark before that main content, and an early sequentially focusable same-document fragment link whose target resolves to the main landmark or to content inside it.
+
+A validated fragment bypass records `PASS` for this tested expectation. When a substantial pre-main navigation block is observed but no such validated link is found, FocusTrace emits `REVIEW`, not `FAIL`, because WCAG 2.4.1 can be satisfied by other mechanisms that cannot be proved from this single DOM pattern. A likely bypass link whose fragment target is missing is also reported for review with the broken target as evidence.
+
+The rule is full-page only. Component-scoped analysis does not execute `FT-REVIEW-012`, because repeated-block bypass behavior depends on document-level order and page context.
+
 ## Static and structural rule set
 
 | FocusTrace rule | Outcome | Source |
@@ -301,6 +309,7 @@ This is deliberately a `REVIEW`, not a `FAIL`. Text heuristics cannot prove that
 | FT-REVIEW-009 Unidentified section/article structure | REVIEW | HTML Living Standard |
 | FT-REVIEW-010 Repeated landmarks without distinguishable names | REVIEW | WAI-ARIA APG |
 | FT-REVIEW-011 Repeated help mechanisms change relative order across sampled pages | REVIEW | WCAG 3.2.6 |
+| FT-REVIEW-012 Missing or broken keyboard bypass candidate before repeated navigation | REVIEW/PASS | WCAG 2.4.1 A |
 
 ## Runtime rules
 
@@ -333,6 +342,7 @@ This is deliberately a `REVIEW`, not a `FAIL`. Text heuristics cannot prove that
 - `FT-RUNTIME-007` reviews only short visible EN/ES status-like text with observable structural signals after real activation. It cannot prove the meaning of every message, non-text-only status, disappearance-only state, equivalent accessibility-tree exposure or actual screen-reader announcement.
 - `FT-RUNTIME-008` and `FT-RUNTIME-009` correlate only observed focus/input events with route, dialog and DOM-focus changes inside a bounded window. They cannot prove author-handler causation, and `FT-RUNTIME-009` cannot always establish whether prior user advice satisfies WCAG 3.2.2.
 - `FT-REVIEW-011` uses bounded, text-based help-mechanism candidates over Site Audit samples and therefore cannot establish full WCAG 3.2.6 applicability or site-wide conformance.
+- `FT-REVIEW-012` validates only the observable keyboard fragment-bypass pattern around substantial pre-main navigation; other WCAG 2.4.1 bypass mechanisms and repeated-block applicability still require manual context.
 - Structural HTML checks operate on the parsed live DOM. Browser parser repair can normalize invalid source before FocusTrace runs; the tool does not infer source-level errors that are no longer observable. See [`STRUCTURAL_HTML.md`](STRUCTURAL_HTML.md).
 - Advanced ARIA checks operate on the live accessibility relationships FocusTrace can derive from DOM semantics and `aria-owns`; they do not claim to reproduce the browser accessibility tree or a screen reader's spoken output. See [`ARIA_VALIDATION.md`](ARIA_VALIDATION.md).
 - Automated static checks are intentionally narrower than the corresponding full WCAG success criteria.
