@@ -253,6 +253,14 @@ FocusTrace compares the relative order only when at least two of the same observ
 
 This is deliberately a `REVIEW`, not a `FAIL`. Text heuristics cannot prove that a candidate belongs to the success criterion, whether two differently labelled controls are semantically the same mechanism, or whether a contextual exception applies. Site Audit sampling also does not prove that every page on the site has been evaluated.
 
+## Consistent Navigation Site Audit scope
+
+`FT-REVIEW-013` provides conservative multipage review evidence for WCAG 3.2.3 Consistent Navigation. Site Audit collects rendered native `nav` and `role="navigation"` landmarks and records the ordered HTTP(S) destinations exposed by each candidate.
+
+FocusTrace intentionally uses a high-confidence identity rule before comparing order. A candidate must expose at least three unique destinations. Two navigation blocks are considered the same repeated mechanism only when their complete normalized destination sets match exactly. If that exact set appears more than once on either page, the pairing is ambiguous and FocusTrace does not compare it. Blocks with only partial destination overlap are also ignored.
+
+Only after that identity check does FocusTrace compare relative destination order. A changed order emits `REVIEW` with both page URLs and both observed orders as evidence. It never becomes automatic `FAIL`: WCAG 3.2.3 allows changes initiated by the user, Site Audit cannot always prove personalization or interaction history, and representative samples do not prove site-wide behavior. The rule deliberately prefers false negatives over guessing that two similar menus are the same mechanism.
+
 ## Bypass Blocks keyboard review scope
 
 `FT-REVIEW-012` provides conservative page-level review evidence for WCAG 2.4.1 Bypass Blocks. It does not search for a literal label such as “Skip to content”. Instead, FocusTrace looks for an exposed primary `main` landmark, a substantial navigation landmark before that main content, and an early sequentially focusable same-document fragment link whose target resolves to the main landmark or to content inside it.
@@ -310,6 +318,7 @@ The rule is full-page only. Component-scoped analysis does not execute `FT-REVIE
 | FT-REVIEW-010 Repeated landmarks without distinguishable names | REVIEW | WAI-ARIA APG |
 | FT-REVIEW-011 Repeated help mechanisms change relative order across sampled pages | REVIEW | WCAG 3.2.6 |
 | FT-REVIEW-012 Missing or broken keyboard bypass candidate before repeated navigation | REVIEW/PASS | WCAG 2.4.1 A |
+| FT-REVIEW-013 Exact repeated navigation destination set changes relative order across sampled pages | REVIEW | WCAG 3.2.3 AA |
 
 ## Runtime rules
 
@@ -343,6 +352,7 @@ The rule is full-page only. Component-scoped analysis does not execute `FT-REVIE
 - `FT-RUNTIME-008` and `FT-RUNTIME-009` correlate only observed focus/input events with route, dialog and DOM-focus changes inside a bounded window. They cannot prove author-handler causation, and `FT-RUNTIME-009` cannot always establish whether prior user advice satisfies WCAG 3.2.2.
 - `FT-REVIEW-011` uses bounded, text-based help-mechanism candidates over Site Audit samples and therefore cannot establish full WCAG 3.2.6 applicability or site-wide conformance.
 - `FT-REVIEW-012` validates only the observable keyboard fragment-bypass pattern around substantial pre-main navigation; other WCAG 2.4.1 bypass mechanisms and repeated-block applicability still require manual context.
+- `FT-REVIEW-013` requires an exact repeated destination-set match and ignores partial/ambiguous navigation matches; it therefore favors false negatives, and Site Audit cannot prove whether an observed order change was initiated by the user.
 - Structural HTML checks operate on the parsed live DOM. Browser parser repair can normalize invalid source before FocusTrace runs; the tool does not infer source-level errors that are no longer observable. See [`STRUCTURAL_HTML.md`](STRUCTURAL_HTML.md).
 - Advanced ARIA checks operate on the live accessibility relationships FocusTrace can derive from DOM semantics and `aria-owns`; they do not claim to reproduce the browser accessibility tree or a screen reader's spoken output. See [`ARIA_VALIDATION.md`](ARIA_VALIDATION.md).
 - Automated static checks are intentionally narrower than the corresponding full WCAG success criteria.
