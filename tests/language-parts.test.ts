@@ -52,4 +52,14 @@ describe('WCAG 3.1.2 explicit language-part subset', () => {
       expect.objectContaining({ element: document.querySelector('#visible'), outcome: 'fail' }),
     ]);
   });
+
+  it('ignores a declared language when an ancestor removes the whole fragment from rendering', () => {
+    render('<section style="display:none"><p id="nested" lang="English">Hidden by ancestor</p></section>');
+    expect(evaluateLanguageParts()).toEqual([]);
+  });
+
+  it('does not treat script or style source text as human-language content', () => {
+    render('<script lang="English">window.example = true;</script><style lang="English">body { display: block; }</style>');
+    expect(evaluateLanguageParts()).toEqual([]);
+  });
 });
