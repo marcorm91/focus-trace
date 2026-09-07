@@ -242,6 +242,16 @@ export const RULES = {
     ),
     references: [wcag('3.2.6', 'Consistent Help', 'A', 'consistent-help')],
   },
+  consistentNavigation: {
+    id: 'FT-REVIEW-013',
+    title: 'Repeated navigation may change relative order across pages',
+    severity: 'moderate',
+    ...impact(
+      'Changing the order of the same repeated navigation destinations can make a site less predictable for people who rely on spatial memory, magnification or sequential navigation.',
+      'Cambiar el orden de los mismos destinos de navegación repetidos puede hacer el sitio menos predecible para personas que dependen de memoria espacial, ampliación o navegación secuencial.',
+    ),
+    references: [wcag('3.2.3', 'Consistent Navigation', 'AA', 'consistent-navigation')],
+  },
   bypassBlocks: {
     id: 'FT-REVIEW-012',
     title: 'Primary navigation may need a keyboard bypass mechanism',
@@ -288,7 +298,7 @@ export const RULES = {
     severity: 'moderate',
     ...impact(
       'Keeping focus in the previous view after navigation can make the new context unclear, but the severity depends strongly on the transition and available landmarks.',
-      'Mantener el foco en la vista anterior tras navegar puede hacer poco claro el nuevo contexto, pero la gravedad depende mucho de la transición y de los puntos de referencia disponibles.',
+      'Mantener focus en la vista anterior tras navegar puede hacer poco claro el nuevo contexto, pero la gravedad depende mucho de la transición y de los puntos de referencia disponibles.',
     ),
     references: [wcag('2.4.3', 'Focus Order', 'A', 'focus-order')],
   },
