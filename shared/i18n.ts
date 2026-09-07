@@ -3,11 +3,27 @@ import {
   localizedScanIssue as baseLocalizedScanIssue,
 } from './i18n-base';
 import type { AppLanguage } from './i18n-base';
-import { localizeIssueSourceCopy } from './i18n-source-copy';
-import type { ScanIssue } from './types';
+import {
+  localizeIssueSourceCopy,
+  localizedReferenceLabel as baseLocalizedReferenceLabel,
+} from './i18n-source-copy';
+import type { ScanIssue, StandardReference } from './types';
 
 export * from './i18n-base';
-export { localizedReferenceLabel } from './i18n-source-copy';
+
+const LANGUAGE_PART_TITLE_EN = 'Declared content language has a known primary language tag';
+const LANGUAGE_PART_TITLE_ES = 'El idioma declarado del contenido tiene una etiqueta de idioma principal conocida';
+const LANGUAGE_PART_DESCRIPTION_ES = 'Este fragmento de contenido declara explícitamente un idioma, pero su valor lang no comienza por una subetiqueta de idioma principal registrada por IANA como Type: language.';
+
+export function localizedReferenceLabel(reference: StandardReference, language: AppLanguage): string {
+  if (language === 'es') {
+    if (reference.label === 'Language of Parts') return 'Idioma de las partes';
+    if (reference.label === 'Element with lang attribute has valid language tag') {
+      return 'El elemento con atributo lang tiene una etiqueta de idioma válida';
+    }
+  }
+  return baseLocalizedReferenceLabel(reference, language);
+}
 
 const EXTRA_COPY_ES: Record<string, { title: string; description: string }> = {
   'FT-WARN-008': {
@@ -200,12 +216,39 @@ function localizedExtraEvidence(ruleId: string, evidence: string): string | unde
   return tokens.length > 0 ? `${fallback} Datos técnicos: ${tokens.join(' · ')}.` : fallback;
 }
 
+function isLanguagePartIssue(issue: ScanIssue): boolean {
+  return issue.ruleId === 'FT-WCAG-009'
+    && issue.references.some((reference) => reference.type === 'WCAG' && reference.id === '3.1.2');
+}
+
+function localizedLanguagePartIssue(issue: ScanIssue): ScanIssue {
+  const evidenceMatch = issue.evidence?.match(/^lang = (.+?); primary subtag = (.+)$/);
+  const evidence = evidenceMatch
+    ? `lang = ${evidenceMatch[1]}; subetiqueta principal = ${evidenceMatch[2]}`
+    : issue.evidence;
+  return {
+    ...issue,
+    title: LANGUAGE_PART_TITLE_ES,
+    description: `${LANGUAGE_PART_DESCRIPTION_ES} Criterio/fuente: WCAG 3.1.2 (AA).`,
+    ...(evidence ? { evidence } : {}),
+    references: issue.references.map((reference) => ({
+      ...reference,
+      label: localizedReferenceLabel(reference, 'es'),
+    })),
+  };
+}
+
 export function localizedRuleTitle(ruleId: string, fallback: string, language: AppLanguage): string {
+  if (language === 'es' && ruleId === 'FT-WCAG-009' && fallback === LANGUAGE_PART_TITLE_EN) {
+    return LANGUAGE_PART_TITLE_ES;
+  }
   if (language === 'es' && EXTRA_COPY_ES[ruleId]) return EXTRA_COPY_ES[ruleId].title;
   return baseLocalizedRuleTitle(ruleId, fallback, language);
 }
 
 export function localizedScanIssue(issue: ScanIssue, language: AppLanguage): ScanIssue {
+  if (language === 'es' && isLanguagePartIssue(issue)) return localizedLanguagePartIssue(issue);
+
   const copy = language === 'es' ? EXTRA_COPY_ES[issue.ruleId] : undefined;
   if (!copy) {
     return localizeIssueSourceCopy(issue, baseLocalizedScanIssue(issue, language), language);
