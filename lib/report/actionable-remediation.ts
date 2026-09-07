@@ -161,6 +161,33 @@ export function actionableRemediationForRule(
     };
   }
 
+  if (ruleId === 'FT-REVIEW-013') {
+    return {
+      options: [
+        tr(
+          language,
+          'Keep the same repeated navigation destinations in the same relative order across pages in the same set unless the user deliberately changes that order.',
+          'Mantén los mismos destinos de navegación repetidos en el mismo orden relativo entre las páginas del mismo conjunto, salvo que el usuario cambie ese orden de forma deliberada.',
+        ),
+        tr(
+          language,
+          'Centralize shared navigation in a common component, layout or template when practical so page-specific variants cannot silently reorder the same destinations.',
+          'Centraliza la navegación compartida en un componente, layout o plantilla común cuando sea práctico para evitar que variantes específicas de página reordenen silenciosamente los mismos destinos.',
+        ),
+        tr(
+          language,
+          'If navigation order is customizable, make the change explicitly user-initiated and preserve the chosen order consistently instead of applying unexplained page-by-page differences.',
+          'Si el orden de navegación es personalizable, haz que el cambio sea iniciado explícitamente por el usuario y conserva de forma coherente el orden elegido en lugar de aplicar diferencias inexplicadas entre páginas.',
+        ),
+      ],
+      validation: tr(
+        language,
+        'Run Site Audit again across the same page set and manually confirm that the same repeated navigation mechanism keeps its relative order, or that any different order is the result of an explicit user choice.',
+        'Vuelve a ejecutar Site Audit sobre el mismo conjunto de páginas y confirma manualmente que el mismo mecanismo de navegación repetido conserva su orden relativo, o que cualquier orden distinto es resultado de una elección explícita del usuario.',
+      ),
+    };
+  }
+
   return undefined;
 }
 
