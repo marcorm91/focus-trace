@@ -2,6 +2,24 @@
 
 All notable FocusTrace release changes are summarized here. Detailed release notes remain under `docs/RELEASE_NOTES_<version>.md`.
 
+## 0.2.4
+
+### Changed
+
+- Structure > Headings now opens the complete H1–H6 hierarchy by default while retaining per-branch and global collapse/expand controls.
+- New scans reset the outline to the fully expanded default so the complete document hierarchy is immediately available.
+
+### Fixed
+
+- Removed the unintended white surface from heading-row layout wrappers so the indentation gutter remains transparent in light and dark themes.
+
+### Reliability
+
+- Updated component and browser regressions for the expanded default, transparent row wrapper, repeated narrow-panel toggling and bounded native memory.
+- No new production permission, backend, analytics or persisted data.
+
+See `docs/RELEASE_NOTES_0.2.4.md` for the full 0.2.4 notes and validation scope.
+
 ## 0.2.3
 
 ### Fixed

@@ -44,6 +44,8 @@ describe('heading tree rendering lifecycle', () => {
     };
     try {
       await render(scan);
+      expect(container.querySelectorAll('[role="treeitem"]')).toHaveLength(6);
+      await click('Collapse all');
       const collapsedNodes = container.querySelectorAll('*').length;
       expect(container.querySelectorAll('[role="treeitem"]')).toHaveLength(1);
       const startCommits = commits;
@@ -65,8 +67,9 @@ describe('heading tree rendering lifecycle', () => {
       await click('Expand all');
       await click('Heading 6');
       expect(onLocate).toHaveBeenCalledExactlyOnceWith('#h6');
+      await click('Collapse all');
       await render({ ...scan, scannedAt: 2 });
-      expect(container.querySelectorAll('[role="treeitem"]')).toHaveLength(1);
+      expect(container.querySelectorAll('[role="treeitem"]')).toHaveLength(6);
     } finally {
       await act(async () => root.unmount());
       container.remove();

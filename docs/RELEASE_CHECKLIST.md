@@ -1,6 +1,6 @@
 # FocusTrace release checklist
 
-Current release candidate: **0.2.3**.
+Current release candidate: **0.2.4**.
 
 Use this checklist before publishing a release build or submitting an updated package to a browser store. Keep the candidate version above aligned with `package.json`, `package-lock.json`, the browser manifests and the release contract test.
 
@@ -88,7 +88,7 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 ## Structure smoke
 
 - Open **Structure** and confirm that merely entering the workspace does not request page access or generate a semantic/metrics snapshot.
-- Open **Headings** inside Structure and confirm the existing H1–H6 tree, hierarchy signals, expand/collapse behavior and page overlay still work.
+- Open **Headings** inside Structure and confirm the existing H1–H6 tree starts fully expanded, its indentation gutter remains transparent, and hierarchy signals, branch controls and page overlay still work.
 - Open **Semantics** or **Metrics**, run **Analyze structure** explicitly and confirm those views populate only after that action.
 - Review semantic suggestions for generic `div`/`span` controls or headings, inline click handlers and generic sequential tab stops; verify they are presented as suggestions/review signals rather than automatic WCAG failures.
 - Confirm Metrics reports the current accessibility-oriented groups: headings, semantic regions, lists, forms, buttons, links, form controls, tables and images.
@@ -225,18 +225,18 @@ Before changing visibility:
 
 ## Release
 
-For the current candidate, the release version is **0.2.3** and the intended tag is **`v0.2.3`**.
+For the current candidate, the release version is **0.2.4** and the intended tag is **`v0.2.4`**.
 
-- Confirm `package.json`, `package-lock.json` and all browser manifests report `0.2.3`.
-- Confirm `tests/release-contract.test.ts` targets `v0.2.3` and passes.
-- Confirm `docs/RELEASE_NOTES_0.2.3.md` and `CHANGELOG.md` match the shipped behavior and limitations.
-- Confirm the version shown in Settings comes from the installed manifest and displays `0.2.3` in the packaged candidate.
+- Confirm `package.json`, `package-lock.json` and all browser manifests report `0.2.4`.
+- Confirm `tests/release-contract.test.ts` targets `v0.2.4` and passes.
+- Confirm `docs/RELEASE_NOTES_0.2.4.md` and `CHANGELOG.md` match the shipped behavior and limitations.
+- Confirm the version shown in Settings comes from the installed manifest and displays `0.2.4` in the packaged candidate.
 - Confirm the release commit is on `main` and CI is green on that exact commit.
 - Build the production Chrome, Edge and Firefox MV3 artifacts from that commit.
 - Smoke-test the unpacked production build in supported Chromium browsers.
 - Complete the Firefox experimental smoke checklist before describing Firefox as officially supported.
-- Tag the exact approved commit as `v0.2.3`.
+- Tag the exact approved commit as `v0.2.4`.
 - Review the generated ZIPs before attaching/uploading them.
 - Only then publish/distribute the release artifacts or submit the updated packages to browser stores.
 
-After publishing 0.2.3, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.
+After publishing 0.2.4, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.
