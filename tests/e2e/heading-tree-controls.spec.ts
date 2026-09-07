@@ -99,3 +99,47 @@ test('heading branches start collapsed and can be expanded independently', async
   await expect(secondDetail).toBeVisible();
   await expect(firstDetail).toBeVisible();
 });
+
+test('six-level heading outline stays responsive across repeated expansion at sidebar widths', async ({ context, extensionWorker }) => {
+  const panel = await openSidepanel(context, extensionWorker);
+  await panel.evaluate(async () => {
+    const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+    if (tab?.id == null) throw new Error('Could not resolve the sidepanel test tab.');
+    await chrome.runtime.sendMessage({
+      type: 'FOCUSTRACE_SAVE_SCAN', tabId: tab.id,
+      scan: {
+        engine: 'FocusTrace Rules', standard: 'WCAG 2.2',
+        url: 'https://example.test/deep-headings', title: 'Six-level outline',
+        scannedAt: Date.now(), scope: { type: 'page' },
+        issues: [], review: [], warnings: [], passes: 0, rulesRun: 0,
+        headings: [1, 2, 3, 4, 5, 6].map((level) => ({
+          id: `h${level}`, level,
+          text: `Heading ${level}: long text that must wrap inside a narrow sidebar without truncation`,
+          selector: `#h${level}`, signals: [],
+        })),
+      },
+    });
+  });
+  await panel.getByRole('button', { name: /Structure|Estructura/ }).click();
+  const tree = panel.getByRole('tree');
+  await expect(tree.getByRole('treeitem')).toHaveCount(1);
+
+  for (const width of [320, 600]) {
+    await panel.setViewportSize({ width, height: 900 });
+    // Exercise the actual browser layout, not only React's DOM updates.
+    for (let cycle = 0; cycle < 10; cycle++) {
+      await panel.getByRole('button', { name: /Expand all|Expandir todo/ }).click();
+      await expect(tree.getByRole('treeitem')).toHaveCount(6);
+      const rows = await tree.locator('.heading-tree-row').evaluateAll((elements) =>
+        elements.map((element) => {
+          const rect = element.getBoundingClientRect();
+          return { left: rect.left, right: rect.right, height: rect.height };
+        }),
+      );
+      expect(rows.every((row) => row.height > 0 && row.left >= 0 && row.right <= width)).toBe(true);
+      await panel.getByRole('button', { name: /Collapse all|Contraer todo/ }).click();
+      await expect(tree.getByRole('treeitem')).toHaveCount(1);
+    }
+  }
+  await expect(panel.getByRole('alert')).toHaveCount(0);
+});

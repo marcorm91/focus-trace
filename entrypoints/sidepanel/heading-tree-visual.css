@@ -1,5 +1,5 @@
 /* Compact visual hierarchy for the DOM-order heading outline. Branches are
-   expanded by default and can be collapsed independently without truncating
+   collapsed by default and can be expanded independently without truncating
    heading text or pushing deep H5/H6 content outside the sidepanel. */
 .heading-outline-panel,
 .heading-overlay-toggle,
@@ -68,8 +68,7 @@
 .heading-tree {
   position: relative;
   width: 100%;
-  display: grid;
-  gap: 7px;
+  display: block;
   padding: 4px 0;
   overflow-x: hidden;
 }
@@ -77,8 +76,16 @@
 .heading-tree-branch,
 .heading-tree-children {
   width: 100%;
-  display: grid;
-  gap: 7px;
+  display: block;
+}
+
+/* Branches only stack vertically. Recursively nesting two auto-sized grids
+   per heading level makes intrinsic layout work grow with outline depth.
+   Keep grid local to each row instead of involving every ancestor in grid
+   sizing when a branch is expanded or collapsed. */
+.heading-tree-branch + .heading-tree-branch,
+.heading-tree-children {
+  margin-top: 7px;
 }
 
 .heading-tree .heading-tree-row {
