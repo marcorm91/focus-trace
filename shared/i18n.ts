@@ -78,6 +78,10 @@ const EXTRA_COPY_ES: Record<string, { title: string; description: string }> = {
     title: 'Los mecanismos de ayuda repetidos pueden cambiar de orden entre páginas',
     description: 'Los mismos mecanismos de ayuda observados aparecen en distinto orden relativo entre páginas muestreadas. Revisa si entran en el alcance de WCAG 3.2.6 y, si es así, conserva un orden relativo coherente.',
   },
+  'FT-REVIEW-012': {
+    title: 'La navegación principal puede necesitar un mecanismo de salto para teclado',
+    description: 'Se ha detectado un bloque de navegación significativo antes del contenido principal sin un enlace de fragmento validado para saltarlo con teclado. Revisa si otro mecanismo satisface WCAG 2.4.1.',
+  },
   'FT-RUNTIME-006': {
     title: 'La interacción de arrastre requiere revisar una alternativa de puntero sencillo',
     description: 'Trace observó un arrastre real. Revisa si la misma funcionalidad puede realizarse con un puntero sencillo sin movimiento de arrastre, teniendo en cuenta las excepciones de WCAG 2.5.7.',
@@ -102,6 +106,7 @@ const EXTRA_EVIDENCE_ES: Record<string, string> = {
   'FT-REVIEW-009': 'La sección señalada no tiene un encabezado propio ni un nombre accesible calculado y necesita revisión contextual.',
   'FT-REVIEW-010': 'El landmark señalado repite un rol sin un nombre accesible suficientemente diferenciable.',
   'FT-REVIEW-011': 'El orden relativo observado de los mecanismos de ayuda no coincide entre las páginas comparadas.',
+  'FT-REVIEW-012': 'Se ha detectado navegación significativa antes del contenido principal sin un mecanismo de salto por teclado validado.',
   'FT-RUNTIME-006': 'Se observó un movimiento de arrastre real y debe revisarse si existe una alternativa equivalente sin arrastrar.',
 };
 
@@ -154,6 +159,16 @@ function localizedExtraEvidence(ruleId: string, evidence: string): string | unde
     const comparison = evidence.match(/^Observed order: (.+?)\. Comparison page (https?:\/\/\S+): (.+)\.$/);
     if (comparison) {
       return `Orden observado: ${localizeHelpOrder(comparison[1] ?? '')}. Página comparada ${comparison[2]}: ${localizeHelpOrder(comparison[3] ?? '')}.`;
+    }
+  }
+
+  if (ruleId === 'FT-REVIEW-012') {
+    const missingTarget = evidence.match(/^Potential bypass link points to missing fragment target (#[A-Za-z][\w:.-]*)\.$/);
+    if (missingTarget) return `El posible enlace de salto apunta al destino de fragmento inexistente ${missingTarget[1]}.`;
+
+    const navigation = evidence.match(/^Navigation landmark before main exposes (\d+) sequential keyboard stops\. No validated keyboard bypass link to the primary main content was detected before that block\.$/);
+    if (navigation) {
+      return `El landmark de navegación anterior a main expone ${navigation[1]} paradas secuenciales de teclado. No se detectó antes de ese bloque un enlace de salto por teclado validado hacia el contenido principal.`;
     }
   }
 
