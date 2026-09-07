@@ -61,6 +61,7 @@ Existing equivalent rules that already matched axe keep their severity, includin
 | `FT-REVIEW-001` Positive tabindex | serious | review | Contextual FocusTrace review; no direct impact mapping is enforced. |
 | `FT-REVIEW-002` Heading level jump | minor | review | Structural review signal rather than a deterministic failure. |
 | `FT-REVIEW-003` Placeholder-only label | moderate | review | The field still has a computed name; persistent visible identification needs context. |
+| `FT-REVIEW-014` Input purpose autocomplete | serious | review | Malformed standard autocomplete purpose tokens can block machine-readable personalization and input assistance. axe `autocomplete-valid` is also serious, but no exact equivalence is enforced because FocusTrace deliberately ignores unknown-only custom taxonomies and keeps WCAG applicability contextual. |
 | `FT-RUNTIME-001` Focused element removed | serious | runtime | FocusTrace runtime evidence; no axe equivalent. |
 | `FT-RUNTIME-002` Focus completely obscured | serious | runtime | FocusTrace runtime evidence; no direct axe equivalent. |
 | `FT-RUNTIME-003` SPA title unchanged | moderate | runtime | Context depends on the SPA transition. |
