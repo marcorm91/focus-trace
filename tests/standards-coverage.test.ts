@@ -128,6 +128,12 @@ describe('standards registry coverage', () => {
       ruleIds: ['FT-RUNTIME-006'],
       implemented: true,
     });
+    expect(wcagCoverageForCriterion('3.2.3')).toMatchObject({
+      level: 'AA',
+      coverage: ['review'],
+      ruleIds: ['FT-REVIEW-013'],
+      implemented: true,
+    });
     expect(wcagCoverageForCriterion('3.2.6')).toMatchObject({
       level: 'A',
       coverage: ['review'],
