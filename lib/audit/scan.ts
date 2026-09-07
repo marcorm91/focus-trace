@@ -12,6 +12,7 @@ import {
   UNKNOWN_ARIA_ATTRIBUTE_RULE,
   UNSUPPORTED_ARIA_PROPERTY_RULE,
 } from '../../shared/aria-authoring-rules';
+import { INPUT_PURPOSE_AUTOCOMPLETE_RULE } from '../../shared/form-purpose-rules';
 import { RULES } from '../../shared/rule-catalog';
 import {
   HTML_CONTENT_MODEL_RULE,
@@ -143,7 +144,7 @@ function ariaIssueFor(kind: AriaValidationSignalKind, element: Element, detail: 
 }
 
 function autocompletePurposeIssueFor(evaluation: AutocompletePurposeEvaluation): ScanIssue {
-  const rule = RULES.inputPurposeAutocomplete;
+  const rule = INPUT_PURPOSE_AUTOCOMPLETE_RULE;
   return {
     id: uid(),
     ruleId: rule.id,
@@ -297,7 +298,7 @@ function appendAutocompletePurposeReview(result: ScanResult, root: Document | El
   result.ruleResults = [
     ...(result.ruleResults ?? []),
     {
-      ruleId: RULES.inputPurposeAutocomplete.id,
+      ruleId: INPUT_PURPOSE_AUTOCOMPLETE_RULE.id,
       applicable: evaluations.length,
       passed,
       failures: 0,
