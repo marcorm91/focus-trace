@@ -82,6 +82,10 @@ const EXTRA_COPY_ES: Record<string, { title: string; description: string }> = {
     title: 'La navegación principal puede necesitar un mecanismo de salto para teclado',
     description: 'Se ha detectado un bloque de navegación significativo antes del contenido principal sin un enlace de fragmento validado para saltarlo con teclado. Revisa si otro mecanismo satisface WCAG 2.4.1.',
   },
+  'FT-REVIEW-013': {
+    title: 'La navegación repetida puede cambiar de orden entre páginas',
+    description: 'El mismo conjunto exacto de destinos de navegación repetidos aparece en distinto orden relativo entre páginas muestreadas. Revisa que se trate del mismo mecanismo y que el cambio no haya sido iniciado por el usuario antes de considerar un problema de WCAG 3.2.3.',
+  },
   'FT-RUNTIME-006': {
     title: 'La interacción de arrastre requiere revisar una alternativa de puntero sencillo',
     description: 'Trace observó un arrastre real. Revisa si la misma funcionalidad puede realizarse con un puntero sencillo sin movimiento de arrastre, teniendo en cuenta las excepciones de WCAG 2.5.7.',
@@ -107,6 +111,7 @@ const EXTRA_EVIDENCE_ES: Record<string, string> = {
   'FT-REVIEW-010': 'El landmark señalado repite un rol sin un nombre accesible suficientemente diferenciable.',
   'FT-REVIEW-011': 'El orden relativo observado de los mecanismos de ayuda no coincide entre las páginas comparadas.',
   'FT-REVIEW-012': 'Se ha detectado navegación significativa antes del contenido principal sin un mecanismo de salto por teclado validado.',
+  'FT-REVIEW-013': 'El mismo conjunto exacto de destinos de navegación repetidos aparece en un orden relativo diferente entre las páginas comparadas.',
   'FT-RUNTIME-006': 'Se observó un movimiento de arrastre real y debe revisarse si existe una alternativa equivalente sin arrastrar.',
 };
 
@@ -169,6 +174,13 @@ function localizedExtraEvidence(ruleId: string, evidence: string): string | unde
     const navigation = evidence.match(/^Navigation landmark before main exposes (\d+) sequential keyboard stops\. No validated keyboard bypass link to the primary main content was detected before that block\.$/);
     if (navigation) {
       return `El landmark de navegación anterior a main expone ${navigation[1]} paradas secuenciales de teclado. No se detectó antes de ese bloque un enlace de salto por teclado validado hacia el contenido principal.`;
+    }
+  }
+
+  if (ruleId === 'FT-REVIEW-013') {
+    const comparison = evidence.match(/^Observed navigation order: (.+?)\. Comparison page (https?:\/\/\S+): (.+)\.$/);
+    if (comparison) {
+      return `Orden de navegación observado: ${comparison[1]}. Página comparada ${comparison[2]}: ${comparison[3]}.`;
     }
   }
 

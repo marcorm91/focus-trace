@@ -92,8 +92,11 @@ FocusTrace utiliza WCAG 2.2 como fuente de conformidad. Los criterios WCAG 2.2 t
 | `FT-REVIEW-010` | Landmarks repetidos de navegación, búsqueda o contenido complementario sin nombres distinguibles. | REVIEW | WAI-ARIA APG |
 | `FT-REVIEW-011` | Los mismos mecanismos de ayuda cambian su orden relativo entre páginas muestreadas. | REVIEW | WCAG 3.2.6 |
 | `FT-REVIEW-012` | Aparece una navegación significativa antes del contenido principal sin un enlace temprano de fragmento, alcanzable por teclado y validado, que lleve a la región main. | REVIEW / PASS | WCAG 2.4.1 |
+| `FT-REVIEW-013` | El mismo conjunto exacto de destinos de navegación repetidos cambia su orden relativo entre páginas muestreadas. | REVIEW | WCAG 3.2.3 AA |
 
 Para `FT-REVIEW-012`, FocusTrace considera señal positiva un enlace de fragmento del mismo documento validado y situado antes del bloque de navegación repetitiva candidato. La ausencia del enlace o un destino roto permanece como **REVIEW**, no como FAIL automático, porque WCAG 2.4.1 admite otros mecanismos y la aplicabilidad de bloques repetidos puede requerir contexto entre páginas.
+
+Para `FT-REVIEW-013`, FocusTrace compara únicamente landmarks de navegación renderizados con al menos tres destinos HTTP(S) únicos. Dos bloques solo se consideran el mismo mecanismo repetido cuando sus conjuntos completos de destinos coinciden exactamente y ese conjunto aparece una sola vez en cada página. Los solapamientos parciales o bloques duplicados ambiguos se ignoran. Un cambio de orden permanece como **REVIEW**, no como FAIL, porque el criterio permite cambios iniciados por el usuario y Site Audit no siempre puede demostrar ese contexto.
 
 Para las señales semánticas, FocusTrace intenta diferenciar la función antes de recomendar HTML nativo: comportamiento de botón → preferir `<button type="button">`; navegación → preferir `<a href="…">`; interacción ambigua → revisar primero la función real. ARIA puede mostrarse como fallback, pero no añade automáticamente el comportamiento nativo de teclado.
 
@@ -282,6 +285,7 @@ Site Audit trabaja sobre el mismo origen y reutiliza el scanner real de FocusTra
 | **Muestreo representativo** | Ejecuta el scanner sobre muestras de cada familia. |
 | **Hallazgos de plantilla** | Solo considera compartida una señal normalizada cuando aparece en todas las muestras analizadas correctamente de la familia. |
 | **Ayuda coherente** | Compara categorías de ayuda repetidas entre páginas para `FT-REVIEW-011`. |
+| **Navegación coherente** | Compara conjuntos exactos de destinos de navegación repetidos entre páginas muestreadas para `FT-REVIEW-013`; ignora coincidencias parciales o ambiguas. |
 | **Historial multipágina** | Conserva la revisión estática más reciente por URL normalizada en la auditoría activa. |
 | **Reanálisis** | Sustituye la revisión/evidencia visual anterior de la misma URL en lugar de duplicarla. |
 | **Evidencia visual limitada** | Puede guardar pequeños recortes locales asociados a revisiones para mantener contexto histórico. |
@@ -362,7 +366,7 @@ Memory no almacena HTML de página, snapshots completos del DOM ni capturas de p
 | APG | Es orientación informativa y las variantes opcionales no se fuerzan como si fueran requisitos universales. |
 | Grid / Treegrid | La revisión es conservadora ante grids irregulares, virtualizados, spans e índices explícitos. |
 | Runtime | Solo puede informar sobre caminos de interacción realmente observados. |
-| Site Audit | El muestreo no equivale a comprobar todas las URLs. |
+| Site Audit | El muestreo no equivale a comprobar todas las URLs. La comparación de navegación repetida ignora deliberadamente solapamientos parciales, mecanismos duplicados con el mismo conjunto exacto y el contexto de cambios iniciados por el usuario que no pueda demostrarse automáticamente. |
 | WCAG | PASS significa que pasa esa expectativa concreta, no todo el criterio WCAG. |
 | EN 301 549 | No realiza una evaluación completa ni certifica conformidad. |
 

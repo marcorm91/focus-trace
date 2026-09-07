@@ -1,6 +1,7 @@
 import type { ReportComponentIdentity } from '../report/component-identity';
 import type { ScanIssue } from '../../shared/types';
 import { buildConsistentHelpReviewByUrl } from './consistent-help';
+import { buildConsistentNavigationReviewByUrl } from './consistent-navigation';
 import type {
   SiteAuditFindingAggregate,
   SiteAuditPageResult,
@@ -99,16 +100,29 @@ function aggregateFindings(
     });
 }
 
+function mergeAdditionalIssueMaps(...maps: Map<string, ScanIssue[]>[]): Map<string, ScanIssue[]> {
+  const merged = new Map<string, ScanIssue[]>();
+  for (const map of maps) {
+    for (const [url, issues] of map) {
+      merged.set(url, [...(merged.get(url) ?? []), ...issues]);
+    }
+  }
+  return merged;
+}
+
 export function buildSiteAuditTemplates(
   families: SiteAuditRouteFamily[],
   pages: SiteAuditPageResult[],
 ): SiteAuditTemplate[] {
-  const consistentHelpReviews = buildConsistentHelpReviewByUrl(pages);
+  const additionalReviews = mergeAdditionalIssueMaps(
+    buildConsistentHelpReviewByUrl(pages),
+    buildConsistentNavigationReviewByUrl(pages),
+  );
   return families.map((family, index) => {
     const sampledPages = pages.filter((page) => page.routeFamilyId === family.id);
     const successful = sampledPages.filter((page) => page.scan);
     const fingerprints = new Set(successful.flatMap((page) => page.structure?.fingerprint ? [page.structure.fingerprint] : []));
-    const findings = aggregateFindings(sampledPages, consistentHelpReviews);
+    const findings = aggregateFindings(sampledPages, additionalReviews);
     return {
       id: `T${String(index + 1).padStart(2, '0')}`,
       label: family.pattern,

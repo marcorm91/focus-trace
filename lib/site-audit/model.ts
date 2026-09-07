@@ -34,6 +34,12 @@ export interface SiteHelpMechanism {
   label: string;
 }
 
+export interface SiteNavigationMechanism {
+  selector: string;
+  label?: string;
+  destinations: string[];
+}
+
 export interface SitePageStructure {
   fingerprint: string;
   canonical?: string;
@@ -42,6 +48,7 @@ export interface SitePageStructure {
   interactiveCount: number;
   landmarkCount: number;
   helpMechanisms?: SiteHelpMechanism[];
+  navigationMechanisms?: SiteNavigationMechanism[];
 }
 
 export interface SiteAuditPageResult {

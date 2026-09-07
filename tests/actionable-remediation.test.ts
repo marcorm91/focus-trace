@@ -6,7 +6,7 @@ import {
 import { remediationForIssue } from '../lib/site-audit/remediation';
 import type { ScanIssue } from '../shared/types';
 
-const TARGET_RULES = ['FT-RUNTIME-002', 'FT-RUNTIME-006', 'FT-REVIEW-011'] as const;
+const TARGET_RULES = ['FT-RUNTIME-002', 'FT-RUNTIME-006', 'FT-REVIEW-011', 'FT-REVIEW-013'] as const;
 
 describe('actionable remediation', () => {
   it('provides three concrete options plus validation in English and Spanish', () => {
@@ -28,6 +28,8 @@ describe('actionable remediation', () => {
     expect(actionableRemediationText('FT-RUNTIME-006', 'es')).toContain('puntero sencillo');
     expect(actionableRemediationText('FT-REVIEW-011', 'en')).toContain('relative order');
     expect(actionableRemediationText('FT-REVIEW-011', 'es')).toContain('orden relativo');
+    expect(actionableRemediationText('FT-REVIEW-013', 'en')).toContain('user deliberately changes');
+    expect(actionableRemediationText('FT-REVIEW-013', 'es')).toContain('usuario cambie ese orden');
   });
 
   it('does not manufacture guidance for unrelated rules', () => {
@@ -56,6 +58,30 @@ describe('actionable remediation', () => {
     const remediation = remediationForIssue(issue, 'es');
     expect(remediation).toBe(actionableRemediationText('FT-REVIEW-011', 'es'));
     expect(remediation).toContain('componente, layout o plantilla compartida');
+    expect(remediation).toContain('Verifica:');
+  });
+
+  it('reuses the same Spanish 3.2.3 guidance in Site Audit', () => {
+    const issue: ScanIssue = {
+      id: 'navigation-order',
+      ruleId: 'FT-REVIEW-013',
+      title: 'Repeated navigation may change order across pages',
+      description: 'Review the observed order.',
+      severity: 'moderate',
+      outcome: 'review',
+      targets: ['page:navigation-order'],
+      references: [{
+        type: 'WCAG',
+        id: '3.2.3',
+        label: 'Consistent Navigation',
+        url: 'https://www.w3.org/TR/WCAG22/#consistent-navigation',
+        level: 'AA',
+      }],
+    };
+
+    const remediation = remediationForIssue(issue, 'es');
+    expect(remediation).toBe(actionableRemediationText('FT-REVIEW-013', 'es'));
+    expect(remediation).toContain('componente, layout o plantilla común');
     expect(remediation).toContain('Verifica:');
   });
 });

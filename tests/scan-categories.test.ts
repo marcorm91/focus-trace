@@ -27,6 +27,7 @@ describe('scan categories', () => {
       'FT-REVIEW-009',
       'FT-REVIEW-010',
       'FT-REVIEW-011',
+      'FT-REVIEW-013',
     ]) expect(scanCategoryForRule(ruleId)).toBe('structure');
   });
 

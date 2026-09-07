@@ -58,7 +58,7 @@ export function collectSitePageStructureInPage(): SitePageStructure {
     .replace(/\s+/g, ' ')
     .trim()
     .toLowerCase();
-  const helpSelector = (element: Element) => {
+  const elementSelector = (element: Element) => {
     if (element.id) {
       const escaped = typeof CSS !== 'undefined' && typeof CSS.escape === 'function'
         ? CSS.escape(element.id)
@@ -94,11 +94,57 @@ export function collectSitePageStructureInPage(): SitePageStructure {
     const label = (element.getAttribute('aria-label') || element.textContent || kind).replace(/\s+/g, ' ').trim();
     helpMechanisms.push({
       kind,
-      selector: helpSelector(element),
+      selector: elementSelector(element),
       label: label.slice(0, 120) || kind,
     });
     seenHelpKinds.add(kind);
     if (seenHelpKinds.size === 4) break;
+  }
+
+  const navigationMechanisms: SitePageStructure['navigationMechanisms'] = [];
+  const navigationCandidates = document.querySelectorAll('nav, [role="navigation"]');
+  for (const navigation of [...navigationCandidates].slice(0, 20)) {
+    if (navigation.closest('[aria-hidden="true"], [hidden], [inert]')) continue;
+    const navigationStyle = getComputedStyle(navigation);
+    if (navigationStyle.display === 'none' || navigationStyle.visibility === 'hidden' || navigationStyle.visibility === 'collapse') continue;
+    if (navigation.getClientRects().length === 0) continue;
+
+    const destinations: string[] = [];
+    const seenDestinations = new Set<string>();
+    for (const anchor of [...navigation.querySelectorAll('a[href]')].slice(0, 80)) {
+      if (!(anchor instanceof HTMLAnchorElement)) continue;
+      if (anchor.closest('[aria-hidden="true"], [hidden], [inert]')) continue;
+      const anchorStyle = getComputedStyle(anchor);
+      if (anchorStyle.display === 'none' || anchorStyle.visibility === 'hidden' || anchorStyle.visibility === 'collapse') continue;
+      if (anchor.getClientRects().length === 0) continue;
+      try {
+        const destination = new URL(anchor.href, location.href);
+        if (!['http:', 'https:'].includes(destination.protocol)) continue;
+        destination.hash = '';
+        const normalized = destination.toString();
+        if (seenDestinations.has(normalized)) continue;
+        seenDestinations.add(normalized);
+        destinations.push(normalized);
+        if (destinations.length >= 60) break;
+      } catch {
+        // Ignore malformed or unsupported destinations.
+      }
+    }
+    if (destinations.length < 3) continue;
+
+    const labelledBy = navigation.getAttribute('aria-labelledby')?.trim();
+    const labelledByText = labelledBy
+      ? labelledBy.split(/\s+/).map((id) => document.getElementById(id)?.textContent ?? '').join(' ')
+      : '';
+    const label = (navigation.getAttribute('aria-label') || labelledByText)
+      .replace(/\s+/g, ' ')
+      .trim()
+      .slice(0, 120);
+    navigationMechanisms.push({
+      selector: elementSelector(navigation),
+      ...(label ? { label } : {}),
+      destinations,
+    });
   }
 
   const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href;
@@ -117,6 +163,7 @@ export function collectSitePageStructureInPage(): SitePageStructure {
     interactiveCount,
     landmarkCount,
     ...(helpMechanisms.length ? { helpMechanisms } : {}),
+    ...(navigationMechanisms.length ? { navigationMechanisms } : {}),
   };
 }
 

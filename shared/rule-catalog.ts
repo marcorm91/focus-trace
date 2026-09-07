@@ -252,6 +252,16 @@ export const RULES = {
     ),
     references: [wcag('2.4.1', 'Bypass Blocks', 'A', 'bypass-blocks')],
   },
+  consistentNavigation: {
+    id: 'FT-REVIEW-013',
+    title: 'Repeated navigation may change relative order across pages',
+    severity: 'moderate',
+    ...impact(
+      'Changing the order of the same repeated navigation destinations can make a site less predictable for people who rely on spatial memory, magnification or sequential navigation.',
+      'Cambiar el orden de los mismos destinos de navegación repetidos puede hacer el sitio menos predecible para personas que dependen de memoria espacial, ampliación o navegación secuencial.',
+    ),
+    references: [wcag('3.2.3', 'Consistent Navigation', 'AA', 'consistent-navigation')],
+  },
   focusLost: {
     id: 'FT-RUNTIME-001',
     title: 'Focused element removed during interaction',
