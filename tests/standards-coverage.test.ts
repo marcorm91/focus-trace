@@ -154,6 +154,12 @@ describe('standards registry coverage', () => {
       ruleIds: ['FT-REVIEW-013'],
       implemented: true,
     });
+    expect(wcagCoverageForCriterion('3.2.4')).toMatchObject({
+      level: 'AA',
+      coverage: ['review'],
+      ruleIds: ['FT-REVIEW-015'],
+      implemented: true,
+    });
     expect(wcagCoverageForCriterion('3.2.6')).toMatchObject({
       level: 'A',
       coverage: ['review'],
