@@ -92,8 +92,11 @@ FocusTrace uses WCAG 2.2 as its conformance source. WCAG 2.2 criteria are also r
 | `FT-REVIEW-010` | Repeated navigation/search/complementary landmarks without distinguishable names. | REVIEW | WAI-ARIA APG |
 | `FT-REVIEW-011` | The same help mechanisms change relative order across sampled pages. | REVIEW | WCAG 3.2.6 |
 | `FT-REVIEW-012` | Substantial navigation appears before primary content without a validated early keyboard-focusable fragment link that reaches the main region. | REVIEW / PASS | WCAG 2.4.1 |
+| `FT-REVIEW-013` | The exact same repeated navigation destination set changes relative order across sampled pages. | REVIEW | WCAG 3.2.3 AA |
 
 For `FT-REVIEW-012`, FocusTrace treats a validated same-document fragment link before the repeated-navigation candidate as a positive signal. A missing link or broken target remains **REVIEW**, not automatic FAIL, because WCAG 2.4.1 permits other mechanisms and repeated-block applicability can require cross-page context.
+
+For `FT-REVIEW-013`, FocusTrace compares only rendered navigation landmarks with at least three unique HTTP(S) destinations. Two blocks are treated as the same repeated mechanism only when their complete destination sets match exactly and that set occurs only once on each page. Partially overlapping or ambiguous duplicated blocks are ignored. A changed order remains **REVIEW**, not FAIL, because the criterion allows user-initiated changes and Site Audit cannot always prove that context.
 
 For semantic signals, FocusTrace tries to distinguish function before recommending native HTML: button behavior → prefer `<button type="button">`; navigation → prefer `<a href="…">`; ambiguous interaction → review the intended behavior first. ARIA can be shown as a fallback, but it does not automatically add native keyboard behavior.
 
@@ -282,6 +285,7 @@ Site Audit stays within the selected origin and reuses the real FocusTrace scann
 | **Representative sampling** | Runs the scanner on samples from each family. |
 | **Template findings** | Treats a normalized signal as shared only when it appears in every successfully scanned sample in the family. |
 | **Consistent Help** | Compares repeated help categories across pages for `FT-REVIEW-011`. |
+| **Consistent Navigation** | Compares exact repeated navigation destination sets across sampled pages for `FT-REVIEW-013`; partial or ambiguous matches are ignored. |
 | **Multipage history** | Keeps the latest static review per normalized URL in the active audit. |
 | **Re-analysis** | Replaces the previous review/visual evidence for the same URL instead of duplicating it. |
 | **Bounded visual evidence** | Can retain small local crops tied to reviews to preserve historical context. |
@@ -362,7 +366,7 @@ Memory does not store page HTML, full DOM snapshots or full-page screenshots.
 | APG | APG is informative guidance and optional variants are not forced as universal requirements. |
 | Grid / Treegrid | Reviews stay conservative for irregular/virtualized grids, spans and explicit indexes. |
 | Runtime | Can report only interaction paths that were actually observed. |
-| Site Audit | Representative sampling is not equivalent to checking every URL. |
+| Site Audit | Representative sampling is not equivalent to checking every URL. Repeated-navigation comparison intentionally ignores partial destination overlap, duplicate exact-set mechanisms and user-initiated-order context that cannot be proven automatically. |
 | WCAG | PASS means the tested expectation passed, not the entire linked success criterion. |
 | EN 301 549 | FocusTrace does not perform a complete evaluation or certify conformance. |
 
