@@ -261,6 +261,16 @@ FocusTrace intentionally uses a high-confidence identity rule before comparing o
 
 Only after that identity check does FocusTrace compare relative destination order. A changed order emits `REVIEW` with both page URLs and both observed orders as evidence. It never becomes automatic `FAIL`: WCAG 3.2.3 allows changes initiated by the user, Site Audit cannot always prove personalization or interaction history, and representative samples do not prove site-wide behavior. The rule deliberately prefers false negatives over guessing that two similar menus are the same mechanism.
 
+## Identify Input Purpose autocomplete review scope
+
+`FT-REVIEW-014` provides conservative static review evidence for WCAG 1.3.5 Identify Input Purpose and the observable HTML `autocomplete` subset described by ACT `73f2c2`.
+
+FocusTrace evaluates only rendered, applicable `input`, `select` and `textarea` controls that already expose a non-empty `autocomplete` attribute and visibly use the standard HTML autocomplete vocabulary. It checks the standard token order: optional `section-*`, optional `shipping`/`billing`, optional contact hint, required field token and optional trailing `webauthn`. A valid standard token sequence records `PASS` for this tested expectation. A malformed standard-like sequence records `REVIEW`, never automatic `FAIL`.
+
+The detector deliberately does **not** infer a required input purpose from `name`, label text, `placeholder`, input type or surrounding copy. It also ignores values composed only of unknown tokens, because ACT explicitly notes that a custom taxonomy can still make purpose programmatically determinable even when it does not match the HTML autocomplete vocabulary. `autocomplete="on"`, `autocomplete="off"`, disabled controls, fixed-value input types and hidden/inapplicable controls are excluded.
+
+The rule remains contextual because WCAG 1.3.5 applies to fields that collect information about the user. The live DOM cannot always prove that semantic fact. FocusTrace therefore prefers missing a questionable case over turning a syntactic signal into a false WCAG failure.
+
 ## Bypass Blocks keyboard review scope
 
 `FT-REVIEW-012` provides conservative page-level review evidence for WCAG 2.4.1 Bypass Blocks. It does not search for a literal label such as “Skip to content”. Instead, FocusTrace looks for an exposed primary `main` landmark, a substantial navigation landmark before that main content, and an early sequentially focusable same-document fragment link whose target resolves to the main landmark or to content inside it.
@@ -319,6 +329,7 @@ The rule is full-page only. Component-scoped analysis does not execute `FT-REVIE
 | FT-REVIEW-011 Repeated help mechanisms change relative order across sampled pages | REVIEW | WCAG 3.2.6 |
 | FT-REVIEW-012 Missing or broken keyboard bypass candidate before repeated navigation | REVIEW/PASS | WCAG 2.4.1 A |
 | FT-REVIEW-013 Exact repeated navigation destination set changes relative order across sampled pages | REVIEW | WCAG 3.2.3 AA |
+| FT-REVIEW-014 Standard autocomplete purpose token sequence may be malformed | REVIEW/PASS | WCAG 1.3.5 AA · ACT 73f2c2 |
 
 ## Runtime rules
 
@@ -353,6 +364,7 @@ The rule is full-page only. Component-scoped analysis does not execute `FT-REVIE
 - `FT-REVIEW-011` uses bounded, text-based help-mechanism candidates over Site Audit samples and therefore cannot establish full WCAG 3.2.6 applicability or site-wide conformance.
 - `FT-REVIEW-012` validates only the observable keyboard fragment-bypass pattern around substantial pre-main navigation; other WCAG 2.4.1 bypass mechanisms and repeated-block applicability still require manual context.
 - `FT-REVIEW-013` requires an exact repeated destination-set match and ignores partial/ambiguous navigation matches; it therefore favors false negatives, and Site Audit cannot prove whether an observed order change was initiated by the user.
+- `FT-REVIEW-014` validates only explicit standard-like `autocomplete` token sequences. It does not infer missing input-purpose metadata, judge unknown-only custom taxonomies, or prove that a field collects information about the user; those boundaries intentionally favor false negatives over false WCAG failures.
 - Structural HTML checks operate on the parsed live DOM. Browser parser repair can normalize invalid source before FocusTrace runs; the tool does not infer source-level errors that are no longer observable. See [`STRUCTURAL_HTML.md`](STRUCTURAL_HTML.md).
 - Advanced ARIA checks operate on the live accessibility relationships FocusTrace can derive from DOM semantics and `aria-owns`; they do not claim to reproduce the browser accessibility tree or a screen reader's spoken output. See [`ARIA_VALIDATION.md`](ARIA_VALIDATION.md).
 - Automated static checks are intentionally narrower than the corresponding full WCAG success criteria.

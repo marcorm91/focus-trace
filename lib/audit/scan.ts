@@ -12,6 +12,7 @@ import {
   UNKNOWN_ARIA_ATTRIBUTE_RULE,
   UNSUPPORTED_ARIA_PROPERTY_RULE,
 } from '../../shared/aria-authoring-rules';
+import { INPUT_PURPOSE_AUTOCOMPLETE_RULE } from '../../shared/form-purpose-rules';
 import { RULES } from '../../shared/rule-catalog';
 import {
   HTML_CONTENT_MODEL_RULE,
@@ -23,6 +24,7 @@ import {
   STRUCTURAL_HTML_RULES,
 } from '../../shared/structural-html-rules';
 import { evaluateAdvancedAria, type AriaValidationSignalKind } from './aria-validator';
+import { evaluateAutocompletePurpose, type AutocompletePurposeEvaluation } from './autocomplete-purpose';
 import { evaluateBypassBlocks } from './bypass-blocks';
 import {
   isInactiveContrastElement,
@@ -137,6 +139,21 @@ function ariaIssueFor(kind: AriaValidationSignalKind, element: Element, detail: 
     outcome: 'warning',
     targets: [selectorFor(element)],
     evidence: detail,
+    references: rule.references,
+  };
+}
+
+function autocompletePurposeIssueFor(evaluation: AutocompletePurposeEvaluation): ScanIssue {
+  const rule = INPUT_PURPOSE_AUTOCOMPLETE_RULE;
+  return {
+    id: uid(),
+    ruleId: rule.id,
+    title: rule.title,
+    description: 'This control uses standard HTML autocomplete vocabulary, but the observed token sequence is not valid. Review whether the field collects information about the user and, when WCAG 1.3.5 applies, expose its purpose with a valid programmatically determinable input-purpose value.',
+    severity: rule.severity,
+    outcome: 'review',
+    targets: [selectorFor(evaluation.element)],
+    evidence: `autocomplete=${JSON.stringify(evaluation.value)}. ${evaluation.reason ?? 'The standard autocomplete token grammar is not satisfied.'}`,
     references: rule.references,
   };
 }
@@ -272,6 +289,27 @@ function appendBypassBlocksReview(result: ScanResult): void {
   result.rulesRun += 1;
 }
 
+function appendAutocompletePurposeReview(result: ScanResult, root: Document | Element): void {
+  const evaluations = evaluateAutocompletePurpose(root);
+  const reviews = evaluations.filter((evaluation) => evaluation.outcome === 'review').map(autocompletePurposeIssueFor);
+  const passed = evaluations.filter((evaluation) => evaluation.outcome === 'pass').length;
+
+  result.review.push(...reviews);
+  result.ruleResults = [
+    ...(result.ruleResults ?? []),
+    {
+      ruleId: INPUT_PURPOSE_AUTOCOMPLETE_RULE.id,
+      applicable: evaluations.length,
+      passed,
+      failures: 0,
+      reviews: reviews.length,
+      warnings: 0,
+    },
+  ];
+  result.passes += passed;
+  result.rulesRun += 1;
+}
+
 export function runFocusTraceScan(scope?: ComponentScanScope): ScanResult {
   const result = runBaseFocusTraceScan(scope);
   const componentScope = result.scope?.type === 'component' ? result.scope : undefined;
@@ -282,6 +320,7 @@ export function runFocusTraceScan(scope?: ComponentScanScope): ScanResult {
   pruneUnresolvedContrastReviews(result);
   annotateObservedContrastStates(result);
   if (!componentScope) appendBypassBlocksReview(result);
+  appendAutocompletePurposeReview(result, root);
 
   const signals = evaluateStructuralHtml(root, !componentScope);
   const activeRules = STRUCTURAL_HTML_RULES.filter((rule) => !componentScope || !PAGE_ONLY_RULE_IDS.has(rule.id));

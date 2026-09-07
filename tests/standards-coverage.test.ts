@@ -4,6 +4,7 @@ import htmlCatalog from '../generated/html-obsolete-catalog.json';
 import sourcesRegistry from '../generated/standards-sources.json';
 import wcagCatalog from '../generated/wcag-catalog.json';
 import { ADVANCED_ARIA_RULES } from '../shared/aria-authoring-rules';
+import { FORM_PURPOSE_RULES } from '../shared/form-purpose-rules';
 import {
   DUPLICATE_ID_RULE,
   GENERIC_INTERACTIVE_SEMANTICS_RULE,
@@ -33,7 +34,7 @@ const HTML_RULES: RuleDefinition[] = [
   ...STRUCTURAL_HTML_RULES,
 ];
 
-const ALL_RULES: RuleDefinition[] = [...Object.values(RULES), ...HTML_RULES, ...ADVANCED_ARIA_RULES];
+const ALL_RULES: RuleDefinition[] = [...Object.values(RULES), ...FORM_PURPOSE_RULES, ...HTML_RULES, ...ADVANCED_ARIA_RULES];
 
 describe('standards registry coverage', () => {
   it('keeps every FocusTrace WCAG and ACT reference resolvable against current upstream catalogs', () => {
@@ -103,6 +104,12 @@ describe('standards registry coverage', () => {
     expect(WCAG_COVERAGE_SUMMARY.totalActive).toBe(active.length);
     expect(WCAG_COVERAGE_SUMMARY.implemented + WCAG_COVERAGE_SUMMARY.notImplemented).toBe(active.length);
 
+    expect(wcagCoverageForCriterion('1.3.5')).toMatchObject({
+      level: 'AA',
+      coverage: ['review'],
+      ruleIds: ['FT-REVIEW-014'],
+      implemented: true,
+    });
     expect(wcagCoverageForCriterion('1.4.3')).toMatchObject({
       level: 'AA',
       coverage: ['automated'],

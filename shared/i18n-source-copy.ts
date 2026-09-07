@@ -17,6 +17,8 @@ const REFERENCE_LABEL_ES: Record<string, string> = {
   'Language of Page': 'Idioma de la página',
   'HTML page has lang attribute': 'La página HTML tiene atributo lang',
   'HTML page lang attribute has valid language tag': 'El atributo lang de la página HTML contiene una etiqueta de idioma válida',
+  'Identify Input Purpose': 'Identificar el propósito de la entrada',
+  'Autocomplete attribute has valid value': 'El atributo autocomplete tiene un valor válido',
   'Contrast (Minimum)': 'Contraste (mínimo)',
   'Non-text Contrast': 'Contraste no textual',
   'Target Size (Minimum)': 'Tamaño del objetivo (mínimo)',

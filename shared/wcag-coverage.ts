@@ -1,4 +1,5 @@
 import wcagCatalog from '../generated/wcag-catalog.json';
+import { FORM_PURPOSE_RULES } from './form-purpose-rules';
 import { RULES } from './rule-catalog';
 
 export type WcagCoverageMode = 'automated' | 'review' | 'runtime';
@@ -20,7 +21,8 @@ function modeForRule(ruleId: string): WcagCoverageMode | undefined {
   return undefined;
 }
 
-const ruleReferences = Object.values(RULES).flatMap((rule) => {
+const COVERAGE_RULES = [...Object.values(RULES), ...FORM_PURPOSE_RULES];
+const ruleReferences = COVERAGE_RULES.flatMap((rule) => {
   const mode = modeForRule(rule.id);
   if (!mode) return [];
   return rule.references
