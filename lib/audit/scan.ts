@@ -308,18 +308,23 @@ function appendBypassBlocksReview(result: ScanResult): void {
 
 function appendLanguageParts(result: ScanResult): void {
   const evaluations = evaluateLanguageParts(document);
-  if (!evaluations.length) return;
-
   const failures = evaluations.filter((evaluation) => evaluation.outcome === 'fail');
   const passed = evaluations.length - failures.length;
-  result.issues.push(...failures.map(languagePartIssueFor));
-  result.passes += passed;
 
-  const ruleResult = result.ruleResults?.find((entry) => entry.ruleId === RULES.pageLangKnown.id);
-  if (!ruleResult) return;
-  ruleResult.applicable += evaluations.length;
-  ruleResult.passed += passed;
-  ruleResult.failures += failures.length;
+  result.issues.push(...failures.map(languagePartIssueFor));
+  result.ruleResults = [
+    ...(result.ruleResults ?? []),
+    {
+      ruleId: LANGUAGE_PARTS_RULE.id,
+      applicable: evaluations.length,
+      passed,
+      failures: failures.length,
+      reviews: 0,
+      warnings: 0,
+    },
+  ];
+  result.passes += passed;
+  result.rulesRun += 1;
 }
 
 function appendAutocompletePurposeReview(result: ScanResult, root: Document | Element): void {
