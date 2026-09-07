@@ -66,7 +66,7 @@ async function saveSixLevelHeadingScan(panel: Page): Promise<void> {
 }
 
 async function settle(panel: Page): Promise<void> {
-  await panel.evaluate(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
+  await panel.evaluate(() => Promise.resolve());
 }
 
 async function sampleMemory(cdp: CDPSession, panel: Page, cycle: number): Promise<MemorySample> {
@@ -98,10 +98,10 @@ async function runCycles(panel: Page, cycles: number): Promise<void> {
   await panel.evaluate(async (count) => {
     const button = (label: string) => [...document.querySelectorAll('button')]
       .find((candidate) => candidate.textContent?.trim() === label) as HTMLButtonElement | undefined;
-    const update = () => new Promise<void>((resolve) => setTimeout(() => {
+    const update = async () => {
+      await Promise.resolve();
       document.querySelector('.heading-tree')?.getBoundingClientRect();
-      resolve();
-    }, 0));
+    };
     for (let cycle = 0; cycle < count; cycle++) {
       button('Expand all')?.click();
       await update();
