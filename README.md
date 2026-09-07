@@ -97,12 +97,15 @@ FocusTrace uses WCAG 2.2 as its conformance source. WCAG 2.2 criteria are also r
 | `FT-REVIEW-012` | Substantial navigation appears before primary content without a validated early keyboard-focusable fragment link that reaches the main region. | REVIEW / PASS | WCAG 2.4.1 |
 | `FT-REVIEW-013` | The exact same repeated navigation destination set changes relative order across sampled pages. | REVIEW | WCAG 3.2.3 AA |
 | `FT-REVIEW-014` | A form control uses recognizable standard `autocomplete` purpose vocabulary in a malformed token sequence. Unknown-only/custom taxonomies are deliberately ignored. | REVIEW / PASS | WCAG 1.3.5 AA · ACT 73f2c2 |
+| `FT-REVIEW-015` | A uniquely observed native link points to the same exact destination on same-language sampled pages but its identification changes substantially. | REVIEW | WCAG 3.2.4 AA |
 
 For `FT-REVIEW-012`, FocusTrace treats a validated same-document fragment link before the repeated-navigation candidate as a positive signal. A missing link or broken target remains **REVIEW**, not automatic FAIL, because WCAG 2.4.1 permits other mechanisms and repeated-block applicability can require cross-page context.
 
 For `FT-REVIEW-013`, FocusTrace compares only rendered navigation landmarks with at least three unique HTTP(S) destinations. Two blocks are treated as the same repeated mechanism only when their complete destination sets match exactly and that set occurs only once on each page. Partially overlapping or ambiguous duplicated blocks are ignored. A changed order remains **REVIEW**, not FAIL, because the criterion allows user-initiated changes and Site Audit cannot always prove that context.
 
 For `FT-REVIEW-014`, FocusTrace validates only explicit, non-empty `autocomplete` values that visibly use the standard HTML token vocabulary and satisfy the control applicability modeled from ACT 73f2c2. A valid standard token sequence is PASS for this tested expectation; a malformed standard-like sequence is REVIEW, never automatic FAIL. FocusTrace does not infer a required purpose from `name`, label, placeholder or input type, and it deliberately ignores unknown-only values because a custom taxonomy can still provide a programmatically determinable purpose. Whether the field actually collects information about the user remains contextual.
+
+For `FT-REVIEW-015`, FocusTrace uses the exact HTTP(S) link destination only as a strong cross-page function anchor, not as proof that all functionality is identical. The destination must occur once per page, both pages must declare the same primary language, and both names must come from the same observed source. Duplicate destinations, different-language pages and labels that retain clear functional vocabulary are ignored. Numeric-only variation is normalized, so wording such as `Go to page 4` and `Go to page 5` does not create noise. The result remains **REVIEW** because semantic equivalence still needs human confirmation and the Site Audit collector intentionally uses a bounded naming approximation rather than full AccName for this comparison.
 
 For semantic signals, FocusTrace tries to distinguish function before recommending native HTML: button behavior → prefer `<button type="button">`; navigation → prefer `<a href="…">`; ambiguous interaction → review the intended behavior first. ARIA can be shown as a fallback, but it does not automatically add native keyboard behavior.
 
@@ -292,6 +295,7 @@ Site Audit stays within the selected origin and reuses the real FocusTrace scann
 | **Template findings** | Treats a normalized signal as shared only when it appears in every successfully scanned sample in the family. |
 | **Consistent Help** | Compares repeated help categories across pages for `FT-REVIEW-011`. |
 | **Consistent Navigation** | Compares exact repeated navigation destination sets across sampled pages for `FT-REVIEW-013`; partial or ambiguous matches are ignored. |
+| **Consistent Identification** | Reviews substantially divergent identification only for a unique exact native-link destination across same-language sampled pages (`FT-REVIEW-015`). |
 | **Multipage history** | Keeps the latest static review per normalized URL in the active audit. |
 | **Re-analysis** | Replaces the previous review/visual evidence for the same URL instead of duplicating it. |
 | **Bounded visual evidence** | Can retain small local crops tied to reviews to preserve historical context. |
@@ -374,7 +378,7 @@ Memory does not store page HTML, full DOM snapshots or full-page screenshots.
 | APG | APG is informative guidance and optional variants are not forced as universal requirements. |
 | Grid / Treegrid | Reviews stay conservative for irregular/virtualized grids, spans and explicit indexes. |
 | Runtime | Can report only interaction paths that were actually observed. |
-| Site Audit | Representative sampling is not equivalent to checking every URL. Repeated-navigation comparison intentionally ignores partial destination overlap, duplicate exact-set mechanisms and user-initiated-order context that cannot be proven automatically. |
+| Site Audit | Representative sampling is not equivalent to checking every URL. Repeated-navigation comparison intentionally ignores partial destination overlap, duplicate exact-set mechanisms and user-initiated-order context; consistent-identification comparison is limited to unique exact native-link destinations on pages with the same declared primary language and intentionally ignores ambiguous or duplicated matches. |
 | WCAG | PASS means the tested expectation passed, not the entire linked success criterion. |
 | EN 301 549 | FocusTrace does not perform a complete evaluation or certify conformance. |
 
