@@ -13,6 +13,7 @@ import {
   OBSOLETE_HTML_ATTRIBUTE_RULE,
   OBSOLETE_HTML_ELEMENT_RULE,
 } from '../shared/html-authoring-rules';
+import { LANGUAGE_PARTS_RULE } from '../shared/language-parts-rules';
 import { RULES, type RuleDefinition } from '../shared/rule-catalog';
 import { STRUCTURAL_HTML_RULES } from '../shared/structural-html-rules';
 import type { Severity } from '../shared/types';
@@ -33,7 +34,7 @@ const HTML_RULES: RuleDefinition[] = [
 ];
 
 const ALL_RULES = new Map(
-  [...Object.values(RULES), ...HTML_RULES, ...ADVANCED_ARIA_RULES].map((rule) => [rule.id, rule] as const),
+  [...Object.values(RULES), LANGUAGE_PARTS_RULE, ...HTML_RULES, ...ADVANCED_ARIA_RULES].map((rule) => [rule.id, rule] as const),
 );
 const AXE_RULES = new Map(axeRegistry.rules.map((rule) => [rule.id, rule] as const));
 const IMPACT_RANK: Record<AxeImpact, number> = {

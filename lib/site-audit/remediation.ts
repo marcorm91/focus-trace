@@ -38,6 +38,9 @@ export function remediationForIssue(issue: ScanIssue, language: AppLanguage): st
   if (issue.ruleId === 'FT-WCAG-009') return t(language,
     'Use a recognized BCP 47 primary language subtag in the page lang attribute.',
     'Usa un subtipo de idioma principal BCP 47 reconocido en el atributo lang de la página.');
+  if (issue.ruleId === 'FT-WCAG-013') return t(language,
+    'Set the affected element lang attribute to a valid BCP 47 language tag whose primary language subtag identifies the human language of that passage.',
+    'Define en el atributo lang del elemento afectado una etiqueta de idioma BCP 47 válida cuyo subtag primario identifique el idioma humano de ese fragmento.');
   if (issue.ruleId === 'FT-WCAG-010' || issue.ruleId === 'FT-WCAG-011') {
     const contrast = issue.contrast;
     if (contrast?.foreground && contrast.background) {

@@ -10,6 +10,7 @@ describe('scan categories', () => {
   it('groups existing rules into useful audit areas', () => {
     expect(scanCategoryForRule('FT-WCAG-003')).toBe('names');
     expect(scanCategoryForRule('FT-WCAG-004')).toBe('forms');
+    expect(scanCategoryForRule('FT-WCAG-013')).toBe('structure');
     expect(scanCategoryForRule('FT-REVIEW-014')).toBe('forms');
     expect(scanCategoryForRule('FT-REVIEW-002')).toBe('structure');
     expect(scanCategoryForRule('FT-REVIEW-001')).toBe('keyboard');

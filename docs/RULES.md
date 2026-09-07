@@ -11,7 +11,7 @@ The public, bilingual capability inventory lives in [`README.md`](../README.md) 
 3. **WAI-ARIA** supplies role/state/property semantics. The automated registry currently follows the public ARIA 1.3 Editor Draft; findings sourced only from this registry are authoring warnings, not direct WCAG failures.
 4. **WAI-ARIA APG** is used for runtime widget patterns and authoring guidance such as modal-dialog focus behavior, landmark structure and preferring native HTML semantics. It remains informative guidance.
 5. **AccName** and **HTML-AAM** guide accessible-name precedence and host-language fallbacks.
-6. **IANA Language Subtag Registry** supplies the primary language subtags used by the ACT rule behind `FT-WCAG-009`.
+6. **IANA Language Subtag Registry** supplies the primary language subtags used by the ACT rules behind `FT-WCAG-009` and `FT-WCAG-013`.
 7. **HTML Living Standard** supplies host-language authoring requirements and native element semantics. FocusTrace can surface these as warnings or review guidance when they are not, by themselves, a WCAG 2.2 failure.
 
 WCAG 2.2 criteria are also reflected in the web requirements of EN 301 549 V4.1.1. FocusTrace does not currently model EN 301 549 as a separate conformance catalog: the implemented rules below describe only their explicit observable WCAG subsets and must not be read as complete EN 301 549 evaluation or certification.
@@ -73,6 +73,18 @@ CSS-generated text, images of text and broader visual-label inference remain out
 `FT-WCAG-008` implements ACT `b5c3f8`: a top-level `text/html` document must have a non-empty `lang` attribute on its root HTML element.
 
 `FT-WCAG-009` implements ACT `bf051a`: when `lang` is non-empty, its primary language subtag must be registered by IANA as `Type: language`. FocusTrace uses the committed `generated/language-subtags.json` snapshot, so the page scan remains offline and deterministic. Later subtags are intentionally not validated by this rule; for example `en-US-GB` still has the known primary subtag `en`.
+
+## Language of Parts scope
+
+`FT-WCAG-013` implements a conservative observable subset of ACT `de46e4` for WCAG 3.1.2 Language of Parts. It evaluates explicit, non-empty `lang` attributes on HTML descendants of `body` when non-whitespace human DOM text inherits its programmatic language from that element.
+
+The rule uses the same committed IANA primary-language registry as `FT-WCAG-009`. A known primary language subtag records `PASS`; an unknown, malformed or whitespace-only primary value records deterministic `FAIL`. Later subtags are intentionally ignored by this expectation, matching the ACT known-primary-language model.
+
+Applicability is deliberately bounded to avoid manufacturing failures from authoring uses that are not human-language declarations. FocusTrace excludes `code`, `pre`, `samp`, `kbd` and `var` contexts because ACT explicitly notes programming-language labels as an assumption risk. It also excludes `script`, `style`, `template` and `noscript` source text, empty `lang` values, nested text whose own element overrides `lang`, and content removed from rendering through `hidden`, `display:none` or hidden/collapsed visibility. Visible text remains applicable even when an ancestor uses `aria-hidden="true"`, because visual human-language content can still require a valid declared language.
+
+This is intentionally narrower than the complete ACT input model: the current detector does not traverse Shadow DOM/slot flat-tree composition and does not treat accessible-name-only strings such as an image `alt` as applicable text for this rule. It also does not use language identification or NLP to infer that an unmarked phrase appears to be in another language. Therefore `PASS` means only that the explicit `lang` declarations evaluated by this subset use known primary language tags; it is not proof that every language change required by WCAG 3.1.2 has been marked.
+
+The rule is page-only. Component-scoped analysis does not execute `FT-WCAG-013`, because the implementation is maintained as a document-level explicit-language check and its coverage contract is reported once per full-page scan.
 
 ## Text contrast scope
 
@@ -295,6 +307,7 @@ The rule is full-page only. Component-scoped analysis does not execute `FT-REVIE
 | FT-WCAG-010 Text color contrast | FAIL/REVIEW/PASS | WCAG 1.4.3 AA |
 | FT-WCAG-011 Required non-text visual information has sufficient contrast | FAIL/REVIEW/PASS | WCAG 1.4.11 AA |
 | FT-WCAG-012 Pointer target size and spacing | REVIEW/PASS | WCAG 2.5.8 AA |
+| FT-WCAG-013 Declared content lang has a known primary language tag | FAIL/PASS | WCAG 3.1.2 AA · ACT de46e4 · IANA |
 | FT-WARN-001 Deprecated ARIA role | WARNING/PASS | WAI-ARIA registry |
 | FT-WARN-002 Deprecated ARIA property for role | WARNING/PASS | WAI-ARIA registry |
 | FT-WARN-003 Prohibited ARIA property for role | WARNING/PASS | WAI-ARIA registry |
@@ -357,6 +370,7 @@ The rule is full-page only. Component-scoped analysis does not execute `FT-REVIE
 - `FT-WCAG-010` covers DOM text with deterministically resolvable computed foreground/background colors. Images of text, pseudo-element text and complex visual composition remain outside deterministic FAIL coverage.
 - `FT-WCAG-011` does not programmatically exercise every hover, pressed, checked or focus state. Multi-color graphics, CSS pseudo-element icons, complex shadows, images/canvas and contextual “required visual information” decisions remain REVIEW/manual territory.
 - `FT-WCAG-012` uses observable DOM/layout geometry and conservative target discovery. Equivalent, essential and user-agent-control exceptions, arbitrary framework-only pointer listeners and complex non-rectangular hit areas can still require manual review; the rule therefore does not currently emit automatic FAIL solely from undersized/overlapping geometry.
+- `FT-WCAG-013` validates only explicit `lang` declarations with inheriting rendered human DOM text. It does not infer missing language changes, traverse Shadow DOM/slot flat-tree text, or currently include accessible-name-only strings such as image `alt`; those gaps intentionally prevent PASS from being interpreted as complete WCAG 3.1.2 conformance.
 - `FT-RUNTIME-002` uses bounded viewport hit-testing of the observed focused element; it is not a rendering-engine proof of every possible overlap/compositing case.
 - `FT-RUNTIME-006` recognizes observed drag interaction signals but does not automatically prove whether an equivalent non-dragging operation or an essential-dragging exception exists.
 - `FT-RUNTIME-007` reviews only short visible EN/ES status-like text with observable structural signals after real activation. It cannot prove the meaning of every message, non-text-only status, disappearance-only state, equivalent accessibility-tree exposure or actual screen-reader announcement.

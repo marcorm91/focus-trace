@@ -75,6 +75,9 @@ FocusTrace uses WCAG 2.2 as its conformance source. WCAG 2.2 criteria are also r
 | `FT-WCAG-010` | Text reaches the required contrast ratio when foreground/background can be resolved safely. | FAIL / REVIEW / PASS | WCAG 1.4.3 AA |
 | `FT-WCAG-011` | Required non-text visual information reaches the required contrast when deterministic evidence exists. | FAIL / REVIEW / PASS | WCAG 1.4.11 AA |
 | `FT-WCAG-012` | Pointer targets contain a verifiable 24 × 24 CSS px area or meet an observable spacing/inline exception; unresolved semantic exceptions remain for review. | REVIEW / PASS | WCAG 2.5.8 AA |
+| `FT-WCAG-013` | Explicit `lang` values on rendered human-language content use a known primary language subtag. Code-like contexts are excluded. | FAIL / PASS | WCAG 3.1.2 AA · ACT de46e4 · IANA |
+
+`FT-WCAG-013` validates only explicit language declarations on rendered text that inherits the tested `lang`. FocusTrace does not use NLP to infer unmarked language changes, and it excludes code-like contexts such as `code`, `pre`, `samp`, `kbd` and `var` to avoid treating programming-language labels as human-language failures. A PASS therefore means the observed declaration is valid, not that every change of human language on the page has been identified.
 
 ### Contextual and structural reviews
 
@@ -367,6 +370,7 @@ Memory does not store page HTML, full DOM snapshots or full-page screenshots.
 | Status messages | Runtime review is limited to short visible EN/ES status-like text and observable structural signals after real activation. It cannot prove every message's meaning, non-text-only status, exact accessibility-tree exposure or screen-reader announcement. |
 | Context changes | Trace correlates focus/input with route, dialog and DOM-focus movement inside a bounded window. It does not prove author causation or whether prior warning satisfies WCAG 3.2.2. |
 | Input purpose | Only explicit standard-like `autocomplete` token sequences are validated. Missing `autocomplete`, unknown-only custom taxonomies and whether a field actually collects information about the user remain outside automatic judgement. |
+| Language of parts | Only explicit `lang` values on rendered human-language text are validated. FocusTrace does not infer missing language changes from the text itself, and code-like contexts are deliberately excluded. |
 | APG | APG is informative guidance and optional variants are not forced as universal requirements. |
 | Grid / Treegrid | Reviews stay conservative for irregular/virtualized grids, spans and explicit indexes. |
 | Runtime | Can report only interaction paths that were actually observed. |

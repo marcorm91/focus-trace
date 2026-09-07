@@ -16,6 +16,7 @@ import {
   OBSOLETE_HTML_ATTRIBUTE_RULE,
   OBSOLETE_HTML_ELEMENT_RULE,
 } from '../shared/html-authoring-rules';
+import { LANGUAGE_PARTS_RULE } from '../shared/language-parts-rules';
 import { OBSOLETE_ATTRIBUTES, OBSOLETE_ELEMENTS } from '../shared/obsolete-html-registry';
 import { RULES, type RuleDefinition } from '../shared/rule-catalog';
 import { STRUCTURAL_HTML_RULES } from '../shared/structural-html-rules';
@@ -34,7 +35,13 @@ const HTML_RULES: RuleDefinition[] = [
   ...STRUCTURAL_HTML_RULES,
 ];
 
-const ALL_RULES: RuleDefinition[] = [...Object.values(RULES), ...FORM_PURPOSE_RULES, ...HTML_RULES, ...ADVANCED_ARIA_RULES];
+const ALL_RULES: RuleDefinition[] = [
+  ...Object.values(RULES),
+  ...FORM_PURPOSE_RULES,
+  LANGUAGE_PARTS_RULE,
+  ...HTML_RULES,
+  ...ADVANCED_ARIA_RULES,
+];
 
 describe('standards registry coverage', () => {
   it('keeps every FocusTrace WCAG and ACT reference resolvable against current upstream catalogs', () => {
@@ -133,6 +140,12 @@ describe('standards registry coverage', () => {
       level: 'AA',
       coverage: ['runtime'],
       ruleIds: ['FT-RUNTIME-006'],
+      implemented: true,
+    });
+    expect(wcagCoverageForCriterion('3.1.2')).toMatchObject({
+      level: 'AA',
+      coverage: ['automated'],
+      ruleIds: ['FT-WCAG-013'],
       implemented: true,
     });
     expect(wcagCoverageForCriterion('3.2.3')).toMatchObject({
