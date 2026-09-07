@@ -1,6 +1,6 @@
 # FocusTrace severity audit
 
-Audit date: 2026-09-06
+Audit date: 2026-09-07
 
 This document records the rule-by-rule review behind the base severity values used by FocusTrace.
 
@@ -88,6 +88,7 @@ Existing equivalent rules that already matched axe keep their severity, includin
 | `FT-REVIEW-008` Generic interactive element | moderate | review | The observed interaction is insufficient to determine whether button, link or another widget semantics are intended. |
 | `FT-REVIEW-011` Consistent help across sampled pages | moderate | review | Relative help order can affect predictability, but FocusTrace samples pages and therefore keeps the result contextual. |
 | `FT-REVIEW-012` Bypass repeated blocks | moderate | review | Repeated keyboard stops before main content can create a meaningful navigation barrier, but FocusTrace only proves whether a common same-document fragment bypass is observable; alternative WCAG 2.4.1 mechanisms still require context. |
+| `FT-REVIEW-013` Consistent navigation across sampled pages | moderate | review | Changing the order of the same repeated navigation destinations can reduce predictability. Exact-set matching and ambiguity suppression keep the detector conservative, while user-initiated changes still require context. |
 | `FT-WARN-008` Invalid native parent/ancestor context | moderate | warning | Native semantics may be lost or distorted outside their required HTML context; the rule reports a deterministic authoring contradiction, not a WCAG failure. |
 | `FT-WARN-009` Native content-model/group/order violation | moderate | warning | Invalid grouping/order can produce browser DOM repair or inconsistent semantic relationships. |
 | `FT-WARN-010` Conflicting nested interactive/label structure | serious | warning | Conflicting interactive structures can directly create ambiguous activation, focus and accessibility-tree behavior. |
