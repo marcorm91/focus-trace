@@ -86,6 +86,10 @@ const EXTRA_COPY_ES: Record<string, { title: string; description: string }> = {
     title: 'La navegación repetida puede cambiar de orden entre páginas',
     description: 'El mismo conjunto exacto de destinos de navegación repetidos aparece en distinto orden relativo entre páginas muestreadas. Revisa que se trate del mismo mecanismo y que el cambio no haya sido iniciado por el usuario antes de considerar un problema de WCAG 3.2.3.',
   },
+  'FT-REVIEW-014': {
+    title: 'Los tokens de propósito autocomplete estándar pueden estar mal formados',
+    description: 'Este control utiliza vocabulario autocomplete estándar, pero la secuencia de tokens observada no es válida. Revisa si el campo recopila información sobre el usuario y, cuando aplique WCAG 1.3.5, expón su propósito mediante un valor válido y programáticamente determinable.',
+  },
   'FT-RUNTIME-006': {
     title: 'La interacción de arrastre requiere revisar una alternativa de puntero sencillo',
     description: 'Trace observó un arrastre real. Revisa si la misma funcionalidad puede realizarse con un puntero sencillo sin movimiento de arrastre, teniendo en cuenta las excepciones de WCAG 2.5.7.',
@@ -112,6 +116,7 @@ const EXTRA_EVIDENCE_ES: Record<string, string> = {
   'FT-REVIEW-011': 'El orden relativo observado de los mecanismos de ayuda no coincide entre las páginas comparadas.',
   'FT-REVIEW-012': 'Se ha detectado navegación significativa antes del contenido principal sin un mecanismo de salto por teclado validado.',
   'FT-REVIEW-013': 'El mismo conjunto exacto de destinos de navegación repetidos aparece en un orden relativo diferente entre las páginas comparadas.',
+  'FT-REVIEW-014': 'El atributo autocomplete utiliza vocabulario estándar en una secuencia de tokens que necesita revisión.',
   'FT-RUNTIME-006': 'Se observó un movimiento de arrastre real y debe revisarse si existe una alternativa equivalente sin arrastrar.',
 };
 
@@ -130,7 +135,7 @@ function localizeHelpOrder(order: string): string {
 }
 
 function technicalEvidenceTokens(evidence: string): string[] {
-  const matches = evidence.match(/<[^>]+>|aria-[a-z-]+(?:="[^"]*")?|role="[^"]*"|#[A-Za-z][\w:.-]*/gi) ?? [];
+  const matches = evidence.match(/<[^>]+>|aria-[a-z-]+(?:="[^"]*")?|role="[^"]*"|autocomplete="[^"]*"|#[A-Za-z][\w:.-]*/gi) ?? [];
   return [...new Set(matches)];
 }
 
@@ -182,6 +187,11 @@ function localizedExtraEvidence(ruleId: string, evidence: string): string | unde
     if (comparison) {
       return `Orden de navegación observado: ${comparison[1]}. Página comparada ${comparison[2]}: ${comparison[3]}.`;
     }
+  }
+
+  if (ruleId === 'FT-REVIEW-014') {
+    const match = evidence.match(/^autocomplete=("[^"]*")\./);
+    if (match) return `Valor autocomplete observado: ${match[1]}. La secuencia de tokens estándar necesita revisión para confirmar que identifica correctamente el propósito del campo.`;
   }
 
   const fallback = EXTRA_EVIDENCE_ES[ruleId];
