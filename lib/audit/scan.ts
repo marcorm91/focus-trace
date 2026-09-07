@@ -13,6 +13,7 @@ import {
   UNSUPPORTED_ARIA_PROPERTY_RULE,
 } from '../../shared/aria-authoring-rules';
 import { INPUT_PURPOSE_AUTOCOMPLETE_RULE } from '../../shared/form-purpose-rules';
+import { LANGUAGE_PARTS_RULE } from '../../shared/language-parts-rules';
 import { RULES } from '../../shared/rule-catalog';
 import {
   HTML_CONTENT_MODEL_RULE,
@@ -33,6 +34,7 @@ import {
 import { textContrastSubjectsForElement } from './contrast';
 import { evaluateStructuralHtml, type StructuralHtmlSignalKind } from './content-model';
 import { isProgrammaticallyHidden, selectorFor } from './dom';
+import { evaluateLanguageParts, type LanguagePartEvaluation } from './language-parts';
 import { collectHeadingOutline, runFocusTraceScan as runBaseFocusTraceScan } from './scan-base';
 import { evaluateTargetSize, type TargetSizeEvaluation } from './target-size';
 
@@ -154,6 +156,21 @@ function autocompletePurposeIssueFor(evaluation: AutocompletePurposeEvaluation):
     outcome: 'review',
     targets: [selectorFor(evaluation.element)],
     evidence: `autocomplete=${JSON.stringify(evaluation.value)}. ${evaluation.reason ?? 'The standard autocomplete token grammar is not satisfied.'}`,
+    references: rule.references,
+  };
+}
+
+function languagePartIssueFor(evaluation: LanguagePartEvaluation): ScanIssue {
+  const rule = LANGUAGE_PARTS_RULE;
+  return {
+    id: uid(),
+    ruleId: rule.id,
+    title: rule.title,
+    description: 'This content fragment explicitly declares a language, but its lang value does not start with a primary language subtag registered by IANA as Type: language.',
+    severity: rule.severity,
+    outcome: 'fail',
+    targets: [selectorFor(evaluation.element)],
+    evidence: `lang = ${JSON.stringify(evaluation.value)}; primary subtag = ${JSON.stringify(evaluation.primary)}`,
     references: rule.references,
   };
 }
@@ -289,6 +306,22 @@ function appendBypassBlocksReview(result: ScanResult): void {
   result.rulesRun += 1;
 }
 
+function appendLanguageParts(result: ScanResult): void {
+  const evaluations = evaluateLanguageParts(document);
+  if (!evaluations.length) return;
+
+  const failures = evaluations.filter((evaluation) => evaluation.outcome === 'fail');
+  const passed = evaluations.length - failures.length;
+  result.issues.push(...failures.map(languagePartIssueFor));
+  result.passes += passed;
+
+  const ruleResult = result.ruleResults?.find((entry) => entry.ruleId === RULES.pageLangKnown.id);
+  if (!ruleResult) return;
+  ruleResult.applicable += evaluations.length;
+  ruleResult.passed += passed;
+  ruleResult.failures += failures.length;
+}
+
 function appendAutocompletePurposeReview(result: ScanResult, root: Document | Element): void {
   const evaluations = evaluateAutocompletePurpose(root);
   const reviews = evaluations.filter((evaluation) => evaluation.outcome === 'review').map(autocompletePurposeIssueFor);
@@ -319,7 +352,10 @@ export function runFocusTraceScan(scope?: ComponentScanScope): ScanResult {
   pruneInactiveTextContrast(result, root);
   pruneUnresolvedContrastReviews(result);
   annotateObservedContrastStates(result);
-  if (!componentScope) appendBypassBlocksReview(result);
+  if (!componentScope) {
+    appendBypassBlocksReview(result);
+    appendLanguageParts(result);
+  }
   appendAutocompletePurposeReview(result, root);
 
   const signals = evaluateStructuralHtml(root, !componentScope);
