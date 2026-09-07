@@ -57,6 +57,7 @@ const RULE_CATEGORY: Record<string, Exclude<ScanCategory, 'all'>> = {
   'FT-REVIEW-011': 'structure',
   'FT-REVIEW-012': 'keyboard',
   'FT-REVIEW-013': 'structure',
+  'FT-REVIEW-014': 'forms',
 };
 
 export function scanCategoryForRule(ruleId: string): Exclude<ScanCategory, 'all'> {
