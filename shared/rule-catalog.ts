@@ -242,6 +242,16 @@ export const RULES = {
     ),
     references: [wcag('3.2.6', 'Consistent Help', 'A', 'consistent-help')],
   },
+  bypassBlocks: {
+    id: 'FT-REVIEW-012',
+    title: 'Primary navigation may need a keyboard bypass mechanism',
+    severity: 'moderate',
+    ...impact(
+      'Keyboard users may have to traverse the same substantial navigation block on every page before reaching the primary content when no practical bypass mechanism is available.',
+      'Los usuarios de teclado pueden tener que recorrer el mismo bloque de navegación extenso en cada página antes de llegar al contenido principal cuando no existe un mecanismo práctico para saltarlo.',
+    ),
+    references: [wcag('2.4.1', 'Bypass Blocks', 'A', 'bypass-blocks')],
+  },
   focusLost: {
     id: 'FT-RUNTIME-001',
     title: 'Focused element removed during interaction',
