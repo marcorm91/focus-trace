@@ -20,6 +20,7 @@ const REFERENCE_LABEL_ES: Record<string, string> = {
   'Contrast (Minimum)': 'Contraste (mínimo)',
   'Non-text Contrast': 'Contraste no textual',
   'Target Size (Minimum)': 'Tamaño del objetivo (mínimo)',
+  'Bypass Blocks': 'Saltar bloques',
   'Focus Order': 'Orden del foco',
   'Info and Relationships': 'Información y relaciones',
   'Headings and Labels': 'Encabezados y etiquetas',
