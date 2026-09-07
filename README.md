@@ -93,10 +93,13 @@ FocusTrace uses WCAG 2.2 as its conformance source. WCAG 2.2 criteria are also r
 | `FT-REVIEW-011` | The same help mechanisms change relative order across sampled pages. | REVIEW | WCAG 3.2.6 |
 | `FT-REVIEW-012` | Substantial navigation appears before primary content without a validated early keyboard-focusable fragment link that reaches the main region. | REVIEW / PASS | WCAG 2.4.1 |
 | `FT-REVIEW-013` | The exact same repeated navigation destination set changes relative order across sampled pages. | REVIEW | WCAG 3.2.3 AA |
+| `FT-REVIEW-014` | A form control uses recognizable standard `autocomplete` purpose vocabulary in a malformed token sequence. Unknown-only/custom taxonomies are deliberately ignored. | REVIEW / PASS | WCAG 1.3.5 AA · ACT 73f2c2 |
 
 For `FT-REVIEW-012`, FocusTrace treats a validated same-document fragment link before the repeated-navigation candidate as a positive signal. A missing link or broken target remains **REVIEW**, not automatic FAIL, because WCAG 2.4.1 permits other mechanisms and repeated-block applicability can require cross-page context.
 
 For `FT-REVIEW-013`, FocusTrace compares only rendered navigation landmarks with at least three unique HTTP(S) destinations. Two blocks are treated as the same repeated mechanism only when their complete destination sets match exactly and that set occurs only once on each page. Partially overlapping or ambiguous duplicated blocks are ignored. A changed order remains **REVIEW**, not FAIL, because the criterion allows user-initiated changes and Site Audit cannot always prove that context.
+
+For `FT-REVIEW-014`, FocusTrace validates only explicit, non-empty `autocomplete` values that visibly use the standard HTML token vocabulary and satisfy the control applicability modeled from ACT 73f2c2. A valid standard token sequence is PASS for this tested expectation; a malformed standard-like sequence is REVIEW, never automatic FAIL. FocusTrace does not infer a required purpose from `name`, label, placeholder or input type, and it deliberately ignores unknown-only values because a custom taxonomy can still provide a programmatically determinable purpose. Whether the field actually collects information about the user remains contextual.
 
 For semantic signals, FocusTrace tries to distinguish function before recommending native HTML: button behavior → prefer `<button type="button">`; navigation → prefer `<a href="…">`; ambiguous interaction → review the intended behavior first. ARIA can be shown as a fallback, but it does not automatically add native keyboard behavior.
 
@@ -363,6 +366,7 @@ Memory does not store page HTML, full DOM snapshots or full-page screenshots.
 | Runtime ARIA | Evaluates modeled patterns only after relevant real interactions and uses a stabilization window; it does not simulate arbitrary actions. |
 | Status messages | Runtime review is limited to short visible EN/ES status-like text and observable structural signals after real activation. It cannot prove every message's meaning, non-text-only status, exact accessibility-tree exposure or screen-reader announcement. |
 | Context changes | Trace correlates focus/input with route, dialog and DOM-focus movement inside a bounded window. It does not prove author causation or whether prior warning satisfies WCAG 3.2.2. |
+| Input purpose | Only explicit standard-like `autocomplete` token sequences are validated. Missing `autocomplete`, unknown-only custom taxonomies and whether a field actually collects information about the user remain outside automatic judgement. |
 | APG | APG is informative guidance and optional variants are not forced as universal requirements. |
 | Grid / Treegrid | Reviews stay conservative for irregular/virtualized grids, spans and explicit indexes. |
 | Runtime | Can report only interaction paths that were actually observed. |
