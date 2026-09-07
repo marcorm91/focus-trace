@@ -109,6 +109,69 @@ describe('Site Audit finding aggregation', () => {
     expect(finding.sampleCount).toBe(3);
   });
 
+  it('aggregates conservative WCAG 3.2.4 cross-page reviews into the template', () => {
+    const family: SiteAuditRouteFamily = {
+      id: 'R01',
+      pattern: '/section/:item',
+      urls: ['https://example.test/section/a', 'https://example.test/section/b'],
+      sampleUrls: ['https://example.test/section/a', 'https://example.test/section/b'],
+    };
+    const [first, second] = family.urls;
+    const pages: SiteAuditPageResult[] = [
+      {
+        url: first!,
+        routeFamilyId: family.id,
+        scan: scan(first!, undefined, false),
+        structure: {
+          fingerprint: 'F00000001',
+          semanticTokens: ['a'],
+          headingLevels: [],
+          interactiveCount: 1,
+          landmarkCount: 0,
+          functionalIdentifications: [{
+            selector: '#search',
+            kind: 'link',
+            functionKey: 'https://example.test/search',
+            accessibleName: 'Search',
+            source: 'aria-label',
+            pageLanguage: 'en',
+          }],
+        },
+      },
+      {
+        url: second!,
+        routeFamilyId: family.id,
+        scan: scan(second!, undefined, false),
+        structure: {
+          fingerprint: 'F00000001',
+          semanticTokens: ['a'],
+          headingLevels: [],
+          interactiveCount: 1,
+          landmarkCount: 0,
+          functionalIdentifications: [{
+            selector: '#search',
+            kind: 'link',
+            functionKey: 'https://example.test/search',
+            accessibleName: 'Find products',
+            source: 'aria-label',
+            pageLanguage: 'en',
+          }],
+        },
+      },
+    ];
+
+    const template = buildSiteAuditTemplates([family], pages)[0]!;
+    const finding = template.findings.find((candidate) => candidate.ruleId === 'FT-REVIEW-015');
+    expect(finding).toMatchObject({
+      outcome: 'review',
+      targetShape: 'page:consistent-identification',
+      sampleCount: 2,
+      totalSamples: 2,
+      commonToTemplate: true,
+    });
+    expect(finding?.exampleIssue.evidence).toContain('Function destination: /search');
+  });
+
   it('keeps exact locations and detailed evidence available to exported site reports', () => {
     const family: SiteAuditRouteFamily = {
       id: 'R01',
