@@ -23,6 +23,7 @@ import {
   STRUCTURAL_HTML_RULES,
 } from '../../shared/structural-html-rules';
 import { evaluateAdvancedAria, type AriaValidationSignalKind } from './aria-validator';
+import { evaluateBypassBlocks } from './bypass-blocks';
 import {
   isInactiveContrastElement,
   observedContrastStates,
@@ -235,6 +236,42 @@ function annotateObservedContrastStates(result: ScanResult): void {
   }
 }
 
+function appendBypassBlocksReview(result: ScanResult): void {
+  const evaluation = evaluateBypassBlocks();
+  const rule = RULES.bypassBlocks;
+  const applicable = evaluation.status === 'inapplicable' ? 0 : 1;
+  const passed = evaluation.status === 'pass' ? 1 : 0;
+  const reviews = evaluation.status === 'review' ? 1 : 0;
+
+  if (evaluation.status === 'review' && evaluation.target && evaluation.description) {
+    result.review.push({
+      id: uid(),
+      ruleId: rule.id,
+      title: rule.title,
+      description: evaluation.description,
+      severity: rule.severity,
+      outcome: 'review',
+      targets: [selectorFor(evaluation.target)],
+      ...(evaluation.evidence ? { evidence: evaluation.evidence } : {}),
+      references: rule.references,
+    });
+  }
+
+  result.ruleResults = [
+    ...(result.ruleResults ?? []),
+    {
+      ruleId: rule.id,
+      applicable,
+      passed,
+      failures: 0,
+      reviews,
+      warnings: 0,
+    },
+  ];
+  result.passes += passed;
+  result.rulesRun += 1;
+}
+
 export function runFocusTraceScan(scope?: ComponentScanScope): ScanResult {
   const result = runBaseFocusTraceScan(scope);
   const componentScope = result.scope?.type === 'component' ? result.scope : undefined;
@@ -244,6 +281,7 @@ export function runFocusTraceScan(scope?: ComponentScanScope): ScanResult {
   pruneInactiveTextContrast(result, root);
   pruneUnresolvedContrastReviews(result);
   annotateObservedContrastStates(result);
+  if (!componentScope) appendBypassBlocksReview(result);
 
   const signals = evaluateStructuralHtml(root, !componentScope);
   const activeRules = STRUCTURAL_HTML_RULES.filter((rule) => !componentScope || !PAGE_ONLY_RULE_IDS.has(rule.id));

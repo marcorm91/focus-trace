@@ -91,6 +91,9 @@ FocusTrace utiliza WCAG 2.2 como fuente de conformidad. Los criterios WCAG 2.2 t
 | `FT-REVIEW-009` | `section` / `article` visible sin encabezado propio ni nombre accesible calculado. | REVIEW | HTML |
 | `FT-REVIEW-010` | Landmarks repetidos de navegación, búsqueda o contenido complementario sin nombres distinguibles. | REVIEW | WAI-ARIA APG |
 | `FT-REVIEW-011` | Los mismos mecanismos de ayuda cambian su orden relativo entre páginas muestreadas. | REVIEW | WCAG 3.2.6 |
+| `FT-REVIEW-012` | Aparece una navegación significativa antes del contenido principal sin un enlace temprano de fragmento, alcanzable por teclado y validado, que lleve a la región main. | REVIEW / PASS | WCAG 2.4.1 |
+
+Para `FT-REVIEW-012`, FocusTrace considera señal positiva un enlace de fragmento del mismo documento validado y situado antes del bloque de navegación repetitiva candidato. La ausencia del enlace o un destino roto permanece como **REVIEW**, no como FAIL automático, porque WCAG 2.4.1 admite otros mecanismos y la aplicabilidad de bloques repetidos puede requerir contexto entre páginas.
 
 Para las señales semánticas, FocusTrace intenta diferenciar la función antes de recomendar HTML nativo: comportamiento de botón → preferir `<button type="button">`; navegación → preferir `<a href="…">`; interacción ambigua → revisar primero la función real. ARIA puede mostrarse como fallback, pero no añade automáticamente el comportamiento nativo de teclado.
 

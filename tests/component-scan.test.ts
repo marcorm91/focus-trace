@@ -63,8 +63,9 @@ describe('component-scoped static analysis', () => {
     expect(document.querySelector(target!)).toBe(document.querySelector('#checkout button'));
   });
 
-  it('does not run page-global title, language or heading-outline checks for a component', () => {
+  it('does not run page-global title, language, bypass or heading-outline checks for a component', () => {
     render(`
+      <nav><a href="/a">A</a><a href="/b">B</a><a href="/c">C</a></nav>
       <main>
         <h2>Page starts below H1</h2>
         <section id="checkout"><button aria-label="Pay">Pay</button></section>
@@ -78,11 +79,12 @@ describe('component-scoped static analysis', () => {
     expect(component.headings).toBeUndefined();
     expect(component.issues.some((issue) => ['FT-WCAG-001', 'FT-WCAG-008', 'FT-WCAG-009'].includes(issue.ruleId))).toBe(false);
     expect(component.review.some((issue) => issue.ruleId === 'FT-REVIEW-002')).toBe(false);
-    expect(component.review.some((issue) => ['FT-REVIEW-004', 'FT-REVIEW-005'].includes(issue.ruleId))).toBe(false);
+    expect(component.review.some((issue) => ['FT-REVIEW-004', 'FT-REVIEW-005', 'FT-REVIEW-012'].includes(issue.ruleId))).toBe(false);
 
     expect(fullPage.issues.map((issue) => issue.ruleId)).toContain('FT-WCAG-001');
     expect(fullPage.issues.map((issue) => issue.ruleId)).toContain('FT-WCAG-008');
     expect(fullPage.review.map((issue) => issue.ruleId)).toContain('FT-REVIEW-002');
+    expect(fullPage.review.map((issue) => issue.ruleId)).toContain('FT-REVIEW-012');
   });
 
   it('consumes the ephemeral component scope selected by the in-page picker', () => {
@@ -112,7 +114,7 @@ describe('component-scoped static analysis', () => {
 
     expect(result.scope).toEqual({ type: 'page' });
     expect(result.headings).toHaveLength(1);
-    expect(result.rulesRun).toBe(43);
+    expect(result.rulesRun).toBe(44);
     expect(document.documentElement.hasAttribute('data-focustrace-focus-component')).toBe(false);
   });
 
