@@ -66,9 +66,7 @@ async function saveSixLevelHeadingScan(panel: Page): Promise<void> {
 }
 
 async function settle(panel: Page): Promise<void> {
-  await panel.evaluate(() => new Promise<void>((resolve) => {
-    requestAnimationFrame(() => requestAnimationFrame(() => resolve()));
-  }));
+  await panel.evaluate(() => new Promise<void>((resolve) => setTimeout(resolve, 0)));
 }
 
 async function sampleMemory(cdp: CDPSession, panel: Page, cycle: number): Promise<MemorySample> {
@@ -100,12 +98,15 @@ async function runCycles(panel: Page, cycles: number): Promise<void> {
   await panel.evaluate(async (count) => {
     const button = (label: string) => [...document.querySelectorAll('button')]
       .find((candidate) => candidate.textContent?.trim() === label) as HTMLButtonElement | undefined;
-    const frame = () => new Promise<void>((resolve) => requestAnimationFrame(() => resolve()));
+    const update = () => new Promise<void>((resolve) => setTimeout(() => {
+      document.querySelector('.heading-tree')?.getBoundingClientRect();
+      resolve();
+    }, 0));
     for (let cycle = 0; cycle < count; cycle++) {
       button('Expand all')?.click();
-      await frame();
+      await update();
       button('Collapse all')?.click();
-      await frame();
+      await update();
     }
   }, cycles);
 }
@@ -123,10 +124,12 @@ test('diagnoses retained resources while repeatedly expanding headings', async (
   const samples: MemorySample[] = [await sampleMemory(cdp, panel, 0)];
   let completed = 0;
   for (const batch of [25, 25, 50, 100]) {
+    const startedAt = Date.now();
     await runCycles(panel, batch);
     completed += batch;
     expect(await panel.getByRole('tree').getByRole('treeitem').count()).toBe(1);
     samples.push(await sampleMemory(cdp, panel, completed));
+    console.log(`HEADING_MEMORY_BATCH ${JSON.stringify({ completed, elapsedMs: Date.now() - startedAt })}`);
   }
 
   console.log(`HEADING_MEMORY_DIAGNOSTIC ${JSON.stringify(samples)}`);
