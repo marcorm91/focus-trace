@@ -34,6 +34,16 @@ function hiddenFromRenderedText(element: Element): boolean {
   }
 }
 
+function hasHiddenRenderedAncestor(element: Element): boolean {
+  let current: Element | null = element;
+  while (current) {
+    if (hiddenFromRenderedText(current)) return true;
+    if (current === document.body) break;
+    current = current.parentElement;
+  }
+  return false;
+}
+
 function textNodeIsRendered(node: Node, boundary: Element): boolean {
   let current = node.parentElement;
   while (current) {
@@ -45,7 +55,9 @@ function textNodeIsRendered(node: Node, boundary: Element): boolean {
 }
 
 function hasHumanTextInheritingLanguage(element: Element): boolean {
+  if (NON_HUMAN_TEXT_TAGS.has(element.tagName)) return false;
   if (CODE_LIKE_TAGS.has(element.tagName) || element.closest('code, pre, samp, kbd, var')) return false;
+  if (hasHiddenRenderedAncestor(element)) return false;
 
   const visit = (node: Node): boolean => {
     for (const child of node.childNodes) {
