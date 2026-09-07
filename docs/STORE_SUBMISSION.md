@@ -2,12 +2,12 @@
 
 This document keeps the Chrome Web Store and Microsoft Edge Add-ons submission copy aligned with the actual extension behavior. It is not a substitute for the public privacy policy or the release checklist.
 
-Current release candidate: **0.2.1**.
+Current release candidate: **0.2.2**.
 
 ## Release positioning
 
 - Product: FocusTrace
-- Version: 0.2.1
+- Version: 0.2.2
 - Supported targets: Chrome 114+ and Chromium-based Microsoft Edge
 - Firefox: keep experimental until the manual Firefox smoke checklist in `RELEASE_CHECKLIST.md` has passed
 - Architecture: Manifest V3, local-first, no required backend
@@ -130,13 +130,13 @@ Record the final public URLs here before submission:
 
 ## Final submission gate
 
-Before uploading the production ZIP for 0.2.1:
+Before uploading the production ZIP for 0.2.2:
 
 1. Complete `npm run release:check:full` on the release candidate.
-2. Confirm CI is green on the exact commit intended for `v0.2.1`.
+2. Confirm CI is green on the exact commit intended for `v0.2.2`.
 3. Complete the manual WCAG 2.2 regression, native EN/ES browser i18n, Structure, multipage Report and FocusTrace Memory smoke items in `RELEASE_CHECKLIST.md`.
 4. Smoke-test the unpacked production Chromium build.
 5. Confirm production manifests contain only the intended required and optional permissions.
 6. Confirm the public privacy-policy, support/contact and voluntary-support URLs resolve without authentication.
 7. Review the final store declarations against `PRIVACY.md` and actual behavior, including target-geometry evidence, runtime status-message candidates, on-demand Structure evidence, bounded multipage-audit visual evidence and opt-in Memory previews/locators.
-8. Tag the exact approved commit as `v0.2.1` only after the release candidate is accepted.
+8. Tag the exact approved commit as `v0.2.2` only after the release candidate is accepted.
