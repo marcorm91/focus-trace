@@ -254,7 +254,7 @@ test('report opens a formatted PDF preview without exposing CSS selectors', asyn
   await panel.setViewportSize({ width: 360, height: 800 });
   await panel.getByRole('button', { name: /Structure|Estructura/ }).click();
   await panel.getByRole('tab', { name: /Headings|Encabezados/ }).click();
-  await panel.getByRole('button', { name: /Expand all|Expandir todo/ }).click();
+  await expect(panel.getByRole('button', { name: /Expand all|Expandir todo/ })).toBeDisabled();
 
   const shortHeadingLabel = panel.getByRole('button', { name: 'Checkout', exact: true }).locator('span').first();
   await expect(shortHeadingLabel).not.toHaveAttribute('title', /.+/);
