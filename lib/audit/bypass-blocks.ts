@@ -16,9 +16,17 @@ function precedes(left: Node, right: Node): boolean {
   return Boolean(left.compareDocumentPosition(right) & Node.DOCUMENT_POSITION_FOLLOWING);
 }
 
+function isMainLandmark(element: Element): boolean {
+  return element.tagName === 'MAIN' || semanticRole(element) === 'main';
+}
+
+function isNavigationLandmark(element: Element): boolean {
+  return element.tagName === 'NAV' || semanticRole(element) === 'navigation';
+}
+
 function exposedMainLandmarks(): Element[] {
   return [...document.querySelectorAll('main, [role]')]
-    .filter((element) => semanticRole(element) === 'main')
+    .filter(isMainLandmark)
     .filter((element) => !isProgrammaticallyHidden(element));
 }
 
@@ -30,7 +38,7 @@ function navigationStops(element: Element): number {
 
 function bypassWorthyNavigation(main: Element): Array<{ element: Element; stops: number }> {
   return [...document.querySelectorAll('nav, [role]')]
-    .filter((element) => semanticRole(element) === 'navigation')
+    .filter(isNavigationLandmark)
     .filter((element) => !isProgrammaticallyHidden(element))
     .filter((element) => precedes(element, main))
     .map((element) => ({ element, stops: navigationStops(element) }))
