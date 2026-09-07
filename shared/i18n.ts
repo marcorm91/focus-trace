@@ -216,11 +216,6 @@ function localizedExtraEvidence(ruleId: string, evidence: string): string | unde
   return tokens.length > 0 ? `${fallback} Datos técnicos: ${tokens.join(' · ')}.` : fallback;
 }
 
-function isLanguagePartIssue(issue: ScanIssue): boolean {
-  return issue.ruleId === 'FT-WCAG-009'
-    && issue.references.some((reference) => reference.type === 'WCAG' && reference.id === '3.1.2');
-}
-
 function localizedLanguagePartIssue(issue: ScanIssue): ScanIssue {
   const evidenceMatch = issue.evidence?.match(/^lang = (.+?); primary subtag = (.+)$/);
   const evidence = evidenceMatch
@@ -239,7 +234,7 @@ function localizedLanguagePartIssue(issue: ScanIssue): ScanIssue {
 }
 
 export function localizedRuleTitle(ruleId: string, fallback: string, language: AppLanguage): string {
-  if (language === 'es' && ruleId === 'FT-WCAG-009' && fallback === LANGUAGE_PART_TITLE_EN) {
+  if (language === 'es' && ruleId === 'FT-WCAG-013' && fallback === LANGUAGE_PART_TITLE_EN) {
     return LANGUAGE_PART_TITLE_ES;
   }
   if (language === 'es' && EXTRA_COPY_ES[ruleId]) return EXTRA_COPY_ES[ruleId].title;
@@ -247,7 +242,7 @@ export function localizedRuleTitle(ruleId: string, fallback: string, language: A
 }
 
 export function localizedScanIssue(issue: ScanIssue, language: AppLanguage): ScanIssue {
-  if (language === 'es' && isLanguagePartIssue(issue)) return localizedLanguagePartIssue(issue);
+  if (language === 'es' && issue.ruleId === 'FT-WCAG-013') return localizedLanguagePartIssue(issue);
 
   const copy = language === 'es' ? EXTRA_COPY_ES[issue.ruleId] : undefined;
   if (!copy) {
