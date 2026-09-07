@@ -273,6 +273,16 @@ FocusTrace intentionally uses a high-confidence identity rule before comparing o
 
 Only after that identity check does FocusTrace compare relative destination order. A changed order emits `REVIEW` with both page URLs and both observed orders as evidence. It never becomes automatic `FAIL`: WCAG 3.2.3 allows changes initiated by the user, Site Audit cannot always prove personalization or interaction history, and representative samples do not prove site-wide behavior. The rule deliberately prefers false negatives over guessing that two similar menus are the same mechanism.
 
+## Consistent Identification Site Audit scope
+
+`FT-REVIEW-015` provides conservative multipage review evidence for WCAG 3.2.4 Consistent Identification. The current subset is deliberately restricted to rendered native HTTP(S) links because an exact destination is one of the few browser-observable signals that can anchor repeated link functionality without guessing from icon shape, nearby copy or similar labels.
+
+Before FocusTrace compares identification, the exact destination (including path, query and fragment) must occur only once on each sampled page, both pages must declare the same non-empty primary `html[lang]`, and both candidates must expose their identification through the same observed source (`aria-label`, `aria-labelledby`, DOM text, a single image `alt`, or `title`). If the destination is duplicated on either page—for example a logo and a footer link to the same URL—the correspondence is ambiguous and no review is emitted.
+
+Names are normalized only to suppress clearly compatible variants: case/diacritics are ignored, numeric values are replaced by a placeholder, and shared functional vocabulary prevents a review for cases such as `Cart` versus `View cart`. This also keeps number-only variations such as `Go to page 4` versus `Go to page 5` quiet; WCAG 3.2.4 requires consistent identification, not byte-identical wording. A review is emitted only when the same strongly anchored link function has substantially divergent observed identification.
+
+The result is always `REVIEW`, never automatic `FAIL`. The same URL is strong evidence of repeated link purpose but does not prove that scripts, page context or application state make the complete functionality identical, and lexical comparison cannot determine every synonym or semantically equivalent label. The Site Audit collector also uses a bounded DOM naming approximation for this cross-page comparison rather than claiming to reproduce the full AccName algorithm. Buttons, custom controls, framework-only actions and functions without a stable exact link destination are intentionally outside this first subset. These boundaries prefer false negatives over noisy WCAG findings.
+
 ## Identify Input Purpose autocomplete review scope
 
 `FT-REVIEW-014` provides conservative static review evidence for WCAG 1.3.5 Identify Input Purpose and the observable HTML `autocomplete` subset described by ACT `73f2c2`.
@@ -343,6 +353,7 @@ The rule is full-page only. Component-scoped analysis does not execute `FT-REVIE
 | FT-REVIEW-012 Missing or broken keyboard bypass candidate before repeated navigation | REVIEW/PASS | WCAG 2.4.1 A |
 | FT-REVIEW-013 Exact repeated navigation destination set changes relative order across sampled pages | REVIEW | WCAG 3.2.3 AA |
 | FT-REVIEW-014 Standard autocomplete purpose token sequence may be malformed | REVIEW/PASS | WCAG 1.3.5 AA · ACT 73f2c2 |
+| FT-REVIEW-015 Exact unique link function may have substantially inconsistent identification across sampled pages | REVIEW | WCAG 3.2.4 AA |
 
 ## Runtime rules
 
@@ -379,6 +390,7 @@ The rule is full-page only. Component-scoped analysis does not execute `FT-REVIE
 - `FT-REVIEW-012` validates only the observable keyboard fragment-bypass pattern around substantial pre-main navigation; other WCAG 2.4.1 bypass mechanisms and repeated-block applicability still require manual context.
 - `FT-REVIEW-013` requires an exact repeated destination-set match and ignores partial/ambiguous navigation matches; it therefore favors false negatives, and Site Audit cannot prove whether an observed order change was initiated by the user.
 - `FT-REVIEW-014` validates only explicit standard-like `autocomplete` token sequences. It does not infer missing input-purpose metadata, judge unknown-only custom taxonomies, or prove that a field collects information about the user; those boundaries intentionally favor false negatives over false WCAG failures.
+- `FT-REVIEW-015` currently compares only unique rendered native HTTP(S) links with the same exact destination, same declared primary page language and same bounded observed naming source. It deliberately ignores duplicated destinations, buttons/custom controls, unknown-language pages and semantically uncertain label variations, so it favors false negatives over noisy 3.2.4 reviews.
 - Structural HTML checks operate on the parsed live DOM. Browser parser repair can normalize invalid source before FocusTrace runs; the tool does not infer source-level errors that are no longer observable. See [`STRUCTURAL_HTML.md`](STRUCTURAL_HTML.md).
 - Advanced ARIA checks operate on the live accessibility relationships FocusTrace can derive from DOM semantics and `aria-owns`; they do not claim to reproduce the browser accessibility tree or a screen reader's spoken output. See [`ARIA_VALIDATION.md`](ARIA_VALIDATION.md).
 - Automated static checks are intentionally narrower than the corresponding full WCAG success criteria.
