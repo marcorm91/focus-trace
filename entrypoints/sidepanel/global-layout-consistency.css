@@ -40,7 +40,6 @@
 .report-priority-list li,
 .report-finding,
 .report-section,
-.heading-tree-row,
 .heading-selection,
 .settings-card,
 .about-card,
@@ -75,5 +74,13 @@
 .instructions-card > summary,
 .instructions-card-body {
   background: var(--ft-surface, #fff);
+  background-image: none;
+}
+
+/* A heading row is only a layout wrapper. Its own surface would paint the
+   indentation gutter as a white strip; the badge and heading button already
+   provide the intended visible surfaces. */
+.heading-tree .heading-tree-row {
+  background: transparent;
   background-image: none;
 }

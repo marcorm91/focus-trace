@@ -235,7 +235,7 @@ La causalidad explica la cadena registrada; no convierte por sí misma una situa
 
 | Capacidad | Comportamiento |
 | --- | --- |
-| **Encabezados** | Reutiliza el análisis actual para mostrar árbol H1-H6, jerarquía y localización visual. |
+| **Encabezados** | Reutiliza el análisis actual para mostrar el árbol H1-H6 abierto por defecto, con jerarquía, controles por rama y localización visual. |
 | **Semántica** | Busca oportunidades concretas de HTML nativo e interacciones genéricas que necesitan revisión. |
 | **Métricas** | Cuenta regiones semánticas, listas, formularios, botones, enlaces, campos, tablas e imágenes. |
 | **Localización** | Un encabezado o conjunto de una métrica puede localizarse y resaltarse en la página. |

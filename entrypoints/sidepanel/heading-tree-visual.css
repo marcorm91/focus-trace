@@ -1,5 +1,5 @@
 /* Compact visual hierarchy for the DOM-order heading outline. Branches are
-   collapsed by default and can be expanded independently without truncating
+   expanded by default and can be collapsed independently without truncating
    heading text or pushing deep H5/H6 content outside the sidepanel. */
 .heading-outline-panel,
 .heading-overlay-toggle,

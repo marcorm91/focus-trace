@@ -19,7 +19,7 @@ async function openSidepanel(context: BrowserContext, extensionWorker: Worker) {
   return panel;
 }
 
-test('heading branches start collapsed and can be expanded independently', async ({ context, extensionWorker }) => {
+test('heading branches start expanded and can be collapsed independently', async ({ context, extensionWorker }) => {
   const panel = await openSidepanel(context, extensionWorker);
 
   await panel.evaluate(async () => {
@@ -61,32 +61,19 @@ test('heading branches start collapsed and can be expanded independently', async
   const secondDetail = panel.getByRole('button', { name: 'Second section detail', exact: true });
 
   await expect(panel.getByRole('button', { name: 'Main heading', exact: true })).toBeVisible();
-  await expect(firstSection).toHaveCount(0);
-  await expect(secondSection).toHaveCount(0);
-  await expect(firstDetail).toHaveCount(0);
-  await expect(secondDetail).toHaveCount(0);
-
-  const mainExpand = panel.getByRole('button', { name: /Expand heading branch: Main heading|Expandir rama de encabezado: Main heading/ });
-  await expect(mainExpand).toHaveAttribute('aria-expanded', 'false');
-  await mainExpand.click();
-
   await expect(firstSection).toBeVisible();
   await expect(secondSection).toBeVisible();
-  await expect(firstDetail).toHaveCount(0);
-  await expect(secondDetail).toHaveCount(0);
-
-  const firstExpand = panel.getByRole('button', { name: /Expand heading branch: First section|Expandir rama de encabezado: First section/ });
-  await expect(firstExpand).toHaveAttribute('aria-expanded', 'false');
-  await firstExpand.click();
   await expect(firstDetail).toBeVisible();
-  await expect(secondDetail).toHaveCount(0);
-
-  await panel.getByRole('button', { name: /Expand heading branch: Second section|Expandir rama de encabezado: Second section/ }).click();
   await expect(secondDetail).toBeVisible();
+  await expect(panel.locator('.heading-tree-row').first()).toHaveCSS('background-color', 'rgba(0, 0, 0, 0)');
+  await expect(panel.getByRole('button', { name: /Collapse heading branch: Main heading|Contraer rama de encabezado: Main heading/ })).toHaveAttribute('aria-expanded', 'true');
 
   await panel.getByRole('button', { name: /Collapse heading branch: First section|Contraer rama de encabezado: First section/ }).click();
   await expect(firstDetail).toHaveCount(0);
   await expect(secondDetail).toBeVisible();
+
+  await panel.getByRole('button', { name: /Expand heading branch: First section|Expandir rama de encabezado: First section/ }).click();
+  await expect(firstDetail).toBeVisible();
 
   await panel.getByRole('button', { name: /Collapse all|Contraer todo/ }).click();
   await expect(firstSection).toHaveCount(0);
@@ -122,12 +109,14 @@ test('six-level heading outline stays responsive across repeated expansion at si
   });
   await panel.getByRole('button', { name: /Structure|Estructura/ }).click();
   const tree = panel.getByRole('tree');
-  await expect(tree.getByRole('treeitem')).toHaveCount(1);
+  await expect(tree.getByRole('treeitem')).toHaveCount(6);
 
   for (const width of [320, 600]) {
     await panel.setViewportSize({ width, height: 900 });
     // Exercise the actual browser layout, not only React's DOM updates.
     for (let cycle = 0; cycle < 10; cycle++) {
+      await panel.getByRole('button', { name: /Collapse all|Contraer todo/ }).click();
+      await expect(tree.getByRole('treeitem')).toHaveCount(1);
       await panel.getByRole('button', { name: /Expand all|Expandir todo/ }).click();
       await expect(tree.getByRole('treeitem')).toHaveCount(6);
       const rows = await tree.locator('.heading-tree-row').evaluateAll((elements) =>
@@ -137,8 +126,6 @@ test('six-level heading outline stays responsive across repeated expansion at si
         }),
       );
       expect(rows.every((row) => row.height > 0 && row.left >= 0 && row.right <= width)).toBe(true);
-      await panel.getByRole('button', { name: /Collapse all|Contraer todo/ }).click();
-      await expect(tree.getByRole('treeitem')).toHaveCount(1);
     }
   }
   await expect(panel.getByRole('alert')).toHaveCount(0);

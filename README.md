@@ -235,7 +235,7 @@ Causality explains the recorded chain; it does not by itself promote a contextua
 
 | Capability | Behavior |
 | --- | --- |
-| **Headings** | Reuses the current analysis to show the H1-H6 outline, hierarchy and page location. |
+| **Headings** | Reuses the current analysis to show the H1-H6 outline expanded by default, with hierarchy, branch controls and page location. |
 | **Semantics** | Finds concrete native-HTML opportunities and generic interactions that need review. |
 | **Metrics** | Counts semantic regions, lists, forms, buttons, links, controls, tables and images. |
 | **Location** | A heading or metric group can be located and highlighted on the page. |

@@ -78,10 +78,15 @@ test('deep heading expansion keeps browser resources bounded and releases collap
   const panel = await openSidepanel(context, extensionWorker);
   await saveDeepHeadingScan(panel);
   await panel.getByRole('button', { name: /Structure|Estructura/ }).click();
-  await expect(panel.getByRole('tree').getByRole('treeitem')).toHaveCount(1);
+  await expect(panel.getByRole('tree').getByRole('treeitem')).toHaveCount(6);
 
   const cdp = await context.newCDPSession(panel);
   await cdp.send('HeapProfiler.enable');
+  const initiallyExpanded = await retainedResources(cdp);
+  expect(initiallyExpanded.embedderHeapUsedSize).toBeLessThan(MAX_HEADING_TREE_EMBEDDER_HEAP);
+
+  await panel.getByRole('button', { name: 'Collapse all' }).click();
+  await expect(panel.getByRole('tree').getByRole('treeitem')).toHaveCount(1);
   const baseline = await retainedResources(cdp);
 
   for (let level = 1; level < 6; level++) {

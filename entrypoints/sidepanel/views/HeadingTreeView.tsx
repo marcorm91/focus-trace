@@ -151,7 +151,7 @@ export function HeadingTreeView({
   const headingForest = useMemo(() => buildHeadingForest(headings), [headings]);
   const collapsibleIds = useMemo(() => branchIds(headingForest), [headingForest]);
   const [selectedId, setSelectedId] = useState<string>();
-  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set(collapsibleIds));
+  const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set());
   const [overlayVisible, setOverlayVisible] = useState(false);
   const [overlayResult, setOverlayResult] = useState<HeadingOverlayResult>();
   const [overlayError, setOverlayError] = useState<string>();
@@ -163,7 +163,7 @@ export function HeadingTreeView({
   }, [headings]);
 
   useEffect(() => {
-    setCollapsedIds(new Set(collapsibleIds));
+    setCollapsedIds(new Set());
   }, [collapsibleIds, scan?.scannedAt]);
 
   useEffect(() => () => {

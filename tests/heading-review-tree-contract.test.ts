@@ -28,12 +28,14 @@ describe('heading review and tree UX', () => {
     expect(locationRule).toContain('white-space: normal;');
   });
 
-  it('builds independent heading branches collapsed by default and exposes global controls', () => {
+  it('builds independent heading branches expanded by default and exposes global controls', () => {
     const view = source('entrypoints/sidepanel/views/HeadingTreeView.tsx');
     const css = source('entrypoints/sidepanel/heading-tree-visual.css');
+    const layoutCss = source('entrypoints/sidepanel/global-layout-consistency.css');
 
     expect(view).toContain('function buildHeadingForest');
-    expect(view).toContain('const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set(collapsibleIds))');
+    expect(view).toContain('const [collapsedIds, setCollapsedIds] = useState<Set<string>>(() => new Set())');
+    expect(view).toContain('setCollapsedIds(new Set())');
     expect(view).toContain('setCollapsedIds(new Set(collapsibleIds))');
     expect(view).toContain('aria-expanded={hasChildren ? expanded : undefined}');
     expect(view).toContain('className="heading-branch-toggle"');
@@ -46,6 +48,8 @@ describe('heading review and tree UX', () => {
     expect(css).toContain('.heading-tree-children');
     expect(css).toContain('.heading-branch-toggle');
     expect(css).not.toContain('text-overflow: ellipsis');
+    expect(layoutCss).toContain('.heading-tree .heading-tree-row');
+    expect(layoutCss).toContain('background: transparent;');
   });
 
   it('indents by real tree depth instead of the H1-H6 rank', () => {
