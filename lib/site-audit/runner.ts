@@ -170,13 +170,22 @@ export function collectSitePageStructureInPage(): SitePageStructure {
     }
 
     const labelledBy = candidate.getAttribute('aria-labelledby')?.trim();
-    const labelledByText = labelledBy
-      ? labelledBy.split(/\s+/).map((id) => document.getElementById(id)?.textContent ?? '').join(' ')
+    const labelledByIds = labelledBy ? labelledBy.split(/\s+/).filter(Boolean) : [];
+    const labelledByElements = labelledByIds.map((id) => document.getElementById(id));
+    if (labelledByIds.length > 0 && (
+      labelledByElements.some((element) => !element)
+      || labelledByElements.some((element) => element?.querySelector('img, svg, input, object, canvas'))
+    )) continue;
+    const labelledByText = labelledByIds.length > 0
+      ? labelledByElements.map((element) => element?.textContent ?? '').join(' ')
       : '';
     const ariaLabel = candidate.getAttribute('aria-label')?.trim() ?? '';
     const visibleText = candidate.textContent?.replace(/\s+/g, ' ').trim() ?? '';
     const images = [...candidate.querySelectorAll('img[alt]')]
       .filter((image) => !image.closest('[aria-hidden="true"], [hidden], [inert]'));
+    const allImages = [...candidate.querySelectorAll('img')]
+      .filter((image) => !image.closest('[aria-hidden="true"], [hidden], [inert]'));
+    const hasOtherRichNameDescendant = Boolean(candidate.querySelector('svg, input, object, canvas'));
     const imageAlt = images.length === 1 ? images[0]?.getAttribute('alt')?.trim() ?? '' : '';
     const title = candidate.getAttribute('title')?.trim() ?? '';
 
@@ -188,15 +197,19 @@ export function collectSitePageStructureInPage(): SitePageStructure {
     } else if (ariaLabel) {
       accessibleName = ariaLabel;
       source = 'aria-label';
-    } else if (visibleText) {
+    } else if (visibleText && allImages.length === 0 && !hasOtherRichNameDescendant) {
       accessibleName = visibleText;
       source = 'text';
-    } else if (imageAlt) {
+    } else if (!visibleText && allImages.length === 1 && images.length === 1 && !hasOtherRichNameDescendant && imageAlt) {
       accessibleName = imageAlt;
       source = 'image-alt';
-    } else if (title) {
+    } else if (!visibleText && allImages.length === 0 && !hasOtherRichNameDescendant && title) {
       accessibleName = title;
       source = 'title';
+    } else {
+      // Mixed text/non-text alternatives can produce a compound accessible
+      // name. Do not approximate that name for cross-page consistency review.
+      continue;
     }
     accessibleName = accessibleName.replace(/\s+/g, ' ').trim().slice(0, 160);
     if (!source || !accessibleName) continue;
