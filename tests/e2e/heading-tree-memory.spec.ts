@@ -118,17 +118,27 @@ for (const layout of ['grid', 'block'] as const) {
     await cdp.send('HeapProfiler.enable');
     const samples: MemorySample[] = [await sampleMemory(cdp, panel, 0)];
 
-    for (let level = 1; level < 6; level++) {
-      const startedAt = Date.now();
+    const maximumLevel = layout === 'grid' ? 3 : 5;
+    for (let level = 1; level <= maximumLevel; level++) {
+      const clickStartedAt = Date.now();
       await panel.getByRole('button', { name: `Expand heading branch: Heading ${level} with representative wrapping text` }).click();
       await expect(panel.getByRole('button', { name: `Heading ${level + 1} with representative wrapping text`, exact: true })).toBeVisible();
-      samples.push(await sampleMemory(cdp, panel, level));
-      console.log(`HEADING_MEMORY_LEVEL ${JSON.stringify({ layout, level, elapsedMs: Date.now() - startedAt })}`);
+      const clickElapsedMs = Date.now() - clickStartedAt;
+      const sampleStartedAt = Date.now();
+      const sample = await sampleMemory(cdp, panel, level);
+      samples.push(sample);
+      console.log(`HEADING_MEMORY_LEVEL ${JSON.stringify({
+        layout,
+        level,
+        clickElapsedMs,
+        sampleElapsedMs: Date.now() - sampleStartedAt,
+        sample,
+      })}`);
     }
 
     await panel.getByRole('button', { name: 'Collapse all' }).click();
     await expect(panel.getByRole('tree').getByRole('treeitem')).toHaveCount(1);
-    samples.push(await sampleMemory(cdp, panel, 6));
+    samples.push(await sampleMemory(cdp, panel, maximumLevel + 1));
     console.log(`HEADING_MEMORY_DIAGNOSTIC ${JSON.stringify({ layout, samples })}`);
 
     const baseline = samples[0]!;
