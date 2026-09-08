@@ -1,6 +1,6 @@
 # FocusTrace release checklist
 
-Current release candidate: **0.2.5**.
+Current release candidate: **0.2.6**.
 
 Use this checklist before publishing a release build or submitting an updated package to a browser store. Keep the candidate version above aligned with `package.json`, `package-lock.json`, the browser manifests and the release contract test.
 
@@ -147,6 +147,11 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 - Test a large DOM and confirm safety limits produce a limited-snapshot notice instead of continuous processing or an unresponsive panel.
 - Open **Report** after full-page analysis and confirm section 03 is **Document structure / Estructura del documento**, includes compact accessibility-oriented metrics and only headings that require review, and does not duplicate the complete heading tree.
 - Confirm the report accordion cards share the same soft border treatment and the Document Structure header/metrics/separators have readable spacing without content sitting directly against divider lines.
+- Open representative FAIL, REVIEW and WARNING findings and confirm the **Affected element inspector** identifies the target with tag/role/readable label before the technical selector.
+- Expand **View HTML / Ver HTML** and confirm only bounded contextual markup is shown; verify the selector remains secondary and copyable.
+- For a relationship finding such as `FT-WARN-018`, confirm the affected child and deterministic related-container context are both understandable without relying on `nth-of-type()` alone.
+- Use **Review on page / Revisar en la página** and confirm the page overlay displays the rule id plus occurrence (`n of N` / `n de N`); moving between occurrences must move the highlight to the newly selected target.
+- Confirm severity attention lines keep readable spacing from badges/titles in Analyze, Report, Structure review cards and heading hierarchy signals.
 - Export PDF and TXT from the same live session and confirm both reuse the available compact Structure evidence without triggering another DOM scan or exporting a full DOM tree.
 - Run a component-scoped analysis and confirm the page-global Structure snapshot is cleared/not mixed into the component-only static report.
 
@@ -278,18 +283,18 @@ Before changing visibility:
 
 ## Release
 
-For the current candidate, the release version is **0.2.5** and the intended tag is **`v0.2.5`**.
+For the current candidate, the release version is **0.2.6** and the intended tag is **`v0.2.6`**.
 
-- Confirm `package.json`, `package-lock.json` and all browser manifests report `0.2.5`.
-- Confirm `tests/release-contract.test.ts` targets `v0.2.5` and passes.
-- Confirm `docs/RELEASE_NOTES_0.2.5.md` and `CHANGELOG.md` match the shipped behavior and limitations.
-- Confirm the version shown in Settings comes from the installed manifest and displays `0.2.5` in the packaged candidate.
+- Confirm `package.json`, `package-lock.json` and all browser manifests report `0.2.6`.
+- Confirm `tests/release-contract.test.ts` targets `v0.2.6` and passes.
+- Confirm `docs/RELEASE_NOTES_0.2.6.md` and `CHANGELOG.md` match the shipped behavior and limitations.
+- Confirm the version shown in Settings comes from the installed manifest and displays `0.2.6` in the packaged candidate.
 - Confirm the release commit is on `main` and CI is green on that exact commit.
 - Build the production Chrome, Edge and Firefox MV3 artifacts from that commit.
 - Smoke-test the unpacked production build in supported Chromium browsers.
 - Complete the Firefox experimental smoke checklist before describing Firefox as officially supported.
-- Tag the exact approved commit as `v0.2.5`.
+- Tag the exact approved commit as `v0.2.6`.
 - Review the generated ZIPs before attaching/uploading them.
 - Only then publish/distribute the release artifacts or submit the updated packages to browser stores.
 
-After publishing 0.2.5, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.
+After publishing 0.2.6, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.
