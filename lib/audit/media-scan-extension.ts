@@ -4,6 +4,7 @@ import {
 } from '../../shared/media-rules';
 import type { ScanIssue, ScanResult } from '../../shared/types';
 import { selectorFor } from './dom';
+import { appendFormErrorReviews } from './form-error-scan-extension';
 import {
   evaluatePrerecordedAudioAlternatives,
   evaluatePrerecordedCaptions,
@@ -85,4 +86,6 @@ export function appendMediaAccessibilityReviews(result: ScanResult, root: ScanRo
   ];
   result.passes += captionPasses;
   result.rulesRun += 1;
+
+  appendFormErrorReviews(result, root);
 }
