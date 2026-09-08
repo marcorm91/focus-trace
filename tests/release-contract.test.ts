@@ -53,8 +53,8 @@ describe('v0.2.6 release contract', () => {
   });
 
   it('ships release documentation for the exact package version', () => {
-    const releaseNotesPath = resolve(process.cwd(), `docs/RELEASE_NOTES_${packageJson.version}.md`);
-    const changelogPath = resolve(process.cwd(), 'CHANGELOG.md');
+    const releaseNotesPath = resolve(process.cwd(), `docs/changelog/RELEASE_NOTES_${packageJson.version}.md`);
+    const changelogPath = resolve(process.cwd(), 'docs/changelog/CHANGELOG.md');
     const checklistPath = resolve(process.cwd(), 'docs/RELEASE_CHECKLIST.md');
     const storeSubmissionPath = resolve(process.cwd(), 'docs/STORE_SUBMISSION.md');
 
