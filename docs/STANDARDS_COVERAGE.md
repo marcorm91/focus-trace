@@ -57,7 +57,7 @@ The same boundary is carried into the reporting workflow rather than being limit
 
 - the session report exposes the existing WCAG/ACT references for each rule and derives the related EN 301 549 clause beside WCAG A/AA references;
 - TXT exports include the shared rule legend with the WCAG → EN 301 549 clause-numbering rule and the explicit non-conformance boundary;
-- printable PDF reports use that same shared legend before the executive summary, so exported evidence retains the same interpretation rules as the live product.
+- printable PDF reports use that same shared legend before the executive summary, so exported evidence retains the same interpretation rules as the live product. Individual PDF findings continue to cite their WCAG/ACT sources, while the legend provides the EN clause mapping rule for A/AA criteria.
 
 These report surfaces describe traceability and evidence scope. They do not convert a clean report into a WCAG or EN 301 549 conformance statement.
 
