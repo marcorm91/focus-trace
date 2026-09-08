@@ -37,6 +37,7 @@
 @import url('./components/focus-memory.css') layer(components);
 @import url('./components/target-inspector.css') layer(components);
 @import url('./components/report-scan-compact.css') layer(components);
+@import url('./components/standards-coverage.css') layer(components);
 
 @import url('./control-states.css') layer(policy);
 @import url('./ui-consistency.css') layer(policy);

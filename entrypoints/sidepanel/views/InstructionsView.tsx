@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { focusMemorySettingsState } from '../../../lib/focus-memory/storage';
 import { tr, type AppLanguage } from '../../../shared/i18n';
 import { ruleLegendCopy } from '../../../shared/rule-legend';
+import { StandardsCoverageMatrix } from '../components/StandardsCoverageMatrix';
 import { closeFocusedInstructionsView } from '../settings-focus';
 
 function InstructionCard({
@@ -109,6 +110,10 @@ export function InstructionsView({ language }: { language: AppLanguage }) {
               <strong>{note.title}</strong>{' '}{note.description}
             </p>
           ))}
+        </InstructionCard>
+
+        <InstructionCard title={tr(language, 'Standards coverage', 'Cobertura de estándares')}>
+          <StandardsCoverageMatrix language={language} />
         </InstructionCard>
 
         <InstructionCard title={tr(language, 'Analyze a component', 'Analizar un componente')}>

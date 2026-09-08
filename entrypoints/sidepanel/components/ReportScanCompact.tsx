@@ -3,6 +3,7 @@ import { scanTargetLocator } from '../../../lib/runtime/scan-target-overlay';
 import { useRovingTabs } from '../../../lib/ui/roving-tabs';
 import { localizedScanIssue, localizedSeverity, tr, type AppLanguage } from '../../../shared/i18n';
 import type { FindingOutcome, ScanIssue, ScanResult } from '../../../shared/types';
+import { ReferenceList } from './Common';
 import { TargetInspector } from './TargetInspector';
 
 type ReportFilter = FindingOutcome;
@@ -96,6 +97,9 @@ function ReportRuleAccordion({
         )}
 
         <p className="report-rule-description">{copy.description}</p>
+        {first.references.length > 0 && (
+          <ReferenceList references={first.references} language={language} />
+        )}
         {copy.evidence && <p className="report-rule-evidence">{copy.evidence}</p>}
 
         {target && (

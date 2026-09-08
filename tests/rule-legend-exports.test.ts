@@ -43,7 +43,17 @@ describe('rule legend exports', () => {
 
     expect(english.items.map((item) => item.pattern)).toEqual(expected);
     expect(spanish.items.map((item) => item.pattern)).toEqual(expected);
-    expect(english.notes.map((note) => note.id)).toEqual(['sequence', 'result-severity', 'external', 'occurrence']);
+    expect(english.notes.map((note) => note.id)).toEqual([
+      'sequence',
+      'result-severity',
+      'external',
+      'standards-coverage',
+      'occurrence',
+    ]);
+    expect(english.notes.find((note) => note.id === 'standards-coverage')?.description)
+      .toContain('EN 301 549 V4.1.1 (2026-09)');
+    expect(spanish.notes.find((note) => note.id === 'standards-coverage')?.description)
+      .toContain('§9.x.y.z');
   });
 
   it('places the legend before the executive summary in TXT reports', () => {
@@ -54,6 +64,8 @@ describe('rule legend exports', () => {
     expect(legendIndex).toBeGreaterThan(-1);
     expect(summaryIndex).toBeGreaterThan(legendIndex);
     expect(report).toContain('FT-RUNTIME-ARIA-###');
+    expect(report).toContain('WCAG and EN 301 549 traceability.');
+    expect(report).toContain('EN 301 549 V4.1.1 (2026-09)');
     expect(report).toContain('Finding vs occurrence.');
   });
 
@@ -72,6 +84,7 @@ describe('rule legend exports', () => {
     expect(legendIndex).toBeGreaterThan(-1);
     expect(summaryIndex).toBeGreaterThan(legendIndex);
     expect(markdown).toContain('`FT-APG-###`');
+    expect(markdown).toContain('EN 301 549 V4.1.1 (2026-09)');
   });
 
   it('uses the shared legend in Instructions and the printable PDF report', () => {
