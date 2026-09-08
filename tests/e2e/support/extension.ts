@@ -80,7 +80,6 @@ export async function startRecording(worker: Worker, page: Page): Promise<number
 
     await ensureContentScript('FOCUSTRACE_PING', '/content-scripts/runtime.js');
     await ensureContentScript('FOCUSTRACE_FOCUS_VISIBLE_PING', '/content-scripts/focus-visible.js');
-    await ensureContentScript('FOCUSTRACE_KEYBOARD_POINTER_PING', '/content-scripts/keyboard-pointer.js');
 
     await chromeApi.tabs.sendMessage(id, {
       type: 'FOCUSTRACE_SET_RECORDING',
