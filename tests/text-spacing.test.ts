@@ -46,7 +46,7 @@ afterEach(() => {
       value: originalGetClientRects,
     });
   } else {
-    delete (Range.prototype as Range & { getClientRects?: () => DOMRectList }).getClientRects;
+    Reflect.deleteProperty(Range.prototype, 'getClientRects');
   }
 });
 
