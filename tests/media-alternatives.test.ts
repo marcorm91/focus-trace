@@ -115,6 +115,7 @@ describe('WCAG prerecorded media review', () => {
     const video = document.querySelector<HTMLVideoElement>('#silent');
     expect(video).not.toBeNull();
     Object.defineProperty(video, 'audioTracks', { configurable: true, value: { length: 0 } });
+    Object.defineProperty(video, 'readyState', { configurable: true, value: video.HAVE_METADATA });
 
     expect(evaluatePrerecordedCaptions(document)).toEqual([]);
   });
