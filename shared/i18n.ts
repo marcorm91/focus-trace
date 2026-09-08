@@ -38,6 +38,11 @@ export function localizedReferenceLabel(reference: StandardReference, language: 
     if (reference.label === 'Video element auditory content has captions') {
       return 'El contenido auditivo del elemento de vídeo tiene subtítulos';
     }
+    if (reference.label === 'Error Identification') return 'Identificación de errores';
+    if (reference.label === 'Error message describes invalid form field value') {
+      return 'El mensaje de error describe el valor no válido del campo de formulario';
+    }
+    if (reference.label === 'Error Suggestion') return 'Sugerencia ante errores';
   }
   return baseLocalizedReferenceLabel(reference, language);
 }
@@ -139,6 +144,14 @@ const EXTRA_COPY_ES: Record<string, { title: string; description: string }> = {
     title: 'El vídeo pregrabado puede carecer de subtítulos observables',
     description: 'FocusTrace ha observado vídeo probablemente pregrabado sin una pista nativa de subtítulos observable. Revisa si contiene información auditiva y si los subtítulos se proporcionan mediante un reproductor personalizado o están incrustados en la imagen antes de considerarlo un incumplimiento WCAG.',
   },
+  'FT-REVIEW-019': {
+    title: 'El campo inválido observado puede carecer de una descripción textual de error asociada',
+    description: 'FocusTrace ha observado un estado de campo inválido sin una descripción textual de error que pueda resolver mediante aria-errormessage o aria-describedby. Revisa cualquier mensaje visual o propio de la aplicación antes de considerarlo un incumplimiento WCAG.',
+  },
+  'FT-REVIEW-020': {
+    title: 'El error de entrada observado necesita revisar la sugerencia de corrección',
+    description: 'FocusTrace ha observado un campo inválido con texto de error asociado y metadatos de restricción relevantes para corregirlo. Revisa si el mensaje ofrece una sugerencia útil cuando se conoce, teniendo en cuenta la excepción de seguridad o propósito de WCAG.',
+  },
   'FT-RUNTIME-006': {
     title: 'La interacción de arrastre requiere revisar una alternativa de puntero sencillo',
     description: 'Trace observó un arrastre real. Revisa si la misma funcionalidad puede realizarse con un puntero sencillo sin movimiento de arrastre, teniendo en cuenta las excepciones de WCAG 2.5.7.',
@@ -170,6 +183,8 @@ const EXTRA_EVIDENCE_ES: Record<string, string> = {
   'FT-REVIEW-016': 'Una declaración inline !important limita el espaciado de texto por debajo del valor evaluado para WCAG 1.4.12.',
   'FT-REVIEW-017': 'El audio probablemente pregrabado señalado no expone una alternativa equivalente candidata que FocusTrace pueda observar en su marcado local. La equivalencia del contenido sigue requiriendo revisión manual.',
   'FT-REVIEW-018': 'El vídeo probablemente pregrabado señalado no expone una pista nativa de subtítulos. Revisa subtítulos incrustados, reproductores personalizados y si el vídeo contiene realmente información auditiva.',
+  'FT-REVIEW-019': 'El campo señalado expone un estado inválido, pero FocusTrace no ha resuelto texto de error no vacío mediante aria-errormessage o aria-describedby.',
+  'FT-REVIEW-020': 'El campo señalado está inválido, tiene texto de error asociado y expone metadatos de restricción relevantes para la corrección; la suficiencia de la sugerencia requiere revisión humana.',
   'FT-RUNTIME-006': 'Se observó un movimiento de arrastre real y debe revisarse si existe una alternativa equivalente sin arrastrar.',
 };
 
