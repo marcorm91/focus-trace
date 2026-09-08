@@ -4,6 +4,7 @@ import htmlCatalog from '../generated/html-obsolete-catalog.json';
 import sourcesRegistry from '../generated/standards-sources.json';
 import wcagCatalog from '../generated/wcag-catalog.json';
 import { ADVANCED_ARIA_RULES } from '../shared/aria-authoring-rules';
+import { FOCUS_VISIBLE_RULE } from '../shared/focus-visible-rules';
 import { FORM_PURPOSE_RULES } from '../shared/form-purpose-rules';
 import {
   DUPLICATE_ID_RULE,
@@ -41,6 +42,7 @@ const ALL_RULES: RuleDefinition[] = [
   ...FORM_PURPOSE_RULES,
   LANGUAGE_PARTS_RULE,
   TEXT_SPACING_RULE,
+  FOCUS_VISIBLE_RULE,
   ...HTML_RULES,
   ...ADVANCED_ARIA_RULES,
 ];
@@ -138,6 +140,12 @@ describe('standards registry coverage', () => {
       implemented: true,
     });
     expect(wcagCoverageForCriterion('2.4.3')?.coverage).toEqual(expect.arrayContaining(['review', 'runtime']));
+    expect(wcagCoverageForCriterion('2.4.7')).toMatchObject({
+      level: 'AA',
+      coverage: ['runtime'],
+      ruleIds: ['FT-RUNTIME-010'],
+      implemented: true,
+    });
     expect(wcagCoverageForCriterion('2.4.11')).toMatchObject({
       level: 'AA',
       coverage: ['runtime'],
