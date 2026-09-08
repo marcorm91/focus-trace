@@ -2,9 +2,7 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { browser } from '#imports';
 import { armReportVisualEvidencePermissionRequest } from '../../lib/report/visual-evidence';
-import { requestActivePageAccess, type WebPageTab } from '../../lib/extension/page-access';
 import { normalizeRuntimeBreakpointSettings } from '../../lib/runtime/breakpoints';
-import { locateScanTargetInPage } from '../../lib/runtime/scan-target-overlay';
 import { SETTINGS_STORAGE_KEY } from '../../shared/i18n';
 import { RUNTIME_BREAKPOINT_SETTINGS_STORAGE_KEY } from '../../shared/runtime-breakpoint-preferences';
 import { mountSupportFooter } from '../../shared/support-footer';
@@ -45,27 +43,6 @@ browser.tabs.onActivated.addListener(({ tabId }) => {
   void syncBreakpointPreferencesToTab(tabId).catch(() => undefined);
 });
 
-async function locateCurrentOccurrence(
-  pagerButton: HTMLButtonElement,
-  pageAccess: Promise<WebPageTab | undefined>,
-) {
-  const tab = await pageAccess;
-  if (!tab) return;
-
-  // React updates the selected finding in the bubble phase. Read the selector on
-  // the next frame so the page highlight always follows the newly selected item.
-  await new Promise<void>((resolve) => window.requestAnimationFrame(() => resolve()));
-  const rule = pagerButton.closest('.scan-rule-group');
-  const selector = rule?.querySelector('.finding-location code')?.textContent?.trim();
-  if (!selector) return;
-
-  await browser.scripting.executeScript({
-    target: { tabId: tab.id },
-    func: locateScanTargetInPage,
-    args: [selector, { tone: 'inspect', label: 'FocusTrace', focusTarget: false }],
-  });
-}
-
 // Start permission-sensitive work synchronously from the original click.
 // Browser permission APIs can lose user-gesture eligibility after awaited work.
 document.addEventListener('click', (event) => {
@@ -85,12 +62,6 @@ document.addEventListener('click', (event) => {
 
   if (target.closest('.instructions-trigger')) {
     openFocusedInstructionsView();
-  }
-
-  const pagerButton = target.closest('.scan-occurrence-pager button') as HTMLButtonElement | null;
-  if (pagerButton && !pagerButton.disabled) {
-    const pageAccess = requestActivePageAccess().catch(() => undefined);
-    void locateCurrentOccurrence(pagerButton, pageAccess).catch(() => undefined);
   }
 }, { capture: true });
 
