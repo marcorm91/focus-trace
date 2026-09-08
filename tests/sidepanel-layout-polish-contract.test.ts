@@ -67,7 +67,9 @@ describe('sidepanel layout polish contract', () => {
     expect(css).toContain('.heading-tree-row.has-signal .heading-level');
     expect(css).toContain('background: var(--ft-danger-soft);');
     expect(css).toContain('color: var(--ft-danger);');
-    expect(css).toContain('box-shadow: inset 4px 0 0 var(--ft-danger);');
+    expect(css).toContain('border-left-width: 4px;');
+    expect(css).toContain('border-left-color: var(--ft-danger);');
+    expect(css).toContain('padding-left: 10px;');
     expect(css).toContain('font-size: 14px;');
     expect(css).not.toContain('!important');
   });
