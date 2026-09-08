@@ -121,6 +121,12 @@ export default function App() {
       const result = (await browser.tabs.sendMessage(tabId, {
         type: 'FOCUSTRACE_RUN_SCAN',
       } satisfies ExtensionMessage)) as ScanResult;
+      const structureResults = await browser.scripting.executeScript({
+        target: { tabId },
+        func: collectStructureEvidenceInPage,
+      }).catch(() => []);
+      const nextStructure = structureResults[0]?.result as StructureSnapshot | undefined;
+      setStructureSnapshot(nextStructure);
       const memoryEvidence = await collectFocusMemoryEvidence(tabId, result).catch(() => []);
       await saveScan(result, memoryEvidence);
       try {
@@ -162,6 +168,7 @@ export default function App() {
       });
       const picked = pickerResults[0]?.result as ComponentPickerResult | undefined;
       if (!picked || picked.cancelled || !picked.scope) return;
+      setStructureSnapshot(undefined);
 
       const result = (await browser.tabs.sendMessage(tabId, {
         type: 'FOCUSTRACE_RUN_SCAN',
