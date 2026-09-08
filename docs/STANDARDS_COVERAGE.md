@@ -51,6 +51,16 @@ WCAG Level AAA criteria are not presented as part of that Level AA clause 9 equi
 
 This mapping is technical standards traceability only. FocusTrace does not certify EN 301 549 compliance, does not claim that its tooling covers all of clause 9, and does not infer legal/harmonisation status from the existence of the published standard.
 
+## Report and export surfaces
+
+The same boundary is carried into the reporting workflow rather than being limited to the Instructions matrix:
+
+- the session report exposes the existing WCAG/ACT references for each rule and derives the related EN 301 549 clause beside WCAG A/AA references;
+- TXT exports include the shared rule legend with the WCAG → EN 301 549 clause-numbering rule and the explicit non-conformance boundary;
+- printable PDF reports use that same shared legend before the executive summary, so exported evidence retains the same interpretation rules as the live product.
+
+These report surfaces describe traceability and evidence scope. They do not convert a clean report into a WCAG or EN 301 549 conformance statement.
+
 ## Source of truth
 
 The executable model lives in `shared/wcag-coverage.ts` and is checked by `tests/standards-coverage.test.ts` and `tests/standards-coverage-ui-contract.test.ts`.
