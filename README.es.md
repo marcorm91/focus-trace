@@ -37,7 +37,7 @@ FocusTrace utiliza WCAG 2.2 como fuente de conformidad. Los criterios WCAG 2.2 t
 
 | Capacidad | Entrada / ámbito | Qué hace | Evidencia / salida |
 | --- | --- | --- | --- |
-| **Analizar página completa** | Documento activo | Ejecuta el motor local de reglas sobre la página actual. | FAIL, REVIEW, WARNING y PASS según cada regla. |
+| **Analizar página completa** | Documento activo | Ejecuta el motor local de reglas y prepara el snapshot limitado de Estructura de la página actual. | FAIL, REVIEW, WARNING y PASS, además de evidencia de Encabezados, Semántica y Métricas. |
 | **Analizar componente** | Subárbol DOM seleccionado visualmente | Ejecuta el mismo motor limitado al componente, conservando contexto global cuando una regla lo necesita. | Hallazgos limitados al ámbito seleccionado. |
 | **Inspeccionar hallazgo** | Resultado actual | Localiza y resalta el elemento objetivo cuando sigue presente en la página. | Selector, elemento y resaltado visual. |
 | **Nombre accesible** | Controles compatibles | Calcula el nombre accesible y conserva la fuente que ganó en la resolución. | Rol, nombre calculado, fuente y candidatos inspeccionados. |
@@ -46,7 +46,7 @@ FocusTrace utiliza WCAG 2.2 como fuente de conformidad. Los criterios WCAG 2.2 t
 | **Tamaño de objetivos de puntero** | Objetivos de puntero renderizados y observables | Mide la geometría del objetivo y la separación de WCAG 2.5.8, conservando las excepciones contextuales como REVIEW. | Tamaño en píxeles CSS, objetivo vecino y justificación de PASS/REVIEW. |
 | **Sugerencia de color** | Fallos deterministas de contraste | Propone un ajuste sRGB pequeño que alcance el ratio requerido cuando puede calcularse con seguridad. | HEX/RGB medido, propuesta y copia. |
 | **Cómo corregirlo** | Hallazgos con remediación disponible | Muestra estrategias concretas de corrección y una comprobación posterior. | Guía localizada ES/EN. |
-| **Estructura** | Página actual | Expone encabezados, semántica y métricas estructurales bajo demanda. | Árbol H1-H6, sugerencias y recuentos. |
+| **Estructura** | Análisis actual de página completa | Expone encabezados, revisión semántica y métricas estructurales preparadas con el análisis; Actualizar las recalcula tras cambios de la página. | Árbol H1-H6, sugerencias y recuentos. |
 | **Trace** | Interacción real | Registra teclado/puntero, foco, cambios no sensibles de controles, mutaciones relevantes, rutas SPA, diálogos, candidatos a mensajes de estado, widgets ARIA y evidencia de causalidad/cambios de contexto. | Eventos correlacionados por interacción; el seguimiento de cambios de contexto no conserva valores de controles. |
 | **Foco virtual** | Widgets con `aria-activedescendant` compatibles | Registra cambios válidos de foco virtual como evidencia informativa sin convertirlos en movimiento de foco DOM ni hallazgo. | Destino virtual disponible en Trace, Journey y Graph. |
 | **Focus Walk** | Página activa | Automatiza el recorrido secuencial de foco para generar evidencia de navegación. | Recorrido de destinos alcanzables. |
@@ -154,7 +154,7 @@ FocusTrace interpreta relaciones observables y `aria-owns`, no se limita a compa
 
 ### Reglas WCAG runtime
 
-Trace almacena evidencia compacta: selector, rol, nombre accesible, tag, cambios relevantes, transición de ruta, eventos de diálogo/foco y resumen de arrastre. No guarda snapshots DOM completos ni la trayectoria completa de coordenadas del puntero.
+Trace almacena evidencia compacta: selector, rol, nombre accesible, tag, cambios relevantes, transición de ruta, eventos de diálogo/foco y resumen de arrastre. No guarda snapshots DOM completos ni la trayectoria completa de coordenadas del puntero. Las capturas temporales y lossless usadas por `FT-RUNTIME-010` se comparan en memoria y no se conservan en Trace, Memory ni informes.
 
 | ID | Detecta / observa | Resultado | Referencia |
 | --- | --- | --- | --- |
@@ -167,12 +167,15 @@ Trace almacena evidencia compacta: selector, rol, nombre accesible, tag, cambios
 | `FT-RUNTIME-007` | Tras una activación real aparece un mensaje visible y breve con apariencia de estado, sin semántica live/status observable ni una relación activa `aria-errormessage`. | REVIEW | WCAG 4.1.3 |
 | `FT-RUNTIME-008` | Recibir el foco va seguido de un cambio de ruta, apertura de diálogo o movimiento programático de foco observado sin una activación independiente. | REVIEW | WCAG 3.2.1 |
 | `FT-RUNTIME-009` | Un evento `input`/`change` de confianza sobre un control de configuración va seguido de un cambio de ruta, apertura de diálogo o movimiento programático de foco observado. | REVIEW | WCAG 3.2.2 |
+| `FT-RUNTIME-010` | Tras una transición real con Tab/Shift+Tab, dos capturas estables sin foco y dos con foco no muestran ningún cambio de color de píxel en la región limitada alrededor del control enfocado. | REVIEW | WCAG 2.4.7 AA · ACT oj04fd |
 
 `FT-RUNTIME-002` vuelve a comprobar el elemento mientras mantiene el foco tras scroll, resize y mutaciones DOM relevantes. `FT-RUNTIME-006` requiere movimiento real del puntero por encima del umbral de jitter; un `dragstart` nativo por sí solo no se utiliza para emitir la revisión.
 
 `FT-RUNTIME-007` está correlacionada con la interacción real y usa una ventana breve de estabilización. Excluye diálogos, contenedores de estado de widgets ya modelados, mensajes que reciben foco o van seguidos de un cambio de foco/navegación/diálogo, y mensajes ya expuestos mediante `role="status"`, `role="alert"`, `role="log"`, semántica de progreso, `aria-live` activo o una relación `aria-errormessage` activa. `aria-busy` por sí solo no se considera exposición suficiente de un mensaje de estado. La clasificación de un mensaje como “estado” sigue dependiendo del significado, por lo que la regla permanece como **REVIEW** y no fabrica un FAIL WCAG automático.
 
 `FT-RUNTIME-008` y `FT-RUNTIME-009` usan una ventana acotada de correlación de 1,2 segundos. Las acciones independientes del usuario eliminan atribuciones antiguas, la activación explícita no se trata como fallo de On Focus y el movimiento secuencial normal del foco no se atribuye al control anterior. `FT-RUNTIME-009` registra la identidad del control y el tipo de evento `input`/`change` de confianza, no el valor del control. Ambas reglas permanecen como **REVIEW** porque el orden runtime no demuestra la causalidad del manejador para 3.2.1 ni permite establecer siempre si hubo aviso previo al usuario para 3.2.2.
+
+`FT-RUNTIME-010` no utiliza deliberadamente Focus Walk automático porque `element.focus()` programático no reproduce de forma fiable la modalidad de teclado de `:focus-visible`. Solo se ejecuta durante un Trace manual tras una transición de confianza con Tab/Shift+Tab, espera un segundo con el foco estable y exige pares de capturas PNG estables antes/después sin cambios de viewport. Cualquier cambio local de píxeles cuenta como evidencia de que esta comprobación limitada observó una diferencia visible; animación/inestabilidad, scroll, resize o captura no disponible vuelven la observación inconclusa y no generan revisión. Un recorte local estable y sin cambios permanece como **REVIEW**, nunca FAIL automático, porque ACT `oj04fd` puede permitir un indicador de foco situado en otra zona del viewport.
 
 ### Avisos ARIA runtime
 
@@ -257,7 +260,8 @@ La causalidad explica la cadena registrada; no convierte por sí misma una situa
 | **Semántica** | Busca oportunidades concretas de HTML nativo e interacciones genéricas que necesitan revisión. |
 | **Métricas** | Cuenta regiones semánticas, listas, formularios, botones, enlaces, campos, tablas e imágenes. |
 | **Localización** | Un encabezado o conjunto de una métrica puede localizarse y resaltarse en la página. |
-| **Bajo demanda** | Semántica y Métricas solo recorren el DOM tras **Analizar estructura** o **Actualizar**. |
+| **Análisis unificado de página** | **Analizar esta página** prepara Semántica y Métricas junto con el análisis normal de página completa; **Actualizar** recalcula el snapshot de Estructura después de cambios de la página. |
+| **Límite de componente** | Los análisis de componente no reutilizan un snapshot antiguo de Estructura de página completa como si fuera evidencia del componente. |
 | **Límite de seguridad** | El colector procesa como máximo 10.000 elementos por defecto. |
 | **Reutilización en informes** | PDF/TXT/informe reutilizan métricas y sugerencias existentes sin exportar el árbol DOM completo. |
 
@@ -343,7 +347,7 @@ Memory no almacena HTML de página, snapshots completos del DOM ni capturas de p
 | --- | --- |
 | **Informe de sesión** | Combina hallazgos estáticos y evidencia runtime de la sesión actual. |
 | **Historias de interacción** | Integra cadenas registradas por Trace, incluidas revisiones de mensajes de estado, warnings ARIA y reviews APG. |
-| **Estructura del documento** | Reutiliza métricas y sugerencias compactas si Estructura ya se generó. |
+| **Estructura del documento** | Reutiliza métricas y sugerencias compactas preparadas por el análisis de página completa o por una actualización posterior de Estructura. |
 | **Leyenda de reglas** | Explica familias `FT-WCAG-*`, `FT-WARN-*`, `FT-REVIEW-*`, `FT-RUNTIME-*`, `FT-RUNTIME-ARIA-*` y `FT-APG-*`. |
 | **PDF** | Exportación imprimible de página o auditoría multipágina. |
 | **TXT** | Exportación textual de la evidencia disponible. |
@@ -371,6 +375,7 @@ Memory no almacena HTML de página, snapshots completos del DOM ni capturas de p
 | Contraste | Composiciones visuales complejas permanecen como REVIEW cuando no pueden resolverse con certeza. |
 | Tamaño de objetivos | Usa geometría observable del DOM/layout y descubrimiento conservador de objetivos. Las excepciones por control equivalente, necesidad esencial o control del navegador, listeners de puntero exclusivos de frameworks y áreas de impacto no rectangulares complejas pueden seguir requiriendo revisión manual. |
 | Espaciado de texto | Solo se comprueban `letter-spacing`, `word-spacing` y `line-height` con salto automático bloqueados mediante `!important` inline contra los tres umbrales ACT actuales. La separación entre párrafos, los mecanismos propios de la página, la aplicabilidad por idioma/sistema de escritura y el juicio conjunto de pérdida de contenido/funcionalidad siguen siendo manuales. |
+| Foco visible | La cobertura runtime exige una transición real y de confianza con Tab/Shift+Tab, foco estable y capturas estables de la pestaña activa. El detector compara solo una región local limitada, por lo que píxeles sin cambios permanecen como REVIEW y no demuestran que no exista un indicador en otra zona del viewport. Focus Walk automático se excluye deliberadamente de esta regla. |
 | Estados dinámicos | El análisis estático no fuerza sistemáticamente todos los estados hover, pressed, checked o focus. |
 | HTML | Opera sobre el DOM vivo ya parseado; el navegador puede haber reparado errores del HTML fuente. |
 | ARIA | Deriva relaciones observables, pero no reproduce exactamente el árbol de accesibilidad interno ni la salida hablada de un lector de pantalla. |
@@ -409,7 +414,7 @@ FocusTrace mantiene intencionadamente un conjunto reducido de permisos en produc
 
 | Permiso | Navegador | Para qué se necesita |
 | --- | --- | --- |
-| `activeTab` | Chrome / Edge / Firefox | Analizar la página sobre la que el usuario activa FocusTrace y permitir evidencia de pestaña visible para un análisis explícito cuando esté disponible. |
+| `activeTab` | Chrome / Edge / Firefox | Analizar la página sobre la que el usuario activa FocusTrace y permitir evidencia local de pestaña visible para análisis explícitos, exportación de informes y revisión de foco visible con Tab real cuando esté disponible. |
 | `scripting` | Chrome / Edge / Firefox | Inyectar la instrumentación local de análisis/runtime en la página activa. |
 | `storage` | Chrome / Edge / Firefox | Guardar preferencias, estado local, auditorías acotadas y la evidencia opcional de FocusTrace Memory. |
 | `sidePanel` | Chrome / Edge | Mostrar la interfaz de depuración de FocusTrace en el panel lateral de Chromium. |
@@ -422,7 +427,7 @@ Los builds de producción no necesitan permisos globales de host al instalarse. 
 
 Todo el análisis se ejecuta localmente en el navegador. FocusTrace no envía contenido de la página, datos del DOM, capturas ni interacciones grabadas a un servidor de FocusTrace ni a una API de IA de terceros.
 
-Estructura se genera bajo demanda. FocusTrace Memory es opt-in. La evidencia visual de Memory y de los informes es local y limitada. Consulta [`PRIVACY.md`](PRIVACY.md) para la política de privacidad canónica y [`SECURITY.md`](SECURITY.md) para notificación responsable de vulnerabilidades.
+El análisis de página completa prepara evidencia limitada de Estructura junto con el resultado del motor de reglas. FocusTrace Memory es opt-in. La evidencia visual de Memory e informes es local y limitada, y las capturas lossless usadas para la comparación runtime de foco visible son temporales y no se persisten. Consulta [`PRIVACY.md`](PRIVACY.md) para la política de privacidad canónica y [`SECURITY.md`](SECURITY.md) para notificación responsable de vulnerabilidades.
 
 ## Licencia e identidad del proyecto
 

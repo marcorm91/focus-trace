@@ -138,7 +138,7 @@ export function InstructionsView({ language }: { language: AppLanguage }) {
 
         <InstructionCard title={tr(language, 'Structure', 'Estructura')}>
           <p>{tr(language, 'Use Headings for the H1–H6 outline, Semantics for concrete native-HTML opportunities, and Metrics for bounded accessibility-oriented structural counts.', 'Usa Encabezados para el esquema H1–H6, Semántica para oportunidades concretas de HTML nativo y Métricas para recuentos estructurales limitados y orientados a accesibilidad.')}</p>
-          <p>{tr(language, 'Headings reuses the current page analysis. Semantics and Metrics stay idle until you explicitly analyze or refresh Structure.', 'Encabezados reutiliza el análisis actual de la página. Semántica y Métricas permanecen inactivas hasta que analizas o actualizas Estructura de forma explícita.')}</p>
+          <p>{tr(language, 'A full-page analysis now prepares Headings, Semantics and Metrics together. Use Refresh in Structure when you want to recalculate semantic and metric evidence after the page changes.', 'El análisis de página completa prepara ahora conjuntamente Encabezados, Semántica y Métricas. Usa Actualizar en Estructura cuando quieras recalcular la evidencia semántica y las métricas después de que cambie la página.')}</p>
         </InstructionCard>
 
         <InstructionCard title={tr(language, 'Report', 'Informe')}>

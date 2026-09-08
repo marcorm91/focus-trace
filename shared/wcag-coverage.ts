@@ -1,4 +1,5 @@
 import wcagCatalog from '../generated/wcag-catalog.json';
+import { FOCUS_VISIBLE_RULE } from './focus-visible-rules';
 import { FORM_PURPOSE_RULES } from './form-purpose-rules';
 import { LANGUAGE_PARTS_RULE } from './language-parts-rules';
 import { RULES } from './rule-catalog';
@@ -23,7 +24,13 @@ function modeForRule(ruleId: string): WcagCoverageMode | undefined {
   return undefined;
 }
 
-const COVERAGE_RULES = [...Object.values(RULES), ...FORM_PURPOSE_RULES, LANGUAGE_PARTS_RULE, TEXT_SPACING_RULE];
+const COVERAGE_RULES = [
+  ...Object.values(RULES),
+  ...FORM_PURPOSE_RULES,
+  LANGUAGE_PARTS_RULE,
+  TEXT_SPACING_RULE,
+  FOCUS_VISIBLE_RULE,
+];
 const ruleReferences = COVERAGE_RULES.flatMap((rule) => {
   const mode = modeForRule(rule.id);
   if (!mode) return [];

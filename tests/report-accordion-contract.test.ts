@@ -35,6 +35,13 @@ describe('report accordion contract', () => {
     expect(reportView).toContain('report-accordion-section report-recommendations">');
   });
 
+  it('uses the shared light border and gives open report content breathing room', () => {
+    expect(accordionCss).toContain('border-color: var(--ft-border-soft, #cfd5dc);');
+    expect(accordionCss).toContain('.report-accordion-section[open] > .report-section-heading + *');
+    expect(accordionCss).toContain('.report-accordion-section[open] > .report-inline-summary');
+    expect(accordionCss).toContain('padding-bottom: 10px;');
+  });
+
   it('uses the shared SVG-mask chevrons and native keyboard-focusable summaries', () => {
     expect(accordionCss).toContain('.report-accordion-summary:focus-visible');
     expect(accordionCss).toContain('.report-accordion-summary::after');

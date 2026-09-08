@@ -2,6 +2,7 @@
   overflow: clip;
   gap: 0;
   padding: 0;
+  border-color: var(--ft-border-soft, #cfd5dc);
 }
 
 .report-accordion-summary {
@@ -76,6 +77,15 @@
 
 .report-accordion-section[open] > :not(.report-accordion-summary):not(.report-section-heading) {
   margin-inline: 10px;
+}
+
+.report-accordion-section[open] > .report-section-heading + * {
+  margin-top: 10px;
+}
+
+.report-accordion-section[open] > .report-inline-summary {
+  margin-bottom: 12px;
+  padding-bottom: 10px;
 }
 
 .report-accordion-section[open] > :last-child {

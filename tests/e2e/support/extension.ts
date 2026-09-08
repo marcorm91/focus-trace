@@ -67,14 +67,19 @@ export async function startRecording(worker: Worker, page: Page): Promise<number
       },
     });
 
-    try {
-      await chromeApi.tabs.sendMessage(id, { type: 'FOCUSTRACE_PING' });
-    } catch {
+    const ensureContentScript = async (pingType: string, file: string) => {
+      const ready = await chromeApi.tabs.sendMessage(id, { type: pingType })
+        .then((response: unknown) => response === true)
+        .catch(() => false);
+      if (ready) return;
       await chromeApi.scripting.executeScript({
         target: { tabId: id },
-        files: ['/content-scripts/runtime.js'],
+        files: [file],
       });
-    }
+    };
+
+    await ensureContentScript('FOCUSTRACE_PING', '/content-scripts/runtime.js');
+    await ensureContentScript('FOCUSTRACE_FOCUS_VISIBLE_PING', '/content-scripts/focus-visible.js');
 
     await chromeApi.tabs.sendMessage(id, {
       type: 'FOCUSTRACE_SET_RECORDING',

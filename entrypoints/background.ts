@@ -1,5 +1,6 @@
 import { browser, defineBackground } from '#imports';
 import { recordFocusMemoryScan } from '../lib/focus-memory/storage';
+import type { FocusVisibleCaptureMessage } from '../lib/runtime/focus-visible';
 import {
   appendRuntimeEventToSession,
   clearSessionEvents,
@@ -56,13 +57,25 @@ async function broadcast(state: SessionState) {
 }
 
 async function ensureInjected(tabId: number): Promise<boolean> {
-  try {
-    await browser.tabs.sendMessage(tabId, { type: 'FOCUSTRACE_PING' });
-    return false;
-  } catch {
+  let injected = false;
+
+  const runtimeReady = await browser.tabs.sendMessage(tabId, { type: 'FOCUSTRACE_PING' })
+    .then((response) => response === true)
+    .catch(() => false);
+  if (!runtimeReady) {
     await browser.scripting.executeScript({ target: { tabId }, files: ['/content-scripts/runtime.js'] });
-    return true;
+    injected = true;
   }
+
+  const focusVisibleReady = await browser.tabs.sendMessage(tabId, { type: 'FOCUSTRACE_FOCUS_VISIBLE_PING' })
+    .then((response) => response === true)
+    .catch(() => false);
+  if (!focusVisibleReady) {
+    await browser.scripting.executeScript({ target: { tabId }, files: ['/content-scripts/focus-visible.js'] });
+    injected = true;
+  }
+
+  return injected;
 }
 
 async function syncContentState(tabId: number, suppliedState?: SessionState) {
@@ -116,7 +129,13 @@ function configurePanelAction() {
 export default defineBackground(() => {
   configurePanelAction();
 
-  browser.runtime.onMessage.addListener((message: ExtensionMessage, sender) => {
+  browser.runtime.onMessage.addListener((message: ExtensionMessage | FocusVisibleCaptureMessage, sender) => {
+    if (message.type === 'FOCUSTRACE_CAPTURE_VIEWPORT') {
+      const tab = sender.tab;
+      if (tab?.id == null || tab.windowId == null || !tab.active) return Promise.resolve(undefined);
+      return browser.tabs.captureVisibleTab(tab.windowId, { format: 'png' }).catch(() => undefined);
+    }
+
     if (message.type === 'FOCUSTRACE_EVENT') {
       const tabId = sender.tab?.id;
       if (tabId == null) return;

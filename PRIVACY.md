@@ -15,7 +15,8 @@ When you explicitly run an analysis, generate Structure evidence or record a Tra
 - page title, URL and other report context;
 - optional visible-element screenshot crops stored locally by FocusTrace Memory when Memory is enabled;
 - bounded visible-element screenshot crops stored locally with multipage audit reviews so previously analyzed pages can retain visual evidence;
-- optional visible-page screenshot crops when the user explicitly includes visual evidence in a printable single-page report.
+- optional visible-page screenshot crops when the user explicitly includes visual evidence in a printable single-page report;
+- temporary lossless visible-tab captures used only in memory while reviewing whether a real keyboard focus transition has a locally visible focus indicator.
 
 ## Where that data goes
 
@@ -27,11 +28,13 @@ Session data, multipage audit evidence and preferences may be stored using brows
 
 ## Structure evidence
 
-Structure is an on-demand accessibility view of the current page. Opening the Structure workspace does not automatically traverse, observe or continuously recalculate the page DOM. Headings reuses the current page analysis; Semantics and Metrics are generated only after an explicit **Analyze structure** or **Refresh** action.
+A full-page **Analyze this page** action now collects the bounded Structure snapshot together with the normal rule-engine result, so Headings, Semantics and Metrics are prepared from the same explicit page-analysis flow. Opening the Structure workspace does not start continuous DOM observation or automatically recalculate the page again. The explicit **Refresh** action remains available when the page changes and the user wants fresh semantic/metric evidence.
 
 The resulting Structure snapshot is kept in the current sidepanel/sidebar session. It contains bounded accessibility-oriented counts plus the selectors, semantic roles, labels and evidence needed for the concrete semantic suggestions shown to the user. The collector applies a sampling safety limit on large pages and does not use a continuous MutationObserver for Structure.
 
-When a session report is exported after Structure has already been analyzed, FocusTrace may reuse a compact report subset containing Structure metrics and semantic review suggestions. Generating or exporting a report does not trigger a second Structure collection automatically.
+Component analysis remains separate from this document-wide Structure snapshot. Starting a component scan clears the current full-page Structure snapshot instead of presenting document-wide semantic or metric evidence as though it belonged to the selected component.
+
+When a session report is exported after Structure evidence has already been generated, FocusTrace may reuse a compact report subset containing Structure metrics and semantic review suggestions. Generating or exporting a report does not trigger a second Structure collection automatically.
 
 Structure evidence is diagnostic context, not a WCAG conformance claim. Suggestions such as replacing a generic interactive element with native HTML still require human review of the element's actual purpose.
 
@@ -72,23 +75,24 @@ Memory comparisons are diagnostic history, not a WCAG conformance claim. A previ
 
 ## Visual evidence
 
-FocusTrace has three local visual-evidence flows:
+FocusTrace has four local visual-evidence flows:
 
 1. **Memory previews.** When Memory is enabled, an explicit analysis may retain a small crop of a currently visible failing element as described above. If capture is unavailable, Memory falls back to a compact locator.
 2. **Multipage audit evidence.** An explicit full-page analysis may retain up to three bounded local crops for eligible findings so the latest saved review can still include visual context after the user navigates to another audited page. If capture is unavailable, the audit keeps the text-based result and records that visual evidence was unavailable.
 3. **Printable single-page report evidence.** Visual evidence in the single-page printable report is optional and user initiated. When requested, FocusTrace may temporarily request the browser permission required to capture the visible page.
+4. **Focus-visible runtime comparison.** During an active manual Trace, a trusted real Tab/Shift+Tab focus transition can trigger temporary lossless visible-tab captures before and after focus so FocusTrace can compare pixels around the target for WCAG 2.4.7 review evidence. These captures are decoded and compared in memory only. FocusTrace does not write them to session storage, Memory, reports or exports, and inconclusive captures are discarded without producing a finding.
 
-Screenshot crops can contain information visible on the inspected page. They are prepared and stored locally for the feature that requested them and are not intentionally transmitted by FocusTrace.
+Screenshot crops or temporary captures can contain information visible on the inspected page. They are prepared and, only where explicitly described above, stored locally for the feature that requested them; they are not intentionally transmitted by FocusTrace.
 
 Users should review exported reports before sharing them with third parties and should clear retained local history when local evidence is no longer appropriate for the browser profile.
 
 ## Permissions
 
-FocusTrace uses extension permissions only for product functionality such as analyzing web pages selected by the user, generating an explicitly requested Structure snapshot, injecting local instrumentation and storing preferences/session state.
+FocusTrace uses extension permissions only for product functionality such as analyzing web pages selected by the user, generating the Structure snapshot that accompanies an explicit full-page analysis, refreshing Structure on request, injecting local instrumentation, comparing a real keyboard focus transition visually during Trace and storing preferences/session state.
 
-Production builds do not require host access at installation. On an explicit page action such as **Analyze this page** or **Analyze / Refresh Structure**, FocusTrace may request optional HTTP/HTTPS page access before it can read the selected tab and inject or execute the required local runtime. Browsers can retain that optional grant until the user revokes it from the extension's site-access settings. The grant permits local inspection; it does not change the policy that inspected-page data is not intentionally transmitted by FocusTrace.
+Production builds do not require host access at installation. On an explicit page action such as **Analyze this page**, **Analyze / Refresh Structure**, or the page access needed for a manually recorded Trace, FocusTrace may request optional HTTP/HTTPS page access before it can read the selected tab and inject or execute the required local runtime. Browsers can retain that optional grant until the user revokes it from the extension's site-access settings. The grant permits local inspection; it does not change the policy that inspected-page data is not intentionally transmitted by FocusTrace.
 
-When Memory is enabled, or when a full-page review is being added to a multipage audit, FocusTrace may attempt a visible-tab capture during the explicit analysis to create small local evidence crops. These analysis-time flows first use the active-tab/page-access context already established for the user-requested analysis and do not require FocusTrace to keep a separate persistent `<all_urls>` screenshot grant. If capture is unavailable, the scan result remains usable without the missing crop.
+When Memory is enabled, or when a full-page review is being added to a multipage audit, FocusTrace may attempt a visible-tab capture during the explicit analysis to create small local evidence crops. A manually recorded real-Tab Trace may also use active visible-tab capture transiently for the focus-visible comparison described above. These flows use the active-tab/page-access context available for the user-requested operation and do not require FocusTrace to keep a separate persistent `<all_urls>` screenshot grant. If capture is unavailable, the underlying scan or Trace remains usable; the focus-visible review is simply omitted when visual evidence cannot be established safely.
 
 Broader `<all_urls>` screenshot access, when required by the browser API for optional single-page printable-report visual evidence, is requested from an explicit export action and removed after use. The capture implementation also attempts valid active-tab capture instead of treating absence of that optional broad grant as an automatic capture failure.
 

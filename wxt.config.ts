@@ -8,11 +8,12 @@ const OPTIONAL_HOST_PERMISSIONS = [
   OPTIONAL_VISUAL_CAPTURE_HOST_PERMISSION,
 ];
 const FIREFOX_115_OPTIONAL_HOSTS = OPTIONAL_HOST_PERMISSIONS as unknown as NonNullable<UserManifest['optional_permissions']>;
-// Browser-level sidepanel tests inject representative scan state directly. In a
-// real session that state only exists after Analyze has already granted page
-// access, so the E2E manifest mirrors that post-analysis permission state.
+// Browser-level sidepanel/runtime tests inject representative state directly. In
+// a real session the equivalent page/capture authority exists only after an
+// explicit user action has granted page access and/or activeTab. The E2E build
+// therefore mirrors that post-grant state without changing production manifests.
 const e2eHostPermissions = process.env.FOCUSTRACE_E2E === '1'
-  ? OPTIONAL_PAGE_HOST_PERMISSIONS
+  ? OPTIONAL_HOST_PERMISSIONS
   : undefined;
 const AUTO_RUNTIME_HOST_PERMISSIONS = new Set(OPTIONAL_PAGE_HOST_PERMISSIONS);
 
