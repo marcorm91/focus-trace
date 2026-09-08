@@ -166,6 +166,16 @@ When no captions track is observable, the result is `REVIEW`, never automatic `F
 
 Both media rules skip clear live/stream signals such as infinite duration, an attached `srcObject`, stream/blob-only sources and streaming-playlist-only URLs. These exclusions deliberately prefer false negatives over claiming prerecorded applicability from weak evidence. Full media equivalence, custom-player behavior, captions embedded in video pixels, and alternatives located elsewhere in an application remain manual territory.
 
+## Form error review scope
+
+`FT-REVIEW-019` provides conservative observable evidence for WCAG 3.3.1 Error Identification and ACT `36b590`. FocusTrace considers a form control applicable only when it exposes explicit `aria-invalid` other than `false` or the browser reports `:user-invalid`. It then looks for non-empty text referenced through `aria-errormessage` or `aria-describedby`.
+
+A resolved text reference records bounded `PASS` evidence only for the association-presence subset. FocusTrace does not prove that the text accurately describes the detected input error, does not infer arbitrary visual/application-level error messages elsewhere in the UI, and does not claim that every automatically detected error has been exercised. When no associated text reference can be observed, the outcome is `REVIEW`, never automatic `FAIL`.
+
+`FT-REVIEW-020` provides a conservative WCAG 3.3.3 Error Suggestion checkpoint. It runs only when an observed invalid field already has associated error text and exposes correction-relevant constraint metadata that makes a known correction plausible: `required`/`aria-required`, constrained native input types, `pattern`, `min`, `max`, `step`, `minlength` or `maxlength`. Every applicable result remains `REVIEW`; FocusTrace does not use language heuristics to decide whether the message is a useful suggestion, and the WCAG exception for cases where suggestions would jeopardize security or purpose still requires human context.
+
+Neither rule reads, hashes, compares or stores the user-entered field value. Both rules run in normal page and component analysis and remain partial/manual-required in the standards coverage matrix.
+
 ## ARIA authoring warnings
 
 The scan consumes `generated/aria-registry.json` instead of maintaining role/property lists by hand where the synced registry contains the required information. Existing role-specific rules report:
@@ -391,6 +401,8 @@ The rule is full-page only. Component-scoped analysis does not execute `FT-REVIE
 | FT-REVIEW-016 Inline important text spacing may block required user adjustments | REVIEW/PASS | WCAG 1.4.12 AA · ACT 24afc2 / 78fd32 / 9e45ec |
 | FT-REVIEW-017 Prerecorded audio may lack an observable equivalent alternative | REVIEW/PASS | WCAG 1.2.1 A |
 | FT-REVIEW-018 Prerecorded video may lack observable captions | REVIEW/PASS | WCAG 1.2.2 A · ACT f51b46 |
+| FT-REVIEW-019 Observed invalid field may lack an associated text error description | REVIEW/PASS | WCAG 3.3.1 A · ACT 36b590 |
+| FT-REVIEW-020 Observed input error needs a correction-suggestion review | REVIEW | WCAG 3.3.3 AA |
 
 ## Runtime rules
 
@@ -433,6 +445,8 @@ The rule is full-page only. Component-scoped analysis does not execute `FT-REVIE
 - `FT-REVIEW-016` covers only the three inline-`!important` ACT subsets for letter spacing, word spacing and wrapped-text line height. It does not automate paragraph spacing, all-language/script applicability, page-provided spacing controls, Shadow DOM/pseudo-generated text or the combined no-loss-of-content/functionality judgement required by the full WCAG 1.4.12 criterion.
 - `FT-REVIEW-017` covers only likely prerecorded native audio-only evidence. It does not prove that candidate alternative content is equivalent, does not claim the video-only branch of WCAG 1.2.1, and can miss custom or application-level alternatives outside the local media markup.
 - `FT-REVIEW-018` observes native/runtime captions tracks and uses browser `audioTracks` only when available. It does not detect burned-in captions or arbitrary custom-player caption systems, does not verify caption synchronization/accuracy/completeness, and may keep audio applicability as unknown.
+- `FT-REVIEW-019` observes only explicit/user-invalid state and non-empty `aria-errormessage` / `aria-describedby` text candidates. It does not prove semantic adequacy, infer every visual/application-level error message, or exercise every form error.
+- `FT-REVIEW-020` reviews only invalid fields that already expose associated error text plus correction-relevant constraint metadata. Suggestion quality and the WCAG security/purpose exception remain manual, and FocusTrace never reads or stores field values for this rule.
 - Structural HTML checks operate on the parsed live DOM. Browser parser repair can normalize invalid source before FocusTrace runs; the tool does not infer source-level errors that are no longer observable. See [`STRUCTURAL_HTML.md`](STRUCTURAL_HTML.md).
 - Advanced ARIA checks operate on the live accessibility relationships FocusTrace can derive from DOM semantics and `aria-owns`; they do not claim to reproduce the browser accessibility tree or a screen reader's spoken output. See [`ARIA_VALIDATION.md`](ARIA_VALIDATION.md).
 - Automated static checks are intentionally narrower than the corresponding full WCAG success criteria.

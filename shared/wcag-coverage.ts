@@ -1,5 +1,6 @@
 import wcagCatalog from '../generated/wcag-catalog.json';
 import { FOCUS_VISIBLE_RULE } from './focus-visible-rules';
+import { FORM_ERROR_RULES } from './form-error-rules';
 import { FORM_PURPOSE_RULES } from './form-purpose-rules';
 import { KEYBOARD_POINTER_RULES } from './keyboard-pointer-rules';
 import { LANGUAGE_PARTS_RULE } from './language-parts-rules';
@@ -49,9 +50,6 @@ export const EN_301_549_WEB_STANDARD = {
   url: 'https://www.etsi.org/deliver/etsi_en/301500_301599/301549/04.01.01_60/en_301549v040101p.pdf',
 } as const;
 
-// EN 301 549 V4.1.1 clause 9.0 states that WCAG 2.2 Level AA conformance is
-// equivalent to clauses 9.1–9.4 plus the conformance requirements in 9.6.
-// The standard deliberately keeps A/AA clause numbering aligned with WCAG 2.2.
 function en301549Reference(
   criterionId: string,
   level: 'A' | 'AA' | 'AAA',
@@ -71,9 +69,6 @@ const SITE_AUDIT_RULE_IDS = new Set([
   'FT-REVIEW-015',
 ]);
 
-// A criterion can only become "complete" through an explicit allow-list entry.
-// Keep this empty until FocusTrace can prove that every requirement branch and
-// exception of a WCAG criterion is evaluated by its available evidence model.
 const FULLY_EVALUATED_WCAG_CRITERIA = new Set<string>();
 
 function coverageMethodForRule(ruleId: string): WcagCoverageMethod | undefined {
@@ -91,6 +86,7 @@ function coverageSurfaceForRule(ruleId: string): WcagCoverageSurface {
 const COVERAGE_RULES = [
   ...Object.values(RULES),
   ...FORM_PURPOSE_RULES,
+  ...FORM_ERROR_RULES,
   LANGUAGE_PARTS_RULE,
   TEXT_SPACING_RULE,
   FOCUS_VISIBLE_RULE,
