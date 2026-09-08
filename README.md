@@ -37,7 +37,7 @@ FocusTrace uses WCAG 2.2 as its conformance source. WCAG 2.2 criteria are also r
 
 | Capability | Input / scope | What it does | Evidence / output |
 | --- | --- | --- | --- |
-| **Full-page analysis** | Active document | Runs the local rule engine on the current page. | FAIL, REVIEW, WARNING and PASS depending on each rule. |
+| **Full-page analysis** | Active document | Runs the local rule engine and prepares the bounded Structure snapshot for the current page. | FAIL, REVIEW, WARNING and PASS plus Headings, Semantics and Metrics evidence. |
 | **Component analysis** | Visually selected DOM subtree | Runs the same engine within the selected component while preserving document-wide context when a rule needs it. | Findings limited to the selected scope. |
 | **Inspect finding** | Current finding | Locates and highlights the target when it still exists on the page. | Selector, target element and visual highlight. |
 | **Accessible name** | Supported controls | Computes the accessible name and records the winning source. | Role, computed name, source and inspected candidates. |
@@ -46,7 +46,7 @@ FocusTrace uses WCAG 2.2 as its conformance source. WCAG 2.2 criteria are also r
 | **Pointer target size** | Observable rendered pointer targets | Measures target geometry and WCAG 2.5.8 spacing while preserving contextual exceptions as REVIEW. | CSS-pixel size, neighboring target and pass/review rationale. |
 | **Color suggestion** | Deterministic contrast failure | Suggests a small sRGB adjustment that reaches the required ratio when it can be computed safely. | Measured HEX/RGB, suggestion and copy action. |
 | **How to fix** | Findings with remediation guidance | Shows concrete remediation strategies and a verification step. | Localized EN/ES guidance. |
-| **Structure** | Current page | Exposes headings, semantic review and structural metrics on demand. | H1-H6 outline, suggestions and counts. |
+| **Structure** | Current full-page analysis | Exposes headings, semantic review and structural metrics prepared with the page scan; Refresh recalculates them after page changes. | H1-H6 outline, suggestions and counts. |
 | **Trace** | Real interaction | Records keyboard/pointer input, focus, non-sensitive setting-change events, relevant mutations, SPA routes, dialogs, status-message candidates, ARIA widgets and causal/context-change evidence. | Events correlated by interaction; control values are not retained by context-change tracking. |
 | **Virtual focus** | Compatible `aria-activedescendant` widgets | Records valid virtual-focus changes as informational evidence without treating them as DOM focus movement or a finding. | Virtual destination available in Trace, Journey and Graph. |
 | **Focus Walk** | Active page | Automates sequential focus traversal to build navigation evidence. | Journey of reachable focus targets. |
@@ -154,7 +154,7 @@ FocusTrace resolves observable accessibility relationships and `aria-owns` rathe
 
 ### Runtime WCAG rules
 
-Trace stores compact evidence: selector, role, accessible name, tag, relevant changes, route transition, dialog/focus events and dragging summary. It does not store full DOM snapshots or the complete pointer-coordinate trail.
+Trace stores compact evidence: selector, role, accessible name, tag, relevant changes, route transition, dialog/focus events and dragging summary. It does not store full DOM snapshots or the complete pointer-coordinate trail. Temporary lossless viewport captures used by `FT-RUNTIME-010` are compared in memory and are not retained in Trace, Memory or reports.
 
 | ID | Detects / observes | Result | Reference |
 | --- | --- | --- | --- |
@@ -167,12 +167,15 @@ Trace stores compact evidence: selector, role, accessible name, tag, relevant ch
 | `FT-RUNTIME-007` | After a real activation, a short visible status-like message appears without observable live/status semantics or an active `aria-errormessage` relationship. | REVIEW | WCAG 4.1.3 |
 | `FT-RUNTIME-008` | Receiving focus is followed by an observed route change, dialog opening or programmatic focus move without a separate observed activation. | REVIEW | WCAG 3.2.1 |
 | `FT-RUNTIME-009` | A trusted `input`/`change` event on a setting control is followed by an observed route change, dialog opening or programmatic focus move. | REVIEW | WCAG 3.2.2 |
+| `FT-RUNTIME-010` | After a trusted real Tab/Shift+Tab transition, two stable non-focused and two stable focused captures show no pixel-color change in the bounded region around the focused control. | REVIEW | WCAG 2.4.7 AA · ACT oj04fd |
 
 `FT-RUNTIME-002` rechecks the element while it keeps focus after scroll, resize and relevant DOM mutations. `FT-RUNTIME-006` requires real pointer movement above the jitter threshold; native `dragstart` alone is not used to emit the review.
 
 `FT-RUNTIME-007` is interaction-correlated and stabilized. It excludes dialogs, modeled widget-state containers, messages that receive focus or are followed by a focus/navigation/dialog context change, and messages already exposed through `role="status"`, `role="alert"`, `role="log"`, progress semantics, active `aria-live` or an active `aria-errormessage` relationship. `aria-busy` alone is not treated as sufficient status-message exposure. Status-message classification still depends on meaning, so the rule stays **REVIEW** and does not manufacture an automatic WCAG FAIL.
 
 `FT-RUNTIME-008` and `FT-RUNTIME-009` use a bounded 1.2-second correlation window. Separate user actions clear stale attribution, explicit activation is not treated as an On Focus failure, and ordinary sequential focus movement is not blamed on the previously focused control. `FT-RUNTIME-009` records control identity and the trusted `input`/`change` event type, not the control value. Both rules stay **REVIEW** because runtime ordering cannot prove author-handler causation for 3.2.1 or establish prior user advice for 3.2.2 in every case.
+
+`FT-RUNTIME-010` deliberately does not use automatic Focus Walk because programmatic `element.focus()` does not reliably reproduce keyboard `:focus-visible` modality. It runs only during manual Trace after a trusted Tab/Shift+Tab transition, waits for a one-second stable focused state, and requires stable before/after PNG capture pairs with unchanged viewport geometry. Any local pixel change is treated as evidence that this bounded check observed a visible difference; instability, scrolling, resizing or unavailable capture makes the observation inconclusive and produces no review. A stable unchanged local crop remains **REVIEW**, never automatic FAIL, because ACT `oj04fd` can allow a focus indication elsewhere in the viewport.
 
 ### Runtime ARIA warnings
 
@@ -257,7 +260,8 @@ Causality explains the recorded chain; it does not by itself promote a contextua
 | **Semantics** | Finds concrete native-HTML opportunities and generic interactions that need review. |
 | **Metrics** | Counts semantic regions, lists, forms, buttons, links, controls, tables and images. |
 | **Location** | A heading or metric group can be located and highlighted on the page. |
-| **On demand** | Semantics and Metrics traverse the DOM only after **Analyze structure** or **Refresh**. |
+| **Unified page analysis** | **Analyze this page** prepares Semantics and Metrics together with the normal full-page scan; **Refresh** recalculates the Structure snapshot after page changes. |
+| **Component boundary** | Component scans do not reuse a stale full-page Structure snapshot as component evidence. |
 | **Safety bound** | The collector processes at most 10,000 elements by default. |
 | **Report reuse** | PDF/TXT/report reuse existing compact metrics/suggestions without exporting the full DOM tree. |
 
@@ -343,7 +347,7 @@ Memory does not store page HTML, full DOM snapshots or full-page screenshots.
 | --- | --- |
 | **Session report** | Combines static findings and runtime evidence from the current session. |
 | **Interaction stories** | Includes Trace chains, including status-message reviews, runtime ARIA warnings and APG reviews. |
-| **Document structure** | Reuses compact metrics/suggestions when Structure was already generated. |
+| **Document structure** | Reuses compact metrics/suggestions prepared by the full-page analysis or a later Structure refresh. |
 | **Rule legend** | Explains `FT-WCAG-*`, `FT-WARN-*`, `FT-REVIEW-*`, `FT-RUNTIME-*`, `FT-RUNTIME-ARIA-*` and `FT-APG-*` families. |
 | **PDF** | Printable single-page or multipage-audit export. |
 | **TXT** | Text export of available evidence. |
@@ -371,6 +375,7 @@ Memory does not store page HTML, full DOM snapshots or full-page screenshots.
 | Contrast | Complex visual composition remains REVIEW when it cannot be resolved safely. |
 | Target size | Uses observable DOM/layout geometry and conservative target discovery. Equivalent, essential and user-agent-control exceptions, arbitrary framework-only pointer listeners and complex non-rectangular hit areas can still require manual review. |
 | Text spacing | Only inline `!important` letter spacing, word spacing and soft-wrapped line height are checked against the three current ACT thresholds. Paragraph spacing, page-provided spacing mechanisms, language/script applicability and the combined no-loss-of-content/functionality judgement remain manual. |
+| Focus visible | Runtime coverage requires a trusted real Tab/Shift+Tab transition, stable focus and stable active-tab captures. The detector compares only a bounded local region, so unchanged pixels remain REVIEW and cannot prove that no indicator exists elsewhere in the viewport. Automatic Focus Walk is intentionally not used for this rule. |
 | Dynamic states | Static analysis does not systematically force every hover, pressed, checked or focus state. |
 | HTML | Operates on the parsed live DOM; browser parser repair may normalize invalid source before FocusTrace runs. |
 | ARIA | Derives observable relationships but does not reproduce the exact browser accessibility tree or a screen reader's spoken output. |
@@ -409,7 +414,7 @@ FocusTrace intentionally keeps its production permission set narrow:
 
 | Permission | Browser | Why it is needed |
 | --- | --- | --- |
-| `activeTab` | Chrome / Edge / Firefox | Analyze the page the user explicitly activates FocusTrace on and support visible-tab evidence for an explicit analysis when available. |
+| `activeTab` | Chrome / Edge / Firefox | Analyze the page the user explicitly activates FocusTrace on and support local visible-tab evidence for explicit analysis, report export and real-Tab focus-visible review when available. |
 | `scripting` | Chrome / Edge / Firefox | Inject local analysis/runtime instrumentation into the active page. |
 | `storage` | Chrome / Edge / Firefox | Persist preferences, local state, bounded audits and optional FocusTrace Memory evidence. |
 | `sidePanel` | Chrome / Edge | Provide the FocusTrace debugging interface in the Chromium side panel. |
@@ -422,7 +427,7 @@ Production builds do not require global host access at install time. HTTP/HTTPS 
 
 All analysis runs locally in the browser. FocusTrace does not send page content, DOM data, screenshots or recorded interactions to a FocusTrace server or third-party AI API.
 
-Structure is generated on demand. FocusTrace Memory is opt-in. Memory/report visual evidence is local and bounded. See [`PRIVACY.md`](PRIVACY.md) for the canonical privacy policy and [`SECURITY.md`](SECURITY.md) for responsible vulnerability reporting.
+Full-page analysis prepares bounded Structure evidence together with the rule-engine result. FocusTrace Memory is opt-in. Memory/report visual evidence is local and bounded, and the lossless captures used for focus-visible runtime comparison are temporary and not persisted. See [`PRIVACY.md`](PRIVACY.md) for the canonical privacy policy and [`SECURITY.md`](SECURITY.md) for responsible vulnerability reporting.
 
 ## License and project identity
 
