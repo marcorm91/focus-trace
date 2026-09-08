@@ -243,6 +243,16 @@ The check runs when focus moves and is re-run while that element remains focused
 
 The result remains `REVIEW`: sampled hit-testing is evidence of complete observed coverage, not a proof of every visual/compositing condition or every exception in the complete success criterion.
 
+## Focus Visible runtime scope
+
+`FT-RUNTIME-010` provides conservative runtime review evidence for WCAG 2.4.7 Focus Visible, informed by ACT `oj04fd`. It runs only during manual Trace after a trusted real `Tab` or `Shift+Tab` transition; Focus Walk is deliberately excluded because programmatic `element.focus()` does not reliably reproduce keyboard `:focus-visible` modality.
+
+For an adjacent sequential-focus candidate, FocusTrace first requires a stable non-focused baseline and later waits one second while the same target remains focused. It captures two lossless PNG viewport samples in each state, maps the target plus a bounded 32 CSS px margin to screenshot device pixels, and compares only that local region. Viewport size, scroll position and capture dimensions must stay unchanged, and any instability within either sample pair makes the observation inconclusive.
+
+A review is emitted only when the local crop is stable and unchanged between the non-focused and focused states. Any stable pixel change suppresses the review. The screenshots are ephemeral working data used only for the comparison and are not persisted to the session, Memory, reports or exports.
+
+The outcome is always `REVIEW`, never automatic `FAIL`. ACT `oj04fd` permits a visible focus indication to appear elsewhere in the viewport, while this detector intentionally bounds comparison around the focused target to avoid broad-page animation noise. The implementation therefore prefers false negatives over claiming that an unchanged local crop proves the whole WCAG criterion has failed.
+
 ## Dragging Movements runtime scope
 
 `FT-RUNTIME-006` provides observed runtime evidence for WCAG 2.5.7 Dragging Movements. Trace watches likely drag-capable targets and records a review only after an observed pointer path exceeds the small movement threshold used to distinguish dragging from click/tap jitter.
@@ -291,7 +301,7 @@ Only after that identity check does FocusTrace compare relative destination orde
 
 Before FocusTrace compares identification, the exact destination (including path, query and fragment) must occur only once on each sampled page, both pages must declare the same non-empty primary `html[lang]`, and both candidates must expose their identification through the same observed source (`aria-label`, `aria-labelledby`, DOM text, a single image `alt`, or `title`). If the destination is duplicated on either page—for example a logo and a footer link to the same URL—the correspondence is ambiguous and no review is emitted.
 
-Names are normalized only to suppress clearly compatible variants: case/diacritics are ignored, numeric values are replaced by a placeholder, and shared functional vocabulary prevents a review for cases such as `Cart` versus `View cart`. This also keeps number-only variations such as `Go to page 4` versus `Go to page 5` quiet; WCAG 3.2.4 requires consistent identification, not byte-identical wording. A review is emitted only when the same strongly anchored link function has substantially divergent observed identification.
+Names are normalized only to suppress clearly compatible variants: case/diacritics are ignored, numeric values are replaced by a placeholder, and shared functional vocabulary prevents a review for cases such as `Cart` versus `View cart`. This also keeps number-only variations such as `Go to page 4` and `Go to page 5` quiet; WCAG 3.2.4 requires consistent identification, not byte-identical wording. A review is emitted only when the same strongly anchored link function has substantially divergent observed identification.
 
 The result is always `REVIEW`, never automatic `FAIL`. The same URL is strong evidence of repeated link purpose but does not prove that scripts, page context or application state make the complete functionality identical, and lexical comparison cannot determine every synonym or semantically equivalent label. The Site Audit collector also uses a bounded DOM naming approximation for this cross-page comparison rather than claiming to reproduce the full AccName algorithm. Buttons, custom controls, framework-only actions and functions without a stable exact link destination are intentionally outside this first subset. These boundaries prefer false negatives over noisy WCAG findings.
 
@@ -381,6 +391,7 @@ The rule is full-page only. Component-scoped analysis does not execute `FT-REVIE
 | FT-RUNTIME-007 Status-like message may not be programmatically exposed | REVIEW | WCAG 4.1.3 |
 | FT-RUNTIME-008 Receiving focus may initiate a context change | REVIEW | WCAG 3.2.1 |
 | FT-RUNTIME-009 Changing a control may initiate a context change | REVIEW | WCAG 3.2.2 |
+| FT-RUNTIME-010 Keyboard focus may have no visible local change | REVIEW | WCAG 2.4.7 AA · ACT oj04fd |
 | FT-APG-001 Dialog initial focus remains outside | REVIEW | WAI-ARIA APG Dialog Modal |
 | FT-APG-002 Focus escapes modal dialog | REVIEW | WAI-ARIA APG Dialog Modal |
 | FT-APG-003 Focus not restored after dialog close | REVIEW | WAI-ARIA APG Dialog Modal |
@@ -399,6 +410,7 @@ The rule is full-page only. Component-scoped analysis does not execute `FT-REVIE
 - `FT-RUNTIME-006` recognizes observed drag interaction signals but does not automatically prove whether an equivalent non-dragging operation or an essential-dragging exception exists.
 - `FT-RUNTIME-007` reviews only short visible EN/ES status-like text with observable structural signals after real activation. It cannot prove the meaning of every message, non-text-only status, disappearance-only state, equivalent accessibility-tree exposure or actual screen-reader announcement.
 - `FT-RUNTIME-008` and `FT-RUNTIME-009` correlate only observed focus/input events with route, dialog and DOM-focus changes inside a bounded window. They cannot prove author-handler causation, and `FT-RUNTIME-009` cannot always establish whether prior user advice satisfies WCAG 3.2.2.
+- `FT-RUNTIME-010` observes only trusted manual Tab focus transitions with a stable local pixel comparison. A visible focus cue outside the bounded target region, viewport/capture instability or non-Tab focus paths can remain outside this detector, so absence of a review is not proof of complete WCAG 2.4.7 conformance.
 - `FT-REVIEW-011` uses bounded, text-based help-mechanism candidates over Site Audit samples and therefore cannot establish full WCAG 3.2.6 applicability or site-wide conformance.
 - `FT-REVIEW-012` validates only the observable keyboard fragment-bypass pattern around substantial pre-main navigation; other WCAG 2.4.1 bypass mechanisms and repeated-block applicability still require manual context.
 - `FT-REVIEW-013` requires an exact repeated destination-set match and ignores partial/ambiguous navigation matches; it therefore favors false negatives, and Site Audit cannot prove whether an observed order change was initiated by the user.
