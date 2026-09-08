@@ -158,7 +158,7 @@ FocusTrace resolves observable accessibility relationships and `aria-owns` rathe
 
 ### Runtime WCAG rules
 
-Trace stores compact evidence: selector, role, accessible name, tag, relevant changes, route transition, dialog/focus events and dragging summary. It does not store full DOM snapshots or the complete pointer-coordinate trail. Temporary lossless viewport captures used by `FT-RUNTIME-010` are compared in memory and are not retained in Trace, Memory or reports.
+Trace stores compact evidence: selector, role, accessible name, tag, relevant changes, route transition, dialog/focus events, dragging summary and bounded keyboard/pointer review signals. It does not store full DOM snapshots or the complete pointer-coordinate trail. Temporary lossless viewport captures used by `FT-RUNTIME-010` are compared in memory and are not retained in Trace, Memory or reports.
 
 | ID | Detects / observes | Result | Reference |
 | --- | --- | --- | --- |
@@ -172,6 +172,9 @@ Trace stores compact evidence: selector, role, accessible name, tag, relevant ch
 | `FT-RUNTIME-008` | Receiving focus is followed by an observed route change, dialog opening or programmatic focus move without a separate observed activation. | REVIEW | WCAG 3.2.1 |
 | `FT-RUNTIME-009` | A trusted `input`/`change` event on a setting control is followed by an observed route change, dialog opening or programmatic focus move. | REVIEW | WCAG 3.2.2 |
 | `FT-RUNTIME-010` | After a trusted real Tab/Shift+Tab transition, two stable non-focused and two stable focused captures show no pixel-color change in the bounded region around the focused control. | REVIEW | WCAG 2.4.7 AA · ACT oj04fd |
+| `FT-RUNTIME-011` | A trusted pointer activation is observed on a custom action target that is not reachable in the observed sequential keyboard focus order. | REVIEW | WCAG 2.1.1 A |
+| `FT-RUNTIME-012` | Repeated standard-Tab navigation cycles through only a subset of the observed focus order, or repeated Tab attempts leave focus unchanged outside an open modal. | REVIEW | WCAG 2.1.2 A · ACT a1b64e |
+| `FT-RUNTIME-013` | Activation-like semantic state, target removal or navigation occurs after pointer-down but before pointer release or `pointercancel`. | REVIEW | WCAG 2.5.2 A |
 
 `FT-RUNTIME-002` rechecks the element while it keeps focus after scroll, resize and relevant DOM mutations. `FT-RUNTIME-006` requires real pointer movement above the jitter threshold; native `dragstart` alone is not used to emit the review.
 
@@ -180,6 +183,8 @@ Trace stores compact evidence: selector, role, accessible name, tag, relevant ch
 `FT-RUNTIME-008` and `FT-RUNTIME-009` use a bounded 1.2-second correlation window. Separate user actions clear stale attribution, explicit activation is not treated as an On Focus failure, and ordinary sequential focus movement is not blamed on the previously focused control. `FT-RUNTIME-009` records control identity and the trusted `input`/`change` event type, not the control value. Both rules stay **REVIEW** because runtime ordering cannot prove author-handler causation for 3.2.1 or establish prior user advice for 3.2.2 in every case.
 
 `FT-RUNTIME-010` deliberately does not use automatic Focus Walk because programmatic `element.focus()` does not reliably reproduce keyboard `:focus-visible` modality. It runs only during manual Trace after a trusted Tab/Shift+Tab transition, waits for a one-second stable focused state, and requires stable before/after PNG capture pairs with unchanged viewport geometry. Any local pixel change is treated as evidence that this bounded check observed a visible difference; instability, scrolling, resizing or unavailable capture makes the observation inconclusive and produces no review. A stable unchanged local crop remains **REVIEW**, never automatic FAIL, because ACT `oj04fd` can allow a focus indication elsewhere in the viewport.
+
+`FT-RUNTIME-011` is intentionally narrow: it needs a real pointer activation plus an observable custom-action signal and only reviews the case where that target is outside sequential keyboard navigation. It does not claim that delegated framework listeners or an equivalent keyboard control elsewhere are absent. `FT-RUNTIME-012` requires repeated real Tab evidence, ignores a full focus-order wrap and suppresses intentional focus containment inside an open modal; other escape mechanisms still require human review. `FT-RUNTIME-013` compares only activation-like state visible before release/cancellation and stays REVIEW because abort, undo and essential-function exceptions remain contextual.
 
 ### Runtime ARIA warnings
 
@@ -381,6 +386,8 @@ Memory does not store page HTML, full DOM snapshots or full-page screenshots.
 | Text spacing | Only inline `!important` letter spacing, word spacing and soft-wrapped line height are checked against the three current ACT thresholds. Paragraph spacing, page-provided spacing mechanisms, language/script applicability and the combined no-loss-of-content/functionality judgement remain manual. |
 | Prerecorded media | Native media evidence only. 1.2.1 currently covers the audio-only subset; candidate alternatives are not checked for equivalence. 1.2.2 can observe native/runtime captions tracks but cannot prove burned-in/custom captions, auditory-content applicability or caption synchronization/accuracy/completeness. Clear live/stream signals are skipped. |
 | Focus visible | Runtime coverage requires a trusted real Tab/Shift+Tab transition, stable focus and stable active-tab captures. The detector compares only a bounded local region, so unchanged pixels remain REVIEW and cannot prove that no indicator exists elsewhere in the viewport. Automatic Focus Walk is intentionally not used for this rule. |
+| Keyboard / trap | Runtime coverage observes real pointer and standard-Tab behavior only. Equivalent keyboard controls elsewhere, delegated framework handlers, non-standard navigation and documented escape mechanisms still require manual review. |
+| Pointer cancellation | Runtime coverage only flags activation-like state already observable before release/cancellation. Whether activation is essential, can be aborted or can be undone remains manual. |
 | Dynamic states | Static analysis does not systematically force every hover, pressed, checked or focus state. |
 | HTML | Operates on the parsed live DOM; browser parser repair may normalize invalid source before FocusTrace runs. |
 | ARIA | Derives observable relationships but does not reproduce the exact browser accessibility tree or a screen reader's spoken output. |
