@@ -24,6 +24,7 @@ import {
   SECTION_HEADING_REVIEW_RULE,
   STRUCTURAL_HTML_RULES,
 } from '../../shared/structural-html-rules';
+import { TEXT_SPACING_ACT_ID_BY_PROPERTY, TEXT_SPACING_RULE } from '../../shared/text-spacing-rules';
 import { evaluateAdvancedAria, type AriaValidationSignalKind } from './aria-validator';
 import { evaluateAutocompletePurpose, type AutocompletePurposeEvaluation } from './autocomplete-purpose';
 import { evaluateBypassBlocks } from './bypass-blocks';
@@ -37,6 +38,7 @@ import { isProgrammaticallyHidden, selectorFor } from './dom';
 import { evaluateLanguageParts, type LanguagePartEvaluation } from './language-parts';
 import { collectHeadingOutline, runFocusTraceScan as runBaseFocusTraceScan } from './scan-base';
 import { evaluateTargetSize, type TargetSizeEvaluation } from './target-size';
+import { evaluateTextSpacing, type TextSpacingEvaluation } from './text-spacing';
 
 export { collectHeadingOutline };
 
@@ -172,6 +174,21 @@ function languagePartIssueFor(evaluation: LanguagePartEvaluation): ScanIssue {
     targets: [selectorFor(evaluation.element)],
     evidence: `lang = ${JSON.stringify(evaluation.value)}; primary subtag = ${JSON.stringify(evaluation.primary)}`,
     references: rule.references,
+  };
+}
+
+function textSpacingIssueFor(evaluation: TextSpacingEvaluation): ScanIssue {
+  const actId = TEXT_SPACING_ACT_ID_BY_PROPERTY[evaluation.property];
+  return {
+    id: uid(),
+    ruleId: TEXT_SPACING_RULE.id,
+    title: TEXT_SPACING_RULE.title,
+    description: 'This rendered text uses an inline !important spacing declaration below the ACT expectation. Review whether the page provides an equivalent spacing-adjustment mechanism and whether WCAG 1.4.12 applies to this language/script before treating it as a conformance failure.',
+    severity: TEXT_SPACING_RULE.severity,
+    outcome: 'review',
+    targets: [selectorFor(evaluation.element)],
+    evidence: evaluation.detail,
+    references: TEXT_SPACING_RULE.references.filter((reference) => reference.type === 'WCAG' || reference.id === actId),
   };
 }
 
@@ -348,6 +365,27 @@ function appendAutocompletePurposeReview(result: ScanResult, root: Document | El
   result.rulesRun += 1;
 }
 
+function appendTextSpacingReview(result: ScanResult, root: Document | Element): void {
+  const evaluations = evaluateTextSpacing(root);
+  const reviews = evaluations.filter((evaluation) => evaluation.outcome === 'review').map(textSpacingIssueFor);
+  const passed = evaluations.filter((evaluation) => evaluation.outcome === 'pass').length;
+
+  result.review.push(...reviews);
+  result.ruleResults = [
+    ...(result.ruleResults ?? []),
+    {
+      ruleId: TEXT_SPACING_RULE.id,
+      applicable: evaluations.length,
+      passed,
+      failures: 0,
+      reviews: reviews.length,
+      warnings: 0,
+    },
+  ];
+  result.passes += passed;
+  result.rulesRun += 1;
+}
+
 export function runFocusTraceScan(scope?: ComponentScanScope): ScanResult {
   const result = runBaseFocusTraceScan(scope);
   const componentScope = result.scope?.type === 'component' ? result.scope : undefined;
@@ -362,6 +400,7 @@ export function runFocusTraceScan(scope?: ComponentScanScope): ScanResult {
     appendLanguageParts(result);
   }
   appendAutocompletePurposeReview(result, root);
+  appendTextSpacingReview(result, root);
 
   const signals = evaluateStructuralHtml(root, !componentScope);
   const activeRules = STRUCTURAL_HTML_RULES.filter((rule) => !componentScope || !PAGE_ONLY_RULE_IDS.has(rule.id));
