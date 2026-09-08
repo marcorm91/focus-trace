@@ -1,0 +1,92 @@
+name: Prepare FocusTrace 0.2.6
+
+on:
+  push:
+    branches:
+      - release/0.2.6-final
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: release/0.2.6-final
+      - name: Prepare release metadata and documentation
+        shell: bash
+        run: |
+          node <<'NODE'
+          const fs = require('node:fs');
+
+          const read = (path) => fs.readFileSync(path, 'utf8');
+          const write = (path, content) => fs.writeFileSync(path, content);
+
+          const pkg = JSON.parse(read('package.json'));
+          pkg.version = '0.2.6';
+          write('package.json', `${JSON.stringify(pkg, null, 2)}\n`);
+
+          const lock = JSON.parse(read('package-lock.json'));
+          lock.version = '0.2.6';
+          if (lock.packages?.['']) lock.packages[''].version = '0.2.6';
+          write('package-lock.json', `${JSON.stringify(lock, null, 2)}\n`);
+
+          const contractPath = 'tests/release-contract.test.ts';
+          write(contractPath, read(contractPath)
+            .replaceAll('v0.2.5', 'v0.2.6')
+            .replaceAll("toBe('0.2.5')", "toBe('0.2.6')"));
+
+          const checklistPath = 'docs/RELEASE_CHECKLIST.md';
+          let checklist = read(checklistPath).replaceAll('0.2.5', '0.2.6');
+          const structureMarker = '- Confirm the report accordion cards share the same soft border treatment and the Document Structure header/metrics/separators have readable spacing without content sitting directly against divider lines.\n';
+          if (!checklist.includes('Affected element inspector')) {
+            checklist = checklist.replace(
+              structureMarker,
+              structureMarker +
+              '- Open representative FAIL, REVIEW and WARNING findings and confirm the **Affected element inspector** identifies the target with tag/role/readable label before the technical selector.\n' +
+              '- Expand **View HTML / Ver HTML** and confirm only bounded contextual markup is shown; verify the selector remains secondary and copyable.\n' +
+              '- For a relationship finding such as `FT-WARN-018`, confirm the affected child and deterministic related-container context are both understandable without relying on `nth-of-type()` alone.\n' +
+              '- Use **Review on page / Revisar en la página** and confirm the page overlay displays the rule id plus occurrence (`n of N` / `n de N`); moving between occurrences must move the highlight to the newly selected target.\n' +
+              '- Confirm severity attention lines keep readable spacing from badges/titles in Analyze, Report, Structure review cards and heading hierarchy signals.\n'
+            );
+          }
+          write(checklistPath, checklist);
+
+          const storePath = 'docs/STORE_SUBMISSION.md';
+          let store = read(storePath).replaceAll('0.2.5', '0.2.6');
+          const capabilityMarker = '- on-demand Structure workspace with heading outline, concrete semantic suggestions and accessibility-oriented structural metrics prepared with the full-page analysis;\n';
+          if (!store.includes('affected-element inspection')) {
+            store = store.replace(
+              capabilityMarker,
+              capabilityMarker + '- affected-element inspection that prioritizes readable target identity, exposes bounded contextual HTML on demand and keeps technical selectors secondary;\n'
+            );
+          }
+          write(storePath, store);
+
+          const changelogPath = 'CHANGELOG.md';
+          let changelog = read(changelogPath);
+          if (!changelog.includes('## 0.2.6')) {
+            const marker = 'All notable FocusTrace release changes are summarized here. Detailed release notes remain under `docs/RELEASE_NOTES_<version>.md`.\n\n';
+            const section = `## 0.2.6\n\n### Changed\n\n- Added a shared affected-element inspector across Analyze/Review, Report and Structure so findings identify targets with tag, role, readable/accessibility label, id and classes before falling back to the raw CSS selector.\n- Technical selectors are now secondary and copyable, with bounded contextual HTML available on demand instead of storing full DOM fragments.\n- Finding pagination now keeps the inspected page highlight synchronized with the selected occurrence and labels overlays with the rule id plus occurrence number.\n- Relationship findings can retain compact deterministic related-container context, including ARIA allowed-child cases such as `FT-WARN-018`.\n- Severity attention lines now keep consistent spacing from card content across scan results, report accordions, Structure review cards and heading hierarchy signals.\n\n### Privacy and reliability\n\n- The new inspector requests live bounded HTML context only when the user expands it; full page HTML/DOM fragments are not persisted as finding evidence.\n- Existing local-first behavior, optional page access and browser permission model remain unchanged.\n- Unit, contract, build and browser E2E coverage guard the shared inspector, bounded context, page overlays and attention-line layout.\n\nSee \`docs/RELEASE_NOTES_0.2.6.md\` for the full 0.2.6 notes and validation scope.\n\n`;
+            changelog = changelog.replace(marker, marker + section);
+          }
+          write(changelogPath, changelog);
+
+          const releaseNotes = `# FocusTrace 0.2.6\n\nFocusTrace 0.2.6 focuses on making accessibility findings easier to inspect and locate. The release does not broaden the permission model or change FocusTrace's local-first, non-certification positioning.\n\n## Affected-element inspector\n\nAnalyze/Review, Report and Structure now share one affected-element inspector. Instead of presenting a raw CSS selector as the primary locator, FocusTrace prioritizes human-readable identity from the inspected target: element tag, ARIA role, readable/accessibility label, id and useful classes when available.\n\nThe technical selector remains available as secondary evidence and can still be copied for debugging. This keeps deterministic machine locators without forcing users to interpret paths such as \`li:nth-of-type(4) > ul\` before they understand what element is affected.\n\n## Bounded contextual HTML\n\nFindings can expose **View HTML / Ver HTML** on demand. FocusTrace queries the live inspected page only when the user opens that detail and returns a bounded contextual fragment rather than retaining full DOM content.\n\nThis is intended to answer “which element is this?” while preserving the existing storage/privacy boundary: full page HTML and arbitrary DOM fragments are not persisted in scan results, reports or FocusTrace Memory.\n\n## Relationship findings\n\nWhere the engine can establish a deterministic relationship, the finding can preserve compact related-container context alongside the affected target. This is particularly useful for ARIA parent/child model findings such as \`FT-WARN-018\`, where understanding both the child role and its container is more useful than a selector alone.\n\nFocusTrace does not invent related context when the relationship cannot be established safely.\n\n## Page-location overlay\n\n**Review on page / Revisar en la página** now carries the rule id and occurrence number into the page overlay. When a grouped finding contains multiple affected elements, moving between occurrences also moves the page highlight to the selected target.\n\nThe overlay additionally includes compact target identity when it can be read safely from the live element. Existing Structure group overlays continue to highlight their complete rendered target set.\n\n## Visual spacing\n\nSeverity/attention lines now use consistent spacing from badges, titles and card content across scan results, report accordions, Structure review cards and heading hierarchy signals. This avoids the cramped presentation previously visible when a warning/review line sat immediately beside the heading content.\n\n## Privacy and permissions\n\n0.2.6 adds no backend, analytics pipeline or required installation-time host permission. Production page access remains optional and user initiated.\n\nThe affected-element inspector stores only compact target identity already associated with the finding. Live contextual HTML is requested on demand, bounded before returning to the side panel and not persisted as full DOM evidence.\n\n## Browser targets\n\nRelease targets remain:\n\n- Google Chrome 114+;\n- Chromium-based Microsoft Edge;\n- Firefox 115+ as an experimental release target pending the packaged-build smoke checklist.\n\n## Validation before publishing\n\nBefore tagging the release, run the complete gate on the exact candidate commit:\n\n\`\`\`bash\nnpm run release:check:full\nnpm audit --omit=dev\nnpm audit\n\`\`\`\n\nThe final candidate must keep \`package.json\`, \`package-lock.json\`, generated browser manifests, release documentation and \`tests/release-contract.test.ts\` aligned on \`0.2.6\`. CI must be green on the exact commit intended for \`v0.2.6\`, and the manual checks in \`docs/RELEASE_CHECKLIST.md\` must be completed before publishing production packages.\n`;
+          write('docs/RELEASE_NOTES_0.2.6.md', releaseNotes);
+          NODE
+      - name: Commit release preparation
+        shell: bash
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add package.json package-lock.json tests/release-contract.test.ts CHANGELOG.md docs/RELEASE_CHECKLIST.md docs/STORE_SUBMISSION.md docs/RELEASE_NOTES_0.2.6.md
+          if git diff --cached --quiet; then
+            echo 'Release metadata already prepared.'
+            exit 0
+          fi
+          git commit -m 'Chore(release): prepare FocusTrace 0.2.6'
+          git push origin HEAD:release/0.2.6-final
