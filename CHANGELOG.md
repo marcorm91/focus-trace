@@ -2,6 +2,33 @@
 
 All notable FocusTrace release changes are summarized here. Detailed release notes remain under `docs/RELEASE_NOTES_<version>.md`.
 
+## 0.2.5
+
+### Added
+
+- WCAG 2.4.1 Bypass Blocks conservative full-page review (`FT-REVIEW-012`).
+- WCAG 3.2.3 Consistent Navigation conservative Site Audit review (`FT-REVIEW-013`).
+- WCAG 1.3.5 Identify Input Purpose explicit-`autocomplete` review (`FT-REVIEW-014`, ACT `73f2c2`).
+- WCAG 3.1.2 Language of Parts explicit-language validation (`FT-WCAG-013`, ACT `de46e4`).
+- WCAG 3.2.4 Consistent Identification conservative Site Audit review (`FT-REVIEW-015`).
+- WCAG 1.4.12 Text Spacing inline-`!important` ACT-subset review (`FT-REVIEW-016`, ACT `24afc2`, `9e45ec`, `78fd32`).
+- WCAG 2.4.7 Focus Visible runtime review using real keyboard Tab transitions and bounded stable pixel comparison (`FT-RUNTIME-010`, ACT `oj04fd`).
+
+### Changed
+
+- **Analyze this page** now prepares the bounded Structure snapshot together with the normal full-page analysis so Headings, Semantics and Metrics are available from the same explicit run.
+- Component-scoped scans clear page-global Structure evidence instead of mixing document-wide metrics into component results.
+- Report accordions now share the same soft border treatment, with improved spacing around the Document Structure header, metrics summary and separators.
+
+### Privacy and reliability
+
+- Focus-visible captures are temporary, lossless visible-tab samples decoded and compared in memory only; they are not persisted to session storage, Memory, reports or exports.
+- New rules preserve the deterministic `FAIL` vs contextual `REVIEW` boundary and deliberately suppress ambiguous evidence to reduce false positives.
+- Production page access remains optional/user initiated; no backend or analytics pipeline was added.
+- Expanded unit, contract and browser E2E coverage validates the new scanner, Site Audit, Structure and real-Tab Focus Visible paths.
+
+See `docs/RELEASE_NOTES_0.2.5.md` for the full 0.2.5 notes, limitations and validation scope.
+
 ## 0.2.4
 
 ### Changed
