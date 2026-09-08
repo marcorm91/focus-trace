@@ -1,0 +1,195 @@
+.target-inspector,
+.target-inspector-primary,
+.target-inspector-context,
+.target-inspector-node,
+.target-inspector-node-heading,
+.target-inspector-actions,
+.target-inspector-html,
+.target-inspector-technical,
+.target-inspector-technical > div {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.target-inspector {
+  display: grid;
+  gap: 8px;
+  padding: 10px 11px;
+  border: 1.5px solid var(--ft-border-soft);
+  border-radius: var(--ft-radius-sm);
+  background: var(--ft-surface-subtle);
+}
+
+.target-inspector-primary,
+.target-inspector-context,
+.target-inspector-node {
+  display: grid;
+  gap: 4px;
+}
+
+.target-inspector-kicker,
+.target-inspector-context > small,
+.target-inspector-html > small {
+  color: var(--ft-muted);
+  font-size: 14px;
+  font-weight: 800;
+  letter-spacing: .035em;
+  text-transform: uppercase;
+}
+
+.target-inspector-node-heading {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px 9px;
+  align-items: center;
+}
+
+.target-inspector-node-heading > code {
+  color: var(--ft-ink);
+  font-weight: 800;
+}
+
+.target-inspector-node-heading > span {
+  color: var(--ft-muted);
+  font-size: 14px;
+}
+
+.target-inspector-node strong {
+  min-width: 0;
+  color: var(--ft-text);
+  font-size: 14px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.target-inspector-node > small {
+  min-width: 0;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  color: var(--ft-muted);
+  overflow-wrap: anywhere;
+}
+
+.target-inspector-node > small code {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.target-inspector-context {
+  padding: 8px 9px;
+  border-left: 3px solid var(--ft-accent);
+  border-radius: 0 var(--ft-radius-xs) var(--ft-radius-xs) 0;
+  background: var(--ft-surface);
+}
+
+.target-inspector-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.target-inspector-actions button,
+.target-inspector-technical button {
+  min-height: 34px;
+  padding: 6px 9px;
+  border: 1.5px solid var(--ft-border);
+  border-radius: var(--ft-radius-xs);
+  background: var(--ft-surface);
+  color: var(--ft-ink);
+  box-shadow: 1px 1px 0 var(--ft-border);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 800;
+}
+
+.target-inspector-actions button:hover:not(:disabled),
+.target-inspector-actions button:focus-visible,
+.target-inspector-technical button:hover:not(:disabled),
+.target-inspector-technical button:focus-visible {
+  background: var(--ft-surface);
+  color: var(--ft-ink);
+}
+
+.target-inspector-actions button:disabled {
+  opacity: .45;
+  cursor: default;
+  box-shadow: none;
+}
+
+.target-inspector-error {
+  margin: 0;
+  padding: 7px 8px;
+  border-left: 3px solid var(--ft-warning);
+  background: var(--ft-warning-soft);
+  color: var(--ft-text);
+  font-size: 14px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.target-inspector-html {
+  display: grid;
+  gap: 5px;
+}
+
+.target-inspector-html pre {
+  max-height: 220px;
+  margin: 0;
+  padding: 9px 10px;
+  overflow: auto;
+  border: 1px solid var(--ft-border-soft);
+  border-radius: var(--ft-radius-xs);
+  background: var(--ft-surface);
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.target-inspector-html code {
+  border: 0;
+  background: transparent;
+  color: var(--ft-ink);
+  white-space: inherit;
+}
+
+.target-inspector-technical {
+  border-top: 1px solid var(--ft-border-soft);
+  padding-top: 7px;
+}
+
+.target-inspector-technical > summary {
+  width: fit-content;
+  color: var(--ft-muted);
+  cursor: pointer;
+  font-size: 14px;
+  font-weight: 750;
+}
+
+.target-inspector-technical > div {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 7px;
+  align-items: center;
+  margin-top: 7px;
+}
+
+.target-inspector-technical code {
+  min-width: 0;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+@media (max-width: 420px) {
+  .target-inspector-actions button {
+    flex: 1 1 150px;
+  }
+
+  .target-inspector-technical > div {
+    grid-template-columns: 1fr;
+  }
+
+  .target-inspector-technical button {
+    justify-self: start;
+  }
+}
