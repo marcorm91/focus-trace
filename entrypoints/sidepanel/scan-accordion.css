@@ -19,7 +19,7 @@
 .scan-rule-group {
   overflow: hidden;
   border: 1.5px solid var(--ft-border);
-  border-left-width: 5px;
+  border-left-width: 4px;
   border-radius: var(--ft-radius-md);
   background: var(--ft-surface);
   box-shadow: 2px 2px 0 color-mix(in srgb, var(--ft-border) 70%, transparent);
@@ -37,7 +37,7 @@
   grid-template-columns: auto minmax(0, 1fr) auto auto;
   gap: 8px;
   align-items: center;
-  padding: 10px 11px;
+  padding: 10px;
   cursor: pointer;
   list-style: none;
 }
@@ -102,7 +102,7 @@
 .scan-rule-body {
   display: grid;
   gap: 9px;
-  padding: 11px;
+  padding: 10px;
   overflow: hidden;
   background: color-mix(in srgb, var(--ft-paper) 38%, var(--ft-surface));
 }
