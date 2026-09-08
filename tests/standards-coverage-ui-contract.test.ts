@@ -36,7 +36,8 @@ describe('standards coverage UI contract', () => {
     const coverage = source('shared/wcag-coverage.ts');
 
     expect(common).toContain('wcagCoverageForCriterion(reference.id)?.en301549');
-    expect(common).toContain('EN 301 549');
+    expect(common).toContain('{en301549.standard} § {en301549.clause} · {en301549.version}');
+    expect(coverage).toContain("standard: 'EN 301 549'");
     expect(coverage).toContain("version: 'V4.1.1 (2026-09)'");
     expect(coverage).toContain("clause: `9.${criterionId}`");
     expect(coverage).toContain('en_301549v040101p.pdf');
