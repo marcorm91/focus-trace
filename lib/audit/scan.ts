@@ -36,6 +36,7 @@ import { textContrastSubjectsForElement } from './contrast';
 import { evaluateStructuralHtml, type StructuralHtmlSignalKind } from './content-model';
 import { accessibleName, isProgrammaticallyHidden, selectorFor, semanticRole } from './dom';
 import { evaluateLanguageParts, type LanguagePartEvaluation } from './language-parts';
+import { appendMediaAccessibilityReviews } from './media-scan-extension';
 import { collectHeadingOutline, runFocusTraceScan as runBaseFocusTraceScan } from './scan-base';
 import { evaluateTargetSize, type TargetSizeEvaluation } from './target-size';
 import { evaluateTextSpacing, type TextSpacingEvaluation } from './text-spacing';
@@ -456,6 +457,7 @@ export function runFocusTraceScan(scope?: ComponentScanScope): ScanResult {
   }
   appendAutocompletePurposeReview(result, root);
   appendTextSpacingReview(result, root);
+  appendMediaAccessibilityReviews(result, root);
 
   const signals = evaluateStructuralHtml(root, !componentScope);
   const activeRules = STRUCTURAL_HTML_RULES.filter((rule) => !componentScope || !PAGE_ONLY_RULE_IDS.has(rule.id));
