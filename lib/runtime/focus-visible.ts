@@ -3,6 +3,10 @@ import type { ElementSnapshot, RuntimeEvent } from '../../shared/types';
 
 type PendingRuntimeEvent = Omit<RuntimeEvent, 'id' | 'timestamp'>;
 
+export interface FocusVisibleCaptureMessage {
+  type: 'FOCUSTRACE_CAPTURE_VIEWPORT';
+}
+
 export interface FocusVisibleRegion {
   left: number;
   top: number;
