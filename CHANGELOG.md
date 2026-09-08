@@ -2,6 +2,24 @@
 
 All notable FocusTrace release changes are summarized here. Detailed release notes remain under `docs/RELEASE_NOTES_<version>.md`.
 
+## 0.2.6
+
+### Changed
+
+- Added a shared affected-element inspector across Analyze/Review, Report and Structure so findings identify targets with tag, role, readable/accessibility label, id and classes before falling back to the raw CSS selector.
+- Technical selectors are now secondary and copyable, with bounded contextual HTML available on demand instead of storing full DOM fragments.
+- Finding pagination now keeps the inspected page highlight synchronized with the selected occurrence and labels overlays with the rule id plus occurrence number.
+- Relationship findings can retain compact deterministic related-container context, including ARIA allowed-child cases such as FT-WARN-018.
+- Severity attention lines now keep consistent spacing from card content across scan results, report accordions, Structure review cards and heading hierarchy signals.
+
+### Privacy and reliability
+
+- The new inspector requests live bounded HTML context only when the user expands it; full page HTML/DOM fragments are not persisted as finding evidence.
+- Existing local-first behavior, optional page access and browser permission model remain unchanged.
+- Unit, contract, build and browser E2E coverage guard the shared inspector, bounded context, page overlays and attention-line layout.
+
+See `docs/RELEASE_NOTES_0.2.6.md` for the full 0.2.6 notes and validation scope.
+
 ## 0.2.5
 
 ### Added
