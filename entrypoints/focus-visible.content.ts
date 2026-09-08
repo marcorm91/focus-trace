@@ -10,9 +10,19 @@ import {
   type FocusVisiblePixelFrame,
   type FocusVisibleViewportState,
 } from '../lib/runtime/focus-visible';
+import {
+  createKeyboardTrapReviewEvent,
+  createPointerCancellationReviewEvent,
+  KeyboardTrapTracker,
+  keyboardOperabilityReviewForPointerAction,
+  observedPointerActionTarget,
+  PointerCancellationTracker,
+  type KeyboardTrapFocusInput,
+  type TabDirection,
+} from '../lib/runtime/keyboard-pointer';
 import { createRuntimeEventId as uid } from '../lib/runtime/events';
-import { focusWalkCandidates } from '../lib/runtime/focus-walk';
-import { snapshot } from '../lib/runtime/page-inspection';
+import { focusWalkCandidates, sequentialFocusPosition } from '../lib/runtime/focus-walk';
+import { isDialogOpen, isModalDialog, snapshot } from '../lib/runtime/page-inspection';
 import type { ExtensionMessage, RuntimeEvent, SessionState } from '../shared/types';
 
 type FocusDirection = 'forward' | 'backward';
@@ -22,6 +32,7 @@ type LocalMessage = ExtensionMessage | FocusVisibleCaptureMessage | { type: 'FOC
 const FOCUSED_STABILITY_MS = 1_000;
 const CAPTURE_PAIR_GAP_MS = 120;
 const TAB_INTENT_TIMEOUT_MS = 500;
+const KEYBOARD_TRAP_TAB_SETTLE_MS = 180;
 const CORRELATION_WINDOW_MS = 2_500;
 
 function viewportState(): FocusVisibleViewportState {
@@ -31,6 +42,11 @@ function viewportState(): FocusVisibleViewportState {
     scrollX,
     scrollY,
   };
+}
+
+function containingOpenModal(element: Element): boolean {
+  const dialog = element.closest('dialog, [role="dialog"], [role="alertdialog"]');
+  return Boolean(dialog && isDialogOpen(dialog) && isModalDialog(dialog));
 }
 
 async function decodeCapture(dataUrl: string): Promise<FocusVisiblePixelFrame | undefined> {
@@ -71,15 +87,25 @@ export default defineContentScript({
     let focusVersion = 0;
     let pendingTabIntent: FocusDirection | undefined;
     let pendingTabIntentVersion = 0;
+    let keyboardPendingTabVersion = 0;
+    let keyboardPendingTab: KeyboardTrapFocusInput | undefined;
     let baselines = new Map<string, FocusVisibleBaseline>();
     const reportedSelectors = new Set<string>();
+    const reportedRuleTargets = new Set<string>();
+    const keyboardTrapTracker = new KeyboardTrapTracker();
+    const pointerCancellationTracker = new PointerCancellationTracker();
 
     const resetProbe = () => {
       focusVersion += 1;
       pendingTabIntent = undefined;
       pendingTabIntentVersion += 1;
+      keyboardPendingTab = undefined;
+      keyboardPendingTabVersion += 1;
+      keyboardTrapTracker.reset();
+      pointerCancellationTracker.reset();
       baselines.clear();
       reportedSelectors.clear();
+      reportedRuleTargets.clear();
     };
 
     const sleep = (ms: number) => new Promise<void>((resolve) => {
@@ -110,17 +136,20 @@ export default defineContentScript({
       return { first, second, viewport: after };
     };
 
-    const interactionIdFor = async (selector: string): Promise<string | undefined> => {
+    const interactionIdFor = async (
+      selector: string,
+      kinds: RuntimeEvent['kind'][] = ['focus'],
+    ): Promise<string | undefined> => {
       const state = await browser.runtime.sendMessage({
         type: 'FOCUSTRACE_GET_CONTENT_STATE',
       } satisfies ExtensionMessage).catch(() => undefined) as SessionState | undefined;
       if (!state) return undefined;
       const now = Date.now();
       const event = [...state.events].reverse().find((candidate) =>
-        candidate.kind === 'focus'
-        && candidate.element?.selector === selector
-        && candidate.interactionId
-        && now - candidate.timestamp <= CORRELATION_WINDOW_MS,
+        Boolean(candidate.interactionId)
+        && kinds.includes(candidate.kind)
+        && now - candidate.timestamp <= CORRELATION_WINDOW_MS
+        && (!candidate.element?.selector || candidate.element.selector === selector),
       );
       return event?.interactionId;
     };
@@ -148,6 +177,43 @@ export default defineContentScript({
         type: 'FOCUSTRACE_EVENT',
         event: runtimeEvent,
       } satisfies ExtensionMessage).catch(() => undefined);
+    };
+
+    const emitRuntimeReview = async (
+      event: Omit<RuntimeEvent, 'id' | 'timestamp'>,
+      correlationKinds: RuntimeEvent['kind'][] = [],
+    ) => {
+      const selector = event.element?.selector ?? 'unknown';
+      const ruleId = event.ruleId ?? event.title;
+      const dedupeKey = `${ruleId}:${selector}`;
+      if (reportedRuleTargets.has(dedupeKey)) return;
+
+      const interactionId = correlationKinds.length
+        ? await interactionIdFor(selector, correlationKinds)
+        : undefined;
+      const runtimeEvent: RuntimeEvent = {
+        id: uid(),
+        timestamp: Date.now(),
+        ...event,
+        ...(interactionId ? { interactionId } : {}),
+      };
+      reportedRuleTargets.add(dedupeKey);
+      await browser.runtime.sendMessage({
+        type: 'FOCUSTRACE_EVENT',
+        event: runtimeEvent,
+      } satisfies ExtensionMessage).catch(() => undefined);
+    };
+
+    const tabInputFor = (element: Element, direction: TabDirection): KeyboardTrapFocusInput => {
+      const focusPosition = sequentialFocusPosition(element);
+      const elementSnapshot = snapshot(element, focusPosition);
+      return {
+        selector: elementSnapshot.selector,
+        element: elementSnapshot,
+        direction,
+        tabOrderSize: focusPosition?.size ?? 0,
+        inModal: containingOpenModal(element),
+      };
     };
 
     const primeNeighborBaselines = (
@@ -234,28 +300,89 @@ export default defineContentScript({
       const event = rawEvent as KeyboardEvent;
       if (!recording || !event.isTrusted || event.key !== 'Tab') return;
       if (event.ctrlKey || event.altKey || event.metaKey) return;
+
       pendingTabIntent = event.shiftKey ? 'backward' : 'forward';
       pendingTabIntentVersion += 1;
-      const version = pendingTabIntentVersion;
+      const focusVisibleVersion = pendingTabIntentVersion;
       ctx.setTimeout(() => {
-        if (pendingTabIntentVersion === version) pendingTabIntent = undefined;
+        if (pendingTabIntentVersion === focusVisibleVersion) pendingTabIntent = undefined;
       }, TAB_INTENT_TIMEOUT_MS);
+
+      const active = document.activeElement;
+      if (!(active instanceof Element) || active === document.body || active === document.documentElement) return;
+      const direction: TabDirection = event.shiftKey ? 'backward' : 'forward';
+      keyboardPendingTab = tabInputFor(active, direction);
+      keyboardPendingTabVersion += 1;
+      const keyboardVersion = keyboardPendingTabVersion;
+      ctx.setTimeout(() => {
+        if (!recording || keyboardPendingTabVersion !== keyboardVersion || !keyboardPendingTab) return;
+        const activeElement = document.activeElement;
+        const stillFocused = activeElement instanceof Element
+          && snapshot(activeElement).selector === keyboardPendingTab.selector;
+        const input = keyboardPendingTab;
+        keyboardPendingTab = undefined;
+        if (!stillFocused) return;
+        const observation = keyboardTrapTracker.recordNoMove(input);
+        if (observation) void emitRuntimeReview(createKeyboardTrapReviewEvent(observation), ['keydown', 'focus']);
+      }, KEYBOARD_TRAP_TAB_SETTLE_MS);
     }, true);
 
-    ctx.addEventListener(document, 'pointerdown', () => {
+    ctx.addEventListener(document, 'pointerdown', (rawEvent) => {
       pendingTabIntent = undefined;
       pendingTabIntentVersion += 1;
+      keyboardPendingTab = undefined;
+      keyboardPendingTabVersion += 1;
+
+      const event = rawEvent as PointerEvent;
+      if (!recording || !event.isTrusted || !(event.target instanceof Element)) return;
+      const target = observedPointerActionTarget(event.target);
+      if (!target) return;
+      pointerCancellationTracker.start(event.pointerId, target, snapshot(target), location.href);
+    }, true);
+
+    ctx.addEventListener(document, 'pointerup', (rawEvent) => {
+      const event = rawEvent as PointerEvent;
+      if (!recording || !event.isTrusted) return;
+      const observation = pointerCancellationTracker.finish(event.pointerId, 'up', location.href);
+      if (observation) void emitRuntimeReview(createPointerCancellationReviewEvent(observation), ['click']);
+    }, true);
+
+    ctx.addEventListener(document, 'pointercancel', (rawEvent) => {
+      const event = rawEvent as PointerEvent;
+      if (!recording || !event.isTrusted) return;
+      const observation = pointerCancellationTracker.finish(event.pointerId, 'cancel', location.href);
+      if (observation) void emitRuntimeReview(createPointerCancellationReviewEvent(observation), ['click']);
+    }, true);
+
+    ctx.addEventListener(document, 'click', (rawEvent) => {
+      const event = rawEvent as MouseEvent;
+      if (!recording || !event.isTrusted || !(event.target instanceof Element)) return;
+      const target = observedPointerActionTarget(event.target);
+      if (!target) return;
+      const review = keyboardOperabilityReviewForPointerAction(target, snapshot(target));
+      if (review) void emitRuntimeReview(review, ['click']);
     }, true);
 
     ctx.addEventListener(document, 'focusin', (rawEvent) => {
-      if (!recording || !pendingTabIntent) return;
+      if (!recording) return;
       const event = rawEvent as FocusEvent;
-      pendingTabIntent = undefined;
-      pendingTabIntentVersion += 1;
       if (!(event.target instanceof Element)) return;
-      focusVersion += 1;
-      const version = focusVersion;
-      void inspectFocusedElement(event.target, version);
+
+      if (pendingTabIntent) {
+        pendingTabIntent = undefined;
+        pendingTabIntentVersion += 1;
+        focusVersion += 1;
+        const version = focusVersion;
+        void inspectFocusedElement(event.target, version);
+      }
+
+      if (keyboardPendingTab) {
+        const direction = keyboardPendingTab.direction;
+        keyboardPendingTab = undefined;
+        keyboardPendingTabVersion += 1;
+        const observation = keyboardTrapTracker.recordFocus(tabInputFor(event.target, direction));
+        if (observation) void emitRuntimeReview(createKeyboardTrapReviewEvent(observation), ['keydown', 'focus']);
+      }
     }, true);
 
     browser.runtime.onMessage.addListener((message: LocalMessage) => {

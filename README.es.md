@@ -158,7 +158,7 @@ FocusTrace interpreta relaciones observables y `aria-owns`, no se limita a compa
 
 ### Reglas WCAG runtime
 
-Trace almacena evidencia compacta: selector, rol, nombre accesible, tag, cambios relevantes, transición de ruta, eventos de diálogo/foco y resumen de arrastre. No guarda snapshots DOM completos ni la trayectoria completa de coordenadas del puntero. Las capturas temporales y lossless usadas por `FT-RUNTIME-010` se comparan en memoria y no se conservan en Trace, Memory ni informes.
+Trace almacena evidencia compacta: selector, rol, nombre accesible, tag, cambios relevantes, transición de ruta, eventos de diálogo/foco, resumen de arrastre y señales acotadas de teclado/puntero. No guarda snapshots DOM completos ni la trayectoria completa de coordenadas del puntero. Las capturas temporales y lossless usadas por `FT-RUNTIME-010` se comparan en memoria y no se conservan en Trace, Memory ni informes.
 
 | ID | Detecta / observa | Resultado | Referencia |
 | --- | --- | --- | --- |
@@ -172,6 +172,9 @@ Trace almacena evidencia compacta: selector, rol, nombre accesible, tag, cambios
 | `FT-RUNTIME-008` | Recibir el foco va seguido de un cambio de ruta, apertura de diálogo o movimiento programático de foco observado sin una activación independiente. | REVIEW | WCAG 3.2.1 |
 | `FT-RUNTIME-009` | Un evento `input`/`change` de confianza sobre un control de configuración va seguido de un cambio de ruta, apertura de diálogo o movimiento programático de foco observado. | REVIEW | WCAG 3.2.2 |
 | `FT-RUNTIME-010` | Tras una transición real con Tab/Shift+Tab, dos capturas estables sin foco y dos con foco no muestran ningún cambio de color de píxel en la región limitada alrededor del control enfocado. | REVIEW | WCAG 2.4.7 AA · ACT oj04fd |
+| `FT-RUNTIME-011` | Se observa una activación de puntero de confianza sobre una acción personalizada que no es alcanzable en el orden secuencial de foco observado. | REVIEW | WCAG 2.1.1 A |
+| `FT-RUNTIME-012` | La navegación repetida con Tab estándar recorre solo un subconjunto del orden de foco observado, o intentos repetidos de Tab dejan el foco inmóvil fuera de un modal abierto. | REVIEW | WCAG 2.1.2 A · ACT a1b64e |
+| `FT-RUNTIME-013` | Estado semántico de activación, eliminación del objetivo o navegación ocurren después de pointer-down pero antes de soltar el puntero o recibir `pointercancel`. | REVIEW | WCAG 2.5.2 A |
 
 `FT-RUNTIME-002` vuelve a comprobar el elemento mientras mantiene el foco tras scroll, resize y mutaciones DOM relevantes. `FT-RUNTIME-006` requiere movimiento real del puntero por encima del umbral de jitter; un `dragstart` nativo por sí solo no se utiliza para emitir la revisión.
 
@@ -180,6 +183,8 @@ Trace almacena evidencia compacta: selector, rol, nombre accesible, tag, cambios
 `FT-RUNTIME-008` y `FT-RUNTIME-009` usan una ventana acotada de correlación de 1,2 segundos. Las acciones independientes del usuario eliminan atribuciones antiguas, la activación explícita no se trata como fallo de On Focus y el movimiento secuencial normal del foco no se atribuye al control anterior. `FT-RUNTIME-009` registra la identidad del control y el tipo de evento `input`/`change` de confianza, no el valor del control. Ambas reglas permanecen como **REVIEW** porque el orden runtime no demuestra la causalidad del manejador para 3.2.1 ni permite establecer siempre si hubo aviso previo al usuario para 3.2.2.
 
 `FT-RUNTIME-010` no utiliza deliberadamente Focus Walk automático porque `element.focus()` programático no reproduce de forma fiable la modalidad de teclado de `:focus-visible`. Solo se ejecuta durante un Trace manual tras una transición de confianza con Tab/Shift+Tab, espera un segundo con el foco estable y exige pares de capturas PNG estables antes/después sin cambios de viewport. Cualquier cambio local de píxeles cuenta como evidencia de que esta comprobación limitada observó una diferencia visible; animación/inestabilidad, scroll, resize o captura no disponible vuelven la observación inconclusa y no generan revisión. Un recorte local estable y sin cambios permanece como **REVIEW**, nunca FAIL automático, porque ACT `oj04fd` puede permitir un indicador de foco situado en otra zona del viewport.
+
+`FT-RUNTIME-011` es deliberadamente acotada: necesita una activación real de puntero más una señal observable de acción personalizada y solo revisa el caso en que ese objetivo queda fuera de la navegación secuencial por teclado. No afirma que falten listeners delegados de frameworks ni un control equivalente de teclado en otra zona. `FT-RUNTIME-012` exige evidencia repetida de Tab real, ignora el wrapping de todo el orden de foco y suprime la contención intencionada dentro de un modal abierto; otros mecanismos de salida requieren revisión humana. `FT-RUNTIME-013` compara únicamente estado de activación observable antes de soltar/cancelar y permanece como REVIEW porque las excepciones de abortar, deshacer o función esencial dependen del contexto.
 
 ### Avisos ARIA runtime
 
@@ -381,6 +386,8 @@ Memory no almacena HTML de página, snapshots completos del DOM ni capturas de p
 | Espaciado de texto | Solo se comprueban `letter-spacing`, `word-spacing` y `line-height` con salto automático bloqueados mediante `!important` inline contra los tres umbrales ACT actuales. La separación entre párrafos, los mecanismos propios de la página, la aplicabilidad por idioma/sistema de escritura y el juicio conjunto de pérdida de contenido/funcionalidad siguen siendo manuales. |
 | Medios pregrabados | Solo evidencia de medios nativos. 1.2.1 cubre actualmente el subconjunto de solo audio; las alternativas candidatas no se comprueban por equivalencia. 1.2.2 puede observar pistas nativas/runtime de captions, pero no demostrar subtítulos incrustados/personalizados, aplicabilidad por presencia de audio ni sincronización, exactitud o completitud. Las señales claras live/stream se excluyen. |
 | Foco visible | La cobertura runtime exige una transición real y de confianza con Tab/Shift+Tab, foco estable y capturas estables de la pestaña activa. El detector compara solo una región local limitada, por lo que píxeles sin cambios permanecen como REVIEW y no demuestran que no exista un indicador en otra zona del viewport. Focus Walk automático se excluye deliberadamente de esta regla. |
+| Teclado / trampa | La cobertura runtime observa únicamente comportamiento real de puntero y Tab estándar. Controles equivalentes de teclado en otra zona, listeners delegados de frameworks, navegación no estándar y mecanismos de salida documentados siguen requiriendo revisión manual. |
+| Cancelación del puntero | La cobertura runtime solo señala estado de activación ya observable antes de soltar/cancelar. Determinar si la activación es esencial, puede abortarse o puede deshacerse sigue siendo manual. |
 | Estados dinámicos | El análisis estático no fuerza sistemáticamente todos los estados hover, pressed, checked o focus. |
 | HTML | Opera sobre el DOM vivo ya parseado; el navegador puede haber reparado errores del HTML fuente. |
 | ARIA | Deriva relaciones observables, pero no reproduce exactamente el árbol de accesibilidad interno ni la salida hablada de un lector de pantalla. |

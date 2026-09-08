@@ -8,6 +8,16 @@ const DEFINITION_PATTERN = new RegExp(`\\bid\\s*:\\s*(['"])(?<id>${RULE_ID})\\1`
 const DECLARATION_PATTERN = new RegExp(`\\b(?:id|ruleId)\\s*:\\s*(['"])(?<id>${RULE_ID})\\1`, 'g');
 const LITERAL_PATTERN = new RegExp(`(['"])(?<id>${RULE_ID})\\1`, 'g');
 const ALLOWED_SEVERITIES = new Set(['critical', 'serious', 'moderate', 'minor', 'info']);
+const RULE_DOC_BUNDLES = [
+  {
+    canonical: 'docs/RULES.md',
+    companions: ['docs/KEYBOARD_POINTER_RUNTIME.md'],
+  },
+  {
+    canonical: 'docs/SEVERITY-AUDIT.md',
+    companions: ['docs/KEYBOARD_POINTER_RUNTIME.md'],
+  },
+];
 
 function sourceFiles(root) {
   const files = [];
@@ -179,11 +189,12 @@ for (const [id, paths] of literalReferences) {
   }
 }
 
-for (const docPath of ['docs/RULES.md', 'docs/SEVERITY-AUDIT.md']) {
-  const document = readFileSync(docPath, 'utf8');
+for (const { canonical, companions } of RULE_DOC_BUNDLES) {
+  const paths = [canonical, ...companions];
+  const document = paths.map((path) => readFileSync(path, 'utf8')).join('\n');
   const missing = [...objectDefinitions.keys()].filter((id) => !document.includes(id));
   if (missing.length > 0) {
-    errors.push(`${docPath} is missing object-defined rule IDs: ${missing.join(', ')}`);
+    errors.push(`${canonical} documentation bundle (${paths.join(', ')}) is missing object-defined rule IDs: ${missing.join(', ')}`);
   }
 }
 
