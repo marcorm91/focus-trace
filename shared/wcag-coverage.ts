@@ -2,6 +2,7 @@ import wcagCatalog from '../generated/wcag-catalog.json';
 import { FOCUS_VISIBLE_RULE } from './focus-visible-rules';
 import { FORM_PURPOSE_RULES } from './form-purpose-rules';
 import { LANGUAGE_PARTS_RULE } from './language-parts-rules';
+import { MEDIA_RULES } from './media-rules';
 import { RULES } from './rule-catalog';
 import { TEXT_SPACING_RULE } from './text-spacing-rules';
 
@@ -92,6 +93,7 @@ const COVERAGE_RULES = [
   LANGUAGE_PARTS_RULE,
   TEXT_SPACING_RULE,
   FOCUS_VISIBLE_RULE,
+  ...MEDIA_RULES,
 ];
 
 const ruleReferences = COVERAGE_RULES.flatMap((rule) => {
