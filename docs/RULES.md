@@ -154,6 +154,18 @@ A below-threshold observation remains `REVIEW`, never automatic `FAIL`. The ACT 
 
 FocusTrace does not currently automate the paragraph-spacing requirement (`2 × font-size`) or the complete requirement to apply all four spacing values together without loss of content or functionality. The remediation therefore instructs reviewers to perform that combined manual check. These boundaries deliberately favor false negatives over claiming that a syntactic spacing lock proves the whole WCAG criterion.
 
+## Prerecorded media review scope
+
+`FT-REVIEW-017` provides conservative observable evidence for WCAG 1.2.1 Audio-only and Video-only (Prerecorded), limited to the native audio-only subset that FocusTrace can inspect responsibly. It evaluates native `<audio>` elements only when the media looks prerecorded from finite-duration or inspectable non-stream source evidence. A bounded `PASS` is recorded when local markup exposes a candidate equivalent alternative through a non-empty `aria-describedby` or `aria-details` target, a native captions track, or a nearby transcript-like link or disclosure. A `REVIEW` is emitted when none of those candidate signals is observable.
+
+That `PASS` proves only that a candidate alternative is present. FocusTrace does not compare the recording with the candidate text and therefore cannot establish information equivalence. The current detector deliberately does not claim coverage of the video-only branch of WCAG 1.2.1 because browser APIs do not reliably expose whether arbitrary video content truly has no audio track.
+
+`FT-REVIEW-018` provides conservative observable evidence for WCAG 1.2.2 Captions (Prerecorded), with ACT `f51b46` traceability for the native-video auditory-content/captions expectation. It evaluates likely prerecorded native `<video>` elements. When the browser exposes `audioTracks` and proves that there are zero audio tracks, the criterion is treated as inapplicable for that video. When an observable captions track exists, FocusTrace records a bounded `PASS`; a `subtitles` track by itself is not treated as proof of captions.
+
+When no captions track is observable, the result is `REVIEW`, never automatic `FAIL`. Auditory content may be unknown, captions may be burned into the picture, or a custom player may provide caption support without a native `<track kind="captions">`. Even when a native captions track is present, FocusTrace does not verify caption synchronization, accuracy or completeness.
+
+Both media rules skip clear live/stream signals such as infinite duration, an attached `srcObject`, stream/blob-only sources and streaming-playlist-only URLs. These exclusions deliberately prefer false negatives over claiming prerecorded applicability from weak evidence. Full media equivalence, custom-player behavior, captions embedded in video pixels, and alternatives located elsewhere in an application remain manual territory.
+
 ## ARIA authoring warnings
 
 The scan consumes `generated/aria-registry.json` instead of maintaining role/property lists by hand where the synced registry contains the required information. Existing role-specific rules report:
@@ -377,6 +389,8 @@ The rule is full-page only. Component-scoped analysis does not execute `FT-REVIE
 | FT-REVIEW-014 Standard autocomplete purpose token sequence may be malformed | REVIEW/PASS | WCAG 1.3.5 AA · ACT 73f2c2 |
 | FT-REVIEW-015 Exact unique link function may have substantially inconsistent identification across sampled pages | REVIEW | WCAG 3.2.4 AA |
 | FT-REVIEW-016 Inline important text spacing may block required user adjustments | REVIEW/PASS | WCAG 1.4.12 AA · ACT 24afc2 / 78fd32 / 9e45ec |
+| FT-REVIEW-017 Prerecorded audio may lack an observable equivalent alternative | REVIEW/PASS | WCAG 1.2.1 A |
+| FT-REVIEW-018 Prerecorded video may lack observable captions | REVIEW/PASS | WCAG 1.2.2 A · ACT f51b46 |
 
 ## Runtime rules
 
@@ -417,6 +431,8 @@ The rule is full-page only. Component-scoped analysis does not execute `FT-REVIE
 - `FT-REVIEW-014` validates only explicit standard-like `autocomplete` token sequences. It does not infer missing input-purpose metadata, judge unknown-only custom taxonomies, or prove that a field collects information about the user; those boundaries intentionally favor false negatives over false WCAG failures.
 - `FT-REVIEW-015` currently compares only unique rendered native HTTP(S) links with the same exact destination, same declared primary page language and same bounded observed naming source. It deliberately ignores duplicated destinations, buttons/custom controls, unknown-language pages and semantically uncertain label variations, so it favors false negatives over noisy 3.2.4 reviews.
 - `FT-REVIEW-016` covers only the three inline-`!important` ACT subsets for letter spacing, word spacing and wrapped-text line height. It does not automate paragraph spacing, all-language/script applicability, page-provided spacing controls, Shadow DOM/pseudo-generated text or the combined no-loss-of-content/functionality judgement required by the full WCAG 1.4.12 criterion.
+- `FT-REVIEW-017` covers only likely prerecorded native audio-only evidence. It does not prove that candidate alternative content is equivalent, does not claim the video-only branch of WCAG 1.2.1, and can miss custom or application-level alternatives outside the local media markup.
+- `FT-REVIEW-018` observes native/runtime captions tracks and uses browser `audioTracks` only when available. It does not detect burned-in captions or arbitrary custom-player caption systems, does not verify caption synchronization/accuracy/completeness, and may keep audio applicability as unknown.
 - Structural HTML checks operate on the parsed live DOM. Browser parser repair can normalize invalid source before FocusTrace runs; the tool does not infer source-level errors that are no longer observable. See [`STRUCTURAL_HTML.md`](STRUCTURAL_HTML.md).
 - Advanced ARIA checks operate on the live accessibility relationships FocusTrace can derive from DOM semantics and `aria-owns`; they do not claim to reproduce the browser accessibility tree or a screen reader's spoken output. See [`ARIA_VALIDATION.md`](ARIA_VALIDATION.md).
 - Automated static checks are intentionally narrower than the corresponding full WCAG success criteria.

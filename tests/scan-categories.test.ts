@@ -14,6 +14,8 @@ describe('scan categories', () => {
     expect(scanCategoryForRule('FT-REVIEW-014')).toBe('forms');
     expect(scanCategoryForRule('FT-REVIEW-015')).toBe('names');
     expect(scanCategoryForRule('FT-REVIEW-016')).toBe('other');
+    expect(scanCategoryForRule('FT-REVIEW-017')).toBe('other');
+    expect(scanCategoryForRule('FT-REVIEW-018')).toBe('other');
     expect(scanCategoryForRule('FT-REVIEW-002')).toBe('structure');
     expect(scanCategoryForRule('FT-REVIEW-001')).toBe('keyboard');
     expect(scanCategoryForRule('FT-REVIEW-012')).toBe('keyboard');

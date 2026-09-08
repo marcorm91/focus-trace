@@ -31,6 +31,13 @@ export function localizedReferenceLabel(reference: StandardReference, language: 
     if (reference.label === 'Important word spacing in style attributes is wide enough') {
       return 'El espaciado de palabras importante en atributos style es suficiente';
     }
+    if (reference.label === 'Audio-only and Video-only (Prerecorded)') {
+      return 'Solo audio y solo vídeo (pregrabado)';
+    }
+    if (reference.label === 'Captions (Prerecorded)') return 'Subtítulos (pregrabados)';
+    if (reference.label === 'Video element auditory content has captions') {
+      return 'El contenido auditivo del elemento de vídeo tiene subtítulos';
+    }
   }
   return baseLocalizedReferenceLabel(reference, language);
 }
@@ -124,6 +131,14 @@ const EXTRA_COPY_ES: Record<string, { title: string; description: string }> = {
     title: 'El espaciado de texto inline con !important puede bloquear ajustes del usuario',
     description: 'Este texto renderizado usa una declaración inline !important de espaciado por debajo de la expectativa ACT. Revisa si la página ofrece un mecanismo equivalente para ajustar el espaciado y si WCAG 1.4.12 aplica al idioma o sistema de escritura antes de considerarlo un incumplimiento.',
   },
+  'FT-REVIEW-017': {
+    title: 'El audio pregrabado puede carecer de una alternativa equivalente observable',
+    description: 'FocusTrace ha observado contenido probablemente pregrabado solo de audio sin una alternativa equivalente candidata en su marcado local. Revisa si existe una alternativa para medios temporales que presente la misma información antes de considerarlo un incumplimiento WCAG.',
+  },
+  'FT-REVIEW-018': {
+    title: 'El vídeo pregrabado puede carecer de subtítulos observables',
+    description: 'FocusTrace ha observado vídeo probablemente pregrabado sin una pista nativa de subtítulos observable. Revisa si contiene información auditiva y si los subtítulos se proporcionan mediante un reproductor personalizado o están incrustados en la imagen antes de considerarlo un incumplimiento WCAG.',
+  },
   'FT-RUNTIME-006': {
     title: 'La interacción de arrastre requiere revisar una alternativa de puntero sencillo',
     description: 'Trace observó un arrastre real. Revisa si la misma funcionalidad puede realizarse con un puntero sencillo sin movimiento de arrastre, teniendo en cuenta las excepciones de WCAG 2.5.7.',
@@ -153,6 +168,8 @@ const EXTRA_EVIDENCE_ES: Record<string, string> = {
   'FT-REVIEW-014': 'El atributo autocomplete utiliza vocabulario estándar en una secuencia de tokens que necesita revisión.',
   'FT-REVIEW-015': 'La misma función de enlace observada de forma única presenta identificaciones sustancialmente distintas entre las páginas comparadas.',
   'FT-REVIEW-016': 'Una declaración inline !important limita el espaciado de texto por debajo del valor evaluado para WCAG 1.4.12.',
+  'FT-REVIEW-017': 'El audio probablemente pregrabado señalado no expone una alternativa equivalente candidata que FocusTrace pueda observar en su marcado local. La equivalencia del contenido sigue requiriendo revisión manual.',
+  'FT-REVIEW-018': 'El vídeo probablemente pregrabado señalado no expone una pista nativa de subtítulos. Revisa subtítulos incrustados, reproductores personalizados y si el vídeo contiene realmente información auditiva.',
   'FT-RUNTIME-006': 'Se observó un movimiento de arrastre real y debe revisarse si existe una alternativa equivalente sin arrastrar.',
 };
 

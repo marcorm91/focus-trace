@@ -18,6 +18,7 @@ import {
   OBSOLETE_HTML_ELEMENT_RULE,
 } from '../shared/html-authoring-rules';
 import { LANGUAGE_PARTS_RULE } from '../shared/language-parts-rules';
+import { MEDIA_RULES } from '../shared/media-rules';
 import { OBSOLETE_ATTRIBUTES, OBSOLETE_ELEMENTS } from '../shared/obsolete-html-registry';
 import { RULES, type RuleDefinition } from '../shared/rule-catalog';
 import { STRUCTURAL_HTML_RULES } from '../shared/structural-html-rules';
@@ -48,6 +49,7 @@ const ALL_RULES: RuleDefinition[] = [
   LANGUAGE_PARTS_RULE,
   TEXT_SPACING_RULE,
   FOCUS_VISIBLE_RULE,
+  ...MEDIA_RULES,
   ...HTML_RULES,
   ...ADVANCED_ARIA_RULES,
 ];
@@ -120,6 +122,21 @@ describe('standards registry coverage', () => {
     expect(WCAG_COVERAGE_SUMMARY.totalActive).toBe(active.length);
     expect(WCAG_COVERAGE_SUMMARY.implemented + WCAG_COVERAGE_SUMMARY.notImplemented).toBe(active.length);
 
+    expect(wcagCoverageForCriterion('1.2.1')).toMatchObject({
+      level: 'A',
+      coverage: ['review', 'manual'],
+      ruleIds: ['FT-REVIEW-017'],
+      completeness: 'partial',
+      manualReviewRequired: true,
+    });
+    expect(wcagCoverageForCriterion('1.2.2')).toMatchObject({
+      level: 'A',
+      coverage: ['review', 'manual'],
+      ruleIds: ['FT-REVIEW-018'],
+      actRuleIds: ['f51b46'],
+      completeness: 'partial',
+      manualReviewRequired: true,
+    });
     expect(wcagCoverageForCriterion('1.3.5')).toMatchObject({
       level: 'AA',
       coverage: ['review', 'manual'],
@@ -192,11 +209,19 @@ describe('standards registry coverage', () => {
       surface: 'page',
       actRuleIds: ['23a2a8'],
     });
+    expect(wcagCoverageForCriterion('1.2.2')?.checks[0]).toMatchObject({
+      ruleId: 'FT-REVIEW-018',
+      method: 'review',
+      surface: 'page',
+      actRuleIds: ['f51b46'],
+    });
   });
 
   it('maps WCAG 2.2 A/AA web requirements to EN 301 549 V4.1.1 clause 9 without treating AAA as an AA requirement', () => {
     expect(EN_301_549_WEB_STANDARD.version).toBe('V4.1.1 (2026-09)');
     expect(wcagCoverageForCriterion('1.1.1')?.en301549?.clause).toBe('9.1.1.1');
+    expect(wcagCoverageForCriterion('1.2.1')?.en301549?.clause).toBe('9.1.2.1');
+    expect(wcagCoverageForCriterion('1.2.2')?.en301549?.clause).toBe('9.1.2.2');
     expect(wcagCoverageForCriterion('2.4.11')?.en301549?.clause).toBe('9.2.4.11');
     expect(wcagCoverageForCriterion('3.2.6')?.en301549?.clause).toBe('9.3.2.6');
     expect(wcagCoverageForCriterion('1.2.6')?.level).toBe('AAA');
