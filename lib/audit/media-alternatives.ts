@@ -120,7 +120,8 @@ function nativeTextTrackCount(video: HTMLVideoElement, kind: 'captions' | 'subti
 function audioTrackState(video: HTMLVideoElement): 'present' | 'absent' | 'unknown' {
   const tracks = (video as MediaElementWithTracks).audioTracks;
   if (!tracks || typeof tracks.length !== 'number') return 'unknown';
-  return tracks.length > 0 ? 'present' : 'absent';
+  if (tracks.length > 0) return 'present';
+  return video.readyState >= video.HAVE_METADATA ? 'absent' : 'unknown';
 }
 
 export function evaluatePrerecordedAudioAlternatives(
