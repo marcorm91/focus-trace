@@ -74,5 +74,5 @@ test('component scope is consumed once and excludes findings outside the selecte
   expect(fullPageScan.scope).toEqual({ type: 'page' });
   expect(pageTargets).toContain('#inside-empty');
   expect(pageTargets).toContain('#outside-empty');
-  expect(fullPageScan.rulesRun).toBe(47);
+  expect(fullPageScan.rulesRun).toBe(49);
 });
