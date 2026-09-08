@@ -57,13 +57,23 @@ async function broadcast(state: SessionState) {
 }
 
 async function ensureInjected(tabId: number): Promise<boolean> {
+  let injected = false;
+
   try {
     await browser.tabs.sendMessage(tabId, { type: 'FOCUSTRACE_PING' });
-    return false;
   } catch {
     await browser.scripting.executeScript({ target: { tabId }, files: ['/content-scripts/runtime.js'] });
-    return true;
+    injected = true;
   }
+
+  try {
+    await browser.tabs.sendMessage(tabId, { type: 'FOCUSTRACE_FOCUS_VISIBLE_PING' });
+  } catch {
+    await browser.scripting.executeScript({ target: { tabId }, files: ['/content-scripts/focus-visible.js'] });
+    injected = true;
+  }
+
+  return injected;
 }
 
 async function syncContentState(tabId: number, suppliedState?: SessionState) {
