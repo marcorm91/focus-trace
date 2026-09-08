@@ -71,22 +71,22 @@ export function locateScanTargetInPage(
         label?: string;
       };
     } catch {
-      return { found: false, selector: targetSelector, rendered: false };
+      return { found: false, selector, rendered: false };
     }
 
     let targets: Element[] = [];
     try {
       targets = [...document.querySelectorAll(payload.selector)];
     } catch {
-      return { found: false, selector: payload.selector, rendered: false };
+      return { found: false, selector, rendered: false };
     }
-    if (!targets.length) return { found: false, selector: payload.selector, rendered: false };
+    if (!targets.length) return { found: false, selector, rendered: false };
 
     const renderedTargets = targets.filter((target) => {
       const rect = target.getBoundingClientRect();
       return rect.width > 0 && rect.height > 0;
     });
-    if (!renderedTargets.length) return { found: true, selector: payload.selector, rendered: false };
+    if (!renderedTargets.length) return { found: true, selector, rendered: false };
 
     renderedTargets[0]?.scrollIntoView({ block: 'center', inline: 'center', behavior: 'auto' });
 
@@ -152,7 +152,7 @@ export function locateScanTargetInPage(
     document.documentElement.append(root);
     const durationMs = options.durationMs ?? 7000;
     if (durationMs > 0) window.setTimeout(() => root.remove(), durationMs);
-    return { found: true, selector: payload.selector, rendered: true };
+    return { found: true, selector, rendered: true };
   }
 
   let target: Element | null = null;
