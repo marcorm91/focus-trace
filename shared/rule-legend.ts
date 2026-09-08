@@ -7,7 +7,7 @@ export interface RuleLegendItem {
 }
 
 export interface RuleLegendNote {
-  id: 'sequence' | 'result-severity' | 'external' | 'occurrence';
+  id: 'sequence' | 'result-severity' | 'external' | 'standards-coverage' | 'occurrence';
   title: string;
   description: string;
 }
@@ -109,6 +109,15 @@ export function ruleLegendCopy(language: AppLanguage): RuleLegendCopy {
           language,
           'References such as WCAG 2.4.3, ACT 2ee8b8 or WAI-ARIA aria-expanded belong to those standards. An FT identifier is always the FocusTrace rule that cites those sources where applicable.',
           'Referencias como WCAG 2.4.3, ACT 2ee8b8 o WAI-ARIA aria-expanded pertenecen a esos estándares. Un identificador FT siempre es la regla de FocusTrace que cita esas fuentes cuando corresponde.',
+        ),
+      },
+      {
+        id: 'standards-coverage',
+        title: tr(language, 'WCAG and EN 301 549 traceability.', 'Trazabilidad WCAG y EN 301 549.'),
+        description: tr(
+          language,
+          'For WCAG 2.2 Level A and AA web criteria, FocusTrace maps WCAG x.y.z to EN 301 549 V4.1.1 (2026-09) clause §9.x.y.z. This mapping is traceability, not a conformance claim: criteria remain subject to manual review unless FocusTrace explicitly marks their coverage as complete.',
+          'Para los criterios web WCAG 2.2 de nivel A y AA, FocusTrace relaciona WCAG x.y.z con la cláusula §9.x.y.z de EN 301 549 V4.1.1 (2026-09). Esta relación aporta trazabilidad, no una declaración de conformidad: los criterios siguen requiriendo revisión manual salvo que FocusTrace marque explícitamente su cobertura como completa.',
         ),
       },
       {
