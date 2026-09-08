@@ -75,14 +75,6 @@ async function ensureInjected(tabId: number): Promise<boolean> {
     injected = true;
   }
 
-  const keyboardPointerReady = await browser.tabs.sendMessage(tabId, { type: 'FOCUSTRACE_KEYBOARD_POINTER_PING' })
-    .then((response) => response === true)
-    .catch(() => false);
-  if (!keyboardPointerReady) {
-    await browser.scripting.executeScript({ target: { tabId }, files: ['/content-scripts/keyboard-pointer.js'] });
-    injected = true;
-  }
-
   return injected;
 }
 
