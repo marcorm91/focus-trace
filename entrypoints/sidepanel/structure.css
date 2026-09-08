@@ -112,7 +112,7 @@
   grid-template-columns: minmax(0, 1fr) auto;
   gap: 10px;
   align-items: start;
-  padding: 11px;
+  padding: 10px;
   border: 1px solid var(--ft-border-soft);
   border-radius: var(--ft-radius-sm);
   background: var(--ft-surface);
@@ -120,6 +120,8 @@
 
 .structure-hint.review {
   border-color: color-mix(in srgb, var(--ft-warning, #8a4f00) 55%, var(--ft-border-soft));
+  border-left-width: 4px;
+  border-left-color: var(--ft-warning, #8a4f00);
 }
 
 .structure-hint-main {
