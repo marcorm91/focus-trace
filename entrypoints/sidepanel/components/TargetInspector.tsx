@@ -95,6 +95,7 @@ export function TargetInspector({
   occurrence,
   total,
   locateLabel,
+  locateAriaLabel,
 }: {
   selector: string;
   element?: TargetInspectorElement | undefined;
@@ -105,6 +106,7 @@ export function TargetInspector({
   occurrence?: number | undefined;
   total?: number | undefined;
   locateLabel?: string | undefined;
+  locateAriaLabel?: string | undefined;
 }) {
   const [inspection, setInspection] = useState<ScanTargetInspectionResult>();
   const [htmlOpen, setHtmlOpen] = useState(false);
@@ -192,6 +194,8 @@ export function TargetInspector({
         <div className="target-inspector-actions">
           <button
             type="button"
+            aria-label={locateAriaLabel}
+            title={locateAriaLabel}
             onClick={() => void onLocate(scanTargetLocator(selector, overlayLabel))}
           >
             {locateLabel ?? tr(language, 'Review on page', 'Revisar en la página')}
