@@ -13,6 +13,13 @@ export interface ScanTargetHighlightResult {
   rendered: boolean;
 }
 
+const TARGET_PREFIX = '__focustrace_target__:';
+
+export function scanTargetLocator(selector: string, label?: string): string {
+  if (!label) return selector;
+  return `${TARGET_PREFIX}${encodeURIComponent(JSON.stringify({ selector, label }))}`;
+}
+
 export function clearScanTargetHighlightInPage(): { removed: boolean } {
   const existing = document.querySelector('[data-focustrace-scan-highlight]');
   const group = document.querySelector('[data-focustrace-structure-highlights]');
@@ -36,11 +43,30 @@ export function locateScanTargetInPage(
   document.querySelector('[data-focustrace-scan-highlight]')?.remove();
   document.querySelector('[data-focustrace-structure-highlights]')?.remove();
 
+  const TARGET_PREFIX = '__focustrace_target__:';
   const GROUP_PREFIX = '__focustrace_group__:';
-  if (selector.startsWith(GROUP_PREFIX)) {
+  let targetSelector = selector;
+  let targetLabel = options.label;
+
+  if (selector.startsWith(TARGET_PREFIX)) {
     let payload: { selector: string; label?: string } | undefined;
     try {
-      payload = JSON.parse(decodeURIComponent(selector.slice(GROUP_PREFIX.length))) as {
+      payload = JSON.parse(decodeURIComponent(selector.slice(TARGET_PREFIX.length))) as {
+        selector: string;
+        label?: string;
+      };
+    } catch {
+      return { found: false, selector, rendered: false };
+    }
+    if (!payload.selector) return { found: false, selector, rendered: false };
+    targetSelector = payload.selector;
+    targetLabel = payload.label || targetLabel;
+  }
+
+  if (targetSelector.startsWith(GROUP_PREFIX)) {
+    let payload: { selector: string; label?: string } | undefined;
+    try {
+      payload = JSON.parse(decodeURIComponent(targetSelector.slice(GROUP_PREFIX.length))) as {
         selector: string;
         label?: string;
       };
@@ -101,7 +127,7 @@ export function locateScanTargetInPage(
 
       if (index === 0) {
         const badge = document.createElement('div');
-        badge.textContent = `${payload.label || options.label || 'FocusTrace'} · ${targets.length}`;
+        badge.textContent = `${payload.label || targetLabel || 'FocusTrace'} · ${targets.length}`;
         Object.assign(badge.style, {
           position: 'absolute',
           top: rect.top + window.scrollY >= 40 ? '-32px' : '4px',
@@ -131,11 +157,11 @@ export function locateScanTargetInPage(
 
   let target: Element | null = null;
   try {
-    target = document.querySelector(selector);
+    target = document.querySelector(targetSelector);
   } catch {
-    return { found: false, selector, rendered: false };
+    return { found: false, selector: targetSelector, rendered: false };
   }
-  if (!target) return { found: false, selector, rendered: false };
+  if (!target) return { found: false, selector: targetSelector, rendered: false };
 
   const readableLabel = (element: Element): string => {
     const ariaLabel = element.getAttribute('aria-label')?.trim();
@@ -159,7 +185,7 @@ export function locateScanTargetInPage(
 
   const rect = target.getBoundingClientRect();
   if (rect.width <= 0 || rect.height <= 0) {
-    return { found: true, selector, rendered: false };
+    return { found: true, selector: targetSelector, rendered: false };
   }
 
   if (options.focusTarget !== false && target instanceof HTMLElement) {
@@ -239,7 +265,7 @@ export function locateScanTargetInPage(
   const title = document.createElement('strong');
   const tag = target.tagName.toLowerCase();
   const role = target.getAttribute('role')?.trim();
-  title.textContent = `${options.label ?? 'FocusTrace'} · ${role ? `${tag} · ${role}` : tag}`;
+  title.textContent = `${targetLabel ?? 'FocusTrace'} · ${role ? `${tag} · ${role}` : tag}`;
   Object.assign(title.style, {
     overflow: 'hidden',
     textOverflow: 'ellipsis',
@@ -247,10 +273,10 @@ export function locateScanTargetInPage(
   });
   card.append(title);
 
-  const targetLabel = readableLabel(target);
-  if (targetLabel) {
+  const targetText = readableLabel(target);
+  if (targetText) {
     const detail = document.createElement('span');
-    detail.textContent = targetLabel;
+    detail.textContent = targetText;
     Object.assign(detail.style, {
       maxWidth: '100%',
       opacity: '.96',
@@ -278,5 +304,5 @@ export function locateScanTargetInPage(
   const durationMs = options.durationMs ?? 7000;
   if (durationMs > 0) window.setTimeout(() => overlay.remove(), durationMs);
 
-  return { found: true, selector, rendered: true };
+  return { found: true, selector: targetSelector, rendered: true };
 }

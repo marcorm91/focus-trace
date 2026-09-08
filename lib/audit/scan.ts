@@ -1,4 +1,4 @@
-import type { ComponentScanScope, FindingOutcome, ScanIssue, ScanResult } from '../../shared/types';
+import type { ComponentScanScope, ElementSnapshot, FindingOutcome, ScanIssue, ScanResult } from '../../shared/types';
 import {
   ALLOWED_ARIA_CHILD_RULE,
   ADVANCED_ARIA_RULES,
@@ -34,7 +34,7 @@ import {
 } from './contrast-state-coverage';
 import { textContrastSubjectsForElement } from './contrast';
 import { evaluateStructuralHtml, type StructuralHtmlSignalKind } from './content-model';
-import { isProgrammaticallyHidden, selectorFor } from './dom';
+import { accessibleName, isProgrammaticallyHidden, selectorFor, semanticRole } from './dom';
 import { evaluateLanguageParts, type LanguagePartEvaluation } from './language-parts';
 import { collectHeadingOutline, runFocusTraceScan as runBaseFocusTraceScan } from './scan-base';
 import { evaluateTargetSize, type TargetSizeEvaluation } from './target-size';
@@ -112,6 +112,59 @@ function ariaDescriptionFor(kind: AriaValidationSignalKind): string {
   }
 }
 
+function compactElementSnapshot(element: Element): ElementSnapshot {
+  const result: ElementSnapshot = {
+    tag: element.tagName.toLowerCase(),
+    selector: selectorFor(element),
+  };
+  if (element.id) result.id = element.id.slice(0, 120);
+  const role = semanticRole(element);
+  if (role) result.role = role;
+  const className = element.getAttribute('class')?.replace(/\s+/g, ' ').trim().slice(0, 140);
+  if (className) result.className = className;
+  try {
+    const name = accessibleName(element).replace(/\s+/g, ' ').trim().slice(0, 120);
+    if (name) result.name = name;
+  } catch {
+    // The target may detach while the synchronous scan is being finalized.
+  }
+  return result;
+}
+
+function ariaAllowedChildContext(element: Element, detail: string): Element | undefined {
+  const match = detail.match(/^role=("(?:\\.|[^"])*") exposes accessibility child role=/);
+  if (!match?.[1]) return undefined;
+
+  let expectedRole: string;
+  try {
+    expectedRole = JSON.parse(match[1]) as string;
+  } catch {
+    return undefined;
+  }
+
+  let current = element.parentElement;
+  while (current) {
+    if (semanticRole(current) === expectedRole) return current;
+    current = current.parentElement;
+  }
+
+  if (element.id) {
+    for (const owner of document.querySelectorAll('[aria-owns]')) {
+      const ids = owner.getAttribute('aria-owns')?.trim().split(/\s+/).filter(Boolean) ?? [];
+      if (ids.includes(element.id) && semanticRole(owner) === expectedRole) return owner;
+    }
+  }
+  return undefined;
+}
+
+function annotateIssueElementSnapshots(result: ScanResult): void {
+  for (const issue of [...result.issues, ...result.review, ...result.warnings]) {
+    if (issue.element) continue;
+    const element = elementForIssue(issue);
+    if (element) issue.element = compactElementSnapshot(element);
+  }
+}
+
 function issueFor(
   kind: StructuralHtmlSignalKind,
   element: Element,
@@ -134,6 +187,7 @@ function issueFor(
 
 function ariaIssueFor(kind: AriaValidationSignalKind, element: Element, detail: string): ScanIssue {
   const rule = RULE_FOR_ARIA_KIND[kind];
+  const context = kind === 'allowed-child' ? ariaAllowedChildContext(element, detail) : undefined;
   return {
     id: uid(),
     ruleId: rule.id,
@@ -142,6 +196,7 @@ function ariaIssueFor(kind: AriaValidationSignalKind, element: Element, detail: 
     severity: rule.severity,
     outcome: 'warning',
     targets: [selectorFor(element)],
+    ...(context ? { context: compactElementSnapshot(context) } : {}),
     evidence: detail,
     references: rule.references,
   };
@@ -464,5 +519,6 @@ export function runFocusTraceScan(scope?: ComponentScanScope): ScanResult {
   ];
   result.passes += targetSizePasses;
   result.rulesRun += 1;
+  annotateIssueElementSnapshots(result);
   return result;
 }
