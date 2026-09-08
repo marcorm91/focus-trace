@@ -137,6 +137,29 @@ describe('standards registry coverage', () => {
       completeness: 'partial',
       manualReviewRequired: true,
     });
+    expect(wcagCoverageForCriterion('1.2.3')).toMatchObject({
+      level: 'A',
+      coverage: ['review', 'manual'],
+      ruleIds: ['FT-REVIEW-021'],
+      actRuleIds: ['c5a4ea'],
+      completeness: 'partial',
+      manualReviewRequired: true,
+    });
+    expect(wcagCoverageForCriterion('1.2.4')).toMatchObject({
+      level: 'AA',
+      coverage: ['review', 'manual'],
+      ruleIds: ['FT-REVIEW-022'],
+      completeness: 'partial',
+      manualReviewRequired: true,
+    });
+    expect(wcagCoverageForCriterion('1.2.5')).toMatchObject({
+      level: 'AA',
+      coverage: ['review', 'manual'],
+      ruleIds: ['FT-REVIEW-023'],
+      actRuleIds: ['1ec09b'],
+      completeness: 'partial',
+      manualReviewRequired: true,
+    });
     expect(wcagCoverageForCriterion('1.3.5')).toMatchObject({
       level: 'AA',
       coverage: ['review', 'manual'],
@@ -215,6 +238,18 @@ describe('standards registry coverage', () => {
       surface: 'page',
       actRuleIds: ['f51b46'],
     });
+    expect(wcagCoverageForCriterion('1.2.3')?.checks[0]).toMatchObject({
+      ruleId: 'FT-REVIEW-021',
+      method: 'review',
+      surface: 'page',
+      actRuleIds: ['c5a4ea'],
+    });
+    expect(wcagCoverageForCriterion('1.2.5')?.checks[0]).toMatchObject({
+      ruleId: 'FT-REVIEW-023',
+      method: 'review',
+      surface: 'page',
+      actRuleIds: ['1ec09b'],
+    });
   });
 
   it('maps WCAG 2.2 A/AA web requirements to EN 301 549 V4.1.1 clause 9 without treating AAA as an AA requirement', () => {
@@ -222,6 +257,9 @@ describe('standards registry coverage', () => {
     expect(wcagCoverageForCriterion('1.1.1')?.en301549?.clause).toBe('9.1.1.1');
     expect(wcagCoverageForCriterion('1.2.1')?.en301549?.clause).toBe('9.1.2.1');
     expect(wcagCoverageForCriterion('1.2.2')?.en301549?.clause).toBe('9.1.2.2');
+    expect(wcagCoverageForCriterion('1.2.3')?.en301549?.clause).toBe('9.1.2.3');
+    expect(wcagCoverageForCriterion('1.2.4')?.en301549?.clause).toBe('9.1.2.4');
+    expect(wcagCoverageForCriterion('1.2.5')?.en301549?.clause).toBe('9.1.2.5');
     expect(wcagCoverageForCriterion('2.4.11')?.en301549?.clause).toBe('9.2.4.11');
     expect(wcagCoverageForCriterion('3.2.6')?.en301549?.clause).toBe('9.3.2.6');
     expect(wcagCoverageForCriterion('1.2.6')?.level).toBe('AAA');
