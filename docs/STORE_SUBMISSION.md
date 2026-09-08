@@ -2,12 +2,12 @@
 
 This document keeps the Chrome Web Store and Microsoft Edge Add-ons submission copy aligned with the actual extension behavior. It is not a substitute for the public privacy policy or the release checklist.
 
-Current release candidate: **0.2.4**.
+Current release candidate: **0.2.5**.
 
 ## Release positioning
 
 - Product: FocusTrace
-- Version: 0.2.4
+- Version: 0.2.5
 - Supported targets: Chrome 114+ and Chromium-based Microsoft Edge
 - Firefox: keep experimental until the manual Firefox smoke checklist in `RELEASE_CHECKLIST.md` has passed
 - Architecture: Manifest V3, local-first, no required backend
@@ -22,7 +22,7 @@ Run local WCAG 2.2 checks, inspect document structure and debug keyboard focus, 
 
 FocusTrace helps developers investigate web accessibility with local static checks, document-structure inspection and runtime focus debugging.
 
-Analyze a full page or a selected component, inspect deterministic failures and review signals, use Structure to understand the page's semantic organization, then use Trace to understand keyboard focus, SPA transitions, dialogs and dynamic DOM behavior as it happens. Replay and Report keep the recorded evidence understandable, while optional FocusTrace Memory can retain bounded local history and visual context for repeated checks.
+Analyze a full page or a selected component, inspect deterministic failures and review signals, use Structure to understand the page's semantic organization, then use Trace to understand keyboard focus, SPA transitions, dialogs and dynamic DOM behavior as it happens. A full-page analysis prepares the bounded Structure snapshot in the same explicit run, so Headings, Semantics and Metrics can be reviewed without launching a second structural analysis. Replay and Report keep the recorded evidence understandable, while optional FocusTrace Memory can retain bounded local history and visual context for repeated checks.
 
 FocusTrace separates deterministic failures from contextual review signals, semantic suggestions and authoring warnings. It is designed to support accessibility debugging and review, not to certify that a page conforms to WCAG or EN 301 549.
 
@@ -30,13 +30,14 @@ Key capabilities include:
 
 - local WCAG 2.2-oriented page and component analysis;
 - accessible-name, language, text/non-text contrast, target-size/spacing, ARIA and HTML authoring checks;
-- on-demand Structure workspace with heading outline, concrete semantic suggestions and accessibility-oriented structural metrics;
+- conservative WCAG review coverage for bypass mechanisms, explicit input purpose, language of parts and text spacing;
+- on-demand Structure workspace with heading outline, concrete semantic suggestions and accessibility-oriented structural metrics prepared with the full-page analysis;
 - runtime keyboard-focus and interaction tracing;
-- conservative runtime review evidence for completely obscured focus, dragging interactions and potentially unexposed status messages;
+- conservative runtime review evidence for completely obscured focus, dragging interactions, potentially unexposed status messages and real-keyboard focus visibility;
 - SPA navigation and dialog lifecycle evidence;
 - read-only replay and consolidated reports;
 - multipage audit history with bounded local visual context for recent reviewed pages;
-- representative same-origin Site Audit sampling, including cross-page Consistent Help review evidence;
+- representative same-origin Site Audit sampling, including Consistent Help, Consistent Navigation and Consistent Identification review evidence;
 - actionable English/Spanish remediation guidance for selected static, runtime and Site Audit findings;
 - native English/Spanish WebExtension metadata for extension name, description and toolbar action title;
 - optional local accessibility history through FocusTrace Memory, including bounded element context for remembered failures.
@@ -53,11 +54,11 @@ Analyze, Structure, Trace, Replay, Report, Site Audit and Memory are complementa
 
 ### `activeTab`
 
-Used to access the current tab after an explicit user action such as Analyze, Analyze Structure or Trace. FocusTrace does not require permanent access to every website for normal single-page use. The same user-initiated analysis context may also be used for bounded local visual evidence when a full-page review is added to the multipage audit, and for a small Memory preview when Memory is explicitly enabled.
+Used to access the current tab after an explicit user action such as Analyze or Trace. FocusTrace does not require permanent access to every website for normal single-page use. The same user-initiated analysis context may also be used for bounded local visual evidence when a full-page review is added to the multipage audit, for a small Memory preview when Memory is explicitly enabled, and for temporary Focus Visible comparison captures during a manually recorded real-Tab Trace.
 
 ### `scripting`
 
-Used to run the local FocusTrace scanner, generate an explicitly requested Structure snapshot, run runtime instrumentation in pages the user chooses to inspect, locate current report targets, and prepare bounded local visual context where the corresponding feature allows it.
+Used to run the local FocusTrace scanner, generate the bounded Structure snapshot that accompanies an explicit full-page analysis or Structure refresh, run runtime instrumentation in pages the user chooses to inspect, locate current report targets, and prepare bounded local visual context where the corresponding feature allows it.
 
 ### `storage`
 
@@ -67,7 +68,9 @@ A full-page analysis can add or replace one page in the active multipage audit. 
 
 Memory is disabled by default. When enabled, it can store bounded local diagnostic observations, compact element locators and small compressed visual previews for selected remembered failures. It does not store page HTML, full DOM snapshots or full-page screenshots as Memory history.
 
-Structure snapshots are generated on demand and remain in the active sidepanel/sidebar session. Reports can reuse compact Structure metrics and semantic suggestions; Structure does not persist a parallel DOM tree as report or Memory history.
+A full-page Analyze action prepares the current bounded Structure snapshot in the active sidepanel/sidebar session. Structure can also be refreshed explicitly after the page changes. Reports can reuse compact Structure metrics and semantic suggestions; Structure does not persist a parallel DOM tree as report or Memory history.
+
+Temporary Focus Visible PNG captures are decoded and compared in memory only. They are not written to session storage, FocusTrace Memory, reports or exports.
 
 ### `sidePanel` (Chromium)
 
@@ -75,13 +78,13 @@ Used to provide the main FocusTrace interface alongside the page being inspected
 
 ### Optional `http://*/*` and `https://*/*` host access
 
-Requested only from explicit user actions when functionality needs page access beyond the transient active-tab grant. This includes actions such as Analyze, Analyze / Refresh Structure and Site Audit. Site Audit requests access for the selected same-origin site so it can discover and analyze representative pages.
+Requested only from explicit user actions when functionality needs page access beyond the transient active-tab grant. This includes actions such as Analyze, Structure refresh and Site Audit. Site Audit requests access for the selected same-origin site so it can discover and analyze representative pages.
 
 ### Optional `<all_urls>` visual-capture access
 
-Used when the user explicitly requests visual evidence for a printable single-page report or Site Audit export and the browser requires broader screenshot capability. The broader capture permission is requested from the user action and is released after capture when FocusTrace acquired it for that operation.
+Used when the user explicitly requests visual evidence for a printable single-page report or when browser capture authority is required for a user-initiated visual-evidence flow. Broader capture permission is not a required installation-time permission and is released after the operation when FocusTrace acquired it temporarily.
 
-Multipage audit review crops and FocusTrace Memory previews do not add a persistent `<all_urls>` grant. They use the active-tab/page-access context already established for the explicit analysis and record an unavailable/fallback state when the browser cannot capture the visible tab.
+Multipage audit review crops and FocusTrace Memory previews do not add a persistent `<all_urls>` grant. They use the active-tab/page-access context already established for the explicit analysis and record an unavailable/fallback state when the browser cannot capture the visible tab. Focus Visible runtime comparison likewise omits its review when safe capture evidence cannot be established.
 
 ## Remote code
 
@@ -91,7 +94,9 @@ FocusTrace does not intentionally execute remotely hosted JavaScript or download
 
 FocusTrace may inspect website content necessary to provide its user-facing accessibility analysis, such as DOM structure and attributes, accessible-name/role information, rendered contrast and target-geometry evidence, focus transitions, selected runtime mutations, status-message candidates, URL/title context and local visual evidence associated with the requested feature.
 
-An explicitly generated Structure snapshot can include bounded accessibility-oriented metrics plus selectors and evidence for concrete semantic review suggestions. Reports may reuse the compact metrics/suggestions subset; exporting a report does not trigger another Structure scan.
+An explicit full-page analysis can generate a bounded Structure snapshot containing accessibility-oriented metrics plus selectors and evidence for concrete semantic review suggestions. Reports may reuse the compact metrics/suggestions subset; exporting a report does not trigger another Structure scan.
+
+During an active manual Trace, a trusted real Tab/Shift+Tab transition can cause temporary visible-tab captures to be decoded and compared for bounded Focus Visible review evidence. Those temporary images are not retained after the comparison.
 
 Multipage audits keep the latest saved full-page analysis for each normalized URL and may retain bounded local screenshot crops for recent reviews. Re-analyzing the same normalized URL replaces its prior scan and its saved audit visual evidence. Historical Trace and Structure snapshots are not persisted as part of a historical page review.
 
@@ -130,13 +135,13 @@ Record the final public URLs here before submission:
 
 ## Final submission gate
 
-Before uploading the production ZIP for 0.2.4:
+Before uploading the production ZIP for 0.2.5:
 
 1. Complete `npm run release:check:full` on the release candidate.
-2. Confirm CI is green on the exact commit intended for `v0.2.4`.
+2. Confirm CI is green on the exact commit intended for `v0.2.5`.
 3. Complete the manual WCAG 2.2 regression, native EN/ES browser i18n, Structure, multipage Report and FocusTrace Memory smoke items in `RELEASE_CHECKLIST.md`.
 4. Smoke-test the unpacked production Chromium build.
 5. Confirm production manifests contain only the intended required and optional permissions.
 6. Confirm the public privacy-policy, support/contact and voluntary-support URLs resolve without authentication.
-7. Review the final store declarations against `PRIVACY.md` and actual behavior, including target-geometry evidence, runtime status-message candidates, on-demand Structure evidence, bounded multipage-audit visual evidence and opt-in Memory previews/locators.
-8. Tag the exact approved commit as `v0.2.4` only after the release candidate is accepted.
+7. Review the final store declarations against `PRIVACY.md` and actual behavior, including target-geometry evidence, Focus Visible temporary captures, runtime status-message candidates, unified Structure evidence, bounded multipage-audit visual evidence and opt-in Memory previews/locators.
+8. Tag the exact approved commit as `v0.2.5` only after the release candidate is accepted.

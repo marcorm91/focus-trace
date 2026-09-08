@@ -1,6 +1,6 @@
 # FocusTrace release checklist
 
-Current release candidate: **0.2.4**.
+Current release candidate: **0.2.5**.
 
 Use this checklist before publishing a release build or submitting an updated package to a browser store. Keep the candidate version above aligned with `package.json`, `package-lock.json`, the browser manifests and the release contract test.
 
@@ -36,6 +36,35 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 
 ## WCAG 2.2 regression smoke
 
+### WCAG 1.3.5 Identify Input Purpose
+
+- Analyze a form with an explicit valid standard `autocomplete` token sequence and confirm the modeled expectation can pass without inferring purpose from the visible label alone.
+- Use malformed standard-like `autocomplete` grammar and confirm `FT-REVIEW-014` stays `REVIEW`, never automatic `FAIL`.
+- Use an unknown-only/custom purpose taxonomy and confirm FocusTrace does not invent a WCAG failure from it.
+- Switch EN/ES and confirm explanatory/remediation copy is translated while HTML tokens remain unchanged.
+
+### WCAG 1.4.12 Text Spacing
+
+- Analyze direct visible text with inline `letter-spacing`, `word-spacing` or `line-height` declarations marked `!important` below the modeled ACT thresholds and confirm `FT-REVIEW-016` identifies only the applicable property.
+- Confirm normal-priority declarations, CSS-wide values such as `inherit`/`unset`/`revert`, code-like contexts and non-rendered text are not reported by this bounded detector.
+- For `line-height`, confirm a genuine soft wrap is required and authored line breaks alone do not establish applicability.
+- Manually apply the complete WCAG text-spacing set together, including paragraph spacing, and verify content/functionality is not lost; do not treat the automated subset as complete 1.4.12 conformance proof.
+
+### WCAG 2.4.1 Bypass Blocks
+
+- Analyze a page with substantial repeated navigation before main content and a valid early keyboard-focusable same-document bypass link; confirm the review is suppressed when its target resolves to the main content area.
+- Remove the observable bypass mechanism and confirm `FT-REVIEW-012` remains a contextual `REVIEW`, not automatic `FAIL`.
+- Confirm a `<main>` landmark alone is not treated as proof that repeated blocks can be bypassed.
+- Confirm the rule does not require the literal text “Skip to content”.
+
+### WCAG 2.4.7 Focus Visible
+
+- Start a manual Trace and move with a real `Tab` / `Shift+Tab` to a control whose keyboard focus state has no local visible pixel change; after the stable observation window, confirm `FT-RUNTIME-010` can appear as `REVIEW`.
+- Repeat on a control with a clearly visible focus indicator and confirm the Focus Visible review is not emitted for that transition.
+- Cause scroll, resize or visual animation/instability during the evidence window and confirm the observation is discarded rather than converted into a noisy result.
+- Confirm automatic Focus Walk is not presented as equivalent evidence for this rule because programmatic `element.focus()` does not reliably reproduce keyboard `:focus-visible` modality.
+- Inspect extension session/Memory/report data and confirm temporary PNG comparison captures are not persisted.
+
 ### WCAG 2.4.11 Focus Not Obscured (Minimum)
 
 - Start Trace, move keyboard focus to a visible control, then scroll or introduce a fixed/sticky overlay so the already-focused control becomes completely covered without moving focus.
@@ -60,6 +89,27 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 - Check a sufficiently large target and confirm the rule can pass its modeled size expectation.
 - Verify inline, equivalent-target, user-agent-control and essential-presentation possibilities are not incorrectly promoted to automatic failures.
 - Switch EN/ES and confirm the criterion title, explanation and remediation remain semantically equivalent while selectors/numeric evidence stay unchanged.
+
+### WCAG 3.1.2 Language of Parts
+
+- Analyze rendered human-language text with an explicit valid nested `lang` and confirm the explicit-language expectation remains quiet/passing.
+- Use an explicit invalid primary language tag and confirm `FT-WCAG-013` reports the deterministic invalid declaration.
+- Confirm `code`, `pre`, `samp`, `kbd`, `var` and non-rendered source contexts are excluded from this bounded rule.
+- Confirm FocusTrace does not infer missing language changes from prose alone and does not claim complete 3.1.2 coverage.
+
+### WCAG 3.2.3 Consistent Navigation
+
+- Run Site Audit over sampled pages with a repeated rendered navigation landmark whose complete normalized destination set is identical but whose order changes; confirm `FT-REVIEW-013` is produced as `REVIEW`.
+- Repeat with the same order and confirm the review disappears.
+- Repeat with only partial destination overlap or ambiguous duplicate matching blocks and confirm FocusTrace does not force a comparison.
+- Preserve the possibility of user-initiated order changes; do not present this review as automatic WCAG failure.
+
+### WCAG 3.2.4 Consistent Identification
+
+- Run Site Audit over pages where one unique native link has the same exact HTTP(S) destination and same naming source but substantially different identification; confirm `FT-REVIEW-015` can be produced as `REVIEW`.
+- Repeat with compatible labels such as `Cart` / `View cart` and numeric-only variants such as `Go to page 4` / `Go to page 5`; confirm those cases stay quiet.
+- Repeat across different primary page languages, different naming sources or duplicate same-destination links and confirm the comparator declines the ambiguous comparison.
+- Confirm an exact destination is described only as a strong function anchor, not proof that the complete functionality is semantically identical.
 
 ### WCAG 3.2.6 Consistent Help
 
@@ -87,16 +137,18 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 
 ## Structure smoke
 
-- Open **Structure** and confirm that merely entering the workspace does not request page access or generate a semantic/metrics snapshot.
-- Open **Headings** inside Structure and confirm the existing H1–H6 tree starts fully expanded, its indentation gutter remains transparent, and hierarchy signals, branch controls and page overlay still work.
-- Open **Semantics** or **Metrics**, run **Analyze structure** explicitly and confirm those views populate only after that action.
+- From a fresh page/session, confirm merely opening **Structure** does not independently request access or start continuous DOM observation.
+- Run **Analyze this page** and confirm the normal rule-engine result and bounded Structure snapshot are prepared from that same explicit full-page action.
+- Open **Headings**, **Semantics** and **Metrics** after Analyze and confirm all three are already populated without requiring a second **Analyze structure** action.
+- Change the inspected DOM, use the explicit Structure **Refresh** action and confirm semantic/metric evidence is updated on request rather than continuously.
+- Open **Headings** and confirm the H1–H6 tree starts fully expanded, its indentation gutter remains transparent, and hierarchy signals, branch controls and page overlay still work.
 - Review semantic suggestions for generic `div`/`span` controls or headings, inline click handlers and generic sequential tab stops; verify they are presented as suggestions/review signals rather than automatic WCAG failures.
 - Confirm Metrics reports the current accessibility-oriented groups: headings, semantic regions, lists, forms, buttons, links, form controls, tables and images.
 - Test a large DOM and confirm safety limits produce a limited-snapshot notice instead of continuous processing or an unresponsive panel.
-- Open **Report** after analyzing Structure and confirm section 03 is **Document structure / Estructura del documento**, includes compact accessibility-oriented metrics and only headings that require review, and does not duplicate the complete heading tree.
+- Open **Report** after full-page analysis and confirm section 03 is **Document structure / Estructura del documento**, includes compact accessibility-oriented metrics and only headings that require review, and does not duplicate the complete heading tree.
+- Confirm the report accordion cards share the same soft border treatment and the Document Structure header/metrics/separators have readable spacing without content sitting directly against divider lines.
 - Export PDF and TXT from the same live session and confirm both reuse the available compact Structure evidence without triggering another DOM scan or exporting a full DOM tree.
-- Repeat the report flow without analyzing Structure and confirm the report remains passive and explains that accessibility-oriented Structure metrics/suggestions are not available.
-- Run a component-scoped analysis and confirm page-global Structure evidence is not mixed into the component-only static report.
+- Run a component-scoped analysis and confirm the page-global Structure snapshot is cleared/not mixed into the component-only static report.
 
 ## Multipage Report smoke
 
@@ -143,10 +195,11 @@ The Firefox artifact remains experimental until these checks pass on Firefox 115
 
 - Load `.output/firefox-mv3/manifest.json` or the `focustrace-firefox-dev` artifact from `about:debugging#/runtime/this-firefox`.
 - Confirm clicking the FocusTrace toolbar action opens the Firefox sidebar.
-- Run Analyze and locate at least one finding on the inspected page.
-- Open Structure, inspect Headings, then explicitly run **Analyze structure** and confirm Semantics/Metrics populate while the sidebar remains responsive.
+- Run **Analyze this page** and confirm static findings plus Headings/Semantics/Metrics are prepared from the same explicit analysis.
+- Open Structure, inspect Headings/Semantics/Metrics, change the page DOM, then use **Refresh** and confirm the snapshot updates while the sidebar remains responsive.
 - Start a manual Trace, leave the sidebar, interact with the page, then return and confirm recording continued.
-- Run the automatic Tab walk and confirm the focus journey is populated.
+- Exercise a real keyboard Tab transition with and without a visible focus indicator; confirm Focus Visible evidence is either correctly reviewed or safely omitted when Firefox capture authority/evidence is unavailable, never fabricated.
+- Run the automatic Tab walk and confirm the focus journey is populated without presenting that programmatic walk as equivalent Focus Visible evidence.
 - Select a recorded focus step and confirm the current page highlight/inspector appears.
 - Check Replay and Report against the same runtime session.
 - Add at least two pages to a multipage audit, revisit the historical report and open its audit PDF.
@@ -173,9 +226,9 @@ Firefox production permissions must remain:
 
 Firefox uses `sidebar_action` generated from the WXT sidepanel entrypoint rather than the Chromium `sidePanel` permission.
 
-Production builds must not declare required global host permissions. Optional HTTP/HTTPS host access may be requested only from an explicit page action and must remain documented in the README and privacy policy. The localhost host permission used by E2E is test-only.
+Production builds must not declare required global host permissions. Optional HTTP/HTTPS host access may be requested only from an explicit page action and must remain documented in the README and privacy policy. The localhost/global visual-capture authority added by the E2E build is test-only and must not become a required production host permission.
 
-Confirm [`PRIVACY.md`](../PRIVACY.md) still matches the actual product behavior, especially storage, on-demand Structure evidence, bounded multipage-audit visual context, optional Memory visual context, optional single-page report screenshot evidence, external services and sponsorship integration.
+Confirm [`PRIVACY.md`](../PRIVACY.md) still matches the actual product behavior, especially unified full-page Structure evidence, temporary in-memory Focus Visible captures, bounded multipage-audit visual context, optional Memory visual context, optional single-page report screenshot evidence, external services and sponsorship integration.
 
 Before a browser-store submission, resolve the publication blockers in `STORE_SUBMISSION.md`: the public privacy-policy URL and public support/contact URL must be real, unauthenticated destinations rather than `TODO` placeholders.
 
@@ -225,18 +278,18 @@ Before changing visibility:
 
 ## Release
 
-For the current candidate, the release version is **0.2.4** and the intended tag is **`v0.2.4`**.
+For the current candidate, the release version is **0.2.5** and the intended tag is **`v0.2.5`**.
 
-- Confirm `package.json`, `package-lock.json` and all browser manifests report `0.2.4`.
-- Confirm `tests/release-contract.test.ts` targets `v0.2.4` and passes.
-- Confirm `docs/RELEASE_NOTES_0.2.4.md` and `CHANGELOG.md` match the shipped behavior and limitations.
-- Confirm the version shown in Settings comes from the installed manifest and displays `0.2.4` in the packaged candidate.
+- Confirm `package.json`, `package-lock.json` and all browser manifests report `0.2.5`.
+- Confirm `tests/release-contract.test.ts` targets `v0.2.5` and passes.
+- Confirm `docs/RELEASE_NOTES_0.2.5.md` and `CHANGELOG.md` match the shipped behavior and limitations.
+- Confirm the version shown in Settings comes from the installed manifest and displays `0.2.5` in the packaged candidate.
 - Confirm the release commit is on `main` and CI is green on that exact commit.
 - Build the production Chrome, Edge and Firefox MV3 artifacts from that commit.
 - Smoke-test the unpacked production build in supported Chromium browsers.
 - Complete the Firefox experimental smoke checklist before describing Firefox as officially supported.
-- Tag the exact approved commit as `v0.2.4`.
+- Tag the exact approved commit as `v0.2.5`.
 - Review the generated ZIPs before attaching/uploading them.
 - Only then publish/distribute the release artifacts or submit the updated packages to browser stores.
 
-After publishing 0.2.4, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.
+After publishing 0.2.5, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.
