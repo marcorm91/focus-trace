@@ -24,8 +24,9 @@ const CODE_LIKE_SELECTOR = 'code, pre, samp, kbd, var';
 function allElements(root: Document | Element): HTMLElement[] {
   const elements: HTMLElement[] = [];
   if (root instanceof HTMLElement) elements.push(root);
-  for (const element of root.querySelectorAll<HTMLElement>('[style]')) {
-    if (!elements.includes(element)) elements.push(element);
+  for (const element of root.querySelectorAll('[style]')) {
+    if (!(element instanceof HTMLElement) || elements.includes(element)) continue;
+    elements.push(element);
   }
   return elements.filter((element) => element.hasAttribute('style'));
 }
