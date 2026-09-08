@@ -4,6 +4,8 @@ import { expect, startRecording, test, waitForSession } from './support/extensio
 
 let fixtures: FixtureServer;
 
+const BASELINE_SETTLE_MS = 2_500;
+
 test.beforeAll(async () => {
   fixtures = await startFixtureServer();
 });
@@ -20,7 +22,10 @@ test('reviews stable keyboard focus with no local visible pixel change and accep
   await page.evaluate(() => (document.activeElement as HTMLElement | null)?.blur());
   await page.keyboard.press('Tab');
   await expect(page.locator('#before')).toBeFocused();
-  await page.waitForTimeout(1_600);
+  // The first focused control has to remain in place long enough for the
+  // one-second ACT stability window plus the two lossless capture/decode steps
+  // that establish the adjacent target's stable non-focused baseline.
+  await page.waitForTimeout(BASELINE_SETTLE_MS);
 
   await page.keyboard.press('Tab');
   await expect(page.locator('#no-indicator')).toBeFocused();
