@@ -8,6 +8,7 @@ import {
 } from '../../../lib/audit/contrast';
 import { reportFindingDescription } from '../../../lib/report/finding-guidance';
 import { type ExplanationLevel } from '../../../lib/runtime/explanations';
+import { scanTargetLocator } from '../../../lib/runtime/scan-target-overlay';
 import { useRovingTabs } from '../../../lib/ui/roving-tabs';
 import { scanCategoryForIssue, type ScanCategory } from '../../../shared/scan-categories';
 import { countBySeverity, SEVERITY_ORDER, sortBySeverity, type SeverityFilter } from '../../../shared/severity';
@@ -21,6 +22,7 @@ import type { FindingOutcome, ScanIssue, ScanResult, Severity } from '../../../s
 import { Empty, ReferenceList } from '../components/Common';
 import { FindingGuidance } from '../components/FindingGuidance';
 import { ImpactMatrix } from '../components/ImpactMatrix';
+import { TargetInspector } from '../components/TargetInspector';
 
 type ScanFilter = FindingOutcome;
 type ColorFormat = 'hex' | 'rgb';
@@ -423,6 +425,17 @@ function FindingRuleAccordion({
     setIndex(Math.max(0, issues.length - 1));
   }, [index, issues.length]);
 
+  const moveTo = (next: number) => {
+    const bounded = Math.max(0, Math.min(issues.length - 1, next));
+    setIndex(bounded);
+    const nextIssue = issues[bounded];
+    const nextTarget = nextIssue?.targets[0];
+    if (nextTarget && nextIssue) {
+      const label = `${nextIssue.ruleId} · ${bounded + 1} ${tr(language, 'of', 'de')} ${issues.length}`;
+      void onLocate(scanTargetLocator(nextTarget, label));
+    }
+  };
+
   return (
     <details className={`scan-rule-group outcome-${first.outcome} severity-${first.severity}`}>
       <summary>
@@ -453,7 +466,7 @@ function FindingRuleAccordion({
               type="button"
               disabled={index === 0}
               aria-label={tr(language, 'Previous affected element', 'Elemento afectado anterior')}
-              onClick={() => setIndex((current) => Math.max(0, current - 1))}
+              onClick={() => moveTo(index - 1)}
             >
               ‹
             </button>
@@ -462,14 +475,21 @@ function FindingRuleAccordion({
               type="button"
               disabled={index >= issues.length - 1}
               aria-label={tr(language, 'Next affected element', 'Siguiente elemento afectado')}
-              onClick={() => setIndex((current) => Math.min(issues.length - 1, current + 1))}
+              onClick={() => moveTo(index + 1)}
             >
               ›
             </button>
           </div>
         )}
 
-        <FindingCard issue={issue} level={level} language={language} onLocate={onLocate} />
+        <FindingCard
+          issue={issue}
+          level={level}
+          language={language}
+          onLocate={onLocate}
+          occurrence={index + 1}
+          total={issues.length}
+        />
       </div>
     </details>
   );
@@ -480,11 +500,15 @@ function FindingCard({
   level,
   language,
   onLocate,
+  occurrence,
+  total,
 }: {
   issue: ScanIssue;
   level: ExplanationLevel;
   language: AppLanguage;
   onLocate: (selector: string) => void | Promise<void>;
+  occurrence: number;
+  total: number;
 }) {
   const copy = localizedScanIssue(issue, language);
   const description = reportFindingDescription(issue, language);
@@ -521,20 +545,17 @@ function FindingCard({
       <p className="scan-occurrence-description">{description}</p>
 
       {target && (
-        <div className="finding-location">
-          <div>
-            <small>{tr(language, 'Element location', 'Ubicación del elemento')}</small>
-            <code title={target}>{target}</code>
-          </div>
-          <button
-            type="button"
-            aria-label={tr(language, 'Highlight element on page', 'Destacar elemento en la página')}
-            title={tr(language, 'Highlight element on page', 'Destacar elemento en la página')}
-            onClick={() => void onLocate(target)}
-          >
-            <span aria-hidden="true">&lt;/&gt;</span>
-          </button>
-        </div>
+        <TargetInspector
+          selector={target}
+          element={issue.element}
+          context={issue.context}
+          language={language}
+          onLocate={onLocate}
+          ruleId={issue.ruleId}
+          occurrence={occurrence}
+          total={total}
+          locateAriaLabel={tr(language, 'Highlight element on page', 'Destacar elemento en la página')}
+        />
       )}
 
       {issue.contrast && (
