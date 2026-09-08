@@ -21,6 +21,16 @@ export function localizedReferenceLabel(reference: StandardReference, language: 
     if (reference.label === 'Element with lang attribute has valid language tag') {
       return 'El elemento con atributo lang tiene una etiqueta de idioma válida';
     }
+    if (reference.label === 'Text Spacing') return 'Espaciado de texto';
+    if (reference.label === 'Important letter spacing in style attributes is wide enough') {
+      return 'El espaciado de letras importante en atributos style es suficiente';
+    }
+    if (reference.label === 'Important line height in style attributes is wide enough') {
+      return 'La altura de línea importante en atributos style es suficiente';
+    }
+    if (reference.label === 'Important word spacing in style attributes is wide enough') {
+      return 'El espaciado de palabras importante en atributos style es suficiente';
+    }
   }
   return baseLocalizedReferenceLabel(reference, language);
 }
@@ -110,6 +120,10 @@ const EXTRA_COPY_ES: Record<string, { title: string; description: string }> = {
     title: 'Una función repetida puede identificarse de forma incoherente entre páginas',
     description: 'Un enlace nativo observado de forma única apunta al mismo destino exacto en páginas muestreadas con el mismo idioma principal, pero su identificación cambia de forma sustancial. Confirma que se trate de la misma funcionalidad y, si es así, mantén etiquetas o nombres accesibles coherentes según WCAG 3.2.4.',
   },
+  'FT-REVIEW-016': {
+    title: 'El espaciado de texto inline con !important puede bloquear ajustes del usuario',
+    description: 'Este texto renderizado usa una declaración inline !important de espaciado por debajo de la expectativa ACT. Revisa si la página ofrece un mecanismo equivalente para ajustar el espaciado y si WCAG 1.4.12 aplica al idioma o sistema de escritura antes de considerarlo un incumplimiento.',
+  },
   'FT-RUNTIME-006': {
     title: 'La interacción de arrastre requiere revisar una alternativa de puntero sencillo',
     description: 'Trace observó un arrastre real. Revisa si la misma funcionalidad puede realizarse con un puntero sencillo sin movimiento de arrastre, teniendo en cuenta las excepciones de WCAG 2.5.7.',
@@ -138,6 +152,7 @@ const EXTRA_EVIDENCE_ES: Record<string, string> = {
   'FT-REVIEW-013': 'El mismo conjunto exacto de destinos de navegación repetidos aparece en un orden relativo diferente entre las páginas comparadas.',
   'FT-REVIEW-014': 'El atributo autocomplete utiliza vocabulario estándar en una secuencia de tokens que necesita revisión.',
   'FT-REVIEW-015': 'La misma función de enlace observada de forma única presenta identificaciones sustancialmente distintas entre las páginas comparadas.',
+  'FT-REVIEW-016': 'Una declaración inline !important limita el espaciado de texto por debajo del valor evaluado para WCAG 1.4.12.',
   'FT-RUNTIME-006': 'Se observó un movimiento de arrastre real y debe revisarse si existe una alternativa equivalente sin arrastrar.',
 };
 
@@ -219,6 +234,17 @@ function localizedExtraEvidence(ruleId: string, evidence: string): string | unde
     const comparison = evidence.match(/^Function destination: (.+?)\. Observed identification: "(.+?)" \(([^)]+)\)\. Comparison page (https?:\/\/\S+): "(.+?)" \(([^)]+)\)\.$/);
     if (comparison) {
       return `Destino funcional: ${comparison[1]}. Identificación observada: "${comparison[2]}" (${comparison[3]}). Página comparada ${comparison[4]}: "${comparison[5]}" (${comparison[6]}).`;
+    }
+  }
+
+  if (ruleId === 'FT-REVIEW-016') {
+    const normal = evidence.match(/^Inline (line-height): (.+?) !important computes to normal on wrapped text; ACT 78fd32 treats normal line height as below the 1\.5 × font-size expectation\.$/);
+    if (normal) {
+      return `Declaración inline ${normal[1]}: ${normal[2]} !important; el valor calculado es normal sobre texto con salto automático y ACT 78fd32 lo considera inferior a la expectativa de 1,5 × el tamaño de fuente.`;
+    }
+    const numeric = evidence.match(/^Inline (letter-spacing|word-spacing|line-height): (.+?) !important; computed (.+?); ([\d.-]+) × font-size; required at least ([\d.]+) × font-size\.$/);
+    if (numeric) {
+      return `Declaración inline ${numeric[1]}: ${numeric[2]} !important; valor calculado ${numeric[3]}; ${numeric[4]} × el tamaño de fuente; se requiere al menos ${numeric[5]} × el tamaño de fuente.`;
     }
   }
 
