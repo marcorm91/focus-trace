@@ -22,7 +22,12 @@ import { OBSOLETE_ATTRIBUTES, OBSOLETE_ELEMENTS } from '../shared/obsolete-html-
 import { RULES, type RuleDefinition } from '../shared/rule-catalog';
 import { STRUCTURAL_HTML_RULES } from '../shared/structural-html-rules';
 import { TEXT_SPACING_RULE } from '../shared/text-spacing-rules';
-import { WCAG_COVERAGE, WCAG_COVERAGE_SUMMARY, wcagCoverageForCriterion } from '../shared/wcag-coverage';
+import {
+  EN_301_549_WEB_STANDARD,
+  WCAG_COVERAGE,
+  WCAG_COVERAGE_SUMMARY,
+  wcagCoverageForCriterion,
+} from '../shared/wcag-coverage';
 
 const HTML_RULES: RuleDefinition[] = [
   DUPLICATE_ID_RULE,
@@ -109,7 +114,7 @@ describe('standards registry coverage', () => {
     }
   });
 
-  it('exposes a criterion-by-criterion WCAG coverage matrix', () => {
+  it('exposes a criterion-by-criterion WCAG coverage matrix with execution surfaces', () => {
     const active = wcagCatalog.criteria.filter((criterion) => criterion.status === 'active');
     expect(WCAG_COVERAGE).toHaveLength(active.length);
     expect(WCAG_COVERAGE_SUMMARY.totalActive).toBe(active.length);
@@ -117,77 +122,99 @@ describe('standards registry coverage', () => {
 
     expect(wcagCoverageForCriterion('1.3.5')).toMatchObject({
       level: 'AA',
-      coverage: ['review'],
+      coverage: ['review', 'manual'],
       ruleIds: ['FT-REVIEW-014'],
-      implemented: true,
+      completeness: 'partial',
+      manualReviewRequired: true,
     });
     expect(wcagCoverageForCriterion('1.4.3')).toMatchObject({
       level: 'AA',
-      coverage: ['automated'],
+      coverage: ['automated', 'manual'],
       ruleIds: ['FT-WCAG-010'],
-      implemented: true,
+      completeness: 'partial',
     });
     expect(wcagCoverageForCriterion('1.4.12')).toMatchObject({
       level: 'AA',
-      coverage: ['review'],
+      coverage: ['review', 'manual'],
       ruleIds: ['FT-REVIEW-016'],
-      implemented: true,
     });
     expect(wcagCoverageForCriterion('2.4.1')).toMatchObject({
       level: 'A',
-      coverage: ['review'],
+      coverage: ['review', 'manual'],
       ruleIds: ['FT-REVIEW-012'],
-      implemented: true,
     });
-    expect(wcagCoverageForCriterion('2.4.3')?.coverage).toEqual(expect.arrayContaining(['review', 'runtime']));
+    expect(wcagCoverageForCriterion('2.4.3')?.coverage).toEqual(expect.arrayContaining(['review', 'runtime', 'manual']));
     expect(wcagCoverageForCriterion('2.4.7')).toMatchObject({
       level: 'AA',
-      coverage: ['runtime'],
+      coverage: ['review', 'runtime', 'manual'],
       ruleIds: ['FT-RUNTIME-010'],
-      implemented: true,
     });
     expect(wcagCoverageForCriterion('2.4.11')).toMatchObject({
       level: 'AA',
-      coverage: ['runtime'],
+      coverage: ['review', 'runtime', 'manual'],
       ruleIds: ['FT-RUNTIME-002'],
-      implemented: true,
     });
     expect(wcagCoverageForCriterion('2.5.7')).toMatchObject({
       level: 'AA',
-      coverage: ['runtime'],
+      coverage: ['review', 'runtime', 'manual'],
       ruleIds: ['FT-RUNTIME-006'],
-      implemented: true,
     });
     expect(wcagCoverageForCriterion('3.1.2')).toMatchObject({
       level: 'AA',
-      coverage: ['automated'],
+      coverage: ['automated', 'manual'],
       ruleIds: ['FT-WCAG-013'],
-      implemented: true,
     });
     expect(wcagCoverageForCriterion('3.2.3')).toMatchObject({
       level: 'AA',
-      coverage: ['review'],
+      coverage: ['review', 'site-audit', 'manual'],
       ruleIds: ['FT-REVIEW-013'],
-      implemented: true,
     });
     expect(wcagCoverageForCriterion('3.2.4')).toMatchObject({
       level: 'AA',
-      coverage: ['review'],
+      coverage: ['review', 'site-audit', 'manual'],
       ruleIds: ['FT-REVIEW-015'],
-      implemented: true,
     });
     expect(wcagCoverageForCriterion('3.2.6')).toMatchObject({
       level: 'A',
-      coverage: ['review'],
+      coverage: ['review', 'site-audit', 'manual'],
       ruleIds: ['FT-REVIEW-011'],
-      implemented: true,
     });
   });
 
-  it('makes WCAG coverage gaps explicit instead of implying full automated conformance', () => {
+  it('keeps ACT traceability attached to the FocusTrace check that supplies it', () => {
+    expect(wcagCoverageForCriterion('1.1.1')).toMatchObject({
+      ruleIds: ['FT-WCAG-002'],
+      actRuleIds: ['23a2a8'],
+    });
+    expect(wcagCoverageForCriterion('1.1.1')?.checks[0]).toMatchObject({
+      ruleId: 'FT-WCAG-002',
+      method: 'automated',
+      surface: 'page',
+      actRuleIds: ['23a2a8'],
+    });
+  });
+
+  it('maps WCAG 2.2 A/AA web requirements to EN 301 549 V4.1.1 clause 9 without treating AAA as an AA requirement', () => {
+    expect(EN_301_549_WEB_STANDARD.version).toBe('V4.1.1 (2026-09)');
+    expect(wcagCoverageForCriterion('1.1.1')?.en301549?.clause).toBe('9.1.1.1');
+    expect(wcagCoverageForCriterion('2.4.11')?.en301549?.clause).toBe('9.2.4.11');
+    expect(wcagCoverageForCriterion('3.2.6')?.en301549?.clause).toBe('9.3.2.6');
+    expect(wcagCoverageForCriterion('1.2.6')?.level).toBe('AAA');
+    expect(wcagCoverageForCriterion('1.2.6')?.en301549).toBeUndefined();
+    expect(WCAG_COVERAGE_SUMMARY.en301549Web).toBe(WCAG_COVERAGE_SUMMARY.levelAOrAA);
+  });
+
+  it('prevents tool-assisted coverage from being presented as complete WCAG conformance by default', () => {
     expect(WCAG_COVERAGE_SUMMARY.totalActive).toBeGreaterThan(80);
     expect(WCAG_COVERAGE_SUMMARY.implemented).toBeGreaterThan(0);
     expect(WCAG_COVERAGE_SUMMARY.notImplemented).toBeGreaterThan(0);
     expect(WCAG_COVERAGE_SUMMARY.automated).toBeLessThan(WCAG_COVERAGE_SUMMARY.totalActive);
+    expect(WCAG_COVERAGE_SUMMARY.complete).toBe(0);
+    expect(WCAG_COVERAGE_SUMMARY.partial).toBe(WCAG_COVERAGE_SUMMARY.implemented);
+    expect(WCAG_COVERAGE_SUMMARY.manualRequired).toBe(WCAG_COVERAGE_SUMMARY.totalActive);
+
+    const uncovered = WCAG_COVERAGE.find((criterion) => !criterion.implemented);
+    expect(uncovered?.coverage).toEqual(['manual', 'not-covered']);
+    expect(uncovered?.completeness).toBe('none');
   });
 });
