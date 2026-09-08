@@ -30,7 +30,7 @@
 .standards-coverage-note,
 .standards-coverage-empty {
   color: var(--ft-muted);
-  font-size: 13px;
+  font-size: 14px;
   line-height: 1.55;
 }
 
@@ -58,7 +58,7 @@
 
 .standards-coverage-summary span {
   color: var(--ft-muted);
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.25;
 }
 
@@ -84,7 +84,7 @@
   gap: 5px;
   min-width: 0;
   color: var(--ft-muted);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 800;
 }
 
@@ -134,7 +134,7 @@
 .standards-coverage-table thead th {
   background: var(--ft-surface-subtle);
   color: var(--ft-muted);
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 900;
 }
 
@@ -148,7 +148,7 @@
 
 .standards-coverage-table tbody th {
   color: var(--ft-text);
-  font-size: 13px;
+  font-size: 14px;
 }
 
 .standards-coverage-table tbody th,
@@ -166,7 +166,7 @@
 .standards-coverage-table small,
 .coverage-na {
   color: var(--ft-muted);
-  font-size: 11px;
+  font-size: 14px;
   line-height: 1.4;
   overflow-wrap: anywhere;
 }
@@ -186,7 +186,7 @@
   border-radius: 999px;
   background: var(--ft-surface-subtle);
   color: var(--ft-text);
-  font-size: 11px;
+  font-size: 14px;
   font-weight: 850;
   line-height: 1.1;
 }
