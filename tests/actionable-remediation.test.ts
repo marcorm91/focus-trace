@@ -6,7 +6,7 @@ import {
 import { remediationForIssue } from '../lib/site-audit/remediation';
 import type { ScanIssue } from '../shared/types';
 
-const TARGET_RULES = ['FT-RUNTIME-002', 'FT-RUNTIME-006', 'FT-REVIEW-011', 'FT-REVIEW-013', 'FT-REVIEW-015'] as const;
+const TARGET_RULES = ['FT-RUNTIME-002', 'FT-RUNTIME-006', 'FT-REVIEW-011', 'FT-REVIEW-013', 'FT-REVIEW-015', 'FT-REVIEW-016'] as const;
 
 describe('actionable remediation', () => {
   it('provides three concrete options plus validation in English and Spanish', () => {
@@ -32,6 +32,8 @@ describe('actionable remediation', () => {
     expect(actionableRemediationText('FT-REVIEW-013', 'es')).toContain('usuario cambie ese orden');
     expect(actionableRemediationText('FT-REVIEW-015', 'en')).toContain('same functionality');
     expect(actionableRemediationText('FT-REVIEW-015', 'es')).toContain('misma función');
+    expect(actionableRemediationText('FT-REVIEW-016', 'en')).toContain('paragraph spacing 2 times');
+    expect(actionableRemediationText('FT-REVIEW-016', 'es')).toContain('separación entre párrafos de 2 veces');
   });
 
   it('does not manufacture guidance for unrelated rules', () => {

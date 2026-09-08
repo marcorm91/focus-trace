@@ -20,6 +20,7 @@ import { LANGUAGE_PARTS_RULE } from '../shared/language-parts-rules';
 import { OBSOLETE_ATTRIBUTES, OBSOLETE_ELEMENTS } from '../shared/obsolete-html-registry';
 import { RULES, type RuleDefinition } from '../shared/rule-catalog';
 import { STRUCTURAL_HTML_RULES } from '../shared/structural-html-rules';
+import { TEXT_SPACING_RULE } from '../shared/text-spacing-rules';
 import { WCAG_COVERAGE, WCAG_COVERAGE_SUMMARY, wcagCoverageForCriterion } from '../shared/wcag-coverage';
 
 const HTML_RULES: RuleDefinition[] = [
@@ -39,6 +40,7 @@ const ALL_RULES: RuleDefinition[] = [
   ...Object.values(RULES),
   ...FORM_PURPOSE_RULES,
   LANGUAGE_PARTS_RULE,
+  TEXT_SPACING_RULE,
   ...HTML_RULES,
   ...ADVANCED_ARIA_RULES,
 ];
@@ -121,6 +123,12 @@ describe('standards registry coverage', () => {
       level: 'AA',
       coverage: ['automated'],
       ruleIds: ['FT-WCAG-010'],
+      implemented: true,
+    });
+    expect(wcagCoverageForCriterion('1.4.12')).toMatchObject({
+      level: 'AA',
+      coverage: ['review'],
+      ruleIds: ['FT-REVIEW-016'],
       implemented: true,
     });
     expect(wcagCoverageForCriterion('2.4.1')).toMatchObject({

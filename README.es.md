@@ -98,6 +98,7 @@ FocusTrace utiliza WCAG 2.2 como fuente de conformidad. Los criterios WCAG 2.2 t
 | `FT-REVIEW-013` | El mismo conjunto exacto de destinos de navegación repetidos cambia su orden relativo entre páginas muestreadas. | REVIEW | WCAG 3.2.3 AA |
 | `FT-REVIEW-014` | Un control de formulario usa vocabulario estándar reconocible de propósito `autocomplete` con una secuencia de tokens mal formada. Las taxonomías desconocidas/personalizadas se ignoran deliberadamente. | REVIEW / PASS | WCAG 1.3.5 AA · ACT 73f2c2 |
 | `FT-REVIEW-015` | Un enlace nativo observado de forma única apunta al mismo destino exacto en páginas muestreadas del mismo idioma, pero su identificación cambia de forma sustancial. | REVIEW | WCAG 3.2.4 AA |
+| `FT-REVIEW-016` | Texto directo renderizado queda bloqueado por `letter-spacing`, `word-spacing` o `line-height` inline con `!important` por debajo del umbral ACT correspondiente. | REVIEW / PASS | WCAG 1.4.12 AA · ACT 24afc2 / 78fd32 / 9e45ec |
 
 Para `FT-REVIEW-012`, FocusTrace considera señal positiva un enlace de fragmento del mismo documento validado y situado antes del bloque de navegación repetitiva candidato. La ausencia del enlace o un destino roto permanece como **REVIEW**, no como FAIL automático, porque WCAG 2.4.1 admite otros mecanismos y la aplicabilidad de bloques repetidos puede requerir contexto entre páginas.
 
@@ -106,6 +107,8 @@ Para `FT-REVIEW-013`, FocusTrace compara únicamente landmarks de navegación re
 Para `FT-REVIEW-014`, FocusTrace valida únicamente valores `autocomplete` explícitos y no vacíos que utilizan de forma reconocible el vocabulario estándar de tokens HTML y cumplen la aplicabilidad de controles modelada a partir de ACT 73f2c2. Una secuencia estándar válida produce PASS para esta expectativa concreta; una secuencia estándar mal formada produce REVIEW, nunca FAIL automático. FocusTrace no deduce un propósito obligatorio a partir de `name`, etiqueta, placeholder o tipo de input, e ignora deliberadamente valores formados solo por tokens desconocidos porque una taxonomía personalizada todavía puede proporcionar un propósito programáticamente determinable. Determinar si el campo realmente recopila información sobre el usuario sigue siendo contextual.
 
 Para `FT-REVIEW-015`, FocusTrace utiliza el destino HTTP(S) exacto del enlace únicamente como ancla fuerte de función entre páginas, no como prueba de que toda la funcionalidad sea idéntica. El destino debe aparecer una sola vez por página, ambas páginas deben declarar el mismo idioma principal y los dos nombres deben proceder de la misma fuente observada. Se ignoran destinos duplicados, páginas de idiomas distintos y etiquetas que conservan vocabulario funcional claro. Las variaciones exclusivamente numéricas se normalizan, por lo que textos como `Go to page 4` y `Go to page 5` no generan ruido. El resultado sigue siendo **REVIEW** porque la equivalencia semántica necesita confirmación humana y el colector de Site Audit usa intencionadamente una aproximación acotada al nombre, no AccName completo, para esta comparación.
+
+Para `FT-REVIEW-016`, FocusTrace implementa únicamente los tres subconjuntos ACT actuales que comprueban espaciado inline con `!important`. Revisa `letter-spacing` por debajo de `0,12 × font-size`, `word-spacing` por debajo de `0,16 × font-size` y `line-height` por debajo de `1,5 × font-size` solo cuando el mismo nodo de texto directo presenta un salto automático real. Se excluyen valores CSS heredados, contextos con apariencia de código, texto oculto/recortado/fuera del documento y nodos con estilo que no sean HTML. Un valor inferior queda como **REVIEW** porque un mecanismo propio de la página y la aplicabilidad según idioma/sistema de escritura pueden seguir haciendo conforme WCAG 1.4.12. FocusTrace no automatiza la separación entre párrafos ni el juicio final de pérdida de contenido/funcionalidad al aplicar todos los valores conjuntamente.
 
 Para las señales semánticas, FocusTrace intenta diferenciar la función antes de recomendar HTML nativo: comportamiento de botón → preferir `<button type="button">`; navegación → preferir `<a href="…">`; interacción ambigua → revisar primero la función real. ARIA puede mostrarse como fallback, pero no añade automáticamente el comportamiento nativo de teclado.
 
@@ -367,6 +370,7 @@ Memory no almacena HTML de página, snapshots completos del DOM ni capturas de p
 | Iframes cross-origin | No se recorre por completo su contenido. |
 | Contraste | Composiciones visuales complejas permanecen como REVIEW cuando no pueden resolverse con certeza. |
 | Tamaño de objetivos | Usa geometría observable del DOM/layout y descubrimiento conservador de objetivos. Las excepciones por control equivalente, necesidad esencial o control del navegador, listeners de puntero exclusivos de frameworks y áreas de impacto no rectangulares complejas pueden seguir requiriendo revisión manual. |
+| Espaciado de texto | Solo se comprueban `letter-spacing`, `word-spacing` y `line-height` con salto automático bloqueados mediante `!important` inline contra los tres umbrales ACT actuales. La separación entre párrafos, los mecanismos propios de la página, la aplicabilidad por idioma/sistema de escritura y el juicio conjunto de pérdida de contenido/funcionalidad siguen siendo manuales. |
 | Estados dinámicos | El análisis estático no fuerza sistemáticamente todos los estados hover, pressed, checked o focus. |
 | HTML | Opera sobre el DOM vivo ya parseado; el navegador puede haber reparado errores del HTML fuente. |
 | ARIA | Deriva relaciones observables, pero no reproduce exactamente el árbol de accesibilidad interno ni la salida hablada de un lector de pantalla. |
@@ -451,7 +455,7 @@ Después de que CI termine correctamente para un push a `main`, GitHub Actions p
 4. Selecciona el `manifest.json` del build.
 5. Completa el smoke checklist de Firefox antes de considerar ese build como soportado.
 
-Cada artefacto incluye `FOCUSTRACE_BUILD.txt` con el SHA de origen y el navegador de destino. Los artefactos de desarrollo son previews sin firmar y se conservan durante 14 días.
+Cada artefacto incluye `FOCUSTRACE_BUILD.txt` con el SHA de origen y el navegador objetivo. Los artefactos de desarrollo son previews sin firmar y se conservan durante 14 días.
 
 ## Desarrollo
 

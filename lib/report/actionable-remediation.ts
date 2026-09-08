@@ -215,6 +215,33 @@ export function actionableRemediationForRule(
     };
   }
 
+  if (ruleId === 'FT-REVIEW-016') {
+    return {
+      options: [
+        tr(
+          language,
+          'Remove inline !important from letter-spacing, word-spacing or line-height when it prevents user styles from reaching the required spacing. Prefer an author stylesheet declaration that remains overridable by user or extension styles.',
+          'Elimina !important inline de letter-spacing, word-spacing o line-height cuando impida que los estilos del usuario alcancen el espaciado requerido. Prefiere una declaración en la hoja de estilos de autor que pueda seguir siendo sobrescrita por estilos del usuario o extensiones.',
+        ),
+        tr(
+          language,
+          'If an important declaration is genuinely required, ensure applicable human-language text can reach at least 0.12em letter spacing, 0.16em word spacing and 1.5 line height without clipping, overlap or loss of functionality.',
+          'Si una declaración importante es realmente necesaria, asegúrate de que el texto de lenguaje humano aplicable pueda alcanzar al menos 0,12em de espaciado entre letras, 0,16em entre palabras y 1,5 de altura de línea sin recortes, solapamientos ni pérdida de funcionalidad.',
+        ),
+        tr(
+          language,
+          'If the page provides its own text-spacing control, verify that users can reach the WCAG values through that mechanism and that the setting works consistently instead of relying on a locked default declaration.',
+          'Si la página ofrece su propio control de espaciado de texto, verifica que permita alcanzar los valores WCAG y que el ajuste funcione de forma coherente en lugar de depender de una declaración predeterminada bloqueada.',
+        ),
+      ],
+      validation: tr(
+        language,
+        'Apply all WCAG 1.4.12 values together: line height 1.5 times the font size, paragraph spacing 2 times the font size, letter spacing 0.12 times the font size and word spacing 0.16 times the font size. Confirm that no content or functionality is lost; FocusTrace automates only the three inline-important ACT subsets, not the paragraph-spacing or combined-layout judgement.',
+        'Aplica conjuntamente todos los valores de WCAG 1.4.12: altura de línea de 1,5 veces el tamaño de fuente, separación entre párrafos de 2 veces el tamaño de fuente, espaciado entre letras de 0,12 veces y entre palabras de 0,16 veces. Confirma que no se pierde contenido ni funcionalidad; FocusTrace automatiza solo los tres subconjuntos ACT de !important inline, no el espaciado entre párrafos ni el juicio del layout combinado.',
+      ),
+    };
+  }
+
   return undefined;
 }
 

@@ -142,6 +142,18 @@ When a target cannot be proven to meet the modeled size/spacing/inline expectati
 
 Non-rectangular geometry is handled conservatively. SVG hit areas, `clip-path`, transforms and smaller rounded shapes are not treated as passing merely because their bounding rectangle is at least `24 × 24` CSS px. Bounding-box size alone is not sufficient evidence that an axis-aligned `24 × 24` square fits inside the actual target.
 
+## Text Spacing inline-important review scope
+
+`FT-REVIEW-016` implements the three current ACT subsets for WCAG 1.4.12 that test author-locked inline spacing: ACT `24afc2` for `letter-spacing`, `78fd32` for `line-height` and `9e45ec` for `word-spacing`. The rule runs in normal page and component analysis and never mutates the tested page merely to create a finding.
+
+Applicability is intentionally narrow. FocusTrace considers only rendered human-language direct text nodes whose own HTML element declares the relevant property in its inline `style` with `!important`. `inherit`, `unset`, `revert` and `revert-layer` are excluded rather than treating inherited values as author-locked. Code-like contexts (`code`, `pre`, `samp`, `kbd`, `var`), hidden/transparent/clipped text and text positioned outside the reachable document area are also excluded. Styled SVG/non-HTML nodes are not coerced into this HTML-specific subset.
+
+The thresholds mirror the ACT expectations: `letter-spacing` must reach at least `0.12 × font-size`, `word-spacing` at least `0.16 × font-size`, and `line-height` at least `1.5 × font-size`. The line-height subset is applicable only when the same direct text node exposes a real soft wrap across more than one rendered line; an authored `<br>` or preserved source newline is not used as proof of wrapping. Each finding carries only WCAG 1.4.12 plus the ACT rule for the property that produced the evidence.
+
+A below-threshold observation remains `REVIEW`, never automatic `FAIL`. The ACT assumptions explicitly allow that a page may provide its own mechanism for adjusting text spacing, and language/script applicability still requires context. A `PASS` means only that the tested inline-important declaration met its property threshold; it does not prove complete 1.4.12 conformance.
+
+FocusTrace does not currently automate the paragraph-spacing requirement (`2 × font-size`) or the complete requirement to apply all four spacing values together without loss of content or functionality. The remediation therefore instructs reviewers to perform that combined manual check. These boundaries deliberately favor false negatives over claiming that a syntactic spacing lock proves the whole WCAG criterion.
+
 ## ARIA authoring warnings
 
 The scan consumes `generated/aria-registry.json` instead of maintaining role/property lists by hand where the synced registry contains the required information. Existing role-specific rules report:
@@ -354,6 +366,7 @@ The rule is full-page only. Component-scoped analysis does not execute `FT-REVIE
 | FT-REVIEW-013 Exact repeated navigation destination set changes relative order across sampled pages | REVIEW | WCAG 3.2.3 AA |
 | FT-REVIEW-014 Standard autocomplete purpose token sequence may be malformed | REVIEW/PASS | WCAG 1.3.5 AA · ACT 73f2c2 |
 | FT-REVIEW-015 Exact unique link function may have substantially inconsistent identification across sampled pages | REVIEW | WCAG 3.2.4 AA |
+| FT-REVIEW-016 Inline important text spacing may block required user adjustments | REVIEW/PASS | WCAG 1.4.12 AA · ACT 24afc2 / 78fd32 / 9e45ec |
 
 ## Runtime rules
 
@@ -391,6 +404,7 @@ The rule is full-page only. Component-scoped analysis does not execute `FT-REVIE
 - `FT-REVIEW-013` requires an exact repeated destination-set match and ignores partial/ambiguous navigation matches; it therefore favors false negatives, and Site Audit cannot prove whether an observed order change was initiated by the user.
 - `FT-REVIEW-014` validates only explicit standard-like `autocomplete` token sequences. It does not infer missing input-purpose metadata, judge unknown-only custom taxonomies, or prove that a field collects information about the user; those boundaries intentionally favor false negatives over false WCAG failures.
 - `FT-REVIEW-015` currently compares only unique rendered native HTTP(S) links with the same exact destination, same declared primary page language and same bounded observed naming source. It deliberately ignores duplicated destinations, buttons/custom controls, unknown-language pages and semantically uncertain label variations, so it favors false negatives over noisy 3.2.4 reviews.
+- `FT-REVIEW-016` covers only the three inline-`!important` ACT subsets for letter spacing, word spacing and wrapped-text line height. It does not automate paragraph spacing, all-language/script applicability, page-provided spacing controls, Shadow DOM/pseudo-generated text or the combined no-loss-of-content/functionality judgement required by the full WCAG 1.4.12 criterion.
 - Structural HTML checks operate on the parsed live DOM. Browser parser repair can normalize invalid source before FocusTrace runs; the tool does not infer source-level errors that are no longer observable. See [`STRUCTURAL_HTML.md`](STRUCTURAL_HTML.md).
 - Advanced ARIA checks operate on the live accessibility relationships FocusTrace can derive from DOM semantics and `aria-owns`; they do not claim to reproduce the browser accessibility tree or a screen reader's spoken output. See [`ARIA_VALIDATION.md`](ARIA_VALIDATION.md).
 - Automated static checks are intentionally narrower than the corresponding full WCAG success criteria.

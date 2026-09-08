@@ -1,6 +1,6 @@
 # FocusTrace severity audit
 
-Audit date: 2026-09-07
+Audit date: 2026-09-08
 
 This document records the rule-by-rule review behind the base severity values used by FocusTrace.
 
@@ -63,6 +63,7 @@ Existing equivalent rules that already matched axe keep their severity, includin
 | `FT-REVIEW-002` Heading level jump | minor | review | Structural review signal rather than a deterministic failure. |
 | `FT-REVIEW-003` Placeholder-only label | moderate | review | The field still has a computed name; persistent visible identification needs context. |
 | `FT-REVIEW-014` Input purpose autocomplete | serious | review | Malformed standard autocomplete purpose tokens can block machine-readable personalization and input assistance. axe `autocomplete-valid` is also serious, but no exact equivalence is enforced because FocusTrace deliberately ignores unknown-only custom taxonomies and keeps WCAG applicability contextual. |
+| `FT-REVIEW-016` Text spacing locked by inline important styles | moderate | review | The three ACT subsets provide strong evidence that inline `!important` can block required letter, word or line spacing, but a page-provided adjustment mechanism, language/script applicability and the complete combined-layout judgement still require context. No direct axe equivalence is enforced. |
 | `FT-RUNTIME-001` Focused element removed | serious | runtime | FocusTrace runtime evidence; no axe equivalent. |
 | `FT-RUNTIME-002` Focus completely obscured | serious | runtime | FocusTrace runtime evidence; no direct axe equivalent. |
 | `FT-RUNTIME-003` SPA title unchanged | moderate | runtime | Context depends on the SPA transition. |
