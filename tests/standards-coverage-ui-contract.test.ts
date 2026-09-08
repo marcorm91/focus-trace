@@ -43,6 +43,21 @@ describe('standards coverage UI contract', () => {
     expect(coverage).toContain('en_301549v040101p.pdf');
   });
 
+  it('carries standards references into the session report and shared TXT/PDF legend', () => {
+    const compact = source('entrypoints/sidepanel/components/ReportScanCompact.tsx');
+    const legend = source('shared/rule-legend.ts');
+    const textReport = source('lib/report/text-report.ts');
+    const printable = source('entrypoints/report-print/main.tsx');
+
+    expect(compact).toContain("import { ReferenceList } from './Common';");
+    expect(compact).toContain('<ReferenceList references={first.references} language={language} />');
+    expect(legend).toContain("id: 'standards-coverage'");
+    expect(legend).toContain('EN 301 549 V4.1.1 (2026-09)');
+    expect(legend).toContain('§9.x.y.z');
+    expect(textReport).toContain('ruleLegendCopy(language)');
+    expect(printable).toContain('ruleLegendCopy(language)');
+  });
+
   it('keeps the coverage table responsive instead of compressing criterion text into the sidepanel width', () => {
     const css = source('entrypoints/sidepanel/components/standards-coverage.css');
     const index = source('entrypoints/sidepanel/index.css');
