@@ -71,6 +71,7 @@ export interface ElementSnapshot {
   id?: string;
   role?: string;
   name?: string;
+  className?: string;
   selector: string;
   tabOrderIndex?: number;
   tabOrderSize?: number;
@@ -186,6 +187,8 @@ export interface ScanIssue {
   severity: Severity;
   outcome: FindingOutcome;
   targets: string[];
+  element?: ElementSnapshot;
+  context?: ElementSnapshot;
   evidence?: string;
   accessibleName?: AccessibleNameEvidence;
   contrast?: ContrastEvidence;
