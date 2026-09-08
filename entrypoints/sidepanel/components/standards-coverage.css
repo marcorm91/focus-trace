@@ -1,0 +1,221 @@
+.standards-coverage {
+  display: grid;
+  gap: 14px;
+  min-width: 0;
+}
+
+.standards-coverage-heading {
+  display: flex;
+  align-items: start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.standards-coverage-heading h3,
+.standards-coverage-heading p,
+.standards-coverage-source,
+.standards-coverage-note,
+.standards-coverage-empty {
+  margin: 0;
+}
+
+.standards-coverage-heading h3 {
+  color: var(--ft-ink);
+  font-size: 15px;
+  font-weight: 900;
+}
+
+.standards-coverage-heading p,
+.standards-coverage-source,
+.standards-coverage-note,
+.standards-coverage-empty {
+  color: var(--ft-muted);
+  font-size: 13px;
+  line-height: 1.55;
+}
+
+.standards-coverage-summary {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.standards-coverage-summary > div {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+  padding: 10px;
+  border: 1px solid var(--ft-border-soft);
+  border-radius: 8px;
+  background: var(--ft-surface-subtle);
+}
+
+.standards-coverage-summary strong {
+  color: var(--ft-ink);
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.standards-coverage-summary span {
+  color: var(--ft-muted);
+  font-size: 12px;
+  line-height: 1.25;
+}
+
+.standards-coverage-note {
+  padding: 10px 12px;
+  border-left: 4px solid var(--ft-warning, #8a4f00);
+  border-radius: 6px;
+  background: var(--ft-surface-subtle);
+}
+
+.standards-coverage-note strong {
+  color: var(--ft-ink);
+}
+
+.standards-coverage-controls {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 10px;
+}
+
+.standards-coverage-controls label {
+  display: grid;
+  gap: 5px;
+  min-width: 0;
+  color: var(--ft-muted);
+  font-size: 12px;
+  font-weight: 800;
+}
+
+.standards-coverage-controls select,
+.standards-coverage-controls input {
+  width: 100%;
+  min-width: 0;
+  min-height: 38px;
+}
+
+.standards-coverage-source a,
+.standards-coverage-table a {
+  font-weight: 800;
+}
+
+.standards-coverage-table-wrap {
+  min-width: 0;
+  overflow-x: auto;
+  border: 1px solid var(--ft-border-soft);
+  border-radius: 8px;
+}
+
+.standards-coverage-table {
+  width: 100%;
+  min-width: 660px;
+  border-collapse: collapse;
+  table-layout: fixed;
+}
+
+.standards-coverage-table th,
+.standards-coverage-table td {
+  padding: 10px;
+  border-right: 1px solid var(--ft-border-faint);
+  border-bottom: 1px solid var(--ft-border-faint);
+  vertical-align: top;
+  text-align: left;
+}
+
+.standards-coverage-table tr > :last-child {
+  border-right: 0;
+}
+
+.standards-coverage-table tbody tr:last-child > * {
+  border-bottom: 0;
+}
+
+.standards-coverage-table thead th {
+  background: var(--ft-surface-subtle);
+  color: var(--ft-muted);
+  font-size: 12px;
+  font-weight: 900;
+}
+
+.standards-coverage-table thead th:first-child {
+  width: 31%;
+}
+
+.standards-coverage-table thead th:nth-child(2) {
+  width: 47%;
+}
+
+.standards-coverage-table tbody th {
+  color: var(--ft-text);
+  font-size: 13px;
+}
+
+.standards-coverage-table tbody th,
+.standards-coverage-table td {
+  background: var(--ft-surface);
+}
+
+.standards-coverage-table tbody th > span,
+.standards-coverage-table tbody th > small,
+.standards-coverage-table td > small {
+  display: block;
+  margin-top: 4px;
+}
+
+.standards-coverage-table small,
+.coverage-na {
+  color: var(--ft-muted);
+  font-size: 11px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.standards-coverage-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.coverage-chip {
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 3px 7px;
+  border: 1px solid var(--ft-border-soft);
+  border-radius: 999px;
+  background: var(--ft-surface-subtle);
+  color: var(--ft-text);
+  font-size: 11px;
+  font-weight: 850;
+  line-height: 1.1;
+}
+
+.coverage-automated {
+  border-color: var(--ft-accent);
+}
+
+.coverage-review,
+.coverage-manual {
+  border-color: var(--ft-warning, #8a4f00);
+}
+
+.coverage-runtime,
+.coverage-site-audit {
+  border-color: var(--ft-ink);
+}
+
+.coverage-not-covered {
+  border-style: dashed;
+  color: var(--ft-muted);
+}
+
+@media (max-width: 520px) {
+  .standards-coverage-summary {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .standards-coverage-controls {
+    grid-template-columns: 1fr;
+  }
+}
