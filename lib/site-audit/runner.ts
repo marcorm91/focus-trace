@@ -147,6 +147,84 @@ export function collectSitePageStructureInPage(): SitePageStructure {
     });
   }
 
+  const functionalIdentifications: SitePageStructure['functionalIdentifications'] = [];
+  const pageLanguage = (document.documentElement.getAttribute('lang') ?? '')
+    .trim()
+    .split('-')[0]
+    ?.toLowerCase() ?? '';
+  const identificationCandidates = document.querySelectorAll('a[href]');
+  for (const candidate of [...identificationCandidates].slice(0, 500)) {
+    if (!(candidate instanceof HTMLAnchorElement)) continue;
+    if (candidate.closest('[aria-hidden="true"], [hidden], [inert]')) continue;
+    const candidateStyle = getComputedStyle(candidate);
+    if (candidateStyle.display === 'none' || candidateStyle.visibility === 'hidden' || candidateStyle.visibility === 'collapse') continue;
+    if (candidate.getClientRects().length === 0) continue;
+
+    let functionKey = '';
+    try {
+      const destination = new URL(candidate.href, location.href);
+      if (!['http:', 'https:'].includes(destination.protocol)) continue;
+      functionKey = destination.toString();
+    } catch {
+      continue;
+    }
+
+    const labelledBy = candidate.getAttribute('aria-labelledby')?.trim();
+    const labelledByIds = labelledBy ? labelledBy.split(/\s+/).filter(Boolean) : [];
+    const labelledByElements = labelledByIds.map((id) => document.getElementById(id));
+    if (labelledByIds.length > 0 && (
+      labelledByElements.some((element) => !element)
+      || labelledByElements.some((element) => element?.querySelector('img, svg, input, object, canvas'))
+    )) continue;
+    const labelledByText = labelledByIds.length > 0
+      ? labelledByElements.map((element) => element?.textContent ?? '').join(' ')
+      : '';
+    const ariaLabel = candidate.getAttribute('aria-label')?.trim() ?? '';
+    const visibleText = candidate.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+    const images = [...candidate.querySelectorAll('img[alt]')]
+      .filter((image) => !image.closest('[aria-hidden="true"], [hidden], [inert]'));
+    const allImages = [...candidate.querySelectorAll('img')]
+      .filter((image) => !image.closest('[aria-hidden="true"], [hidden], [inert]'));
+    const hasOtherRichNameDescendant = Boolean(candidate.querySelector('svg, input, object, canvas'));
+    const imageAlt = images.length === 1 ? images[0]?.getAttribute('alt')?.trim() ?? '' : '';
+    const title = candidate.getAttribute('title')?.trim() ?? '';
+
+    let accessibleName = '';
+    let source: 'aria-label' | 'aria-labelledby' | 'text' | 'image-alt' | 'title' | undefined;
+    if (labelledByText.trim()) {
+      accessibleName = labelledByText;
+      source = 'aria-labelledby';
+    } else if (ariaLabel) {
+      accessibleName = ariaLabel;
+      source = 'aria-label';
+    } else if (visibleText && allImages.length === 0 && !hasOtherRichNameDescendant) {
+      accessibleName = visibleText;
+      source = 'text';
+    } else if (!visibleText && allImages.length === 1 && images.length === 1 && !hasOtherRichNameDescendant && imageAlt) {
+      accessibleName = imageAlt;
+      source = 'image-alt';
+    } else if (!visibleText && allImages.length === 0 && !hasOtherRichNameDescendant && title) {
+      accessibleName = title;
+      source = 'title';
+    } else {
+      // Mixed text/non-text alternatives can produce a compound accessible
+      // name. Do not approximate that name for cross-page consistency review.
+      continue;
+    }
+    accessibleName = accessibleName.replace(/\s+/g, ' ').trim().slice(0, 160);
+    if (!source || !accessibleName) continue;
+
+    functionalIdentifications.push({
+      selector: elementSelector(candidate),
+      kind: 'link',
+      functionKey,
+      accessibleName,
+      source,
+      pageLanguage,
+    });
+    if (functionalIdentifications.length >= 300) break;
+  }
+
   const canonical = document.querySelector<HTMLLinkElement>('link[rel="canonical"]')?.href;
   const source = `${semanticTokens.slice(0, 360).join('|')}::h=${headingLevels.join(',')}::i=${Math.min(interactiveCount, 99)}::l=${Math.min(landmarkCount, 30)}`;
   let hash = 2166136261;
@@ -164,6 +242,7 @@ export function collectSitePageStructureInPage(): SitePageStructure {
     landmarkCount,
     ...(helpMechanisms.length ? { helpMechanisms } : {}),
     ...(navigationMechanisms.length ? { navigationMechanisms } : {}),
+    ...(functionalIdentifications.length ? { functionalIdentifications } : {}),
   };
 }
 

@@ -34,6 +34,7 @@ const REFERENCE_LABEL_ES: Record<string, string> = {
   'On Input': 'Al introducir datos',
   'Consistent Help': 'Ayuda coherente',
   'Consistent Navigation': 'Navegación coherente',
+  'Consistent Identification': 'Identificación coherente',
   'WAI-ARIA 1.3 Editor Draft': 'WAI-ARIA 1.3 · borrador editorial',
   'WAI-ARIA 1.3 Editor Draft · Roles model': 'WAI-ARIA 1.3 · borrador editorial · Modelo de roles',
   'WAI-ARIA 1.3 Editor Draft · States and properties': 'WAI-ARIA 1.3 · borrador editorial · Estados y propiedades',

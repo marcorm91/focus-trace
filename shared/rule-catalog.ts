@@ -262,6 +262,16 @@ export const RULES = {
     ),
     references: [wcag('3.2.3', 'Consistent Navigation', 'AA', 'consistent-navigation')],
   },
+  consistentIdentification: {
+    id: 'FT-REVIEW-015',
+    title: 'Repeated function may be identified inconsistently across pages',
+    severity: 'moderate',
+    ...impact(
+      'Substantially different identification for a repeated function can make familiar actions harder to recognize for screen-reader users and people who rely on predictable labels.',
+      'Una identificación muy diferente para una función repetida puede dificultar reconocer acciones conocidas a usuarios de lector de pantalla y personas que dependen de etiquetas predecibles.',
+    ),
+    references: [wcag('3.2.4', 'Consistent Identification', 'AA', 'consistent-identification')],
+  },
   focusLost: {
     id: 'FT-RUNTIME-001',
     title: 'Focused element removed during interaction',

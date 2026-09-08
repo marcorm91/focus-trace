@@ -40,6 +40,22 @@ export interface SiteNavigationMechanism {
   destinations: string[];
 }
 
+export type SiteFunctionalIdentificationSource =
+  | 'aria-label'
+  | 'aria-labelledby'
+  | 'text'
+  | 'image-alt'
+  | 'title';
+
+export interface SiteFunctionalIdentification {
+  selector: string;
+  kind: 'link';
+  functionKey: string;
+  accessibleName: string;
+  source: SiteFunctionalIdentificationSource;
+  pageLanguage: string;
+}
+
 export interface SitePageStructure {
   fingerprint: string;
   canonical?: string;
@@ -49,6 +65,7 @@ export interface SitePageStructure {
   landmarkCount: number;
   helpMechanisms?: SiteHelpMechanism[];
   navigationMechanisms?: SiteNavigationMechanism[];
+  functionalIdentifications?: SiteFunctionalIdentification[];
 }
 
 export interface SiteAuditPageResult {

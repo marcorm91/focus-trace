@@ -106,6 +106,10 @@ const EXTRA_COPY_ES: Record<string, { title: string; description: string }> = {
     title: 'Los tokens de propósito autocomplete estándar pueden estar mal formados',
     description: 'Este control utiliza vocabulario autocomplete estándar, pero la secuencia de tokens observada no es válida. Revisa si el campo recopila información sobre el usuario y, cuando aplique WCAG 1.3.5, expón su propósito mediante un valor válido y programáticamente determinable.',
   },
+  'FT-REVIEW-015': {
+    title: 'Una función repetida puede identificarse de forma incoherente entre páginas',
+    description: 'Un enlace nativo observado de forma única apunta al mismo destino exacto en páginas muestreadas con el mismo idioma principal, pero su identificación cambia de forma sustancial. Confirma que se trate de la misma funcionalidad y, si es así, mantén etiquetas o nombres accesibles coherentes según WCAG 3.2.4.',
+  },
   'FT-RUNTIME-006': {
     title: 'La interacción de arrastre requiere revisar una alternativa de puntero sencillo',
     description: 'Trace observó un arrastre real. Revisa si la misma funcionalidad puede realizarse con un puntero sencillo sin movimiento de arrastre, teniendo en cuenta las excepciones de WCAG 2.5.7.',
@@ -133,6 +137,7 @@ const EXTRA_EVIDENCE_ES: Record<string, string> = {
   'FT-REVIEW-012': 'Se ha detectado navegación significativa antes del contenido principal sin un mecanismo de salto por teclado validado.',
   'FT-REVIEW-013': 'El mismo conjunto exacto de destinos de navegación repetidos aparece en un orden relativo diferente entre las páginas comparadas.',
   'FT-REVIEW-014': 'El atributo autocomplete utiliza vocabulario estándar en una secuencia de tokens que necesita revisión.',
+  'FT-REVIEW-015': 'La misma función de enlace observada de forma única presenta identificaciones sustancialmente distintas entre las páginas comparadas.',
   'FT-RUNTIME-006': 'Se observó un movimiento de arrastre real y debe revisarse si existe una alternativa equivalente sin arrastrar.',
 };
 
@@ -208,6 +213,13 @@ function localizedExtraEvidence(ruleId: string, evidence: string): string | unde
   if (ruleId === 'FT-REVIEW-014') {
     const match = evidence.match(/^autocomplete=("[^"]*")\./);
     if (match) return `Valor autocomplete observado: ${match[1]}. La secuencia de tokens estándar necesita revisión para confirmar que identifica correctamente el propósito del campo.`;
+  }
+
+  if (ruleId === 'FT-REVIEW-015') {
+    const comparison = evidence.match(/^Function destination: (.+?)\. Observed identification: "(.+?)" \(([^)]+)\)\. Comparison page (https?:\/\/\S+): "(.+?)" \(([^)]+)\)\.$/);
+    if (comparison) {
+      return `Destino funcional: ${comparison[1]}. Identificación observada: "${comparison[2]}" (${comparison[3]}). Página comparada ${comparison[4]}: "${comparison[5]}" (${comparison[6]}).`;
+    }
   }
 
   const fallback = EXTRA_EVIDENCE_ES[ruleId];

@@ -97,12 +97,15 @@ FocusTrace utiliza WCAG 2.2 como fuente de conformidad. Los criterios WCAG 2.2 t
 | `FT-REVIEW-012` | Aparece una navegación significativa antes del contenido principal sin un enlace temprano de fragmento, alcanzable por teclado y validado, que lleve a la región main. | REVIEW / PASS | WCAG 2.4.1 |
 | `FT-REVIEW-013` | El mismo conjunto exacto de destinos de navegación repetidos cambia su orden relativo entre páginas muestreadas. | REVIEW | WCAG 3.2.3 AA |
 | `FT-REVIEW-014` | Un control de formulario usa vocabulario estándar reconocible de propósito `autocomplete` con una secuencia de tokens mal formada. Las taxonomías desconocidas/personalizadas se ignoran deliberadamente. | REVIEW / PASS | WCAG 1.3.5 AA · ACT 73f2c2 |
+| `FT-REVIEW-015` | Un enlace nativo observado de forma única apunta al mismo destino exacto en páginas muestreadas del mismo idioma, pero su identificación cambia de forma sustancial. | REVIEW | WCAG 3.2.4 AA |
 
 Para `FT-REVIEW-012`, FocusTrace considera señal positiva un enlace de fragmento del mismo documento validado y situado antes del bloque de navegación repetitiva candidato. La ausencia del enlace o un destino roto permanece como **REVIEW**, no como FAIL automático, porque WCAG 2.4.1 admite otros mecanismos y la aplicabilidad de bloques repetidos puede requerir contexto entre páginas.
 
 Para `FT-REVIEW-013`, FocusTrace compara únicamente landmarks de navegación renderizados con al menos tres destinos HTTP(S) únicos. Dos bloques solo se consideran el mismo mecanismo repetido cuando sus conjuntos completos de destinos coinciden exactamente y ese conjunto aparece una sola vez en cada página. Los solapamientos parciales o bloques duplicados ambiguos se ignoran. Un cambio de orden permanece como **REVIEW**, no como FAIL, porque el criterio permite cambios iniciados por el usuario y Site Audit no siempre puede demostrar ese contexto.
 
 Para `FT-REVIEW-014`, FocusTrace valida únicamente valores `autocomplete` explícitos y no vacíos que utilizan de forma reconocible el vocabulario estándar de tokens HTML y cumplen la aplicabilidad de controles modelada a partir de ACT 73f2c2. Una secuencia estándar válida produce PASS para esta expectativa concreta; una secuencia estándar mal formada produce REVIEW, nunca FAIL automático. FocusTrace no deduce un propósito obligatorio a partir de `name`, etiqueta, placeholder o tipo de input, e ignora deliberadamente valores formados solo por tokens desconocidos porque una taxonomía personalizada todavía puede proporcionar un propósito programáticamente determinable. Determinar si el campo realmente recopila información sobre el usuario sigue siendo contextual.
+
+Para `FT-REVIEW-015`, FocusTrace utiliza el destino HTTP(S) exacto del enlace únicamente como ancla fuerte de función entre páginas, no como prueba de que toda la funcionalidad sea idéntica. El destino debe aparecer una sola vez por página, ambas páginas deben declarar el mismo idioma principal y los dos nombres deben proceder de la misma fuente observada. Se ignoran destinos duplicados, páginas de idiomas distintos y etiquetas que conservan vocabulario funcional claro. Las variaciones exclusivamente numéricas se normalizan, por lo que textos como `Go to page 4` y `Go to page 5` no generan ruido. El resultado sigue siendo **REVIEW** porque la equivalencia semántica necesita confirmación humana y el colector de Site Audit usa intencionadamente una aproximación acotada al nombre, no AccName completo, para esta comparación.
 
 Para las señales semánticas, FocusTrace intenta diferenciar la función antes de recomendar HTML nativo: comportamiento de botón → preferir `<button type="button">`; navegación → preferir `<a href="…">`; interacción ambigua → revisar primero la función real. ARIA puede mostrarse como fallback, pero no añade automáticamente el comportamiento nativo de teclado.
 
@@ -292,6 +295,7 @@ Site Audit trabaja sobre el mismo origen y reutiliza el scanner real de FocusTra
 | **Hallazgos de plantilla** | Solo considera compartida una señal normalizada cuando aparece en todas las muestras analizadas correctamente de la familia. |
 | **Ayuda coherente** | Compara categorías de ayuda repetidas entre páginas para `FT-REVIEW-011`. |
 | **Navegación coherente** | Compara conjuntos exactos de destinos de navegación repetidos entre páginas muestreadas para `FT-REVIEW-013`; ignora coincidencias parciales o ambiguas. |
+| **Identificación coherente** | Revisa identificaciones sustancialmente divergentes solo para un destino exacto de enlace nativo observado de forma única entre páginas muestreadas del mismo idioma (`FT-REVIEW-015`). |
 | **Historial multipágina** | Conserva la revisión estática más reciente por URL normalizada en la auditoría activa. |
 | **Reanálisis** | Sustituye la revisión/evidencia visual anterior de la misma URL en lugar de duplicarla. |
 | **Evidencia visual limitada** | Puede guardar pequeños recortes locales asociados a revisiones para mantener contexto histórico. |
@@ -374,7 +378,7 @@ Memory no almacena HTML de página, snapshots completos del DOM ni capturas de p
 | APG | Es orientación informativa y las variantes opcionales no se fuerzan como si fueran requisitos universales. |
 | Grid / Treegrid | La revisión es conservadora ante grids irregulares, virtualizados, spans e índices explícitos. |
 | Runtime | Solo puede informar sobre caminos de interacción realmente observados. |
-| Site Audit | El muestreo no equivale a comprobar todas las URLs. La comparación de navegación repetida ignora deliberadamente solapamientos parciales, mecanismos duplicados con el mismo conjunto exacto y el contexto de cambios iniciados por el usuario que no pueda demostrarse automáticamente. |
+| Site Audit | El muestreo no equivale a comprobar todas las URLs. La comparación de navegación repetida ignora solapamientos parciales, mecanismos duplicados con el mismo conjunto exacto y cambios iniciados por el usuario; la comparación de identificación coherente se limita a destinos exactos y únicos de enlaces nativos en páginas con el mismo idioma principal declarado e ignora coincidencias ambiguas o duplicadas. |
 | WCAG | PASS significa que pasa esa expectativa concreta, no todo el criterio WCAG. |
 | EN 301 549 | No realiza una evaluación completa ni certifica conformidad. |
 

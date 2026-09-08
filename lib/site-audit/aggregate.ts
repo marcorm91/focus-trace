@@ -1,6 +1,7 @@
 import type { ReportComponentIdentity } from '../report/component-identity';
 import type { ScanIssue } from '../../shared/types';
 import { buildConsistentHelpReviewByUrl } from './consistent-help';
+import { buildConsistentIdentificationReviewByUrl } from './consistent-identification';
 import { buildConsistentNavigationReviewByUrl } from './consistent-navigation';
 import type {
   SiteAuditFindingAggregate,
@@ -117,6 +118,7 @@ export function buildSiteAuditTemplates(
   const additionalReviews = mergeAdditionalIssueMaps(
     buildConsistentHelpReviewByUrl(pages),
     buildConsistentNavigationReviewByUrl(pages),
+    buildConsistentIdentificationReviewByUrl(pages),
   );
   return families.map((family, index) => {
     const sampledPages = pages.filter((page) => page.routeFamilyId === family.id);

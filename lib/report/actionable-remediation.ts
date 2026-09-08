@@ -188,6 +188,33 @@ export function actionableRemediationForRule(
     };
   }
 
+  if (ruleId === 'FT-REVIEW-015') {
+    return {
+      options: [
+        tr(
+          language,
+          'First confirm that the compared links really provide the same functionality. When they do, identify that repeated function with a consistent label or accessible name across the relevant pages; the wording may vary only when it remains meaningfully equivalent.',
+          'Confirma primero que los enlaces comparados realizan realmente la misma función. Cuando sea así, identifica esa función repetida con una etiqueta o nombre accesible coherente entre las páginas relevantes; la redacción puede variar solo cuando siga siendo significativamente equivalente.',
+        ),
+        tr(
+          language,
+          'Centralize repeated link labels and accessible-name copy in the same shared component, template or content source when practical so page variants do not silently introduce unrelated terminology.',
+          'Centraliza las etiquetas repetidas y el texto del nombre accesible en el mismo componente, plantilla o fuente de contenido compartida cuando sea práctico, para evitar que variantes de página introduzcan terminología no relacionada sin querer.',
+        ),
+        tr(
+          language,
+          'If the wording differs because the controls are not actually the same function, or because contextual information legitimately changes the identification, document that distinction rather than forcing identical text only to silence the review.',
+          'Si la redacción cambia porque los controles no realizan realmente la misma función o porque la información contextual modifica legítimamente su identificación, documenta esa diferencia en lugar de forzar texto idéntico solo para silenciar la revisión.',
+        ),
+      ],
+      validation: tr(
+        language,
+        'Run Site Audit again on the same page set, then manually verify every reported pair: confirm the functionality is the same and that its visible/programmatic identification remains consistent or meaningfully equivalent across those pages.',
+        'Vuelve a ejecutar Site Audit sobre el mismo conjunto de páginas y verifica manualmente cada par informado: confirma que la funcionalidad sea la misma y que su identificación visible/programática se mantenga coherente o significativamente equivalente entre esas páginas.',
+      ),
+    };
+  }
+
   return undefined;
 }
 
