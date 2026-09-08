@@ -83,6 +83,15 @@ function contextChangeDetail(event: RuntimeEvent, language: AppLanguage): string
 }
 
 export function humanRuntimeEventDetail(event: RuntimeEvent, language: AppLanguage): string | undefined {
+  if (event.ruleId === 'FT-RUNTIME-010') {
+    const selector = event.element?.selector ?? tr(language, 'the focused element', 'el elemento con foco');
+    return tr(
+      language,
+      `After a real Tab transition to ${selector}, FocusTrace found no stable pixel-color change in the bounded local comparison region across paired before-focus and focused captures. Review the focus indicator manually: this remains REVIEW, not FAIL, because ACT oj04fd allows the visible indication to appear elsewhere in the viewport and dynamic or unavailable capture evidence is deliberately ignored.`,
+      `Tras una transición real con Tab hacia ${selector}, FocusTrace no encontró ningún cambio estable de color de píxel en la región local acotada al comparar pares de capturas antes y después del foco. Revisa manualmente el indicador de foco: el resultado permanece como REVIEW, no FAIL, porque ACT oj04fd permite que la indicación visible aparezca en otra zona del viewport y la evidencia dinámica o no disponible se descarta deliberadamente.`,
+    );
+  }
+
   if (event.kind === 'virtual-focus') {
     const target = event.element?.name?.trim() || event.element?.role || event.element?.tag;
     return target
