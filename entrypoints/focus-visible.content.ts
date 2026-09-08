@@ -82,7 +82,9 @@ export default defineContentScript({
       reportedSelectors.clear();
     };
 
-    const sleep = (ms: number) => new Promise((resolve) => ctx.setTimeout(resolve, ms));
+    const sleep = (ms: number) => new Promise<void>((resolve) => {
+      ctx.setTimeout(() => resolve(), ms);
+    });
 
     const captureViewport = async (): Promise<FocusVisiblePixelFrame | undefined> => {
       const dataUrl = await browser.runtime.sendMessage({
