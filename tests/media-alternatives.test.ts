@@ -114,6 +114,7 @@ describe('WCAG prerecorded media review', () => {
     render('<video id="silent" src="silent.mp4" controls></video>');
     const video = document.querySelector<HTMLVideoElement>('#silent');
     expect(video).not.toBeNull();
+    if (!video) throw new Error('Expected silent video fixture');
     Object.defineProperty(video, 'audioTracks', { configurable: true, value: { length: 0 } });
     Object.defineProperty(video, 'readyState', { configurable: true, value: video.HAVE_METADATA });
 
