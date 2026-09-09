@@ -58,6 +58,12 @@ cancelled as soon as the bytes actually received exceed that budget;
 `Content-Length` is only an early-rejection hint and is never trusted as the
 sole bound.
 
+The Site Audit entrypoint is split by responsibility: `main.tsx` owns input,
+permissions and scan orchestration; `SiteAuditReport.tsx` owns aggregate result
+presentation; and `SiteAuditFindingRow.tsx` owns one finding's expandable detail
+and explicit visual-evidence capture action. Domain aggregation and report export
+remain in `lib/site-audit/` so presentation components do not redefine evidence.
+
 ### Printable reports
 
 `entrypoints/report-print/`, `entrypoints/audit-print/`, `lib/report/` and the multipage-audit storage boundary own report assembly, bounded local visual evidence and printable/export formats.
