@@ -28,12 +28,11 @@ describe('FocusTrace DevTools DOM inspection contract', () => {
     expect(main).toContain('locateScanTargetInPage');
   });
 
-  it('exposes an accurate bilingual accessible name for the DevTools action', () => {
+  it('does not patch the React-rendered DOM to implement DevTools inspection', () => {
     const main = source('entrypoints/sidepanel/main.tsx');
 
-    expect(main).toContain('Inspect element in DOM');
-    expect(main).toContain('Inspeccionar elemento en el DOM');
-    expect(main).toContain("button.setAttribute('aria-label', label)");
-    expect(main).toContain('button.title = label');
+    expect(main).not.toContain('MutationObserver');
+    expect(main).not.toContain("setAttribute('aria-label'");
+    expect(main).not.toContain('dataset.ftDevtoolsInspect');
   });
 });
