@@ -1,4 +1,5 @@
 import languageRegistryJson from '../../generated/language-subtags.json';
+import { scopedElements } from './scan-elements';
 
 export interface LanguagePartEvaluation {
   element: Element;
@@ -78,9 +79,7 @@ function hasHumanTextInheritingLanguage(element: Element): boolean {
 }
 
 function candidates(root: Document | Element): Element[] {
-  const descendants = [...root.querySelectorAll('[lang]')];
-  if (root instanceof Element && root.matches('[lang]')) descendants.unshift(root);
-  return descendants;
+  return scopedElements(root, '[lang]');
 }
 
 export function evaluateLanguageParts(root: Document | Element = document): LanguagePartEvaluation[] {

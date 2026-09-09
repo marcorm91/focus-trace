@@ -1,6 +1,5 @@
 import { accessibleNameDetails, isProgrammaticallyHidden } from './dom';
-
-type ScanRoot = Document | Element;
+import { scopedElements, type ScanRoot } from './scan-elements';
 
 export type StructuralHtmlSignalKind =
   | 'parent-context'
@@ -33,11 +32,6 @@ const INTERACTIVE_SELECTOR = [
   'video[controls]',
 ].join(', ');
 const LABELABLE_SELECTOR = 'button, input:not([type="hidden"]), meter, output, progress, select, textarea';
-
-function scopedElements(root: ScanRoot, selector: string): Element[] {
-  const descendants = [...root.querySelectorAll(selector)];
-  return root instanceof Element && root.matches(selector) ? [root, ...descendants] : descendants;
-}
 
 function tag(element: Element | null | undefined): string {
   return element?.tagName.toLowerCase() ?? 'none';

@@ -1,4 +1,5 @@
 import { selectorFor, semanticRole } from './dom';
+import { scopedElements, type ScanRoot } from './scan-elements';
 
 export const TARGET_SIZE_MINIMUM_CSS_PX = 24;
 const TARGET_SPACING_RADIUS_CSS_PX = TARGET_SIZE_MINIMUM_CSS_PX / 2;
@@ -81,8 +82,6 @@ interface TargetSnapshot {
   rect: RectSnapshot;
   sizeKnowledge: SizeKnowledge;
 }
-
-type ScanRoot = Document | Element;
 
 function normalizedRole(element: Element): string | null {
   return semanticRole(element)?.trim().toLowerCase() ?? null;
@@ -178,10 +177,7 @@ function sizeKnowledgeFor(element: Element, rect: RectSnapshot): SizeKnowledge {
 }
 
 function targetElements(root: ScanRoot): Element[] {
-  const descendants = [...root.querySelectorAll(POINTER_TARGET_SELECTOR)];
-  const candidates = root instanceof Element && root.matches(POINTER_TARGET_SELECTOR)
-    ? [root, ...descendants]
-    : descendants;
+  const candidates = scopedElements(root, POINTER_TARGET_SELECTOR);
   return candidates.filter((element, index) => candidates.indexOf(element) === index)
     .filter(isSemanticPointerTarget)
     .filter(isRenderedPointerTarget);

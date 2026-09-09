@@ -1,4 +1,5 @@
 import { semanticRole } from './dom';
+import { scopedElements, type ScanRoot } from './scan-elements';
 
 export type InteractiveSemanticIntent = 'button' | 'link' | 'unknown';
 export type SemanticConfidence = 'high' | 'medium';
@@ -14,16 +15,9 @@ export interface InteractiveSemanticSignal {
   signals: string[];
 }
 
-type ScanRoot = Document | Element;
-
 const BUTTON_INPUT_TYPES = new Set(['button', 'submit', 'reset', 'image']);
 const BUTTON_STATE_ATTRIBUTES = ['aria-pressed', 'aria-expanded', 'aria-haspopup'] as const;
 const NAVIGATION_HANDLER_PATTERN = /(?:\b(?:window\.)?location(?:\.href)?\b|\blocation\.(?:assign|replace)\s*\(|\bwindow\.open\s*\(|\bhistory\.(?:pushState|replaceState)\s*\(|\b(?:router\.(?:push|replace)|navigate)\s*\()/i;
-
-function scopedElements(root: ScanRoot, selector: string): Element[] {
-  const descendants = [...root.querySelectorAll(selector)];
-  return root instanceof Element && root.matches(selector) ? [root, ...descendants] : descendants;
-}
 
 function explicitInteractiveRole(element: Element): 'button' | 'link' | undefined {
   if (!element.hasAttribute('role')) return undefined;
@@ -168,7 +162,7 @@ export function evaluateInteractiveSemantics(root: ScanRoot): InteractiveSemanti
 }
 
 export function mainLandmarkCandidates(): Element[] {
-  return [...document.querySelectorAll('main, [role]')].filter((element) => {
+  return scopedElements(document, 'main, [role]').filter((element) => {
     const role = semanticRole(element);
     if (element.hasAttribute('role') && role === 'main') return true;
     if (element.tagName !== 'MAIN') return false;

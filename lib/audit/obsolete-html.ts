@@ -4,8 +4,7 @@ import {
   OBSOLETE_ELEMENTS,
   type ObsoleteAttributeDefinition,
 } from '../../shared/obsolete-html-registry';
-
-type ScanRoot = Document | Element;
+import { scopedElements, type ScanRoot } from './scan-elements';
 
 export type ObsoleteHtmlSignalKind = 'obsolete-element' | 'obsolete-attribute' | 'obsolete-but-conforming';
 
@@ -23,11 +22,6 @@ for (const definition of OBSOLETE_ATTRIBUTES) {
   const existing = attributeDefinitions.get(definition.attribute);
   if (existing) existing.push(definition);
   else attributeDefinitions.set(definition.attribute, [definition]);
-}
-
-function scopedElements(root: ScanRoot): Element[] {
-  const descendants = [...root.querySelectorAll('*')];
-  return root instanceof Element ? [root, ...descendants] : descendants;
 }
 
 function appliesToElement(definition: ObsoleteAttributeDefinition, tag: string): boolean {
@@ -224,7 +218,7 @@ function genericObsoleteAttributeSignal(element: Element, attribute: Attr): Obso
 export function evaluateObsoleteHtml(root: ScanRoot): ObsoleteHtmlSignal[] {
   const signals: ObsoleteHtmlSignal[] = [];
 
-  for (const element of scopedElements(root)) {
+  for (const element of scopedElements(root, '*')) {
     const tag = element.tagName.toLowerCase();
     const elementDefinition = elementDefinitions.get(tag);
     if (elementDefinition) {
