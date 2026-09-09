@@ -18,29 +18,34 @@ describe('FocusTrace DevTools DOM inspection contract', () => {
     expect(main).toContain('event.stopPropagation()');
   });
 
-  it('keeps the action scoped to the DevTools surface and leaves the normal side panel locator intact', () => {
+  it('keeps native DOM inspection scoped to DevTools while visual location remains available everywhere', () => {
     const main = source('entrypoints/sidepanel/main.tsx');
+    const scan = source('entrypoints/sidepanel/views/ScanView.tsx');
 
     expect(main).toContain('if (inspectedTabId == null)');
     expect(main).toContain("target.closest('.finding-location > button')");
     expect(main).toContain('const inspectedWindow = devtoolsInspectedWindow();');
     expect(main).toContain('requestSurfacePageAccess()');
     expect(main).toContain('locateScanTargetInPage');
+    expect(scan).toContain('disabled={!devtoolsSurface}');
+    expect(scan).toContain('available from FocusTrace in DevTools');
+    expect(scan).toContain('disponible desde FocusTrace en DevTools');
   });
 
-  it('renders separate visual-highlight and native DOM-inspection controls in DevTools', () => {
+  it('renders separate visual-highlight and native DOM-inspection controls without layout gaps', () => {
     const scan = source('entrypoints/sidepanel/views/ScanView.tsx');
     const css = source('entrypoints/sidepanel/element-location-actions.css');
 
     expect(scan).toContain("dataset.ftSurface === 'devtools'");
     expect(scan).toContain('finding-location-highlight-action');
     expect(scan).toContain('finding-location-inspect-action');
-    expect(scan).toContain("data-ft-action={devtoolsSurface ? 'inspect-dom' : 'highlight-page'}");
+    expect(scan).toContain('data-ft-action="inspect-dom"');
     expect(scan).toContain('Highlight element visually on page');
     expect(scan).toContain('Destacar visualmente el elemento en la página');
     expect(scan).toContain('Inspect element in DOM');
     expect(scan).toContain('Inspeccionar elemento en el DOM');
     expect(css).toContain('grid-template-columns: minmax(0, 1fr) 44px 44px');
+    expect(css).toContain('gap: 0;');
   });
 
   it('does not patch the React-rendered DOM to implement DevTools inspection', () => {
