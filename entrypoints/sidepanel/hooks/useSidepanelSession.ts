@@ -11,6 +11,17 @@ const EMPTY_SESSION: SessionState = {
   breakpoints: defaultRuntimeBreakpointSettings(),
 };
 
+function fixedDevtoolsTabId(): number | undefined {
+  try {
+    const value = new URLSearchParams(window.location.search).get('focustraceTabId');
+    if (!value) return undefined;
+    const parsed = Number(value);
+    return Number.isInteger(parsed) && parsed >= 0 ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
 async function activeTabForCurrentWindow() {
   const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
   if (tab?.id == null || tab.windowId == null) throw new Error('No active browser tab is available.');
@@ -31,6 +42,7 @@ export function useSidepanelSession({
 } {
   const [tabId, setTabId] = useState<number>();
   const [session, setSession] = useState<SessionState>(EMPTY_SESSION);
+  const [inspectedTabId] = useState(fixedDevtoolsTabId);
   const selectedTabRef = useRef<number | undefined>(undefined);
   const panelWindowRef = useRef<number | undefined>(undefined);
 
@@ -52,22 +64,29 @@ export function useSidepanelSession({
   }, [onTabSelected, refresh]);
 
   useEffect(() => {
+    if (inspectedTabId != null) {
+      void selectTab(inspectedTabId).catch(onError);
+      return;
+    }
+
     void activeTabForCurrentWindow()
       .then(({ tabId: activeTabId, windowId }) => {
         panelWindowRef.current = windowId;
         return selectTab(activeTabId);
       })
       .catch(onError);
-  }, [onError, selectTab]);
+  }, [inspectedTabId, onError, selectTab]);
 
   useEffect(() => {
+    if (inspectedTabId != null) return;
+
     const listener = ({ tabId: nextTabId, windowId }: { tabId: number; windowId: number }) => {
       if (!activationBelongsToPanelWindow(panelWindowRef.current, windowId)) return;
       void selectTab(nextTabId).catch(onError);
     };
     browser.tabs.onActivated.addListener(listener);
     return () => browser.tabs.onActivated.removeListener(listener);
-  }, [onError, selectTab]);
+  }, [inspectedTabId, onError, selectTab]);
 
   useEffect(() => {
     const listener = (message: ExtensionMessage) => {
