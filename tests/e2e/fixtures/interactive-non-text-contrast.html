@@ -1,0 +1,54 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Interactive non-text contrast runtime</title>
+  <style>
+    html, body {
+      margin: 0;
+      background: #fff;
+      color: #111;
+      font-family: sans-serif;
+    }
+
+    main { padding: 24px; }
+    button {
+      margin: 12px;
+      padding: 10px 14px;
+      color: #111;
+      background: #fff;
+      border: 0;
+    }
+
+    #bad-focus { outline: none; }
+    #bad-focus:focus-visible {
+      outline: 2px solid rgb(190, 190, 190);
+      outline-offset: 2px;
+    }
+
+    .icon svg {
+      width: 24px;
+      height: 24px;
+      display: block;
+    }
+    .icon path {
+      fill: rgb(20, 20, 20);
+      transition: fill 50ms linear;
+    }
+    #bad-hover:hover path { fill: rgb(190, 190, 190); }
+    #good-hover:hover path { fill: rgb(80, 80, 80); }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Interactive non-text contrast runtime</h1>
+    <button id="bad-focus">Keyboard focus target</button>
+    <button id="bad-hover" class="icon" aria-label="Bad hover icon">
+      <svg viewBox="0 0 10 10" aria-hidden="true"><path d="M0 0h10v10H0z"></path></svg>
+    </button>
+    <button id="good-hover" class="icon" aria-label="Good hover icon">
+      <svg viewBox="0 0 10 10" aria-hidden="true"><path d="M0 0h10v10H0z"></path></svg>
+    </button>
+  </main>
+</body>
+</html>

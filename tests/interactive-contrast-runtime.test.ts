@@ -4,6 +4,7 @@ import { describe, expect, it } from 'vitest';
 import {
   activeSemanticContrastStates,
   interactiveContrastSettleDelay,
+  interactiveNonTextContrastReviews,
   interactiveTextContrastReviews,
 } from '../lib/runtime/interactive-contrast';
 
@@ -38,6 +39,55 @@ describe('interactive contrast runtime evidence', () => {
     ]));
   });
 
+  it('creates a non-text REVIEW only when a rendered semantic state has a measured ratio below 3:1', () => {
+    render(
+      '<style>#target[aria-pressed="true"] { background: white; border: 0; } #target[aria-pressed="true"] path { fill: rgb(190, 190, 190); }</style>',
+      '<button id="target" aria-pressed="true" aria-label="Toggle"><svg viewBox="0 0 10 10"><path d="M0 0h10v10H0z" /></svg></button>',
+    );
+
+    const target = document.querySelector<HTMLButtonElement>('#target')!;
+    const reviews = interactiveNonTextContrastReviews(target, 'pressed');
+
+    expect(reviews).toHaveLength(1);
+    expect(reviews[0]).toMatchObject({
+      kind: 'contrast-state',
+      outcome: 'review',
+      ruleId: 'FT-RUNTIME-016',
+      element: { selector: '#target' },
+    });
+    expect(reviews[0]?.title).toContain('WCAG 1.4.11');
+    expect(reviews[0]?.detail).toContain('category=non-text');
+    expect(reviews[0]?.detail).toContain('kind=graphic');
+    expect(reviews[0]?.detail).toContain('required=3:1');
+    expect(reviews[0]?.references).toEqual(expect.arrayContaining([
+      expect.objectContaining({ type: 'WCAG', id: '1.4.11', level: 'AA' }),
+    ]));
+  });
+
+  it('keeps a sufficient non-text state quiet', () => {
+    render(
+      '<style>#target[aria-selected="true"] { background: white; border: 0; } #target[aria-selected="true"] path { fill: rgb(80, 80, 80); }</style>',
+      '<button id="target" aria-selected="true" aria-label="Selected"><svg viewBox="0 0 10 10"><path d="M0 0h10v10H0z" /></svg></button>',
+    );
+
+    const target = document.querySelector<HTMLButtonElement>('#target')!;
+    expect(interactiveNonTextContrastReviews(target, 'selected')).toEqual([]);
+  });
+
+  it('attributes a measured focus outline only to the observed focus state', () => {
+    render(
+      '',
+      '<div style="background:white"><button id="target" style="background:white;border:0;outline-width:2px;outline-style:solid;outline-color:rgb(190,190,190)">Focus target</button></div>',
+    );
+
+    const target = document.querySelector<HTMLButtonElement>('#target')!;
+    target.focus();
+    const reviews = interactiveNonTextContrastReviews(target, 'focus');
+
+    expect(reviews.some((review) => review.ruleId === 'FT-RUNTIME-016' && review.detail?.includes('kind=focus-indicator'))).toBe(true);
+    expect(interactiveNonTextContrastReviews(target, 'hover')).toEqual([]);
+  });
+
   it('does not infer hover contrast when hover is not actually active', () => {
     render(
       '<style>#target:hover { color: rgb(180, 180, 180); background: white; }</style>',
@@ -46,6 +96,7 @@ describe('interactive contrast runtime evidence', () => {
 
     const target = document.querySelector<HTMLButtonElement>('#target')!;
     expect(interactiveTextContrastReviews(target, 'hover')).toEqual([]);
+    expect(interactiveNonTextContrastReviews(target, 'hover')).toEqual([]);
   });
 
   it('does not emit a runtime review when the observed state has sufficient contrast', () => {

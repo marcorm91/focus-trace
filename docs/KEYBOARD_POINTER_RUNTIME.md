@@ -58,10 +58,24 @@ FocusTrace never synthesizes hover or focus for this rule and does not infer a f
 
 **Base impact:** serious. Additional content that cannot be reached, retained or dismissed can obscure or remove information during pointer or keyboard interaction, especially for users with low vision, magnification or motor impairments.
 
+## `FT-RUNTIME-016` — Interactive non-text contrast review
+
+**Reference:** WCAG 1.4.11 Non-text Contrast · EN 301 549 V4.1.1 §9.1.4.11.
+
+FocusTrace extends the same trusted-state probe used by `FT-RUNTIME-014` to bounded non-text visual evidence on the **interacted control only**. After a real hover, pointer-active state, keyboard focus/focus-visible transition or observed semantic checked/expanded/selected/pressed state settles, FocusTrace reuses the existing non-text contrast evaluator for simple identifying SVG fill/stroke, relevant author-styled component boundaries and author-defined focus outlines.
+
+Runtime output is deliberately quieter than the static non-text review. `FT-RUNTIME-016` is emitted only when the visual cue has a **resolved numeric contrast ratio below 3:1** against its adjacent color. Gradients, masks, generated CSS graphics, multi-color graphics and box-shadow-only focus cues that cannot be reduced to one reliable ratio remain silent/manual rather than creating speculative Trace findings. A measured low outline accompanied by a second box-shadow cue remains REVIEW because the additional cue may contribute to the visible indicator.
+
+Focus-indicator evidence is attributed only to real `focus` / `focus-visible` states. If a control remains focused while it is later hovered or pressed, FocusTrace does not relabel the existing focus indicator as a hover/pressed contrast problem. As with the text rule, unobserved states and the WCAG judgement about whether a visual cue is required remain outside automatic conformance claims.
+
+**Base impact:** serious. A component boundary, identifying icon or focus cue can become difficult to perceive only during interaction, hiding the control or its current state from users with low vision or reduced contrast sensitivity even when the default presentation is acceptable.
+
+The detailed implementation boundary is documented in `docs/INTERACTIVE_CONTRAST.md`.
+
 ## Shared guardrails
 
 - Only trusted user interaction is considered; synthetic test events from the page are not treated as user evidence.
-- Interactive contrast and hover/focus-content review do not synthesize hover and do not call `element.focus()` to manufacture focus evidence.
+- Interactive text/non-text contrast and hover/focus-content review do not synthesize hover and do not call `element.focus()` to manufacture focus evidence.
 - The rules record compact target/evidence data and do not persist raw pointer trajectories.
 - Absence of a review does not mean the referenced WCAG criterion is fully tested.
 - The WCAG coverage matrix marks these runtime criteria as **partial**, **runtime**, **review** and still requiring manual review.

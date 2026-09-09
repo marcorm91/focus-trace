@@ -379,44 +379,60 @@ function evaluateObservedFocusIndicator(element: Element): NonTextContrastEvalua
   };
 }
 
+/**
+ * Evaluates the same bounded non-text contrast evidence as the page scan, but
+ * only for one interactive control. Runtime state probes use this to avoid a
+ * page-wide rescan on every trusted hover/focus/state transition.
+ */
+export function evaluateNonTextContrastForElement(control: Element): NonTextContrastFinding[] {
+  const findings: NonTextContrastFinding[] = [];
+  if (!isInteractiveContainer(control) || isDisabled(control)) return findings;
+
+  const svgs = [...control.querySelectorAll('svg')];
+  const iconOnly = svgs.length > 0 && !visibleTextOutsideSvg(control);
+  if (iconOnly) {
+    const evaluation = svgs.length === 1
+      ? evaluateGraphic(svgs[0]!, control)
+      : {
+          status: 'review' as const,
+          kind: 'graphic' as const,
+          subject: 'control icons',
+          requiredRatio: REQUIRED_RATIO,
+          reason: 'The control contains multiple SVG graphics, so FocusTrace cannot choose a single identifying visual cue reliably.',
+        };
+    findings.push({ element: control, evaluation });
+  } else {
+    const cssGraphic = !visibleTextOutsideSvg(control) ? cssGraphicReason(control) : undefined;
+    if (cssGraphic) {
+      findings.push({
+        element: control,
+        evaluation: {
+          status: 'review',
+          kind: 'graphic',
+          subject: 'CSS graphic',
+          requiredRatio: REQUIRED_RATIO,
+          reason: `${cssGraphic} FocusTrace cannot reduce generated or image-based graphics to one reliable color ratio.`,
+        },
+      });
+    } else {
+      const boundary = evaluateUiBoundary(control);
+      if (boundary) findings.push({ element: control, evaluation: boundary });
+    }
+  }
+
+  const focusIndicator = evaluateObservedFocusIndicator(control);
+  if (focusIndicator) findings.push({ element: control, evaluation: focusIndicator });
+
+  return findings;
+}
+
 export function evaluateNonTextContrast(): NonTextContrastFinding[] {
   const findings: NonTextContrastFinding[] = [];
   const controls = Array.from(document.querySelectorAll('button, input, select, textarea, [role]'))
     .filter((element) => isInteractiveContainer(element));
 
   for (const control of controls) {
-    if (isDisabled(control)) continue;
-    const svgs = [...control.querySelectorAll('svg')];
-    const iconOnly = svgs.length > 0 && !visibleTextOutsideSvg(control);
-    if (iconOnly) {
-      const evaluation = svgs.length === 1
-        ? evaluateGraphic(svgs[0]!, control)
-        : {
-            status: 'review' as const,
-            kind: 'graphic' as const,
-            subject: 'control icons',
-            requiredRatio: REQUIRED_RATIO,
-            reason: 'The control contains multiple SVG graphics, so FocusTrace cannot choose a single identifying visual cue reliably.',
-          };
-      findings.push({ element: control, evaluation });
-    } else {
-      const cssGraphic = !visibleTextOutsideSvg(control) ? cssGraphicReason(control) : undefined;
-      if (cssGraphic) {
-        findings.push({
-          element: control,
-          evaluation: {
-            status: 'review',
-            kind: 'graphic',
-            subject: 'CSS graphic',
-            requiredRatio: REQUIRED_RATIO,
-            reason: `${cssGraphic} FocusTrace cannot reduce generated or image-based graphics to one reliable color ratio.`,
-          },
-        });
-        continue;
-      }
-      const boundary = evaluateUiBoundary(control);
-      if (boundary) findings.push({ element: control, evaluation: boundary });
-    }
+    findings.push(...evaluateNonTextContrastForElement(control));
   }
 
   for (const svg of document.querySelectorAll<SVGElement>('svg[role]')) {
@@ -440,12 +456,6 @@ export function evaluateNonTextContrast(): NonTextContrastFinding[] {
         reason: `${reason ?? 'The graphic is rendered as canvas pixels.'} FocusTrace cannot reduce it to a reliable computed-style contrast ratio. Review required graphical objects and their adjacent colors manually.`,
       },
     });
-  }
-
-  const active = document.activeElement;
-  if (active && active instanceof Element) {
-    const focusIndicator = evaluateObservedFocusIndicator(active);
-    if (focusIndicator) findings.push({ element: active, evaluation: focusIndicator });
   }
 
   return findings;

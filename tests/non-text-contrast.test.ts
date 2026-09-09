@@ -1,7 +1,10 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from 'vitest';
-import { evaluateNonTextContrast } from '../lib/audit/non-text-contrast';
+import {
+  evaluateNonTextContrast,
+  evaluateNonTextContrastForElement,
+} from '../lib/audit/non-text-contrast';
 import { runFocusTraceScan } from '../lib/audit/scan';
 
 function render(body: string) {
@@ -21,6 +24,20 @@ describe('non-text contrast', () => {
       requiredRatio: 3,
     });
     expect(finding?.evaluation.ratio).toBeLessThan(3);
+  });
+
+  it('scopes the same control evidence without rescanning unrelated controls', () => {
+    render('<button id="first" aria-label="Settings" style="background:#fff;border:0"><svg viewBox="0 0 10 10"><path style="fill:rgb(170,170,170)" d="M0 0h10v10H0z"/></svg></button><button id="second">Other</button>');
+    const first = document.querySelector('#first')!;
+    const findings = evaluateNonTextContrastForElement(first);
+
+    expect(findings).toHaveLength(1);
+    expect(findings[0]?.element).toBe(first);
+    expect(findings[0]?.evaluation).toMatchObject({
+      status: 'fail',
+      kind: 'graphic',
+      requiredRatio: 3,
+    });
   });
 
   it('does not treat a decorative low-contrast icon beside visible button text as required', () => {
