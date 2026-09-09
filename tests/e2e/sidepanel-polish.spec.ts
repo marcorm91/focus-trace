@@ -80,7 +80,7 @@ test('sidepanel controls and finding surfaces expose their intended behavior', a
 
   await workspace.getByRole('button', { name: 'Trace' }).click();
   const traceControls = panel.locator('.trace-hero-actions .trace-record, .trace-hero-actions .trace-reset');
-  expect(await traceControls.count()).toBeGreaterThanOrEqual(2);
+  await expect(traceControls).toHaveCount(2);
   const traceStyles = await traceControls.evaluateAll((buttons) => buttons.map((button) => {
     const style = getComputedStyle(button);
     return `${style.backgroundColor}|${style.borderColor}`;
@@ -138,7 +138,9 @@ test('sidepanel controls and finding surfaces expose their intended behavior', a
 
   await workspace.getByRole('button', { name: /Report|Informe/ }).click();
 
-  const scorelineStyles = await panel.locator('.report-scoreline > div').evaluateAll((metrics) => metrics.map((metric) => {
+  const scorelineMetrics = panel.locator('.report-scoreline > div');
+  await expect(scorelineMetrics).toHaveCount(4);
+  const scorelineStyles = await scorelineMetrics.evaluateAll((metrics) => metrics.map((metric) => {
     const style = getComputedStyle(metric);
     return `${style.borderTopWidth}|${style.borderRadius}|${style.backgroundColor}|${style.boxShadow}`;
   }));

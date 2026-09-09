@@ -36,6 +36,20 @@ function budgetFor(key) {
   return Math.ceil(config.baseline[key] * growthFactor);
 }
 
+function initialHtmlAssets(root, htmlFile) {
+  const html = readFileSync(htmlFile, 'utf8');
+  const paths = [...html.matchAll(/(?:src|href)="\/([^"?#]+)(?:[?#][^"]*)?"/g)]
+    .map((match) => match[1]);
+  return {
+    html,
+    bytes: paths.reduce((total, path) => {
+      const asset = resolve(root, path);
+      assert(existsSync(asset), `Initial sidepanel asset is missing: ${asset}`);
+      return total + statSync(asset).size;
+    }, 0),
+  };
+}
+
 for (const target of TARGETS) {
   const root = resolve('.output', target);
   assert(existsSync(root), `${target} output is missing; build all browser targets before validating bundle size.`);
@@ -47,12 +61,30 @@ for (const target of TARGETS) {
   // historical one-file shape.
   const sidepanelJs = largestMatchingFile(resolve(root, 'chunks'), /^sidepanel-.*\.js$/, `${target} sidepanel JS`);
   const sidepanelCss = matchingFile(resolve(root, 'assets'), /^sidepanel-.*\.css$/, `${target} sidepanel CSS`);
+  const initial = initialHtmlAssets(root, resolve(root, 'sidepanel.html'));
+
+  for (const workspace of [
+    'AuditReportWorkspace',
+    'InstructionsView',
+    'ScanView',
+    'SettingsView',
+    'StructureView',
+    'TraceView',
+  ]) {
+    const pattern = new RegExp(`^${workspace}-.*\\.js$`);
+    matchingFile(resolve(root, 'chunks'), pattern, `${target} ${workspace} lazy chunk`);
+    assert(
+      !initial.html.includes(`${workspace}-`),
+      `${target} must not preload the ${workspace} lazy chunk from sidepanel.html.`,
+    );
+  }
 
   const measured = {
     totalBytes: totalBytes(root),
     runtimeBytes: statSync(runtime).size,
     sidepanelJsBytes: statSync(sidepanelJs).size,
     sidepanelCssBytes: statSync(sidepanelCss).size,
+    sidepanelInitialBytes: initial.bytes,
   };
 
   for (const [key, actual] of Object.entries(measured)) {

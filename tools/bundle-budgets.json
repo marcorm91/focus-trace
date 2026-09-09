@@ -3,7 +3,8 @@
   "baseline": {
     "totalBytes": 1597132,
     "runtimeBytes": 367444,
-    "sidepanelJsBytes": 330996,
-    "sidepanelCssBytes": 197208
+    "sidepanelJsBytes": 89383,
+    "sidepanelCssBytes": 118939,
+    "sidepanelInitialBytes": 487965
   }
 }

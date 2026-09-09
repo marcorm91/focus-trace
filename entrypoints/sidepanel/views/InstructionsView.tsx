@@ -4,6 +4,7 @@ import { tr, type AppLanguage } from '../../../shared/i18n';
 import { ruleLegendCopy } from '../../../shared/rule-legend';
 import { StandardsCoverageMatrix } from '../components/StandardsCoverageMatrix';
 import { closeFocusedInstructionsView } from '../settings-focus';
+import './instructions-workspace.css';
 
 function InstructionCard({
   title,

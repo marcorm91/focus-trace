@@ -1,4 +1,4 @@
-import { useCallback, useState } from 'react';
+import { lazy, Suspense, useCallback, useState } from 'react';
 import { browser } from '#imports';
 import { collectFocusMemoryEvidence } from '../../lib/focus-memory/visual-evidence';
 import { type ExplanationLevel } from '../../lib/runtime/explanations';
@@ -7,7 +7,7 @@ import { clearHeadingOutlineInPage } from '../../lib/runtime/heading-overlay';
 import { pickComponentInPage, type ComponentPickerResult } from '../../lib/runtime/component-picker';
 import { locateScanTargetInPage } from '../../lib/runtime/scan-target-overlay';
 import { collectStructureEvidenceInPage, type StructureSnapshot } from '../../lib/runtime/structure-evidence';
-import { tr } from '../../shared/i18n';
+import { tr, type AppLanguage } from '../../shared/i18n';
 import type {
   ExtensionMessage,
   FocusMemoryCapturedEvidence,
@@ -23,20 +23,39 @@ import { usePageRuntimeAccess } from './hooks/usePageRuntimeAccess';
 import { useSidepanelLanguage } from './hooks/useSidepanelLanguage';
 import { useSidepanelSession } from './hooks/useSidepanelSession';
 import { useTraceActions } from './hooks/useTraceActions';
-import { AuditReportWorkspace } from './views/AuditReportWorkspace';
-import { InstructionsView } from './views/InstructionsView';
-import { ScanView } from './views/ScanView';
-import { SettingsView } from './views/SettingsView';
-import { StructureView } from './views/StructureView';
-import { TraceView } from './views/TraceView';
-
 type View = 'scan' | 'structure' | 'trace' | 'report' | 'instructions' | 'settings';
+
+const AuditReportWorkspace = lazy(() => import('./views/AuditReportWorkspace')
+  .then((module) => ({ default: module.AuditReportWorkspace })));
+const InstructionsView = lazy(() => import('./views/InstructionsView')
+  .then((module) => ({ default: module.InstructionsView })));
+const ScanView = lazy(() => import('./views/ScanView')
+  .then((module) => ({ default: module.ScanView })));
+const SettingsView = lazy(() => import('./views/SettingsView')
+  .then((module) => ({ default: module.SettingsView })));
+const StructureView = lazy(() => import('./views/StructureView')
+  .then((module) => ({ default: module.StructureView })));
+const TraceView = lazy(() => import('./views/TraceView')
+  .then((module) => ({ default: module.TraceView })));
 
 type NavigationItem = {
   id: 'scan' | 'structure' | 'trace' | 'report';
   label: string;
   icon: string;
 };
+
+function WorkspaceLoading({ language }: { language: AppLanguage }) {
+  return (
+    <section className="notice workspace-loading" role="status" aria-live="polite" aria-busy="true">
+      <strong>{tr(language, 'Loading workspace…', 'Cargando área de trabajo…')}</strong>
+      <p>{tr(
+        language,
+        'FocusTrace is preparing this view.',
+        'FocusTrace está preparando esta vista.',
+      )}</p>
+    </section>
+  );
+}
 
 export default function App() {
   const [view, setView] = useState<View>('scan');
@@ -470,63 +489,65 @@ export default function App() {
         ))}
       </nav>
 
-      {view === 'scan' && (
-        <ScanView
-          scan={scan}
-          level={explanationLevel}
-          language={language}
-          onLocate={locateScanTarget}
-          onAnalyzePage={runScan}
-          onSelectComponent={runComponentScan}
-        />
-      )}
-      {view === 'structure' && (
-        <StructureView
-          snapshot={structureSnapshot}
-          scan={scan}
-          language={language}
-          busy={busy}
-          onRefresh={refreshStructure}
-          onLocate={locateScanTarget}
-        />
-      )}
-      {view === 'trace' && (
-        <TraceView
-          journey={focusJourney}
-          graph={focusGraph}
-          events={session.events}
-          interactions={interactions}
-          pathSteps={focusPathSteps}
-          pathVisible={focusPathVisible}
-          recording={session.recording}
-          busy={busy}
-          selectedSelector={selectedFocusSelector}
-          breakpointSettings={breakpointSettings}
-          pausedByBreakpoint={session.pausedByBreakpoint}
-          level={explanationLevel}
-          language={language}
-          page={scan ? { url: scan.url, title: scan.title } : undefined}
-          onTogglePath={toggleFocusPath}
-          onToggleRecording={toggleRecording}
-          onSelectStep={selectFocusPoint}
-          onClearSelection={clearFocusSelection}
-          onBreakpointChange={setBreakpoint}
-          onDeleteInteraction={deleteTraceInteraction}
-        />
-      )}
-      {view === 'report' && (
-        <AuditReportWorkspace
-          audit={activeAudit}
-          scan={scan}
-          events={session.events}
-          structureSnapshot={structureSnapshot}
-          language={language}
-          onLocate={locateScanTarget}
-          onDeletePage={deleteAuditPage}
-        />
-      )}
-      {view === 'instructions' && <InstructionsView language={language} />}
-      {view === 'settings' && <SettingsView language={language} onLanguageChange={updateLanguage} />}
+      <Suspense fallback={<WorkspaceLoading language={language} />}>
+        {view === 'scan' && (
+          <ScanView
+            scan={scan}
+            level={explanationLevel}
+            language={language}
+            onLocate={locateScanTarget}
+            onAnalyzePage={runScan}
+            onSelectComponent={runComponentScan}
+          />
+        )}
+        {view === 'structure' && (
+          <StructureView
+            snapshot={structureSnapshot}
+            scan={scan}
+            language={language}
+            busy={busy}
+            onRefresh={refreshStructure}
+            onLocate={locateScanTarget}
+          />
+        )}
+        {view === 'trace' && (
+          <TraceView
+            journey={focusJourney}
+            graph={focusGraph}
+            events={session.events}
+            interactions={interactions}
+            pathSteps={focusPathSteps}
+            pathVisible={focusPathVisible}
+            recording={session.recording}
+            busy={busy}
+            selectedSelector={selectedFocusSelector}
+            breakpointSettings={breakpointSettings}
+            pausedByBreakpoint={session.pausedByBreakpoint}
+            level={explanationLevel}
+            language={language}
+            page={scan ? { url: scan.url, title: scan.title } : undefined}
+            onTogglePath={toggleFocusPath}
+            onToggleRecording={toggleRecording}
+            onSelectStep={selectFocusPoint}
+            onClearSelection={clearFocusSelection}
+            onBreakpointChange={setBreakpoint}
+            onDeleteInteraction={deleteTraceInteraction}
+          />
+        )}
+        {view === 'report' && (
+          <AuditReportWorkspace
+            audit={activeAudit}
+            scan={scan}
+            events={session.events}
+            structureSnapshot={structureSnapshot}
+            language={language}
+            onLocate={locateScanTarget}
+            onDeletePage={deleteAuditPage}
+          />
+        )}
+        {view === 'instructions' && <InstructionsView language={language} />}
+        {view === 'settings' && <SettingsView language={language} onLanguageChange={updateLanguage} />}
+      </Suspense>
     </main>
   );
 }

@@ -21,6 +21,7 @@ import type { FindingOutcome, ScanIssue, ScanResult, Severity } from '../../../s
 import { Empty, ReferenceList } from '../components/Common';
 import { FindingGuidance } from '../components/FindingGuidance';
 import { ImpactMatrix } from '../components/ImpactMatrix';
+import './scan-workspace.css';
 
 type ScanFilter = FindingOutcome;
 type ColorFormat = 'hex' | 'rgb';

@@ -1,0 +1,7 @@
+@layer foundation, system, layout, components, policy, accessibility;
+
+@import url('./session-report.css') layer(components);
+@import url('./report-accordion.css') layer(components);
+@import url('./report-export.css') layer(components);
+@import url('../components/report-component-identity.css') layer(components);
+@import url('../components/report-scan-compact.css') layer(components);

@@ -1,0 +1,4 @@
+@layer foundation, system, layout, components, policy, accessibility;
+
+@import url('../heading-tree-visual.css') layer(components);
+@import url('../structure.css') layer(components);

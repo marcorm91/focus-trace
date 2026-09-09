@@ -1,0 +1,4 @@
+@layer foundation, system, layout, components, policy, accessibility;
+
+@import url('../settings-scale.css') layer(components);
+@import url('../components/focus-memory-settings.css') layer(components);

@@ -8,6 +8,7 @@ import type {
 import { tr, type AppLanguage } from '../../../shared/i18n';
 import type { ScanResult } from '../../../shared/types';
 import { HeadingTreeView } from './HeadingTreeView';
+import './structure-workspace.css';
 
 type StructureMode = 'headings' | 'semantics' | 'metrics';
 
