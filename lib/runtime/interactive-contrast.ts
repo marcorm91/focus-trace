@@ -8,7 +8,11 @@ import {
   type ContrastStateName,
 } from '../audit/contrast-state-coverage';
 import { isProgrammaticallyHidden } from '../audit/dom';
-import { INTERACTIVE_TEXT_CONTRAST_RULE } from '../../shared/interactive-contrast-rules';
+import { evaluateNonTextContrastForElement } from '../audit/non-text-contrast';
+import {
+  INTERACTIVE_NON_TEXT_CONTRAST_RULE,
+  INTERACTIVE_TEXT_CONTRAST_RULE,
+} from '../../shared/interactive-contrast-rules';
 import type { RuntimeEvent } from '../../shared/types';
 import { snapshot } from './page-inspection';
 
@@ -110,6 +114,28 @@ function neutralContrastDetail(input: {
   return tokens.join(' · ');
 }
 
+function neutralNonTextContrastDetail(input: {
+  state: RuntimeContrastState;
+  kind: string;
+  subject: string;
+  ratio: number;
+  requiredRatio: number;
+  foreground?: string;
+  background?: string;
+}): string {
+  const tokens = [
+    'category=non-text',
+    `state=${input.state}`,
+    `kind=${input.kind}`,
+    `subject=${input.subject}`,
+    `ratio=${input.ratio.toFixed(2)}:1`,
+    `required=${input.requiredRatio}:1`,
+  ];
+  if (input.foreground) tokens.push(`foreground=${input.foreground}`);
+  if (input.background) tokens.push(`background=${input.background}`);
+  return tokens.join(' · ');
+}
+
 /**
  * Evaluates only the currently rendered state. The caller is responsible for
  * observing a trusted user interaction and waiting for the state transition to
@@ -155,6 +181,50 @@ export function interactiveTextContrastReviews(
         }),
       });
     }
+  }
+  return reviews;
+}
+
+/**
+ * Reuses the scoped non-text evaluator on the interacted control only. Runtime
+ * evidence stays intentionally quiet for unresolved visual composition: a
+ * review is emitted only when the current rendered cue has a measured ratio
+ * below 3:1. Focus-indicator evidence is attributed only to real focus states.
+ */
+export function interactiveNonTextContrastReviews(
+  root: Element,
+  state: RuntimeContrastState,
+): PendingRuntimeEvent[] {
+  if (!root.isConnected || !interactiveContrastStateIsActive(root, state) || isProgrammaticallyHidden(root)) return [];
+
+  const focusState = state === 'focus' || state === 'focus-visible';
+  const reviews: PendingRuntimeEvent[] = [];
+  for (const finding of evaluateNonTextContrastForElement(root)) {
+    if (reviews.length >= MAX_REVIEWS_PER_STATE) break;
+    const evaluation = finding.evaluation;
+    if (evaluation.kind === 'focus-indicator' && !focusState) continue;
+    if (evaluation.ratio == null || evaluation.requiredRatio == null) continue;
+    if (evaluation.ratio + Number.EPSILON >= evaluation.requiredRatio) continue;
+    if (evaluation.status !== 'fail' && evaluation.status !== 'review') continue;
+
+    reviews.push({
+      kind: 'contrast-state',
+      severity: INTERACTIVE_NON_TEXT_CONTRAST_RULE.severity,
+      title: `WCAG 1.4.11 · ${state} · ${evaluation.ratio.toFixed(2)}:1`,
+      outcome: 'review',
+      ruleId: INTERACTIVE_NON_TEXT_CONTRAST_RULE.id,
+      references: INTERACTIVE_NON_TEXT_CONTRAST_RULE.references,
+      element: snapshot(finding.element),
+      detail: neutralNonTextContrastDetail({
+        state,
+        kind: evaluation.kind,
+        subject: evaluation.subject,
+        ratio: evaluation.ratio,
+        requiredRatio: evaluation.requiredRatio,
+        foreground: evaluation.foreground,
+        background: evaluation.background,
+      }),
+    });
   }
   return reviews;
 }
