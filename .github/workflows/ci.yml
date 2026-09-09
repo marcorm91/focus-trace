@@ -52,6 +52,7 @@ jobs:
       - run: npm run check
       - run: npm run lint
       - run: npm test
+      - run: npm run build:clean
       - run: npm run build
       - run: npm run build:edge
       - run: npm run build:firefox
@@ -99,7 +100,7 @@ jobs:
           if [ -f /etc/apt/sources.list ] && grep -q 'dl.google.com/linux/chrome' /etc/apt/sources.list; then
             sudo sed -i '\|dl.google.com/linux/chrome|d' /etc/apt/sources.list
           fi
-          npx playwright install --with-deps --no-shell chromium
+          npm run playwright:install:chromium
       - run: npm run test:e2e
       - name: Upload E2E failure artifacts
         if: failure()

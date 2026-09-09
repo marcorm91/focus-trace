@@ -115,6 +115,10 @@ Follow the existing TypeScript/React structure and repository conventions. Keep 
 
 The project uses TypeScript, Vitest, Playwright and Oxlint. CI is the final gate, but contributors should run the relevant checks locally first.
 
+All quality tools are pinned in `package-lock.json`. Add a development dependency
+when introducing a validator instead of downloading an uncommitted tool version
+from a package runner inside a validation script.
+
 Functions passed to `browser.scripting.executeScript({ func })` must be self-contained because the inspected page does not receive module closures.
 
 ## Licensing contributions
