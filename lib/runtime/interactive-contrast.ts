@@ -9,13 +9,11 @@ import {
 } from '../audit/contrast-state-coverage';
 import { isProgrammaticallyHidden } from '../audit/dom';
 import { INTERACTIVE_TEXT_CONTRAST_RULE } from '../../shared/interactive-contrast-rules';
-import type {
-  RuntimeContrastState,
-  RuntimeEvent,
-} from '../../shared/types';
+import type { RuntimeEvent } from '../../shared/types';
 import { snapshot } from './page-inspection';
 
 type PendingRuntimeEvent = Omit<RuntimeEvent, 'id' | 'timestamp'>;
+export type RuntimeContrastState = ContrastStateName;
 
 export const RUNTIME_CONTRAST_STATES = [
   'hover',
@@ -87,7 +85,7 @@ export function interactiveContrastStateIsActive(
   element: Element,
   state: RuntimeContrastState,
 ): boolean {
-  return observedContrastStates(element).includes(state as ContrastStateName);
+  return observedContrastStates(element).includes(state);
 }
 
 export function activeSemanticContrastStates(element: Element): RuntimeContrastState[] {
@@ -101,11 +99,10 @@ export function activeSemanticContrastStates(element: Element): RuntimeContrastS
     'pressed',
     'unpressed',
   ]);
-  return observedContrastStates(element)
-    .filter((state): state is RuntimeContrastState => semantic.has(state as RuntimeContrastState));
+  return observedContrastStates(element).filter((state) => semantic.has(state));
 }
 
-function contrastDetail(input: {
+function neutralContrastDetail(input: {
   state: RuntimeContrastState;
   subject: string;
   ratio: number;
@@ -115,13 +112,17 @@ function contrastDetail(input: {
   fontSizePx?: number;
   fontWeight?: number;
 }): string {
-  const colors = input.foreground && input.background
-    ? ` Foreground ${input.foreground}; background ${input.background}.`
-    : '';
-  const font = input.fontSizePx != null
-    ? ` Font ${Number(input.fontSizePx.toFixed(2))} CSS px${input.fontWeight != null ? ` / weight ${input.fontWeight}` : ''}.`
-    : '';
-  return `Observed real ${input.state} state: ${input.subject} contrast ${input.ratio.toFixed(2)}:1; required ${input.requiredRatio}:1.${colors}${font}`;
+  const tokens = [
+    `state=${input.state}`,
+    `subject=${input.subject}`,
+    `ratio=${input.ratio.toFixed(2)}:1`,
+    `required=${input.requiredRatio}:1`,
+  ];
+  if (input.foreground) tokens.push(`foreground=${input.foreground}`);
+  if (input.background) tokens.push(`background=${input.background}`);
+  if (input.fontSizePx != null) tokens.push(`font-size=${Number(input.fontSizePx.toFixed(2))}px`);
+  if (input.fontWeight != null) tokens.push(`font-weight=${input.fontWeight}`);
+  return tokens.join(' · ');
 }
 
 /**
@@ -150,14 +151,17 @@ export function interactiveTextContrastReviews(
 
       const elementSnapshot = snapshot(element);
       reviews.push({
-        kind: 'contrast-state',
+        // `aria-widget` is the existing generic rendered-state runtime channel.
+        // Keeping the shared event-kind union stable avoids coupling this bounded
+        // contrast review to a new session-storage schema.
+        kind: 'aria-widget',
         severity: INTERACTIVE_TEXT_CONTRAST_RULE.severity,
-        title: INTERACTIVE_TEXT_CONTRAST_RULE.title,
+        title: `WCAG 1.4.3 · ${state} · ${evaluation.ratio.toFixed(2)}:1`,
         outcome: 'review',
         ruleId: INTERACTIVE_TEXT_CONTRAST_RULE.id,
         references: INTERACTIVE_TEXT_CONTRAST_RULE.references,
         element: elementSnapshot,
-        detail: contrastDetail({
+        detail: neutralContrastDetail({
           state,
           subject: subject.subject,
           ratio: evaluation.ratio,
@@ -167,16 +171,6 @@ export function interactiveTextContrastReviews(
           fontSizePx: evaluation.fontSizePx,
           fontWeight: evaluation.fontWeight,
         }),
-        interactiveContrast: {
-          state,
-          subject: subject.subject,
-          ratio: evaluation.ratio,
-          requiredRatio: evaluation.requiredRatio,
-          ...(evaluation.foreground ? { foreground: evaluation.foreground } : {}),
-          ...(evaluation.background ? { background: evaluation.background } : {}),
-          ...(evaluation.fontSizePx != null ? { fontSizePx: evaluation.fontSizePx } : {}),
-          ...(evaluation.fontWeight != null ? { fontWeight: evaluation.fontWeight } : {}),
-        },
       });
     }
   }
