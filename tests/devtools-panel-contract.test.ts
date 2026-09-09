@@ -7,11 +7,11 @@ function source(path: string): string {
 }
 
 describe('FocusTrace DevTools panel contract', () => {
-  it('registers a Chromium DevTools page and opens the canonical FocusTrace workspace', () => {
+  it('registers a cross-browser DevTools page and opens the canonical FocusTrace workspace', () => {
     const html = source('entrypoints/devtools/index.html');
     const main = source('entrypoints/devtools/main.ts');
 
-    expect(html).toContain("['chrome', 'edge']");
+    expect(html).toContain("['chrome', 'edge', 'firefox']");
     expect(html).toContain('./main.ts');
     expect(main).toContain("chrome?.devtools");
     expect(main).toContain('inspectedWindow.tabId');
@@ -19,6 +19,22 @@ describe('FocusTrace DevTools panel contract', () => {
     expect(main).toContain("'icon/16.png'");
     expect(main).toContain('sidepanel.html?focustraceTabId=');
     expect(main).not.toContain('devtools-panel.html');
+  });
+
+  it('keeps Firefox DevTools opt-in while preserving the regular sidebar', () => {
+    const config = source('wxt.config.ts');
+    const settings = source('entrypoints/sidepanel/views/SettingsView.tsx');
+    const firefoxSettings = source('entrypoints/sidepanel/components/FirefoxDevtoolsSettings.tsx');
+    const validator = source('tools/validate-browser-builds.mjs');
+
+    expect(config).toContain("'devtools'");
+    expect(config).toContain('optional_permissions: FIREFOX_115_OPTIONAL_PERMISSIONS');
+    expect(settings).toContain('<FirefoxDevtoolsSettings language={language} />');
+    expect(firefoxSettings).toContain("permissions.contains({ permissions: ['devtools'] })");
+    expect(firefoxSettings).toContain("permissions.request({ permissions: ['devtools'] })");
+    expect(firefoxSettings).toContain("'Enable DevTools integration', 'Activar integración DevTools'");
+    expect(validator).toContain("firefox.devtools_page === 'devtools.html'");
+    expect(validator).toContain("firefox.sidebar_action?.default_panel === 'sidepanel.html'");
   });
 
   it('pins the shared sidepanel workspace to the inspected DevTools tab', () => {
