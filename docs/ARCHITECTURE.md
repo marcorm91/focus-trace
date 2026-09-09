@@ -229,7 +229,7 @@ The main quality gate combines:
 
 - TypeScript strict checking;
 - linting;
-- unit/contract tests;
+- executable unit/behavior tests and explicit source-contract tests;
 - standards snapshot validation;
 - Chrome, Edge and Firefox production builds;
 - build-manifest validation;
@@ -241,6 +241,12 @@ Quality tools are installed only from the committed npm lockfile; validation
 commands do not fetch ad-hoc packages at runtime. Production build validation
 starts by removing `.output`, so obsolete files from an earlier target or branch
 cannot make a release candidate appear complete.
+
+Coverage instruments every production TypeScript/TSX module under
+`entrypoints/`, `lib/` and `shared/`, with an aggregate regression floor. The
+highest-risk audit and runtime evidence modules also keep individual per-file
+floors. Source-contract tests remain useful for wiring, packaging and CSS
+invariants, but reading source text does not count as executed product behavior.
 
 ## Maintenance guidance
 

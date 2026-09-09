@@ -12,7 +12,7 @@ Run the complete local release gate:
 npm run release:check:full
 ```
 
-A release candidate is blocked if standards validation, rule/i18n/dead-code checks, critical coverage, TypeScript, lint, unit tests, Chrome/Edge/Firefox MV3 builds, manifest/build validation, bundle budgets or browser E2E tests fail.
+A release candidate is blocked if standards validation, rule/i18n/dead-code checks, project-wide or critical-module coverage, TypeScript, lint, unit tests, Chrome/Edge/Firefox MV3 builds, manifest/build validation, bundle budgets or browser E2E tests fail.
 
 CI must also be green on the exact commit that will be tagged.
 
