@@ -110,33 +110,6 @@ function inspectSelectorInDevtools(selector: string): Promise<DevtoolsInspectRes
   });
 }
 
-function devtoolsInspectLabel(): string {
-  return document.documentElement.lang === 'es'
-    ? 'Inspeccionar elemento en el DOM'
-    : 'Inspect element in DOM';
-}
-
-function relabelDevtoolsInspectButtons(): void {
-  if (!devtoolsInspectedWindow()) return;
-  const label = devtoolsInspectLabel();
-  for (const button of document.querySelectorAll<HTMLButtonElement>('.finding-location > button')) {
-    if (button.getAttribute('aria-label') !== label) button.setAttribute('aria-label', label);
-    if (button.title !== label) button.title = label;
-    button.dataset.ftDevtoolsInspect = 'true';
-  }
-}
-
-if (inspectedTabId != null) {
-  const observer = new MutationObserver(() => relabelDevtoolsInspectButtons());
-  observer.observe(document.documentElement, {
-    subtree: true,
-    childList: true,
-    attributes: true,
-    attributeFilter: ['aria-label', 'title', 'lang'],
-  });
-  queueMicrotask(relabelDevtoolsInspectButtons);
-}
-
 async function syncBreakpointPreferencesToTab(
   tabId: number,
   supplied?: Partial<RuntimeBreakpointSettings>,
@@ -223,6 +196,10 @@ document.addEventListener('click', (event) => {
     openFocusedInstructionsView();
   }
 
+  // In the DevTools surface the compact finding-location action delegates to
+  // the browser's native Elements panel instead of recreating an HTML inspector.
+  // Stop before React's normal on-page highlight handler; outside DevTools the
+  // existing React handler remains untouched.
   const findingLocationButton = target.closest('.finding-location > button') as HTMLButtonElement | null;
   const inspectedWindow = devtoolsInspectedWindow();
   if (findingLocationButton && inspectedWindow && !findingLocationButton.disabled) {
