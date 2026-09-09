@@ -2,6 +2,18 @@ import { useEffect, useState } from 'react';
 import { browser } from '#imports';
 import { tr, type AppLanguage } from '../../../shared/i18n';
 
+type FirefoxDevtoolsPermissionsApi = {
+  contains: (permissions: { permissions: string[] }) => Promise<boolean>;
+  request: (permissions: { permissions: string[] }) => Promise<boolean>;
+};
+
+function firefoxDevtoolsPermissions(): FirefoxDevtoolsPermissionsApi {
+  // Firefox supports the optional `devtools` permission, but the shared
+  // Chromium-oriented WebExtension typings do not currently include that
+  // Firefox-only permission string in ManifestPermission.
+  return browser.permissions as unknown as FirefoxDevtoolsPermissionsApi;
+}
+
 export function FirefoxDevtoolsSettings({ language }: { language: AppLanguage }) {
   const firefox = import.meta.env.FIREFOX;
   const [enabled, setEnabled] = useState<boolean>();
@@ -10,8 +22,9 @@ export function FirefoxDevtoolsSettings({ language }: { language: AppLanguage })
   useEffect(() => {
     if (!firefox) return;
     let cancelled = false;
+    const permissions = firefoxDevtoolsPermissions();
 
-    void browser.permissions.contains({ permissions: ['devtools'] })
+    void permissions.contains({ permissions: ['devtools'] })
       .then((granted) => {
         if (!cancelled) setEnabled(granted);
       })
@@ -29,7 +42,7 @@ export function FirefoxDevtoolsSettings({ language }: { language: AppLanguage })
   const enableDevtools = async () => {
     setRequesting(true);
     try {
-      const granted = await browser.permissions.request({ permissions: ['devtools'] });
+      const granted = await firefoxDevtoolsPermissions().request({ permissions: ['devtools'] });
       setEnabled(granted);
     } catch {
       setEnabled(false);
