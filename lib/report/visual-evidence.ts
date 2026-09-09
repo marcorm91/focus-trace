@@ -1,6 +1,11 @@
 import { browser } from '#imports';
 import type { RuntimeEvent, ScanResult, SessionState } from '../../shared/types';
 import {
+  captureVisibleTabFromSource,
+  resolveVisibleTabCaptureSource,
+  visibleTabCaptureSourceIsCurrent,
+} from '../extension/visible-tab-capture';
+import {
   buildReportComponentIndex,
   collectComponentIdentitiesInPage,
   reportComponentSelectors,
@@ -251,8 +256,8 @@ export async function captureReportVisualEvidence(
   const temporaryPermissionGranted = await settleTemporaryVisualCapturePermission();
 
   try {
-    const tab = await browser.tabs.get(tabId);
-    if (tab.windowId == null || !tab.active) {
+    const source = await resolveVisibleTabCaptureSource(tabId, scan?.url);
+    if (!source) {
       return { visuals: [], limitReached, eligibleCount, captureUnavailable: true };
     }
 
@@ -263,6 +268,7 @@ export async function captureReportVisualEvidence(
 
     try {
       for (const component of targets) {
+        if (!await visibleTabCaptureSourceIsCurrent(source)) break;
         const metrics = await browser.scripting.executeScript({
           target: { tabId },
           func: prepareCaptureTargetInPage,
@@ -271,7 +277,8 @@ export async function captureReportVisualEvidence(
         if (!metrics) continue;
         await wait(90);
         try {
-          const screenshot = await browser.tabs.captureVisibleTab(tab.windowId, { format: 'jpeg', quality: 78 });
+          const screenshot = await captureVisibleTabFromSource(source, { format: 'jpeg', quality: 78 });
+          if (!screenshot) break;
           const tone = component.visualTone ?? toneForSelector(component.selector, scan, events);
           visuals.push({
             selector: component.selector,
@@ -283,7 +290,7 @@ export async function captureReportVisualEvidence(
         }
       }
     } finally {
-      if (original) {
+      if (original && await visibleTabCaptureSourceIsCurrent(source, false)) {
         await browser.scripting.executeScript({
           target: { tabId },
           func: restoreScrollPositionInPage,

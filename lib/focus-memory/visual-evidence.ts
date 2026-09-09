@@ -1,5 +1,9 @@
 import { browser } from '#imports';
 import type { FocusMemoryCapturedEvidence, ScanResult } from '../../shared/types';
+import {
+  captureVisibleTabFromSource,
+  resolveVisibleTabCaptureSource,
+} from '../extension/visible-tab-capture';
 import { focusMemorySettingsState } from './storage';
 
 const MAX_MEMORY_PREVIEWS_PER_SCAN = 8;
@@ -142,12 +146,13 @@ export async function collectFocusMemoryEvidence(
   if (!metrics.length) return evidence;
 
   try {
-    const tab = await browser.tabs.get(tabId);
-    if (tab.windowId == null || !tab.active) return evidence;
-    const screenshot = await browser.tabs.captureVisibleTab(tab.windowId, {
+    const source = await resolveVisibleTabCaptureSource(tabId, scan.url);
+    if (!source) return evidence;
+    const screenshot = await captureVisibleTabFromSource(source, {
       format: 'jpeg',
       quality: 70,
     });
+    if (!screenshot) return evidence;
     const capturedAt = Date.now();
     const evidenceByIssue = new Map(evidence.map((item) => [item.issueIndex, item]));
 

@@ -133,7 +133,7 @@ Closing a tab removes its session entry. **Start Over** clears the page/Trace ev
 - multipage audit history and bounded recent visual crops;
 - FocusTrace Memory opt-in, bounded history and optional bounded local evidence.
 
-Multipage audits retain the latest saved full-page result per normalized URL. Storage is bounded by audit/page counts, at most two visual crops per review, a shared visual-data budget and an overall serialized audit-store budget. Pruning prefers the newest active review: older inactive audit history is removed first, then older pages. A quota-write fallback attempts to preserve the newest active page without screenshot data rather than losing the latest static review entirely.
+Multipage audits retain the latest saved full-page result per normalized URL. Storage is bounded by audit/page counts, at most three visual crops per review, a shared visual-data budget and an overall serialized audit-store budget. Audit evidence remains bound to the exact tab and normalized page URL that produced the scan; if that source is no longer visible, capture is marked unavailable instead of borrowing pixels from another active tab. Pruning prefers the newest active review: older inactive audit history is removed first, then older pages. A quota-write fallback attempts to preserve the newest active page without screenshot data rather than losing the latest static review entirely.
 
 Historical audit pages in 0.1.4 persist their static scan/headings and audit visual crops. They do **not** persist complete Trace or Structure snapshots; the UI must label those historical sections as unavailable rather than borrowing live evidence from the current tab.
 

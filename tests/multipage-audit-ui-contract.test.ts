@@ -5,9 +5,12 @@ import { describe, expect, it } from 'vitest';
 describe('multipage audit UI contract', () => {
   it('asks before mixing another site and records full-page analyses into the audit', () => {
     const app = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/App.tsx'), 'utf8');
+    const hook = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/hooks/useMultipageAudit.ts'), 'utf8');
     const dialog = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/components/AuditScopeDialog.tsx'), 'utf8');
     expect(app).toContain('preparePageAnalysis(tab.url)');
-    expect(app).toContain('recordPageAnalysis(result, auditPlan)');
+    expect(app).toContain('recordPageAnalysis(tabId, result, auditPlan)');
+    expect(hook).toContain('resolveVisibleTabCaptureSource(tabId, scan.url)');
+    expect(hook).not.toContain('browser.tabs.query({ active: true, currentWindow: true })');
     expect(app).toContain('<AuditScopeDialog');
     expect(dialog).toContain('Add to current audit');
     expect(dialog).toContain('Start new audit');

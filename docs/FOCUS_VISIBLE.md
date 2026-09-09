@@ -35,7 +35,7 @@ The first real Tab destination in a sequence can remain unassessed until FocusTr
 
 ## Privacy and storage
 
-Viewport captures used by this rule are ephemeral. They are requested only while Trace is recording and the inspected tab is active, decoded locally for pixel comparison, and are **not written to FocusTrace session storage, FocusTrace Memory, reports or exports**.
+Viewport captures used by this rule are ephemeral. They are requested only while Trace is recording and the inspected tab is active. FocusTrace validates the requesting tab and document before and after each window-scoped capture; a tab switch or navigation discards the pixels as inconclusive. Valid captures are decoded locally for pixel comparison and are **not written to FocusTrace session storage, FocusTrace Memory, reports or exports**.
 
 ## What this rule does not test
 

@@ -43,7 +43,7 @@ If the overall budget is exceeded, FocusTrace removes older inactive audit histo
 
 ## Visual evidence
 
-During an explicit full-page analysis, FocusTrace can capture a small bounded set of visual crops for the audit using the active page context already established for that analysis. These crops remain local in browser extension storage and may contain visible page content.
+During an explicit full-page analysis, FocusTrace can capture a small bounded set of visual crops for the audit using the active page context already established for that analysis. The capture remains bound to the exact analyzed tab and normalized URL; a tab switch or navigation makes capture unavailable instead of borrowing the newly active page. These crops remain local in browser extension storage and may contain visible page content.
 
 A failed or unavailable capture is stored as an evidence state rather than being treated as if screenshots existed. Before export, the Report workspace can therefore distinguish between:
 
