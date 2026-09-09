@@ -9,6 +9,7 @@ export function runtimeEventKindLabel(kind: RuntimeEventKind, language: AppLangu
   if (kind === 'click') return tr(language, 'Activation', 'Activación');
   if (kind === 'input-change') return tr(language, 'Setting change', 'Cambio de valor');
   if (kind === 'dragging') return tr(language, 'Dragging', 'Arrastre');
+  if (kind === 'contrast-state') return tr(language, 'Interactive contrast', 'Contraste interactivo');
   if (kind === 'route') return tr(language, 'Navigation', 'Navegación');
   if (kind === 'dom-mutation') return tr(language, 'DOM change', 'Cambio DOM');
   if (kind === 'focus-lost') return tr(language, 'Focus lost', 'Foco perdido');
@@ -37,6 +38,31 @@ export function focusDirectionLabel(direction: FocusJourneyDirection, language: 
 
 function statusMessageText(detail: string | undefined): string | undefined {
   return detail?.match(/Observed status-like text “(.+?)” after an interaction/)?.[1];
+}
+
+function detailToken(detail: string | undefined, key: string): string | undefined {
+  if (!detail) return undefined;
+  const match = detail.match(new RegExp(`(?:^| · )${key}=([^·]+)`));
+  return match?.[1]?.trim();
+}
+
+function interactiveContrastDetail(event: RuntimeEvent, language: AppLanguage): string {
+  const state = detailToken(event.detail, 'state') ?? tr(language, 'interactive', 'interactivo');
+  const subject = detailToken(event.detail, 'subject') ?? tr(language, 'text', 'texto');
+  const ratio = detailToken(event.detail, 'ratio') ?? tr(language, 'below the threshold', 'por debajo del umbral');
+  const required = detailToken(event.detail, 'required') ?? tr(language, 'the WCAG minimum', 'el mínimo WCAG');
+  const selector = event.element?.selector ?? tr(language, 'the observed element', 'el elemento observado');
+  const foreground = detailToken(event.detail, 'foreground');
+  const background = detailToken(event.detail, 'background');
+  const colors = foreground && background
+    ? tr(language, ` Foreground ${foreground}; background ${background}.`, ` Color frontal ${foreground}; fondo ${background}.`)
+    : '';
+
+  return tr(
+    language,
+    `While the real ${state} state was rendered on ${selector}, FocusTrace measured ${subject} contrast at ${ratio}; WCAG 1.4.3 requires ${required}.${colors} This remains REVIEW because only the observed interactive state was exercised.`,
+    `Mientras el estado real ${state} estaba renderizado en ${selector}, FocusTrace midió el contraste de ${subject} en ${ratio}; WCAG 1.4.3 exige ${required}.${colors} El resultado permanece como REVISIÓN porque solo se ha comprobado el estado interactivo observado.`,
+  );
 }
 
 function contextChangeDetail(event: RuntimeEvent, language: AppLanguage): string | undefined {
@@ -91,6 +117,8 @@ export function humanRuntimeEventDetail(event: RuntimeEvent, language: AppLangua
       `Tras una transición real con Tab hacia ${selector}, FocusTrace no encontró ningún cambio estable de color de píxel en la región local acotada al comparar pares de capturas antes y después del foco. Revisa manualmente el indicador de foco: el resultado permanece como REVIEW, no FAIL, porque ACT oj04fd permite que la indicación visible aparezca en otra zona del viewport y la evidencia dinámica o no disponible se descarta deliberadamente.`,
     );
   }
+
+  if (event.kind === 'contrast-state') return interactiveContrastDetail(event, language);
 
   if (event.kind === 'virtual-focus') {
     const target = event.element?.name?.trim() || event.element?.role || event.element?.tag;
