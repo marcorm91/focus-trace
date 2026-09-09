@@ -10,6 +10,10 @@ const contrastSource = readFileSync(
   resolve(process.cwd(), 'lib/runtime/interactive-contrast.ts'),
   'utf8',
 );
+const presentationSource = readFileSync(
+  resolve(process.cwd(), 'lib/runtime/runtime-presentation.ts'),
+  'utf8',
+);
 
 describe('interactive contrast runtime contract', () => {
   it('observes trusted real pointer and keyboard states while Trace is recording', () => {
@@ -34,10 +38,13 @@ describe('interactive contrast runtime contract', () => {
     expect(contrastSource).toContain('evaluateTextContrastForElement(element, subject.pseudo)');
   });
 
-  it('keeps the evidence conservative and WCAG-linked', () => {
+  it('keeps the evidence conservative, WCAG-linked and distinct in Trace', () => {
     expect(contrastSource).toContain("outcome: 'review'");
     expect(contrastSource).toContain("ruleId: INTERACTIVE_TEXT_CONTRAST_RULE.id");
-    expect(contrastSource).toContain("kind: 'aria-widget'");
+    expect(contrastSource).toContain("kind: 'contrast-state'");
     expect(contrastSource).not.toContain("outcome: 'fail'");
+    expect(presentationSource).toContain("kind === 'contrast-state'");
+    expect(presentationSource).toContain("'Interactive contrast', 'Contraste interactivo'");
+    expect(presentationSource).toContain("event.kind === 'contrast-state'");
   });
 });
