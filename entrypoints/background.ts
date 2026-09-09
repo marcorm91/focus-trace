@@ -1,6 +1,6 @@
 import { browser, defineBackground } from '#imports';
-import { ensureRuntimeScripts } from '../lib/extension/runtime-injection';
 import { recordFocusMemoryScan } from '../lib/focus-memory/storage';
+import { ensureRuntimeScripts } from '../lib/extension/runtime-injection';
 import type { FocusVisibleCaptureMessage } from '../lib/runtime/focus-visible';
 import {
   appendRuntimeEventToSession,
