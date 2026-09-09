@@ -20,7 +20,7 @@ const devtools = (globalThis as ChromeWithDevtools).chrome?.devtools;
 if (!devtools) throw new Error('FocusTrace DevTools API is unavailable in this browser.');
 
 const inspectedTabId = devtools.inspectedWindow.tabId;
-const panelUrl = `devtools-panel.html?focustraceTabId=${encodeURIComponent(String(inspectedTabId))}`;
+const panelUrl = `sidepanel.html?focustraceTabId=${encodeURIComponent(String(inspectedTabId))}`;
 
 devtools.panels.create(
   'FocusTrace',
