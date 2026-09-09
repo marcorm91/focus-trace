@@ -25,7 +25,7 @@ describe('interactive contrast runtime evidence', () => {
 
     expect(reviews).toHaveLength(1);
     expect(reviews[0]).toMatchObject({
-      kind: 'aria-widget',
+      kind: 'contrast-state',
       outcome: 'review',
       ruleId: 'FT-RUNTIME-014',
       element: { selector: '#target' },
