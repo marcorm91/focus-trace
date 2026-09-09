@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Hover focus content runtime</title>
+  <style>
+    body {
+      font-family: system-ui, sans-serif;
+      margin: 48px;
+    }
+
+    .case {
+      position: relative;
+      display: inline-block;
+      margin: 0 80px 120px 0;
+    }
+
+    button {
+      min-width: 150px;
+      min-height: 44px;
+    }
+
+    .tooltip {
+      display: none;
+      position: absolute;
+      left: 0;
+      top: calc(100% + 4px);
+      z-index: 2;
+      width: 220px;
+      min-height: 56px;
+      padding: 10px;
+      background: white;
+      border: 1px solid black;
+    }
+
+    #bad-trigger:hover + #bad-tooltip {
+      display: block;
+    }
+
+    #good-case:hover #good-tooltip {
+      display: block;
+    }
+  </style>
+</head>
+<body>
+  <h1>Hover focus content runtime</h1>
+
+  <section class="case" id="bad-case">
+    <button id="bad-trigger" aria-describedby="bad-tooltip">Broken hover help</button>
+    <div id="bad-tooltip" class="tooltip" role="tooltip">This help disappears when the pointer tries to enter it.</div>
+  </section>
+
+  <section class="case" id="good-case">
+    <button id="good-trigger" aria-describedby="good-tooltip">Stable hover help</button>
+    <div id="good-tooltip" class="tooltip" role="tooltip">This help remains visible while the pointer is over the containing hover region.</div>
+  </section>
+</body>
+</html>
