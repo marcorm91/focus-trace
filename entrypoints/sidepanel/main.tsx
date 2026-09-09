@@ -256,5 +256,5 @@ void (async () => {
       <App />
     </React.StrictMode>,
   );
-  mountSupportFooter();
+  mountSupportFooter(undefined, { version: browser.runtime.getManifest().version });
 })();
