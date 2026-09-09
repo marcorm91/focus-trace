@@ -34,6 +34,7 @@ import {
   isPotentialDraggingTarget,
   RuntimeDragTracker,
 } from '../lib/runtime/dragging';
+import { createRuntimeEventBatcher } from '../lib/runtime/event-batcher';
 import { createRuntimeEventId as uid } from '../lib/runtime/events';
 import {
   createFocusEvent,
@@ -141,7 +142,10 @@ export default defineContentScript({
     const emittedAriaWidgetFindings = new Set<string>();
     const emittedStatusMessageFindings = new Set<string>();
     const pendingStatusMessageTimers = new Map<Element, number>();
-    const pendingEventDeliveries = new Set<Promise<unknown>>();
+    const runtimeEventBatcher = createRuntimeEventBatcher((events) => browser.runtime.sendMessage({
+      type: 'FOCUSTRACE_EVENTS',
+      events,
+    } satisfies ExtensionMessage));
 
     const clearPendingStatusMessageTimers = () => {
       for (const timer of pendingStatusMessageTimers.values()) clearTimeout(timer);
@@ -173,18 +177,6 @@ export default defineContentScript({
       );
     };
 
-    const queueRuntimeEventDelivery = (message: ExtensionMessage) => {
-      const delivery = browser.runtime.sendMessage(message).catch(() => undefined);
-      pendingEventDeliveries.add(delivery);
-      void delivery.finally(() => pendingEventDeliveries.delete(delivery));
-    };
-
-    const flushPendingEventDeliveries = async () => {
-      while (pendingEventDeliveries.size > 0) {
-        await Promise.allSettled(pendingEventDeliveries);
-      }
-    };
-
     const emit = (
       event: Omit<RuntimeEvent, 'id' | 'timestamp'>,
       explicitInteractionId?: string,
@@ -210,7 +202,7 @@ export default defineContentScript({
         ...(interactionId ? { interactionId } : {}),
         ...(breakpointHits.length ? { breakpointHits } : {}),
       };
-      queueRuntimeEventDelivery({ type: 'FOCUSTRACE_EVENT', event: runtimeEvent });
+      runtimeEventBatcher.enqueue(runtimeEvent);
 
       if (breakpointHits.length) {
         recording = false;
@@ -917,13 +909,20 @@ export default defineContentScript({
       dragTracker.reset();
     }
 
-    ctx.onInvalidated(stopInstrumentation);
+    ctx.addEventListener(window, 'pagehide', () => {
+      void runtimeEventBatcher.flush();
+    });
+
+    ctx.onInvalidated(() => {
+      void runtimeEventBatcher.flush();
+      stopInstrumentation();
+    });
 
     browser.runtime.onMessage.addListener((message: ExtensionMessage | { type: 'FOCUSTRACE_PING' }) => {
       if (message.type === 'FOCUSTRACE_PING') return Promise.resolve(true);
 
       if (message.type === 'FOCUSTRACE_FLUSH_CONTENT_EVENTS') {
-        return flushPendingEventDeliveries().then(() => true);
+        return runtimeEventBatcher.flush().then(() => true);
       }
 
       if (message.type === 'FOCUSTRACE_CONFIGURE_BREAKPOINTS') {

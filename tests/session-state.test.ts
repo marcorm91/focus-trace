@@ -4,6 +4,7 @@ import { buildFocusJourney } from '../lib/runtime/focus-journey';
 import {
   MAX_RUNTIME_EVENTS,
   appendRuntimeEventToSession,
+  appendRuntimeEventsToSession,
   clearSessionEvents,
   emptySessionState,
   invalidateSessionScanForUrl,
@@ -74,6 +75,30 @@ describe('runtime session state helpers', () => {
     expect(next.events).toHaveLength(MAX_RUNTIME_EVENTS);
     expect(next.events[0]?.id).toBe('2');
     expect(next.events.at(-1)?.id).toBe('999');
+  });
+
+  it('appends an ordered runtime batch with one trim and preserves its first breakpoint', () => {
+    const firstBreakpointHit: RuntimeBreakpointHit = {
+      breakpointId: 'focused-node-removed',
+      causeType: 'FOCUSED_NODE_REMOVED',
+      eventId: '502',
+      timestamp: 502,
+      label: 'Focused node removed',
+      summary: 'Focused node was removed.',
+    };
+    const previousEvents = Array.from({ length: MAX_RUNTIME_EVENTS - 1 }, (_, index) => event(String(index + 1)));
+
+    const next = appendRuntimeEventsToSession(session({ events: previousEvents }), [
+      event('500'),
+      event('501'),
+      event('502', { breakpointHits: [firstBreakpointHit] }),
+    ]);
+
+    expect(next.events.at(-3)?.id).toBe('500');
+    expect(next.events.at(-2)?.id).toBe('501');
+    expect(next.events.at(-1)?.id).toBe('502');
+    expect(next.recording).toBe(false);
+    expect(next.pausedByBreakpoint).toBe(firstBreakpointHit);
   });
 
   it('moves the retention boundary backwards instead of splitting a correlated interaction', () => {

@@ -7,7 +7,7 @@ import { recordFocusMemoryScan } from '../lib/focus-memory/storage';
 import { ensureRuntimeScripts } from '../lib/extension/runtime-injection';
 import type { FocusVisibleCaptureMessage } from '../lib/runtime/focus-visible';
 import {
-  appendRuntimeEventToSession,
+  appendRuntimeEventsToSession,
   clearSessionEvents,
   emptySessionState,
   invalidateSessionScanForUrl,
@@ -142,12 +142,14 @@ export default defineBackground(() => {
       return captureVisibleTabFromSource(source, { format: 'png' });
     }
 
-    if (message.type === 'FOCUSTRACE_EVENT') {
+    if (message.type === 'FOCUSTRACE_EVENT' || message.type === 'FOCUSTRACE_EVENTS') {
       const tabId = sender.tab?.id;
       if (tabId == null) return;
+      const events = message.type === 'FOCUSTRACE_EVENTS' ? message.events : [message.event];
+      if (events.length === 0) return;
       return serializeTabWrite(tabId, async () => {
         const state = await getSession(tabId);
-        const next = appendRuntimeEventToSession(state, message.event);
+        const next = appendRuntimeEventsToSession(state, events);
         await saveSession(next);
         await broadcast(next);
       });
