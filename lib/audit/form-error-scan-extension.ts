@@ -3,6 +3,7 @@ import {
   ERROR_SUGGESTION_RULE,
 } from '../../shared/form-error-rules';
 import type { ScanIssue, ScanResult } from '../../shared/types';
+import { appendAccessibleAuthenticationReviews } from './authentication-scan-extension';
 import { selectorFor } from './dom';
 import {
   evaluateErrorIdentification,
@@ -81,4 +82,6 @@ export function appendFormErrorReviews(result: ScanResult, root: ScanRoot): void
     },
   ];
   result.rulesRun += 1;
+
+  appendAccessibleAuthenticationReviews(result, root);
 }
