@@ -20,6 +20,7 @@ import {
   UI_SCALE_STORAGE_KEY,
   type UiScale,
 } from '../../../shared/ui-scale';
+import { FirefoxDevtoolsSettings } from '../components/FirefoxDevtoolsSettings';
 import { FocusMemorySettings } from '../components/FocusMemorySettings';
 import { closeFocusedSettingsView } from '../settings-focus';
 
@@ -251,6 +252,8 @@ export function SettingsView({
           )}
         </small>
       </fieldset>
+
+      <FirefoxDevtoolsSettings language={language} />
 
       <fieldset className="settings-group settings-trace-group">
         <legend>Trace</legend>

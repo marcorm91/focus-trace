@@ -33,7 +33,6 @@ type DevtoolsInspectResult = 'inspected' | 'not-found' | 'invalid-selector' | 'i
 type DevtoolsInspectedWindowApi = {
   eval: (
     expression: string,
-    options: Record<string, never>,
     callback: (result: unknown, exceptionInfo?: DevtoolsEvalExceptionInfo) => void,
   ) => void;
 };
@@ -89,7 +88,10 @@ function inspectSelectorInDevtools(selector: string): Promise<DevtoolsInspectRes
   if (!inspectedWindow) return Promise.resolve('inspect-failed');
 
   return new Promise((resolve, reject) => {
-    inspectedWindow.eval(devtoolsInspectExpression(selector), {}, (result, exceptionInfo) => {
+    // Keep the optional eval options argument omitted. Chromium supports this
+    // callback form and Firefox does not implement eval options, so this is the
+    // common WebExtensions contract for the DOM reveal path.
+    inspectedWindow.eval(devtoolsInspectExpression(selector), (result, exceptionInfo) => {
       if (exceptionInfo?.isException) {
         reject(new Error(exceptionInfo.description || exceptionInfo.value || 'DevTools could not inspect the selected DOM element.'));
         return;
@@ -197,7 +199,7 @@ document.addEventListener('click', (event) => {
   }
 
   // In the DevTools surface the compact finding-location action delegates to
-  // the browser's native Elements panel instead of recreating an HTML inspector.
+  // the browser's native DOM inspector instead of recreating an HTML inspector.
   // Stop before React's normal on-page highlight handler; outside DevTools the
   // existing React handler remains untouched.
   const findingLocationButton = target.closest('.finding-location > button') as HTMLButtonElement | null;

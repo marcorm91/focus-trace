@@ -7,7 +7,10 @@ const OPTIONAL_HOST_PERMISSIONS = [
   ...OPTIONAL_PAGE_HOST_PERMISSIONS,
   OPTIONAL_VISUAL_CAPTURE_HOST_PERMISSION,
 ];
-const FIREFOX_115_OPTIONAL_HOSTS = OPTIONAL_HOST_PERMISSIONS as unknown as NonNullable<UserManifest['optional_permissions']>;
+const FIREFOX_115_OPTIONAL_PERMISSIONS = [
+  ...OPTIONAL_HOST_PERMISSIONS,
+  'devtools',
+] as unknown as NonNullable<UserManifest['optional_permissions']>;
 // Browser-level sidepanel/runtime tests inject representative state directly. In
 // a real session the equivalent page/capture authority exists only after an
 // explicit user action has granted page access and/or activeTab. The E2E build
@@ -58,10 +61,11 @@ export function manifestForBrowser(browser: string): UserManifest {
       : ['activeTab', 'scripting', 'storage', 'sidePanel'],
     ...(firefox
       ? {
-          // Firefox supports runtime host requests through optional_permissions
-          // before optional_host_permissions was added in Firefox 128. WXT's
-          // manifest type does not model those legacy host patterns.
-          optional_permissions: FIREFOX_115_OPTIONAL_HOSTS,
+          // Firefox 115 keeps optional host patterns under optional_permissions.
+          // DevTools is optional too so introducing the panel in an update does
+          // not force a new install/update permission warning. Users can enable
+          // it explicitly from FocusTrace Settings when they want the F12 panel.
+          optional_permissions: FIREFOX_115_OPTIONAL_PERMISSIONS,
         }
       : { optional_host_permissions: OPTIONAL_HOST_PERMISSIONS }),
     ...(e2eHostPermissions ? { host_permissions: e2eHostPermissions } : {}),

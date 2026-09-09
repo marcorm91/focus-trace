@@ -523,34 +523,40 @@ function FindingCard({
       <p className="scan-occurrence-description">{description}</p>
 
       {target && (
-        <div className={`finding-location${devtoolsSurface ? ' finding-location-devtools' : ''}`}>
+        <div className="finding-location finding-location-dual-actions">
           <div>
             <small>{tr(language, 'Element location', 'Ubicación del elemento')}</small>
             <code title={target}>{target}</code>
           </div>
-          {devtoolsSurface && (
-            <span className="finding-location-highlight-action">
-              <button
-                type="button"
-                aria-label={tr(language, 'Highlight element visually on page', 'Destacar visualmente el elemento en la página')}
-                title={tr(language, 'Highlight element visually on page', 'Destacar visualmente el elemento en la página')}
-                onClick={() => void onLocate(target)}
-              >
-                <span aria-hidden="true">◎</span>
-              </button>
-            </span>
-          )}
+          <span className="finding-location-highlight-action">
+            <button
+              type="button"
+              aria-label={tr(language, 'Highlight element visually on page', 'Destacar visualmente el elemento en la página')}
+              title={tr(language, 'Highlight element visually on page', 'Destacar visualmente el elemento en la página')}
+              onClick={() => void onLocate(target)}
+            >
+              <span aria-hidden="true">◎</span>
+            </button>
+          </span>
           <button
             type="button"
-            className={devtoolsSurface ? 'finding-location-inspect-action' : undefined}
-            data-ft-action={devtoolsSurface ? 'inspect-dom' : 'highlight-page'}
+            className="finding-location-inspect-action"
+            data-ft-action="inspect-dom"
+            disabled={!devtoolsSurface}
             aria-label={devtoolsSurface
               ? tr(language, 'Inspect element in DOM', 'Inspeccionar elemento en el DOM')
-              : tr(language, 'Highlight element on page', 'Destacar elemento en la página')}
+              : tr(
+                  language,
+                  'Inspect element in DOM — available from FocusTrace in DevTools',
+                  'Inspeccionar elemento en el DOM — disponible desde FocusTrace en DevTools',
+                )}
             title={devtoolsSurface
               ? tr(language, 'Inspect element in DOM', 'Inspeccionar elemento en el DOM')
-              : tr(language, 'Highlight element on page', 'Destacar elemento en la página')}
-            onClick={devtoolsSurface ? undefined : () => void onLocate(target)}
+              : tr(
+                  language,
+                  'Open DevTools (F12) and select FocusTrace to inspect this element in the DOM',
+                  'Abre DevTools (F12) y selecciona FocusTrace para inspeccionar este elemento en el DOM',
+                )}
           >
             <span aria-hidden="true">&lt;/&gt;</span>
           </button>

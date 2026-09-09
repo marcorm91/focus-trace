@@ -106,7 +106,7 @@ test('Inspect, localized impact matrix, occurrence navigation and compact report
   await expect(scanRule).toHaveAttribute('open', '');
 
   const inspect = panel.getByRole('button', {
-    name: /Highlight element on page|Destacar elemento en la página/,
+    name: /Highlight element visually on page|Destacar visualmente el elemento en la página/,
   }).first();
   await inspect.click();
 

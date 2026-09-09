@@ -96,7 +96,7 @@ describe('UX polish contract', () => {
     expect(scan).not.toContain('<div className="metrics">');
     expect(scan).not.toContain('domSnippet');
     expect(scan).not.toContain('DOM fragment');
-    expect(scan).toContain('Highlight element on page');
+    expect(scan).toContain('Highlight element visually on page');
     expect(overlay).not.toContain('outerHTML');
     expect(overlay).not.toContain('snippet');
     expect(scanCss).not.toContain('.scan-results-note');

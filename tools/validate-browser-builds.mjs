@@ -52,6 +52,16 @@ function hasSafeExtensionCsp(manifest) {
   return !extensionPages.includes("'unsafe-eval'") && !/https?:\/\//i.test(extensionPages);
 }
 
+function hasFirefoxOptionalDevtoolsAndHosts(manifest) {
+  const optionalPermissions = Array.isArray(manifest.optional_permissions)
+    ? manifest.optional_permissions
+    : [];
+  const hasDevtools = optionalPermissions.includes('devtools');
+  const legacyHosts = EXPECTED_OPTIONAL_HOSTS.every((host) => optionalPermissions.includes(host));
+  const mv3Hosts = sameValues(manifest.optional_host_permissions, EXPECTED_OPTIONAL_HOSTS);
+  return hasDevtools && (legacyHosts || mv3Hosts);
+}
+
 const chrome = readManifest('chrome-mv3');
 const edge = readManifest('edge-mv3');
 const firefox = readManifest('firefox-mv3');
@@ -136,12 +146,13 @@ for (const [name, manifest] of Object.entries({ chrome, edge })) {
 assert(!firefox.minimum_chrome_version, 'Firefox manifest must not contain minimum_chrome_version');
 assert(sameValues(firefox.permissions, FIREFOX_PERMISSIONS), 'Firefox permissions must exactly match the reviewed Firefox permission set');
 assert(
-  sameValues(firefox.optional_permissions, EXPECTED_OPTIONAL_HOSTS)
-    || sameValues(firefox.optional_host_permissions, EXPECTED_OPTIONAL_HOSTS),
-  'Firefox must expose HTTP/HTTPS plus temporary visual-capture access as optional hosts',
+  hasFirefoxOptionalDevtoolsAndHosts(firefox),
+  'Firefox must keep page/capture hosts and DevTools access optional',
 );
 assert(firefox.sidebar_action?.default_panel === 'sidepanel.html', 'Firefox must expose sidepanel.html as sidebar_action');
-assert(!firefox.devtools_page, 'Firefox must keep the DevTools integration disabled for this release');
+assert(firefox.devtools_page === 'devtools.html', 'Firefox must register the optional FocusTrace DevTools page');
+assert(existsSync(resolve('.output', 'firefox-mv3', 'devtools.html')), 'firefox-mv3 must include devtools.html');
+assert(!existsSync(resolve('.output', 'firefox-mv3', 'devtools-panel.html')), 'firefox-mv3 must reuse sidepanel.html instead of shipping a duplicate DevTools application page');
 assert(firefox.browser_specific_settings?.gecko?.id === 'focustrace@focus-mode.app', 'Firefox must have a stable Gecko ID');
 assert(firefox.browser_specific_settings?.gecko?.strict_min_version === '115.0', 'Firefox must require version 115+');
 assert(
@@ -150,4 +161,4 @@ assert(
   'Firefox must declare that it does not collect/transmit data',
 );
 
-console.log('Browser builds validated: exact permissions, native EN/ES extension metadata, optional host access, no persistent content scripts, safe CSP, single-workspace Chromium DevTools registration, and required release files for chrome-mv3, edge-mv3 and firefox-mv3.');
+console.log('Browser builds validated: exact required permissions, native EN/ES extension metadata, optional host access, optional Firefox DevTools access, no persistent content scripts, safe CSP, shared DevTools registration, and required release files for chrome-mv3, edge-mv3 and firefox-mv3.');
