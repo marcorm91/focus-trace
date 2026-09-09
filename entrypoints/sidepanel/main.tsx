@@ -2,7 +2,11 @@ import React from 'react';
 import { createRoot } from 'react-dom/client';
 import { browser } from '#imports';
 import { armReportVisualEvidencePermissionRequest } from '../../lib/report/visual-evidence';
-import { requestActivePageAccess, type WebPageTab } from '../../lib/extension/page-access';
+import {
+  requestActivePageAccess,
+  requestTabPageAccess,
+  type WebPageTab,
+} from '../../lib/extension/page-access';
 import { normalizeRuntimeBreakpointSettings } from '../../lib/runtime/breakpoints';
 import { locateScanTargetInPage } from '../../lib/runtime/scan-target-overlay';
 import { SETTINGS_STORAGE_KEY } from '../../shared/i18n';
@@ -18,7 +22,20 @@ import './index.css';
 const root = document.getElementById('root');
 if (!root) throw new Error('FocusTrace root element was not found.');
 
+function fixedDevtoolsTabId(): number | undefined {
+  try {
+    const value = new URLSearchParams(window.location.search).get('focustraceTabId');
+    if (!value) return undefined;
+    const parsed = Number(value);
+    return Number.isInteger(parsed) && parsed >= 0 ? parsed : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+const inspectedTabId = fixedDevtoolsTabId();
 document.documentElement.dataset.ftUiScale = '100';
+if (inspectedTabId != null) document.documentElement.dataset.ftSurface = 'devtools';
 
 async function syncBreakpointPreferencesToTab(
   tabId: number,
@@ -41,9 +58,17 @@ async function syncBreakpointPreferencesToTab(
   } satisfies ExtensionMessage).catch(() => undefined);
 }
 
-browser.tabs.onActivated.addListener(({ tabId }) => {
-  void syncBreakpointPreferencesToTab(tabId).catch(() => undefined);
-});
+if (inspectedTabId == null) {
+  browser.tabs.onActivated.addListener(({ tabId }) => {
+    void syncBreakpointPreferencesToTab(tabId).catch(() => undefined);
+  });
+}
+
+function requestSurfacePageAccess(): Promise<WebPageTab | undefined> {
+  return inspectedTabId != null
+    ? requestTabPageAccess(inspectedTabId)
+    : requestActivePageAccess();
+}
 
 async function locateCurrentOccurrence(
   pagerButton: HTMLButtonElement,
@@ -89,7 +114,7 @@ document.addEventListener('click', (event) => {
 
   const pagerButton = target.closest('.scan-occurrence-pager button') as HTMLButtonElement | null;
   if (pagerButton && !pagerButton.disabled) {
-    const pageAccess = requestActivePageAccess().catch(() => undefined);
+    const pageAccess = requestSurfacePageAccess().catch(() => undefined);
     void locateCurrentOccurrence(pagerButton, pageAccess).catch(() => undefined);
   }
 }, { capture: true });
@@ -107,10 +132,14 @@ void (async () => {
       document.documentElement.lang = settings.language;
     }
 
-    const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
     const savedBreakpoints = stored[RUNTIME_BREAKPOINT_SETTINGS_STORAGE_KEY] as Partial<RuntimeBreakpointSettings> | undefined;
-    if (tab?.id != null && savedBreakpoints) {
-      await syncBreakpointPreferencesToTab(tab.id, savedBreakpoints);
+    if (savedBreakpoints) {
+      if (inspectedTabId != null) {
+        await syncBreakpointPreferencesToTab(inspectedTabId, savedBreakpoints);
+      } else {
+        const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+        if (tab?.id != null) await syncBreakpointPreferencesToTab(tab.id, savedBreakpoints);
+      }
     }
   } catch {
     // App has its own settings fallback; bootstrap should never block rendering.
