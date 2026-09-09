@@ -113,7 +113,7 @@ export default function App() {
       if (!auditPlan) return;
 
       setBusy(true);
-      await ensureInjected();
+      await ensureInjected('scan');
       await browser.scripting.executeScript({
         target: { tabId },
         func: () => document.documentElement.removeAttribute('data-focustrace-scan-component'),
@@ -160,7 +160,7 @@ export default function App() {
     setBusy(true);
     setError(undefined);
     try {
-      await ensureInjected();
+      await ensureInjected('scan');
       const pickerResults = await browser.scripting.executeScript({
         target: { tabId },
         func: pickComponentInPage,

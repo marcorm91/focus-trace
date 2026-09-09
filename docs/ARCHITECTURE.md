@@ -33,6 +33,8 @@ The background stores a completed static scan before broadcasting the updated se
 
 `entrypoints/runtime.content.ts` and `lib/runtime/` execute or support code that observes the inspected page.
 
+Injection is capability-scoped. A static page/component analysis or Site Audit representative-page scan loads only `runtime.content.ts`. Starting Trace or Focus Walk additionally loads the focus-visible and hover/focus-content observer entrypoints. Restoring an active recording after navigation always selects the complete Trace set, even if another action asks for the smaller scan runtime at the same time.
+
 Responsibilities include:
 
 - static scan execution;
@@ -149,6 +151,7 @@ User action in side panel
 Request/verify optional page access
         ↓
 Ensure runtime content script is injected
+        └─ static analysis loads only the scan runtime; Trace-only observers stay unloaded
         ↓
 Run FocusTrace static scanner in inspected page
         ↓
@@ -173,6 +176,8 @@ Component scans use the same rule engine with a selected subtree. Rules that nee
 ## Trace event flow
 
 ```text
+Ensure complete Trace instrumentation is injected
+        ↓
 Keyboard / pointer / focus / relevant mutation
         ↓
 Inspected-page runtime

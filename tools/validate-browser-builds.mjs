@@ -8,6 +8,7 @@ const FIREFOX_PERMISSIONS = ['activeTab', 'scripting', 'storage'];
 const BUILD_TARGETS = ['chrome-mv3', 'edge-mv3', 'firefox-mv3'];
 const REQUIRED_LOCALES = ['en', 'es'];
 const REQUIRED_LOCALE_MESSAGES = ['extensionName', 'extensionDescription', 'actionTitle'];
+const REQUIRED_RUNTIME_SCRIPTS = ['runtime.js', 'focus-visible.js', 'hover-focus-content.js'];
 
 function readManifest(target) {
   return JSON.parse(readFileSync(resolve('.output', target, 'manifest.json'), 'utf8'));
@@ -113,7 +114,12 @@ for (const target of BUILD_TARGETS) {
   assert(existsSync(resolve('.output', target, 'report-print.html')), `${target} must include report-print.html`);
   assert(existsSync(resolve('.output', target, 'sidepanel.html')), `${target} must include sidepanel.html`);
   assert(existsSync(resolve('.output', target, 'background.js')), `${target} must include background.js`);
-  assert(existsSync(resolve('.output', target, 'content-scripts', 'runtime.js')), `${target} must include the on-demand runtime content script`);
+  for (const script of REQUIRED_RUNTIME_SCRIPTS) {
+    assert(
+      existsSync(resolve('.output', target, 'content-scripts', script)),
+      `${target} must include the on-demand ${script} content script`,
+    );
+  }
 
   for (const locale of REQUIRED_LOCALES) {
     const messagesPath = resolve('.output', target, '_locales', locale, 'messages.json');
@@ -161,4 +167,4 @@ assert(
   'Firefox must declare that it does not collect/transmit data',
 );
 
-console.log('Browser builds validated: exact required permissions, native EN/ES extension metadata, optional host access, optional Firefox DevTools access, no persistent content scripts, safe CSP, shared DevTools registration, and required release files for chrome-mv3, edge-mv3 and firefox-mv3.');
+console.log('Browser builds validated: exact required permissions, native EN/ES extension metadata, optional host access, optional Firefox DevTools access, no persistent content scripts, safe CSP, shared DevTools registration, on-demand runtime content-script sets, and required release files for chrome-mv3, edge-mv3 and firefox-mv3.');

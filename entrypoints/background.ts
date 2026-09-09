@@ -1,4 +1,5 @@
 import { browser, defineBackground } from '#imports';
+import { ensureRuntimeScripts } from '../lib/extension/runtime-injection';
 import { recordFocusMemoryScan } from '../lib/focus-memory/storage';
 import type { FocusVisibleCaptureMessage } from '../lib/runtime/focus-visible';
 import {
@@ -13,7 +14,12 @@ import {
   updateSessionBreakpoints,
   updateSessionScan,
 } from '../lib/runtime/session-state';
-import type { ExtensionMessage, SaveScanResponse, SessionState } from '../shared/types';
+import type {
+  ExtensionMessage,
+  RuntimeInjectionMode,
+  SaveScanResponse,
+  SessionState,
+} from '../shared/types';
 
 const keyForTab = (tabId: number) => `session:${tabId}`;
 const tabWriteQueues = new Map<number, Promise<unknown>>();
@@ -56,39 +62,25 @@ async function broadcast(state: SessionState) {
   }
 }
 
-async function ensureInjected(tabId: number): Promise<boolean> {
-  let injected = false;
-
-  const runtimeReady = await browser.tabs.sendMessage(tabId, { type: 'FOCUSTRACE_PING' })
-    .then((response) => response === true)
-    .catch(() => false);
-  if (!runtimeReady) {
-    await browser.scripting.executeScript({ target: { tabId }, files: ['/content-scripts/runtime.js'] });
-    injected = true;
-  }
-
-  const focusVisibleReady = await browser.tabs.sendMessage(tabId, { type: 'FOCUSTRACE_FOCUS_VISIBLE_PING' })
-    .then((response) => response === true)
-    .catch(() => false);
-  if (!focusVisibleReady) {
-    await browser.scripting.executeScript({ target: { tabId }, files: ['/content-scripts/focus-visible.js'] });
-    injected = true;
-  }
-
-  const hoverFocusReady = await browser.tabs.sendMessage(tabId, { type: 'FOCUSTRACE_HOVER_FOCUS_PING' })
-    .then((response) => response === true)
-    .catch(() => false);
-  if (!hoverFocusReady) {
-    await browser.scripting.executeScript({ target: { tabId }, files: ['/content-scripts/hover-focus-content.js'] });
-    injected = true;
-  }
-
-  return injected;
+async function ensureInjected(tabId: number, mode: RuntimeInjectionMode): Promise<boolean> {
+  return ensureRuntimeScripts(
+    mode,
+    (pingType) => browser.tabs.sendMessage(tabId, { type: pingType })
+      .then((response) => response === true)
+      .catch(() => false),
+    (file) => browser.scripting.executeScript({ target: { tabId }, files: [file] })
+      .then(() => undefined),
+  );
 }
 
-async function syncContentState(tabId: number, suppliedState?: SessionState) {
-  const state = suppliedState ?? await getSession(tabId);
-  await ensureInjected(tabId);
+async function syncContentState(
+  tabId: number,
+  mode: RuntimeInjectionMode,
+) {
+  const state = await getSession(tabId);
+  // A restored recording always needs the complete Trace instrumentation even
+  // if a concurrent static-analysis action requested only the scan runtime.
+  await ensureInjected(tabId, state.recording ? 'trace' : mode);
   await browser.tabs.sendMessage(tabId, {
     type: 'FOCUSTRACE_SET_RECORDING',
     enabled: state.recording,
@@ -97,7 +89,7 @@ async function syncContentState(tabId: number, suppliedState?: SessionState) {
 }
 
 async function restoreContentStateAfterNavigation(tabId: number, state: SessionState) {
-  const injected = await ensureInjected(tabId);
+  const injected = await ensureInjected(tabId, 'trace');
   if (!injected) return;
   await browser.tabs.sendMessage(tabId, {
     type: 'FOCUSTRACE_SET_RECORDING',
@@ -251,7 +243,7 @@ export default defineBackground(() => {
     }
 
     if (message.type === 'FOCUSTRACE_ENSURE_INJECTED') {
-      return syncContentState(message.tabId).then(() => true);
+      return syncContentState(message.tabId, message.mode).then(() => true);
     }
   });
 

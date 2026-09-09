@@ -48,6 +48,7 @@ export type RuntimeBreakpointId =
   | 'focused-element-became-hidden';
 
 export type RuntimeBreakpointSettings = Record<RuntimeBreakpointId, boolean>;
+export type RuntimeInjectionMode = 'scan' | 'trace';
 
 export interface StandardReference {
   type: 'HTML' | 'WCAG' | 'ACT' | 'WAI-ARIA' | 'WAI-ARIA APG';
@@ -291,7 +292,7 @@ export type ExtensionMessage =
   | { type: 'FOCUSTRACE_CLEAR_SESSION'; tabId: number }
   | { type: 'FOCUSTRACE_DELETE_INTERACTION'; tabId: number; interactionId: string }
   | { type: 'FOCUSTRACE_RESET_TAB'; tabId: number }
-  | { type: 'FOCUSTRACE_ENSURE_INJECTED'; tabId: number }
+  | { type: 'FOCUSTRACE_ENSURE_INJECTED'; tabId: number; mode: RuntimeInjectionMode }
   | { type: 'FOCUSTRACE_SESSION_UPDATED'; state: SessionState }
   | { type: 'FOCUSTRACE_SET_RECORDING'; enabled: boolean; breakpoints?: RuntimeBreakpointSettings }
   | { type: 'FOCUSTRACE_SET_RECORDING_STATE'; tabId: number; enabled: boolean; startedAt?: number }

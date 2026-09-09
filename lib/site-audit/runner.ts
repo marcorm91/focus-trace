@@ -299,6 +299,7 @@ export async function scanRepresentativePage(
     await browser.runtime.sendMessage({
       type: 'FOCUSTRACE_ENSURE_INJECTED',
       tabId: tab.id,
+      mode: 'scan',
     } satisfies ExtensionMessage);
     const scan = (await browser.tabs.sendMessage(tab.id, {
       type: 'FOCUSTRACE_RUN_SCAN',

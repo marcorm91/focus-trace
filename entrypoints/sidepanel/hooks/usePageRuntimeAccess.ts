@@ -1,7 +1,7 @@
 import { useCallback } from 'react';
 import { browser } from '#imports';
 import { requestTabPageAccess } from '../../../lib/extension/page-access';
-import type { ExtensionMessage } from '../../../shared/types';
+import type { ExtensionMessage, RuntimeInjectionMode } from '../../../shared/types';
 
 export function usePageRuntimeAccess(tabId: number | undefined) {
   const requestPageAccess = useCallback(async () => {
@@ -12,12 +12,13 @@ export function usePageRuntimeAccess(tabId: number | undefined) {
     throw new Error('FocusTrace page access permission was not granted.');
   }, [tabId]);
 
-  const ensureInjected = useCallback(async () => {
+  const ensureInjected = useCallback(async (mode: RuntimeInjectionMode) => {
     if (tabId == null) throw new Error('No active tab selected.');
     await requestPageAccess();
     await browser.runtime.sendMessage({
       type: 'FOCUSTRACE_ENSURE_INJECTED',
       tabId,
+      mode,
     } satisfies ExtensionMessage);
   }, [requestPageAccess, tabId]);
 
