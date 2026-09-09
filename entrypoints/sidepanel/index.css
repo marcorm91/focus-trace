@@ -20,6 +20,7 @@
 @import url('./information-summaries.css') layer(components);
 @import url('./instructions.css') layer(components);
 @import url('./modern-icons.css') layer(components);
+@import url('./element-location-actions.css') layer(components);
 @import url('./disclosure-chevron.css') layer(components);
 @import url('./breakpoint-settings.css') layer(components);
 @import url('./views/trace.css') layer(components);
