@@ -9,6 +9,7 @@ export type RuntimeEventKind =
   | 'click'
   | 'input-change'
   | 'dragging'
+  | 'contrast-state'
   | 'route'
   | 'dom-mutation'
   | 'focus-lost'
