@@ -12,7 +12,7 @@ test.afterAll(async () => {
   await fixtures.close();
 });
 
-test('loads Trace-only observers only when Trace is requested', async ({ page, extensionWorker }) => {
+test('loads Trace-only observers only when Trace is requested', async ({ context, page, extensionWorker }) => {
   await page.goto(`${fixtures.origin}/focus-visible.html`);
   await expect(page.locator('main')).toBeVisible();
 
@@ -24,7 +24,15 @@ test('loads Trace-only observers only when Trace is requested', async ({ page, e
     return tab.id as number;
   }, page.url());
 
-  const readiness = async (mode: 'scan' | 'trace') => extensionWorker.evaluate(async ({ id, requestedMode }) => {
+  // Send the request from an extension page, matching the side panel's real
+  // message path. A service worker does not dispatch a message back to its own
+  // runtime.onMessage listener.
+  const extensionId = new URL(extensionWorker.url()).hostname;
+  if (!extensionId) throw new Error('Could not resolve the FocusTrace extension ID.');
+  const panel = await context.newPage();
+  await panel.goto(`chrome-extension://${extensionId}/sidepanel.html`);
+
+  const readiness = async (mode: 'scan' | 'trace') => panel.evaluate(async ({ id, requestedMode }) => {
     const chromeApi = (globalThis as any).chrome;
     await chromeApi.runtime.sendMessage({
       type: 'FOCUSTRACE_ENSURE_INJECTED',
