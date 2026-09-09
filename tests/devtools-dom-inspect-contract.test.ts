@@ -28,6 +28,21 @@ describe('FocusTrace DevTools DOM inspection contract', () => {
     expect(main).toContain('locateScanTargetInPage');
   });
 
+  it('renders separate visual-highlight and native DOM-inspection controls in DevTools', () => {
+    const scan = source('entrypoints/sidepanel/views/ScanView.tsx');
+    const css = source('entrypoints/sidepanel/element-location-actions.css');
+
+    expect(scan).toContain("dataset.ftSurface === 'devtools'");
+    expect(scan).toContain('finding-location-highlight-action');
+    expect(scan).toContain('finding-location-inspect-action');
+    expect(scan).toContain("data-ft-action={devtoolsSurface ? 'inspect-dom' : 'highlight-page'}");
+    expect(scan).toContain('Highlight element visually on page');
+    expect(scan).toContain('Destacar visualmente el elemento en la página');
+    expect(scan).toContain('Inspect element in DOM');
+    expect(scan).toContain('Inspeccionar elemento en el DOM');
+    expect(css).toContain('grid-template-columns: minmax(0, 1fr) 44px 44px');
+  });
+
   it('does not patch the React-rendered DOM to implement DevTools inspection', () => {
     const main = source('entrypoints/sidepanel/main.tsx');
 

@@ -24,17 +24,16 @@ This lets FocusTrace reuse the same rule engine, runtime session and report mode
 
 The DevTools panel is therefore not a second scanner and does not duplicate the removed inline affected-element inspector.
 
-## Native DOM inspection
+## Element location actions
 
-When FocusTrace is running inside Chromium DevTools, the compact element-location action on a finding becomes a native DOM inspection action.
+When FocusTrace runs inside Chromium DevTools, a finding exposes two deliberately separate element actions:
 
-FocusTrace evaluates the saved CSS selector through `devtools.inspectedWindow` and uses the DevTools Console Utilities `inspect()` function on the resolved element. Chrome or Edge then opens the **Elements** panel and selects that exact DOM node.
+1. **Highlight on page** keeps FocusTrace open and visually marks the affected element in the inspected page.
+2. **Inspect in DOM** resolves the saved CSS selector through `devtools.inspectedWindow` and uses the DevTools Console Utilities `inspect()` function. Chrome or Edge then opens **Elements** and selects that exact DOM node.
 
-This is intentionally different from calling `element.focus()` on the page: FocusTrace does not move keyboard focus or change the page interaction state just to inspect a finding. It changes the DevTools selection only.
+The DOM action is intentionally different from calling `element.focus()` on the page: FocusTrace does not move keyboard focus or change the page interaction state just to inspect a finding. It changes the DevTools selection only.
 
-If the saved selector can no longer be resolved, FocusTrace falls back to the existing page-location behavior rather than creating a second HTML inspector inside the FocusTrace UI.
-
-The normal browser side panel and Firefox sidebar keep their current page-highlight action.
+The normal browser side panel and Firefox sidebar keep the single page-highlight action because native DevTools DOM selection is not available from those surfaces.
 
 ## Page access
 
@@ -66,10 +65,9 @@ Before release, validate the packaged Chrome and Edge builds manually:
 4. Confirm a **FocusTrace** tab appears.
 5. Run a full-page analysis from the DevTools panel.
 6. Confirm the result belongs to the inspected tab even if another browser tab becomes active.
-7. Open a finding and use its element-location action.
-8. Confirm DevTools switches to **Elements** and selects the exact DOM node for that finding.
+7. Open a finding and use **Highlight on page**; confirm the element is marked without leaving FocusTrace.
+8. Use **Inspect in DOM**; confirm DevTools switches to **Elements** and selects the exact DOM node.
 9. Return to FocusTrace and check Review, Structure, Trace and Report.
-10. Confirm page-location fallbacks still affect the inspected page.
-11. Close and reopen DevTools and confirm the panel reconnects to the current inspected tab session.
+10. Close and reopen DevTools and confirm the panel reconnects to the current inspected tab session.
 
 The normal release gate and side-panel smoke checks still apply.
