@@ -85,7 +85,13 @@ jobs:
       - run: npm ci --no-audit --no-fund
       - run: npm run build:e2e
       - name: Install Chromium for extension E2E
-        run: npx playwright install --with-deps --no-shell chromium
+        shell: bash
+        run: |
+          # Playwright installs its own Chromium; the hosted runner's separate
+          # Google Chrome apt source can be temporarily inconsistent while its
+          # repository is publishing and must not block the E2E dependency install.
+          sudo rm -f /etc/apt/sources.list.d/google-chrome.list
+          npx playwright install --with-deps --no-shell chromium
       - run: npm run test:e2e
       - name: Upload E2E failure artifacts
         if: failure()
