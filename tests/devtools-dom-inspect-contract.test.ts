@@ -7,7 +7,7 @@ function source(path: string): string {
 }
 
 describe('FocusTrace DevTools DOM inspection contract', () => {
-  it('reveals the selected finding in the native Elements panel', () => {
+  it('reveals the selected finding in the native browser DOM inspector', () => {
     const main = source('entrypoints/sidepanel/main.tsx');
 
     expect(main).toContain('chrome?.devtools?.inspectedWindow');
@@ -16,6 +16,14 @@ describe('FocusTrace DevTools DOM inspection contract', () => {
     expect(main).toContain("'inspected'");
     expect(main).toContain("'not-found'");
     expect(main).toContain('event.stopPropagation()');
+  });
+
+  it('uses the eval callback form shared by Chromium and Firefox', () => {
+    const main = source('entrypoints/sidepanel/main.tsx');
+
+    expect(main).toContain('inspectedWindow.eval(devtoolsInspectExpression(selector), (result, exceptionInfo) => {');
+    expect(main).toContain('Firefox does not implement eval options');
+    expect(main).not.toContain('devtoolsInspectExpression(selector), {},');
   });
 
   it('keeps native DOM inspection scoped to DevTools while visual location remains available everywhere', () => {
