@@ -36,7 +36,6 @@ describe('multipage audit UI contract', () => {
     const workspace = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/views/AuditReportWorkspace.tsx'), 'utf8');
     const report = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/views/SessionReportView.tsx'), 'utf8');
     const compact = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/components/ReportScanCompact.tsx'), 'utf8');
-    const inspector = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/components/TargetInspector.tsx'), 'utf8');
 
     expect(workspace).toContain('const [openPageKey, setOpenPageKey] = useState<string>();');
     expect(workspace).toContain('const open = openPageKey === page.key;');
@@ -54,8 +53,7 @@ describe('multipage audit UI contract', () => {
     expect(report).toContain('Historical Structure unavailable');
     expect(compact).not.toContain('requestActivePageAccess');
     expect(compact).not.toContain('locateScanTargetInPage');
-    expect(compact).toContain('onLocate={onLocate}');
-    expect(inspector).toContain('{onLocate && (');
+    expect(compact).toContain('{onLocate && (');
   });
 
   it('deletes saved page reports and explains page-by-page audit image capture', () => {

@@ -1,10 +1,8 @@
 import { useEffect, useMemo, useState } from 'react';
-import { scanTargetLocator } from '../../../lib/runtime/scan-target-overlay';
 import { useRovingTabs } from '../../../lib/ui/roving-tabs';
 import { localizedScanIssue, localizedSeverity, tr, type AppLanguage } from '../../../shared/i18n';
 import type { FindingOutcome, ScanIssue, ScanResult } from '../../../shared/types';
 import { ReferenceList } from './Common';
-import { TargetInspector } from './TargetInspector';
 
 type ReportFilter = FindingOutcome;
 
@@ -55,12 +53,8 @@ function ReportRuleAccordion({
   const moveTo = (next: number) => {
     const bounded = Math.max(0, Math.min(issues.length - 1, next));
     setIndex(bounded);
-    const nextIssue = issues[bounded];
-    const nextTarget = nextIssue?.targets[0];
-    if (nextTarget && nextIssue && onLocate) {
-      const label = `${nextIssue.ruleId} · ${bounded + 1} ${tr(language, 'of', 'de')} ${issues.length}`;
-      void onLocate(scanTargetLocator(nextTarget, label));
-    }
+    const nextTarget = issues[bounded]?.targets[0];
+    if (nextTarget && onLocate) void onLocate(nextTarget);
   };
 
   return (
@@ -103,16 +97,14 @@ function ReportRuleAccordion({
         {copy.evidence && <p className="report-rule-evidence">{copy.evidence}</p>}
 
         {target && (
-          <TargetInspector
-            selector={target}
-            element={issue.element}
-            context={issue.context}
-            language={language}
-            onLocate={onLocate}
-            ruleId={issue.ruleId}
-            occurrence={index + 1}
-            total={issues.length}
-          />
+          <div className="report-rule-target">
+            <code title={target}>{target}</code>
+            {onLocate && (
+              <button type="button" onClick={() => void onLocate(target)}>
+                {tr(language, 'Review on page', 'Revisar en la página')}
+              </button>
+            )}
+          </div>
         )}
       </div>
     </details>
