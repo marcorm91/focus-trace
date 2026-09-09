@@ -22,6 +22,30 @@ import './index.css';
 const root = document.getElementById('root');
 if (!root) throw new Error('FocusTrace root element was not found.');
 
+type DevtoolsEvalExceptionInfo = {
+  isException?: boolean;
+  description?: string;
+  value?: string;
+};
+
+type DevtoolsInspectResult = 'inspected' | 'not-found' | 'invalid-selector' | 'inspect-failed';
+
+type DevtoolsInspectedWindowApi = {
+  eval: (
+    expression: string,
+    options: Record<string, never>,
+    callback: (result: unknown, exceptionInfo?: DevtoolsEvalExceptionInfo) => void,
+  ) => void;
+};
+
+type ChromeWithDevtools = typeof globalThis & {
+  chrome?: {
+    devtools?: {
+      inspectedWindow?: DevtoolsInspectedWindowApi;
+    };
+  };
+};
+
 function fixedDevtoolsTabId(): number | undefined {
   try {
     const value = new URLSearchParams(window.location.search).get('focustraceTabId');
@@ -36,6 +60,82 @@ function fixedDevtoolsTabId(): number | undefined {
 const inspectedTabId = fixedDevtoolsTabId();
 document.documentElement.dataset.ftUiScale = '100';
 if (inspectedTabId != null) document.documentElement.dataset.ftSurface = 'devtools';
+
+function devtoolsInspectedWindow(): DevtoolsInspectedWindowApi | undefined {
+  if (inspectedTabId == null) return undefined;
+  return (globalThis as ChromeWithDevtools).chrome?.devtools?.inspectedWindow;
+}
+
+function devtoolsInspectExpression(selector: string): string {
+  return `(() => {
+    let element;
+    try {
+      element = document.querySelector(${JSON.stringify(selector)});
+    } catch {
+      return 'invalid-selector';
+    }
+    if (!element) return 'not-found';
+    try {
+      inspect(element);
+      return 'inspected';
+    } catch {
+      return 'inspect-failed';
+    }
+  })()`;
+}
+
+function inspectSelectorInDevtools(selector: string): Promise<DevtoolsInspectResult> {
+  const inspectedWindow = devtoolsInspectedWindow();
+  if (!inspectedWindow) return Promise.resolve('inspect-failed');
+
+  return new Promise((resolve, reject) => {
+    inspectedWindow.eval(devtoolsInspectExpression(selector), {}, (result, exceptionInfo) => {
+      if (exceptionInfo?.isException) {
+        reject(new Error(exceptionInfo.description || exceptionInfo.value || 'DevTools could not inspect the selected DOM element.'));
+        return;
+      }
+
+      if (
+        result === 'inspected'
+        || result === 'not-found'
+        || result === 'invalid-selector'
+        || result === 'inspect-failed'
+      ) {
+        resolve(result);
+        return;
+      }
+
+      reject(new Error('DevTools returned an unexpected DOM inspection result.'));
+    });
+  });
+}
+
+function devtoolsInspectLabel(): string {
+  return document.documentElement.lang === 'es'
+    ? 'Inspeccionar elemento en el DOM'
+    : 'Inspect element in DOM';
+}
+
+function relabelDevtoolsInspectButtons(): void {
+  if (!devtoolsInspectedWindow()) return;
+  const label = devtoolsInspectLabel();
+  for (const button of document.querySelectorAll<HTMLButtonElement>('.finding-location > button')) {
+    if (button.getAttribute('aria-label') !== label) button.setAttribute('aria-label', label);
+    if (button.title !== label) button.title = label;
+    button.dataset.ftDevtoolsInspect = 'true';
+  }
+}
+
+if (inspectedTabId != null) {
+  const observer = new MutationObserver(() => relabelDevtoolsInspectButtons());
+  observer.observe(document.documentElement, {
+    subtree: true,
+    childList: true,
+    attributes: true,
+    attributeFilter: ['aria-label', 'title', 'lang'],
+  });
+  queueMicrotask(relabelDevtoolsInspectButtons);
+}
 
 async function syncBreakpointPreferencesToTab(
   tabId: number,
@@ -68,6 +168,17 @@ function requestSurfacePageAccess(): Promise<WebPageTab | undefined> {
   return inspectedTabId != null
     ? requestTabPageAccess(inspectedTabId)
     : requestActivePageAccess();
+}
+
+async function locateSelectorOnPage(selector: string): Promise<void> {
+  const tab = await requestSurfacePageAccess().catch(() => undefined);
+  if (!tab) return;
+
+  await browser.scripting.executeScript({
+    target: { tabId: tab.id },
+    func: locateScanTargetInPage,
+    args: [selector, { tone: 'inspect', label: 'FocusTrace', focusTarget: false }],
+  }).catch(() => undefined);
 }
 
 async function locateCurrentOccurrence(
@@ -110,6 +221,22 @@ document.addEventListener('click', (event) => {
 
   if (target.closest('.instructions-trigger')) {
     openFocusedInstructionsView();
+  }
+
+  const findingLocationButton = target.closest('.finding-location > button') as HTMLButtonElement | null;
+  const inspectedWindow = devtoolsInspectedWindow();
+  if (findingLocationButton && inspectedWindow && !findingLocationButton.disabled) {
+    const selector = findingLocationButton.closest('.finding-location')?.querySelector('code')?.textContent?.trim();
+    if (selector) {
+      event.preventDefault();
+      event.stopPropagation();
+      void inspectSelectorInDevtools(selector)
+        .then((result) => {
+          if (result !== 'inspected') void locateSelectorOnPage(selector);
+        })
+        .catch(() => locateSelectorOnPage(selector));
+      return;
+    }
   }
 
   const pagerButton = target.closest('.scan-occurrence-pager button') as HTMLButtonElement | null;
