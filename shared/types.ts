@@ -10,6 +10,7 @@ export type RuntimeEventKind =
   | 'input-change'
   | 'dragging'
   | 'contrast-state'
+  | 'hover-focus-content'
   | 'route'
   | 'dom-mutation'
   | 'focus-lost'

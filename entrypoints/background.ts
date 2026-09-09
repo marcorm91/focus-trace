@@ -75,6 +75,14 @@ async function ensureInjected(tabId: number): Promise<boolean> {
     injected = true;
   }
 
+  const hoverFocusReady = await browser.tabs.sendMessage(tabId, { type: 'FOCUSTRACE_HOVER_FOCUS_PING' })
+    .then((response) => response === true)
+    .catch(() => false);
+  if (!hoverFocusReady) {
+    await browser.scripting.executeScript({ target: { tabId }, files: ['/content-scripts/hover-focus-content.js'] });
+    injected = true;
+  }
+
   return injected;
 }
 
