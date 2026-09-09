@@ -87,10 +87,18 @@ jobs:
       - name: Install Chromium for extension E2E
         shell: bash
         run: |
-          # Playwright installs its own Chromium; the hosted runner's separate
-          # Google Chrome apt source can be temporarily inconsistent while its
-          # repository is publishing and must not block the E2E dependency install.
-          sudo rm -f /etc/apt/sources.list.d/google-chrome.list
+          # Playwright installs its own Chromium. Ignore any unrelated hosted-runner
+          # Google Chrome apt source if that repository is temporarily inconsistent.
+          for source in /etc/apt/sources.list.d/*; do
+            [ -f "$source" ] || continue
+            if grep -q 'dl.google.com/linux/chrome' "$source"; then
+              echo "Disabling unrelated Chrome apt source: $source"
+              sudo mv "$source" "${source}.disabled"
+            fi
+          done
+          if [ -f /etc/apt/sources.list ] && grep -q 'dl.google.com/linux/chrome' /etc/apt/sources.list; then
+            sudo sed -i '\|dl.google.com/linux/chrome|d' /etc/apt/sources.list
+          fi
           npx playwright install --with-deps --no-shell chromium
       - run: npm run test:e2e
       - name: Upload E2E failure artifacts
