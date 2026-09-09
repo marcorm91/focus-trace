@@ -10,6 +10,7 @@ export function runtimeEventKindLabel(kind: RuntimeEventKind, language: AppLangu
   if (kind === 'input-change') return tr(language, 'Setting change', 'Cambio de valor');
   if (kind === 'dragging') return tr(language, 'Dragging', 'Arrastre');
   if (kind === 'contrast-state') return tr(language, 'Interactive contrast', 'Contraste interactivo');
+  if (kind === 'hover-focus-content') return tr(language, 'Hover/focus content', 'Contenido hover/foco');
   if (kind === 'route') return tr(language, 'Navigation', 'Navegación');
   if (kind === 'dom-mutation') return tr(language, 'DOM change', 'Cambio DOM');
   if (kind === 'focus-lost') return tr(language, 'Focus lost', 'Foco perdido');
@@ -62,6 +63,44 @@ function interactiveContrastDetail(event: RuntimeEvent, language: AppLanguage): 
     language,
     `While the real ${state} state was rendered on ${selector}, FocusTrace measured ${subject} contrast at ${ratio}; WCAG 1.4.3 requires ${required}.${colors} This remains REVIEW because only the observed interactive state was exercised.`,
     `Mientras el estado real ${state} estaba renderizado en ${selector}, FocusTrace midió el contraste de ${subject} en ${ratio}; WCAG 1.4.3 exige ${required}.${colors} El resultado permanece como REVISIÓN porque solo se ha comprobado el estado interactivo observado.`,
+  );
+}
+
+function hoverFocusContentDetail(event: RuntimeEvent, language: AppLanguage): string {
+  const mode = detailToken(event.detail, 'mode') ?? tr(language, 'hover/focus', 'hover/foco');
+  const requirement = detailToken(event.detail, 'requirement') ?? tr(language, 'behavior', 'comportamiento');
+  const trigger = event.element?.selector ?? tr(language, 'the observed trigger', 'el activador observado');
+  const additional = detailToken(event.detail, 'additional') ?? tr(language, 'the additional content', 'el contenido adicional');
+  const evidence = detailToken(event.detail, 'evidence');
+
+  if (requirement === 'hoverable') {
+    return tr(
+      language,
+      `Additional content ${additional}, revealed from ${trigger} by a real ${mode} interaction, disappeared while the trusted pointer moved into or remained within its last observed bounds. Review the Hoverable requirement of WCAG 1.4.13. This stays REVIEW because FocusTrace observes a bounded DOM interaction and does not prove every author-controlled presentation path.`,
+      `El contenido adicional ${additional}, mostrado desde ${trigger} mediante una interacción real de ${mode}, desapareció mientras el puntero de confianza se desplazaba hacia su última zona observada o permanecía dentro de ella. Revisa el requisito Hoverable de WCAG 1.4.13. Permanece como REVIEW porque FocusTrace observa una interacción DOM acotada y no demuestra todas las rutas de presentación controladas por el autor.`,
+    );
+  }
+
+  if (requirement === 'persistent') {
+    return tr(
+      language,
+      `Additional content ${additional}, revealed from ${trigger} by a real ${mode} interaction, disappeared while the observed trigger state remained active and no explicit dismissal attempt was observed. Review the Persistent requirement of WCAG 1.4.13. Whether the information became invalid or another allowed condition applied still requires human review.`,
+      `El contenido adicional ${additional}, mostrado desde ${trigger} mediante una interacción real de ${mode}, desapareció mientras el estado observado del activador seguía activo y no se observó un intento explícito de descarte. Revisa el requisito Persistent de WCAG 1.4.13. Determinar si la información dejó de ser válida o si aplicaba otra condición permitida sigue requiriendo revisión humana.`,
+    );
+  }
+
+  if (requirement === 'dismissible') {
+    return tr(
+      language,
+      `Escape was tested while author-controlled additional content ${additional} from ${trigger} remained visible over other observed content, but the content stayed present. Review the Dismissible requirement of WCAG 1.4.13. Escape is evidence, not a mandated key: another mechanism, the input-error exception, or a non-obscuring presentation can still make the content conforming.`,
+      `Se probó Escape mientras el contenido adicional ${additional}, controlado por el autor y mostrado desde ${trigger}, seguía visible sobre otro contenido observado, pero no desapareció. Revisa el requisito Dismissible de WCAG 1.4.13. Escape aporta evidencia, pero no es una tecla obligatoria: otro mecanismo, la excepción por error de entrada o una presentación que no tape contenido todavía pueden hacer que el comportamiento sea conforme.`,
+    );
+  }
+
+  return tr(
+    language,
+    `FocusTrace observed additional hover/focus content related to ${trigger}${evidence ? `: ${evidence}` : ''}. Review WCAG 1.4.13 manually.`,
+    `FocusTrace observó contenido adicional de hover/foco relacionado con ${trigger}${evidence ? `: ${evidence}` : ''}. Revisa WCAG 1.4.13 manualmente.`,
   );
 }
 
@@ -119,6 +158,7 @@ export function humanRuntimeEventDetail(event: RuntimeEvent, language: AppLangua
   }
 
   if (event.kind === 'contrast-state') return interactiveContrastDetail(event, language);
+  if (event.kind === 'hover-focus-content') return hoverFocusContentDetail(event, language);
 
   if (event.kind === 'virtual-focus') {
     const target = event.element?.name?.trim() || event.element?.role || event.element?.tag;
