@@ -52,6 +52,12 @@ Functions passed through `browser.scripting.executeScript({ func })` must be sel
 
 Site Audit reuses the real static rule engine rather than maintaining a second accessibility scanner.
 
+Discovery requests remain on the selected origin and apply both an eight-second
+timeout and a 6 MB response budget. Response bodies are decoded as a stream and
+cancelled as soon as the bytes actually received exceed that budget;
+`Content-Length` is only an early-rejection hint and is never trusted as the
+sole bound.
+
 ### Printable reports
 
 `entrypoints/report-print/`, `entrypoints/audit-print/`, `lib/report/` and the multipage-audit storage boundary own report assembly, bounded local visual evidence and printable/export formats.

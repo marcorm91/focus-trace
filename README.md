@@ -336,6 +336,7 @@ Site Audit stays within the selected origin and reuses the real FocusTrace scann
 | Discovered URLs | 500 |
 | Scanned pages | 30 |
 | Samples per route family | 3 |
+| Each robots.txt or sitemap response | 6 MB actually received |
 
 Sampling is representative evidence: it does not prove every URL is identical and does not automatically run Trace through every site workflow.
 
