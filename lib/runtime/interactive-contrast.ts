@@ -15,11 +15,12 @@ import { snapshot } from './page-inspection';
 type PendingRuntimeEvent = Omit<RuntimeEvent, 'id' | 'timestamp'>;
 export type RuntimeContrastState = ContrastStateName;
 
-export const RUNTIME_CONTRAST_STATES = [
-  'hover',
-  'active',
-  'focus',
-  'focus-visible',
+const MAX_TEXT_CANDIDATES = 80;
+const MAX_REVIEWS_PER_STATE = 8;
+const MIN_SETTLE_MS = 34;
+const MAX_SETTLE_MS = 1_000;
+const SETTLE_PADDING_MS = 34;
+const SEMANTIC_STATES = new Set<RuntimeContrastState>([
   'checked',
   'unchecked',
   'expanded',
@@ -28,13 +29,7 @@ export const RUNTIME_CONTRAST_STATES = [
   'unselected',
   'pressed',
   'unpressed',
-] as const satisfies readonly RuntimeContrastState[];
-
-const MAX_TEXT_CANDIDATES = 80;
-const MAX_REVIEWS_PER_STATE = 8;
-const MIN_SETTLE_MS = 34;
-const MAX_SETTLE_MS = 1_000;
-const SETTLE_PADDING_MS = 34;
+]);
 
 function cssTimeMs(token: string): number {
   const value = token.trim().toLowerCase();
@@ -81,7 +76,7 @@ export function interactiveContrastSettleDelay(element: Element): number {
   return Math.min(MAX_SETTLE_MS, Math.max(MIN_SETTLE_MS, Math.ceil(transitionMs + SETTLE_PADDING_MS)));
 }
 
-export function interactiveContrastStateIsActive(
+function interactiveContrastStateIsActive(
   element: Element,
   state: RuntimeContrastState,
 ): boolean {
@@ -89,17 +84,7 @@ export function interactiveContrastStateIsActive(
 }
 
 export function activeSemanticContrastStates(element: Element): RuntimeContrastState[] {
-  const semantic = new Set<RuntimeContrastState>([
-    'checked',
-    'unchecked',
-    'expanded',
-    'collapsed',
-    'selected',
-    'unselected',
-    'pressed',
-    'unpressed',
-  ]);
-  return observedContrastStates(element).filter((state) => semantic.has(state));
+  return observedContrastStates(element).filter((state) => SEMANTIC_STATES.has(state));
 }
 
 function neutralContrastDetail(input: {
