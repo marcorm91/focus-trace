@@ -30,8 +30,9 @@ describe('FocusTrace DevTools panel contract', () => {
     expect(config).toContain("'devtools'");
     expect(config).toContain('optional_permissions: FIREFOX_115_OPTIONAL_PERMISSIONS');
     expect(settings).toContain('<FirefoxDevtoolsSettings language={language} />');
+    expect(firefoxSettings).toContain('firefoxDevtoolsPermissions()');
     expect(firefoxSettings).toContain("permissions.contains({ permissions: ['devtools'] })");
-    expect(firefoxSettings).toContain("permissions.request({ permissions: ['devtools'] })");
+    expect(firefoxSettings).toContain("firefoxDevtoolsPermissions().request({ permissions: ['devtools'] })");
     expect(firefoxSettings).toContain("'Enable DevTools integration', 'Activar integración DevTools'");
     expect(validator).toContain("firefox.devtools_page === 'devtools.html'");
     expect(validator).toContain("firefox.sidebar_action?.default_panel === 'sidepanel.html'");
