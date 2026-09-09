@@ -91,8 +91,19 @@ export function InstructionsView({ language }: { language: AppLanguage }) {
             <li>{tr(language, 'Failures are findings FocusTrace can determine from the evidence it measured.', 'Los fallos son hallazgos que FocusTrace puede determinar a partir de la evidencia medida.')}</li>
             <li>{tr(language, 'Reviews need human context before they should be treated as an accessibility failure.', 'Las revisiones necesitan contexto humano antes de tratarse como un fallo de accesibilidad.')}</li>
             <li>{tr(language, 'Warnings highlight risky HTML/ARIA authoring without automatically claiming a WCAG failure.', 'Los avisos señalan riesgos de autoría HTML/ARIA sin afirmar automáticamente un fallo WCAG.')}</li>
-            <li>{tr(language, 'Use Inspect on a finding to locate its current target in the page when it is still present.', 'Usa Inspeccionar en un hallazgo para localizar su objetivo actual en la página cuando siga presente.')}</li>
+            <li>{tr(language, 'Use the affected-element actions to highlight a finding on the page or, from FocusTrace in DevTools, reveal its exact DOM node in Elements.', 'Usa las acciones del elemento afectado para destacar un hallazgo en la página o, desde FocusTrace en DevTools, revelar su nodo DOM exacto en Elements.')}</li>
           </ul>
+        </InstructionCard>
+
+        <InstructionCard title={tr(language, 'DevTools and DOM inspection', 'DevTools e inspección del DOM')}>
+          <p>{tr(language, 'In Chrome and Edge, FocusTrace is also available as a dedicated panel inside browser DevTools. Open DevTools with F12 and select the FocusTrace tab to use the developer-integrated workspace.', 'En Chrome y Edge, FocusTrace también está disponible como panel dedicado dentro de las DevTools del navegador. Abre DevTools con F12 y selecciona la pestaña FocusTrace para usar el espacio de trabajo integrado para desarrollo.')}</p>
+          <ul>
+            <li>{tr(language, 'Highlight on page is available everywhere and visually marks the affected element without leaving FocusTrace.', 'Destacar en la página está disponible en todas las superficies y marca visualmente el elemento afectado sin salir de FocusTrace.')}</li>
+            <li>{tr(language, 'Inspect in DOM is available when FocusTrace is opened inside Chromium DevTools. It switches to Elements and selects the exact node matched by the finding selector.', 'Inspeccionar en el DOM está disponible cuando FocusTrace se abre dentro de las DevTools de Chromium. Cambia a Elements y selecciona el nodo exacto que coincide con el selector del hallazgo.')}</li>
+            <li>{tr(language, 'Outside DevTools, the DOM inspection button stays visible but disabled and explains that F12 → FocusTrace is required to use it.', 'Fuera de DevTools, el botón de inspección del DOM permanece visible pero deshabilitado e indica que debes usar F12 → FocusTrace para activarlo.')}</li>
+            <li>{tr(language, 'DOM inspection changes the DevTools selection only; FocusTrace does not call element.focus() or move the page keyboard focus just to inspect a finding.', 'La inspección del DOM solo cambia la selección de DevTools; FocusTrace no llama a element.focus() ni mueve el foco de teclado de la página solo para inspeccionar un hallazgo.')}</li>
+          </ul>
+          <p>{tr(language, 'Firefox keeps the current FocusTrace sidebar in this release, so native DOM selection in Elements is not available there yet.', 'Firefox mantiene el sidebar actual de FocusTrace en esta versión, por lo que la selección nativa del DOM en Elements todavía no está disponible allí.')}</p>
         </InstructionCard>
 
         <InstructionCard title={legend.title}>
