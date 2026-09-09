@@ -7,7 +7,6 @@ import type {
 } from '../../../lib/runtime/structure-evidence';
 import { tr, type AppLanguage } from '../../../shared/i18n';
 import type { ScanResult } from '../../../shared/types';
-import { TargetInspector } from '../components/TargetInspector';
 import { HeadingTreeView } from './HeadingTreeView';
 
 type StructureMode = 'headings' | 'semantics' | 'metrics';
@@ -245,8 +244,8 @@ export function StructureView({
             <div className="structure-subview-heading">
               <p className="structure-explainer">{tr(
                 language,
-                'These are semantic review opportunities, not automatic WCAG failures. Each result identifies the affected element and can reveal a bounded current HTML context without storing the full DOM.',
-                'Estas son oportunidades de revisión semántica, no fallos WCAG automáticos. Cada resultado identifica el elemento afectado y puede mostrar un contexto HTML actual limitado sin guardar el DOM completo.',
+                'These are semantic review opportunities, not automatic WCAG failures. Each result includes the element details and CSS selector used to locate it.',
+                'Estas son oportunidades de revisión semántica, no fallos WCAG automáticos. Cada resultado incluye los datos del elemento y el selector CSS utilizado para localizarlo.',
               )}</p>
               <button type="button" className="structure-refresh" disabled={busy} onClick={() => void onRefresh()}>
                 {busy ? tr(language, 'Updating…', 'Actualizando…') : tr(language, 'Refresh', 'Actualizar')}
@@ -264,23 +263,27 @@ export function StructureView({
                     <p>{copy.description}</p>
                     {copy.suggestion && <p className="structure-hint-suggestion">{copy.suggestion}</p>}
 
-                    {element && (element.tabindex || element.trigger) && (
-                      <dl className="structure-element-details structure-element-runtime-details">
+                    {element && (
+                      <dl className="structure-element-details">
+                        <div><dt>{tr(language, 'Element', 'Elemento')}</dt><dd><code>&lt;{element.tag}&gt;</code></dd></div>
+                        {element.label && <div><dt>{tr(language, 'Text / label', 'Texto / etiqueta')}</dt><dd>{element.label}</dd></div>}
+                        {element.role && <div><dt>Role</dt><dd><code>{element.role}</code></dd></div>}
+                        {element.id && <div><dt>ID</dt><dd><code>{element.id}</code></dd></div>}
+                        {element.className && <div><dt>{tr(language, 'Classes', 'Clases')}</dt><dd><code>{element.className}</code></dd></div>}
                         {element.tabindex && <div><dt>tabindex</dt><dd><code>{element.tabindex}</code></dd></div>}
                         {element.trigger && <div><dt>{tr(language, 'Detected by', 'Detectado por')}</dt><dd><code>{element.trigger}</code></dd></div>}
+                        <div className="structure-selector-detail">
+                          <dt>{tr(language, 'CSS selector', 'Selector CSS')}</dt>
+                          <dd><code>{element.selector}</code></dd>
+                        </div>
                       </dl>
                     )}
-
-                    {hint.selector && (
-                      <TargetInspector
-                        selector={hint.selector}
-                        element={element}
-                        language={language}
-                        onLocate={onLocate}
-                        locateAriaLabel={tr(language, 'Locate affected element on page', 'Localizar elemento afectado en la página')}
-                      />
-                    )}
                   </div>
+                  {hint.selector && (
+                    <button type="button" onClick={() => void onLocate(hint.selector!)}>
+                      {tr(language, 'Locate', 'Localizar')}
+                    </button>
+                  )}
                 </article>
               );
             }) : (
