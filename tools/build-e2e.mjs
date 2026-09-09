@@ -16,6 +16,7 @@ await build({
     'audit-print',
     'background',
     'focus-visible',
+    'hover-focus-content',
     'report-print',
     'runtime',
     'sidepanel',
