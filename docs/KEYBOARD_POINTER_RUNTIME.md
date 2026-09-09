@@ -1,8 +1,8 @@
 # Keyboard and pointer runtime reviews
 
-This document is the focused methodology and severity supplement for the WCAG interaction evidence introduced in the 0.2.7 development batch. It complements `docs/RULES.md` and `docs/SEVERITY-AUDIT.md`; the public capability inventory remains `README.md` / `README.es.md`.
+This document is the focused methodology and severity supplement for WCAG interaction evidence collected during Trace. It complements `docs/RULES.md` and `docs/SEVERITY-AUDIT.md`; the public capability inventory remains `README.md` / `README.es.md`.
 
-All three rules below run only while Trace is recording real trusted interaction. They emit **REVIEW**, never automatic **FAIL**, because FocusTrace can observe a strong runtime signal without proving every alternative path, exception or recovery mechanism required for complete WCAG conformance.
+The rules below run only while Trace is recording real trusted interaction. They emit **REVIEW**, never automatic **FAIL**, because FocusTrace can observe a strong runtime signal without proving every alternative path, exception, state or recovery mechanism required for complete WCAG conformance.
 
 ## `FT-RUNTIME-011` — Keyboard operability review
 
@@ -34,10 +34,23 @@ The detector does not retain a full pointer-coordinate trail. It also does not c
 
 **Base impact:** moderate. Premature activation can cause accidental actions for users with motor impairments, while valid exceptions and recovery mechanisms can make the observed pattern conforming.
 
+## `FT-RUNTIME-014` — Interactive text contrast review
+
+**Reference:** WCAG 1.4.3 Contrast (Minimum) · EN 301 549 V4.1.1 §9.1.4.3.
+
+FocusTrace complements the default-state static contrast scan by measuring text contrast while a real interactive state is actually rendered during Trace. The initial runtime scope includes pointer hover, pointer active, keyboard focus/focus-visible reached through a real Tab transition, and rendered checked/expanded/selected/pressed state variants after user activation.
+
+The detector does not infer a failure merely because CSS contains an inactive selector such as `:hover`. It waits for a bounded transition-settle window, verifies that the state is still active, then uses the live computed foreground/background colors and rendered font size/weight. A low measured ratio is recorded as REVIEW because the evidence covers the observed state only; FocusTrace has not exercised every possible state, application path or WCAG applicability branch.
+
+**Base impact:** serious. Text can become unreadable only during interaction even when the default state passes, which can block users with low vision or reduced contrast sensitivity from understanding or completing the active control state.
+
+The detailed implementation boundary is documented in `docs/INTERACTIVE_CONTRAST.md`.
+
 ## Shared guardrails
 
 - Only trusted user interaction is considered; synthetic test events from the page are not treated as user evidence.
+- Interactive contrast does not synthesize hover and does not call `element.focus()` to manufacture focus evidence.
 - The rules record compact target/evidence data and do not persist raw pointer trajectories.
-- Absence of a review does not mean WCAG 2.1.1, 2.1.2 or 2.5.2 is fully tested.
-- The WCAG coverage matrix therefore marks these criteria as **partial**, **runtime**, **review** and still requiring manual review.
+- Absence of a review does not mean the referenced WCAG criterion is fully tested.
+- The WCAG coverage matrix marks these runtime criteria as **partial**, **runtime**, **review** and still requiring manual review.
 - EN 301 549 references are traceability mappings for the web requirement in clause 9, not certification or a complete EN 301 549 evaluation.
