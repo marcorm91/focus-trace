@@ -41,13 +41,17 @@ describe('FocusTrace DevTools panel contract', () => {
     expect(css).toContain('max-width: none;');
   });
 
-  it('keeps the DevTools surface on the compact locator UI with separate visual and DOM actions', () => {
+  it('keeps the compact locator UI with separate visual and DOM actions on every surface', () => {
     const scan = source('entrypoints/sidepanel/views/ScanView.tsx');
+    const css = source('entrypoints/sidepanel/element-location-actions.css');
 
-    expect(scan).toContain("finding-location${devtoolsSurface ? ' finding-location-devtools' : ''}");
+    expect(scan).toContain('className="finding-location finding-location-dual-actions"');
     expect(scan).toContain('finding-location-highlight-action');
     expect(scan).toContain('finding-location-inspect-action');
-    expect(scan).toContain("data-ft-action={devtoolsSurface ? 'inspect-dom' : 'highlight-page'}");
+    expect(scan).toContain('data-ft-action="inspect-dom"');
+    expect(scan).toContain('disabled={!devtoolsSurface}');
+    expect(css).toContain('grid-template-columns: minmax(0, 1fr) 44px 44px');
+    expect(css).toContain('gap: 0;');
     expect(scan).not.toContain('TargetInspector');
     expect(scan).not.toContain('View HTML');
   });
