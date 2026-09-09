@@ -11,7 +11,7 @@ const accordionCss = readFileSync(
   'utf8',
 );
 const sidepanelCss = readFileSync(
-  resolve(process.cwd(), 'entrypoints/sidepanel/index.css'),
+  resolve(process.cwd(), 'entrypoints/sidepanel/views/report-workspace.css'),
   'utf8',
 );
 const printableReport = readFileSync(
@@ -49,7 +49,7 @@ describe('report accordion contract', () => {
     expect(accordionCss).toContain('.report-accordion-section[open] > .report-accordion-summary::after');
     expect(accordionCss).toContain('var(--ft-i-chevron-down)');
     expect(accordionCss).not.toContain("content: '⌄';");
-    expect(sidepanelCss).toContain("@import url('./views/report-accordion.css') layer(components);");
+    expect(sidepanelCss).toContain("@import url('./report-accordion.css') layer(components);");
   });
 
   it('does not collapse the printable report', () => {

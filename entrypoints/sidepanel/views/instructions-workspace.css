@@ -1,0 +1,3 @@
+@layer foundation, system, layout, components, policy, accessibility;
+
+@import url('../components/standards-coverage.css') layer(components);

@@ -7,6 +7,7 @@ import { tr, type AppLanguage } from '../../../shared/i18n';
 import type { RuntimeEvent, ScanResult } from '../../../shared/types';
 import { Empty } from '../components/Common';
 import { SessionReportView } from './SessionReportView';
+import './report-workspace.css';
 
 function formatReviewTime(timestamp: number, language: AppLanguage): string {
   return new Intl.DateTimeFormat(language === 'es' ? 'es-ES' : 'en-GB', {

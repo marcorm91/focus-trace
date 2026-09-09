@@ -23,6 +23,7 @@ import {
 import { FirefoxDevtoolsSettings } from '../components/FirefoxDevtoolsSettings';
 import { FocusMemorySettings } from '../components/FocusMemorySettings';
 import { closeFocusedSettingsView } from '../settings-focus';
+import './settings-workspace.css';
 
 const CREATOR_LINKEDIN = 'https://es.linkedin.com/in/marcorm91';
 const REPOSITORY_URL = 'https://github.com/marcorm91/focus-trace';

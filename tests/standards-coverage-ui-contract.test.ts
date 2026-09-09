@@ -60,11 +60,11 @@ describe('standards coverage UI contract', () => {
 
   it('keeps the coverage table responsive instead of compressing criterion text into the sidepanel width', () => {
     const css = source('entrypoints/sidepanel/components/standards-coverage.css');
-    const index = source('entrypoints/sidepanel/index.css');
+    const index = source('entrypoints/sidepanel/views/instructions-workspace.css');
 
     expect(css).toContain('overflow-x: auto;');
     expect(css).toContain('min-width: 660px;');
     expect(css).toContain('@media (max-width: 520px)');
-    expect(index).toContain("@import url('./components/standards-coverage.css') layer(components);");
+    expect(index).toContain("@import url('../components/standards-coverage.css') layer(components);");
   });
 });

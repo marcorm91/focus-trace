@@ -9,13 +9,8 @@
 @import url('./workspace-layout.css') layer(layout);
 @import url('./devtools-surface.css') layer(layout);
 
-@import url('./focus-graph.css') layer(components);
 @import url('./scan-settings.css') layer(components);
-@import url('./settings-scale.css') layer(components);
-@import url('./scan-accordion.css') layer(components);
 @import url('./component-scan.css') layer(components);
-@import url('./heading-tree-visual.css') layer(components);
-@import url('./structure.css') layer(components);
 @import url('./audit.css') layer(components);
 @import url('./information-summaries.css') layer(components);
 @import url('./instructions.css') layer(components);
@@ -23,26 +18,11 @@
 @import url('./element-location-actions.css') layer(components);
 @import url('./disclosure-chevron.css') layer(components);
 @import url('./breakpoint-settings.css') layer(components);
-@import url('./views/trace.css') layer(components);
 @import url('./views/trace-reset.css') layer(components);
-@import url('./views/trace-polish.css') layer(components);
-@import url('./views/transition-semantics.css') layer(components);
-@import url('./views/replay.css') layer(components);
-@import url('./views/session-report.css') layer(components);
-@import url('./views/report-accordion.css') layer(components);
-@import url('./views/report-export.css') layer(components);
-@import url('./components/finding-guidance.css') layer(components);
-@import url('./components/focus-memory-settings.css') layer(components);
-@import url('./components/impact-matrix.css') layer(components);
-@import url('./components/report-component-identity.css') layer(components);
 @import url('./components/site-audit-launcher.css') layer(components);
-@import url('./components/focus-memory.css') layer(components);
-@import url('./components/report-scan-compact.css') layer(components);
-@import url('./components/standards-coverage.css') layer(components);
 
 @import url('./control-states.css') layer(policy);
 @import url('./ui-consistency.css') layer(policy);
-@import url('./memory-interactions.css') layer(policy);
 @import url('./shared-control-policy.css') layer(policy);
 @import url('./button-affordance-followup.css') layer(policy);
 @import url('./empty-state-consistency.css') layer(policy);

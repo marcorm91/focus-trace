@@ -21,6 +21,12 @@ Responsibilities include:
 
 The side panel treats the background session as the source of truth for the active tab. Asynchronous tab refreshes are guarded so a slow response from a previously selected tab cannot overwrite the current tab state.
 
+Each Review, Structure, Trace, Report, Instructions and Settings workspace is a
+React lazy boundary. CSS that belongs only to one workspace follows the same
+dynamic module boundary while shared shell, control-policy and accessibility
+styles stay in the initial stylesheet. The bundle gate verifies the six lazy
+chunks and budgets every asset referenced directly by `sidepanel.html`.
+
 ### Background service worker
 
 `entrypoints/background.ts` owns per-tab session persistence and message coordination.

@@ -25,6 +25,7 @@ import { FocusGraphView } from './FocusGraphView';
 import { FocusView } from './FocusView';
 import { ReplayView } from './ReplayView';
 import { RuntimeView } from './RuntimeView';
+import './trace-workspace.css';
 
 type TraceMode = 'replay' | 'journey' | 'interactions' | 'graph';
 
