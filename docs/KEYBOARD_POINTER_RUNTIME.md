@@ -46,10 +46,22 @@ The detector does not infer a failure merely because CSS contains an inactive se
 
 The detailed implementation boundary is documented in `docs/INTERACTIVE_CONTRAST.md`.
 
+## `FT-RUNTIME-015` — Content on Hover or Focus review
+
+**Reference:** WCAG 1.4.13 Content on Hover or Focus · EN 301 549 V4.1.1 §9.1.4.13.
+
+FocusTrace observes additional rendered content that becomes visible after a real trusted hover or a focus transition correlated with recent trusted user input. Candidate content is associated with the trigger only when an explicit `aria-controls`, `aria-describedby` or `aria-details` relationship exists, or when the newly visible content is within a bounded geometric proximity of the trigger. The observer is capped by element and concurrent-observation limits so Trace does not turn ordinary pointer movement into a page-wide inventory.
+
+The runtime evidence is intentionally split around the three WCAG 1.4.13 requirements. **Hoverable** review evidence can be emitted when additional content disappears while the trusted pointer is moving into its last observed bounds. **Persistent** review evidence can be emitted when the additional content disappears while the originating hover/focus trigger remains active and no dismissal attempt was observed. **Dismissible** evidence is probed conservatively when overlapping additional content remains visible after Escape while the trigger state remains active; Escape is evidence of one attempted dismissal mechanism, not a universal WCAG requirement.
+
+FocusTrace never synthesizes hover or focus for this rule and does not infer a failure from authored CSS alone. It records **REVIEW**, not FAIL, because alternate dismissal mechanisms, exceptions, timing behavior, relationship ambiguity and unobserved interaction states can still determine conformance.
+
+**Base impact:** serious. Additional content that cannot be reached, retained or dismissed can obscure or remove information during pointer or keyboard interaction, especially for users with low vision, magnification or motor impairments.
+
 ## Shared guardrails
 
 - Only trusted user interaction is considered; synthetic test events from the page are not treated as user evidence.
-- Interactive contrast does not synthesize hover and does not call `element.focus()` to manufacture focus evidence.
+- Interactive contrast and hover/focus-content review do not synthesize hover and do not call `element.focus()` to manufacture focus evidence.
 - The rules record compact target/evidence data and do not persist raw pointer trajectories.
 - Absence of a review does not mean the referenced WCAG criterion is fully tested.
 - The WCAG coverage matrix marks these runtime criteria as **partial**, **runtime**, **review** and still requiring manual review.
