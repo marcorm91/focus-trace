@@ -19,3 +19,23 @@ export const INTERACTIVE_TEXT_CONTRAST_RULE: RuleDefinition = {
     },
   ],
 };
+
+export const INTERACTIVE_NON_TEXT_CONTRAST_RULE: RuleDefinition = {
+  id: 'FT-RUNTIME-016',
+  title: 'Interactive state may have insufficient non-text contrast',
+  severity: 'serious',
+  severityRationale: {
+    en: 'A component boundary, identifying graphic or focus cue can lose the contrast users need to perceive the control or its state only while they interact with it.',
+    es: 'El límite de un componente, un gráfico identificativo o un indicador de foco puede perder el contraste necesario para percibir el control o su estado solo durante la interacción.',
+  },
+  references: [
+    {
+      type: 'WCAG',
+      id: '1.4.11',
+      label: 'Non-text Contrast',
+      level: 'AA',
+      status: 'normative',
+      url: 'https://www.w3.org/TR/WCAG22/#non-text-contrast',
+    },
+  ],
+};
