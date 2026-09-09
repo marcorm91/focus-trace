@@ -136,10 +136,7 @@ export function interactiveTextContrastReviews(
 
       const elementSnapshot = snapshot(element);
       reviews.push({
-        // `aria-widget` is the existing generic rendered-state runtime channel.
-        // Keeping the shared event-kind union stable avoids coupling this bounded
-        // contrast review to a new session-storage schema.
-        kind: 'aria-widget',
+        kind: 'contrast-state',
         severity: INTERACTIVE_TEXT_CONTRAST_RULE.severity,
         title: `WCAG 1.4.3 · ${state} · ${evaluation.ratio.toFixed(2)}:1`,
         outcome: 'review',
