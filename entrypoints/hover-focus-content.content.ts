@@ -37,13 +37,13 @@ export default defineContentScript({
     let stateVersion = 0;
     let lastTrustedInputAt = 0;
     let lastTrustedInputKind: 'keyboard' | 'pointer' | undefined;
-    const triggerVersions = new Map<string, number>();
+    let triggerVersions = new WeakMap<Element, Map<HoverFocusTriggerMode, number>>();
     const reported = new Set<string>();
     const tracker = new HoverFocusContentTracker();
 
     const reset = () => {
       stateVersion += 1;
-      triggerVersions.clear();
+      triggerVersions = new WeakMap();
       reported.clear();
       lastTrustedInputAt = 0;
       lastTrustedInputKind = undefined;
@@ -98,20 +98,18 @@ export default defineContentScript({
 
     const scheduleObserve = (trigger: Element, mode: HoverFocusTriggerMode) => {
       if (!recording || !trigger.isConnected) return;
-      let selector: string;
-      try {
-        selector = trigger.id ? `#${CSS.escape(trigger.id)}` : trigger.tagName.toLowerCase();
-      } catch {
-        selector = trigger.tagName.toLowerCase();
+      let versions = triggerVersions.get(trigger);
+      if (!versions) {
+        versions = new Map();
+        triggerVersions.set(trigger, versions);
       }
-      const key = `${mode}:${selector}`;
-      const version = (triggerVersions.get(key) ?? 0) + 1;
-      triggerVersions.set(key, version);
+      const version = (versions.get(mode) ?? 0) + 1;
+      versions.set(mode, version);
       const currentStateVersion = stateVersion;
 
       ctx.setTimeout(() => {
-        if (!recording || stateVersion !== currentStateVersion || triggerVersions.get(key) !== version) return;
-        if (!trigger.isConnected) return;
+        if (!recording || stateVersion !== currentStateVersion) return;
+        if (triggerVersions.get(trigger)?.get(mode) !== version || !trigger.isConnected) return;
         tracker.observeTriggeredContent(trigger, mode, document);
       }, REVEAL_SETTLE_MS);
     };
