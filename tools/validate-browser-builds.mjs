@@ -64,6 +64,7 @@ console.log(JSON.stringify({
     optional_host_permissions: chrome.optional_host_permissions,
     content_scripts: chrome.content_scripts,
     side_panel: chrome.side_panel,
+    devtools_page: chrome.devtools_page,
   },
   edge: {
     permissions: edge.permissions,
@@ -71,6 +72,7 @@ console.log(JSON.stringify({
     optional_host_permissions: edge.optional_host_permissions,
     content_scripts: edge.content_scripts,
     side_panel: edge.side_panel,
+    devtools_page: edge.devtools_page,
   },
   firefox: {
     permissions: firefox.permissions,
@@ -79,6 +81,7 @@ console.log(JSON.stringify({
     optional_host_permissions: firefox.optional_host_permissions,
     content_scripts: firefox.content_scripts,
     sidebar_action: firefox.sidebar_action,
+    devtools_page: firefox.devtools_page,
     browser_specific_settings: firefox.browser_specific_settings,
   },
 }, null, 2));
@@ -120,10 +123,14 @@ for (const target of BUILD_TARGETS) {
 }
 
 for (const [name, manifest] of Object.entries({ chrome, edge })) {
+  const target = `${name}-mv3`;
   assert(manifest.minimum_chrome_version === '114', `${name} must require Chromium 114+`);
   assert(sameValues(manifest.permissions, CHROMIUM_PERMISSIONS), `${name} permissions must exactly match the reviewed Chromium permission set`);
   assert(sameValues(manifest.optional_host_permissions, EXPECTED_OPTIONAL_HOSTS), `${name} must expose HTTP/HTTPS plus temporary visual-capture access as optional hosts`);
   assert(manifest.side_panel?.default_path === 'sidepanel.html', `${name} must expose sidepanel.html`);
+  assert(manifest.devtools_page === 'devtools.html', `${name} must register the FocusTrace DevTools page`);
+  assert(existsSync(resolve('.output', target, 'devtools.html')), `${target} must include devtools.html`);
+  assert(!existsSync(resolve('.output', target, 'devtools-panel.html')), `${target} must reuse sidepanel.html instead of shipping a duplicate DevTools application page`);
 }
 
 assert(!firefox.minimum_chrome_version, 'Firefox manifest must not contain minimum_chrome_version');
@@ -134,6 +141,7 @@ assert(
   'Firefox must expose HTTP/HTTPS plus temporary visual-capture access as optional hosts',
 );
 assert(firefox.sidebar_action?.default_panel === 'sidepanel.html', 'Firefox must expose sidepanel.html as sidebar_action');
+assert(!firefox.devtools_page, 'Firefox must keep the DevTools integration disabled for this release');
 assert(firefox.browser_specific_settings?.gecko?.id === 'focustrace@focus-mode.app', 'Firefox must have a stable Gecko ID');
 assert(firefox.browser_specific_settings?.gecko?.strict_min_version === '115.0', 'Firefox must require version 115+');
 assert(
@@ -142,4 +150,4 @@ assert(
   'Firefox must declare that it does not collect/transmit data',
 );
 
-console.log('Browser builds validated: exact permissions, native EN/ES extension metadata, optional host access, no persistent content scripts, safe CSP, and required entrypoints for chrome-mv3, edge-mv3 and firefox-mv3.');
+console.log('Browser builds validated: exact permissions, native EN/ES extension metadata, optional host access, no persistent content scripts, safe CSP, single-workspace Chromium DevTools registration, and required release files for chrome-mv3, edge-mv3 and firefox-mv3.');

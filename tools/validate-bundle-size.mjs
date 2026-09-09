@@ -22,6 +22,16 @@ function matchingFile(dir, pattern, label) {
   return join(dir, matches[0]);
 }
 
+function largestMatchingFile(dir, pattern, label) {
+  assert(existsSync(dir), `${label} directory is missing: ${dir}`);
+  const matches = readdirSync(dir)
+    .filter((entry) => pattern.test(entry))
+    .map((entry) => ({ entry, bytes: statSync(join(dir, entry)).size }))
+    .sort((left, right) => right.bytes - left.bytes);
+  assert(matches.length > 0, `${label} must resolve to at least one file; found 0.`);
+  return join(dir, matches[0].entry);
+}
+
 function budgetFor(key) {
   return Math.ceil(config.baseline[key] * growthFactor);
 }
@@ -31,7 +41,11 @@ for (const target of TARGETS) {
   assert(existsSync(root), `${target} output is missing; build all browser targets before validating bundle size.`);
 
   const runtime = resolve(root, 'content-scripts/runtime.js');
-  const sidepanelJs = matchingFile(resolve(root, 'chunks'), /^sidepanel-.*\.js$/, `${target} sidepanel JS`);
+  // A second extension page that imports the shared FocusTrace app can cause Vite
+  // to split the sidepanel entry into a tiny loader plus the large shared app
+  // chunk. Keep budgeting the actual application chunk instead of requiring the
+  // historical one-file shape.
+  const sidepanelJs = largestMatchingFile(resolve(root, 'chunks'), /^sidepanel-.*\.js$/, `${target} sidepanel JS`);
   const sidepanelCss = matchingFile(resolve(root, 'assets'), /^sidepanel-.*\.css$/, `${target} sidepanel CSS`);
 
   const measured = {

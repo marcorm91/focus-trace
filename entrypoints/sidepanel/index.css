@@ -7,6 +7,7 @@
 @import url('./ux-polish.css') layer(system);
 
 @import url('./workspace-layout.css') layer(layout);
+@import url('./devtools-surface.css') layer(layout);
 
 @import url('./focus-graph.css') layer(components);
 @import url('./scan-settings.css') layer(components);
