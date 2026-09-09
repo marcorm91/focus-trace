@@ -13,9 +13,9 @@ describe('scan categories', () => {
     expect(scanCategoryForRule('FT-WCAG-013')).toBe('structure');
     expect(scanCategoryForRule('FT-REVIEW-014')).toBe('forms');
     expect(scanCategoryForRule('FT-REVIEW-015')).toBe('names');
-    expect(scanCategoryForRule('FT-REVIEW-016')).toBe('other');
-    expect(scanCategoryForRule('FT-REVIEW-017')).toBe('other');
-    expect(scanCategoryForRule('FT-REVIEW-018')).toBe('other');
+    for (const mediaRule of ['FT-REVIEW-016', 'FT-REVIEW-017', 'FT-REVIEW-018', 'FT-REVIEW-021', 'FT-REVIEW-022', 'FT-REVIEW-023']) {
+      expect(scanCategoryForRule(mediaRule)).toBe('other');
+    }
     expect(scanCategoryForRule('FT-REVIEW-019')).toBe('forms');
     expect(scanCategoryForRule('FT-REVIEW-020')).toBe('forms');
     expect(scanCategoryForRule('FT-REVIEW-002')).toBe('structure');

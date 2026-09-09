@@ -38,6 +38,17 @@ export function localizedReferenceLabel(reference: StandardReference, language: 
     if (reference.label === 'Video element auditory content has captions') {
       return 'El contenido auditivo del elemento de vídeo tiene subtítulos';
     }
+    if (reference.label === 'Audio Description or Media Alternative (Prerecorded)') {
+      return 'Audiodescripción o alternativa para el medio (pregrabado)';
+    }
+    if (reference.label === 'Video element visual content has accessible alternative') {
+      return 'El contenido visual del elemento de vídeo tiene una alternativa accesible';
+    }
+    if (reference.label === 'Captions (Live)') return 'Subtítulos (en directo)';
+    if (reference.label === 'Audio Description (Prerecorded)') return 'Audiodescripción (pregrabada)';
+    if (reference.label === 'Video element visual content has strict accessible alternative') {
+      return 'El contenido visual del elemento de vídeo tiene una alternativa accesible estricta';
+    }
     if (reference.label === 'Error Identification') return 'Identificación de errores';
     if (reference.label === 'Error message describes invalid form field value') {
       return 'El mensaje de error describe el valor no válido del campo de formulario';
@@ -152,6 +163,18 @@ const EXTRA_COPY_ES: Record<string, { title: string; description: string }> = {
     title: 'El error de entrada observado necesita revisar la sugerencia de corrección',
     description: 'FocusTrace ha observado un campo inválido con texto de error asociado y metadatos de restricción relevantes para corregirlo. Revisa si el mensaje ofrece una sugerencia útil cuando se conoce, teniendo en cuenta la excepción de seguridad o propósito de WCAG.',
   },
+  'FT-REVIEW-021': {
+    title: 'El vídeo pregrabado puede carecer de una alternativa para el medio o audiodescripción observable',
+    description: 'FocusTrace ha observado vídeo sincronizado probablemente pregrabado sin una audiodescripción ni alternativa equivalente candidata que pueda resolver en el marcado local. Revisa versiones audiodescritas, alternativas para el medio y el contenido visual significativo antes de considerarlo un incumplimiento WCAG.',
+  },
+  'FT-REVIEW-022': {
+    title: 'El vídeo en directo puede carecer de subtítulos observables',
+    description: 'FocusTrace ha observado vídeo nativo con señales sólidas de emisión en directo sin una pista nativa de subtítulos observable. Revisa subtítulos de reproductores personalizados o incrustados y si la emisión contiene información auditiva antes de considerarlo un incumplimiento WCAG.',
+  },
+  'FT-REVIEW-023': {
+    title: 'El vídeo pregrabado puede carecer de una audiodescripción observable',
+    description: 'FocusTrace ha observado vídeo sincronizado probablemente pregrabado sin una pista nativa de descripción ni un control cercano para una versión audiodescrita. Revisa el reproductor, versiones alternativas y el contenido visual real antes de considerarlo un incumplimiento WCAG.',
+  },
   'FT-RUNTIME-006': {
     title: 'La interacción de arrastre requiere revisar una alternativa de puntero sencillo',
     description: 'Trace observó un arrastre real. Revisa si la misma funcionalidad puede realizarse con un puntero sencillo sin movimiento de arrastre, teniendo en cuenta las excepciones de WCAG 2.5.7.',
@@ -185,6 +208,9 @@ const EXTRA_EVIDENCE_ES: Record<string, string> = {
   'FT-REVIEW-018': 'El vídeo probablemente pregrabado señalado no expone una pista nativa de subtítulos. Revisa subtítulos incrustados, reproductores personalizados y si el vídeo contiene realmente información auditiva.',
   'FT-REVIEW-019': 'El campo señalado expone un estado inválido, pero FocusTrace no ha resuelto texto de error no vacío mediante aria-errormessage o aria-describedby.',
   'FT-REVIEW-020': 'El campo señalado está inválido, tiene texto de error asociado y expone metadatos de restricción relevantes para la corrección; la suficiencia de la sugerencia requiere revisión humana.',
+  'FT-REVIEW-021': 'El vídeo probablemente pregrabado señalado no expone una audiodescripción ni una alternativa para el medio candidata que FocusTrace pueda observar localmente. La equivalencia y cobertura del contenido visual requieren revisión manual.',
+  'FT-REVIEW-022': 'El vídeo señalado presenta señales sólidas de contenido en directo y no expone una pista nativa de subtítulos. Revisa subtítulos personalizados o incrustados y la presencia real de información auditiva.',
+  'FT-REVIEW-023': 'El vídeo probablemente pregrabado señalado no expone una pista nativa de descripción ni una versión audiodescrita observable. La precisión, integridad y aplicabilidad de la audiodescripción requieren revisión manual.',
   'FT-RUNTIME-006': 'Se observó un movimiento de arrastre real y debe revisarse si existe una alternativa equivalente sin arrastrar.',
 };
 
