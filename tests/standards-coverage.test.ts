@@ -6,6 +6,7 @@ import wcagCatalog from '../generated/wcag-catalog.json';
 import { ADVANCED_ARIA_RULES } from '../shared/aria-authoring-rules';
 import { FOCUS_VISIBLE_RULE } from '../shared/focus-visible-rules';
 import { FORM_PURPOSE_RULES } from '../shared/form-purpose-rules';
+import { HOVER_FOCUS_CONTENT_RULE } from '../shared/hover-focus-content-rules';
 import {
   DUPLICATE_ID_RULE,
   GENERIC_INTERACTIVE_SEMANTICS_RULE,
@@ -51,6 +52,7 @@ const ALL_RULES: RuleDefinition[] = [
   TEXT_SPACING_RULE,
   FOCUS_VISIBLE_RULE,
   INTERACTIVE_TEXT_CONTRAST_RULE,
+  HOVER_FOCUS_CONTENT_RULE,
   ...MEDIA_RULES,
   ...HTML_RULES,
   ...ADVANCED_ARIA_RULES,
@@ -180,6 +182,15 @@ describe('standards registry coverage', () => {
       coverage: ['review', 'manual'],
       ruleIds: ['FT-REVIEW-016'],
     });
+    expect(wcagCoverageForCriterion('1.4.13')).toMatchObject({
+      level: 'AA',
+      coverage: ['review', 'runtime', 'manual'],
+      ruleIds: ['FT-RUNTIME-015'],
+      actRuleIds: [],
+      completeness: 'partial',
+      manualReviewRequired: true,
+      en301549: { clause: '9.1.4.13' },
+    });
     expect(wcagCoverageForCriterion('2.4.1')).toMatchObject({
       level: 'A',
       coverage: ['review', 'manual'],
@@ -260,6 +271,14 @@ describe('standards registry coverage', () => {
         actRuleIds: [],
       }),
     ]));
+    expect(wcagCoverageForCriterion('1.4.13')?.checks).toEqual([
+      expect.objectContaining({
+        ruleId: 'FT-RUNTIME-015',
+        method: 'review',
+        surface: 'runtime',
+        actRuleIds: [],
+      }),
+    ]);
   });
 
   it('maps WCAG 2.2 A/AA web requirements to EN 301 549 V4.1.1 clause 9 without treating AAA as an AA requirement', () => {
@@ -270,6 +289,7 @@ describe('standards registry coverage', () => {
     expect(wcagCoverageForCriterion('1.2.3')?.en301549?.clause).toBe('9.1.2.3');
     expect(wcagCoverageForCriterion('1.2.4')?.en301549?.clause).toBe('9.1.2.4');
     expect(wcagCoverageForCriterion('1.2.5')?.en301549?.clause).toBe('9.1.2.5');
+    expect(wcagCoverageForCriterion('1.4.13')?.en301549?.clause).toBe('9.1.4.13');
     expect(wcagCoverageForCriterion('2.4.11')?.en301549?.clause).toBe('9.2.4.11');
     expect(wcagCoverageForCriterion('3.2.6')?.en301549?.clause).toBe('9.3.2.6');
     expect(wcagCoverageForCriterion('1.2.6')?.level).toBe('AAA');
