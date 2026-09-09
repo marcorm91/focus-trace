@@ -285,6 +285,7 @@ export interface SaveScanResponse {
 
 export type ExtensionMessage =
   | { type: 'FOCUSTRACE_EVENT'; event: RuntimeEvent }
+  | { type: 'FOCUSTRACE_EVENTS'; events: RuntimeEvent[] }
   | { type: 'FOCUSTRACE_GET_CONTENT_STATE' }
   | { type: 'FOCUSTRACE_GET_SESSION'; tabId: number }
   | { type: 'FOCUSTRACE_FLUSH_SESSION'; tabId: number }

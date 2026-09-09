@@ -90,11 +90,19 @@ export function normalizeSessionState(state: SessionState): SessionState {
 }
 
 export function appendRuntimeEventToSession(state: SessionState, event: RuntimeEvent): SessionState {
-  const firstBreakpointHit = event.breakpointHits?.[0];
+  return appendRuntimeEventsToSession(state, [event]);
+}
+
+export function appendRuntimeEventsToSession(
+  state: SessionState,
+  events: RuntimeEvent[],
+): SessionState {
+  if (events.length === 0) return state;
+  const firstBreakpointHit = events.find((event) => event.breakpointHits?.length)?.breakpointHits?.[0];
   return {
     ...state,
     recording: firstBreakpointHit ? false : state.recording,
-    events: trimRuntimeEvents([...state.events, event]),
+    events: trimRuntimeEvents([...state.events, ...events]),
     ...(firstBreakpointHit ? { pausedByBreakpoint: firstBreakpointHit } : {}),
   };
 }

@@ -194,7 +194,7 @@ Keyboard / pointer / focus / relevant mutation
         ↓
 Inspected-page runtime
         ↓
-FOCUSTRACE_EVENT
+FOCUSTRACE_EVENTS (short batches; breakpoints flush immediately)
         ↓
 Background per-tab write queue
         ↓
@@ -206,6 +206,12 @@ Side panel views / graph / journey / replay / current report
 ```
 
 Trace is session evidence. It must not be silently attached to a historical audit page that did not persist that Trace.
+
+The inspected-page runtime coalesces ordinary event bursts over a single 16 ms
+window before crossing the extension boundary. A breakpoint bypasses that wait,
+and explicit session flushes drain both queued and in-flight batches before the
+background returns the current session. The background persists and broadcasts
+once per batch while retaining the original event order and 500-event bound.
 
 ## Selector invariant
 
