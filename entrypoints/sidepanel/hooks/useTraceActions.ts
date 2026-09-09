@@ -25,6 +25,7 @@ import type {
   FocusWalkResult,
   RuntimeBreakpointId,
   RuntimeBreakpointSettings,
+  RuntimeInjectionMode,
   ScanResult,
   SessionState,
 } from '../../../shared/types';
@@ -37,7 +38,7 @@ type UseTraceActionsOptions = {
   language: AppLanguage;
   setSession: Dispatch<SetStateAction<SessionState>>;
   refresh: (tabId: number) => Promise<void>;
-  ensureInjected: () => Promise<void>;
+  ensureInjected: (mode: RuntimeInjectionMode) => Promise<void>;
   requestPageAccess: () => Promise<void>;
   setBusy: Dispatch<SetStateAction<boolean>>;
   setError: Dispatch<SetStateAction<string | undefined>>;
@@ -123,7 +124,7 @@ export function useTraceActions({
     setBusy(true);
     setError(undefined);
     try {
-      await ensureInjected();
+      await ensureInjected('trace');
       const enabled = !session.recording;
       const resumingFromBreakpoint = enabled && session.pausedByBreakpoint != null;
 
@@ -185,7 +186,7 @@ export function useTraceActions({
     let runtimeStarted = false;
 
     try {
-      await ensureInjected();
+      await ensureInjected('trace');
       await browser.scripting.executeScript({
         target: { tabId },
         func: clearFocusPathInPage,
@@ -263,7 +264,7 @@ export function useTraceActions({
     setSession((current) => ({ ...current, breakpoints: nextSettings }));
 
     try {
-      await ensureInjected();
+      await ensureInjected('scan');
       await browser.tabs.sendMessage(tabId, {
         type: 'FOCUSTRACE_CONFIGURE_BREAKPOINTS',
         breakpoints: nextSettings,
