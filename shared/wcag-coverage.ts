@@ -1,4 +1,5 @@
 import wcagCatalog from '../generated/wcag-catalog.json';
+import { AUTHENTICATION_RULES } from './authentication-rules';
 import { FOCUS_VISIBLE_RULE } from './focus-visible-rules';
 import { FORM_ERROR_RULES } from './form-error-rules';
 import { FORM_PURPOSE_RULES } from './form-purpose-rules';
@@ -87,6 +88,7 @@ const COVERAGE_RULES = [
   ...Object.values(RULES),
   ...FORM_PURPOSE_RULES,
   ...FORM_ERROR_RULES,
+  ...AUTHENTICATION_RULES,
   LANGUAGE_PARTS_RULE,
   TEXT_SPACING_RULE,
   FOCUS_VISIBLE_RULE,
