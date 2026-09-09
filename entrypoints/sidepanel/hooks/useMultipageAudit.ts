@@ -20,6 +20,7 @@ import {
   captureReportVisualEvidence,
   collectReportComponents,
 } from '../../../lib/report/visual-evidence';
+import { resolveVisibleTabCaptureSource } from '../../../lib/extension/visible-tab-capture';
 import type { ScanResult } from '../../../shared/types';
 
 interface PendingAuditScope {
@@ -105,7 +106,11 @@ export function useMultipageAudit() {
 
   const cancelPendingAuditScope = useCallback(() => resolvePending(null), [resolvePending]);
 
-  const recordPageAnalysis = useCallback(async (scan: ScanResult, plan: AuditAnalysisPlan) => {
+  const recordPageAnalysis = useCallback(async (
+    tabId: number,
+    scan: ScanResult,
+    plan: AuditAnalysisPlan,
+  ) => {
     if (scan.scope?.type === 'component') return;
 
     const fallbackEligibleCount = staticVisualTargetCount(scan);
@@ -118,11 +123,10 @@ export function useMultipageAudit() {
     };
 
     try {
-      const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
-      if (tab?.id != null) {
-        const components = await collectReportComponents(tab.id, scan, []);
+      if (await resolveVisibleTabCaptureSource(tabId, scan.url)) {
+        const components = await collectReportComponents(tabId, scan, []);
         const capture = await captureReportVisualEvidence(
-          tab.id,
+          tabId,
           scan,
           components,
           [],

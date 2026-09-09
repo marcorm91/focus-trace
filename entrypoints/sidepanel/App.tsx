@@ -130,7 +130,7 @@ export default function App() {
       const memoryEvidence = await collectFocusMemoryEvidence(tabId, result).catch(() => []);
       await saveScan(result, memoryEvidence);
       try {
-        await recordPageAnalysis(result, auditPlan);
+        await recordPageAnalysis(tabId, result, auditPlan);
       } catch {
         setError(tr(
           language,

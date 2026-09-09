@@ -84,6 +84,8 @@ FocusTrace has four local visual-evidence flows:
 
 Screenshot crops or temporary captures can contain information visible on the inspected page. They are prepared and, only where explicitly described above, stored locally for the feature that requested them; they are not intentionally transmitted by FocusTrace.
 
+Because the browser screenshot API captures the visible tab of a window rather than a tab ID directly, FocusTrace binds every capture to the requesting tab, window and normalized document URL. It validates that source immediately before and after capture. If the user switches tabs or the source navigates during that interval, the captured pixels are discarded and the feature uses its unavailable/inconclusive fallback instead of associating another page's pixels with the evidence.
+
 Users should review exported reports before sharing them with third parties and should clear retained local history when local evidence is no longer appropriate for the browser profile.
 
 ## Permissions

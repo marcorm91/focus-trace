@@ -17,7 +17,7 @@ describe('FocusTrace Memory wiring contract', () => {
     expect(app).toContain('collectFocusMemoryEvidence(tabId, result)');
     expect(app).toContain('memoryEvidence,');
     expect(evidence).toContain('focusMemorySettingsState()');
-    expect(evidence).toContain('browser.tabs.captureVisibleTab');
+    expect(evidence).toContain('captureVisibleTabFromSource(source');
     expect(hook).toContain('readFocusMemoryForScan(scan)');
     expect(hook).not.toContain('recordFocusMemoryObservation');
     expect(hook).not.toContain('browser.storage.local.set');

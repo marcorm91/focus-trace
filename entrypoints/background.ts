@@ -1,4 +1,8 @@
 import { browser, defineBackground } from '#imports';
+import {
+  captureVisibleTabFromSource,
+  visibleTabCaptureSource,
+} from '../lib/extension/visible-tab-capture';
 import { recordFocusMemoryScan } from '../lib/focus-memory/storage';
 import { ensureRuntimeScripts } from '../lib/extension/runtime-injection';
 import type { FocusVisibleCaptureMessage } from '../lib/runtime/focus-visible';
@@ -132,8 +136,10 @@ export default defineBackground(() => {
   browser.runtime.onMessage.addListener((message: ExtensionMessage | FocusVisibleCaptureMessage, sender) => {
     if (message.type === 'FOCUSTRACE_CAPTURE_VIEWPORT') {
       const tab = sender.tab;
-      if (tab?.id == null || tab.windowId == null || !tab.active) return Promise.resolve(undefined);
-      return browser.tabs.captureVisibleTab(tab.windowId, { format: 'png' }).catch(() => undefined);
+      if (tab?.id == null) return Promise.resolve(undefined);
+      const source = visibleTabCaptureSource(tab, tab.id, tab.url);
+      if (!source) return Promise.resolve(undefined);
+      return captureVisibleTabFromSource(source, { format: 'png' });
     }
 
     if (message.type === 'FOCUSTRACE_EVENT') {

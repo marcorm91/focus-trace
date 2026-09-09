@@ -48,6 +48,16 @@ describe('report export evidence contract', () => {
     expect(evidence).toContain('if (temporaryPermissionGranted) await releaseVisualCapturePermission();');
   });
 
+  it('discards window-scoped captures if the source tab changes during capture', () => {
+    const evidence = source('lib/report/visual-evidence.ts');
+    const capture = source('lib/extension/visible-tab-capture.ts');
+
+    expect(evidence).toContain('resolveVisibleTabCaptureSource(tabId, scan?.url)');
+    expect(evidence).toContain("captureVisibleTabFromSource(source, { format: 'jpeg', quality: 78 })");
+    expect(capture.match(/visibleTabCaptureSourceIsCurrent\(source\)/g)).toHaveLength(2);
+    expect(evidence).toContain('if (original && await visibleTabCaptureSourceIsCurrent(source, false))');
+  });
+
   it('carries static and runtime finding tone into visual evidence eligibility', () => {
     const components = source('lib/report/component-identity.ts');
     const report = source('entrypoints/sidepanel/views/SessionReportView.tsx');

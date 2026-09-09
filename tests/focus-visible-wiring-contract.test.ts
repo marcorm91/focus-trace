@@ -12,8 +12,8 @@ describe('focus-visible runtime wiring', () => {
     const probe = source('entrypoints/focus-visible.content.ts');
 
     expect(background).toContain("message.type === 'FOCUSTRACE_CAPTURE_VIEWPORT'");
-    expect(background).toContain('!tab.active');
-    expect(background).toContain("captureVisibleTab(tab.windowId, { format: 'png' })");
+    expect(background).toContain('visibleTabCaptureSource(tab, tab.id, tab.url)');
+    expect(background).toContain("captureVisibleTabFromSource(source, { format: 'png' })");
     expect(probe).toContain("type: 'FOCUSTRACE_CAPTURE_VIEWPORT'");
     expect(probe).not.toContain('browser.storage');
     expect(probe).not.toContain('dataUrl?:');
