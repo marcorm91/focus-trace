@@ -34,6 +34,7 @@ const chromeManifest = manifestForBrowser('chrome');
 const edgeManifest = manifestForBrowser('edge');
 const firefoxManifest = manifestForBrowser('firefox');
 const OPTIONAL_HOSTS = ['http://*/*', 'https://*/*', '<all_urls>'];
+const FIREFOX_OPTIONAL_PERMISSIONS = [...OPTIONAL_HOSTS, 'devtools'];
 const CHROME_WEB_STORE_URL = 'https://chromewebstore.google.com/detail/focustrace/efmfklamjafbknbmadpfmlbhobnoffnn';
 
 describe('v0.2.6 release contract', () => {
@@ -102,15 +103,16 @@ describe('v0.2.6 release contract', () => {
     }
   });
 
-  it('keeps Firefox MV3 permissions, optional hosts and Gecko metadata explicit', () => {
+  it('keeps Firefox MV3 permissions, optional hosts, optional DevTools access and Gecko metadata explicit', () => {
     expect(firefoxManifest.permissions).toEqual([
       'activeTab',
       'scripting',
       'storage',
     ]);
     expect(firefoxManifest.permissions).not.toContain('sidePanel');
+    expect(firefoxManifest.permissions).not.toContain('devtools');
     expect(firefoxManifest.host_permissions).toBeUndefined();
-    expect(firefoxManifest.optional_permissions).toEqual(OPTIONAL_HOSTS);
+    expect(firefoxManifest.optional_permissions).toEqual(FIREFOX_OPTIONAL_PERMISSIONS);
     expect(firefoxManifest.minimum_chrome_version).toBeUndefined();
     expect(firefoxManifest.browser_specific_settings?.gecko).toMatchObject({
       id: 'focustrace@focus-mode.app',
