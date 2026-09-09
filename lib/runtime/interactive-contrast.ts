@@ -84,6 +84,11 @@ function interactiveContrastStateIsActive(
   element: Element,
   state: RuntimeContrastState,
 ): boolean {
+  if (state === 'focus') return document.activeElement === element;
+  if (state === 'focus-visible') {
+    return document.activeElement === element
+      && observedContrastStates(element).includes('focus-visible');
+  }
   return observedContrastStates(element).includes(state);
 }
 
