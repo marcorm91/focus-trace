@@ -17,6 +17,7 @@ import {
   OBSOLETE_HTML_ATTRIBUTE_RULE,
   OBSOLETE_HTML_ELEMENT_RULE,
 } from '../shared/html-authoring-rules';
+import { INTERACTIVE_TEXT_CONTRAST_RULE } from '../shared/interactive-contrast-rules';
 import { LANGUAGE_PARTS_RULE } from '../shared/language-parts-rules';
 import { MEDIA_RULES } from '../shared/media-rules';
 import { OBSOLETE_ATTRIBUTES, OBSOLETE_ELEMENTS } from '../shared/obsolete-html-registry';
@@ -49,6 +50,7 @@ const ALL_RULES: RuleDefinition[] = [
   LANGUAGE_PARTS_RULE,
   TEXT_SPACING_RULE,
   FOCUS_VISIBLE_RULE,
+  INTERACTIVE_TEXT_CONTRAST_RULE,
   ...MEDIA_RULES,
   ...HTML_RULES,
   ...ADVANCED_ARIA_RULES,
@@ -169,8 +171,8 @@ describe('standards registry coverage', () => {
     });
     expect(wcagCoverageForCriterion('1.4.3')).toMatchObject({
       level: 'AA',
-      coverage: ['automated', 'manual'],
-      ruleIds: ['FT-WCAG-010'],
+      coverage: ['automated', 'review', 'runtime', 'manual'],
+      ruleIds: ['FT-RUNTIME-014', 'FT-WCAG-010'],
       completeness: 'partial',
     });
     expect(wcagCoverageForCriterion('1.4.12')).toMatchObject({
@@ -250,6 +252,14 @@ describe('standards registry coverage', () => {
       surface: 'page',
       actRuleIds: ['1ec09b'],
     });
+    expect(wcagCoverageForCriterion('1.4.3')?.checks).toEqual(expect.arrayContaining([
+      expect.objectContaining({
+        ruleId: 'FT-RUNTIME-014',
+        method: 'review',
+        surface: 'runtime',
+        actRuleIds: [],
+      }),
+    ]));
   });
 
   it('maps WCAG 2.2 A/AA web requirements to EN 301 549 V4.1.1 clause 9 without treating AAA as an AA requirement', () => {
