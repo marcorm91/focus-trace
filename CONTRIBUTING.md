@@ -119,6 +119,11 @@ All quality tools are pinned in `package-lock.json`. Add a development dependenc
 when introducing a validator instead of downloading an uncommitted tool version
 from a package runner inside a validation script.
 
+Prefer executable assertions over source-text assertions when behavior can be
+extracted behind a testable boundary. Source contracts are appropriate for
+build wiring, static assets and cross-file conventions, but they do not execute
+the production path and therefore do not contribute to the coverage gate.
+
 Functions passed to `browser.scripting.executeScript({ func })` must be self-contained because the inspected page does not receive module closures.
 
 ## Licensing contributions
