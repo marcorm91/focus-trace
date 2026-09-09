@@ -1,6 +1,6 @@
 # FocusTrace release checklist
 
-Current release candidate: **0.2.6**.
+Current release candidate: **0.2.7**.
 
 Use this checklist before publishing a release build or submitting an updated package to a browser store. Keep the candidate version above aligned with `package.json`, `package-lock.json`, the browser manifests and the release contract test.
 
@@ -21,8 +21,9 @@ The committed `package-lock.json` must remain synchronized with `package.json`, 
 ## Accessibility self-audit
 
 - Navigate the side panel/sidebar entirely with the keyboard.
+- Navigate the FocusTrace DevTools panel entirely with the keyboard in Chrome/Edge and, after opt-in, Firefox.
 - Confirm every visible control has a readable accessible name.
-- Confirm focus remains clearly visible throughout Analyze, Structure, Trace, Replay, Report and Settings.
+- Confirm focus remains clearly visible throughout Analyze, Structure, Trace, Replay, Report, Settings and the DevTools surface.
 - Confirm the document language changes with the FocusTrace language setting.
 - Switch FocusTrace to Spanish and inspect representative FAIL, REVIEW and WARNING findings, including Structure/Site Audit/reference details; user-facing scanner/standards prose should be Spanish while technical identifiers such as rule IDs, HTML/ARIA tokens, selectors, ratios and colors remain unchanged.
 - Check the panel at 200% browser zoom and at its narrowest supported width.
@@ -34,7 +35,23 @@ The committed `package-lock.json` must remain synchronized with `package.json`, 
 
 The automated side-panel E2E smoke test is a regression guard; it is not a substitute for the manual checks above.
 
+## Standards Coverage and EN 301 549 smoke
+
+- Open **Instructions → Standards Coverage** and confirm WCAG 2.2 Level A/AA criteria expose the implemented evidence modes without presenting linked criteria as complete conformance coverage.
+- Confirm the matrix distinguishes Automated, Review, Runtime, Site Audit, Manual and Not covered states and that completeness remains `none` or `partial` under the current model.
+- Confirm representative WCAG A/AA rows expose their EN 301 549 V4.1.1 clause-9 mapping, for example WCAG 1.1.1 → § 9.1.1.1 and WCAG 2.4.11 → § 9.2.4.11.
+- Confirm AAA rows are not presented as part of the A/AA EN clause-9 equivalence.
+- Generate a Report plus TXT/PDF export and verify the standards legend preserves the WCAG/ACT/EN traceability boundary and never claims that a clean result proves WCAG or EN 301 549 conformance.
+- Switch EN/ES and confirm explanatory copy changes language while criterion identifiers and EN clause numbers remain stable.
+
 ## WCAG 2.2 regression smoke
+
+### Media alternatives and captions — WCAG 1.2.x
+
+- Analyze representative prerecorded audio/video with observable alternatives/captions and confirm the corresponding review is suppressed where the modeled evidence is present.
+- Remove or make the relevant alternative/caption evidence ambiguous and confirm FocusTrace produces contextual `REVIEW`, not automatic `FAIL`.
+- Exercise prerecorded audio description/media-alternative and live-caption scenarios and confirm FocusTrace does not invent media state that cannot be observed safely from the page.
+- Switch EN/ES and confirm remediation/explanation is translated while media attributes and technical evidence remain unchanged.
 
 ### WCAG 1.3.5 Identify Input Purpose
 
@@ -49,6 +66,12 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 - Confirm normal-priority declarations, CSS-wide values such as `inherit`/`unset`/`revert`, code-like contexts and non-rendered text are not reported by this bounded detector.
 - For `line-height`, confirm a genuine soft wrap is required and authored line breaks alone do not establish applicability.
 - Manually apply the complete WCAG text-spacing set together, including paragraph spacing, and verify content/functionality is not lost; do not treat the automated subset as complete 1.4.12 conformance proof.
+
+### WCAG 2.1.1 / 2.1.2 Keyboard and keyboard traps
+
+- Start a manual Trace and exercise representative keyboard-operable controls; confirm keyboard evidence remains contextual and does not infer operability from pointer behavior alone.
+- Exercise a deliberately trapped keyboard sequence and a valid escape/exit sequence and confirm FocusTrace keeps the result in `REVIEW` where human judgement is still required.
+- Confirm programmatic FocusTrace actions do not masquerade as trusted user keyboard evidence.
 
 ### WCAG 2.4.1 Bypass Blocks
 
@@ -73,6 +96,12 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 - Partially cover the focused control while leaving sampled visible area exposed and confirm FocusTrace does not report the complete-obscuration review solely for that partial overlap.
 - Repeat with a visually transparent/non-rendered overlay and confirm it is not treated as a blocker.
 - Confirm FocusTrace's own page overlay/highlight UI never becomes the reported covering element.
+
+### WCAG 2.5.2 Pointer Cancellation
+
+- Exercise a pointer interaction where activation occurs only after a complete click/tap and compare it with a control that commits behavior too early in the pointer sequence.
+- Confirm FocusTrace records bounded interaction evidence as `REVIEW` rather than claiming it has resolved every Pointer Cancellation exception.
+- Repeat with ordinary pointer movement/jitter and confirm unrelated pointer activity is not promoted into a cancellation finding.
 
 ### WCAG 2.5.7 Dragging Movements
 
@@ -119,6 +148,13 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 - Repeat with the same relative order and confirm the review disappears.
 - Repeat with only one shared help mechanism category and confirm FocusTrace does not infer an order inconsistency from insufficient evidence.
 
+### WCAG 3.3.1 / 3.3.3 Error Identification and Error Suggestion
+
+- Analyze an explicitly invalid form control with a programmatically associated textual error and confirm the modeled error-identification review can stay quiet when sufficient observable evidence exists.
+- Remove the associated error description and confirm FocusTrace produces conservative `REVIEW` evidence instead of assuming every invalid state is a deterministic WCAG failure.
+- Exercise a correctable input error with and without an observable suggestion and confirm 3.3.3 remains contextual where FocusTrace cannot determine the complete applicability/exceptions automatically.
+- Switch EN/ES and confirm form-error guidance is translated without modifying the inspected page's original error text.
+
 ### WCAG 4.1.3 Status Messages
 
 - Start Trace, trigger a save/loading/result message that updates after a real user interaction without moving focus or changing context, and confirm an unexposed candidate can produce `FT-RUNTIME-007` as `REVIEW`.
@@ -135,7 +171,7 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 - Repeat with Spanish browser UI and verify the browser-owned metadata resolves to Spanish.
 - Confirm changing the FocusTrace in-product language remains independent of the browser UI locale.
 
-## Structure smoke
+## Structure and element-location smoke
 
 - From a fresh page/session, confirm merely opening **Structure** does not independently request access or start continuous DOM observation.
 - Run **Analyze this page** and confirm the normal rule-engine result and bounded Structure snapshot are prepared from that same explicit full-page action.
@@ -147,13 +183,37 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 - Test a large DOM and confirm safety limits produce a limited-snapshot notice instead of continuous processing or an unresponsive panel.
 - Open **Report** after full-page analysis and confirm section 03 is **Document structure / Estructura del documento**, includes compact accessibility-oriented metrics and only headings that require review, and does not duplicate the complete heading tree.
 - Confirm the report accordion cards share the same soft border treatment and the Document Structure header/metrics/separators have readable spacing without content sitting directly against divider lines.
-- Open representative FAIL, REVIEW and WARNING findings and confirm the **Affected element inspector** identifies the target with tag/role/readable label before the technical selector.
-- Expand **View HTML / Ver HTML** and confirm only bounded contextual markup is shown; verify the selector remains secondary and copyable.
-- For a relationship finding such as `FT-WARN-018`, confirm the affected child and deterministic related-container context are both understandable without relying on `nth-of-type()` alone.
-- Use **Review on page / Revisar en la página** and confirm the page overlay displays the rule id plus occurrence (`n of N` / `n de N`); moving between occurrences must move the highlight to the newly selected target.
+- Open representative FAIL, REVIEW and WARNING findings and confirm the compact affected-element locator keeps the technical selector plus two location actions without restoring the removed inline HTML inspector.
+- In the normal Chrome/Edge side panel, confirm **Highlight on page** works and **Inspect in DOM** remains visible but disabled with F12 → FocusTrace guidance.
+- For a relationship finding such as `FT-WARN-018`, confirm the affected child and deterministic related-container context remain understandable without relying on `nth-of-type()` alone.
 - Confirm severity attention lines keep readable spacing from badges/titles in Analyze, Report, Structure review cards and heading hierarchy signals.
 - Export PDF and TXT from the same live session and confirm both reuse the available compact Structure evidence without triggering another DOM scan or exporting a full DOM tree.
 - Run a component-scoped analysis and confirm the page-global Structure snapshot is cleared/not mixed into the component-only static report.
+
+## DevTools and native DOM inspection smoke
+
+### Chrome and Edge
+
+- Install the production candidate and confirm the normal side panel still opens and works independently of DevTools.
+- Open Developer Tools with F12 and confirm a **FocusTrace** tab appears.
+- Run Analyze inside the DevTools panel and confirm Review, Structure, Trace and Report stay pinned to the inspected tab even if another browser tab becomes active.
+- Use **Highlight on page** from a finding and confirm the visual overlay appears without leaving FocusTrace.
+- Use **Inspect in DOM** and confirm DevTools switches to **Elements** and selects the exact affected node.
+- Confirm native DOM inspection does not move real keyboard focus on the inspected page and does not call `element.focus()` as part of the reveal flow.
+- Confirm the two action cells are contiguous with no blank gap in normal, hover and keyboard-focus states.
+- Close/reopen DevTools and confirm FocusTrace reconnects to the newly inspected tab.
+
+### Firefox 115+
+
+- Install/update the candidate and confirm the normal Firefox sidebar works before granting any DevTools permission.
+- Open FocusTrace Settings and confirm **Firefox DevTools integration** is offered as an explicit opt-in.
+- Enable it, approve the optional `devtools` permission, then open/reopen Firefox Developer Tools with F12.
+- Confirm a **FocusTrace** tab appears while the normal sidebar remains available.
+- Run Analyze in the DevTools panel and confirm the workspace remains pinned to the inspected tab.
+- Use **Highlight on page** and confirm the normal overlay works.
+- Use **Inspect in DOM** and confirm Firefox selects the exact node in the native **Inspector**.
+- Confirm native DOM reveal does not move the page's keyboard focus.
+- Decline/remove the optional permission and confirm the normal Firefox sidebar remains functional while Inspect in DOM is unavailable outside DevTools.
 
 ## Multipage Report smoke
 
@@ -194,9 +254,9 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 - Confirm color suggestions are only offered when foreground/background evidence is deterministic.
 - Confirm a report generated from the same session matches the findings shown in Analyze and Trace.
 
-## Firefox experimental smoke
+## Firefox packaged-build smoke
 
-The Firefox artifact remains experimental until these checks pass on Firefox 115+:
+The Firefox artifact remains experimental until the complete packaged-build checklist is accepted on Firefox 115+:
 
 - Load `.output/firefox-mv3/manifest.json` or the `focustrace-firefox-dev` artifact from `about:debugging#/runtime/this-firefox`.
 - Confirm clicking the FocusTrace toolbar action opens the Firefox sidebar.
@@ -205,7 +265,8 @@ The Firefox artifact remains experimental until these checks pass on Firefox 115
 - Start a manual Trace, leave the sidebar, interact with the page, then return and confirm recording continued.
 - Exercise a real keyboard Tab transition with and without a visible focus indicator; confirm Focus Visible evidence is either correctly reviewed or safely omitted when Firefox capture authority/evidence is unavailable, never fabricated.
 - Run the automatic Tab walk and confirm the focus journey is populated without presenting that programmatic walk as equivalent Focus Visible evidence.
-- Select a recorded focus step and confirm the current page highlight/inspector appears.
+- Select a recorded focus step and confirm the current page highlight appears.
+- Complete the Firefox DevTools/Inspector opt-in smoke above.
 - Check Replay and Report against the same runtime session.
 - Add at least two pages to a multipage audit, revisit the historical report and open its audit PDF.
 - Navigate to another tab and back; confirm state remains scoped to the inspected tab while the active audit remains product-level history.
@@ -223,17 +284,17 @@ Chromium production permissions must remain:
 - `storage`
 - `sidePanel`
 
-Firefox production permissions must remain:
+Firefox required production permissions must remain:
 
 - `activeTab`
 - `scripting`
 - `storage`
 
-Firefox uses `sidebar_action` generated from the WXT sidepanel entrypoint rather than the Chromium `sidePanel` permission.
+Firefox uses `sidebar_action` generated from the WXT sidepanel entrypoint rather than the Chromium `sidePanel` permission. Firefox may additionally list `devtools` under **optional permissions** for the explicit DevTools integration opt-in; it must not become a required permission.
 
 Production builds must not declare required global host permissions. Optional HTTP/HTTPS host access may be requested only from an explicit page action and must remain documented in the README and privacy policy. The localhost/global visual-capture authority added by the E2E build is test-only and must not become a required production host permission.
 
-Confirm [`PRIVACY.md`](../PRIVACY.md) still matches the actual product behavior, especially unified full-page Structure evidence, temporary in-memory Focus Visible captures, bounded multipage-audit visual context, optional Memory visual context, optional single-page report screenshot evidence, external services and sponsorship integration.
+Confirm [`PRIVACY.md`](../PRIVACY.md) still matches the actual product behavior, especially unified full-page Structure evidence, temporary in-memory Focus Visible captures, bounded multipage-audit visual context, optional Memory visual context, optional single-page report screenshot evidence, DevTools DOM selection, external services and sponsorship integration.
 
 Before a browser-store submission, resolve the publication blockers in `STORE_SUBMISSION.md`: the public privacy-policy URL and public support/contact URL must be real, unauthenticated destinations rather than `TODO` placeholders.
 
@@ -269,9 +330,9 @@ Before changing visibility:
 ## Public repository readiness
 
 - Confirm `README.md`, `LICENSE`, `CONTRIBUTING.md`, `SECURITY.md`, `PRIVACY.md` and `TRADEMARKS.md` reflect the release.
-- Confirm the README does not overclaim full WCAG conformance or browser support.
+- Confirm the README does not overclaim full WCAG/EN conformance or browser support.
 - Confirm GitHub description, website and topics are set.
-- Add current screenshots or a short demo of Analyze, Structure and Trace.
+- Add current screenshots or a short demo of Analyze, Structure, Trace and, for 0.2.7, the DevTools DOM workflow.
 - Verify author/contact links.
 - Enable branch protection or an equivalent ruleset for `main`.
 - Require the relevant CI checks before merge.
@@ -283,18 +344,18 @@ Before changing visibility:
 
 ## Release
 
-For the current candidate, the release version is **0.2.6** and the intended tag is **`v0.2.6`**.
+For the current candidate, the release version is **0.2.7** and the intended tag is **`v0.2.7`**.
 
-- Confirm `package.json`, `package-lock.json` and all browser manifests report `0.2.6`.
-- Confirm `tests/release-contract.test.ts` targets `v0.2.6` and passes.
-- Confirm `docs/RELEASE_NOTES_0.2.6.md` and `CHANGELOG.md` match the shipped behavior and limitations.
-- Confirm the version shown in Settings comes from the installed manifest and displays `0.2.6` in the packaged candidate.
+- Confirm `package.json`, `package-lock.json` and all browser manifests report `0.2.7`.
+- Confirm `tests/release-contract.test.ts` targets `v0.2.7` and passes.
+- Confirm `docs/changelog/RELEASE_NOTES_0.2.7.md` and `docs/changelog/CHANGELOG.md` match the shipped behavior and limitations.
+- Confirm the version shown in Settings comes from the installed manifest and displays `0.2.7` in the packaged candidate.
 - Confirm the release commit is on `main` and CI is green on that exact commit.
 - Build the production Chrome, Edge and Firefox MV3 artifacts from that commit.
-- Smoke-test the unpacked production build in supported Chromium browsers.
-- Complete the Firefox experimental smoke checklist before describing Firefox as officially supported.
-- Tag the exact approved commit as `v0.2.6`.
+- Smoke-test the unpacked production build in supported Chromium browsers, including F12 → FocusTrace → Inspect in DOM.
+- Complete the Firefox packaged-build and optional DevTools/Inspector smoke checklist before describing Firefox as officially supported.
+- Tag the exact approved commit as `v0.2.7`.
 - Review the generated ZIPs before attaching/uploading them.
 - Only then publish/distribute the release artifacts or submit the updated packages to browser stores.
 
-After publishing 0.2.6, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.
+After publishing 0.2.7, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.
