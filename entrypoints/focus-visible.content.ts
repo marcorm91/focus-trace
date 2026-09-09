@@ -13,6 +13,7 @@ import {
 import {
   activeSemanticContrastStates,
   interactiveContrastSettleDelay,
+  interactiveNonTextContrastReviews,
   interactiveTextContrastReviews,
   type RuntimeContrastState,
 } from '../lib/runtime/interactive-contrast';
@@ -254,7 +255,10 @@ export default defineContentScript({
 
       ctx.setTimeout(() => {
         if (!recording || interactiveProbeVersions.get(probeKey) !== version || !element.isConnected) return;
-        const reviews = interactiveTextContrastReviews(element, state);
+        const reviews = [
+          ...interactiveTextContrastReviews(element, state),
+          ...interactiveNonTextContrastReviews(element, state),
+        ];
         for (const review of reviews) {
           void emitInteractiveContrastReview(review, state, correlationKinds);
         }
