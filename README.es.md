@@ -336,6 +336,7 @@ Site Audit trabaja sobre el mismo origen y reutiliza el scanner real de FocusTra
 | URLs descubiertas | 500 |
 | Páginas analizadas | 30 |
 | Muestras por familia de rutas | 3 |
+| Cada respuesta de robots.txt o sitemap | 6 MB realmente recibidos |
 
 El muestreo es evidencia representativa: no demuestra que todas las URLs sean idénticas ni ejecuta automáticamente Trace sobre todos los recorridos del sitio.
 

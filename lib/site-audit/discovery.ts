@@ -1,3 +1,4 @@
+import { readBoundedResponseText } from './bounded-response';
 import { SITE_AUDIT_MAX_DISCOVERED_URLS, type SiteAuditDiscovery } from './model';
 
 const TRACKING_QUERY_KEYS = new Set([
@@ -5,7 +6,7 @@ const TRACKING_QUERY_KEYS = new Set([
   'utm_campaign', 'utm_content', 'utm_medium', 'utm_source', 'utm_term',
 ]);
 const MAX_SITEMAPS = 24;
-const MAX_FETCH_BYTES = 6_000_000;
+export const SITE_AUDIT_MAX_FETCH_BYTES = 6_000_000;
 
 function decodeXml(value: string): string {
   return value
@@ -63,10 +64,11 @@ async function fetchText(url: string): Promise<string | undefined> {
       signal: controller.signal,
     });
     if (!response.ok) return undefined;
-    const declaredLength = Number(response.headers.get('content-length') ?? '0');
-    if (declaredLength > MAX_FETCH_BYTES) return undefined;
-    const text = await response.text();
-    return text.length > MAX_FETCH_BYTES ? undefined : text;
+    return await readBoundedResponseText(
+      response,
+      SITE_AUDIT_MAX_FETCH_BYTES,
+      () => controller.abort(),
+    );
   } catch {
     return undefined;
   } finally {

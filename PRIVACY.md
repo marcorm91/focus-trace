@@ -24,6 +24,12 @@ FocusTrace processes analysis, Structure and runtime evidence locally in the bro
 
 FocusTrace does not intentionally send inspected-page content, DOM evidence, screenshots or recorded interactions to a FocusTrace server or third-party AI service.
 
+Site Audit discovery makes credential-aware requests only to the selected
+site's origin for `robots.txt` and declared or conventional sitemaps. Each
+response has an eight-second timeout and is streamed under a 6 MB
+actually-received byte limit; the body is cancelled if it crosses that bound.
+Discovered URLs remain subject to the documented same-origin and count limits.
+
 Session data, multipage audit evidence and preferences may be stored using browser extension storage so the product can preserve state and user settings. Browser storage is controlled by the browser profile and browser platform.
 
 ## Structure evidence
