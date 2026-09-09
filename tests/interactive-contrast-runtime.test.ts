@@ -77,7 +77,7 @@ describe('interactive contrast runtime evidence', () => {
   it('attributes a measured focus outline only to the observed focus state', () => {
     render(
       '',
-      '<button id="target" style="background:white;border:0;outline:2px solid rgb(190,190,190)">Focus target</button>',
+      '<button id="target" style="background:white;border:0;outline-width:2px;outline-style:solid;outline-color:rgb(190,190,190)">Focus target</button>',
     );
 
     const target = document.querySelector<HTMLButtonElement>('#target')!;
