@@ -55,14 +55,18 @@ function interactiveContrastDetail(event: RuntimeEvent, language: AppLanguage): 
   const selector = event.element?.selector ?? tr(language, 'the observed element', 'el elemento observado');
   const foreground = detailToken(event.detail, 'foreground');
   const background = detailToken(event.detail, 'background');
+  const nonText = event.ruleId === 'FT-RUNTIME-016' || detailToken(event.detail, 'category') === 'non-text';
+  const criterion = nonText ? 'WCAG 1.4.11' : 'WCAG 1.4.3';
   const colors = foreground && background
-    ? tr(language, ` Foreground ${foreground}; background ${background}.`, ` Color frontal ${foreground}; fondo ${background}.`)
+    ? nonText
+      ? tr(language, ` Visual color ${foreground}; adjacent color ${background}.`, ` Color visual ${foreground}; color adyacente ${background}.`)
+      : tr(language, ` Foreground ${foreground}; background ${background}.`, ` Color frontal ${foreground}; fondo ${background}.`)
     : '';
 
   return tr(
     language,
-    `While the real ${state} state was rendered on ${selector}, FocusTrace measured ${subject} contrast at ${ratio}; WCAG 1.4.3 requires ${required}.${colors} This remains REVIEW because only the observed interactive state was exercised.`,
-    `Mientras el estado real ${state} estaba renderizado en ${selector}, FocusTrace midió el contraste de ${subject} en ${ratio}; WCAG 1.4.3 exige ${required}.${colors} El resultado permanece como REVISIÓN porque solo se ha comprobado el estado interactivo observado.`,
+    `While the real ${state} state was rendered on ${selector}, FocusTrace measured ${subject} contrast at ${ratio}; ${criterion} requires ${required}.${colors} This remains REVIEW because only the observed interactive state was exercised.`,
+    `Mientras el estado real ${state} estaba renderizado en ${selector}, FocusTrace midió el contraste de ${subject} en ${ratio}; ${criterion} exige ${required}.${colors} El resultado permanece como REVISIÓN porque solo se ha comprobado el estado interactivo observado.`,
   );
 }
 
@@ -186,7 +190,7 @@ export function humanRuntimeEventDetail(event: RuntimeEvent, language: AppLangua
     return tr(
       language,
       `FocusTrace observed${message ? ` “${message}”` : ' a short status-like message'} after this action, but did not find live-region/status semantics or an aria-errormessage relationship. Review whether this content is a WCAG 4.1.3 status message that needs programmatic exposure without moving focus.`,
-      `FocusTrace observó${message ? ` “${message}”` : ' un mensaje breve con apariencia de estado'} tras esta acción, pero no encontró semántica de región dinámica/estado ni una relación aria-errormessage. Revisa si este contenido es un mensaje de estado de WCAG 4.1.3 que necesita exposición programática sin mover el foco.`,
+      `FocusTrace observó${message ? ` “${message}”` : ' un mensaje breve con apariencia de estado'} tras esta acción, pero no encontró semántica de región dinámica/estado ni una relación aria-errormessage. Revisa si este contenido es un mensaje de estado de WCAG 4.1.3 que necesita exposición programática sin mover foco.`,
     );
   }
 
