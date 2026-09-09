@@ -489,6 +489,8 @@ function FindingCard({
   const copy = localizedScanIssue(issue, language);
   const description = reportFindingDescription(issue, language);
   const target = issue.targets[0];
+  const devtoolsSurface = typeof document !== 'undefined'
+    && document.documentElement.dataset.ftSurface === 'devtools';
   const [colorFormat, setColorFormat] = useState<ColorFormat>('hex');
   const [copiedKey, setCopiedKey] = useState<string>();
 
@@ -521,16 +523,34 @@ function FindingCard({
       <p className="scan-occurrence-description">{description}</p>
 
       {target && (
-        <div className="finding-location">
+        <div className={`finding-location${devtoolsSurface ? ' finding-location-devtools' : ''}`}>
           <div>
             <small>{tr(language, 'Element location', 'Ubicación del elemento')}</small>
             <code title={target}>{target}</code>
           </div>
+          {devtoolsSurface && (
+            <span className="finding-location-highlight-action">
+              <button
+                type="button"
+                aria-label={tr(language, 'Highlight element visually on page', 'Destacar visualmente el elemento en la página')}
+                title={tr(language, 'Highlight element visually on page', 'Destacar visualmente el elemento en la página')}
+                onClick={() => void onLocate(target)}
+              >
+                <span aria-hidden="true">◎</span>
+              </button>
+            </span>
+          )}
           <button
             type="button"
-            aria-label={tr(language, 'Highlight element on page', 'Destacar elemento en la página')}
-            title={tr(language, 'Highlight element on page', 'Destacar elemento en la página')}
-            onClick={() => void onLocate(target)}
+            className={devtoolsSurface ? 'finding-location-inspect-action' : undefined}
+            data-ft-action={devtoolsSurface ? 'inspect-dom' : 'highlight-page'}
+            aria-label={devtoolsSurface
+              ? tr(language, 'Inspect element in DOM', 'Inspeccionar elemento en el DOM')
+              : tr(language, 'Highlight element on page', 'Destacar elemento en la página')}
+            title={devtoolsSurface
+              ? tr(language, 'Inspect element in DOM', 'Inspeccionar elemento en el DOM')
+              : tr(language, 'Highlight element on page', 'Destacar elemento en la página')}
+            onClick={devtoolsSurface ? undefined : () => void onLocate(target)}
           >
             <span aria-hidden="true">&lt;/&gt;</span>
           </button>
