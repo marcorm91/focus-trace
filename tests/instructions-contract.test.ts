@@ -56,6 +56,13 @@ describe('README language and instructions contract', () => {
     expect(instructions).toContain("'How to use FocusTrace', 'Cómo usar FocusTrace'");
     expect(instructions).toContain("'Start here', 'Empieza aquí'");
     expect(instructions).toContain("'Review', 'Revisión'");
+    expect(instructions).toContain("'DevTools and DOM inspection', 'DevTools e inspección del DOM'");
+    expect(instructions).toContain('Open DevTools with F12 and select the FocusTrace tab');
+    expect(instructions).toContain('Abre DevTools con F12 y selecciona la pestaña FocusTrace');
+    expect(instructions).toContain('Inspect in DOM is available when FocusTrace is opened inside Chromium DevTools');
+    expect(instructions).toContain('Inspeccionar en el DOM está disponible cuando FocusTrace se abre dentro de las DevTools de Chromium');
+    expect(instructions).toContain('the DOM inspection button stays visible but disabled');
+    expect(instructions).toContain('el botón de inspección del DOM permanece visible pero deshabilitado');
     expect(instructions).toContain("'Analyze a component', 'Analizar un componente'");
     expect(instructions).toContain("'Site Audit', 'Análisis de sitio'");
     expect(instructions).toContain('title="Trace"');
