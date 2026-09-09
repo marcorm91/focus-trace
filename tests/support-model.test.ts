@@ -24,11 +24,12 @@ describe('voluntary support configuration', () => {
 
   it('mounts one accessible global footer when support is enabled', () => {
     document.documentElement.lang = 'es';
-    const cleanup = mountSupportFooter('https://example.com/support');
+    const cleanup = mountSupportFooter('https://example.com/support', { version: '0.2.7' });
 
     const footer = document.querySelector('[data-focustrace-support-footer]');
     const link = footer?.querySelector('a');
     const icon = footer?.querySelector('svg.ft-support-footer-icon');
+    const version = footer?.querySelector('.ft-support-footer-version');
     expect(footer).not.toBeNull();
     expect(document.body.classList.contains('ft-support-footer-host')).toBe(true);
     expect(link?.textContent).toContain('Apoyar FocusTrace');
@@ -36,8 +37,10 @@ describe('voluntary support configuration', () => {
     expect(link?.getAttribute('rel')).toContain('noopener');
     expect(icon?.getAttribute('aria-hidden')).toBe('true');
     expect(icon?.querySelector('path')).not.toBeNull();
+    expect(version?.textContent).toBe('FocusTrace v0.2.7');
+    expect(link?.nextElementSibling).toBe(version);
 
-    mountSupportFooter('https://example.com/support');
+    mountSupportFooter('https://example.com/support', { version: '0.2.7' });
     expect(document.querySelectorAll('[data-focustrace-support-footer]')).toHaveLength(1);
 
     cleanup();
@@ -65,8 +68,14 @@ describe('voluntary support configuration', () => {
       resolve(process.cwd(), 'entrypoints/report-print/main.tsx'),
       'utf8',
     );
+    const sidepanelMain = readFileSync(
+      resolve(process.cwd(), 'entrypoints/sidepanel/main.tsx'),
+      'utf8',
+    );
 
     expect(siteAuditHtml).toContain('./support-footer.ts');
+    expect(sidepanelMain).toContain('browser.runtime.getManifest().version');
+    expect(sidepanelMain).toContain('mountSupportFooter(undefined, { version:');
     expect(printHtml).not.toContain('support-footer');
     expect(printMain).not.toContain('support-footer');
     expect(printMain).not.toContain('SUPPORT_URL');
