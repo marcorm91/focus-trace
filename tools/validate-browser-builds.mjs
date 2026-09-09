@@ -130,7 +130,7 @@ for (const [name, manifest] of Object.entries({ chrome, edge })) {
   assert(manifest.side_panel?.default_path === 'sidepanel.html', `${name} must expose sidepanel.html`);
   assert(manifest.devtools_page === 'devtools.html', `${name} must register the FocusTrace DevTools page`);
   assert(existsSync(resolve('.output', target, 'devtools.html')), `${target} must include devtools.html`);
-  assert(existsSync(resolve('.output', target, 'devtools-panel.html')), `${target} must include devtools-panel.html`);
+  assert(!existsSync(resolve('.output', target, 'devtools-panel.html')), `${target} must reuse sidepanel.html instead of shipping a duplicate DevTools application page`);
 }
 
 assert(!firefox.minimum_chrome_version, 'Firefox manifest must not contain minimum_chrome_version');
@@ -150,4 +150,4 @@ assert(
   'Firefox must declare that it does not collect/transmit data',
 );
 
-console.log('Browser builds validated: exact permissions, native EN/ES extension metadata, optional host access, no persistent content scripts, safe CSP, Chromium DevTools entrypoints, and required release files for chrome-mv3, edge-mv3 and firefox-mv3.');
+console.log('Browser builds validated: exact permissions, native EN/ES extension metadata, optional host access, no persistent content scripts, safe CSP, single-workspace Chromium DevTools registration, and required release files for chrome-mv3, edge-mv3 and firefox-mv3.');
