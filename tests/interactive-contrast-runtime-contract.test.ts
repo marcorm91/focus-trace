@@ -38,13 +38,24 @@ describe('interactive contrast runtime contract', () => {
     expect(contrastSource).toContain('evaluateTextContrastForElement(element, subject.pseudo)');
   });
 
+  it('runs text and scoped non-text checks from the same trusted state probe', () => {
+    expect(runtimeSource).toContain('interactiveTextContrastReviews(element, state)');
+    expect(runtimeSource).toContain('interactiveNonTextContrastReviews(element, state)');
+    expect(contrastSource).toContain('evaluateNonTextContrastForElement(root)');
+    expect(contrastSource).toContain("ruleId: INTERACTIVE_NON_TEXT_CONTRAST_RULE.id");
+    expect(contrastSource).toContain("'category=non-text'");
+  });
+
   it('keeps the evidence conservative, WCAG-linked and distinct in Trace', () => {
     expect(contrastSource).toContain("outcome: 'review'");
     expect(contrastSource).toContain("ruleId: INTERACTIVE_TEXT_CONTRAST_RULE.id");
+    expect(contrastSource).toContain("ruleId: INTERACTIVE_NON_TEXT_CONTRAST_RULE.id");
     expect(contrastSource).toContain("kind: 'contrast-state'");
     expect(contrastSource).not.toContain("outcome: 'fail'");
     expect(presentationSource).toContain("kind === 'contrast-state'");
     expect(presentationSource).toContain("'Interactive contrast', 'Contraste interactivo'");
     expect(presentationSource).toContain("event.kind === 'contrast-state'");
+    expect(presentationSource).toContain("event.ruleId === 'FT-RUNTIME-016'");
+    expect(presentationSource).toContain("'WCAG 1.4.11'");
   });
 });
