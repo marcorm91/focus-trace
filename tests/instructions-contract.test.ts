@@ -57,12 +57,14 @@ describe('README language and instructions contract', () => {
     expect(instructions).toContain("'Start here', 'Empieza aquí'");
     expect(instructions).toContain("'Review', 'Revisión'");
     expect(instructions).toContain("'DevTools and DOM inspection', 'DevTools e inspección del DOM'");
-    expect(instructions).toContain('Open DevTools with F12 and select the FocusTrace tab');
-    expect(instructions).toContain('Abre DevTools con F12 y selecciona la pestaña FocusTrace');
-    expect(instructions).toContain('Inspect in DOM is available when FocusTrace is opened inside Chromium DevTools');
-    expect(instructions).toContain('Inspeccionar en el DOM está disponible cuando FocusTrace se abre dentro de las DevTools de Chromium');
+    expect(instructions).toContain('In Chrome, Edge and Firefox, FocusTrace can run as a dedicated panel inside browser DevTools');
+    expect(instructions).toContain('En Chrome, Edge y Firefox, FocusTrace puede ejecutarse como panel dedicado dentro de las DevTools del navegador');
+    expect(instructions).toContain('Elements on Chromium or the Inspector on Firefox');
+    expect(instructions).toContain('Elements de Chromium o en el Inspector de Firefox');
     expect(instructions).toContain('the DOM inspection button stays visible but disabled');
     expect(instructions).toContain('el botón de inspección del DOM permanece visible pero deshabilitado');
+    expect(instructions).toContain('Firefox DevTools permission is optional');
+    expect(instructions).toContain('El permiso de DevTools de Firefox es opcional');
     expect(instructions).toContain("'Analyze a component', 'Analizar un componente'");
     expect(instructions).toContain("'Site Audit', 'Análisis de sitio'");
     expect(instructions).toContain('title="Trace"');
@@ -79,6 +81,17 @@ describe('README language and instructions contract', () => {
     expect(instructions).toContain('Los avisos señalan riesgos de autoría HTML/ARIA');
     expect(instructions).toContain('After stopping a manual Trace, you can remove a mistaken interaction.');
     expect(instructions).toContain('La leyenda de reglas se incluye al principio de las exportaciones PDF, TXT y Markdown');
+  });
+
+  it('documents the Firefox DevTools opt-in in Settings', () => {
+    const settings = source('entrypoints/sidepanel/views/SettingsView.tsx');
+    const firefoxDevtools = source('entrypoints/sidepanel/components/FirefoxDevtoolsSettings.tsx');
+
+    expect(settings).toContain("import { FirefoxDevtoolsSettings } from '../components/FirefoxDevtoolsSettings';");
+    expect(settings).toContain('<FirefoxDevtoolsSettings language={language} />');
+    expect(firefoxDevtools).toContain("'Firefox DevTools integration', 'Integración DevTools de Firefox'");
+    expect(firefoxDevtools).toContain('installing or updating FocusTrace does not require a new DevTools permission prompt');
+    expect(firefoxDevtools).toContain('instalar o actualizar FocusTrace no requiera un nuevo aviso de permiso de DevTools');
   });
 
   it('explains FocusTrace identifiers, outcomes and report terminology from one shared source', () => {
