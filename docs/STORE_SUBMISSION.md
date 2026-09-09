@@ -1,40 +1,44 @@
 # FocusTrace store submission
 
-This document keeps the Chrome Web Store and Microsoft Edge Add-ons submission copy aligned with the actual extension behavior. It is not a substitute for the public privacy policy or the release checklist.
+This document keeps the Chrome Web Store, Microsoft Edge Add-ons and Firefox release copy aligned with the actual extension behavior. It is not a substitute for the public privacy policy or the release checklist.
 
-Current release candidate: **0.2.6**.
+Current release candidate: **0.2.7**.
 
 ## Release positioning
 
 - Product: FocusTrace
-- Version: 0.2.6
+- Version: 0.2.7
 - Supported targets: Chrome 114+ and Chromium-based Microsoft Edge
-- Firefox: keep experimental until the manual Firefox smoke checklist in `RELEASE_CHECKLIST.md` has passed
+- Firefox: Firefox 115+ packaged target; keep the public support claim conservative until the manual Firefox packaged-build and DevTools smoke checklist in `RELEASE_CHECKLIST.md` has passed
 - Architecture: Manifest V3, local-first, no required backend
 
 FocusTrace should be positioned as an accessibility auditing and runtime debugging tool. Do not describe it as a certification tool and do not claim that a clean scan proves WCAG or EN 301 549 conformance.
 
 ## Suggested short description
 
-Run local WCAG 2.2 checks, inspect document structure and debug keyboard focus, SPA navigation and dynamic accessibility behavior.
+Run local WCAG 2.2 checks, inspect document structure and debug keyboard focus, DOM targets and dynamic accessibility behavior.
 
 ## Suggested store description
 
-FocusTrace helps developers investigate web accessibility with local static checks, document-structure inspection and runtime focus debugging.
+FocusTrace helps developers investigate web accessibility with local static checks, standards traceability, document-structure inspection and runtime focus debugging.
 
-Analyze a full page or a selected component, inspect deterministic failures and review signals, use Structure to understand the page's semantic organization, then use Trace to understand keyboard focus, SPA transitions, dialogs and dynamic DOM behavior as it happens. A full-page analysis prepares the bounded Structure snapshot in the same explicit run, so Headings, Semantics and Metrics can be reviewed without launching a second structural analysis. Replay and Report keep the recorded evidence understandable, while optional FocusTrace Memory can retain bounded local history and visual context for repeated checks.
+Analyze a full page or a selected component, inspect deterministic failures and contextual review signals, use Structure to understand the page's semantic organization, then use Trace to understand keyboard focus, SPA transitions, dialogs and dynamic DOM behavior as it happens. Replay and Report keep the recorded evidence understandable, while optional FocusTrace Memory can retain bounded local history and visual context for repeated checks.
 
-FocusTrace separates deterministic failures from contextual review signals, semantic suggestions and authoring warnings. It is designed to support accessibility debugging and review, not to certify that a page conforms to WCAG or EN 301 549.
+FocusTrace separates deterministic failures from contextual review signals, semantic suggestions and authoring warnings. Its Standards Coverage view explains what WCAG 2.2 evidence the product can collect and maps Level A/AA criteria to the corresponding EN 301 549 V4.1.1 clause-9 numbering where applicable. That traceability is not a claim of complete criterion coverage, WCAG conformance, EN 301 549 conformity or certification.
 
 Key capabilities include:
 
 - local WCAG 2.2-oriented page and component analysis;
+- a conservative Standards Coverage matrix distinguishing Automated, Review, Runtime, Site Audit, Manual and Not covered evidence;
+- EN 301 549 V4.1.1 (2026-09) clause-9 traceability for WCAG 2.2 Level A/AA references without converting coverage into a conformance claim;
 - accessible-name, language, text/non-text contrast, target-size/spacing, ARIA and HTML authoring checks;
-- conservative WCAG review coverage for bypass mechanisms, explicit input purpose, language of parts and text spacing;
+- conservative WCAG review evidence for prerecorded media alternatives/captions, audio description/media alternatives, live captions, keyboard operability/traps, pointer cancellation, form error identification/suggestions, bypass mechanisms, explicit input purpose, language of parts and text spacing;
 - on-demand Structure workspace with heading outline, concrete semantic suggestions and accessibility-oriented structural metrics prepared with the full-page analysis;
-- affected-element inspection that prioritizes readable target identity, exposes bounded contextual HTML on demand and keeps technical selectors secondary;
+- compact affected-element location with separate **Highlight on page** and **Inspect in DOM** actions;
+- a dedicated FocusTrace panel inside Chrome, Edge and Firefox Developer Tools that reuses the same Review, Structure, Trace and Report workspace;
+- native DOM reveal from a finding to Chrome/Edge **Elements** or Firefox **Inspector** without moving keyboard focus on the inspected page;
 - runtime keyboard-focus and interaction tracing;
-- conservative runtime review evidence for completely obscured focus, dragging interactions, potentially unexposed status messages and real-keyboard focus visibility;
+- conservative runtime review evidence for completely obscured focus, dragging interactions, pointer/keyboard behavior, potentially unexposed status messages and real-keyboard focus visibility;
 - SPA navigation and dialog lifecycle evidence;
 - read-only replay and consolidated reports;
 - multipage audit history with bounded local visual context for recent reviewed pages;
@@ -47,9 +51,9 @@ By default, inspected page data is processed locally in the browser. FocusTrace 
 
 ## Single purpose
 
-FocusTrace has one purpose: help developers audit, understand and debug accessibility behavior on web pages, including static accessibility signals, relevant document structure and runtime keyboard-focus behavior.
+FocusTrace has one purpose: help developers audit, understand and debug accessibility behavior on web pages, including static accessibility signals, standards-linked review evidence, relevant document structure and runtime keyboard-focus behavior.
 
-Analyze, Structure, Trace, Replay, Report, Site Audit and Memory are complementary workflows for that same accessibility-debugging purpose.
+Analyze, Structure, Trace, Replay, Report, Site Audit, Memory and the DevTools surface are complementary workflows for that same accessibility-debugging purpose.
 
 ## Permission justifications
 
@@ -69,13 +73,19 @@ A full-page analysis can add or replace one page in the active multipage audit. 
 
 Memory is disabled by default. When enabled, it can store bounded local diagnostic observations, compact element locators and small compressed visual previews for selected remembered failures. It does not store page HTML, full DOM snapshots or full-page screenshots as Memory history.
 
-A full-page Analyze action prepares the current bounded Structure snapshot in the active sidepanel/sidebar session. Structure can also be refreshed explicitly after the page changes. Reports can reuse compact Structure metrics and semantic suggestions; Structure does not persist a parallel DOM tree as report or Memory history.
+A full-page Analyze action prepares the current bounded Structure snapshot in the active FocusTrace session. Structure can also be refreshed explicitly after the page changes. Reports can reuse compact Structure metrics and semantic suggestions; Structure does not persist a parallel DOM tree as report or Memory history.
 
 Temporary Focus Visible PNG captures are decoded and compared in memory only. They are not written to session storage, FocusTrace Memory, reports or exports.
 
 ### `sidePanel` (Chromium)
 
-Used to provide the main FocusTrace interface alongside the page being inspected.
+Used to provide the regular FocusTrace interface alongside the page being inspected. The 0.2.7 DevTools panel is an additional developer-focused surface and does not replace the side panel or require `chrome.debugger`.
+
+### Optional `devtools` (Firefox)
+
+Firefox 115+ packages the FocusTrace DevTools entrypoint, but the `devtools` permission remains optional. It is requested only after the user explicitly selects **Enable DevTools integration** in FocusTrace Settings.
+
+Granting it makes the **F12 → FocusTrace** workflow available and allows findings to reveal their exact node in Firefox's native Inspector. Declining or removing it does not break the normal Firefox sidebar, Analyze, Structure, Trace or Report workflows. It does not grant permanent host access to inspected websites.
 
 ### Optional `http://*/*` and `https://*/*` host access
 
@@ -87,15 +97,25 @@ Used when the user explicitly requests visual evidence for a printable single-pa
 
 Multipage audit review crops and FocusTrace Memory previews do not add a persistent `<all_urls>` grant. They use the active-tab/page-access context already established for the explicit analysis and record an unavailable/fallback state when the browser cannot capture the visible tab. Focus Visible runtime comparison likewise omits its review when safe capture evidence cannot be established.
 
+## DevTools and DOM-inspection boundary
+
+Inside browser DevTools, FocusTrace can resolve a saved CSS selector in the inspected page and use the DevTools `inspect()` utility to select the node in Chrome/Edge **Elements** or Firefox **Inspector**.
+
+This operation changes the developer-tools selection only. FocusTrace does not call `element.focus()` to reveal the node, does not intentionally change the page's keyboard-focus state, does not persist a new full-DOM copy, and does not use `chrome.debugger`.
+
+Outside DevTools, **Inspect in DOM** remains visible but unavailable with guidance to open **F12 → FocusTrace**. Browsers do not expose a supported extension API that lets the regular side panel/sidebar programmatically open Developer Tools and activate a custom extension panel.
+
 ## Remote code
 
 FocusTrace does not intentionally execute remotely hosted JavaScript or download executable code at runtime. Standards snapshots used by the scanner are generated at build/repository time and shipped with the extension.
 
 ## Data-use declaration basis
 
-FocusTrace may inspect website content necessary to provide its user-facing accessibility analysis, such as DOM structure and attributes, accessible-name/role information, rendered contrast and target-geometry evidence, focus transitions, selected runtime mutations, status-message candidates, URL/title context and local visual evidence associated with the requested feature.
+FocusTrace may inspect website content necessary to provide its user-facing accessibility analysis, such as DOM structure and attributes, accessible-name/role information, rendered contrast and target-geometry evidence, focus transitions, selected runtime mutations, media/form/keyboard-pointer evidence, status-message candidates, URL/title context and local visual evidence associated with the requested feature.
 
 An explicit full-page analysis can generate a bounded Structure snapshot containing accessibility-oriented metrics plus selectors and evidence for concrete semantic review suggestions. Reports may reuse the compact metrics/suggestions subset; exporting a report does not trigger another Structure scan.
+
+Standards Coverage metadata and EN 301 549 clause mappings are product/reference metadata shipped with FocusTrace; they do not represent a remote certification service or upload inspected-page data to a standards backend.
 
 During an active manual Trace, a trusted real Tab/Shift+Tab transition can cause temporary visible-tab captures to be decoded and compared for bounded Focus Visible review evidence. Those temporary images are not retained after the comparison.
 
@@ -117,7 +137,7 @@ Core functionality remains available without payment. Sponsorship does not unloc
 
 ## Publication blocker: public privacy URL
 
-Before submitting an updated package to Chrome Web Store or Edge Add-ons, provide a publicly accessible privacy-policy URL that contains the policy represented by `PRIVACY.md`.
+Before submitting an updated package to a browser store, provide a publicly accessible privacy-policy URL that contains the policy represented by `PRIVACY.md`.
 
 A URL that requires authentication is not suitable as the store privacy-policy URL.
 
@@ -131,18 +151,20 @@ Record the final public URLs here before submission:
 
 - current extension icon/logo in the store-required sizes;
 - screenshots showing Analyze, Structure and Trace as the primary workflows;
+- add a 0.2.7 screenshot showing **F12 → FocusTrace → Inspect in DOM** in the native browser inspector;
 - optionally one screenshot for Report, Site Audit or FocusTrace Memory;
 - concise captions that describe observable functionality without claiming certification or complete WCAG/EN 301 549 coverage.
 
 ## Final submission gate
 
-Before uploading the production ZIP for 0.2.6:
+Before uploading the production ZIP for 0.2.7:
 
 1. Complete `npm run release:check:full` on the release candidate.
-2. Confirm CI is green on the exact commit intended for `v0.2.6`.
-3. Complete the manual WCAG 2.2 regression, native EN/ES browser i18n, Structure, multipage Report and FocusTrace Memory smoke items in `RELEASE_CHECKLIST.md`.
-4. Smoke-test the unpacked production Chromium build.
-5. Confirm production manifests contain only the intended required and optional permissions.
-6. Confirm the public privacy-policy, support/contact and voluntary-support URLs resolve without authentication.
-7. Review the final store declarations against `PRIVACY.md` and actual behavior, including target-geometry evidence, Focus Visible temporary captures, runtime status-message candidates, unified Structure evidence, bounded multipage-audit visual evidence and opt-in Memory previews/locators.
-8. Tag the exact approved commit as `v0.2.6` only after the release candidate is accepted.
+2. Confirm CI is green on the exact commit intended for `v0.2.7`.
+3. Complete the manual Standards Coverage/EN 301 549, WCAG 2.2 regression, native EN/ES browser i18n, Structure, DevTools DOM inspection, multipage Report and FocusTrace Memory smoke items in `RELEASE_CHECKLIST.md`.
+4. Smoke-test the unpacked production Chrome and Edge builds, including the regular side panel and **F12 → FocusTrace → Inspect in DOM** flow.
+5. Complete the Firefox 115+ packaged-build smoke, including the optional DevTools permission and native Inspector path, before making a broad Firefox support claim.
+6. Confirm production manifests contain only the intended required and optional permissions and that Firefox `devtools` remains optional.
+7. Confirm the public privacy-policy, support/contact and voluntary-support URLs resolve without authentication.
+8. Review the final store declarations against `PRIVACY.md` and actual behavior, including standards traceability, media/form/keyboard-pointer review evidence, target-geometry evidence, Focus Visible temporary captures, runtime status-message candidates, unified Structure evidence, DevTools DOM selection, bounded multipage-audit visual evidence and opt-in Memory previews/locators.
+9. Tag the exact approved commit as `v0.2.7` only after the release candidate is accepted.

@@ -1,6 +1,33 @@
 # Changelog
 
-All notable FocusTrace release changes are summarized here. Detailed release notes remain under `docs/RELEASE_NOTES_<version>.md`.
+All notable FocusTrace release changes are summarized here. Detailed release notes remain under `docs/changelog/RELEASE_NOTES_<version>.md`.
+
+## 0.2.7
+
+### Added
+
+- Added a standards-coverage model for WCAG 2.2 A/AA that distinguishes automated, review, runtime, Site Audit, manual and not-covered evidence instead of treating a linked criterion as complete conformance coverage.
+- Added EN 301 549 V4.1.1 (2026-09) clause-9 traceability for WCAG 2.2 A/AA criteria across the live coverage matrix and report/export guidance.
+- Added conservative review coverage for prerecorded media alternatives/captions, audio description or media alternatives, live captions, form error identification/suggestions and keyboard/pointer interaction behavior.
+- Added a dedicated FocusTrace panel inside Chrome, Edge and Firefox Developer Tools while keeping the existing browser side panel / Firefox sidebar available.
+- Added native DOM reveal from findings: DevTools can select the exact affected node in Chrome/Edge **Elements** or Firefox **Inspector** without moving keyboard focus on the inspected page.
+
+### Changed
+
+- Finding location now keeps two consistent actions: **Highlight on page** remains available everywhere, while **Inspect in DOM** is enabled inside DevTools and remains visibly unavailable with F12 → FocusTrace guidance outside that surface.
+- The old in-card HTML/technical-selector inspector was removed in favor of compact target location plus browser-native DevTools inspection.
+- The DevTools workspace reuses the existing Review, Structure, Trace and Report session and pins it to the inspected tab rather than creating a second scanner.
+- Firefox 115+ packages the DevTools entrypoint too; its `devtools` access remains an optional permission that can be enabled explicitly from FocusTrace Settings.
+- Release documentation and in-product instructions now explain the DevTools/DOM workflow and preserve the distinction between standards coverage evidence and WCAG/EN conformance.
+
+### Privacy and reliability
+
+- No backend or analytics pipeline was added, no `chrome.debugger` permission is used, and Chromium required permissions remain unchanged.
+- Firefox DevTools access is optional rather than a new required install/update permission; page/capture host permissions remain optional under the existing model.
+- Native DOM inspection changes only the browser inspector selection and does not call `element.focus()` or alter the inspected page's keyboard-focus state.
+- Expanded contract, unit, browser-build and E2E coverage guards standards mapping, the new conservative review rules, cross-browser DevTools packaging and element-location actions.
+
+See `docs/changelog/RELEASE_NOTES_0.2.7.md` for the full 0.2.7 notes and validation scope.
 
 ## 0.2.6
 
@@ -18,7 +45,7 @@ All notable FocusTrace release changes are summarized here. Detailed release not
 - Existing local-first behavior, optional page access and browser permission model remain unchanged.
 - Unit, contract, build and browser E2E coverage guard the shared inspector, bounded context, page overlays and attention-line layout.
 
-See `docs/RELEASE_NOTES_0.2.6.md` for the full 0.2.6 notes and validation scope.
+See `docs/changelog/RELEASE_NOTES_0.2.6.md` for the full 0.2.6 notes and validation scope.
 
 ## 0.2.5
 
@@ -45,7 +72,7 @@ See `docs/RELEASE_NOTES_0.2.6.md` for the full 0.2.6 notes and validation scope.
 - Production page access remains optional/user initiated; no backend or analytics pipeline was added.
 - Expanded unit, contract and browser E2E coverage validates the new scanner, Site Audit, Structure and real-Tab Focus Visible paths.
 
-See `docs/RELEASE_NOTES_0.2.5.md` for the full 0.2.5 notes, limitations and validation scope.
+See `docs/changelog/RELEASE_NOTES_0.2.5.md` for the full 0.2.5 notes, limitations and validation scope.
 
 ## 0.2.4
 
@@ -63,7 +90,7 @@ See `docs/RELEASE_NOTES_0.2.5.md` for the full 0.2.5 notes, limitations and vali
 - Updated component and browser regressions for the expanded default, transparent row wrapper, repeated narrow-panel toggling and bounded native memory.
 - No new production permission, backend, analytics or persisted data.
 
-See `docs/RELEASE_NOTES_0.2.4.md` for the full 0.2.4 notes and validation scope.
+See `docs/changelog/RELEASE_NOTES_0.2.4.md` for the full 0.2.4 notes and validation scope.
 
 ## 0.2.3
 
@@ -78,7 +105,7 @@ See `docs/RELEASE_NOTES_0.2.4.md` for the full 0.2.4 notes and validation scope.
 - Added a Chromium memory guard that verifies expanded heading branches stay within a bounded native-memory budget and that collapse restores the baseline DOM/listener footprint.
 - No new production permission, backend, analytics or persisted data.
 
-See `docs/RELEASE_NOTES_0.2.3.md` for the full 0.2.3 notes and validation scope.
+See `docs/changelog/RELEASE_NOTES_0.2.3.md` for the full 0.2.3 notes and validation scope.
 
 ## 0.2.2
 
@@ -101,7 +128,7 @@ See `docs/RELEASE_NOTES_0.2.3.md` for the full 0.2.3 notes and validation scope.
 - Browser E2E coverage verifies that fictitious email/token values carried in query/hash URL data are not retained in runtime session evidence.
 - No new backend, analytics pipeline or production permission.
 
-See `docs/RELEASE_NOTES_0.2.2.md` for the full 0.2.2 notes and documented scope limitations.
+See `docs/changelog/RELEASE_NOTES_0.2.2.md` for the full 0.2.2 notes and documented scope limitations.
 
 ## 0.2.1
 
@@ -142,4 +169,4 @@ See `docs/RELEASE_NOTES_0.2.2.md` for the full 0.2.2 notes and documented scope 
 - Expanded runtime and multipage WCAG 2.2 review coverage while preserving the deterministic `FAIL` vs contextual `REVIEW` boundary.
 - Extended English and Spanish presentation/remediation coverage.
 
-See `docs/RELEASE_NOTES_0.2.0.md` for the full 0.2.0 notes.
+See `docs/changelog/RELEASE_NOTES_0.2.0.md` for the full 0.2.0 notes.
