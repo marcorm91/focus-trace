@@ -237,6 +237,11 @@ The main quality gate combines:
 
 CI is intentionally least-privilege for normal validation. Third-party GitHub Actions are pinned to verified commit SHAs rather than mutable major-version tags.
 
+Quality tools are installed only from the committed npm lockfile; validation
+commands do not fetch ad-hoc packages at runtime. Production build validation
+starts by removing `.output`, so obsolete files from an earlier target or branch
+cannot make a release candidate appear complete.
+
 ## Maintenance guidance
 
 Prefer extracting pure behavior into `shared/` or `lib/` and testing it directly instead of hiding product logic inside React effects or view rendering.
