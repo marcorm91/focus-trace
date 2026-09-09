@@ -44,7 +44,7 @@ Support appears in two deliberately low-pressure locations:
 - **About**: the primary explanatory location, with context that FocusTrace remains free and support is voluntary.
 - **Global footer**: a compact **Support FocusTrace / Apoyar FocusTrace** link shown across the side-panel views and the separate Site Audit screen.
 
-The global footer must remain visually secondary to the active workflow and must not be fixed over content, interrupt navigation or appear in printed/exported reports.
+The global footer must remain visually secondary to the active workflow and must not be fixed over content, interrupt navigation or appear in printed/exported reports. In the side panel, the installed manifest version is shown immediately below the support action as `FocusTrace v<version>`, matching the version source already used by Settings. Site Audit keeps its existing version placement in the Site Audit header and does not duplicate it in the footer.
 
 Suggested About copy:
 

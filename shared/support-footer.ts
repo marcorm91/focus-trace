@@ -5,6 +5,10 @@ import './support-footer.css';
 const SVG_NS = 'http://www.w3.org/2000/svg';
 const HOST_CLASS = 'ft-support-footer-host';
 
+export interface SupportFooterOptions {
+  version?: string;
+}
+
 function currentLanguage(): AppLanguage {
   return document.documentElement.lang === 'es' ? 'es' : 'en';
 }
@@ -28,7 +32,10 @@ function createHeartIcon(): SVGSVGElement {
   return icon;
 }
 
-export function mountSupportFooter(supportUrl: string | null = SUPPORT_URL): () => void {
+export function mountSupportFooter(
+  supportUrl: string | null = SUPPORT_URL,
+  options: SupportFooterOptions = {},
+): () => void {
   if (!supportUrl || !document.body) return () => undefined;
   if (document.querySelector('[data-focustrace-support-footer]')) return () => undefined;
 
@@ -51,6 +58,13 @@ export function mountSupportFooter(supportUrl: string | null = SUPPORT_URL): () 
 
   link.append(icon, label, externalMark);
 
+  const version = options.version?.trim();
+  const versionLabel = version ? document.createElement('span') : undefined;
+  if (versionLabel) {
+    versionLabel.className = 'ft-support-footer-version';
+    versionLabel.textContent = `FocusTrace v${version}`;
+  }
+
   const updateCopy = () => {
     const language = currentLanguage();
     label.textContent = tr(language, 'Support FocusTrace', 'Apoyar FocusTrace');
@@ -63,6 +77,7 @@ export function mountSupportFooter(supportUrl: string | null = SUPPORT_URL): () 
 
   updateCopy();
   footer.append(link);
+  if (versionLabel) footer.append(versionLabel);
   document.body.append(footer);
 
   const languageObserver = new MutationObserver(updateCopy);

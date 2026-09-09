@@ -2,6 +2,7 @@ import wcagCatalog from '../generated/wcag-catalog.json';
 import { FOCUS_VISIBLE_RULE } from './focus-visible-rules';
 import { FORM_ERROR_RULES } from './form-error-rules';
 import { FORM_PURPOSE_RULES } from './form-purpose-rules';
+import { INTERACTIVE_TEXT_CONTRAST_RULE } from './interactive-contrast-rules';
 import { KEYBOARD_POINTER_RULES } from './keyboard-pointer-rules';
 import { LANGUAGE_PARTS_RULE } from './language-parts-rules';
 import { MEDIA_RULES } from './media-rules';
@@ -90,6 +91,7 @@ const COVERAGE_RULES = [
   LANGUAGE_PARTS_RULE,
   TEXT_SPACING_RULE,
   FOCUS_VISIBLE_RULE,
+  INTERACTIVE_TEXT_CONTRAST_RULE,
   ...MEDIA_RULES,
   ...KEYBOARD_POINTER_RULES,
 ];

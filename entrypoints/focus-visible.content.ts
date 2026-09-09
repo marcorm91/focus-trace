@@ -11,6 +11,12 @@ import {
   type FocusVisibleViewportState,
 } from '../lib/runtime/focus-visible';
 import {
+  activeSemanticContrastStates,
+  interactiveContrastSettleDelay,
+  interactiveTextContrastReviews,
+  type RuntimeContrastState,
+} from '../lib/runtime/interactive-contrast';
+import {
   createKeyboardTrapReviewEvent,
   createPointerCancellationReviewEvent,
   KeyboardTrapTracker,
@@ -92,6 +98,8 @@ export default defineContentScript({
     let baselines = new Map<string, FocusVisibleBaseline>();
     const reportedSelectors = new Set<string>();
     const reportedRuleTargets = new Set<string>();
+    const reportedInteractiveContrast = new Set<string>();
+    const interactiveProbeVersions = new Map<string, number>();
     const keyboardTrapTracker = new KeyboardTrapTracker();
     const pointerCancellationTracker = new PointerCancellationTracker();
 
@@ -106,6 +114,8 @@ export default defineContentScript({
       baselines.clear();
       reportedSelectors.clear();
       reportedRuleTargets.clear();
+      reportedInteractiveContrast.clear();
+      interactiveProbeVersions.clear();
     };
 
     const sleep = (ms: number) => new Promise<void>((resolve) => {
@@ -202,6 +212,53 @@ export default defineContentScript({
         type: 'FOCUSTRACE_EVENT',
         event: runtimeEvent,
       } satisfies ExtensionMessage).catch(() => undefined);
+    };
+
+    const emitInteractiveContrastReview = async (
+      event: Omit<RuntimeEvent, 'id' | 'timestamp'>,
+      state: RuntimeContrastState,
+      correlationKinds: RuntimeEvent['kind'][] = [],
+    ) => {
+      const selector = event.element?.selector ?? 'unknown';
+      const subject = event.detail?.match(/(?:^| · )subject=([^·]+)/)?.[1]?.trim() ?? 'text';
+      const dedupeKey = `${event.ruleId ?? event.title}:${state}:${selector}:${subject}`;
+      if (reportedInteractiveContrast.has(dedupeKey)) return;
+
+      const interactionId = correlationKinds.length
+        ? await interactionIdFor(selector, correlationKinds)
+        : undefined;
+      const runtimeEvent: RuntimeEvent = {
+        id: uid(),
+        timestamp: Date.now(),
+        ...event,
+        ...(interactionId ? { interactionId } : {}),
+      };
+      reportedInteractiveContrast.add(dedupeKey);
+      await browser.runtime.sendMessage({
+        type: 'FOCUSTRACE_EVENT',
+        event: runtimeEvent,
+      } satisfies ExtensionMessage).catch(() => undefined);
+    };
+
+    const scheduleInteractiveContrast = (
+      element: Element,
+      state: RuntimeContrastState,
+      correlationKinds: RuntimeEvent['kind'][] = [],
+    ) => {
+      if (!recording || !element.isConnected) return;
+      const selector = snapshot(element).selector;
+      const probeKey = `${state}:${selector}`;
+      const version = (interactiveProbeVersions.get(probeKey) ?? 0) + 1;
+      interactiveProbeVersions.set(probeKey, version);
+      const delay = interactiveContrastSettleDelay(element);
+
+      ctx.setTimeout(() => {
+        if (!recording || interactiveProbeVersions.get(probeKey) !== version || !element.isConnected) return;
+        const reviews = interactiveTextContrastReviews(element, state);
+        for (const review of reviews) {
+          void emitInteractiveContrastReview(review, state, correlationKinds);
+        }
+      }, delay);
     };
 
     const tabInputFor = (element: Element, direction: TabDirection): KeyboardTrapFocusInput => {
@@ -327,6 +384,18 @@ export default defineContentScript({
       }, KEYBOARD_TRAP_TAB_SETTLE_MS);
     }, true);
 
+    ctx.addEventListener(document, 'pointerover', (rawEvent) => {
+      const event = rawEvent as PointerEvent;
+      if (!recording || !event.isTrusted || !(event.target instanceof Element)) return;
+      const target = observedPointerActionTarget(event.target);
+      if (!target) return;
+      const previousTarget = event.relatedTarget instanceof Element
+        ? observedPointerActionTarget(event.relatedTarget)
+        : undefined;
+      if (previousTarget === target) return;
+      scheduleInteractiveContrast(target, 'hover');
+    }, true);
+
     ctx.addEventListener(document, 'pointerdown', (rawEvent) => {
       pendingTabIntent = undefined;
       pendingTabIntentVersion += 1;
@@ -338,6 +407,7 @@ export default defineContentScript({
       const target = observedPointerActionTarget(event.target);
       if (!target) return;
       pointerCancellationTracker.start(event.pointerId, target, snapshot(target), location.href);
+      scheduleInteractiveContrast(target, 'active');
     }, true);
 
     ctx.addEventListener(document, 'pointerup', (rawEvent) => {
@@ -361,6 +431,9 @@ export default defineContentScript({
       if (!target) return;
       const review = keyboardOperabilityReviewForPointerAction(target, snapshot(target));
       if (review) void emitRuntimeReview(review, ['click']);
+      for (const state of activeSemanticContrastStates(target)) {
+        scheduleInteractiveContrast(target, state, ['click']);
+      }
     }, true);
 
     ctx.addEventListener(document, 'focusin', (rawEvent) => {
@@ -369,6 +442,11 @@ export default defineContentScript({
       if (!(event.target instanceof Element)) return;
 
       if (pendingTabIntent) {
+        const contrastState: RuntimeContrastState = event.target.matches(':focus-visible')
+          ? 'focus-visible'
+          : 'focus';
+        scheduleInteractiveContrast(event.target, contrastState, ['keydown', 'focus']);
+
         pendingTabIntent = undefined;
         pendingTabIntentVersion += 1;
         focusVersion += 1;
