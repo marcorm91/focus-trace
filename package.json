@@ -27,6 +27,7 @@
     "check": "tsc --noEmit",
     "lint": "oxlint --deny-warnings entrypoints lib shared tests tools playwright.config.ts vitest.config.ts wxt.config.ts",
     "test": "vitest run --exclude \"tests/e2e/**\"",
+    "benchmark:scan": "vitest bench tests/performance/static-scan.bench.ts --run",
     "test:e2e": "playwright test",
     "playwright:install:chromium": "playwright install --with-deps --no-shell chromium",
     "e2e": "npm run build:e2e && npm run test:e2e",

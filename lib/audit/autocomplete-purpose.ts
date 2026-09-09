@@ -4,6 +4,7 @@ import {
   isSequentiallyFocusable,
   semanticRole,
 } from './dom';
+import { scopedElements } from './scan-elements';
 
 export type AutocompletePurposeControl = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement;
 
@@ -160,10 +161,7 @@ function parseStandardAutocomplete(tokens: string[]): { valid: true } | { valid:
 }
 
 export function evaluateAutocompletePurpose(root: Document | Element = document): AutocompletePurposeEvaluation[] {
-  const descendants = [...root.querySelectorAll('input[autocomplete], select[autocomplete], textarea[autocomplete]')];
-  const controls = root instanceof Element && root.matches('input[autocomplete], select[autocomplete], textarea[autocomplete]')
-    ? [root, ...descendants]
-    : descendants;
+  const controls = scopedElements(root, 'input[autocomplete], select[autocomplete], textarea[autocomplete]');
 
   const results: AutocompletePurposeEvaluation[] = [];
   for (const candidate of controls) {

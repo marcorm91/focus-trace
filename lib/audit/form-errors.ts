@@ -1,6 +1,6 @@
-export type FormErrorOutcome = 'pass' | 'review';
+import { scopedElements, type ScanRoot } from './scan-elements';
 
-type ScanRoot = Document | Element;
+export type FormErrorOutcome = 'pass' | 'review';
 
 type FormControl = HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement | HTMLElement;
 
@@ -31,11 +31,6 @@ const CONTROL_SELECTOR = [
   '[role="checkbox"]',
   '[role="radio"]',
 ].join(',');
-
-function scopedElements<T extends Element>(root: ScanRoot, selector: string): T[] {
-  const descendants = [...root.querySelectorAll<T>(selector)];
-  return root instanceof Element && root.matches(selector) ? [root as T, ...descendants] : descendants;
-}
 
 function isDisabled(element: Element): boolean {
   if (element.getAttribute('aria-disabled') === 'true') return true;

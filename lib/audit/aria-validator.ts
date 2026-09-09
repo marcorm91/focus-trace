@@ -1,5 +1,6 @@
 import ariaRegistryJson from '../../generated/aria-registry.json';
 import { isProgrammaticallyHidden } from './dom';
+import { scopedElements, type ScanRoot } from './scan-elements';
 import {
   ariaRoleRecord,
   ariaRoleTokens,
@@ -25,8 +26,6 @@ export interface AriaValidationSignal {
   element: Element;
   detail: string;
 }
-
-type ScanRoot = Document | Element;
 
 type OwnershipModel = {
   ownerFor: Map<Element, Element>;
@@ -95,11 +94,6 @@ const POSITIVE_INTEGER = new Set([
 ]);
 const COUNT = new Set(['aria-colcount', 'aria-rowcount', 'aria-setsize']);
 const NUMBER = new Set(['aria-valuemax', 'aria-valuemin', 'aria-valuenow']);
-
-function scopedElements(root: ScanRoot): Element[] {
-  const descendants = [...root.querySelectorAll('*')];
-  return root instanceof Element ? [root, ...descendants] : descendants;
-}
 
 function tokens(value: string | null): string[] {
   return value?.trim().split(/\s+/).filter(Boolean) ?? [];
@@ -215,7 +209,7 @@ function buildOwnershipModel(): OwnershipModel {
   const claims = new Map<Element, Element[]>();
   const signals: AriaValidationSignal[] = [];
 
-  for (const owner of document.querySelectorAll('[aria-owns]')) {
+  for (const owner of scopedElements(document, '[aria-owns]')) {
     for (const id of tokens(owner.getAttribute('aria-owns'))) {
       const target = document.getElementById(id);
       if (!target) continue;
@@ -433,7 +427,7 @@ function unsupportedPropertySignal(
 }
 
 export function evaluateAdvancedAria(root: ScanRoot): AriaValidationSignal[] {
-  const elements = scopedElements(root);
+  const elements = scopedElements(root, '*');
   const result: AriaValidationSignal[] = [];
   const ownership = buildOwnershipModel();
   result.push(...ownership.signals.filter(({ element }) => root instanceof Document || element === root || root.contains(element)));

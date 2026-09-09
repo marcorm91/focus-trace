@@ -17,6 +17,7 @@ import { evaluateDuplicateIds } from './duplicate-ids';
 import { evaluateLabelInName } from './label-in-name';
 import { evaluateNonTextContrast } from './non-text-contrast';
 import { evaluateObsoleteHtml } from './obsolete-html';
+import { scopedElements, type ScanRoot } from './scan-elements';
 import { evaluateInteractiveSemantics, mainLandmarkCandidates } from './semantics';
 import { evaluateAriaAuthoringSignals, pageLanguageStatus, type AriaAuthoringSignal } from './standards-registry';
 
@@ -27,16 +28,10 @@ interface RuleExecution {
   warnings: ScanIssue[];
   passes: number;
 }
-type ScanRoot = Document | Element;
 const emptyExecution = (rule: RuleDefinition): RuleExecution => ({ rule, issues: [], review: [], warnings: [], passes: 0 });
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 const COMPONENT_SCAN_SCOPE_ATTRIBUTE = 'data-focustrace-scan-component';
 const COMPONENT_FOCUS_SCOPE_ATTRIBUTE = 'data-focustrace-focus-component';
-
-function scopedElements(root: ScanRoot, selector: string): Element[] {
-  const descendants = [...root.querySelectorAll(selector)];
-  return root instanceof Element && root.matches(selector) ? [root, ...descendants] : descendants;
-}
 
 function containsInScope(root: ScanRoot, element: Element): boolean {
   return root instanceof Document || root === element || root.contains(element);
@@ -379,8 +374,8 @@ function runPositiveTabindex(root: ScanRoot): RuleExecution {
 function runTextContrast(root: ScanRoot): RuleExecution {
   const result = emptyExecution(RULES.textContrast);
   const elements = root instanceof Document
-    ? document.body ? [document.body, ...document.body.querySelectorAll('*')] : []
-    : [root, ...root.querySelectorAll('*')];
+    ? document.body ? scopedElements(root, '*').filter((element) => document.body?.contains(element)) : []
+    : scopedElements(root, '*');
   if (!elements.length) return result;
 
   for (const element of elements) {
@@ -491,7 +486,7 @@ function runNonTextContrast(root: ScanRoot): RuleExecution {
 }
 
 function visibleHeadings(): Element[] {
-  return [...document.querySelectorAll('h1, h2, h3, h4, h5, h6')]
+  return scopedElements(document, 'h1, h2, h3, h4, h5, h6')
     .filter((heading) => !isProgrammaticallyHidden(heading));
 }
 

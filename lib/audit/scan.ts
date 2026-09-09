@@ -38,6 +38,7 @@ import { accessibleName, isProgrammaticallyHidden, selectorFor, semanticRole } f
 import { evaluateLanguageParts, type LanguagePartEvaluation } from './language-parts';
 import { appendMediaAccessibilityReviews } from './media-scan-extension';
 import { collectHeadingOutline, runFocusTraceScan as runBaseFocusTraceScan } from './scan-base';
+import { scopedElements, withScanElementQueryCache } from './scan-elements';
 import { evaluateTargetSize, type TargetSizeEvaluation } from './target-size';
 import { evaluateTextSpacing, type TextSpacingEvaluation } from './text-spacing';
 
@@ -275,9 +276,11 @@ function elementForIssue(issue: ScanIssue): Element | undefined {
 
 function contrastElements(root: Document | Element): Element[] {
   if (root instanceof Document) {
-    return document.body ? [document.body, ...document.body.querySelectorAll('*')] : [];
+    return document.body
+      ? scopedElements(root, '*').filter((element) => document.body?.contains(element))
+      : [];
   }
-  return [root, ...root.querySelectorAll('*')];
+  return scopedElements(root, '*');
 }
 
 function pruneInactiveTextContrast(result: ScanResult, root: Document | Element): void {
@@ -442,7 +445,7 @@ function appendTextSpacingReview(result: ScanResult, root: Document | Element): 
   result.rulesRun += 1;
 }
 
-export function runFocusTraceScan(scope?: ComponentScanScope): ScanResult {
+function runFocusTraceScanWithCache(scope?: ComponentScanScope): ScanResult {
   const result = runBaseFocusTraceScan(scope);
   const componentScope = result.scope?.type === 'component' ? result.scope : undefined;
   const root = componentScope ? document.querySelector(componentScope.selector) : document;
@@ -523,4 +526,8 @@ export function runFocusTraceScan(scope?: ComponentScanScope): ScanResult {
   result.rulesRun += 1;
   annotateIssueElementSnapshots(result);
   return result;
+}
+
+export function runFocusTraceScan(scope?: ComponentScanScope): ScanResult {
+  return withScanElementQueryCache(() => runFocusTraceScanWithCache(scope));
 }

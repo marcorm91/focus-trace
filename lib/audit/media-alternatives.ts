@@ -1,7 +1,7 @@
+import { scopedElements, type ScanRoot } from './scan-elements';
+
 export type MediaReviewOutcome = 'pass' | 'review';
 export type MediaTimingKind = 'prerecorded' | 'live' | 'unknown';
-
-type ScanRoot = Document | Element;
 
 type MediaElementWithTracks = HTMLMediaElement & {
   audioTracks?: { length: number };
@@ -54,11 +54,6 @@ export interface PrerecordedAudioDescriptionEvaluation {
 const TRANSCRIPT_PATTERN = /\b(?:transcript|transcription|transcripci[oó]n|transcri[cç][aã]o|trascrizione|transkript)\b/i;
 const AUDIO_DESCRIPTION_PATTERN = /\b(?:audio[-\s]?description|audio[-\s]?described|described\s+version|audiodescripci[oó]n|versi[oó]n\s+audiodescrita|audiodescri[cç][aã]o|vers[aã]o\s+audiodescrita|audiodescrizione|versione\s+audiodescritta|audiodeskription)\b/i;
 const STREAM_SOURCE_PATTERN = /(?:\.m3u8|\.mpd)(?:$|[?#])/i;
-
-function scopedElements<T extends Element>(root: ScanRoot, selector: string): T[] {
-  const descendants = [...root.querySelectorAll<T>(selector)];
-  return root instanceof Element && root.matches(selector) ? [root as T, ...descendants] : descendants;
-}
 
 function sourceUrls(media: HTMLMediaElement): string[] {
   const urls = new Set<string>();

@@ -1,3 +1,5 @@
+import { scopedElements } from './scan-elements';
+
 export type TextSpacingProperty = 'letter-spacing' | 'word-spacing' | 'line-height';
 
 export interface TextSpacingEvaluation {
@@ -24,7 +26,7 @@ const CODE_LIKE_SELECTOR = 'code, pre, samp, kbd, var';
 function allElements(root: Document | Element): HTMLElement[] {
   const elements: HTMLElement[] = [];
   if (root instanceof HTMLElement) elements.push(root);
-  for (const element of root.querySelectorAll('[style]')) {
+  for (const element of scopedElements(root, '[style]')) {
     if (!(element instanceof HTMLElement) || elements.includes(element)) continue;
     elements.push(element);
   }

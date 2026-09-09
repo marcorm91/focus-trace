@@ -185,6 +185,18 @@ browser.storage.local (bounded audit store)
 
 Component scans use the same rule engine with a selected subtree. Rules that need document context can still inspect the document when required. Duplicate-ID uniqueness, for example, is document-wide even when only occurrences inside the selected component are reported.
 
+Within one synchronous static scan, identical selector queries for the same root
+share a scan-local result. The cache is discarded as soon as that scan returns,
+so a later analysis always observes current DOM state. This keeps the four
+root-wide element passes used by the page scanner to one DOM query without
+changing rule applicability or evidence.
+
+Run `npm run benchmark:scan` to compare the complete rule engine against
+generated 1,000, 5,000 and 10,000-element DOM fixtures. The benchmark is kept out of
+the normal unit-test gate because wall-clock thresholds vary across developer
+and CI hardware; the deterministic unit gate instead enforces the root-query
+budget and cache lifetime.
+
 ## Trace event flow
 
 ```text
