@@ -138,7 +138,7 @@ test('settings becomes a focused sub-view and Back restores the workspace', asyn
     name: /Remember accessibility history|Recordar historial de accesibilidad/,
   });
   await expect(memoryPreference).toBeChecked();
-  await memoryPreference.uncheck();
+  await memoryPreference.click();
   await expect(memoryPreference).not.toBeChecked();
 
   const spanish = panel.getByRole('radio', { name: /Español/ });
