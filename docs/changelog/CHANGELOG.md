@@ -2,24 +2,45 @@
 
 All notable FocusTrace release changes are summarized here. Detailed release notes remain under `docs/changelog/RELEASE_NOTES_<version>.md`.
 
-## Unreleased
+## 0.2.8
 
 ### Added
 
+- Added `FT-RUNTIME-014` contextual text-contrast review for rendered hover, active, keyboard-focus and observed semantic states exercised through trusted interaction during Trace.
+- Added `FT-RUNTIME-015` conservative runtime evidence for WCAG 1.4.13 Content on Hover or Focus, covering observable dismissibility, hoverability and persistence signals without inventing unvisited states.
+- Added `FT-RUNTIME-016` contextual non-text contrast review for measurable control boundaries, simple graphics and authored focus indicators in real interactive states.
 - Added editable and removable auditor notes to every static finding and Trace event. Notes remain separate from detected evidence and are included in applicable report, PDF, TXT, Markdown and JSON exports.
 - Added parent-linked note synchronization for the current session, saved multipage reviews and existing FocusTrace Memory observations, including portable Memory JSON.
+- Added the installed extension version below the support action in the side-panel footer.
 
 ### Changed
 
 - FocusTrace Memory is now enabled by default with an explicit Settings opt-out.
 - Memory observations and compact resolved markers no longer expire by age. Existing per-scope, global and visual-preview capacity limits still replace older evidence to keep storage bounded.
 - Trace evidence JSON now uses `schemaVersion: 2`; Memory baseline JSON uses version 2 while continuing to accept version 1 files.
+- Site Audit result presentation was split into focused report and finding components while preserving its bilingual semantics, actions and evidence model.
+
+### Performance
+
+- Static Analyze and Site Audit now inject only the core scanner; Trace-only observers load on demand, reducing emitted page-side JavaScript for a static scan by 44.6% in the final candidate.
+- Review, Structure, Trace, Report, Instructions and Settings now load as separate side-panel workspace chunks, reducing initial side-panel assets by 45.5% and initial JavaScript by 73.2% in the final Chrome candidate.
+- Trace coalesces ordinary event bursts over a 16 ms window into ordered per-tab storage writes while keeping breakpoint evidence immediate and flushing before page exit.
+- The static scanner reuses identical root-scoped queries within one synchronous scan and reduces repeated whole-document `*` traversals from four to one.
+
+### Fixed
+
+- Visual evidence is now bound to the exact source tab, window and normalized document URL before and after capture; a tab switch or navigation discards the pixels instead of associating them with the wrong scan.
+- Site Audit streams robots.txt and sitemap responses and enforces its 6 MB limit against bytes actually received, including compressed, chunked or incorrectly declared responses.
 
 ### Privacy and reliability
 
+- The three new runtime rules observe trusted interactions only, remain `REVIEW`, do not synthesize hover/focus and add no permission or debugger access.
 - Auditor notes remain local unless the user explicitly exports them. Deleting a note or its retained parent removes the linked local copy; previously exported files are not retroactively changed.
 - Clarified that browser-managed extension storage persists only while FocusTrace remains installed: uninstall removes local Memory, notes, preferences and saved audits automatically, while previously exported files remain available for later import where supported.
+- Release validation now uses lockfile-pinned local tools and cleans stale build output before packaging; project-wide production coverage floors complement the existing high-risk module thresholds.
 - Added unit and contract coverage for note normalization, editing/removal, parent lifecycle, local-history synchronization, export formats and default Memory behavior.
+
+See `docs/changelog/RELEASE_NOTES_0.2.8.md` for the full 0.2.8 notes and validation scope.
 
 ## 0.2.7
 
