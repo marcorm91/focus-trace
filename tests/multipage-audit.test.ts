@@ -7,6 +7,7 @@ import {
   auditSummary,
   emptyMultipageAuditStore,
   removeAuditPage,
+  updateAuditScan,
   type AuditPageVisualEvidence,
 } from '../lib/audit/multipage-audit';
 import type { ScanResult } from '../shared/types';
@@ -147,5 +148,28 @@ describe('multipage audit model', () => {
     store = removeAuditPage(store, 'audit-1', auditPageKey('https://bidafarma.es/servicios/'));
     expect(store.audits).toEqual([]);
     expect(store.activeAuditId).toBeUndefined();
+  });
+
+  it('updates notes only on the matching saved analysis', () => {
+    const initialScan = scan('https://bidafarma.es/', 100);
+    const store = applyAuditAnalysis(
+      emptyMultipageAuditStore(),
+      initialScan,
+      { kind: 'new', site: 'bidafarma.es' },
+      'audit-1',
+      visualEvidence(100, 'kept'),
+    );
+    const annotatedScan: ScanResult = {
+      ...initialScan,
+      issues: [{
+        ...initialScan.issues[0]!,
+        auditorNote: { text: 'Confirmed by the auditor', updatedAt: 200 },
+      }],
+    };
+    const next = updateAuditScan(store, annotatedScan);
+
+    expect(next.audits[0]?.pages[0]?.scan.issues[0]?.auditorNote?.text).toBe('Confirmed by the auditor');
+    expect(next.audits[0]?.pages[0]?.visualEvidence?.visuals[0]?.dataUrl).toContain('kept');
+    expect(updateAuditScan(store, { ...annotatedScan, scannedAt: 999 })).toBe(store);
   });
 });

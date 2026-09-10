@@ -1,9 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  FOCUS_MEMORY_RETENTION_DAYS,
-  focusMemoryScopeKey,
-  recordFocusMemoryObservation,
-} from '../shared/focus-memory';
+import { focusMemoryScopeKey, recordFocusMemoryObservation } from '../shared/focus-memory';
 import {
   FOCUS_MEMORY_MAX_RESOLVED_FINDINGS,
   applyResolvedFindingMemory,
@@ -44,7 +40,10 @@ function scan(scannedAt: number, failures: ScanIssue[]): ScanResult {
 
 describe('FocusTrace Memory resolved findings', () => {
   it('removes detailed history after resolution but still detects a later regression', () => {
-    const issue = failure('FT-WCAG-003', '#save');
+    const issue = {
+      ...failure('FT-WCAG-003', '#save'),
+      auditorNote: { text: 'Resolved after retest', updatedAt: 1_500 },
+    };
     const firstScan = scan(1_000, [issue]);
     const fixedScan = scan(2_000, []);
     const returnedScan = scan(3_000, [issue]);
@@ -76,6 +75,7 @@ describe('FocusTrace Memory resolved findings', () => {
     ]);
     expect(archived.observations.every((item) => !item.failureFingerprints.includes(fingerprint))).toBe(true);
     expect(JSON.stringify(archived.observations)).not.toContain('#save');
+    expect(JSON.stringify(archived.observations)).not.toContain('Resolved after retest');
 
     const afterArchive = recordFocusMemoryObservation(
       { version: 1, observations: archived.observations },
@@ -115,10 +115,9 @@ describe('FocusTrace Memory resolved findings', () => {
     expect(decoratedStillFailing.history.find((item) => item.fingerprint === fingerprint)?.state).toBe('present');
   });
 
-  it('bounds compact resolved markers by age and count', () => {
-    const day = 24 * 60 * 60 * 1_000;
-    const now = FOCUS_MEMORY_RETENTION_DAYS * day + 10_000;
-    const expired = {
+  it('bounds compact resolved markers by count without expiring them by age', () => {
+    const now = 20 * 365 * 24 * 60 * 60 * 1_000;
+    const old = {
       scopeKey: 'scope-old',
       fingerprint: 'finding-old',
       ruleId: 'FT-WCAG-003',
@@ -131,7 +130,7 @@ describe('FocusTrace Memory resolved findings', () => {
       resolvedAt: now - 1_000,
     };
 
-    expect(pruneFocusMemoryResolvedFindings([expired, recent], now)).toEqual([recent]);
+    expect(pruneFocusMemoryResolvedFindings([old, recent], now)).toEqual([recent, old]);
 
     const many = Array.from({ length: FOCUS_MEMORY_MAX_RESOLVED_FINDINGS + 15 }, (_, index) => ({
       scopeKey: `scope-${index}`,

@@ -44,9 +44,11 @@ Status-message evidence remains `REVIEW`: FocusTrace can observe DOM semantics a
 
 Runtime evidence should remain inspectable as events, interactions, journey, graph and replay rather than being reduced to a single pass/fail number.
 
+Auditors can attach optional editable notes to individual Trace events and static findings. These notes are human context, remain visibly separate from detected evidence and never change an outcome, severity or conformance interpretation. Reports and structured exports preserve the association with the original event or finding.
+
 ### 4. Historical comparison
 
-FocusTrace Memory is an opt-in local history for repeated static page/component scans.
+FocusTrace Memory is a local history for repeated static page/component scans. It is enabled by default and can be disabled by the user.
 
 It can identify:
 
@@ -56,7 +58,7 @@ It can identify:
 - regressions;
 - other material scan changes.
 
-Memory is disabled by default, bounded and local. It must never infer that repeated behavior is correct merely because it has been seen before.
+Memory is bounded, local and has no time-based expiry; capacity limits replace the oldest retained evidence. It must never infer that repeated behavior is correct merely because it has been seen before.
 
 Runtime behavioral memory is intentionally a later step. It should be built on explicit Interaction Contracts rather than learning repeated behavior as truth.
 
@@ -83,7 +85,7 @@ Best-practice or code-quality checks can be useful, but they should remain visib
 
 The local-first model is a product feature, not just an implementation detail.
 
-Core analysis, on-demand Structure evidence, Trace evidence and FocusTrace Memory do not require a FocusTrace backend. Persistent features must have explicit retention boundaries and user controls. See [`../PRIVACY.md`](../PRIVACY.md) and [`ARCHITECTURE.md`](ARCHITECTURE.md).
+Core analysis, on-demand Structure evidence, Trace evidence and FocusTrace Memory do not require a FocusTrace backend. Persistent features must have explicit capacity/lifecycle boundaries and user controls. See [`../PRIVACY.md`](../PRIVACY.md) and [`ARCHITECTURE.md`](ARCHITECTURE.md).
 
 ## Near-term differentiation
 

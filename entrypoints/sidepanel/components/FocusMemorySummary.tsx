@@ -3,7 +3,6 @@ import {
   FOCUS_MEMORY_MAX_OBSERVATIONS,
   FOCUS_MEMORY_MAX_FAILURE_FINGERPRINTS,
   FOCUS_MEMORY_MAX_PER_SCOPE,
-  FOCUS_MEMORY_RETENTION_DAYS,
   focusMemoryScopeKey,
   recordFocusMemoryObservation,
   type FocusMemoryComparison,
@@ -217,8 +216,8 @@ export function FocusMemorySummary({ scan, language }: { scan: ScanResult; langu
         </div>
         <p>{tr(
           language,
-          'Memory is enabled. Run another analysis to create a new local baseline; the analysis that was already open before opt-in will not be added retroactively.',
-          'Memory está activado. Ejecuta otro análisis para crear una nueva línea base local; el análisis que ya estaba abierto antes de activarlo no se añadirá de forma retroactiva.',
+          'Memory is enabled. Run another analysis to create a new local baseline; an analysis that was already open before Memory was enabled again or cleared will not be added retroactively.',
+          'Memory está activado. Ejecuta otro análisis para crear una nueva línea base local; un análisis que ya estaba abierto antes de volver a activar o borrar Memory no se añadirá de forma retroactiva.',
         )}</p>
       </section>
     );
@@ -310,8 +309,8 @@ export function FocusMemorySummary({ scan, language }: { scan: ScanResult; langu
         <small>
           {tr(
             language,
-            `Max ${FOCUS_MEMORY_MAX_PER_SCOPE} per scope · ${FOCUS_MEMORY_MAX_OBSERVATIONS} total · ${FOCUS_MEMORY_MAX_FAILURE_FINGERPRINTS} failure details per scan · ${FOCUS_MEMORY_RETENTION_DAYS} days`,
-            `Máx. ${FOCUS_MEMORY_MAX_PER_SCOPE} por ámbito · ${FOCUS_MEMORY_MAX_OBSERVATIONS} en total · ${FOCUS_MEMORY_MAX_FAILURE_FINGERPRINTS} detalles de fallo por análisis · ${FOCUS_MEMORY_RETENTION_DAYS} días`,
+            `No time expiry · max ${FOCUS_MEMORY_MAX_PER_SCOPE} per scope · ${FOCUS_MEMORY_MAX_OBSERVATIONS} total · ${FOCUS_MEMORY_MAX_FAILURE_FINGERPRINTS} failure details per scan`,
+            `Sin caducidad temporal · máx. ${FOCUS_MEMORY_MAX_PER_SCOPE} por ámbito · ${FOCUS_MEMORY_MAX_OBSERVATIONS} en total · ${FOCUS_MEMORY_MAX_FAILURE_FINGERPRINTS} detalles de fallo por análisis`,
           )}
         </small>
         <div>

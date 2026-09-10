@@ -1,4 +1,5 @@
 import { suggestAccessibleForeground } from '../audit/contrast';
+import { humanRuntimeEventTitle } from '../runtime/explanations';
 import { tr, type AppLanguage } from '../../shared/i18n';
 import { ruleLegendCopy } from '../../shared/rule-legend';
 import type { RuntimeEvent, ScanIssue, ScanResult } from '../../shared/types';
@@ -101,6 +102,11 @@ function issueLines(
       `   ${lineLabel(language, 'Description', 'Descripción')}: ${issue.description}`,
       ...contrastLines(issue, language),
       ...(issue.evidence ? [`   ${lineLabel(language, 'Evidence', 'Evidencia')}: ${issue.evidence}`] : []),
+      ...(issue.auditorNote
+        ? issue.auditorNote.text.split('\n').map((line, lineIndex) => lineIndex === 0
+            ? `   ${lineLabel(language, 'Auditor note', 'Nota del auditor')}: ${line}`
+            : `      ${line}`)
+        : []),
       ...(references ? [`   ${lineLabel(language, 'References', 'Referencias')}: ${references}`] : []),
       '',
     ];
@@ -246,6 +252,21 @@ export function buildTextSessionReport({
         ...(story.references.length
           ? [`   ${lineLabel(language, 'References', 'Referencias')}: ${story.references.map((reference) => `${reference.type} ${reference.id}: ${reference.url}`).join(' | ')}`]
           : []),
+        '',
+      );
+    });
+  }
+
+  const annotatedRuntimeEvents = events.filter((event) => event.auditorNote);
+  if (annotatedRuntimeEvents.length) {
+    lines.push('', lineLabel(language, 'Auditor notes:', 'Notas del auditor:'));
+    annotatedRuntimeEvents.forEach((event, index) => {
+      lines.push(
+        `${index + 1}. ${humanRuntimeEventTitle(event, language)}`,
+        `   ${lineLabel(language, 'Event', 'Evento')}: ${event.ruleId ?? event.kind}`,
+        ...event.auditorNote!.text.split('\n').map((line, lineIndex) => lineIndex === 0
+          ? `   ${lineLabel(language, 'Auditor note', 'Nota del auditor')}: ${line}`
+          : `      ${line}`),
         '',
       );
     });

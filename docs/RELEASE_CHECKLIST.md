@@ -236,8 +236,8 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 
 ## FocusTrace Memory smoke
 
-- Confirm Memory is still disabled by default after a clean installation/profile.
-- Enable **Remember accessibility history**, analyze a page with a visible deterministic failure and confirm the observation is stored locally.
+- Confirm Memory is enabled by default after a clean installation/profile and that clearing **Remember accessibility history** persists the opt-out.
+- Analyze a page with a visible deterministic failure and confirm the observation is stored locally without a separate opt-in step.
 - Re-analyze after fixing that failure and confirm the resolved history shows useful visual context: a small saved preview when capture was possible, or a compact locator fallback when it was not.
 - Confirm resolved cards no longer expose an opaque `Ref. XXXXX` identifier.
 - Check that a saved preview remains usable by keyboard focus as well as pointer hover.
@@ -245,6 +245,16 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 - Mark a no-longer-reproduced finding as resolved and confirm its detailed preview/locator/history is removed while regression recognition remains available.
 - Clear saved Memory history from Settings and confirm both observation history and resolved markers are removed.
 - Inspect extension storage during the smoke test and confirm Memory does not persist full-page screenshots, page HTML or full DOM snapshots.
+- Seed an observation older than 90 days and confirm it remains available; then exercise count limits and confirm the oldest retained evidence is replaced only because of capacity.
+
+## Auditor-note smoke
+
+- Add, edit and remove a multiline note on a failure, a REVIEW, a WARNING and an ordinary Trace event; confirm the detected outcome, severity and counts never change.
+- Reload/reopen the side panel and confirm notes remain attached to the current parent evidence.
+- Confirm a full-page finding note updates the matching saved audit page and Memory observation without removing its saved visual crop.
+- Export the single-page PDF/TXT, complete-audit PDF, Trace Markdown/JSON and Memory baseline JSON; confirm each applicable note remains associated with the correct finding/event and Trace JSON reports `schemaVersion: 2`.
+- Remove a Trace interaction, saved audit page and Memory history in turn, and confirm their embedded notes disappear with the parent evidence.
+- Confirm a previously exported file is unchanged after editing/removing the local note and review its contents before sharing.
 
 ## Scanner confidence
 
@@ -294,7 +304,7 @@ Firefox uses `sidebar_action` generated from the WXT sidepanel entrypoint rather
 
 Production builds must not declare required global host permissions. Optional HTTP/HTTPS host access may be requested only from an explicit page action and must remain documented in the README and privacy policy. The localhost/global visual-capture authority added by the E2E build is test-only and must not become a required production host permission.
 
-Confirm [`PRIVACY.md`](../PRIVACY.md) still matches the actual product behavior, especially unified full-page Structure evidence, temporary in-memory Focus Visible captures, bounded multipage-audit visual context, optional Memory visual context, optional single-page report screenshot evidence, DevTools DOM selection, external services and sponsorship integration.
+Confirm [`PRIVACY.md`](../PRIVACY.md) still matches the actual product behavior, especially unified full-page Structure evidence, temporary in-memory Focus Visible captures, bounded multipage-audit visual context, auditor notes and exports, default-enabled Memory with user opt-out, optional Memory visual context, optional single-page report screenshot evidence, DevTools DOM selection, external services and sponsorship integration.
 
 Before a browser-store submission, resolve the publication blockers in `STORE_SUBMISSION.md`: the public privacy-policy URL and public support/contact URL must be real, unauthenticated destinations rather than `TODO` placeholders.
 

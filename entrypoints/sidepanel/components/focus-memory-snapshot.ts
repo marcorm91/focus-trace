@@ -7,7 +7,7 @@ import type { ScanResult } from '../../../shared/types';
 
 export interface FocusMemorySnapshotFile {
   format: 'focustrace-memory-baseline';
-  version: 1;
+  version: 2;
   exportedAt: string;
   analyzedAt: string;
   page: {
@@ -23,7 +23,7 @@ export function downloadFocusMemorySnapshot(scan: ScanResult) {
   const observation = buildFocusMemoryObservation(scan);
   const snapshot: FocusMemorySnapshotFile = {
     format: 'focustrace-memory-baseline',
-    version: 1,
+    version: 2,
     exportedAt: new Date().toISOString(),
     analyzedAt: new Date(scan.scannedAt).toISOString(),
     page: {
@@ -57,8 +57,9 @@ export function downloadFocusMemorySnapshot(scan: ScanResult) {
 
 export function parseFocusMemorySnapshot(value: unknown): FocusMemorySnapshotFile {
   if (!value || typeof value !== 'object') throw new Error('invalid-snapshot');
-  const candidate = value as Partial<FocusMemorySnapshotFile>;
-  if (candidate.format !== 'focustrace-memory-baseline' || candidate.version !== 1) {
+  const candidate = value as Partial<Omit<FocusMemorySnapshotFile, 'version'>> & { version?: unknown };
+  if (candidate.format !== 'focustrace-memory-baseline'
+    || (candidate.version !== 1 && candidate.version !== 2)) {
     throw new Error('invalid-snapshot');
   }
   if (typeof candidate.exportedAt !== 'string' || !Number.isFinite(Date.parse(candidate.exportedAt))) {
@@ -74,7 +75,7 @@ export function parseFocusMemorySnapshot(value: unknown): FocusMemorySnapshotFil
 
   return {
     format: 'focustrace-memory-baseline',
-    version: 1,
+    version: 2,
     exportedAt: candidate.exportedAt,
     analyzedAt: typeof candidate.analyzedAt === 'string'
       ? candidate.analyzedAt

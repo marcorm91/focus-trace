@@ -2,7 +2,7 @@ import { explanationForCause, humanInteractionTitle, humanRuntimeEventTitle } fr
 import type { FocusGraph, FocusGraphNode } from './focus-graph';
 import { tr, type AppLanguage } from '../../shared/i18n';
 import { ruleLegendCopy } from '../../shared/rule-legend';
-import type { RuntimeEvent, RuntimeInteraction } from '../../shared/types';
+import type { AuditorNote, RuntimeEvent, RuntimeInteraction } from '../../shared/types';
 
 export interface FocusArrivalTrace {
   id: string;
@@ -15,7 +15,7 @@ export interface FocusArrivalTrace {
 }
 
 export interface AuditEvidenceBundle {
-  schemaVersion: 1;
+  schemaVersion: 2;
   product: 'FocusTrace';
   generatedAt: string;
   scope: 'recorded-journey';
@@ -64,6 +64,7 @@ export interface AuditEvidenceBundle {
       selector?: string;
       ruleId?: string;
       outcome?: string;
+      auditorNote?: AuditorNote;
     }>;
   }>;
 }
@@ -104,7 +105,7 @@ export function buildAuditEvidenceBundle(input: {
   const { graph, interactions } = input;
   const language = input.language ?? 'en';
   return {
-    schemaVersion: 1,
+    schemaVersion: 2,
     product: 'FocusTrace',
     generatedAt: input.generatedAt ?? new Date().toISOString(),
     scope: 'recorded-journey',
@@ -158,6 +159,7 @@ export function buildAuditEvidenceBundle(input: {
         ...(event.element?.selector ? { selector: event.element.selector } : {}),
         ...(event.ruleId ? { ruleId: event.ruleId } : {}),
         ...(event.outcome ? { outcome: event.outcome } : {}),
+        ...(event.auditorNote ? { auditorNote: event.auditorNote } : {}),
       })),
     })),
   };
@@ -232,6 +234,27 @@ export function renderAuditEvidenceMarkdown(
       `- Selector: ${point.selector}`,
     );
   });
+
+  const annotatedEvents = bundle.interactions.flatMap((interaction) => interaction.events.flatMap((event) =>
+    event.auditorNote ? [{ interaction, event, note: event.auditorNote }] : []));
+  if (annotatedEvents.length) {
+    lines.push('', tr(language, '## Auditor notes', '## Notas del auditor'));
+    annotatedEvents.forEach(({ interaction, event, note }, index) => {
+      lines.push(
+        '',
+        `### ${index + 1}. ${event.title}`,
+        '',
+        tr(language, `Interaction: ${interaction.title}`, `Interacción: ${interaction.title}`),
+        tr(
+          language,
+          `Updated: ${new Date(note.updatedAt).toISOString()}`,
+          `Actualizada: ${new Date(note.updatedAt).toISOString()}`,
+        ),
+        '',
+        ...note.text.split('\n').map((line) => `> ${line}`),
+      );
+    });
+  }
 
   lines.push(
     '',

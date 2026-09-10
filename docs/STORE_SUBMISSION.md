@@ -22,7 +22,7 @@ Run local WCAG 2.2 checks, inspect document structure and debug keyboard focus, 
 
 FocusTrace helps developers investigate web accessibility with local static checks, standards traceability, document-structure inspection and runtime focus debugging.
 
-Analyze a full page or a selected component, inspect deterministic failures and contextual review signals, use Structure to understand the page's semantic organization, then use Trace to understand keyboard focus, SPA transitions, dialogs and dynamic DOM behavior as it happens. Replay and Report keep the recorded evidence understandable, while optional FocusTrace Memory can retain bounded local history and visual context for repeated checks.
+Analyze a full page or a selected component, inspect deterministic failures and contextual review signals, add editable auditor notes, use Structure to understand the page's semantic organization, then use Trace to understand keyboard focus, SPA transitions, dialogs and dynamic DOM behavior as it happens. Replay and Report keep the recorded evidence understandable, while user-controllable FocusTrace Memory retains bounded local history and visual context for repeated checks by default.
 
 FocusTrace separates deterministic failures from contextual review signals, semantic suggestions and authoring warnings. Its Standards Coverage view explains what WCAG 2.2 evidence the product can collect and maps Level A/AA criteria to the corresponding EN 301 549 V4.1.1 clause-9 numbering where applicable. That traceability is not a claim of complete criterion coverage, WCAG conformance, EN 301 549 conformity or certification.
 
@@ -41,11 +41,12 @@ Key capabilities include:
 - conservative runtime review evidence for completely obscured focus, dragging interactions, pointer/keyboard behavior, potentially unexposed status messages and real-keyboard focus visibility;
 - SPA navigation and dialog lifecycle evidence;
 - read-only replay and consolidated reports;
+- editable and removable auditor notes on static findings and Trace events, included in local reports and structured exports;
 - multipage audit history with bounded local visual context for recent reviewed pages;
 - representative same-origin Site Audit sampling, including Consistent Help, Consistent Navigation and Consistent Identification review evidence;
 - actionable English/Spanish remediation guidance for selected static, runtime and Site Audit findings;
 - native English/Spanish WebExtension metadata for extension name, description and toolbar action title;
-- optional local accessibility history through FocusTrace Memory, including bounded element context for remembered failures.
+- default-enabled local accessibility history through FocusTrace Memory, including bounded element context and notes for remembered findings, with a Settings opt-out.
 
 By default, inspected page data is processed locally in the browser. FocusTrace does not require an account or a FocusTrace backend to run its analysis.
 
@@ -59,7 +60,7 @@ Analyze, Structure, Trace, Replay, Report, Site Audit, Memory and the DevTools s
 
 ### `activeTab`
 
-Used to access the current tab after an explicit user action such as Analyze or Trace. FocusTrace does not require permanent access to every website for normal single-page use. The same user-initiated analysis context may also be used for bounded local visual evidence when a full-page review is added to the multipage audit, for a small Memory preview when Memory is explicitly enabled, and for temporary Focus Visible comparison captures during a manually recorded real-Tab Trace.
+Used to access the current tab after an explicit user action such as Analyze or Trace. FocusTrace does not require permanent access to every website for normal single-page use. The same user-initiated analysis context may also be used for bounded local visual evidence when a full-page review is added to the multipage audit, for a small Memory preview while Memory is enabled, and for temporary Focus Visible comparison captures during a manually recorded real-Tab Trace.
 
 ### `scripting`
 
@@ -67,11 +68,11 @@ Used to run the local FocusTrace scanner, generate the bounded Structure snapsho
 
 ### `storage`
 
-Used for extension preferences, per-tab/session state, multipage audit history and optional FocusTrace Memory.
+Used for extension preferences, per-tab/session state, parent-linked auditor notes, multipage audit history and FocusTrace Memory.
 
 A full-page analysis can add or replace one page in the active multipage audit. Audit storage is bounded by audit/page counts, a visual-evidence budget and an overall serialized-size budget. A reviewed page can retain up to three small local visual crops so its audit PDF can preserve context after navigation. When storage pressure requires pruning, older audit history or visual crops are removed before the newest active review.
 
-Memory is disabled by default. When enabled, it can store bounded local diagnostic observations, compact element locators and small compressed visual previews for selected remembered failures. It does not store page HTML, full DOM snapshots or full-page screenshots as Memory history.
+Memory is enabled by default and can be disabled in Settings. While enabled, it can store bounded local diagnostic observations, auditor notes, compact element locators and small compressed visual previews for selected remembered failures. Observations do not expire by age; count/capacity limits replace the oldest evidence. It does not store page HTML, full DOM snapshots or full-page screenshots as Memory history.
 
 A full-page Analyze action prepares the current bounded Structure snapshot in the active FocusTrace session. Structure can also be refreshed explicitly after the page changes. Reports can reuse compact Structure metrics and semantic suggestions; Structure does not persist a parallel DOM tree as report or Memory history.
 
@@ -166,5 +167,5 @@ Before uploading the production ZIP for 0.2.7:
 5. Complete the Firefox 115+ packaged-build smoke, including the optional DevTools permission and native Inspector path, before making a broad Firefox support claim.
 6. Confirm production manifests contain only the intended required and optional permissions and that Firefox `devtools` remains optional.
 7. Confirm the public privacy-policy, support/contact and voluntary-support URLs resolve without authentication.
-8. Review the final store declarations against `PRIVACY.md` and actual behavior, including standards traceability, media/form/keyboard-pointer review evidence, target-geometry evidence, Focus Visible temporary captures, runtime status-message candidates, unified Structure evidence, DevTools DOM selection, bounded multipage-audit visual evidence and opt-in Memory previews/locators.
+8. Review the final store declarations against `PRIVACY.md` and actual behavior, including standards traceability, media/form/keyboard-pointer review evidence, target-geometry evidence, Focus Visible temporary captures, runtime status-message candidates, auditor notes and their exports, unified Structure evidence, DevTools DOM selection, bounded multipage-audit visual evidence and default-enabled Memory notes/previews/locators.
 9. Tag the exact approved commit as `v0.2.7` only after the release candidate is accepted.

@@ -37,11 +37,11 @@ The primary Report action exports the printable/PDF report. **More formats** con
 - Markdown (`.md`) for recorded Trace evidence used in audit notes, tickets and reports;
 - JSON (`.json`) for the same recorded Trace evidence in a structured format.
 
-Markdown and JSON preserve the Focus Graph evidence model: labels, roles, selectors, interactions, runtime signals and standards references. They do not contain screenshots or full DOM snapshots. Moving these actions to Report changes only where the export is initiated, not the evidence they contain.
+Markdown and JSON preserve the Focus Graph evidence model: labels, roles, selectors, interactions, runtime signals, standards references and any auditor notes attached to individual Trace events. They do not contain screenshots or full DOM snapshots. Moving these actions to Report changes only where the export is initiated, not the evidence they contain.
 
 Exports are generated locally and require no upload or FocusTrace server.
 
-The Trace evidence schema starts at `schemaVersion: 1` so future integrations can evolve without silently changing the meaning of existing evidence.
+Trace JSON with auditor notes uses `schemaVersion: 2`. The version change makes the new optional `auditorNote` event field explicit so integrations do not silently reinterpret the version 1 contract.
 
 ## Evidence boundary
 

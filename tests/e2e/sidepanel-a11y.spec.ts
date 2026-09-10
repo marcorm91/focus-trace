@@ -134,6 +134,13 @@ test('settings becomes a focused sub-view and Back restores the workspace', asyn
   const panel = await openSidepanel(context, extensionWorker);
   await panel.getByRole('button', { name: /Open settings|Abrir ajustes/ }).click();
 
+  const memoryPreference = panel.getByRole('checkbox', {
+    name: /Remember accessibility history|Recordar historial de accesibilidad/,
+  });
+  await expect(memoryPreference).toBeChecked();
+  await memoryPreference.uncheck();
+  await expect(memoryPreference).not.toBeChecked();
+
   const spanish = panel.getByRole('radio', { name: /Español/ });
   await spanish.check();
 

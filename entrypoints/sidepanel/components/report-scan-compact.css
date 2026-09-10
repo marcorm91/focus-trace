@@ -238,6 +238,25 @@
   background: var(--ft-surface);
 }
 
+.report-auditor-note {
+  padding: 9px 10px;
+  border-left: 3px solid var(--ft-brand);
+  border-radius: 0 var(--ft-radius-sm) var(--ft-radius-sm) 0;
+  background: var(--ft-brand-soft);
+}
+
+.report-auditor-note strong {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 14px;
+}
+
+.report-auditor-note p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
 @media (max-width: 520px) {
   .report-compact-tabs {
     grid-template-columns: 1fr;

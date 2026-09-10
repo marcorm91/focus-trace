@@ -112,6 +112,11 @@ export interface RuntimeBreakpointHit {
   interactionId?: string;
 }
 
+export interface AuditorNote {
+  text: string;
+  updatedAt: number;
+}
+
 export interface RuntimeEvent {
   id: string;
   timestamp: number;
@@ -133,6 +138,7 @@ export interface RuntimeEvent {
   ruleId?: string;
   references?: StandardReference[];
   focusWalk?: FocusWalkResult;
+  auditorNote?: AuditorNote;
 }
 
 export interface RuntimeInteraction {
@@ -197,6 +203,7 @@ export interface ScanIssue {
   contrast?: ContrastEvidence;
   contrastState?: ContrastStateReviewEvidence;
   references: StandardReference[];
+  auditorNote?: AuditorNote;
 }
 
 export type HeadingSignal = 'empty' | 'level-jump' | 'multiple-h1';
@@ -283,6 +290,19 @@ export interface SaveScanResponse {
   warning?: 'focus-memory-write-failed';
 }
 
+export type AuditorNoteTarget =
+  | { kind: 'scan-finding'; findingId: string }
+  | { kind: 'runtime-event'; eventId: string };
+
+export type AuditorNotePersistenceWarning =
+  | 'focus-memory-write-failed'
+  | 'multipage-audit-write-failed';
+
+export interface SaveAuditorNoteResponse {
+  state: SessionState;
+  warnings?: AuditorNotePersistenceWarning[];
+}
+
 export type ExtensionMessage =
   | { type: 'FOCUSTRACE_EVENT'; event: RuntimeEvent }
   | { type: 'FOCUSTRACE_EVENTS'; events: RuntimeEvent[] }
@@ -292,6 +312,7 @@ export type ExtensionMessage =
   | { type: 'FOCUSTRACE_FLUSH_CONTENT_EVENTS' }
   | { type: 'FOCUSTRACE_CLEAR_SESSION'; tabId: number }
   | { type: 'FOCUSTRACE_DELETE_INTERACTION'; tabId: number; interactionId: string }
+  | { type: 'FOCUSTRACE_SAVE_AUDITOR_NOTE'; tabId: number; target: AuditorNoteTarget; text: string }
   | { type: 'FOCUSTRACE_RESET_TAB'; tabId: number }
   | { type: 'FOCUSTRACE_ENSURE_INJECTED'; tabId: number; mode: RuntimeInjectionMode }
   | { type: 'FOCUSTRACE_SESSION_UPDATED'; state: SessionState }

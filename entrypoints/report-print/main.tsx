@@ -10,6 +10,7 @@ import {
 } from '../../lib/report/component-identity';
 import { guidanceForIssue, reportFindingDescription } from '../../lib/report/finding-guidance';
 import { buildSessionReportModel } from '../../lib/report/session-report';
+import { humanRuntimeEventTitle } from '../../lib/runtime/explanations';
 import { structureHintCopy, structureSummaryLabels } from '../../lib/report/structure-report';
 import {
   readPrintableReportEvidence,
@@ -198,6 +199,12 @@ function Finding({
       )}
       <ContrastEvidence issue={issue} language={language} />
       {copy.evidence && <p className="print-evidence"><strong>{tr(language, 'Evidence:', 'Evidencia:')}</strong> {copy.evidence}</p>}
+      {issue.auditorNote && (
+        <div className="print-auditor-note">
+          <strong>{tr(language, 'Auditor note', 'Nota del auditor')}</strong>
+          <p>{issue.auditorNote.text}</p>
+        </div>
+      )}
       <div className="print-guidance">
         <div>
           <small>{tr(language, 'User impact', 'Impacto para el usuario')}</small>
@@ -280,6 +287,7 @@ function PrintableReport({ report }: { report: LoadedReport }) {
     () => [...scan.issues, ...scan.review, ...(scan.warnings ?? [])],
     [scan],
   );
+  const annotatedRuntimeEvents = session.events.filter((event) => event.auditorNote);
   const findingSeverityCounts = useMemo(() => countBySeverity(staticFindings), [staticFindings]);
   const highPriority = model.suggestions.filter((suggestion) => suggestion.priority === 'high').slice(0, 6);
   const headings = scan.headings ?? [];
@@ -476,6 +484,18 @@ function PrintableReport({ report }: { report: LoadedReport }) {
               })}
             </div>
           ) : <p className="print-empty">{tr(language, 'No runtime trace was recorded for this report.', 'No se ha registrado una traza runtime para este informe.')}</p>}
+          {annotatedRuntimeEvents.length > 0 && (
+            <div className="print-auditor-notes">
+              <h3>{tr(language, 'Auditor notes', 'Notas del auditor')}</h3>
+              {annotatedRuntimeEvents.map((event) => (
+                <article className="print-auditor-note" key={event.id}>
+                  <strong>{humanRuntimeEventTitle(event, language)}</strong>
+                  <small>{event.ruleId ?? event.kind}</small>
+                  <p>{event.auditorNote?.text}</p>
+                </article>
+              ))}
+            </div>
+          )}
         </section>
 
         <section className="print-section" aria-labelledby="scan-title">

@@ -190,6 +190,13 @@ function FindingHistoryItem({
         </span>
       </div>
 
+      {item.lastKnownDetail?.auditorNote && (
+        <div className="focus-memory-auditor-note">
+          <strong>{tr(language, 'Auditor note', 'Nota del auditor')}</strong>
+          <p>{item.lastKnownDetail.auditorNote.text}</p>
+        </div>
+      )}
+
       {item.state === 'resolved' && <LastDetection item={item} language={language} />}
 
       <div className="focus-memory-evidence-table-wrap">
@@ -238,8 +245,8 @@ function FindingHistoryItem({
           <small id={resolveHintId}>
             {tr(
               language,
-              'Removes the detailed local history for this fixed finding, including any saved preview or locator. FocusTrace keeps only a minimal fingerprint so it can identify a future regression.',
-              'Elimina el historial local detallado de este fallo corregido, incluida cualquier vista previa o localizador guardado. FocusTrace conserva solo una huella mínima para identificar una futura regresión.',
+              'Removes the detailed local history for this fixed finding, including any auditor note, saved preview or locator. FocusTrace keeps only a minimal fingerprint so it can identify a future regression.',
+              'Elimina el historial local detallado de este fallo corregido, incluida cualquier nota del auditor, vista previa o localizador guardado. FocusTrace conserva solo una huella mínima para identificar una futura regresión.',
             )}
           </small>
         </div>

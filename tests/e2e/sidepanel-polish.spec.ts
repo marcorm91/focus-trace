@@ -136,6 +136,19 @@ test('sidepanel controls and finding surfaces expose their intended behavior', a
   await expect(scanFinding.locator('.severity-badge')).toBeVisible();
   await expect(scanFinding.locator('.scan-rule-outcome')).toHaveCount(0);
 
+  await scanFinding.locator(':scope > summary').click();
+  const scanNoteEditor = scanFinding.locator('.auditor-note-editor');
+  await scanNoteEditor.getByRole('button', { name: /Add auditor note|Añadir nota del auditor/ }).click();
+  await scanNoteEditor.getByRole('textbox').fill('Confirmed with keyboard.');
+  await scanNoteEditor.getByRole('button', { name: /Save note|Guardar nota/ }).click();
+  await expect(scanNoteEditor.locator('.auditor-note-text')).toHaveText('Confirmed with keyboard.');
+
+  await scanNoteEditor.getByRole('button', { name: /Edit|Editar/ }).click();
+  await scanNoteEditor.getByRole('textbox').fill('Confirmed with keyboard and VoiceOver.');
+  await scanNoteEditor.getByRole('button', { name: /Save note|Guardar nota/ }).click();
+  await expect(scanNoteEditor.locator('.auditor-note-text'))
+    .toHaveText('Confirmed with keyboard and VoiceOver.');
+
   await workspace.getByRole('button', { name: /Report|Informe/ }).click();
 
   const scorelineMetrics = panel.locator('.report-scoreline > div');
@@ -163,6 +176,9 @@ test('sidepanel controls and finding surfaces expose their intended behavior', a
   await expect(reportFinding).not.toHaveAttribute('open', '');
   await expect(reportFinding.locator('.severity-badge')).toBeVisible();
   await expect(reportFinding.locator('.report-rule-outcome')).toHaveCount(0);
+  await reportFinding.locator(':scope > summary').click();
+  await expect(reportFinding.locator('.report-auditor-note'))
+    .toContainText('Confirmed with keyboard and VoiceOver.');
 
   const reportTabsBefore = await reportTabs.evaluate((element) => element.getBoundingClientRect().top + window.scrollY);
   const moreFormats = panel.locator('.report-more-formats');
@@ -172,4 +188,12 @@ test('sidepanel controls and finding surfaces expose their intended behavior', a
   await expect(formatOptions).toHaveCSS('position', 'absolute');
   const reportTabsAfter = await reportTabs.evaluate((element) => element.getBoundingClientRect().top + window.scrollY);
   expect(Math.abs(reportTabsAfter - reportTabsBefore)).toBeLessThan(1);
+
+  await workspace.getByRole('button', { name: /Review|Revisión/ }).click();
+  await scanFinding.locator(':scope > summary').click();
+  await scanFinding.locator('.auditor-note-editor')
+    .getByRole('button', { name: /Remove|Eliminar/ })
+    .click();
+  await expect(scanFinding.locator('.auditor-note-editor'))
+    .toContainText(/Add auditor note|Añadir nota del auditor/);
 });

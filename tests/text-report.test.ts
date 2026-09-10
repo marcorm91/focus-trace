@@ -133,6 +133,35 @@ describe('text session report', () => {
     expect(report).not.toContain('H1: Products');
   });
 
+  it('includes editable static and runtime auditor notes', () => {
+    const annotatedScan: ScanResult = {
+      ...scan,
+      issues: scan.issues.map((issue, index) => index === 0
+        ? { ...issue, auditorNote: { text: 'Verified with VoiceOver\nand keyboard', updatedAt: 10 } }
+        : issue),
+    };
+    const events: RuntimeEvent[] = [{
+      id: 'event-note',
+      timestamp: 20,
+      kind: 'focus',
+      severity: 'info',
+      title: 'Focus moved',
+      auditorNote: { text: 'Unexpected focus destination', updatedAt: 21 },
+    }];
+    const report = buildTextSessionReport({
+      scan: annotatedScan,
+      events,
+      language: 'en',
+      components,
+      generatedAt: 30,
+    });
+
+    expect(report).toContain('Auditor note: Verified with VoiceOver');
+    expect(report).toContain('and keyboard');
+    expect(report).toContain('Auditor notes:');
+    expect(report).toContain('Unexpected focus destination');
+  });
+
   it('includes automatic focus results in the executive summary', () => {
     const events: RuntimeEvent[] = [
       { id: 'start', timestamp: 1, kind: 'focus-walk-start', severity: 'info', title: 'Walk started', focusWalk: { totalCandidates: 1, focusedSteps: 0, skipped: 0, stopped: false } },

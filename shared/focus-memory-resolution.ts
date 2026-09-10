@@ -1,6 +1,5 @@
 import {
   FOCUS_MEMORY_MAX_OBSERVATIONS,
-  FOCUS_MEMORY_RETENTION_DAYS,
   type FocusMemoryComparison,
   type FocusMemoryFindingHistory,
   type FocusMemoryFindingState,
@@ -9,8 +8,6 @@ import {
 
 export const FOCUS_MEMORY_RESOLVED_STORAGE_KEY = 'focustrace:memory-resolved:v1';
 export const FOCUS_MEMORY_MAX_RESOLVED_FINDINGS = FOCUS_MEMORY_MAX_OBSERVATIONS;
-
-const RETENTION_MS = FOCUS_MEMORY_RETENTION_DAYS * 24 * 60 * 60 * 1000;
 
 export interface FocusMemoryResolvedFinding {
   scopeKey: string;
@@ -55,13 +52,11 @@ export function normalizeFocusMemoryResolvedStore(value: unknown): FocusMemoryRe
 
 export function pruneFocusMemoryResolvedFindings(
   findings: FocusMemoryResolvedFinding[],
-  now = Date.now(),
+  _now = Date.now(),
 ): FocusMemoryResolvedFinding[] {
-  const cutoff = now - RETENTION_MS;
   const newestByFinding = new Map<string, FocusMemoryResolvedFinding>();
 
   for (const finding of [...findings].sort((left, right) => right.resolvedAt - left.resolvedAt)) {
-    if (finding.resolvedAt < cutoff) continue;
     const key = `${finding.scopeKey}:${finding.fingerprint}`;
     if (!newestByFinding.has(key)) newestByFinding.set(key, finding);
     if (newestByFinding.size >= FOCUS_MEMORY_MAX_RESOLVED_FINDINGS) break;
@@ -92,6 +87,13 @@ export function archiveResolvedFinding(
       failureFingerprints: observation.failureFingerprints.filter((item) => item !== fingerprint),
       ...(observation.failureDetails
         ? { failureDetails: observation.failureDetails.filter((item) => item.fingerprint !== fingerprint) }
+        : {}),
+      ...(observation.findingNotes
+        ? {
+            findingNotes: observation.findingNotes.filter(
+              (item) => item.outcome !== 'fail' || item.fingerprint !== fingerprint,
+            ),
+          }
         : {}),
     };
   });

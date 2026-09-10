@@ -2,6 +2,24 @@
 
 All notable FocusTrace release changes are summarized here. Detailed release notes remain under `docs/changelog/RELEASE_NOTES_<version>.md`.
 
+## Unreleased
+
+### Added
+
+- Added editable and removable auditor notes to every static finding and Trace event. Notes remain separate from detected evidence and are included in applicable report, PDF, TXT, Markdown and JSON exports.
+- Added parent-linked note synchronization for the current session, saved multipage reviews and existing FocusTrace Memory observations, including portable Memory JSON.
+
+### Changed
+
+- FocusTrace Memory is now enabled by default with an explicit Settings opt-out.
+- Memory observations and compact resolved markers no longer expire by age. Existing per-scope, global and visual-preview capacity limits still replace older evidence to keep storage bounded.
+- Trace evidence JSON now uses `schemaVersion: 2`; Memory baseline JSON uses version 2 while continuing to accept version 1 files.
+
+### Privacy and reliability
+
+- Auditor notes remain local unless the user explicitly exports them. Deleting a note or its retained parent removes the linked local copy; previously exported files are not retroactively changed.
+- Added unit and contract coverage for note normalization, editing/removal, parent lifecycle, local-history synchronization, export formats and default Memory behavior.
+
 ## 0.2.7
 
 ### Added

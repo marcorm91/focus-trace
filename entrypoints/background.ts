@@ -3,7 +3,11 @@ import {
   captureVisibleTabFromSource,
   visibleTabCaptureSource,
 } from '../lib/extension/visible-tab-capture';
-import { recordFocusMemoryScan } from '../lib/focus-memory/storage';
+import {
+  recordFocusMemoryScan,
+  updateFocusMemoryScanNotes,
+} from '../lib/focus-memory/storage';
+import { updateStoredMultipageAuditScan } from '../lib/audit/multipage-audit-storage';
 import { ensureRuntimeScripts } from '../lib/extension/runtime-injection';
 import type { FocusVisibleCaptureMessage } from '../lib/runtime/focus-visible';
 import {
@@ -18,10 +22,13 @@ import {
   updateSessionBreakpoints,
   updateSessionScan,
 } from '../lib/runtime/session-state';
+import { updateSessionAuditorNote } from '../shared/auditor-notes';
 import type {
+  AuditorNotePersistenceWarning,
   ExtensionMessage,
   RuntimeInjectionMode,
   SaveScanResponse,
+  SaveAuditorNoteResponse,
   SessionState,
 } from '../shared/types';
 
@@ -186,6 +193,30 @@ export default defineBackground(() => {
         await saveSession(next);
         await broadcast(next);
         return next;
+      });
+    }
+
+    if (message.type === 'FOCUSTRACE_SAVE_AUDITOR_NOTE') {
+      return serializeTabWrite(message.tabId, async () => {
+        const current = await getSession(message.tabId);
+        const next = updateSessionAuditorNote(current, message.target, message.text);
+        if (next === current) return { state: current } satisfies SaveAuditorNoteResponse;
+
+        await saveSession(next);
+        const warnings: AuditorNotePersistenceWarning[] = [];
+        if (message.target.kind === 'scan-finding' && next.scan) {
+          const results = await Promise.allSettled([
+            updateFocusMemoryScanNotes(next.scan),
+            updateStoredMultipageAuditScan(next.scan),
+          ]);
+          if (results[0]?.status === 'rejected') warnings.push('focus-memory-write-failed');
+          if (results[1]?.status === 'rejected') warnings.push('multipage-audit-write-failed');
+        }
+        await broadcast(next);
+        return {
+          state: next,
+          ...(warnings.length ? { warnings } : {}),
+        } satisfies SaveAuditorNoteResponse;
       });
     }
 

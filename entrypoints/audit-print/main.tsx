@@ -146,6 +146,12 @@ function Finding({
       {copy.evidence && (
         <p className="print-evidence"><strong>{tr(language, 'Evidence:', 'Evidencia:')}</strong> {copy.evidence}</p>
       )}
+      {issue.auditorNote && (
+        <div className="print-auditor-note">
+          <strong>{tr(language, 'Auditor note', 'Nota del auditor')}</strong>
+          <p>{issue.auditorNote.text}</p>
+        </div>
+      )}
       {visual && (
         <figure className={`print-visual-evidence tone-${visual.tone}`}>
           <img
