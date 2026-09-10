@@ -246,6 +246,7 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 - Clear saved Memory history from Settings and confirm both observation history and resolved markers are removed.
 - Inspect extension storage during the smoke test and confirm Memory does not persist full-page screenshots, page HTML or full DOM snapshots.
 - Seed an observation older than 90 days and confirm it remains available; then exercise count limits and confirm the oldest retained evidence is replaced only because of capacity.
+- In a disposable clean browser profile, export a Memory JSON containing an attached note, uninstall FocusTrace, reinstall it and confirm local Memory/preferences/audit history start empty; then import the exported JSON and confirm the supported Memory observation and note are restored.
 
 ## Auditor-note smoke
 

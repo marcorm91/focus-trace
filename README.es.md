@@ -343,7 +343,7 @@ El muestreo es evidencia representativa: no demuestra que todas las URLs sean id
 
 ### FocusTrace Memory
 
-Memory está **activado por defecto** y puede desactivarse desde Ajustes. No caduca por antigüedad; los límites de capacidad siguen sustituyendo la evidencia conservada más antigua para mantener acotado el almacenamiento del navegador.
+Memory está **activado por defecto** y puede desactivarse desde Ajustes. No caduca por antigüedad mientras FocusTrace siga instalada; los límites de capacidad siguen sustituyendo la evidencia conservada más antigua para mantener acotado el almacenamiento del navegador. Al desinstalar FocusTrace, el navegador elimina automáticamente su almacenamiento de extensión. Exporta antes el JSON portable de Memory si quieres reutilizar el historial o sus notas después de reinstalarla o en otro perfil del navegador.
 
 | Capacidad | Comportamiento |
 | --- | --- |
@@ -357,6 +357,7 @@ Memory está **activado por defecto** y puede desactivarse desde Ajustes. No cad
 | **Fallback** | Si no puede capturar, conserva el localizador compacto. |
 | **Notas del auditor** | Conserva las notas ligadas a hallazgos estáticos recordados y las incluye en el JSON portable de Memory. |
 | **Borrado** | El historial puede borrarse desde Ajustes incluso con Memory desactivado. |
+| **Ciclo de desinstalación** | El navegador elimina automáticamente Memory, notas, preferencias e historial de auditoría local al desinstalar FocusTrace; los archivos ya exportados permanecen fuera del almacenamiento de la extensión. |
 
 | Límite actual | Valor |
 | --- | ---: |

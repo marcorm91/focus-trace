@@ -18,6 +18,7 @@ All notable FocusTrace release changes are summarized here. Detailed release not
 ### Privacy and reliability
 
 - Auditor notes remain local unless the user explicitly exports them. Deleting a note or its retained parent removes the linked local copy; previously exported files are not retroactively changed.
+- Clarified that browser-managed extension storage persists only while FocusTrace remains installed: uninstall removes local Memory, notes, preferences and saved audits automatically, while previously exported files remain available for later import where supported.
 - Added unit and contract coverage for note normalization, editing/removal, parent lifecycle, local-history synchronization, export formats and default Memory behavior.
 
 ## 0.2.7

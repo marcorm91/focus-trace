@@ -343,7 +343,7 @@ Sampling is representative evidence: it does not prove every URL is identical an
 
 ### FocusTrace Memory
 
-Memory is **enabled by default** and can be disabled from Settings. It has no time-based expiry; capacity limits still replace the oldest retained evidence so browser storage remains bounded.
+Memory is **enabled by default** and can be disabled from Settings. It has no time-based expiry while FocusTrace remains installed; capacity limits still replace the oldest retained evidence so browser storage remains bounded. Uninstalling FocusTrace causes the browser to delete its extension storage automatically. Export the portable Memory JSON before uninstalling if the history or attached notes should be reused after a reinstall or in another browser profile.
 
 | Capability | Behavior |
 | --- | --- |
@@ -357,6 +357,7 @@ Memory is **enabled by default** and can be disabled from Settings. It has no ti
 | **Fallback** | If capture fails, keeps the compact locator instead. |
 | **Auditor notes** | Keeps notes attached to remembered static findings and includes them in portable Memory JSON. |
 | **Clear history** | Saved history can be removed from Settings even while Memory is disabled. |
+| **Uninstall lifecycle** | The browser automatically removes local Memory, notes, preferences and saved audit history when FocusTrace is uninstalled; exported files remain outside extension storage. |
 
 | Current limit | Value |
 | --- | ---: |

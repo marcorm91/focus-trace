@@ -74,6 +74,8 @@ A full-page analysis can add or replace one page in the active multipage audit. 
 
 Memory is enabled by default and can be disabled in Settings. While enabled, it can store bounded local diagnostic observations, auditor notes, compact element locators and small compressed visual previews for selected remembered failures. Observations do not expire by age; count/capacity limits replace the oldest evidence. It does not store page HTML, full DOM snapshots or full-page screenshots as Memory history.
 
+Browser-managed extension storage persists only while FocusTrace remains installed in the current profile. Uninstalling FocusTrace automatically removes its local Memory, notes, preferences and saved audit history. Reinstallation starts with empty extension storage unless the user explicitly exported portable Memory JSON before uninstalling and imports it afterwards; exported files themselves remain outside extension storage.
+
 A full-page Analyze action prepares the current bounded Structure snapshot in the active FocusTrace session. Structure can also be refreshed explicitly after the page changes. Reports can reuse compact Structure metrics and semantic suggestions; Structure does not persist a parallel DOM tree as report or Memory history.
 
 Temporary Focus Visible PNG captures are decoded and compared in memory only. They are not written to session storage, FocusTrace Memory, reports or exports.
@@ -122,7 +124,7 @@ During an active manual Trace, a trusted real Tab/Shift+Tab transition can cause
 
 Multipage audits keep the latest saved full-page analysis for each normalized URL and may retain bounded local screenshot crops for recent reviews. Re-analyzing the same normalized URL replaces its prior scan and its saved audit visual evidence. Historical Trace and Structure snapshots are not persisted as part of a historical page review.
 
-If the user explicitly enables FocusTrace Memory, bounded local history may include hashed finding/scope identities, generic rule identifiers, counts, timestamps, compact element locators and a limited number of small local visual previews. These values remain in the browser profile unless the user exports or otherwise shares data outside FocusTrace.
+While FocusTrace Memory is enabled, bounded local history may include hashed finding/scope identities, generic rule identifiers, counts, timestamps, attached auditor notes, compact element locators and a limited number of small local visual previews. These values remain in extension storage within the current browser profile until FocusTrace prunes them for capacity, the user clears them or the browser removes them automatically when FocusTrace is uninstalled. Exporting or otherwise sharing a file copies selected data outside FocusTrace and does not remove the local original.
 
 The default product is local-first. The submission declarations must remain consistent with `PRIVACY.md`; do not claim that FocusTrace accesses no website data, because inspecting the selected page is fundamental to the product.
 

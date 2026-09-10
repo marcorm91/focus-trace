@@ -91,6 +91,12 @@ After a user has disabled Memory, enabling it again establishes a new recording 
 
 Memory comparisons are diagnostic history, not a WCAG conformance claim. A previously recorded deterministic failure that is no longer reproduced can be reported as a historical change, but absence from a later scan does not by itself prove that the whole page or component conforms to WCAG.
 
+## Extension removal and local storage
+
+FocusTrace uses browser-managed extension storage rather than a remote FocusTrace account or backend. Data in local extension storage, including Memory, attached notes, preferences and saved multipage audits, can persist across browser restarts and extension updates, but only while FocusTrace remains installed in that browser profile. Session storage is shorter-lived and is cleared by browser lifecycle events such as disabling, reloading or updating the extension and restarting the browser.
+
+When FocusTrace is uninstalled, the supported browser automatically removes the extension's associated local and session storage. Reinstalling therefore starts without the previous local Memory or notes. Files that the user explicitly exported are outside extension storage and are not deleted by uninstalling the extension. Users who want to reuse remembered static findings and their notes after reinstalling or in another profile should export the portable Memory JSON before uninstalling.
+
 ## Visual evidence
 
 FocusTrace has four local visual-evidence flows:

@@ -58,7 +58,7 @@ It can identify:
 - regressions;
 - other material scan changes.
 
-Memory is bounded, local and has no time-based expiry; capacity limits replace the oldest retained evidence. It must never infer that repeated behavior is correct merely because it has been seen before.
+Memory is bounded, local and has no time-based expiry while FocusTrace remains installed; capacity limits replace the oldest retained evidence. Uninstalling FocusTrace causes the browser to remove its extension-owned storage, so cross-installation reuse requires an explicit JSON export before uninstall and import afterwards. It must never infer that repeated behavior is correct merely because it has been seen before.
 
 Runtime behavioral memory is intentionally a later step. It should be built on explicit Interaction Contracts rather than learning repeated behavior as truth.
 
