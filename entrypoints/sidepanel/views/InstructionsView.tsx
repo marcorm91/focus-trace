@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { focusMemorySettingsState } from '../../../lib/focus-memory/storage';
+import { DEFAULT_FOCUS_MEMORY_SETTINGS } from '../../../shared/focus-memory';
 import { tr, type AppLanguage } from '../../../shared/i18n';
 import { ruleLegendCopy } from '../../../shared/rule-legend';
 import { StandardsCoverageMatrix } from '../components/StandardsCoverageMatrix';
@@ -25,7 +26,7 @@ function InstructionCard({
 
 export function InstructionsView({ language }: { language: AppLanguage }) {
   const legend = ruleLegendCopy(language);
-  const [memoryEnabled, setMemoryEnabled] = useState(false);
+  const [memoryEnabled, setMemoryEnabled] = useState(DEFAULT_FOCUS_MEMORY_SETTINGS.enabled);
 
   useEffect(() => {
     let cancelled = false;
@@ -93,6 +94,7 @@ export function InstructionsView({ language }: { language: AppLanguage }) {
             <li>{tr(language, 'Reviews need human context before they should be treated as an accessibility failure.', 'Las revisiones necesitan contexto humano antes de tratarse como un fallo de accesibilidad.')}</li>
             <li>{tr(language, 'Warnings highlight risky HTML/ARIA authoring without automatically claiming a WCAG failure.', 'Los avisos señalan riesgos de autoría HTML/ARIA sin afirmar automáticamente un fallo WCAG.')}</li>
             <li>{tr(language, 'Use the affected-element actions to highlight a finding on the page or, from FocusTrace in DevTools, reveal its exact DOM node in the browser inspector.', 'Usa las acciones del elemento afectado para destacar un hallazgo en la página o, desde FocusTrace en DevTools, revelar su nodo DOM exacto en el inspector del navegador.')}</li>
+            <li>{tr(language, 'Add, edit or remove an auditor note when human testing adds context. The note never changes the detected outcome or severity.', 'Añade, edita o elimina una nota del auditor cuando las pruebas humanas aporten contexto. La nota nunca cambia el resultado detectado ni su gravedad.')}</li>
           </ul>
         </InstructionCard>
 
@@ -145,6 +147,7 @@ export function InstructionsView({ language }: { language: AppLanguage }) {
             <li>{tr(language, 'Journey and Graph help explain where focus moved and how controls were connected during the session.', 'Recorrido y Grafo ayudan a explicar dónde se movió el foco y cómo se relacionaron los controles durante la sesión.')}</li>
             <li>{tr(language, 'Accessibility breakpoints can pause FocusTrace recording after selected deterministic runtime conditions are captured.', 'Los breakpoints de accesibilidad pueden pausar la grabación de FocusTrace después de capturar determinadas condiciones runtime deterministas.')}</li>
             <li>{tr(language, 'After stopping a manual Trace, you can remove a mistaken interaction. FocusTrace removes that action and all correlated runtime evidence, then recalculates Replay, Journey, Graph and Report.', 'Después de detener un Trace manual puedes eliminar una interacción realizada por error. FocusTrace elimina esa acción y toda la evidencia runtime correlacionada, y recalcula Replay, Recorrido, Grafo e Informe.')}</li>
+            <li>{tr(language, 'Every event can carry an editable auditor note. Removing the parent interaction also removes its event notes.', 'Cada evento puede incluir una nota del auditor editable. Al eliminar la interacción padre también se eliminan las notas de sus eventos.')}</li>
           </ul>
         </InstructionCard>
 
@@ -161,13 +164,15 @@ export function InstructionsView({ language }: { language: AppLanguage }) {
         <InstructionCard title={tr(language, 'Report', 'Informe')}>
           <p>{tr(language, 'Combine static findings and runtime stories in a shareable review. Reports include the evidence FocusTrace recorded, not only a score or summary count.', 'Combina hallazgos estáticos e historias runtime en una revisión compartible. Los informes incluyen la evidencia registrada por FocusTrace, no solo una puntuación o un contador.')}</p>
           <p>{tr(language, 'The rule legend is included near the beginning of PDF, TXT and Markdown exports so identifiers can be interpreted without opening Instructions separately.', 'La leyenda de reglas se incluye al principio de las exportaciones PDF, TXT y Markdown para poder interpretar los identificadores sin tener que abrir Instrucciones aparte.')}</p>
+          <p>{tr(language, 'Auditor notes are included in applicable reports and JSON/Markdown exports. Review them before sharing; an exported file is not changed if its local note is edited or removed later.', 'Las notas del auditor se incluyen en los informes y exportaciones JSON/Markdown aplicables. Revísalas antes de compartir; un archivo exportado no cambia si después editas o eliminas la nota local.')}</p>
           <p>{tr(language, 'A full-page analysis can keep a bounded local visual crop for the multipage audit so its historical PDF retains context after navigation. Re-analyzing the same page replaces that saved audit evidence.', 'Un análisis de página completa puede conservar un recorte visual local y limitado para la auditoría multipágina, de modo que su PDF histórico mantenga contexto después de navegar. Al volver a analizar la misma página se sustituye esa evidencia guardada.')}</p>
           <p>{tr(language, 'Single-page printable visual evidence remains optional and is created only when you explicitly include it while exporting that report. Review screenshots before sharing any PDF.', 'La evidencia visual del PDF de una sola página sigue siendo opcional y solo se crea cuando la incluyes expresamente al exportar ese informe. Revisa las capturas antes de compartir cualquier PDF.')}</p>
         </InstructionCard>
 
         <InstructionCard title="FocusTrace Memory">
-          <p>{tr(language, 'Memory is optional and disabled by default. When enabled in Settings, it keeps bounded local scan history so page or component findings can be compared over time.', 'Memory es opcional y está desactivado por defecto. Al activarlo en Ajustes, conserva un historial local limitado para comparar con el tiempo los hallazgos de una página o componente.')}</p>
+          <p>{tr(language, 'Memory is enabled by default and can be disabled in Settings. It keeps bounded local scan history without a time-based expiry so page or component findings can be compared over time.', 'Memory está activado por defecto y se puede desactivar en Ajustes. Conserva un historial local limitado y sin caducidad temporal para comparar con el tiempo los hallazgos de una página o componente.')}</p>
           <p>{tr(language, 'Use it to identify persistent findings, changes, issues that are no longer reproduced and regressions. Memory history is diagnostic and does not prove WCAG conformance.', 'Úsalo para identificar hallazgos persistentes, cambios, problemas que ya no se reproducen y regresiones. El historial de Memory es diagnóstico y no demuestra conformidad WCAG.')}</p>
+          <p>{tr(language, 'Memory has no time-based expiry within its capacity limits and includes static-finding notes in its portable JSON. Settings can disable future observations or clear saved history.', 'Memory no caduca por antigüedad dentro de sus límites de capacidad e incluye las notas de hallazgos estáticos en su JSON portable. Desde Ajustes se pueden desactivar futuras observaciones o borrar el historial guardado.')}</p>
           {memoryEnabled && (
             <p className="instructions-memory-evidence-note">
               <strong>{tr(language, 'Local visual evidence:', 'Evidencia visual local:')}</strong>{' '}

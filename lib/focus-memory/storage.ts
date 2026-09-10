@@ -7,6 +7,7 @@ import {
   normalizeFocusMemoryStore,
   pruneFocusMemoryObservations,
   recordFocusMemoryObservation,
+  updateFocusMemoryObservationNotes,
   type FocusMemoryComparison,
   type FocusMemoryFindingHistory,
   type FocusMemorySettings,
@@ -125,6 +126,17 @@ export function recordFocusMemoryScan(
     );
     await browser.storage.local.set({ [FOCUS_MEMORY_STORAGE_KEY]: result.store });
     return resolved.comparison;
+  });
+}
+
+export function updateFocusMemoryScanNotes(scan: ScanResult): Promise<boolean> {
+  return serializeMemoryAccess(async () => {
+    const { store } = await loadMemoryStorage();
+    const observationId = `${focusMemoryScopeKey(scan)}:${scan.scannedAt}`;
+    if (!store.observations.some((observation) => observation.id === observationId)) return false;
+    const next = updateFocusMemoryObservationNotes(store, scan);
+    await browser.storage.local.set({ [FOCUS_MEMORY_STORAGE_KEY]: next });
+    return true;
   });
 }
 

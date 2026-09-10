@@ -1,0 +1,100 @@
+.auditor-note-editor {
+  display: grid;
+  gap: 8px;
+  margin-top: 12px;
+  padding: 10px;
+  border: 1px solid color-mix(in srgb, var(--ft-brand, Highlight) 28%, var(--ft-border, ButtonBorder));
+  border-radius: 8px;
+  background: color-mix(in srgb, var(--ft-brand, Highlight) 4%, var(--ft-surface, Canvas));
+}
+
+.auditor-note-editor.is-empty {
+  display: block;
+  padding: 0;
+  border: 0;
+  background: transparent;
+}
+
+.auditor-note-editor button {
+  min-height: 32px;
+  border: 1px solid var(--ft-border, ButtonBorder);
+  border-radius: 7px;
+  padding: 5px 9px;
+  background: var(--ft-surface, ButtonFace);
+  color: inherit;
+  cursor: pointer;
+  font-size: 14px;
+}
+
+.auditor-note-editor button.primary {
+  border-color: var(--ft-brand, Highlight);
+  background: var(--ft-brand, Highlight);
+  color: #fff;
+  font-weight: 700;
+}
+
+.auditor-note-editor button.danger {
+  color: var(--ft-danger, #b3261e);
+}
+
+.auditor-note-editor button:disabled {
+  cursor: not-allowed;
+  opacity: .55;
+}
+
+.auditor-note-heading,
+.auditor-note-heading > div,
+.auditor-note-form-footer,
+.auditor-note-form-footer > div {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 7px;
+}
+
+.auditor-note-heading > strong {
+  font-size: 14px;
+}
+
+.auditor-note-form,
+.auditor-note-form label {
+  display: grid;
+  gap: 7px;
+}
+
+.auditor-note-form label > span,
+.auditor-note-form-footer small {
+  color: var(--ft-muted, GrayText);
+  font-size: 14px;
+  line-height: 1.4;
+}
+
+.auditor-note-form textarea {
+  width: 100%;
+  min-height: 92px;
+  resize: vertical;
+  border: 1px solid var(--ft-border, ButtonBorder);
+  border-radius: 7px;
+  padding: 8px;
+  background: var(--ft-surface, Canvas);
+  color: inherit;
+  line-height: 1.45;
+}
+
+.auditor-note-form textarea:focus-visible {
+  outline: 3px solid #786ff0;
+  outline-offset: 2px;
+}
+
+.auditor-note-text {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 14px;
+}
+
+.auditor-note-error {
+  margin: 0;
+  color: var(--ft-danger, #b3261e);
+  font-size: 14px;
+}

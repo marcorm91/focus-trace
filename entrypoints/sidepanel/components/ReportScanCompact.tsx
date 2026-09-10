@@ -96,6 +96,13 @@ function ReportRuleAccordion({
         )}
         {copy.evidence && <p className="report-rule-evidence">{copy.evidence}</p>}
 
+        {issue.auditorNote && (
+          <div className="report-auditor-note">
+            <strong>{tr(language, 'Auditor note', 'Nota del auditor')}</strong>
+            <p>{issue.auditorNote.text}</p>
+          </div>
+        )}
+
         {target && (
           <div className="report-rule-target">
             <code title={target}>{target}</code>

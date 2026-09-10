@@ -4,11 +4,11 @@ import {
   DEFAULT_FOCUS_MEMORY_SETTINGS,
   FOCUS_MEMORY_MAX_OBSERVATIONS,
   FOCUS_MEMORY_MAX_PER_SCOPE,
-  FOCUS_MEMORY_RETENTION_DAYS,
   focusMemoryScopeKey,
   normalizeFocusMemorySettings,
   pruneFocusMemoryObservations,
   recordFocusMemoryObservation,
+  updateFocusMemoryObservationNotes,
   type FocusMemoryStore,
 } from '../shared/focus-memory';
 import type { ScanIssue, ScanResult } from '../shared/types';
@@ -91,9 +91,9 @@ function componentScan(scannedAt: number, url: string, selector: string): ScanRe
 }
 
 describe('FocusTrace Memory', () => {
-  it('is opt-in and disabled when no preference exists', () => {
-    expect(DEFAULT_FOCUS_MEMORY_SETTINGS.enabled).toBe(false);
-    expect(normalizeFocusMemorySettings(undefined).enabled).toBe(false);
+  it('is enabled by default while preserving an explicit opt-out', () => {
+    expect(DEFAULT_FOCUS_MEMORY_SETTINGS.enabled).toBe(true);
+    expect(normalizeFocusMemorySettings(undefined).enabled).toBe(true);
     expect(normalizeFocusMemorySettings({ enabled: false }).enabled).toBe(false);
     expect(normalizeFocusMemorySettings({ enabled: true }).enabled).toBe(true);
   });
@@ -344,7 +344,7 @@ describe('FocusTrace Memory', () => {
     expect(second.history.every((item) => item.state === 'present')).toBe(true);
   });
 
-  it('caps history per scope, globally and by age', () => {
+  it('caps history per scope and globally without expiring it by age', () => {
     let store: FocusMemoryStore | undefined;
     for (let index = 1; index <= FOCUS_MEMORY_MAX_PER_SCOPE + 4; index += 1) {
       const next = recordFocusMemoryObservation(
@@ -367,9 +367,59 @@ describe('FocusTrace Memory', () => {
     }
     expect(store?.observations).toHaveLength(FOCUS_MEMORY_MAX_OBSERVATIONS);
 
-    const now = FOCUS_MEMORY_RETENTION_DAYS * 24 * 60 * 60 * 1_000 + 5_000;
+    const now = 20 * 365 * 24 * 60 * 60 * 1_000;
     const recent = buildFocusMemoryObservation(scan({ scannedAt: now - 1_000 }));
-    const expired = buildFocusMemoryObservation(scan({ scannedAt: 1_000, url: 'https://old.example.test/page' }));
-    expect(pruneFocusMemoryObservations([expired, recent], now)).toEqual([recent]);
+    const old = buildFocusMemoryObservation(scan({ scannedAt: 1_000, url: 'https://old.example.test/page' }));
+    expect(pruneFocusMemoryObservations([old, recent], now)).toEqual([recent, old]);
+
+    const input = [old, recent];
+    pruneFocusMemoryObservations(input, now);
+    expect(input).toEqual([old, recent]);
+  });
+
+  it('persists notes for every finding outcome and edits them without losing visual evidence', () => {
+    const failureWithNote = {
+      ...failure('FT-WCAG-003', '#save'),
+      auditorNote: { text: 'Confirmed failure', updatedAt: 10 },
+    };
+    const reviewWithNote = {
+      ...failure('FT-WCAG-020', '#menu'),
+      outcome: 'review' as const,
+      auditorNote: { text: 'Needs screen reader review', updatedAt: 11 },
+    };
+    const warningWithNote = {
+      ...failure('FT-WCAG-021', 'html'),
+      outcome: 'warning' as const,
+      auditorNote: { text: 'Copy team notified', updatedAt: 12 },
+    };
+    const initialScan = {
+      ...scan({ scannedAt: 1_000, failures: [failureWithNote] }),
+      review: [reviewWithNote],
+      warnings: [warningWithNote],
+    };
+    const recorded = recordFocusMemoryObservation(undefined, initialScan, 1_000, [{
+      issueIndex: 0,
+      locator: '#save',
+      dataUrl: 'data:image/png;base64,preview',
+      capturedAt: 1_000,
+    }]);
+
+    expect(recorded.store.observations[0]?.findingNotes).toHaveLength(3);
+    expect(recorded.store.observations[0]?.failureDetails?.[0]?.auditorNote?.text).toBe('Confirmed failure');
+
+    const editedScan = {
+      ...initialScan,
+      issues: [{
+        ...failureWithNote,
+        auditorNote: { text: 'Edited after retest', updatedAt: 20 },
+      }],
+    };
+    const updated = updateFocusMemoryObservationNotes(recorded.store, editedScan);
+    expect(updated.observations[0]?.failureDetails?.[0]).toMatchObject({
+      previewDataUrl: 'data:image/png;base64,preview',
+      auditorNote: { text: 'Edited after retest', updatedAt: 20 },
+    });
+    expect(updated.observations[0]?.findingNotes?.map((item) => item.outcome).sort())
+      .toEqual(['fail', 'review', 'warning']);
   });
 });

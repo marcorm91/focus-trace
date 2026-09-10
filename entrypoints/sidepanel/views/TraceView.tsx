@@ -66,6 +66,7 @@ export function TraceView({
   onClearSelection,
   onBreakpointChange,
   onDeleteInteraction,
+  onSaveAuditorNote,
 }: {
   journey: FocusJourney;
   graph: FocusGraph;
@@ -87,6 +88,7 @@ export function TraceView({
   onClearSelection: () => void | Promise<void>;
   onBreakpointChange: (breakpointId: RuntimeBreakpointId, enabled: boolean) => void | Promise<void>;
   onDeleteInteraction: (interactionId: string) => void | Promise<void>;
+  onSaveAuditorNote: (eventId: string, text: string) => void | Promise<void>;
 }) {
   const [mode, setMode] = useState<TraceMode>('journey');
   const [resetDialogOpen, setResetDialogOpen] = useState(false);
@@ -529,6 +531,7 @@ export function TraceView({
               pausedByBreakpoint={pausedByBreakpoint}
               onBreakpointChange={onBreakpointChange}
               onDeleteInteraction={onDeleteInteraction}
+              onSaveAuditorNote={onSaveAuditorNote}
               level={level}
               language={language}
             />

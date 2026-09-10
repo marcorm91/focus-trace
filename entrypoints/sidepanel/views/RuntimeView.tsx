@@ -18,6 +18,7 @@ import type {
   RuntimeInteraction,
 } from '../../../shared/types';
 import { ActionableRemediation } from '../components/ActionableRemediation';
+import { AuditorNoteEditor } from '../components/AuditorNoteEditor';
 import { Empty, ReferenceList, timeLabel } from '../components/Common';
 
 export function RuntimeView({
@@ -28,6 +29,7 @@ export function RuntimeView({
   pausedByBreakpoint,
   onBreakpointChange,
   onDeleteInteraction,
+  onSaveAuditorNote,
   level,
   language,
 }: {
@@ -38,6 +40,7 @@ export function RuntimeView({
   pausedByBreakpoint?: RuntimeBreakpointHit | undefined;
   onBreakpointChange: (breakpointId: RuntimeBreakpointId, enabled: boolean) => void | Promise<void>;
   onDeleteInteraction: (interactionId: string) => void | Promise<void>;
+  onSaveAuditorNote: (eventId: string, text: string) => void | Promise<void>;
   level: ExplanationLevel;
   language: AppLanguage;
 }) {
@@ -211,6 +214,7 @@ export function RuntimeView({
           deletableIds={deletableIds}
           recording={recording}
           onRequestDelete={setPendingDelete}
+          onSaveAuditorNote={onSaveAuditorNote}
           level={level}
           language={language}
         />
@@ -224,6 +228,7 @@ function RuntimeInteractionList({
   deletableIds,
   recording,
   onRequestDelete,
+  onSaveAuditorNote,
   level,
   language,
 }: {
@@ -231,6 +236,7 @@ function RuntimeInteractionList({
   deletableIds: Set<string>;
   recording: boolean;
   onRequestDelete: (interaction: RuntimeInteraction) => void;
+  onSaveAuditorNote: (eventId: string, text: string) => void | Promise<void>;
   level: ExplanationLevel;
   language: AppLanguage;
 }) {
@@ -337,7 +343,13 @@ function RuntimeInteractionList({
 
               <ol className="causal-chain">
                 {interaction.events.map((event) => (
-                  <RuntimeEventRow event={event} level={level} language={language} key={event.id} />
+                  <RuntimeEventRow
+                    event={event}
+                    level={level}
+                    language={language}
+                    onSaveAuditorNote={onSaveAuditorNote}
+                    key={event.id}
+                  />
                 ))}
               </ol>
             </details>
@@ -352,10 +364,12 @@ function RuntimeEventRow({
   event,
   level,
   language,
+  onSaveAuditorNote,
 }: {
   event: RuntimeEvent;
   level: ExplanationLevel;
   language: AppLanguage;
+  onSaveAuditorNote: (eventId: string, text: string) => void | Promise<void>;
 }) {
   const title = humanRuntimeEventTitle(event, language);
   const detail = humanRuntimeEventDetail(event, language);
@@ -385,6 +399,11 @@ function RuntimeEventRow({
         {level === 'developer' && event.element && <code>{event.element.selector}</code>}
         {level === 'developer' && event.fromUrl && event.toUrl && <p className="route">{event.fromUrl} → {event.toUrl}</p>}
         {level !== 'simple' && <ReferenceList references={event.references} language={language} />}
+        <AuditorNoteEditor
+          note={event.auditorNote}
+          language={language}
+          onSave={(text) => onSaveAuditorNote(event.id, text)}
+        />
       </div>
     </li>
   );

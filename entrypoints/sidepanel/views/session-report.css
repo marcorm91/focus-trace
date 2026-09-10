@@ -414,3 +414,40 @@
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
+.report-auditor-notes {
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid color-mix(in srgb, var(--ft-brand) 30%, var(--ft-border));
+  border-radius: var(--ft-radius-md);
+  background: var(--ft-brand-soft);
+}
+
+.report-auditor-notes h4 {
+  margin: 0 0 8px;
+}
+
+.report-auditor-notes ol {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-left: 22px;
+}
+
+.report-auditor-notes li {
+  padding-left: 3px;
+}
+
+.report-auditor-notes li > strong,
+.report-auditor-notes li > small {
+  display: block;
+}
+
+.report-auditor-notes li > small {
+  color: var(--ft-muted);
+}
+
+.report-auditor-notes li > p {
+  margin: 4px 0 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}

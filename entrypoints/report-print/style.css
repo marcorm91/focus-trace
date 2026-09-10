@@ -128,6 +128,12 @@ button { font: inherit; }
 .print-references { display: flex; flex-wrap: wrap; gap: 5px; }
 .print-references a { padding: 3px 6px; border: 1px solid #dcdaf8; border-radius: 999px; background: #f7f6ff; font-size: 9px; font-weight: 800; text-decoration: none; }
 .print-evidence { padding: 7px 9px; border-left: 3px solid #c8ceda; background: #fafbfc; }
+.print-auditor-note { margin: 10px 0; padding: 9px 10px; border-left: 3px solid #4f46e5; background: #f3f2ff; }
+.print-auditor-note strong { display: block; margin-bottom: 3px; font-size: 12px; text-transform: uppercase; letter-spacing: .04em; }
+.print-auditor-note p { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; }
+.print-auditor-note small { display: block; margin: 2px 0 5px; color: #5f6673; }
+.print-auditor-notes { margin-top: 14px; }
+.print-auditor-notes > h3 { margin-bottom: 6px; }
 
 .print-contrast { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 6px; padding: 8px; border-radius: 8px; background: #f7f9fb; }
 .print-contrast > div { min-width: 0; display: grid; align-content: start; gap: 2px; }
@@ -180,4 +186,3 @@ button { font: inherit; }
   a { color: #2f2a8f; }
   * { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
 }
-

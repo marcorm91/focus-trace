@@ -31,11 +31,12 @@ describe('FocusTrace Memory wiring contract', () => {
     expect(settings).toContain('disabled={!ready || !hasHistory}');
   });
 
-  it('documents local previews and selector fallback only when Memory is enabled in Instructions', () => {
+  it('documents default-on Memory and local previews only while it remains enabled', () => {
     const instructions = source('entrypoints/sidepanel/views/InstructionsView.tsx');
     const settings = source('entrypoints/sidepanel/components/FocusMemorySettings.tsx');
 
-    expect(instructions).toContain('const [memoryEnabled, setMemoryEnabled] = useState(false);');
+    expect(instructions).toContain('const [memoryEnabled, setMemoryEnabled] = useState(DEFAULT_FOCUS_MEMORY_SETTINGS.enabled);');
+    expect(instructions).toContain('Memory is enabled by default and can be disabled in Settings.');
     expect(instructions).toContain('{memoryEnabled && (');
     expect(instructions).toContain("'Local visual evidence:', 'Evidencia visual local:'");
     expect(instructions).toContain('CSS selector');

@@ -55,9 +55,10 @@ FocusTrace utiliza WCAG 2.2 como fuente de conformidad. Los criterios WCAG 2.2 t
 | **Grafo / Graph** | Sesión Trace | Representa conexiones observadas entre destinos de foco. | Grafo de navegación observada. |
 | **Breakpoints de accesibilidad** | Trace | Puede pausar la grabación al capturar determinadas causas runtime. | Punto de parada asociado a evidencia determinista. |
 | **Site Audit** | Sitio del mismo origen | Descubre, agrupa y muestrea páginas representativas y ejecuta el scanner real. | Hallazgos por página, familia y plantilla. |
-| **FocusTrace Memory** | Análisis repetidos, opt-in | Mantiene historial local limitado para comparar persistencia, cambios, resoluciones y regresiones. | Observaciones, localizador y vista previa opcional. |
+| **Notas del auditor** | Cualquier hallazgo estático o evento de Trace | Añade contexto humano editable y eliminable sin cambiar el resultado detectado ni su gravedad. | Nota local ligada al elemento padre e incluida en informes y exportaciones JSON. |
+| **FocusTrace Memory** | Análisis repetidos, activado por defecto | Mantiene historial local limitado y sin caducidad temporal para comparar persistencia, cambios, resoluciones y regresiones. | Observaciones, notas del auditor, localizador y vista previa opcional. |
 | **Informe** | Evidencia estática/runtime disponible | Consolida análisis, historias runtime y Estructura ya generada. | Vista de informe y exportaciones. |
-| **PDF / TXT / Markdown** | Informe actual | Exporta evidencia reutilizando los datos disponibles sin volver a recorrer silenciosamente todo el DOM. | Artefactos compartibles. |
+| **PDF / TXT / Markdown / JSON** | Informe actual o línea base de Memory | Exporta la evidencia y las notas del auditor aplicables reutilizando los datos disponibles sin volver a recorrer silenciosamente todo el DOM. | Artefactos compartibles. |
 
 ### Reglas WCAG estáticas
 
@@ -342,7 +343,7 @@ El muestreo es evidencia representativa: no demuestra que todas las URLs sean id
 
 ### FocusTrace Memory
 
-Memory es opcional y **está desactivado por defecto**.
+Memory está **activado por defecto** y puede desactivarse desde Ajustes. No caduca por antigüedad mientras FocusTrace siga instalada; los límites de capacidad siguen sustituyendo la evidencia conservada más antigua para mantener acotado el almacenamiento del navegador. Al desinstalar FocusTrace, el navegador elimina automáticamente su almacenamiento de extensión. Exporta antes el JSON portable de Memory si quieres reutilizar el historial o sus notas después de reinstalarla o en otro perfil del navegador.
 
 | Capacidad | Comportamiento |
 | --- | --- |
@@ -354,14 +355,16 @@ Memory es opcional y **está desactivado por defecto**.
 | **Localizador compacto** | Puede conservar ID o selector CSS para reconocer después el elemento. |
 | **Vista previa visual** | Puede guardar un pequeño recorte JPEG local de un elemento con fallo visible cuando la captura está disponible. |
 | **Fallback** | Si no puede capturar, conserva el localizador compacto. |
+| **Notas del auditor** | Conserva las notas ligadas a hallazgos estáticos recordados y las incluye en el JSON portable de Memory. |
 | **Borrado** | El historial puede borrarse desde Ajustes incluso con Memory desactivado. |
+| **Ciclo de desinstalación** | El navegador elimina automáticamente Memory, notas, preferencias e historial de auditoría local al desinstalar FocusTrace; los archivos ya exportados permanecen fuera del almacenamiento de la extensión. |
 
 | Límite actual | Valor |
 | --- | ---: |
 | Observaciones por ámbito | 8 |
 | Observaciones totales | 200 |
 | Vistas previas visuales | 24 |
-| Antigüedad máxima | 90 días |
+| Caducidad temporal | Ninguna; los límites de capacidad sustituyen la evidencia más antigua |
 
 Memory no almacena HTML de página, snapshots completos del DOM ni capturas de página completa.
 
@@ -371,11 +374,13 @@ Memory no almacena HTML de página, snapshots completos del DOM ni capturas de p
 | --- | --- |
 | **Informe de sesión** | Combina hallazgos estáticos y evidencia runtime de la sesión actual. |
 | **Historias de interacción** | Integra cadenas registradas por Trace, incluidas revisiones de mensajes de estado, warnings ARIA y reviews APG. |
+| **Notas del auditor** | Incluye las notas humanas ligadas a hallazgos estáticos y eventos de Trace, separadas visualmente de la evidencia de FocusTrace. |
 | **Estructura del documento** | Reutiliza métricas y sugerencias compactas preparadas por el análisis de página completa o por una actualización posterior de Estructura. |
 | **Leyenda de reglas** | Explica familias `FT-WCAG-*`, `FT-WARN-*`, `FT-REVIEW-*`, `FT-RUNTIME-*`, `FT-RUNTIME-ARIA-*` y `FT-APG-*`. |
 | **PDF** | Exportación imprimible de página o auditoría multipágina. |
 | **TXT** | Exportación textual de la evidencia disponible. |
 | **Markdown** | Exportación estructurada en Markdown. |
+| **JSON** | El esquema v2 de Trace conserva las notas de eventos; los snapshots portables de Memory conservan las notas de hallazgos y siguen aceptando líneas base v1. |
 | **Evidencia visual opcional** | El PDF de una página puede incluir captura solo cuando el usuario lo solicita expresamente. |
 | **Evidencia histórica multipágina** | Los PDFs de auditoría pueden reutilizar recortes locales limitados guardados durante cada análisis. |
 
@@ -387,7 +392,7 @@ Memory no almacena HTML de página, snapshots completos del DOM ni capturas de p
 | **Identificadores técnicos** | IDs de reglas, selectores, tokens HTML/ARIA, ratios y colores permanecen canónicos. |
 | **Tamaño de interfaz** | Preferencia persistente. |
 | **Breakpoints** | Preferencias runtime persistentes. |
-| **Memory** | Preferencia opt-in persistente. |
+| **Memory** | Activado por defecto; preferencia persistente de desactivación. |
 
 ### Límites del análisis
 
@@ -445,7 +450,7 @@ FocusTrace mantiene intencionadamente un conjunto reducido de permisos en produc
 | --- | --- | --- |
 | `activeTab` | Chrome / Edge / Firefox | Analizar la página sobre la que el usuario activa FocusTrace y permitir evidencia local de pestaña visible para análisis explícitos, exportación de informes y revisión de foco visible con Tab real cuando esté disponible. |
 | `scripting` | Chrome / Edge / Firefox | Inyectar la instrumentación local de análisis/runtime en la página activa. |
-| `storage` | Chrome / Edge / Firefox | Guardar preferencias, estado local, auditorías acotadas y la evidencia opcional de FocusTrace Memory. |
+| `storage` | Chrome / Edge / Firefox | Guardar preferencias, estado local, auditorías acotadas, notas del auditor y evidencia de FocusTrace Memory. |
 | `sidePanel` | Chrome / Edge | Mostrar la interfaz de depuración de FocusTrace en el panel lateral de Chromium. |
 
 Firefox utiliza su integración nativa de sidebar en el manifest en lugar del permiso exclusivo de Chromium `sidePanel`.
@@ -456,7 +461,7 @@ Los builds de producción no necesitan permisos globales de host al instalarse. 
 
 Todo el análisis se ejecuta localmente en el navegador. FocusTrace no envía contenido de la página, datos del DOM, capturas ni interacciones grabadas a un servidor de FocusTrace ni a una API de IA de terceros.
 
-El análisis de página completa prepara evidencia limitada de Estructura junto con el resultado del motor de reglas. FocusTrace Memory es opt-in. La evidencia visual de Memory e informes es local y limitada, y las capturas lossless usadas para la comparación runtime de foco visible son temporales y no se persisten. Consulta [`PRIVACY.md`](PRIVACY.md) para la política de privacidad canónica y [`SECURITY.md`](SECURITY.md) para notificación responsable de vulnerabilidades.
+El análisis de página completa prepara evidencia limitada de Estructura junto con el resultado del motor de reglas. FocusTrace Memory está activado por defecto, se puede desactivar y no caduca por antigüedad dentro de sus límites de capacidad. Las notas del auditor y la evidencia visual de Memory/informes permanecen locales salvo que el usuario exporte un informe o archivo JSON; las capturas lossless usadas para la comparación runtime de foco visible son temporales y no se persisten. Consulta [`PRIVACY.md`](PRIVACY.md) para la política de privacidad canónica y [`SECURITY.md`](SECURITY.md) para notificación responsable de vulnerabilidades.
 
 ## Licencia e identidad del proyecto
 

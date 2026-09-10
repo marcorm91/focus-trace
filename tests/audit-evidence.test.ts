@@ -43,6 +43,7 @@ const events: RuntimeEvent[] = [
       confidence: 'deterministic',
       summary: 'Focused node was removed.',
     }],
+    auditorNote: { text: 'Reproduced after activating Edit profile.', updatedAt: 25 },
   },
 ];
 
@@ -86,9 +87,16 @@ describe('audit evidence', () => {
     expect(markdown).toContain('# FocusTrace accessibility evidence');
     expect(markdown).toContain('Focus was lost after an element disappeared');
     expect(markdown).toContain('not a WCAG conformance claim');
+    expect(markdown).toContain('## Auditor notes');
+    expect(markdown).toContain('Reproduced after activating Edit profile.');
 
     const json = JSON.parse(renderAuditEvidenceJson(bundle)) as typeof bundle;
+    expect(json.schemaVersion).toBe(2);
     expect(json.generatedAt).toBe('2026-08-24T19:30:00.000Z');
     expect(json.focusPoints[0]?.selector).toBe('#edit');
+    expect(json.interactions[0]?.events[2]?.auditorNote).toEqual({
+      text: 'Reproduced after activating Edit profile.',
+      updatedAt: 25,
+    });
   });
 });

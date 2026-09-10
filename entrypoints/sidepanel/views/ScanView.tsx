@@ -19,6 +19,7 @@ import {
 } from '../../../shared/i18n';
 import type { FindingOutcome, ScanIssue, ScanResult, Severity } from '../../../shared/types';
 import { Empty, ReferenceList } from '../components/Common';
+import { AuditorNoteEditor } from '../components/AuditorNoteEditor';
 import { FindingGuidance } from '../components/FindingGuidance';
 import { ImpactMatrix } from '../components/ImpactMatrix';
 import './scan-workspace.css';
@@ -125,6 +126,7 @@ export function ScanView({
   onLocate,
   onAnalyzePage,
   onSelectComponent,
+  onSaveAuditorNote,
 }: {
   scan?: ScanResult | undefined;
   level: ExplanationLevel;
@@ -132,6 +134,7 @@ export function ScanView({
   onLocate: (selector: string) => void | Promise<void>;
   onAnalyzePage: () => void | Promise<void>;
   onSelectComponent: () => void | Promise<void>;
+  onSaveAuditorNote: (findingId: string, text: string) => void | Promise<void>;
 }) {
   const [filter, setFilter] = useState<ScanFilter>('fail');
   const [category, setCategory] = useState<ScanCategory>('all');
@@ -389,6 +392,7 @@ export function ScanView({
                         level={level}
                         language={language}
                         onLocate={onLocate}
+                        onSaveAuditorNote={onSaveAuditorNote}
                         key={issues[0]!.ruleId}
                       />
                     ))}
@@ -408,11 +412,13 @@ function FindingRuleAccordion({
   level,
   language,
   onLocate,
+  onSaveAuditorNote,
 }: {
   issues: ScanIssue[];
   level: ExplanationLevel;
   language: AppLanguage;
   onLocate: (selector: string) => void | Promise<void>;
+  onSaveAuditorNote: (findingId: string, text: string) => void | Promise<void>;
 }) {
   const [index, setIndex] = useState(0);
   const first = issues[0]!;
@@ -470,7 +476,13 @@ function FindingRuleAccordion({
           </div>
         )}
 
-        <FindingCard issue={issue} level={level} language={language} onLocate={onLocate} />
+        <FindingCard
+          issue={issue}
+          level={level}
+          language={language}
+          onLocate={onLocate}
+          onSaveAuditorNote={onSaveAuditorNote}
+        />
       </div>
     </details>
   );
@@ -481,11 +493,13 @@ function FindingCard({
   level,
   language,
   onLocate,
+  onSaveAuditorNote,
 }: {
   issue: ScanIssue;
   level: ExplanationLevel;
   language: AppLanguage;
   onLocate: (selector: string) => void | Promise<void>;
+  onSaveAuditorNote: (findingId: string, text: string) => void | Promise<void>;
 }) {
   const copy = localizedScanIssue(issue, language);
   const description = reportFindingDescription(issue, language);
@@ -742,6 +756,11 @@ function FindingCard({
       )}
 
       <FindingGuidance issue={issue} language={language} />
+      <AuditorNoteEditor
+        note={issue.auditorNote}
+        language={language}
+        onSave={(text) => onSaveAuditorNote(issue.id, text)}
+      />
     </article>
   );
 }

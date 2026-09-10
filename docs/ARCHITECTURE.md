@@ -102,7 +102,7 @@ Runtime causal classifications explain recorded evidence. They do not automatica
 
 ### `lib/focus-memory/`
 
-Browser-storage lifecycle and optional local evidence capture for FocusTrace Memory.
+Browser-storage lifecycle and bounded local evidence capture for FocusTrace Memory.
 
 Memory persistence is deliberately separate from React presentation components. Saving a scan records an eligible observation; rendering a result reads history but does not create it.
 
@@ -117,6 +117,7 @@ Shared report composition, evidence formatting, visual-crop preparation and reme
 Cross-boundary data contracts and pure helpers, including:
 
 - message/session/result types;
+- auditor-note normalization and parent-linked update helpers;
 - rule catalog;
 - localization;
 - severity and scan categories;
@@ -137,6 +138,7 @@ FocusTrace uses two browser storage lifetimes for different purposes.
 - Trace events;
 - recording state;
 - breakpoint state.
+- optional auditor notes embedded in their static-finding or Trace-event parent.
 
 It is also used as a short-lived handoff for printable report evidence. Single-page visual evidence is trimmed by a data-size budget before that handoff, and a multipage audit is normalized/bounded before its print payload is stored. Printable payloads are consumed and removed by their print entrypoint.
 
@@ -151,15 +153,19 @@ Closing a tab removes its session entry. **Start Over** clears the page/Trace ev
 - interface language and scale;
 - breakpoint preferences;
 - multipage audit history and bounded recent visual crops;
-- FocusTrace Memory opt-in, bounded history and optional bounded local evidence.
+- FocusTrace Memory settings, bounded history and optional bounded local evidence.
+
+Here, durable means across normal browser restarts and extension updates while FocusTrace remains installed. The browser owns the extension-storage lifecycle and automatically removes this local data when FocusTrace is uninstalled. A later installation begins with empty extension storage; only an explicit portable JSON export made before uninstall can be imported to reuse supported Memory evidence and notes. Exported files are outside extension storage and are not affected by uninstall.
 
 Multipage audits retain the latest saved full-page result per normalized URL. Storage is bounded by audit/page counts, at most three visual crops per review, a shared visual-data budget and an overall serialized audit-store budget. Audit evidence remains bound to the exact tab and normalized page URL that produced the scan; if that source is no longer visible, capture is marked unavailable instead of borrowing pixels from another active tab. Pruning prefers the newest active review: older inactive audit history is removed first, then older pages. A quota-write fallback attempts to preserve the newest active page without screenshot data rather than losing the latest static review entirely.
 
 Historical audit pages in 0.1.4 persist their static scan/headings and audit visual crops. They do **not** persist complete Trace or Structure snapshots; the UI must label those historical sections as unavailable rather than borrowing live evidence from the current tab.
 
-FocusTrace Memory is disabled by default. Its normal observation data includes hashed fingerprints, counts and timestamps. To preserve useful context for a resolved finding, it can also retain a compact target locator and, when available, a small local JPEG crop of the visible failing element. Memory does not store page HTML, a full DOM snapshot or a full-page screenshot.
+FocusTrace Memory is enabled by default and can be disabled by the user. Its normal observation data includes hashed fingerprints, counts, timestamps and any auditor notes attached to remembered static findings. To preserve useful context for a resolved finding, it can also retain a compact target locator and, when available, a small local JPEG crop of the visible failing element. Memory does not store page HTML, a full DOM snapshot or a full-page screenshot.
 
-Current Memory retention bounds are 8 observations per scope, 200 observations total, 24 visual previews across remembered findings and 90 days. Only the newest retained preview for a finding is kept. Age cleanup occurs when FocusTrace next reads Memory storage. Users can clear saved history and evidence from Settings even when Memory is disabled.
+Current Memory capacity bounds are 8 observations per scope, 200 observations total and 24 visual previews across remembered findings. Observations and compact resolved markers do not expire by age; the oldest retained evidence is replaced when a capacity limit is reached. Only the newest retained preview for a finding is kept. Users can clear saved history, notes and evidence from Settings even when Memory is disabled.
+
+Auditor notes use one shared plain-text contract (`2,000` characters plus `updatedAt`) and remain embedded in their parent `ScanIssue` or `RuntimeEvent`. The background session writer serializes note edits with other per-tab writes. Static note edits also patch the exact matching Memory observation and saved multipage-audit scan without recreating visual evidence. Deleting a note or its retained parent therefore deletes the associated local copy. Trace JSON schema version 2 and Memory baseline JSON version 2 expose notes explicitly; the Memory parser remains backward-compatible with version 1 files.
 
 ## Static scan flow
 
@@ -294,7 +300,7 @@ Before adding a new persistent feature, define:
 
 1. whether it belongs in session or local storage;
 2. its retention bound;
-3. whether it is opt-in or part of an explicit user-requested workflow;
+3. its default state and user control, or whether it is part of an explicit user-requested workflow;
 4. which execution context is allowed to write it;
 5. how concurrent writes are serialized;
 6. how the user can clear it or how automatic pruning works;

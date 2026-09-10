@@ -6,6 +6,7 @@ import {
   applyAuditAnalysis,
   emptyMultipageAuditStore,
   removeAuditPage,
+  updateAuditScan,
   type AccessibilityAudit,
   type AuditAnalysisPlan,
   type AuditPageVisualEvidence,
@@ -206,6 +207,14 @@ export async function deleteMultipageAuditPage(auditId: string, pageKey: string)
   const next = removeAuditPage(current, auditId, pageKey);
   await saveMultipageAuditStore(next);
   return loadMultipageAuditStore();
+}
+
+export async function updateStoredMultipageAuditScan(scan: ScanResult): Promise<boolean> {
+  const current = await loadMultipageAuditStore();
+  const next = updateAuditScan(current, scan);
+  if (next === current) return false;
+  await saveMultipageAuditStore(next);
+  return true;
 }
 
 export async function clearMultipageAudits(): Promise<MultipageAuditStore> {

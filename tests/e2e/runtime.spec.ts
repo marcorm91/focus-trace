@@ -58,7 +58,7 @@ test('captures focused-node removal, breakpoint pause, graph evidence and export
   });
 
   expect(JSON.parse(renderAuditEvidenceJson(bundle))).toMatchObject({
-    schemaVersion: 1,
+    schemaVersion: 2,
     product: 'FocusTrace',
     scope: 'recorded-journey',
   });

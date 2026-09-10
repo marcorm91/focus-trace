@@ -9,8 +9,10 @@ import { locateScanTargetInPage } from '../../lib/runtime/scan-target-overlay';
 import { collectStructureEvidenceInPage, type StructureSnapshot } from '../../lib/runtime/structure-evidence';
 import { tr, type AppLanguage } from '../../shared/i18n';
 import type {
+  AuditorNoteTarget,
   ExtensionMessage,
   FocusMemoryCapturedEvidence,
+  SaveAuditorNoteResponse,
   SaveScanResponse,
   ScanResult,
   SessionState,
@@ -118,6 +120,30 @@ export default function App() {
         'The analysis was saved, but FocusTrace Memory could not record this observation.',
         'El análisis se ha guardado, pero FocusTrace Memory no ha podido registrar esta observación.',
       ));
+    }
+  }, [language, setSession, tabId]);
+
+  const saveAuditorNote = useCallback(async (target: AuditorNoteTarget, text: string) => {
+    if (tabId == null) return;
+    setError(undefined);
+    try {
+      const response = (await browser.runtime.sendMessage({
+        type: 'FOCUSTRACE_SAVE_AUDITOR_NOTE',
+        tabId,
+        target,
+        text,
+      } satisfies ExtensionMessage)) as SaveAuditorNoteResponse;
+      setSession(response.state);
+      if (response.warnings?.length) {
+        setError(tr(
+          language,
+          'The note is saved in this session, but one local history copy could not be updated.',
+          'La nota está guardada en esta sesión, pero no se pudo actualizar una copia del historial local.',
+        ));
+      }
+    } catch (reason) {
+      setError(localizedUserError(reason, language, 'session'));
+      throw reason;
     }
   }, [language, setSession, tabId]);
 
@@ -498,6 +524,7 @@ export default function App() {
             onLocate={locateScanTarget}
             onAnalyzePage={runScan}
             onSelectComponent={runComponentScan}
+            onSaveAuditorNote={(findingId, text) => saveAuditorNote({ kind: 'scan-finding', findingId }, text)}
           />
         )}
         {view === 'structure' && (
@@ -532,6 +559,7 @@ export default function App() {
             onClearSelection={clearFocusSelection}
             onBreakpointChange={setBreakpoint}
             onDeleteInteraction={deleteTraceInteraction}
+            onSaveAuditorNote={(eventId, text) => saveAuditorNote({ kind: 'runtime-event', eventId }, text)}
           />
         )}
         {view === 'report' && (

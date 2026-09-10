@@ -1,14 +1,19 @@
-import type { FocusMemoryCapturedEvidence, ScanIssue, ScanResult } from './types';
+import { isAuditorNote } from './auditor-notes';
+import type {
+  AuditorNote,
+  FindingOutcome,
+  FocusMemoryCapturedEvidence,
+  ScanIssue,
+  ScanResult,
+} from './types';
 
 export const FOCUS_MEMORY_STORAGE_KEY = 'focustrace:memory:v1';
 export const FOCUS_MEMORY_SETTINGS_STORAGE_KEY = 'focustrace:memory-settings:v1';
-export const FOCUS_MEMORY_RETENTION_DAYS = 90;
 export const FOCUS_MEMORY_MAX_PER_SCOPE = 8;
 export const FOCUS_MEMORY_MAX_OBSERVATIONS = 200;
 export const FOCUS_MEMORY_MAX_FAILURE_FINGERPRINTS = 120;
 export const FOCUS_MEMORY_MAX_VISUAL_PREVIEWS = 24;
 
-const RETENTION_MS = FOCUS_MEMORY_RETENTION_DAYS * 24 * 60 * 60 * 1000;
 const MAX_MEMORY_LOCATOR_LENGTH = 240;
 
 export type FocusMemoryStatus = 'new' | 'open' | 'fixed' | 'regressed' | 'changed' | 'unchanged';
@@ -36,6 +41,14 @@ export interface FocusMemoryFailureDescriptor {
   locator?: string;
   previewDataUrl?: string;
   previewCapturedAt?: number;
+  auditorNote?: AuditorNote;
+}
+
+export interface FocusMemoryFindingNoteDescriptor {
+  fingerprint: string;
+  ruleId: string;
+  outcome: FindingOutcome;
+  auditorNote: AuditorNote;
 }
 
 export interface FocusMemoryObservation {
@@ -50,6 +63,7 @@ export interface FocusMemoryObservation {
   warningCount: number;
   failureFingerprints: string[];
   failureDetails?: FocusMemoryFailureDescriptor[];
+  findingNotes?: FocusMemoryFindingNoteDescriptor[];
   failuresTruncated: boolean;
 }
 
@@ -92,7 +106,7 @@ export interface FocusMemoryFindingHistory {
 }
 
 export const DEFAULT_FOCUS_MEMORY_SETTINGS: FocusMemorySettings = {
-  enabled: false,
+  enabled: true,
 };
 
 export const EMPTY_FOCUS_MEMORY_STORE: FocusMemoryStore = {
@@ -174,6 +188,18 @@ function findingFingerprint(issue: ScanIssue): string {
   return `finding-${hashFingerprint(`${issue.ruleId}|${targets}`)}`;
 }
 
+function findingFingerprints(issues: ScanIssue[]): string[] {
+  const occurrences = new Map<string, number>();
+  return issues.map((issue) => {
+    const baseFingerprint = findingFingerprint(issue);
+    const occurrence = occurrences.get(baseFingerprint) ?? 0;
+    occurrences.set(baseFingerprint, occurrence + 1);
+    return occurrence === 0
+      ? baseFingerprint
+      : `finding-${hashFingerprint(`${baseFingerprint}|occurrence:${occurrence + 1}`)}`;
+  });
+}
+
 function contrastSnapshot(issue: ScanIssue): FocusMemoryContrastSnapshot | undefined {
   const contrast = issue.contrast;
   if (!contrast || !Number.isFinite(contrast.requiredRatio)) return undefined;
@@ -213,13 +239,10 @@ export function focusMemoryFailureDescriptors(
   scan: Pick<ScanResult, 'issues'>,
   capturedEvidence: FocusMemoryCapturedEvidence[] = [],
 ): FocusMemoryFailureDescriptor[] {
-  const occurrences = new Map<string, number>();
   const evidenceByIssue = new Map(capturedEvidence.map((item) => [item.issueIndex, item]));
+  const fingerprints = findingFingerprints(scan.issues);
 
   return scan.issues.map((issue, issueIndex) => {
-    const baseFingerprint = findingFingerprint(issue);
-    const occurrence = occurrences.get(baseFingerprint) ?? 0;
-    occurrences.set(baseFingerprint, occurrence + 1);
     const contrast = contrastSnapshot(issue);
     const evidence = evidenceByIssue.get(issueIndex);
     const locator = evidence?.locator?.trim().slice(0, MAX_MEMORY_LOCATOR_LENGTH) || compactLocator(issue);
@@ -229,15 +252,30 @@ export function focusMemoryFailureDescriptors(
       : undefined;
 
     return {
-      fingerprint: occurrence === 0
-        ? baseFingerprint
-        : `finding-${hashFingerprint(`${baseFingerprint}|occurrence:${occurrence + 1}`)}`,
+      fingerprint: fingerprints[issueIndex]!,
       ruleId: issue.ruleId,
       ...(contrast ? { contrast } : {}),
       ...(locator ? { locator } : {}),
       ...(previewDataUrl ? { previewDataUrl } : {}),
       ...(previewCapturedAt != null ? { previewCapturedAt } : {}),
+      ...(issue.auditorNote ? { auditorNote: issue.auditorNote } : {}),
     };
+  });
+}
+
+export function focusMemoryFindingNotes(
+  scan: Pick<ScanResult, 'issues' | 'review' | 'warnings'>,
+): FocusMemoryFindingNoteDescriptor[] {
+  return [scan.issues, scan.review, scan.warnings ?? []].flatMap((issues) => {
+    const fingerprints = findingFingerprints(issues);
+    return issues.flatMap((issue, index) => issue.auditorNote
+      ? [{
+          fingerprint: fingerprints[index]!,
+          ruleId: issue.ruleId,
+          outcome: issue.outcome,
+          auditorNote: issue.auditorNote,
+        }]
+      : []);
   });
 }
 
@@ -249,6 +287,7 @@ export function buildFocusMemoryObservation(
   const allFailureDetails = focusMemoryFailureDescriptors(scan, capturedEvidence);
   const failureDetails = allFailureDetails.slice(0, FOCUS_MEMORY_MAX_FAILURE_FINGERPRINTS);
   const failureFingerprints = failureDetails.map((item) => item.fingerprint);
+  const findingNotes = focusMemoryFindingNotes(scan);
 
   return {
     id: `${scopeKey}:${scan.scannedAt}`,
@@ -264,6 +303,7 @@ export function buildFocusMemoryObservation(
     warningCount: scan.warnings?.length ?? 0,
     failureFingerprints,
     failureDetails,
+    ...(findingNotes.length ? { findingNotes } : {}),
     failuresTruncated: allFailureDetails.length > FOCUS_MEMORY_MAX_FAILURE_FINGERPRINTS,
   };
 }
@@ -290,7 +330,17 @@ function isFailureDescriptor(value: unknown): value is FocusMemoryFailureDescrip
     && (candidate.locator == null || typeof candidate.locator === 'string')
     && (candidate.previewDataUrl == null || (typeof candidate.previewDataUrl === 'string' && candidate.previewDataUrl.startsWith('data:image/')))
     && (candidate.previewCapturedAt == null
-      || (typeof candidate.previewCapturedAt === 'number' && Number.isFinite(candidate.previewCapturedAt)));
+      || (typeof candidate.previewCapturedAt === 'number' && Number.isFinite(candidate.previewCapturedAt)))
+    && (candidate.auditorNote == null || isAuditorNote(candidate.auditorNote));
+}
+
+function isFindingNoteDescriptor(value: unknown): value is FocusMemoryFindingNoteDescriptor {
+  if (!value || typeof value !== 'object') return false;
+  const candidate = value as Partial<FocusMemoryFindingNoteDescriptor>;
+  return typeof candidate.fingerprint === 'string'
+    && typeof candidate.ruleId === 'string'
+    && (candidate.outcome === 'fail' || candidate.outcome === 'review' || candidate.outcome === 'warning')
+    && isAuditorNote(candidate.auditorNote);
 }
 
 function isObservation(value: unknown): value is FocusMemoryObservation {
@@ -298,6 +348,8 @@ function isObservation(value: unknown): value is FocusMemoryObservation {
   const candidate = value as Partial<FocusMemoryObservation>;
   const detailsValid = candidate.failureDetails == null
     || (Array.isArray(candidate.failureDetails) && candidate.failureDetails.every(isFailureDescriptor));
+  const notesValid = candidate.findingNotes == null
+    || (Array.isArray(candidate.findingNotes) && candidate.findingNotes.every(isFindingNoteDescriptor));
 
   return typeof candidate.id === 'string'
     && typeof candidate.scopeKey === 'string'
@@ -313,6 +365,7 @@ function isObservation(value: unknown): value is FocusMemoryObservation {
     && Array.isArray(candidate.failureFingerprints)
     && candidate.failureFingerprints.every((item) => typeof item === 'string')
     && detailsValid
+    && notesValid
     && typeof candidate.failuresTruncated === 'boolean';
 }
 
@@ -332,7 +385,9 @@ export function normalizeFocusMemorySettings(value: unknown): FocusMemorySetting
   if (!value || typeof value !== 'object') return { ...DEFAULT_FOCUS_MEMORY_SETTINGS };
   const candidate = value as Partial<FocusMemorySettings>;
   return {
-    enabled: candidate.enabled === true,
+    enabled: typeof candidate.enabled === 'boolean'
+      ? candidate.enabled
+      : DEFAULT_FOCUS_MEMORY_SETTINGS.enabled,
     ...(typeof candidate.ignoreScansAtOrBefore === 'number' && Number.isFinite(candidate.ignoreScansAtOrBefore)
       ? { ignoreScansAtOrBefore: candidate.ignoreScansAtOrBefore }
       : {}),
@@ -345,16 +400,15 @@ function stripVisualPreview(descriptor: FocusMemoryFailureDescriptor): FocusMemo
     ruleId: descriptor.ruleId,
     ...(descriptor.contrast ? { contrast: descriptor.contrast } : {}),
     ...(descriptor.locator ? { locator: descriptor.locator } : {}),
+    ...(descriptor.auditorNote ? { auditorNote: descriptor.auditorNote } : {}),
   };
 }
 
 export function pruneFocusMemoryObservations(
   observations: FocusMemoryObservation[],
-  now = Date.now(),
+  _now = Date.now(),
 ): FocusMemoryObservation[] {
-  const cutoff = now - RETENTION_MS;
-  const sorted = observations
-    .filter((observation) => observation.observedAt >= cutoff)
+  const sorted = [...observations]
     .sort((left, right) => right.observedAt - left.observedAt);
 
   const perScope = new Map<string, number>();
@@ -387,6 +441,38 @@ export function pruneFocusMemoryObservations(
         }
       : {}),
   }));
+}
+
+export function updateFocusMemoryObservationNotes(
+  value: unknown,
+  scan: ScanResult,
+): FocusMemoryStore {
+  const store = normalizeFocusMemoryStore(value);
+  const current = buildFocusMemoryObservation(scan);
+  const observationIndex = store.observations.findIndex((observation) => observation.id === current.id);
+  if (observationIndex < 0) return store;
+
+  const existing = store.observations[observationIndex]!;
+  const currentDetails = new Map(
+    (current.failureDetails ?? []).map((descriptor) => [descriptor.fingerprint, descriptor]),
+  );
+  const failureDetails = existing.failureDetails?.map((descriptor) => {
+    const auditorNote = currentDetails.get(descriptor.fingerprint)?.auditorNote;
+    const next = { ...descriptor };
+    if (auditorNote) next.auditorNote = auditorNote;
+    else delete next.auditorNote;
+    return next;
+  });
+  const nextObservation: FocusMemoryObservation = {
+    ...existing,
+    ...(failureDetails ? { failureDetails } : {}),
+  };
+  if (current.findingNotes?.length) nextObservation.findingNotes = current.findingNotes;
+  else delete nextObservation.findingNotes;
+
+  const observations = [...store.observations];
+  observations[observationIndex] = nextObservation;
+  return { version: 1, observations };
 }
 
 function observationsAreComparable(

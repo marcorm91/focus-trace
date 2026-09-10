@@ -36,10 +36,30 @@ test('removes one manual interaction and all correlated evidence while preservin
     (state) => state.events.some((event) => event.interactionId === removedId && event.outcome != null),
   );
   expect(session.events.some((event) => event.interactionId === removedId && event.outcome != null)).toBe(true);
+  const annotatedEventId = session.events.find((event) => event.interactionId === removedId)?.id;
+  expect(annotatedEventId).toBeTruthy();
 
   const extensionId = new URL(extensionWorker.url()).hostname;
   const panel = await context.newPage();
   await panel.goto(`chrome-extension://${extensionId}/sidepanel.html`);
+  await panel.evaluate(async ({ id, eventId }) => {
+    const chromeApi = (globalThis as any).chrome;
+    await chromeApi.runtime.sendMessage({
+      type: 'FOCUSTRACE_SAVE_AUDITOR_NOTE',
+      tabId: id,
+      target: { kind: 'runtime-event', eventId },
+      text: 'Remove with the mistaken interaction.',
+    });
+  }, { id: tabId, eventId: annotatedEventId! });
+
+  session = await waitForSession(
+    extensionWorker,
+    tabId,
+    (state) => state.events.some((event) => event.id === annotatedEventId && event.auditorNote?.text === 'Remove with the mistaken interaction.'),
+  );
+  expect(session.events.find((event) => event.id === annotatedEventId)?.auditorNote?.text)
+    .toBe('Remove with the mistaken interaction.');
+
   await panel.evaluate(async ({ id, interactionId }) => {
     const chromeApi = (globalThis as any).chrome;
     await chromeApi.tabs.sendMessage(id, { type: 'FOCUSTRACE_SET_RECORDING', enabled: false });
@@ -62,6 +82,7 @@ test('removes one manual interaction and all correlated evidence while preservin
   );
 
   expect(session.events.some((event) => event.interactionId === removedId)).toBe(false);
+  expect(JSON.stringify(session)).not.toContain('Remove with the mistaken interaction.');
   expect(session.events.some((event) => event.interactionId === keptId)).toBe(true);
   expect(session.events.length).toBeGreaterThan(0);
   expect(session.recording).toBe(false);

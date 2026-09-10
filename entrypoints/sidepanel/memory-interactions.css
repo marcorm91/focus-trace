@@ -227,7 +227,7 @@
   line-height: 1.4;
 }
 
-/* Footer is now reserved for retention metadata and portable baseline actions. */
+/* Footer is reserved for capacity metadata and portable baseline actions. */
 .focus-memory-controls > div {
   justify-content: flex-end;
 }

@@ -7,6 +7,7 @@ import {
 } from '../../../lib/runtime/audit-evidence';
 import { groupRuntimeInteractions } from '../../../lib/runtime/causality';
 import { defaultRuntimeBreakpointSettings } from '../../../lib/runtime/breakpoints';
+import { humanRuntimeEventTitle } from '../../../lib/runtime/explanations';
 import { buildFocusGraph } from '../../../lib/runtime/focus-graph';
 import type { StructureSnapshot } from '../../../lib/runtime/structure-evidence';
 import { buildReportComponentIndex, type ReportComponentIdentity } from '../../../lib/report/component-identity';
@@ -93,6 +94,7 @@ export function SessionReportView({
   const structureReviewCount = headingReviews.length + structureHints.length;
   const highPriority = model.suggestions.filter((suggestion) => suggestion.priority === 'high').slice(0, 4);
   const automatic = events.some((event) => event.kind === 'focus-walk-start');
+  const annotatedRuntimeEvents = events.filter((event) => event.auditorNote);
   const [components, setComponents] = useState<ReportComponentIdentity[]>([]);
   const [includeVisualEvidence, setIncludeVisualEvidence] = useState(true);
   const [exportingPdf, setExportingPdf] = useState(false);
@@ -488,6 +490,20 @@ export function SessionReportView({
                   ? tr(language, 'Record a real interaction or use Automate focus to add runtime context to this report.', 'Graba una interacción real o utiliza Automatizar foco para añadir contexto runtime al informe.')
                   : tr(language, 'This saved review keeps its static analysis, but Trace evidence was not persisted with historical pages in this version.', 'Esta revisión guardada conserva su análisis estático, pero en esta versión la evidencia de Trace no se persiste con las páginas históricas.')}</p>
               </div>
+            )}
+            {annotatedRuntimeEvents.length > 0 && (
+              <section className="report-auditor-notes" aria-label={tr(language, 'Trace auditor notes', 'Notas del auditor en Trace')}>
+                <h4>{tr(language, 'Auditor notes', 'Notas del auditor')}</h4>
+                <ol>
+                  {annotatedRuntimeEvents.map((event) => (
+                    <li key={event.id}>
+                      <strong>{humanRuntimeEventTitle(event, language)}</strong>
+                      <small>{event.ruleId ?? event.kind}</small>
+                      <p>{event.auditorNote?.text}</p>
+                    </li>
+                  ))}
+                </ol>
+              </section>
             )}
           </details>
 

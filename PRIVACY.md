@@ -13,6 +13,7 @@ When you explicitly run an analysis, generate Structure evidence or record a Tra
 - focus transitions and selected DOM mutations;
 - SPA route and dialog lifecycle evidence;
 - page title, URL and other report context;
+- optional text notes that the user writes on static findings or Trace events, together with their local update timestamp;
 - optional visible-element screenshot crops stored locally by FocusTrace Memory when Memory is enabled;
 - bounded visible-element screenshot crops stored locally with multipage audit reviews so previously analyzed pages can retain visual evidence;
 - optional visible-page screenshot crops when the user explicitly includes visual evidence in a printable single-page report;
@@ -54,30 +55,47 @@ Audit visual evidence is bounded again at storage level. FocusTrace keeps at mos
 
 Audit screenshots remain local to extension storage and the generated local PDF preview. Users should review the PDF before sharing it because a crop can contain text or other information visible on the inspected page.
 
+## Auditor notes
+
+Users can add, edit and remove an optional plain-text auditor note on any static finding or Trace event. A note is human-authored context and is kept separately from FocusTrace evidence: it does not change the finding outcome, severity, rule result or report counts.
+
+The note is stored with its parent finding or event in the current per-tab extension session. Notes on full-page findings are also updated in the matching saved multipage-audit review. When a matching FocusTrace Memory observation exists, static-finding notes are retained with that local observation; this includes notes on failures, reviews and warnings. Trace-event notes remain part of the Trace session and its exports rather than being converted into static Memory observations.
+
+Auditor notes are included in the report/PDF and text exports that contain their parent evidence. Static-finding notes are included in exported FocusTrace Memory JSON; Trace-event notes are included in Trace JSON (`schemaVersion: 2`) and Markdown. Export is an explicit local user action. An exported file is outside extension storage and cannot be changed or retracted by later editing or deleting the original note.
+
+Removing a note removes it from the current parent and matching local copies. Removing a saved audit page, clearing the parent session/Trace interaction, clearing Memory history or replacing/pruning the parent evidence also removes the note stored with that parent. Notes can contain page, client or testing context entered by the user, so users should review them before sharing an export.
+
 ## FocusTrace Memory
 
-FocusTrace Memory is an optional local history feature for comparing accessibility observations over time. It is **disabled by default after installation** and does not begin remembering scan history until the user explicitly enables **Remember accessibility history** in Settings.
+FocusTrace Memory is a local history feature for comparing accessibility observations over time. It is **enabled by default after installation**. Users can turn off **Remember accessibility history** in Settings at any time.
 
 When enabled, Memory stores bounded local observation data such as hashed scope/finding fingerprints, generic FocusTrace rule identifiers, result counts, rule-coverage counts and timestamps. To make a historical finding understandable after it is no longer reproduced, Memory may also keep a compact locator for the affected element, such as an HTML id or CSS selector.
 
 During an explicit page or component analysis, if an affected element is currently visible and the browser permits visible-tab capture, Memory may save a small JPEG screenshot crop around that element. The crop is generated locally and is intended only to identify which visible component the historical finding referred to. FocusTrace does not store a full-page screenshot for Memory. If a preview cannot be captured, the compact element locator is used as the fallback context.
 
-Memory does not store page HTML or full DOM snapshots. A saved locator or screenshot crop can itself contain information derived from the inspected page, so users should enable Memory only when they are comfortable retaining this bounded evidence in the current browser profile.
+Memory does not store page HTML or full DOM snapshots. A saved locator, auditor note or screenshot crop can itself contain information derived from the inspected page, so users should leave Memory enabled only when they are comfortable retaining this bounded evidence in the current browser profile.
 
 Memory is bounded so it cannot grow without limit. The current limits are:
 
 - up to 8 observations for the same remembered page/component scope;
 - up to 200 observations across the browser profile;
-- up to 24 visual previews across remembered findings, retaining only the newest preview for a given finding;
-- observations older than 90 days are removed the next time FocusTrace reads Memory storage.
+- up to 24 visual previews across remembered findings, retaining only the newest preview for a given finding.
 
-When a finding is no longer reproduced, the user can explicitly mark it as resolved. FocusTrace then removes that finding from the detailed remembered observations, including its stored locator and any saved visual preview, so it no longer appears in the normal finding history. To recognize the same finding if it returns later, FocusTrace keeps only a compact resolved marker containing the hashed scope/finding identity, the generic FocusTrace rule identifier when known, and the resolution timestamp. Resolved markers do not contain the failing locator, screenshot preview, page text, HTML or DOM snapshots. They are also pruned after 90 days and capped at 200 compact markers.
+Memory observations do not expire because of age. When a count or evidence-capacity limit is reached, FocusTrace replaces or removes the oldest retained evidence needed to remain within that limit.
 
-Turning Memory off stops new observations, locators, visual previews and comparisons. Existing local Memory history remains local until it is removed by the retention cleanup or the user explicitly clears it. **Clear saved history** remains available in Settings even while Memory is disabled and clears observation history, saved Memory evidence and resolved markers.
+When a finding is no longer reproduced, the user can explicitly mark it as resolved. FocusTrace then removes that finding from the detailed remembered observations, including its stored locator, auditor note and any saved visual preview, so it no longer appears in the normal finding history. To recognize the same finding if it returns later, FocusTrace keeps only a compact resolved marker containing the hashed scope/finding identity, the generic FocusTrace rule identifier when known, and the resolution timestamp. Resolved markers do not contain the failing locator, auditor note, screenshot preview, page text, HTML or DOM snapshots. They do not expire because of age and are capped at 200 compact markers.
 
-Enabling Memory establishes the opt-in point and does not retroactively add an analysis that was already open before opt-in. Eligible observations and their available local evidence are persisted when a scan is saved, independently of which FocusTrace results view the user opens afterwards.
+Turning Memory off stops new observations, locators, visual previews and comparisons. Existing local Memory history remains local until a capacity limit replaces it or the user explicitly clears it. **Clear saved history** remains available in Settings even while Memory is disabled and clears observation history, saved Memory evidence, attached notes and resolved markers.
+
+After a user has disabled Memory, enabling it again establishes a new recording point and does not retroactively add an analysis that was already open. Eligible observations and their available local evidence are persisted when a scan is saved, independently of which FocusTrace results view the user opens afterwards.
 
 Memory comparisons are diagnostic history, not a WCAG conformance claim. A previously recorded deterministic failure that is no longer reproduced can be reported as a historical change, but absence from a later scan does not by itself prove that the whole page or component conforms to WCAG.
+
+## Extension removal and local storage
+
+FocusTrace uses browser-managed extension storage rather than a remote FocusTrace account or backend. Data in local extension storage, including Memory, attached notes, preferences and saved multipage audits, can persist across browser restarts and extension updates, but only while FocusTrace remains installed in that browser profile. Session storage is shorter-lived and is cleared by browser lifecycle events such as disabling, reloading or updating the extension and restarting the browser.
+
+When FocusTrace is uninstalled, the supported browser automatically removes the extension's associated local and session storage. Reinstalling therefore starts without the previous local Memory or notes. Files that the user explicitly exported are outside extension storage and are not deleted by uninstalling the extension. Users who want to reuse remembered static findings and their notes after reinstalling or in another profile should export the portable Memory JSON before uninstalling.
 
 ## Visual evidence
 

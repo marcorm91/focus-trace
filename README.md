@@ -55,9 +55,10 @@ FocusTrace uses WCAG 2.2 as its conformance source. WCAG 2.2 criteria are also r
 | **Graph** | Trace session | Represents observed connections between focus targets. | Focus-navigation graph. |
 | **Accessibility breakpoints** | Trace | Can pause recording after selected deterministic runtime causes are captured. | Breakpoint tied to captured evidence. |
 | **Site Audit** | Same-origin site | Discovers, groups and samples representative pages using the real scanner. | Findings by page, route family and template. |
-| **FocusTrace Memory** | Repeated scans, opt-in | Keeps bounded local history for persistence, changes, resolutions and regressions. | Observations, locator and optional preview. |
+| **Auditor notes** | Any static finding or Trace event | Adds editable, removable human context without changing the detected outcome or severity. | Local parent-linked note included in reports and JSON exports. |
+| **FocusTrace Memory** | Repeated scans, enabled by default | Keeps bounded local history without time-based expiry for persistence, changes, resolutions and regressions. | Observations, auditor notes, locator and optional preview. |
 | **Report** | Available static/runtime evidence | Consolidates analysis, runtime stories and already-generated Structure data. | Report view and exports. |
-| **PDF / TXT / Markdown** | Current report | Exports available evidence without silently rerunning a full DOM collection. | Shareable artifacts. |
+| **PDF / TXT / Markdown / JSON** | Current report or Memory baseline | Exports the applicable evidence and auditor notes without silently rerunning a full DOM collection. | Shareable artifacts. |
 
 ### Static WCAG rules
 
@@ -342,7 +343,7 @@ Sampling is representative evidence: it does not prove every URL is identical an
 
 ### FocusTrace Memory
 
-Memory is optional and **disabled by default**.
+Memory is **enabled by default** and can be disabled from Settings. It has no time-based expiry while FocusTrace remains installed; capacity limits still replace the oldest retained evidence so browser storage remains bounded. Uninstalling FocusTrace causes the browser to delete its extension storage automatically. Export the portable Memory JSON before uninstalling if the history or attached notes should be reused after a reinstall or in another browser profile.
 
 | Capability | Behavior |
 | --- | --- |
@@ -354,14 +355,16 @@ Memory is optional and **disabled by default**.
 | **Compact locator** | Can retain an ID or CSS selector to identify the element later. |
 | **Visual preview** | Can keep a small local JPEG crop of a currently visible failing element when capture is available. |
 | **Fallback** | If capture fails, keeps the compact locator instead. |
+| **Auditor notes** | Keeps notes attached to remembered static findings and includes them in portable Memory JSON. |
 | **Clear history** | Saved history can be removed from Settings even while Memory is disabled. |
+| **Uninstall lifecycle** | The browser automatically removes local Memory, notes, preferences and saved audit history when FocusTrace is uninstalled; exported files remain outside extension storage. |
 
 | Current limit | Value |
 | --- | ---: |
 | Observations per scope | 8 |
 | Total observations | 200 |
 | Visual previews | 24 |
-| Maximum age | 90 days |
+| Time-based expiry | None; capacity limits replace the oldest evidence |
 
 Memory does not store page HTML, full DOM snapshots or full-page screenshots.
 
@@ -371,11 +374,13 @@ Memory does not store page HTML, full DOM snapshots or full-page screenshots.
 | --- | --- |
 | **Session report** | Combines static findings and runtime evidence from the current session. |
 | **Interaction stories** | Includes Trace chains, including status-message reviews, runtime ARIA warnings and APG reviews. |
+| **Auditor notes** | Includes human notes attached to static findings and Trace events, visibly separated from FocusTrace evidence. |
 | **Document structure** | Reuses compact metrics/suggestions prepared by the full-page analysis or a later Structure refresh. |
 | **Rule legend** | Explains `FT-WCAG-*`, `FT-WARN-*`, `FT-REVIEW-*`, `FT-RUNTIME-*`, `FT-RUNTIME-ARIA-*` and `FT-APG-*` families. |
 | **PDF** | Printable single-page or multipage-audit export. |
 | **TXT** | Text export of available evidence. |
 | **Markdown** | Structured Markdown export. |
+| **JSON** | Trace schema v2 preserves event notes; portable Memory snapshots preserve static-finding notes and still accept v1 baselines. |
 | **Optional visual evidence** | Single-page PDF can include capture only when explicitly requested. |
 | **Historical multipage evidence** | Audit PDFs can reuse bounded local crops saved during each analysis. |
 
@@ -387,7 +392,7 @@ Memory does not store page HTML, full DOM snapshots or full-page screenshots.
 | **Technical identifiers** | Rule IDs, selectors, HTML/ARIA tokens, ratios and colors remain canonical. |
 | **Interface size** | Persistent preference. |
 | **Breakpoints** | Persistent runtime preferences. |
-| **Memory** | Persistent opt-in preference. |
+| **Memory** | Enabled by default; persistent opt-out preference. |
 
 ### Analysis limits
 
@@ -445,7 +450,7 @@ FocusTrace intentionally keeps its production permission set narrow:
 | --- | --- | --- |
 | `activeTab` | Chrome / Edge / Firefox | Analyze the page the user explicitly activates FocusTrace on and support local visible-tab evidence for explicit analysis, report export and real-Tab focus-visible review when available. |
 | `scripting` | Chrome / Edge / Firefox | Inject local analysis/runtime instrumentation into the active page. |
-| `storage` | Chrome / Edge / Firefox | Persist preferences, local state, bounded audits and optional FocusTrace Memory evidence. |
+| `storage` | Chrome / Edge / Firefox | Persist preferences, local state, bounded audits, auditor notes and FocusTrace Memory evidence. |
 | `sidePanel` | Chrome / Edge | Provide the FocusTrace debugging interface in the Chromium side panel. |
 
 Firefox uses its native sidebar manifest integration instead of the Chromium-only `sidePanel` permission.
@@ -456,7 +461,7 @@ Production builds do not require global host access at install time. HTTP/HTTPS 
 
 All analysis runs locally in the browser. FocusTrace does not send page content, DOM data, screenshots or recorded interactions to a FocusTrace server or third-party AI API.
 
-Full-page analysis prepares bounded Structure evidence together with the rule-engine result. FocusTrace Memory is opt-in. Memory/report visual evidence is local and bounded, and the lossless captures used for focus-visible runtime comparison are temporary and not persisted. See [`PRIVACY.md`](PRIVACY.md) for the canonical privacy policy and [`SECURITY.md`](SECURITY.md) for responsible vulnerability reporting.
+Full-page analysis prepares bounded Structure evidence together with the rule-engine result. FocusTrace Memory is enabled by default, can be disabled, and has no time-based expiry within its capacity limits. Auditor notes and Memory/report visual evidence remain local unless the user exports a report or JSON file; the lossless captures used for focus-visible runtime comparison are temporary and not persisted. See [`PRIVACY.md`](PRIVACY.md) for the canonical privacy policy and [`SECURITY.md`](SECURITY.md) for responsible vulnerability reporting.
 
 ## License and project identity
 

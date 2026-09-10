@@ -212,3 +212,24 @@ export function removeAuditPage(
     ...(activeAuditId ? { activeAuditId } : {}),
   };
 }
+
+export function updateAuditScan(
+  store: MultipageAuditStore,
+  scan: ScanResult,
+): MultipageAuditStore {
+  const key = auditPageKey(scan.url);
+  let changed = false;
+  const audits = store.audits.map((audit) => {
+    const pages = audit.pages.map((page) => {
+      if (page.key !== key || page.scan.scannedAt !== scan.scannedAt) return page;
+      changed = true;
+      return {
+        ...page,
+        title: scan.title,
+        scan,
+      };
+    });
+    return pages.some((page, index) => page !== audit.pages[index]) ? { ...audit, pages } : audit;
+  });
+  return changed ? { ...store, audits } : store;
+}

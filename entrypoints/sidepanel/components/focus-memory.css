@@ -492,3 +492,21 @@
     grid-template-columns: minmax(0, 1fr);
   }
 }
+.focus-memory-auditor-note {
+  margin-top: 9px;
+  padding: 8px 9px;
+  border-left: 3px solid var(--ft-brand);
+  background: var(--ft-brand-soft);
+}
+
+.focus-memory-auditor-note strong {
+  display: block;
+  margin-bottom: 3px;
+  font-size: 14px;
+}
+
+.focus-memory-auditor-note p {
+  margin: 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
