@@ -2,12 +2,12 @@
 
 This document keeps the Chrome Web Store, Microsoft Edge Add-ons and Firefox release copy aligned with the actual extension behavior. It is not a substitute for the public privacy policy or the release checklist.
 
-Current release candidate: **0.2.7**.
+Current release candidate: **0.2.8**.
 
 ## Release positioning
 
 - Product: FocusTrace
-- Version: 0.2.7
+- Version: 0.2.8
 - Supported targets: Chrome 114+ and Chromium-based Microsoft Edge
 - Firefox: Firefox 115+ packaged target; keep the public support claim conservative until the manual Firefox packaged-build and DevTools smoke checklist in `RELEASE_CHECKLIST.md` has passed
 - Architecture: Manifest V3, local-first, no required backend
@@ -39,6 +39,7 @@ Key capabilities include:
 - native DOM reveal from a finding to Chrome/Edge **Elements** or Firefox **Inspector** without moving keyboard focus on the inspected page;
 - runtime keyboard-focus and interaction tracing;
 - conservative runtime review evidence for completely obscured focus, dragging interactions, pointer/keyboard behavior, potentially unexposed status messages and real-keyboard focus visibility;
+- trusted-interaction review evidence for rendered text/non-text contrast states and additional content revealed by hover or focus;
 - SPA navigation and dialog lifecycle evidence;
 - read-only replay and consolidated reports;
 - editable and removable auditor notes on static findings and Trace events, included in local reports and structured exports;
@@ -82,7 +83,7 @@ Temporary Focus Visible PNG captures are decoded and compared in memory only. Th
 
 ### `sidePanel` (Chromium)
 
-Used to provide the regular FocusTrace interface alongside the page being inspected. The 0.2.7 DevTools panel is an additional developer-focused surface and does not replace the side panel or require `chrome.debugger`.
+Used to provide the regular FocusTrace interface alongside the page being inspected. The FocusTrace DevTools panel is an additional developer-focused surface and does not replace the side panel or require `chrome.debugger`.
 
 ### Optional `devtools` (Firefox)
 
@@ -154,20 +155,20 @@ Record the final public URLs here before submission:
 
 - current extension icon/logo in the store-required sizes;
 - screenshots showing Analyze, Structure and Trace as the primary workflows;
-- add a 0.2.7 screenshot showing **F12 → FocusTrace → Inspect in DOM** in the native browser inspector;
-- optionally one screenshot for Report, Site Audit or FocusTrace Memory;
+- add a current screenshot showing **F12 → FocusTrace → Inspect in DOM** in the native browser inspector;
+- add a current screenshot showing an auditor note and default-enabled FocusTrace Memory; optionally include Report or Site Audit too;
 - concise captions that describe observable functionality without claiming certification or complete WCAG/EN 301 549 coverage.
 
 ## Final submission gate
 
-Before uploading the production ZIP for 0.2.7:
+Before uploading the production ZIP for 0.2.8:
 
 1. Complete `npm run release:check:full` on the release candidate.
-2. Confirm CI is green on the exact commit intended for `v0.2.7`.
+2. Confirm CI is green on the exact commit intended for `v0.2.8`.
 3. Complete the manual Standards Coverage/EN 301 549, WCAG 2.2 regression, native EN/ES browser i18n, Structure, DevTools DOM inspection, multipage Report and FocusTrace Memory smoke items in `RELEASE_CHECKLIST.md`.
 4. Smoke-test the unpacked production Chrome and Edge builds, including the regular side panel and **F12 → FocusTrace → Inspect in DOM** flow.
 5. Complete the Firefox 115+ packaged-build smoke, including the optional DevTools permission and native Inspector path, before making a broad Firefox support claim.
 6. Confirm production manifests contain only the intended required and optional permissions and that Firefox `devtools` remains optional.
 7. Confirm the public privacy-policy, support/contact and voluntary-support URLs resolve without authentication.
 8. Review the final store declarations against `PRIVACY.md` and actual behavior, including standards traceability, media/form/keyboard-pointer review evidence, target-geometry evidence, Focus Visible temporary captures, runtime status-message candidates, auditor notes and their exports, unified Structure evidence, DevTools DOM selection, bounded multipage-audit visual evidence and default-enabled Memory notes/previews/locators.
-9. Tag the exact approved commit as `v0.2.7` only after the release candidate is accepted.
+9. Tag the exact approved commit as `v0.2.8` only after the release candidate is accepted.

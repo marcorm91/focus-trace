@@ -1,6 +1,6 @@
 # FocusTrace release checklist
 
-Current release candidate: **0.2.7**.
+Current release candidate: **0.2.8**.
 
 Use this checklist before publishing a release build or submitting an updated package to a browser store. Keep the candidate version above aligned with `package.json`, `package-lock.json`, the browser manifests and the release contract test.
 
@@ -66,6 +66,27 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 - Confirm normal-priority declarations, CSS-wide values such as `inherit`/`unset`/`revert`, code-like contexts and non-rendered text are not reported by this bounded detector.
 - For `line-height`, confirm a genuine soft wrap is required and authored line breaks alone do not establish applicability.
 - Manually apply the complete WCAG text-spacing set together, including paragraph spacing, and verify content/functionality is not lost; do not treat the automated subset as complete 1.4.12 conformance proof.
+
+### WCAG 1.4.3 Contrast in interactive text states
+
+- Start Trace and exercise a real hover, pointer-active and keyboard-focus state whose rendered text contrast becomes insufficient; confirm `FT-RUNTIME-014` records contextual `REVIEW` evidence only after the trusted interaction.
+- Repeat with sufficient final contrast and confirm the observed state stays silent.
+- Exercise a transitioned state and confirm the measurement reflects the bounded settled style rather than an intermediate animation frame.
+- Confirm static Analyze does not infer inactive authored selectors and that unvisited interactive states are not presented as passing.
+
+### WCAG 1.4.11 Non-text Contrast in interactive states
+
+- During Trace, exercise a control whose real hover state exposes a measurably insufficient boundary or simple graphic contrast and confirm `FT-RUNTIME-016` remains `REVIEW`.
+- Reach an authored low-contrast focus outline with real keyboard navigation and confirm it is evaluated only after the trusted focus transition.
+- Repeat with sufficient boundary/graphic/focus-indicator contrast and confirm the observed state stays silent.
+- Confirm complex gradients, image-based or multi-color graphics and unresolved shadow-only indicators do not become invented deterministic failures.
+
+### WCAG 1.4.13 Content on Hover or Focus
+
+- Exercise additional content that appears after real hover or focus and confirm `FT-RUNTIME-015` associates it only through an explicit ARIA relationship or bounded geometric proximity.
+- Verify a broken example that disappears while the pointer enters it can produce hoverability review evidence, while content that remains available under the pointer stays silent.
+- Review representative persistence and overlapping-content dismissal scenarios; confirm Escape is treated as one diagnostic probe, not a universal requirement.
+- Confirm every result remains contextual `REVIEW`, unexercised states are not inferred and EN/ES presentation keeps the technical evidence stable.
 
 ### WCAG 2.1.1 / 2.1.2 Keyboard and keyboard traps
 
@@ -343,7 +364,7 @@ Before changing visibility:
 - Confirm `README.md`, `LICENSE`, `CONTRIBUTING.md`, `SECURITY.md`, `PRIVACY.md` and `TRADEMARKS.md` reflect the release.
 - Confirm the README does not overclaim full WCAG/EN conformance or browser support.
 - Confirm GitHub description, website and topics are set.
-- Add current screenshots or a short demo of Analyze, Structure, Trace and, for 0.2.7, the DevTools DOM workflow.
+- Add current screenshots or a short demo of Analyze, Structure, Trace, the DevTools DOM workflow, auditor notes and default-enabled Memory.
 - Verify author/contact links.
 - Enable branch protection or an equivalent ruleset for `main`.
 - Require the relevant CI checks before merge.
@@ -355,18 +376,18 @@ Before changing visibility:
 
 ## Release
 
-For the current candidate, the release version is **0.2.7** and the intended tag is **`v0.2.7`**.
+For the current candidate, the release version is **0.2.8** and the intended tag is **`v0.2.8`**.
 
-- Confirm `package.json`, `package-lock.json` and all browser manifests report `0.2.7`.
-- Confirm `tests/release-contract.test.ts` targets `v0.2.7` and passes.
-- Confirm `docs/changelog/RELEASE_NOTES_0.2.7.md` and `docs/changelog/CHANGELOG.md` match the shipped behavior and limitations.
-- Confirm the version shown in Settings comes from the installed manifest and displays `0.2.7` in the packaged candidate.
+- Confirm `package.json`, `package-lock.json` and all browser manifests report `0.2.8`.
+- Confirm `tests/release-contract.test.ts` targets `v0.2.8` and passes.
+- Confirm `docs/changelog/RELEASE_NOTES_0.2.8.md` and `docs/changelog/CHANGELOG.md` match the shipped behavior and limitations.
+- Confirm the version shown in Settings comes from the installed manifest and displays `0.2.8` in the packaged candidate.
 - Confirm the release commit is on `main` and CI is green on that exact commit.
 - Build the production Chrome, Edge and Firefox MV3 artifacts from that commit.
 - Smoke-test the unpacked production build in supported Chromium browsers, including F12 → FocusTrace → Inspect in DOM.
 - Complete the Firefox packaged-build and optional DevTools/Inspector smoke checklist before describing Firefox as officially supported.
-- Tag the exact approved commit as `v0.2.7`.
+- Tag the exact approved commit as `v0.2.8`.
 - Review the generated ZIPs before attaching/uploading them.
 - Only then publish/distribute the release artifacts or submit the updated packages to browser stores.
 
-After publishing 0.2.7, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.
+After publishing 0.2.8, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.
