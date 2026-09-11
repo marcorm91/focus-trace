@@ -213,6 +213,20 @@ export interface UseOfColorEvidence {
   persistentVisualCue: 'none-observed';
 }
 
+export interface PauseStopHideEvidence {
+  kind: 'moving-or-blinking' | 'moving-or-scrolling';
+  source: 'web-animation' | 'marquee' | 'autoplay-video';
+  automaticStart: 'observed' | 'declared' | 'unknown';
+  parallelContent: 'observed';
+  durationMs: number | null;
+  thresholdMs: 5000;
+  repeatsIndefinitely: boolean;
+  animatedProperties: string[];
+  animationNames: string[];
+  controlMechanism: 'candidate-observed' | 'none-observed';
+  controlSelectors: string[];
+}
+
 export interface ScanIssue {
   id: string;
   ruleId: string;
@@ -229,6 +243,7 @@ export interface ScanIssue {
   contrastState?: ContrastStateReviewEvidence;
   reflow?: ReflowEvidence;
   useOfColor?: UseOfColorEvidence;
+  pauseStopHide?: PauseStopHideEvidence;
   references: StandardReference[];
   auditorNote?: AuditorNote;
 }

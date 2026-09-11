@@ -24,6 +24,7 @@ export function localizedReferenceLabel(reference: StandardReference, language: 
     if (reference.label === 'Text Spacing') return 'Espaciado de texto';
     if (reference.label === 'Reflow') return 'Reajuste del contenido';
     if (reference.label === 'Use of Color') return 'Uso del color';
+    if (reference.label === 'Pause, Stop, Hide') return 'Pausar, detener u ocultar';
     if (reference.label === 'Important letter spacing in style attributes is wide enough') {
       return 'El espaciado de letras importante en atributos style es suficiente';
     }
@@ -185,6 +186,10 @@ const EXTRA_COPY_ES: Record<string, { title: string; description: string }> = {
     title: 'El enlace integrado puede depender únicamente del color',
     description: 'FocusTrace ha observado un enlace integrado cuyo texto renderizado se diferencia del texto adyacente mediante el color, con una diferencia de luminosidad inferior a 3:1 y sin otra señal visual persistente que pueda resolver. Revisa el contexto visual completo antes de considerarlo un incumplimiento.',
   },
+  'FT-REVIEW-026': {
+    title: 'El contenido en movimiento automático necesita revisar cómo pausarlo, detenerlo u ocultarlo',
+    description: 'FocusTrace ha observado contenido renderizado en movimiento, parpadeo o desplazamiento que podría iniciarse automáticamente, continuar durante más de cinco segundos y aparecer junto a otro contenido. Revisa el inicio automático, la duración, el carácter esencial y cualquier mecanismo de control antes de considerarlo un incumplimiento.',
+  },
   'FT-RUNTIME-006': {
     title: 'La interacción de arrastre requiere revisar una alternativa de puntero sencillo',
     description: 'Trace observó un arrastre real. Revisa si la misma funcionalidad puede realizarse con un puntero sencillo sin movimiento de arrastre, teniendo en cuenta las excepciones de WCAG 2.5.7.',
@@ -223,6 +228,7 @@ const EXTRA_EVIDENCE_ES: Record<string, string> = {
   'FT-REVIEW-023': 'El vídeo probablemente pregrabado señalado no expone una pista nativa de descripción ni una versión audiodescrita observable. La precisión, integridad y aplicabilidad de la audiodescripción requieren revisión manual.',
   'FT-REVIEW-024': 'El viewport estrecho observado presenta desbordamiento bidimensional o contenido recortado que requiere revisión contextual.',
   'FT-REVIEW-025': 'El enlace integrado señalado puede depender únicamente de una diferencia de color insuficiente respecto al texto adyacente.',
+  'FT-REVIEW-026': 'El contenido señalado presenta movimiento, parpadeo o desplazamiento persistente que requiere revisión contextual.',
   'FT-RUNTIME-006': 'Se observó un movimiento de arrastre real y debe revisarse si existe una alternativa equivalente sin arrastrar.',
 };
 
@@ -363,6 +369,28 @@ function localizedUseOfColorEvidence(issue: ScanIssue): string | undefined {
   return `${issue.targets[0] ?? 'El enlace señalado'} es un enlace integrado en ${evidence.contextSelector}. Su color de texto renderizado ${evidence.linkColor} se diferencia del texto adyacente ${evidence.surroundingTextColor} en ${evidence.contrastRatio}:1, por debajo de la diferencia de luminosidad requerida de ${evidence.requiredRatio}:1, y no se ha observado ninguna señal visual persistente no basada en color.`;
 }
 
+function localizedPauseStopHideEvidence(issue: ScanIssue): string | undefined {
+  const evidence = issue.pauseStopHide;
+  if (!evidence) return undefined;
+  const source = evidence.source === 'web-animation'
+    ? 'una animación Web activa'
+    : evidence.source === 'marquee'
+      ? 'un elemento marquee con desplazamiento automático'
+      : 'un vídeo con autoplay sin controles nativos';
+  const duration = evidence.repeatsIndefinitely
+    ? 'se repite indefinidamente'
+    : evidence.durationMs == null
+      ? 'tiene una duración no resoluble'
+      : `tiene una duración observada de ${evidence.durationMs} ms`;
+  const controls = evidence.controlSelectors.length
+    ? `Se han observado controles candidatos relacionados: ${evidence.controlSelectors.join(', ')}; es necesario activarlos y comprobar su comportamiento.`
+    : 'No se ha observado ningún control renderizado con nombre accesible y una relación aria-controls explícita con el contenido.';
+  const properties = evidence.animatedProperties.length
+    ? ` Propiedades animadas: ${evidence.animatedProperties.join(', ')}.`
+    : '';
+  return `${issue.targets[0] ?? 'El contenido señalado'} expone ${source} mientras existe otro contenido visible; ${duration} frente al umbral de ${evidence.thresholdMs} ms.${properties} ${controls} Confirma que comienza automáticamente, supera cinco segundos y no es esencial.`;
+}
+
 export function localizedRuleTitle(ruleId: string, fallback: string, language: AppLanguage): string {
   if (language === 'es' && ruleId === 'FT-WCAG-013' && fallback === LANGUAGE_PART_TITLE_EN) {
     return LANGUAGE_PART_TITLE_ES;
@@ -389,6 +417,8 @@ export function localizedScanIssue(issue: ScanIssue, language: AppLanguage): Sca
       ? localizedReflowEvidence(issue)
       : issue.ruleId === 'FT-REVIEW-025'
         ? localizedUseOfColorEvidence(issue)
+        : issue.ruleId === 'FT-REVIEW-026'
+          ? localizedPauseStopHideEvidence(issue)
         : localizedExtraEvidence(issue.ruleId, issue.evidence);
     if (evidence) localized = { ...localized, evidence };
   }
