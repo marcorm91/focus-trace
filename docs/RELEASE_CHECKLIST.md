@@ -1,6 +1,6 @@
 # FocusTrace release checklist
 
-Current release candidate: **0.2.8**.
+Current release candidate: **0.2.9**.
 
 Use this checklist before publishing a release build or submitting an updated package to a browser store. Keep the candidate version above aligned with `package.json`, `package-lock.json`, the browser manifests and the release contract test.
 
@@ -412,7 +412,7 @@ Before changing visibility:
 - Confirm `README.md`, `LICENSE`, `CONTRIBUTING.md`, `SECURITY.md`, `PRIVACY.md` and `TRADEMARKS.md` reflect the release.
 - Confirm the README does not overclaim full WCAG/EN conformance or browser support.
 - Confirm GitHub description, website and topics are set.
-- Add current screenshots or a short demo of Analyze, Structure, Trace, the DevTools DOM workflow, auditor notes and default-enabled Memory.
+- Add current screenshots or a short demo of Analyze, Structure, Trace, the DevTools DOM workflow, auditor notes, default-enabled Memory and the guided 100% to 200% Resize Text workflow.
 - Verify author/contact links.
 - Enable branch protection or an equivalent ruleset for `main`.
 - Require the relevant CI checks before merge.
@@ -424,18 +424,18 @@ Before changing visibility:
 
 ## Release
 
-For the current candidate, the release version is **0.2.8** and the intended tag is **`v0.2.8`**.
+For the current candidate, the release version is **0.2.9** and the intended tag is **`v0.2.9`**.
 
-- Confirm `package.json`, `package-lock.json` and all browser manifests report `0.2.8`.
-- Confirm `tests/release-contract.test.ts` targets `v0.2.8` and passes.
-- Confirm `docs/changelog/RELEASE_NOTES_0.2.8.md` and `docs/changelog/CHANGELOG.md` match the shipped behavior and limitations.
-- Confirm the version shown in Settings comes from the installed manifest and displays `0.2.8` in the packaged candidate.
+- Confirm `package.json`, `package-lock.json` and all browser manifests report `0.2.9`.
+- Confirm `tests/release-contract.test.ts` targets `v0.2.9` and passes.
+- Confirm `docs/changelog/RELEASE_NOTES_0.2.9.md` and `docs/changelog/CHANGELOG.md` match the shipped behavior and limitations.
+- Confirm the version shown in Settings comes from the installed manifest and displays `0.2.9` in the packaged candidate.
 - Confirm the release commit is on `main` and CI is green on that exact commit.
 - Build the production Chrome, Edge and Firefox MV3 artifacts from that commit.
 - Smoke-test the unpacked production build in supported Chromium browsers, including F12 → FocusTrace → Inspect in DOM.
 - Complete the Firefox packaged-build and optional DevTools/Inspector smoke checklist before describing Firefox as officially supported.
-- Tag the exact approved commit as `v0.2.8`.
+- Tag the exact approved commit as `v0.2.9`.
 - Review the generated ZIPs before attaching/uploading them.
 - Only then publish/distribute the release artifacts or submit the updated packages to browser stores.
 
-After publishing 0.2.8, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.
+After publishing 0.2.9, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.
