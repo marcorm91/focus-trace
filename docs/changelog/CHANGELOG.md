@@ -2,6 +2,32 @@
 
 All notable FocusTrace release changes are summarized here. Detailed release notes remain under `docs/changelog/RELEASE_NOTES_<version>.md`.
 
+## 0.2.9
+
+### Added
+
+- Added `FT-REVIEW-024` conservative reflow review for cross-axis document overflow and rendered text or controls clipped by unscrollable `overflow: hidden/clip` ancestors at the WCAG narrow-viewport threshold.
+- Added `FT-REVIEW-025` review evidence for native inline links that may rely on color alone, including measured lightness difference against adjacent prose and observable persistent non-color cues.
+- Added `FT-REVIEW-026` current-state review for persistent browser-exposed Web Animations, rendered `<marquee>` content and native autoplay video that may need a pause, stop or hide mechanism.
+- Added `FT-REVIEW-027` bounded English/Spanish generic-link detection with programmatically determinable context from sentences, paragraphs, lists, tables and `aria-describedby`.
+- Added `FT-REVIEW-028` guided same-document comparison between 100% and 200% browser zoom for newly unavailable content, lost control names, clipping, overlap and insufficient effective text enlargement.
+
+### Changed
+
+- Analyze now exposes localized workflow status for capturing, retaining and comparing the session-only Resize Text reference without changing the user's browser zoom.
+- Structured JSON, Memory-compatible findings and reports can retain bounded evidence for the five new review rules, including selectors, ratios, animation timing, programmatic context, geometry and zoom factors where applicable.
+- Standards Coverage and EN 301 549 clause-9 traceability now include the new partial evidence for WCAG 1.4.1, 1.4.4, 1.4.10, 2.2.2 and 2.4.4.
+
+### Privacy and reliability
+
+- Every new candidate remains `REVIEW`; quiet or bounded passing observations are not presented as complete WCAG conformance.
+- Reflow exceptions, natural-language purpose, essential movement, functional equivalence and complete text-resize behavior remain subject to human verification.
+- Scans use explicit candidate, traversal and finding limits. The Resize Text baseline is session-only and is invalidated for a different page document.
+- No backend, analytics pipeline, required permission, persistent storage category or external communication was added.
+- Added unit, contract and real-browser E2E coverage for all five review workflows.
+
+See `docs/changelog/RELEASE_NOTES_0.2.9.md` for the full 0.2.9 notes and validation scope.
+
 ## 0.2.8
 
 ### Added

@@ -2,12 +2,12 @@
 
 This document keeps the Chrome Web Store, Microsoft Edge Add-ons and Firefox release copy aligned with the actual extension behavior. It is not a substitute for the public privacy policy or the release checklist.
 
-Current release candidate: **0.2.8**.
+Current release candidate: **0.2.9**.
 
 ## Release positioning
 
 - Product: FocusTrace
-- Version: 0.2.8
+- Version: 0.2.9
 - Supported targets: Chrome 114+ and Chromium-based Microsoft Edge
 - Firefox: Firefox 115+ packaged target; keep the public support claim conservative until the manual Firefox packaged-build and DevTools smoke checklist in `RELEASE_CHECKLIST.md` has passed
 - Architecture: Manifest V3, local-first, no required backend
@@ -33,6 +33,8 @@ Key capabilities include:
 - EN 301 549 V4.1.1 (2026-09) clause-9 traceability for WCAG 2.2 Level A/AA references without converting coverage into a conformance claim;
 - accessible-name, language, text/non-text contrast, target-size/spacing, ARIA and HTML authoring checks;
 - conservative WCAG review evidence for prerecorded media alternatives/captions, audio description/media alternatives, live captions, keyboard operability/traps, pointer cancellation, form error identification/suggestions, bypass mechanisms, explicit input purpose, language of parts and text spacing;
+- bounded visual review evidence for narrow-viewport reflow, inline links that may rely on color alone, persistent moving content and generic link purpose in programmatic context;
+- a guided same-page 100% to 200% browser-zoom comparison for newly unavailable content, lost control names, clipping, overlap and insufficient effective text enlargement;
 - on-demand Structure workspace with heading outline, concrete semantic suggestions and accessibility-oriented structural metrics prepared with the full-page analysis;
 - compact affected-element location with separate **Highlight on page** and **Inspect in DOM** actions;
 - a dedicated FocusTrace panel inside Chrome, Edge and Firefox Developer Tools that reuses the same Review, Structure, Trace and Report workspace;
@@ -117,6 +119,8 @@ FocusTrace does not intentionally execute remotely hosted JavaScript or download
 
 FocusTrace may inspect website content necessary to provide its user-facing accessibility analysis, such as DOM structure and attributes, accessible-name/role information, rendered contrast and target-geometry evidence, focus transitions, selected runtime mutations, media/form/keyboard-pointer evidence, status-message candidates, URL/title context and local visual evidence associated with the requested feature.
 
+The guided Resize Text review keeps a bounded 100% reference only in the current extension session for comparison with the same document at 200% browser zoom. The reference contains compact selectors, text/name signatures, computed-size and geometry evidence; FocusTrace does not change browser zoom or persist this reference as a separate long-term page snapshot.
+
 An explicit full-page analysis can generate a bounded Structure snapshot containing accessibility-oriented metrics plus selectors and evidence for concrete semantic review suggestions. Reports may reuse the compact metrics/suggestions subset; exporting a report does not trigger another Structure scan.
 
 Standards Coverage metadata and EN 301 549 clause mappings are product/reference metadata shipped with FocusTrace; they do not represent a remote certification service or upload inspected-page data to a standards backend.
@@ -157,18 +161,19 @@ Record the final public URLs here before submission:
 - screenshots showing Analyze, Structure and Trace as the primary workflows;
 - add a current screenshot showing **F12 → FocusTrace → Inspect in DOM** in the native browser inspector;
 - add a current screenshot showing an auditor note and default-enabled FocusTrace Memory; optionally include Report or Site Audit too;
+- add a current screenshot showing either narrow-viewport reflow evidence or the guided 100% to 200% Resize Text workflow;
 - concise captions that describe observable functionality without claiming certification or complete WCAG/EN 301 549 coverage.
 
 ## Final submission gate
 
-Before uploading the production ZIP for 0.2.8:
+Before uploading the production ZIP for 0.2.9:
 
 1. Complete `npm run release:check:full` on the release candidate.
-2. Confirm CI is green on the exact commit intended for `v0.2.8`.
+2. Confirm CI is green on the exact commit intended for `v0.2.9`.
 3. Complete the manual Standards Coverage/EN 301 549, WCAG 2.2 regression, native EN/ES browser i18n, Structure, DevTools DOM inspection, multipage Report and FocusTrace Memory smoke items in `RELEASE_CHECKLIST.md`.
 4. Smoke-test the unpacked production Chrome and Edge builds, including the regular side panel and **F12 → FocusTrace → Inspect in DOM** flow.
 5. Complete the Firefox 115+ packaged-build smoke, including the optional DevTools permission and native Inspector path, before making a broad Firefox support claim.
 6. Confirm production manifests contain only the intended required and optional permissions and that Firefox `devtools` remains optional.
 7. Confirm the public privacy-policy, support/contact and voluntary-support URLs resolve without authentication.
-8. Review the final store declarations against `PRIVACY.md` and actual behavior, including standards traceability, media/form/keyboard-pointer review evidence, target-geometry evidence, Focus Visible temporary captures, runtime status-message candidates, auditor notes and their exports, unified Structure evidence, DevTools DOM selection, bounded multipage-audit visual evidence and default-enabled Memory notes/previews/locators.
-9. Tag the exact approved commit as `v0.2.8` only after the release candidate is accepted.
+8. Review the final store declarations against `PRIVACY.md` and actual behavior, including standards traceability, media/form/keyboard-pointer review evidence, reflow, use-of-color, moving-content, link-purpose and Resize Text evidence, target geometry, Focus Visible temporary captures, runtime status-message candidates, auditor notes and their exports, unified Structure evidence, DevTools DOM selection, bounded multipage-audit visual evidence and default-enabled Memory notes/previews/locators.
+9. Tag the exact approved commit as `v0.2.9` only after the release candidate is accepted.
