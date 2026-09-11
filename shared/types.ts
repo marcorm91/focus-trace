@@ -202,6 +202,17 @@ export interface ReflowEvidence {
   clipping?: 'partial' | 'complete';
 }
 
+export interface UseOfColorEvidence {
+  kind: 'inline-link';
+  contextSelector: string;
+  surroundingTextSelector: string;
+  linkColor: string;
+  surroundingTextColor: string;
+  contrastRatio: number;
+  requiredRatio: 3;
+  persistentVisualCue: 'none-observed';
+}
+
 export interface ScanIssue {
   id: string;
   ruleId: string;
@@ -217,6 +228,7 @@ export interface ScanIssue {
   contrast?: ContrastEvidence;
   contrastState?: ContrastStateReviewEvidence;
   reflow?: ReflowEvidence;
+  useOfColor?: UseOfColorEvidence;
   references: StandardReference[];
   auditorNote?: AuditorNote;
 }

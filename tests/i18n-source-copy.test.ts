@@ -189,3 +189,38 @@ describe('Spanish localization of synced/source copy', () => {
     expect(localized.evidence).not.toContain('Generated reflow evidence');
   });
 });
+
+describe('Spanish use-of-color evidence', () => {
+  it('localizes structured inline-link measurements without losing canonical colors or selectors', () => {
+    const issue: ScanIssue = {
+      id: 'color-only-link',
+      ruleId: 'FT-REVIEW-025',
+      title: 'Inline link may rely on color alone',
+      description: 'Generated use-of-color review.',
+      evidence: 'Generated use-of-color evidence.',
+      severity: 'serious',
+      outcome: 'review',
+      targets: ['#guide'],
+      useOfColor: {
+        kind: 'inline-link',
+        contextSelector: '#copy',
+        surroundingTextSelector: '#copy',
+        linkColor: 'rgb(0, 0, 255)',
+        surroundingTextColor: 'rgb(0, 0, 0)',
+        contrastRatio: 2.44,
+        requiredRatio: 3,
+        persistentVisualCue: 'none-observed',
+      },
+      references: [],
+    };
+
+    const localized = localizedScanIssue(issue, 'es');
+
+    expect(localized.title).toContain('depender únicamente del color');
+    expect(localized.evidence).toContain('#guide');
+    expect(localized.evidence).toContain('#copy');
+    expect(localized.evidence).toContain('rgb(0, 0, 255)');
+    expect(localized.evidence).toContain('2.44:1');
+    expect(localized.evidence).not.toContain('Generated');
+  });
+});

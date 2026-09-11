@@ -6,7 +6,7 @@ import {
 import { remediationForIssue } from '../lib/site-audit/remediation';
 import type { ScanIssue } from '../shared/types';
 
-const TARGET_RULES = ['FT-RUNTIME-002', 'FT-RUNTIME-006', 'FT-REVIEW-011', 'FT-REVIEW-013', 'FT-REVIEW-015', 'FT-REVIEW-016', 'FT-REVIEW-024'] as const;
+const TARGET_RULES = ['FT-RUNTIME-002', 'FT-RUNTIME-006', 'FT-REVIEW-011', 'FT-REVIEW-013', 'FT-REVIEW-015', 'FT-REVIEW-016', 'FT-REVIEW-024', 'FT-REVIEW-025'] as const;
 
 describe('actionable remediation', () => {
   it('provides three concrete options plus validation in English and Spanish', () => {
@@ -36,6 +36,8 @@ describe('actionable remediation', () => {
     expect(actionableRemediationText('FT-REVIEW-016', 'es')).toContain('separación entre párrafos de 2 veces');
     expect(actionableRemediationText('FT-REVIEW-024', 'en')).toContain('320 CSS px');
     expect(actionableRemediationText('FT-REVIEW-024', 'es')).toContain('320 píxeles CSS');
+    expect(actionableRemediationText('FT-REVIEW-025', 'en')).toContain('normal, unhovered and unfocused state');
+    expect(actionableRemediationText('FT-REVIEW-025', 'es')).toContain('estado normal, sin hover ni foco');
   });
 
   it('does not manufacture guidance for unrelated rules', () => {

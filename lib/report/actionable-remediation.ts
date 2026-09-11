@@ -269,6 +269,33 @@ export function actionableRemediationForRule(
     };
   }
 
+  if (ruleId === 'FT-REVIEW-025') {
+    return {
+      options: [
+        tr(
+          language,
+          'Add a persistent non-color cue to inline links, such as an underline, bold or italic styling, a distinct font family or a sufficiently different text size. Keep the cue visible before hover or keyboard focus.',
+          'Añade a los enlaces integrados una señal persistente no basada en el color, como subrayado, negrita, cursiva, una familia tipográfica distinta o un tamaño de texto suficientemente diferente. Mantén la señal visible antes del hover o del foco de teclado.',
+        ),
+        tr(
+          language,
+          'When lightness is the additional distinction, ensure at least 3:1 contrast between the link text and the surrounding non-link text. Separately preserve the required text-to-background contrast for both colors.',
+          'Cuando la luminosidad sea la distinción adicional, asegura un contraste mínimo de 3:1 entre el texto del enlace y el texto adyacente que no es enlace. Conserva por separado el contraste exigido entre ambos colores de texto y su fondo.',
+        ),
+        tr(
+          language,
+          'Apply the same persistent treatment consistently to links inside prose. Do not rely only on a cue that appears on hover, active or focus, because users must be able to identify the link before interacting with it.',
+          'Aplica el mismo tratamiento persistente de forma coherente a los enlaces dentro de texto. No dependas únicamente de una señal que aparezca con hover, active o focus, porque el usuario debe poder identificar el enlace antes de interactuar.',
+        ),
+      ],
+      validation: tr(
+        language,
+        'Inspect the link in its normal, unhovered and unfocused state and confirm it remains identifiable when color differences are removed. If lightness is the only additional cue, measure at least 3:1 against adjacent text and also verify each text color against its background under WCAG 1.4.3.',
+        'Inspecciona el enlace en su estado normal, sin hover ni foco, y confirma que sigue siendo identificable al eliminar las diferencias de color. Si la luminosidad es la única señal adicional, mide al menos 3:1 respecto al texto adyacente y verifica también cada color de texto frente a su fondo según WCAG 1.4.3.',
+      ),
+    };
+  }
+
   return undefined;
 }
 

@@ -5,6 +5,7 @@ describe('scan categories', () => {
   it('keeps text and non-text contrast inside the full Analyze scan', () => {
     expect(scanCategoryForRule('FT-WCAG-010')).toBe('contrast');
     expect(scanCategoryForRule('FT-WCAG-011')).toBe('contrast');
+    expect(scanCategoryForRule('FT-REVIEW-025')).toBe('contrast');
   });
 
   it('groups existing rules into useful audit areas', () => {

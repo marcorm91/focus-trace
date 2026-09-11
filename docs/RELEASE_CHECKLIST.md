@@ -78,6 +78,15 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 - Switch EN/ES and confirm title, explanation, measured evidence and remediation are localized while selectors and numeric geometry remain unchanged.
 - Manually traverse all content and controls after zooming; confirm the product does not claim complete WCAG 1.4.10 coverage or reset the page's zoom.
 
+### WCAG 1.4.1 Use of Color — inline links
+
+- Analyze a native link inside a prose paragraph whose only distinction is a text color less than `3:1` from the adjacent non-link text; confirm `FT-REVIEW-025` reports REVIEW with both colors, the measured ratio and stable link/context selectors.
+- Repeat with an underline, bold/italic/different-size treatment, visible boundary, generated cue or graphic icon and confirm the bounded observation records PASS rather than a review.
+- Repeat with a color difference of at least `3:1`, equal link/surrounding colors, a standalone link and a link inside navigation/menu/toolbar context; confirm only the applicable bounded cases are counted.
+- Exercise translucent, image/gradient, filtered and different-background cases and confirm unresolved visual rendering is omitted rather than guessed.
+- Switch EN/ES and confirm title, explanation, evidence and remediation are localized while selectors, RGB colors and ratios remain canonical.
+- Manually verify normal, hover and focus presentation plus non-link color semantics such as errors, required fields, charts and state indicators; confirm the product does not claim complete WCAG 1.4.1 coverage.
+
 ### WCAG 1.4.3 Contrast in interactive text states
 
 - Start Trace and exercise a real hover, pointer-active and keyboard-focus state whose rendered text contrast becomes insufficient; confirm `FT-RUNTIME-014` records contextual `REVIEW` evidence only after the trusted interaction.
