@@ -21,8 +21,8 @@
       "authority": "W3C",
       "url": "https://www.w3.org/WAI/ARIA/apg/",
       "role": "informative",
-      "contentHash": "c5a6d654942b42e6ed32b612dbbd51401f48893e3e006c14a7cbd957ee665ab1",
-      "lastModified": "Fri, 28 Aug 2026 17:32:58 GMT"
+      "contentHash": "a22dbb98b95306dbe54c2cca816c69ce9b55572702952b29b3cc8c867a9aee4b",
+      "lastModified": "Thu, 10 Sep 2026 02:58:41 GMT"
     },
     {
       "id": "core-aam",
@@ -39,9 +39,9 @@
       "authority": "WHATWG",
       "url": "https://html.spec.whatwg.org/multipage/",
       "role": "normative",
-      "contentHash": "167d4d5453314829ec06adb71b92d2cca17b69d3df5bd01393b04cd05ceeaabe",
-      "etag": "W/\"6a96e38e-25c4f\"",
-      "lastModified": "Tue, 01 Sep 2026 14:39:10 GMT"
+      "contentHash": "7cef0dd44431f96d5222a779a0caeec3cd217034be98dbf5cb3baea80bf61916",
+      "etag": "W/\"6aa01a84-25c76\"",
+      "lastModified": "Tue, 08 Sep 2026 14:24:04 GMT"
     },
     {
       "id": "html-aam",
@@ -58,9 +58,9 @@
       "authority": "WHATWG",
       "url": "https://html.spec.whatwg.org/multipage/obsolete.html",
       "role": "normative",
-      "contentHash": "11b984f04a92dcc010117234f4bea48c6019880c86d2436e4403591629d3aaa3",
-      "etag": "W/\"6a96e38f-2abbb\"",
-      "lastModified": "Tue, 01 Sep 2026 14:39:11 GMT"
+      "contentHash": "973ae5b6f7f26b1202900fc7f38042c073189b898833b2e6bd4b62c393a15d69",
+      "etag": "W/\"6aa01a85-2abbb\"",
+      "lastModified": "Tue, 08 Sep 2026 14:24:05 GMT"
     },
     {
       "id": "iana-language-subtags",
@@ -98,8 +98,8 @@
       "authority": "W3C",
       "url": "https://www.w3.org/WAI/standards-guidelines/wcag/changelog/",
       "role": "informative",
-      "contentHash": "b43494fd640824abe6b51c6d874a04f3f80a56abded4e9ff3c265647289dd347",
-      "lastModified": "Fri, 28 Aug 2026 17:32:59 GMT"
+      "contentHash": "af4a8db5688b8832dc1ffee4bee37ce4833cc98a71d44a6ab6242ad6426ff6b3",
+      "lastModified": "Thu, 10 Sep 2026 02:58:41 GMT"
     },
     {
       "id": "wcag22",
@@ -116,9 +116,9 @@
       "authority": "W3C",
       "url": "https://w3c.github.io/wcag/guidelines/22/",
       "role": "informative",
-      "contentHash": "50047cf00ab25f0029def9a271e3e213b7d26c68817f040149e80d3fefc78ba3",
-      "etag": "W/\"6a91c0ba-7c9aa\"",
-      "lastModified": "Fri, 28 Aug 2026 17:09:14 GMT"
+      "contentHash": "6b45325e5e9651904818060d206e947745a90d8910c2f23e8577bf73de30d697",
+      "etag": "W/\"6aa19152-7c9b0\"",
+      "lastModified": "Wed, 09 Sep 2026 17:03:14 GMT"
     },
     {
       "id": "wcag22-errata",
@@ -126,8 +126,8 @@
       "authority": "W3C",
       "url": "https://www.w3.org/WAI/WCAG22/errata/",
       "role": "informative",
-      "contentHash": "6e6bdb09bc4b1c2c0e6a6e3f18aed873c54466614f900132a2a5c2bae516dd7d",
-      "lastModified": "Fri, 28 Aug 2026 17:37:39 GMT"
+      "contentHash": "f1039216ad867b18256b9eeddd2485210d71f4cfaa6d528595c4571045e746d8",
+      "lastModified": "Thu, 03 Sep 2026 15:18:01 GMT"
     },
     {
       "id": "wcag22-techniques",
