@@ -212,6 +212,16 @@ export const RULES = {
     ),
     references: [wcag('2.4.4', 'Link Purpose (In Context)', 'A', 'link-purpose-in-context'), act('5effbb', 'Link in context is descriptive')],
   },
+  resizeText: {
+    id: 'FT-REVIEW-028',
+    title: 'Text resized to 200% needs content and functionality review',
+    severity: 'serious',
+    ...impact(
+      'Text that does not double in effective size, becomes clipped or overlaps other content can become unreadable or make controls unavailable for people with low vision. FocusTrace keeps this as review because responsive substitutions, alternate resizing mechanisms and visual meaning require human verification.',
+      'El texto que no duplica su tamaño efectivo, queda recortado o se solapa con otro contenido puede resultar ilegible o dejar controles inaccesibles para personas con baja visión. FocusTrace lo mantiene como revisión porque las sustituciones responsive, los mecanismos alternativos de ampliación y el significado visual requieren verificación humana.',
+    ),
+    references: [wcag('1.4.4', 'Resize Text', 'AA', 'resize-text')],
+  },
   deprecatedAriaRole: {
     id: 'FT-WARN-001',
     title: 'Deprecated ARIA role is used',

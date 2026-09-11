@@ -265,7 +265,7 @@ export default defineBackground(() => {
     if (message.type === 'FOCUSTRACE_SAVE_SCAN') {
       return serializeTabWrite(message.tabId, async () => {
         const state = await getSession(message.tabId);
-        const next = updateSessionScan(state, message.scan);
+        const next = updateSessionScan(state, message.scan, message.textResizeBaseline);
         await saveSession(next);
         let warning: SaveScanResponse['warning'];
         try {

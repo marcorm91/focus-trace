@@ -1,0 +1,44 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Resize text fixture</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 16px/1.5 sans-serif; }
+    main { padding: 24px; }
+    #shrunk { font-size: 20px; }
+    #clip {
+      width: 320px;
+      height: 52px;
+      overflow: hidden;
+    }
+    #clipped-action {
+      width: 280px;
+      height: 42px;
+      font-size: 16px;
+    }
+    #replacement-mobile { display: none; }
+    @media (max-width: 700px) {
+      #shrunk { font-size: 12px; }
+      #clip { width: 120px; }
+      #lost-at-zoom { display: none; }
+      #replacement-desktop { display: none; }
+      #replacement-mobile { display: block; }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Resize text</h1>
+    <p id="shrunk">This text is reduced at the narrow responsive breakpoint.</p>
+    <div id="clip">
+      <button id="clipped-action" type="button">Continue with the complete checkout</button>
+    </div>
+    <p id="lost-at-zoom">Important account terms remain available.</p>
+    <p id="replacement-desktop">Responsive account options</p>
+    <p id="replacement-mobile">Responsive account options</p>
+  </main>
+</body>
+</html>

@@ -14,8 +14,9 @@ import {
   setSessionRecordingState,
   trimRuntimeEvents,
   updateSessionBreakpoints,
+  updateSessionScan,
 } from '../lib/runtime/session-state';
-import type { RuntimeBreakpointHit, RuntimeEvent, SessionState } from '../shared/types';
+import type { RuntimeBreakpointHit, RuntimeEvent, SessionState, TextResizeBaseline } from '../shared/types';
 
 function event(id: string, overrides: Partial<RuntimeEvent> = {}): RuntimeEvent {
   return {
@@ -309,6 +310,30 @@ describe('runtime session state helpers', () => {
     expect(navigated.scan).toBeUndefined();
     expect(navigated.events).toBe(current.events);
     expect(navigated.recording).toBe(current.recording);
+  });
+
+  it('retains a text-resize baseline for the same document and drops it after navigation', () => {
+    const scan = { url: 'https://example.com/account#intro' } as NonNullable<SessionState['scan']>;
+    const baseline: TextResizeBaseline = {
+      version: 1,
+      documentToken: 'document-1',
+      url: 'https://example.com/account',
+      capturedAt: 100,
+      zoomFactor: 1,
+      viewportWidth: 1280,
+      viewportHeight: 800,
+      subjects: [],
+      truncated: false,
+    };
+    const withBaseline = updateSessionScan(session(), scan, baseline);
+
+    expect(withBaseline.textResizeBaseline).toBe(baseline);
+    expect(updateSessionScan(withBaseline, { url: 'https://example.com/account#details' } as NonNullable<SessionState['scan']>)
+      .textResizeBaseline).toBe(baseline);
+
+    const navigated = invalidateSessionScanForUrl(withBaseline, 'https://example.com/settings');
+    expect(navigated.scan).toBeUndefined();
+    expect(navigated.textResizeBaseline).toBeUndefined();
   });
 
   it('invalidates stale scans for hash-router navigation but not ordinary anchors', () => {

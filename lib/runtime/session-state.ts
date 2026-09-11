@@ -5,6 +5,7 @@ import type {
   RuntimeEvent,
   ScanResult,
   SessionState,
+  TextResizeBaseline,
 } from '../../shared/types';
 
 export const MAX_RUNTIME_EVENTS = 500;
@@ -171,12 +172,30 @@ export function updateSessionBreakpoints(
   };
 }
 
-export function updateSessionScan(state: SessionState, scan: ScanResult): SessionState {
-  return { ...state, scan };
+export function updateSessionScan(
+  state: SessionState,
+  scan: ScanResult,
+  textResizeBaseline?: TextResizeBaseline,
+): SessionState {
+  const retainedBaseline = textResizeBaseline
+    ?? (state.textResizeBaseline
+      && comparableDocumentUrl(state.textResizeBaseline.url) === comparableDocumentUrl(scan.url)
+      ? state.textResizeBaseline
+      : undefined);
+  const next: SessionState = { ...state, scan };
+  if (retainedBaseline) next.textResizeBaseline = retainedBaseline;
+  else delete next.textResizeBaseline;
+  return next;
 }
 
 export function invalidateSessionScanForUrl(state: SessionState, url: string): SessionState {
-  if (!state.scan || comparableDocumentUrl(state.scan.url) === comparableDocumentUrl(url)) return state;
-  const { scan: _scan, ...rest } = state;
-  return rest;
+  const comparable = comparableDocumentUrl(url);
+  const scanMatches = !state.scan || comparableDocumentUrl(state.scan.url) === comparable;
+  const baselineMatches = !state.textResizeBaseline
+    || comparableDocumentUrl(state.textResizeBaseline.url) === comparable;
+  if (scanMatches && baselineMatches) return state;
+  const next = { ...state };
+  if (!scanMatches) delete next.scan;
+  if (!baselineMatches) delete next.textResizeBaseline;
+  return next;
 }

@@ -72,6 +72,7 @@ import {
   statusMessageFingerprint,
 } from '../lib/runtime/status-messages';
 import { runFocusTraceScan } from '../lib/audit/scan';
+import { captureTextResizeBaseline } from '../lib/audit/resize-text';
 import type {
   ExtensionMessage,
   FocusWalkOptions,
@@ -955,7 +956,12 @@ export default defineContentScript({
         return Promise.resolve({ recording, breakpoints: breakpointSettings });
       }
 
-      if (message.type === 'FOCUSTRACE_RUN_SCAN') return Promise.resolve(runFocusTraceScan());
+      if (message.type === 'FOCUSTRACE_CAPTURE_TEXT_RESIZE_BASELINE') {
+        return Promise.resolve(captureTextResizeBaseline(message.zoomFactor));
+      }
+      if (message.type === 'FOCUSTRACE_RUN_SCAN') {
+        return Promise.resolve(runFocusTraceScan(message.scope, message.textResize));
+      }
       if (message.type === 'FOCUSTRACE_RUN_FOCUS_WALK') return runAutomaticFocusWalk(message.options);
     });
 

@@ -23,6 +23,7 @@ export function localizedReferenceLabel(reference: StandardReference, language: 
     }
     if (reference.label === 'Text Spacing') return 'Espaciado de texto';
     if (reference.label === 'Reflow') return 'Reajuste del contenido';
+    if (reference.label === 'Resize Text') return 'Cambio de tamaño del texto';
     if (reference.label === 'Use of Color') return 'Uso del color';
     if (reference.label === 'Pause, Stop, Hide') return 'Pausar, detener u ocultar';
     if (reference.label === 'Important letter spacing in style attributes is wide enough') {
@@ -194,6 +195,10 @@ const EXTRA_COPY_ES: Record<string, { title: string; description: string }> = {
     title: 'El texto ambiguo del enlace requiere revisar su propósito en contexto',
     description: 'FocusTrace ha observado un nombre accesible de enlace no vacío que coincide con un conjunto reducido de expresiones genéricas en español o inglés. Revisa si el propósito del enlace queda claro por su nombre o junto con su contexto determinado programáticamente antes de considerarlo un incumplimiento.',
   },
+  'FT-REVIEW-028': {
+    title: 'El texto ampliado al 200 % necesita revisar el contenido y la funcionalidad',
+    description: 'FocusTrace ha comparado una referencia acotada al 100 % con la misma página al 200 % y ha observado una posible pérdida de texto, contenido o funcionalidad. Revisa las alternativas responsive y el estado visual completo antes de considerarlo un incumplimiento.',
+  },
   'FT-RUNTIME-006': {
     title: 'La interacción de arrastre requiere revisar una alternativa de puntero sencillo',
     description: 'Trace observó un arrastre real. Revisa si la misma funcionalidad puede realizarse con un puntero sencillo sin movimiento de arrastre, teniendo en cuenta las excepciones de WCAG 2.5.7.',
@@ -234,6 +239,7 @@ const EXTRA_EVIDENCE_ES: Record<string, string> = {
   'FT-REVIEW-025': 'El enlace integrado señalado puede depender únicamente de una diferencia de color insuficiente respecto al texto adyacente.',
   'FT-REVIEW-026': 'El contenido señalado presenta movimiento, parpadeo o desplazamiento persistente que requiere revisión contextual.',
   'FT-REVIEW-027': 'El nombre accesible del enlace señalado es genérico y su propósito necesita revisión en el contexto programático observado.',
+  'FT-REVIEW-028': 'La comparación entre el 100 % y el 200 % ha detectado una posible pérdida de texto, contenido o funcionalidad.',
   'FT-RUNTIME-006': 'Se observó un movimiento de arrastre real y debe revisarse si existe una alternativa equivalente sin arrastrar.',
 };
 
@@ -415,6 +421,26 @@ function localizedLinkPurposeContextEvidence(issue: ScanIssue): string | undefin
   return `${issue.targets[0] ?? 'El enlace señalado'} tiene el nombre accesible ${JSON.stringify(evidence.accessibleName)}, que coincide con la expresión genérica ${JSON.stringify(evidence.matchedPhrase)}. ${contexts}`;
 }
 
+function localizedTextResizeEvidence(issue: ScanIssue): string | undefined {
+  const evidence = issue.textResize;
+  if (!evidence) return undefined;
+  const target = issue.targets[0] ?? 'El contenido señalado';
+  const zooms = `Referencia: ${Math.round(evidence.baselineZoomFactor * 100)} %. Estado comparado: ${Math.round(evidence.currentZoomFactor * 100)} %.`;
+  if (evidence.kind === 'content-unavailable') {
+    return `${target} mostraba ${JSON.stringify(evidence.label ?? '')} en la referencia, pero no se ha observado texto o control equivalente al 200 %. ${zooms} Revisa las sustituciones responsive.`;
+  }
+  if (evidence.kind === 'control-name-lost') {
+    return `${target} tenía un nombre accesible no vacío en la referencia y no lo conserva al 200 %. ${zooms}`;
+  }
+  if (evidence.kind === 'clipped-content') {
+    return `${target} no estaba recortado en la referencia y queda recortado por ${evidence.clippedBy ?? 'un contenedor'} al 200 %. ${zooms}`;
+  }
+  if (evidence.kind === 'overlapping-content') {
+    return `${target} no se solapaba en la referencia y se solapa con ${evidence.overlappingWith ?? 'otro contenido'} al 200 %. ${zooms} Revisa si el texto o la funcionalidad quedan ocultos.`;
+  }
+  return `${target} alcanza una escala efectiva observada de ${evidence.observedScale ?? 0}:1 frente a la ampliación esperada de ${evidence.requiredScale}:1. ${zooms} Revisa las reglas responsive de tamaño de fuente y cualquier mecanismo alternativo de ampliación.`;
+}
+
 export function localizedRuleTitle(ruleId: string, fallback: string, language: AppLanguage): string {
   if (language === 'es' && ruleId === 'FT-WCAG-013' && fallback === LANGUAGE_PART_TITLE_EN) {
     return LANGUAGE_PART_TITLE_ES;
@@ -445,6 +471,8 @@ export function localizedScanIssue(issue: ScanIssue, language: AppLanguage): Sca
           ? localizedPauseStopHideEvidence(issue)
         : issue.ruleId === 'FT-REVIEW-027'
           ? localizedLinkPurposeContextEvidence(issue)
+        : issue.ruleId === 'FT-REVIEW-028'
+          ? localizedTextResizeEvidence(issue)
         : localizedExtraEvidence(issue.ruleId, issue.evidence);
     if (evidence) localized = { ...localized, evidence };
   }

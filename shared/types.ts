@@ -251,6 +251,80 @@ export interface LinkPurposeContextEvidence {
   contextTextObserved: boolean;
 }
 
+export type TextResizeSubjectKind = 'text' | 'control';
+
+export interface TextResizeRectSnapshot {
+  left: number;
+  top: number;
+  width: number;
+  height: number;
+}
+
+export interface TextResizeSubjectSnapshot {
+  selector: string;
+  kind: TextResizeSubjectKind;
+  signature: string;
+  label: string;
+  accessibleName?: string;
+  fontSizePx: number;
+  transformed: boolean;
+  rect: TextResizeRectSnapshot;
+  clippedBy?: string;
+}
+
+export interface TextResizeBaseline {
+  version: 1;
+  documentToken: string;
+  url: string;
+  capturedAt: number;
+  zoomFactor: number;
+  viewportWidth: number;
+  viewportHeight: number;
+  subjects: TextResizeSubjectSnapshot[];
+  truncated: boolean;
+}
+
+export interface TextResizeContext {
+  zoomFactor?: number;
+  baseline?: TextResizeBaseline;
+}
+
+export type TextResizePhase =
+  | 'baseline-captured'
+  | 'baseline-required'
+  | 'target-zoom-required'
+  | 'comparison-complete'
+  | 'zoom-unavailable';
+
+export interface TextResizeAssessment {
+  phase: TextResizePhase;
+  currentZoomFactor?: number;
+  baselineZoomFactor?: number;
+  baselineCapturedAt?: number;
+  requiredZoomFactor: 2;
+  subjectsCaptured?: number;
+  subjectsCompared?: number;
+  truncated?: boolean;
+}
+
+export interface TextResizeEvidence {
+  kind:
+    | 'content-unavailable'
+    | 'control-name-lost'
+    | 'clipped-content'
+    | 'overlapping-content'
+    | 'insufficient-enlargement';
+  baselineZoomFactor: number;
+  currentZoomFactor: number;
+  requiredScale: 2;
+  observedScale?: number;
+  baselineRect?: TextResizeRectSnapshot;
+  currentRect?: TextResizeRectSnapshot;
+  clippedBy?: string;
+  overlappingWith?: string;
+  label?: string;
+}
+
 export interface ScanIssue {
   id: string;
   ruleId: string;
@@ -269,6 +343,7 @@ export interface ScanIssue {
   useOfColor?: UseOfColorEvidence;
   pauseStopHide?: PauseStopHideEvidence;
   linkPurposeContext?: LinkPurposeContextEvidence;
+  textResize?: TextResizeEvidence;
   references: StandardReference[];
   auditorNote?: AuditorNote;
 }
@@ -321,6 +396,7 @@ export interface ScanResult {
   ruleResults?: ScanRuleResult[];
   passes: number;
   rulesRun: number;
+  textResize?: TextResizeAssessment;
 }
 
 export interface FocusMemoryCapturedEvidence {
@@ -350,6 +426,7 @@ export interface SessionState {
   breakpoints?: RuntimeBreakpointSettings;
   pausedByBreakpoint?: RuntimeBreakpointHit;
   scan?: ScanResult;
+  textResizeBaseline?: TextResizeBaseline;
 }
 
 export interface SaveScanResponse {
@@ -387,6 +464,7 @@ export type ExtensionMessage =
   | { type: 'FOCUSTRACE_SET_RECORDING_STATE'; tabId: number; enabled: boolean; startedAt?: number }
   | { type: 'FOCUSTRACE_CONFIGURE_BREAKPOINTS'; breakpoints: RuntimeBreakpointSettings }
   | { type: 'FOCUSTRACE_SAVE_BREAKPOINTS'; tabId: number; breakpoints: RuntimeBreakpointSettings }
-  | { type: 'FOCUSTRACE_RUN_SCAN'; scope?: ComponentScanScope }
+  | { type: 'FOCUSTRACE_RUN_SCAN'; scope?: ComponentScanScope; textResize?: TextResizeContext }
+  | { type: 'FOCUSTRACE_CAPTURE_TEXT_RESIZE_BASELINE'; zoomFactor: number }
   | { type: 'FOCUSTRACE_RUN_FOCUS_WALK'; options?: FocusWalkOptions }
-  | { type: 'FOCUSTRACE_SAVE_SCAN'; tabId: number; scan: ScanResult; memoryEvidence?: FocusMemoryCapturedEvidence[] };
+  | { type: 'FOCUSTRACE_SAVE_SCAN'; tabId: number; scan: ScanResult; memoryEvidence?: FocusMemoryCapturedEvidence[]; textResizeBaseline?: TextResizeBaseline };

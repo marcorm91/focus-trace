@@ -5,7 +5,7 @@ const rules = Object.values(RULES);
 
 describe('rule severity rationale', () => {
   it('documents every FocusTrace rule in both supported languages', () => {
-    expect(rules).toHaveLength(38);
+    expect(rules).toHaveLength(39);
     for (const rule of rules) {
       expect(rule.severityRationale.en.trim().length, `${rule.id} English rationale`).toBeGreaterThan(24);
       expect(rule.severityRationale.es.trim().length, `${rule.id} Spanish rationale`).toBeGreaterThan(24);
