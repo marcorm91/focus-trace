@@ -42,6 +42,7 @@ import { collectHeadingOutline, runFocusTraceScan as runBaseFocusTraceScan } fro
 import { scopedElements, withScanElementQueryCache } from './scan-elements';
 import { evaluateTargetSize, type TargetSizeEvaluation } from './target-size';
 import { evaluateTextSpacing, type TextSpacingEvaluation } from './text-spacing';
+import { evaluateInlineLinkUseOfColor, type UseOfColorEvaluation } from './use-of-color';
 
 export { collectHeadingOutline };
 
@@ -266,6 +267,23 @@ function reflowIssueFor(signal: ReflowSignal): ScanIssue {
   };
 }
 
+function useOfColorIssueFor(evaluation: UseOfColorEvaluation): ScanIssue {
+  const rule = RULES.inlineLinkUseOfColor;
+  return {
+    id: uid(),
+    ruleId: rule.id,
+    title: rule.title,
+    description: 'FocusTrace observed an inline link whose current rendered text differs from adjacent non-link text by color, with less than a 3:1 lightness difference and no persistent non-color cue it could resolve. Review the complete visual context before treating it as a conformance failure.',
+    severity: rule.severity,
+    outcome: 'review',
+    targets: [selectorFor(evaluation.element)],
+    context: compactElementSnapshot(evaluation.context),
+    ...(evaluation.detail ? { evidence: evaluation.detail } : {}),
+    ...(evaluation.evidence ? { useOfColor: evaluation.evidence } : {}),
+    references: rule.references,
+  };
+}
+
 function targetSizeIssueFor(evaluation: TargetSizeEvaluation): ScanIssue {
   const rule = RULES.targetSizeMinimum;
   return {
@@ -484,6 +502,29 @@ function appendReflowReview(result: ScanResult): void {
   result.rulesRun += 1;
 }
 
+function appendInlineLinkUseOfColorReview(result: ScanResult, root: Document | Element): void {
+  const evaluations = evaluateInlineLinkUseOfColor(root);
+  const reviews = evaluations
+    .filter((evaluation) => evaluation.status === 'review')
+    .map(useOfColorIssueFor);
+  const passed = evaluations.filter((evaluation) => evaluation.status === 'pass').length;
+
+  result.review.push(...reviews);
+  result.ruleResults = [
+    ...(result.ruleResults ?? []),
+    {
+      ruleId: RULES.inlineLinkUseOfColor.id,
+      applicable: evaluations.length,
+      passed,
+      failures: 0,
+      reviews: reviews.length,
+      warnings: 0,
+    },
+  ];
+  result.passes += passed;
+  result.rulesRun += 1;
+}
+
 function runFocusTraceScanWithCache(scope?: ComponentScanScope): ScanResult {
   const result = runBaseFocusTraceScan(scope);
   const componentScope = result.scope?.type === 'component' ? result.scope : undefined;
@@ -500,6 +541,7 @@ function runFocusTraceScanWithCache(scope?: ComponentScanScope): ScanResult {
   }
   appendAutocompletePurposeReview(result, root);
   appendTextSpacingReview(result, root);
+  appendInlineLinkUseOfColorReview(result, root);
   appendMediaAccessibilityReviews(result, root);
 
   const signals = evaluateStructuralHtml(root, !componentScope);

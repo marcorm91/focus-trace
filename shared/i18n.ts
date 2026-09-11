@@ -23,6 +23,7 @@ export function localizedReferenceLabel(reference: StandardReference, language: 
     }
     if (reference.label === 'Text Spacing') return 'Espaciado de texto';
     if (reference.label === 'Reflow') return 'Reajuste del contenido';
+    if (reference.label === 'Use of Color') return 'Uso del color';
     if (reference.label === 'Important letter spacing in style attributes is wide enough') {
       return 'El espaciado de letras importante en atributos style es suficiente';
     }
@@ -180,6 +181,10 @@ const EXTRA_COPY_ES: Record<string, { title: string; description: string }> = {
     title: 'El viewport estrecho puede perder contenido o exigir desplazamiento bidimensional',
     description: 'FocusTrace ha observado desbordamiento bidimensional no exceptuado o contenido renderizado recortado por un ancestro sin desplazamiento en el viewport estrecho actual. Revisa las alternativas responsive y las excepciones WCAG antes de considerarlo un incumplimiento.',
   },
+  'FT-REVIEW-025': {
+    title: 'El enlace integrado puede depender únicamente del color',
+    description: 'FocusTrace ha observado un enlace integrado cuyo texto renderizado se diferencia del texto adyacente mediante el color, con una diferencia de luminosidad inferior a 3:1 y sin otra señal visual persistente que pueda resolver. Revisa el contexto visual completo antes de considerarlo un incumplimiento.',
+  },
   'FT-RUNTIME-006': {
     title: 'La interacción de arrastre requiere revisar una alternativa de puntero sencillo',
     description: 'Trace observó un arrastre real. Revisa si la misma funcionalidad puede realizarse con un puntero sencillo sin movimiento de arrastre, teniendo en cuenta las excepciones de WCAG 2.5.7.',
@@ -217,6 +222,7 @@ const EXTRA_EVIDENCE_ES: Record<string, string> = {
   'FT-REVIEW-022': 'El vídeo señalado presenta señales sólidas de contenido en directo y no expone una pista nativa de subtítulos. Revisa subtítulos personalizados o incrustados y la presencia real de información auditiva.',
   'FT-REVIEW-023': 'El vídeo probablemente pregrabado señalado no expone una pista nativa de descripción ni una versión audiodescrita observable. La precisión, integridad y aplicabilidad de la audiodescripción requieren revisión manual.',
   'FT-REVIEW-024': 'El viewport estrecho observado presenta desbordamiento bidimensional o contenido recortado que requiere revisión contextual.',
+  'FT-REVIEW-025': 'El enlace integrado señalado puede depender únicamente de una diferencia de color insuficiente respecto al texto adyacente.',
   'FT-RUNTIME-006': 'Se observó un movimiento de arrastre real y debe revisarse si existe una alternativa equivalente sin arrastrar.',
 };
 
@@ -351,6 +357,12 @@ function localizedReflowEvidence(issue: ScanIssue): string | undefined {
   return `En un viewport de ${viewport}, ${issue.targets[0] ?? 'el contenido señalado'} queda recortado ${clipping} por ${evidence.clippedBy ?? 'un ancestro sin desplazamiento'}; aproximadamente ${evidence.clippedPixels ?? 0} píxeles CSS no resultan observables en el eje ${axisLabel}.`;
 }
 
+function localizedUseOfColorEvidence(issue: ScanIssue): string | undefined {
+  const evidence = issue.useOfColor;
+  if (!evidence) return undefined;
+  return `${issue.targets[0] ?? 'El enlace señalado'} es un enlace integrado en ${evidence.contextSelector}. Su color de texto renderizado ${evidence.linkColor} se diferencia del texto adyacente ${evidence.surroundingTextColor} en ${evidence.contrastRatio}:1, por debajo de la diferencia de luminosidad requerida de ${evidence.requiredRatio}:1, y no se ha observado ninguna señal visual persistente no basada en color.`;
+}
+
 export function localizedRuleTitle(ruleId: string, fallback: string, language: AppLanguage): string {
   if (language === 'es' && ruleId === 'FT-WCAG-013' && fallback === LANGUAGE_PART_TITLE_EN) {
     return LANGUAGE_PART_TITLE_ES;
@@ -375,7 +387,9 @@ export function localizedScanIssue(issue: ScanIssue, language: AppLanguage): Sca
   if (issue.evidence && localized.evidence === issue.evidence) {
     const evidence = issue.ruleId === 'FT-REVIEW-024'
       ? localizedReflowEvidence(issue)
-      : localizedExtraEvidence(issue.ruleId, issue.evidence);
+      : issue.ruleId === 'FT-REVIEW-025'
+        ? localizedUseOfColorEvidence(issue)
+        : localizedExtraEvidence(issue.ruleId, issue.evidence);
     if (evidence) localized = { ...localized, evidence };
   }
   return localizeIssueSourceCopy(issue, localized, language);

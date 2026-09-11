@@ -164,6 +164,14 @@ Known two-dimensional surfaces —native/ARIA tables and grids, SVG, canvas, vid
 
 Every negative remains `REVIEW`, never deterministic `FAIL`. FocusTrace cannot prove whether a layout exception is essential, whether content hidden behind a custom overlay remains available through another mechanism, whether a transformed/off-canvas state is intentionally inactive, or whether Shadow DOM and cross-origin embedded content preserve reflow. Reviewers must still traverse the page and verify that all ordinary content and functionality remain available with only one scrolling direction.
 
+## Inline-link use-of-color review scope
+
+`FT-REVIEW-025` implements a bounded candidate detector for the inline-link subset of WCAG 1.4.1 Use of Color, informed by W3C techniques G182/G183 and failure F73. It runs in page and component analysis without changing focus, hover state, styles or page content. Applicability is limited to the first 2,000 rendered native `a[href]` elements inside prose-like `p`, `li`, `dd`, `dt`, `figcaption` and `blockquote` contexts that also contain adjacent non-link text, with at most 50 REVIEW findings emitted per scan. Navigation, menu and toolbar regions, standalone links and links without rendered text are excluded because page design or context can make those destinations visually evident without an inline text treatment.
+
+For comparable foreground/background rendering, FocusTrace measures the relative-luminance contrast between the link text and its nearest non-link text before and after the link. Equal colors are not applicable to this specific color-difference test. A bounded PASS is recorded when the difference reaches at least `3:1` or an observable persistent non-color cue exists, including a different text decoration, font family/style/weight/size, letter spacing or text transform, a visible border/outline/shadow, generated content or a rendered image/SVG/canvas cue. Descendant cue inspection is bounded to the link itself and its first 19 descendant elements. A sub-`3:1` difference without any resolved cue produces REVIEW evidence containing the two rendered colors, measured ratio, required ratio and link/context/surrounding-text selectors.
+
+Every negative remains `REVIEW`, never deterministic `FAIL`. Complex or different backgrounds, opacity/filter/blending effects, hidden content and unresolved CSS colors are omitted rather than guessed. FocusTrace cannot prove every page-level visual convention or uncommon CSS cue, and this rule does not cover color-only errors, required fields, charts, legends, validation states or other non-link information. Reviewers must confirm that the link is identifiable in its normal state without relying on hue; a cue that appears only on hover or focus does not make an otherwise color-only inline link identifiable before interaction. Separately verify each text color against its background under WCAG 1.4.3.
+
 ## Media alternatives, captions and descriptions review scope
 
 The media rules deliberately evaluate only native `<audio>` / `<video>` evidence and use bounded positive signals. They never inspect media payloads, transcribe audio, analyze video pixels or claim that candidate alternatives are semantically equivalent.
@@ -421,6 +429,7 @@ The rule is full-page only. Component-scoped analysis does not execute `FT-REVIE
 | FT-REVIEW-022 Live video may lack observable captions | REVIEW/PASS | WCAG 1.2.4 AA |
 | FT-REVIEW-023 Prerecorded video may lack an observable audio description | REVIEW/PASS | WCAG 1.2.5 AA · ACT 1ec09b |
 | FT-REVIEW-024 Narrow viewport may lose content or require two-dimensional scrolling | REVIEW/PASS | WCAG 1.4.10 AA |
+| FT-REVIEW-025 Inline link may rely on color alone | REVIEW/PASS | WCAG 1.4.1 A |
 
 ## Runtime rules
 
@@ -467,6 +476,7 @@ The rule is full-page only. Component-scoped analysis does not execute `FT-REVIE
 - `FT-REVIEW-022` requires strong live timing evidence and deliberately does not classify HLS/DASH playlist URLs alone as live. It cannot detect arbitrary custom-player or burned-in live captions, prove auditory content when browser APIs are unavailable, or verify live-caption accuracy/completeness/latency.
 - `FT-REVIEW-023` accepts only native descriptions tracks or nearby described-version controls as bounded positive evidence. It does not treat a transcript alone as proof of audio description and cannot verify description accuracy, completeness or applicability to meaningful visual information.
 - `FT-REVIEW-024` evaluates only the current page viewport at the WCAG reflow threshold and detects bounded document overflow plus content clipped by unscrollable `overflow: hidden/clip` ancestors. It does not alter zoom, prove essential two-dimensional exceptions, inspect Shadow DOM/cross-origin frames or detect every overlay, transform and compositing-based loss mode.
+- `FT-REVIEW-025` evaluates only rendered native links in bounded prose contexts against nearby non-link text. Complex/different backgrounds, Shadow DOM, custom link roles, standalone/navigation links and non-link color semantics remain outside this detector; bounded PASS evidence is not complete WCAG 1.4.1 conformance.
 - `FT-REVIEW-019` observes only explicit/user-invalid state and non-empty `aria-errormessage` / `aria-describedby` text candidates. It does not prove semantic adequacy, infer every visual/application-level error message, or exercise every form error.
 - `FT-REVIEW-020` reviews only invalid fields that already expose associated error text plus correction-relevant constraint metadata. Suggestion quality and the WCAG security/purpose exception remain manual, and FocusTrace never reads or stores field values for this rule.
 - Structural HTML checks operate on the parsed live DOM. Browser parser repair can normalize invalid source before FocusTrace runs; the tool does not infer source-level errors that are no longer observable. See [`STRUCTURAL_HTML.md`](STRUCTURAL_HTML.md).

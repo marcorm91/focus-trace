@@ -182,6 +182,16 @@ export const RULES = {
     ),
     references: [wcag('1.4.10', 'Reflow', 'AA', 'reflow')],
   },
+  inlineLinkUseOfColor: {
+    id: 'FT-REVIEW-025',
+    title: 'Inline link may rely on color alone',
+    severity: 'serious',
+    ...impact(
+      'An inline link distinguished only by a small color difference can be impossible to identify for people who do not perceive that color difference. FocusTrace keeps this as review because surrounding visual context and uncommon persistent cues can still require human judgement.',
+      'Un enlace integrado que solo se diferencia mediante un pequeño cambio de color puede resultar imposible de identificar para quienes no perciben esa diferencia. FocusTrace lo mantiene como revisión porque el contexto visual circundante y señales persistentes poco habituales todavía pueden requerir criterio humano.',
+    ),
+    references: [wcag('1.4.1', 'Use of Color', 'A', 'use-of-color')],
+  },
   deprecatedAriaRole: {
     id: 'FT-WARN-001',
     title: 'Deprecated ARIA role is used',

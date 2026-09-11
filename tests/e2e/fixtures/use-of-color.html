@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Use of color fixture</title>
+  <style>
+    body {
+      margin: 24px;
+      color: #000;
+      background: #fff;
+      font: 16px/1.5 sans-serif;
+    }
+    #color-only {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    #underlined {
+      color: #0000ff;
+      text-decoration: underline;
+    }
+    #lightness {
+      color: #767676;
+      text-decoration: none;
+    }
+    #generated {
+      color: #0000ff;
+      text-decoration: none;
+    }
+    #generated::before {
+      content: "↗ ";
+    }
+    nav a {
+      color: #0000ff;
+      text-decoration: none;
+    }
+  </style>
+</head>
+<body>
+  <header>
+    <nav aria-label="Primary"><a href="#article">Article</a></nav>
+  </header>
+  <main id="article">
+    <h1>Use of color</h1>
+    <p id="review-context">Read the <a id="color-only" href="#guide">accessibility guide</a> before continuing.</p>
+    <p>Read the <a id="underlined" href="#underlined-guide">underlined guide</a> before continuing.</p>
+    <p>Read the <a id="lightness" href="#lightness-guide">high-lightness guide</a> before continuing.</p>
+    <p>Read the <a id="generated" href="#generated-guide">external guide</a> before continuing.</p>
+  </main>
+</body>
+</html>
