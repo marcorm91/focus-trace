@@ -221,6 +221,15 @@ describe('standards registry coverage', () => {
       ruleIds: ['FT-REVIEW-012'],
     });
     expect(wcagCoverageForCriterion('2.4.3')?.coverage).toEqual(expect.arrayContaining(['review', 'runtime', 'manual']));
+    expect(wcagCoverageForCriterion('2.4.4')).toMatchObject({
+      level: 'A',
+      coverage: ['automated', 'review', 'manual'],
+      ruleIds: ['FT-REVIEW-027', 'FT-WCAG-005'],
+      actRuleIds: ['5effbb', 'c487ae'],
+      completeness: 'partial',
+      manualReviewRequired: true,
+      en301549: { clause: '9.2.4.4' },
+    });
     expect(wcagCoverageForCriterion('2.4.7')).toMatchObject({
       level: 'AA',
       coverage: ['review', 'runtime', 'manual'],

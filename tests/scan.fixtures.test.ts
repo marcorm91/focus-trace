@@ -24,7 +24,7 @@ describe('FocusTrace WCAG rule fixtures', () => {
   it('produces no findings for the passing fixture', () => {
     loadFixture('pass');
     const result = runFocusTraceScan();
-    expect(result.rulesRun).toBe(57);
+    expect(result.rulesRun).toBe(58);
     expect(result.issues).toEqual([]);
     expect(result.review).toEqual([]);
     expect(result.warnings).toEqual([]);

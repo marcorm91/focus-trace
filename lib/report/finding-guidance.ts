@@ -109,6 +109,18 @@ export function guidanceForIssue(issue: ScanIssue, language: AppLanguage): Findi
           'Navigate to the link with a screen reader or inspect its computed name and confirm the destination/purpose is understandable without relying on surrounding visual cues alone.',
           'Navega hasta el enlace con lector de pantalla o revisa su nombre calculado y confirma que el destino o propósito se entiende sin depender únicamente de pistas visuales cercanas.'),
       };
+    case 'FT-REVIEW-027':
+      return {
+        impact: tr(language,
+          'Generic link wording can make a destination or action difficult to predict, especially when assistive technology presents links separately from their visual surroundings.',
+          'Un texto de enlace genérico puede dificultar la predicción del destino o la acción, especialmente cuando una tecnología de asistencia presenta los enlaces separados de su entorno visual.'),
+        remediation: tr(language,
+          'Prefer concise link wording that identifies the destination or action. If generic wording is necessary, provide descriptive text in the same programmatically determined sentence, paragraph, list item or table context.',
+          'Prioriza un texto de enlace conciso que identifique el destino o la acción. Si es necesaria una expresión genérica, proporciona texto descriptivo en la misma frase, párrafo, elemento de lista o contexto de tabla determinado programáticamente.'),
+        validation: tr(language,
+          'Inspect the computed accessible name and test the link with a screen reader both in place and in its links list. Confirm that its purpose is clear from the name alone or together with the recorded programmatic context.',
+          'Revisa el nombre accesible calculado y prueba el enlace con un lector de pantalla tanto en su ubicación como en la lista de enlaces. Confirma que su propósito queda claro por el nombre solo o junto con el contexto programático registrado.'),
+      };
     case 'FT-WCAG-006':
       return {
         impact: tr(language,

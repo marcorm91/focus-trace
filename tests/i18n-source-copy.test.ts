@@ -262,3 +262,39 @@ describe('Spanish pause-stop-hide evidence', () => {
     expect(localized.evidence).not.toContain('Generated');
   });
 });
+
+describe('Spanish link-purpose context evidence', () => {
+  it('localizes structured context without losing text, source kinds or selectors', () => {
+    const issue: ScanIssue = {
+      id: 'generic-link',
+      ruleId: 'FT-REVIEW-027',
+      title: 'Ambiguous link text needs purpose-in-context review',
+      description: 'Generated link-purpose review.',
+      evidence: 'Generated link-purpose evidence.',
+      severity: 'serious',
+      outcome: 'review',
+      targets: ['#more'],
+      linkPurposeContext: {
+        kind: 'ambiguous-link-purpose',
+        accessibleName: 'Read more',
+        matchedPhrase: 'read more',
+        contexts: [
+          { source: 'sentence', selector: '#product', text: 'Read more about TrailPro.' },
+          { source: 'aria-describedby', selector: '#description', text: 'TrailPro product details' },
+        ],
+        contextTextObserved: true,
+      },
+      references: [],
+    };
+
+    const localized = localizedScanIssue(issue, 'es');
+
+    expect(localized.title).toContain('propósito en contexto');
+    expect(localized.evidence).toContain('#more');
+    expect(localized.evidence).toContain('#product');
+    expect(localized.evidence).toContain('misma frase');
+    expect(localized.evidence).toContain('aria-describedby');
+    expect(localized.evidence).toContain('TrailPro product details');
+    expect(localized.evidence).not.toContain('Generated');
+  });
+});

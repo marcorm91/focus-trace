@@ -82,4 +82,15 @@ describe('finding guidance', () => {
     expect(guidance.remediation).toContain('nombre accesible');
     expect(guidance.validation).toContain('lector de pantalla');
   });
+
+  it('provides contextual validation guidance for ambiguous links', () => {
+    const guidance = guidanceForIssue(issue({
+      ruleId: 'FT-REVIEW-027',
+      outcome: 'review',
+      contrast: undefined,
+    }), 'es');
+
+    expect(guidance.remediation).toContain('contexto de tabla');
+    expect(guidance.validation).toContain('lista de enlaces');
+  });
 });

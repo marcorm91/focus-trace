@@ -11,6 +11,7 @@ const REFERENCE_LABEL_ES: Record<string, string> = {
   'Form field has non-empty accessible name': 'El campo de formulario tiene un nombre accesible no vacío',
   'Link Purpose (In Context)': 'Propósito del enlace (en contexto)',
   'Link has non-empty accessible name': 'El enlace tiene un nombre accesible no vacío',
+  'Link in context is descriptive': 'El enlace en contexto describe su propósito',
   'Element with aria-hidden has no content in sequential focus navigation': 'El elemento con aria-hidden no contiene contenido en la navegación secuencial del foco',
   'Label in Name': 'Etiqueta en el nombre',
   'Visible label is part of accessible name': 'La etiqueta visible forma parte del nombre accesible',

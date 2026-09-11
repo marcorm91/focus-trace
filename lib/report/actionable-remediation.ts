@@ -323,6 +323,33 @@ export function actionableRemediationForRule(
     };
   }
 
+  if (ruleId === 'FT-REVIEW-027') {
+    return {
+      options: [
+        tr(
+          language,
+          'Replace generic link text with a concise accessible name that identifies the destination or action, for example “Download the annual report” instead of “Click here”. Keep the visible wording and accessible name aligned.',
+          'Sustituye el texto genérico por un nombre accesible conciso que identifique el destino o la acción, por ejemplo «Descargar el informe anual» en lugar de «Haz clic aquí». Mantén alineados el texto visible y el nombre accesible.',
+        ),
+        tr(
+          language,
+          'When concise generic wording is necessary, put the descriptive wording in the same sentence, paragraph, list item or table cell, or provide an appropriate programmatic description. Do not rely only on a visually preceding heading or nearby text that is not part of the link context.',
+          'Cuando sea necesario mantener una expresión genérica breve, incluye la descripción en la misma frase, párrafo, elemento de lista o celda de tabla, o proporciona una descripción programática adecuada. No dependas únicamente de un encabezado visual anterior ni de texto cercano que no forme parte del contexto del enlace.',
+        ),
+        tr(
+          language,
+          'If several generic links appear together, make each purpose distinguishable in its own programmatic context and verify that links with the same name do not unexpectedly lead to different purposes.',
+          'Si aparecen varios enlaces genéricos juntos, haz que cada propósito sea distinguible en su propio contexto programático y verifica que los enlaces con el mismo nombre no conduzcan inesperadamente a propósitos diferentes.',
+        ),
+      ],
+      validation: tr(
+        language,
+        'Inspect the link with a screen reader in context and in a links list. Confirm that its purpose is understandable from the accessible name alone or from the name combined with programmatically determined context. Human language judgement is required; a FocusTrace review is not an automatic failure.',
+        'Inspecciona el enlace con un lector de pantalla tanto en contexto como en la lista de enlaces. Confirma que su propósito se entiende por el nombre accesible solo o combinado con contexto determinado programáticamente. Es necesario aplicar criterio humano sobre el lenguaje; una revisión de FocusTrace no es un fallo automático.',
+      ),
+    };
+  }
+
   return undefined;
 }
 
