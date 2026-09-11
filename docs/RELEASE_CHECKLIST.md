@@ -97,6 +97,15 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 - Switch EN/ES and confirm title, explanation, evidence and remediation are localized while selectors, animation properties and numeric timing remain canonical.
 - Manually test automatic start, more-than-five-second duration, essentiality, persistent pause/restart and the auto-updating branch. Confirm the product does not claim complete WCAG 2.2.2 coverage.
 
+### WCAG 2.4.4 Link Purpose (In Context)
+
+- Analyze exposed links named `Read more`, `Click here`, `Details`, `Más información` and `Aquí`; confirm `FT-REVIEW-027` reports REVIEW while a descriptive accessible name and an empty name do not enter this rule.
+- Place generic links in a sentence/paragraph, nested list and table with explicit `headers` or `scope`; confirm structured evidence retains bounded context text, source kinds and stable selectors.
+- Add a resolved `aria-describedby` target, including a hidden referenced description, and confirm its text is retained as programmatic context without converting the outcome to PASS.
+- Run component analysis around a nested link and confirm neither links nor context outside the selected component enter the result.
+- Switch EN/ES and confirm title, explanation, evidence, reference label and remediation are localized while selectors and source tokens remain canonical.
+- Manually judge whether each name plus context communicates purpose, test screen-reader presentation and inspect generic wording outside the bounded vocabulary, Shadow DOM and frames. Confirm the product never presents a candidate as an automatic WCAG failure or a non-candidate as proof of conformance.
+
 ### WCAG 1.4.3 Contrast in interactive text states
 
 - Start Trace and exercise a real hover, pointer-active and keyboard-focus state whose rendered text contrast becomes insufficient; confirm `FT-RUNTIME-014` records contextual `REVIEW` evidence only after the trusted interaction.

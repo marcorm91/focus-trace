@@ -7,6 +7,7 @@ describe('scan categories', () => {
     expect(scanCategoryForRule('FT-WCAG-011')).toBe('contrast');
     expect(scanCategoryForRule('FT-REVIEW-025')).toBe('contrast');
     expect(scanCategoryForRule('FT-REVIEW-026')).toBe('other');
+    expect(scanCategoryForRule('FT-REVIEW-027')).toBe('names');
   });
 
   it('groups existing rules into useful audit areas', () => {

@@ -227,6 +227,30 @@ export interface PauseStopHideEvidence {
   controlSelectors: string[];
 }
 
+export type LinkPurposeContextSource =
+  | 'aria-describedby'
+  | 'sentence'
+  | 'paragraph'
+  | 'list-item'
+  | 'parent-list-item'
+  | 'table-cell'
+  | 'table-header'
+  | 'block-container';
+
+export interface LinkPurposeContextSnippet {
+  source: LinkPurposeContextSource;
+  selector: string;
+  text: string;
+}
+
+export interface LinkPurposeContextEvidence {
+  kind: 'ambiguous-link-purpose';
+  accessibleName: string;
+  matchedPhrase: string;
+  contexts: LinkPurposeContextSnippet[];
+  contextTextObserved: boolean;
+}
+
 export interface ScanIssue {
   id: string;
   ruleId: string;
@@ -244,6 +268,7 @@ export interface ScanIssue {
   reflow?: ReflowEvidence;
   useOfColor?: UseOfColorEvidence;
   pauseStopHide?: PauseStopHideEvidence;
+  linkPurposeContext?: LinkPurposeContextEvidence;
   references: StandardReference[];
   auditorNote?: AuditorNote;
 }

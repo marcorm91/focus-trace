@@ -36,6 +36,7 @@ import { textContrastSubjectsForElement } from './contrast';
 import { evaluateStructuralHtml, type StructuralHtmlSignalKind } from './content-model';
 import { accessibleName, isProgrammaticallyHidden, selectorFor, semanticRole } from './dom';
 import { evaluateLanguageParts, type LanguagePartEvaluation } from './language-parts';
+import { evaluateLinkPurposeContext, type LinkPurposeContextEvaluation } from './link-purpose-context';
 import { evaluatePauseStopHide, type PauseStopHideEvaluation } from './pause-stop-hide';
 import { evaluateReflow, type ReflowSignal } from './reflow';
 import { appendMediaAccessibilityReviews } from './media-scan-extension';
@@ -297,6 +298,22 @@ function pauseStopHideIssueFor(evaluation: PauseStopHideEvaluation): ScanIssue {
     targets: [selectorFor(evaluation.element)],
     ...(evaluation.detail ? { evidence: evaluation.detail } : {}),
     ...(evaluation.evidence ? { pauseStopHide: evaluation.evidence } : {}),
+    references: rule.references,
+  };
+}
+
+function linkPurposeContextIssueFor(evaluation: LinkPurposeContextEvaluation): ScanIssue {
+  const rule = RULES.linkPurposeContext;
+  return {
+    id: uid(),
+    ruleId: rule.id,
+    title: rule.title,
+    description: 'FocusTrace observed a non-empty accessible link name that matches a deliberately small set of generic English or Spanish phrases. Review whether the link purpose is clear from the name alone or together with its programmatically determined context before treating it as a conformance failure.',
+    severity: rule.severity,
+    outcome: 'review',
+    targets: [selectorFor(evaluation.element)],
+    evidence: evaluation.detail,
+    linkPurposeContext: evaluation.evidence,
     references: rule.references,
   };
 }
@@ -565,6 +582,26 @@ function appendPauseStopHideReview(result: ScanResult, root: Document | Element)
   result.rulesRun += 1;
 }
 
+function appendLinkPurposeContextReview(result: ScanResult, root: Document | Element): void {
+  const evaluations = evaluateLinkPurposeContext(root);
+  const reviews = evaluations.map(linkPurposeContextIssueFor);
+
+  result.review.push(...reviews);
+  result.ruleResults = [
+    ...(result.ruleResults ?? []),
+    {
+      ruleId: RULES.linkPurposeContext.id,
+      applicable: evaluations.length,
+      passed: 0,
+      failures: 0,
+      reviews: reviews.length,
+      warnings: 0,
+      coverage: 'findings-only',
+    },
+  ];
+  result.rulesRun += 1;
+}
+
 function runFocusTraceScanWithCache(scope?: ComponentScanScope): ScanResult {
   const result = runBaseFocusTraceScan(scope);
   const componentScope = result.scope?.type === 'component' ? result.scope : undefined;
@@ -583,6 +620,7 @@ function runFocusTraceScanWithCache(scope?: ComponentScanScope): ScanResult {
   appendTextSpacingReview(result, root);
   appendInlineLinkUseOfColorReview(result, root);
   appendPauseStopHideReview(result, root);
+  appendLinkPurposeContextReview(result, root);
   appendMediaAccessibilityReviews(result, root);
 
   const signals = evaluateStructuralHtml(root, !componentScope);

@@ -190,6 +190,10 @@ const EXTRA_COPY_ES: Record<string, { title: string; description: string }> = {
     title: 'El contenido en movimiento automático necesita revisar cómo pausarlo, detenerlo u ocultarlo',
     description: 'FocusTrace ha observado contenido renderizado en movimiento, parpadeo o desplazamiento que podría iniciarse automáticamente, continuar durante más de cinco segundos y aparecer junto a otro contenido. Revisa el inicio automático, la duración, el carácter esencial y cualquier mecanismo de control antes de considerarlo un incumplimiento.',
   },
+  'FT-REVIEW-027': {
+    title: 'El texto ambiguo del enlace requiere revisar su propósito en contexto',
+    description: 'FocusTrace ha observado un nombre accesible de enlace no vacío que coincide con un conjunto reducido de expresiones genéricas en español o inglés. Revisa si el propósito del enlace queda claro por su nombre o junto con su contexto determinado programáticamente antes de considerarlo un incumplimiento.',
+  },
   'FT-RUNTIME-006': {
     title: 'La interacción de arrastre requiere revisar una alternativa de puntero sencillo',
     description: 'Trace observó un arrastre real. Revisa si la misma funcionalidad puede realizarse con un puntero sencillo sin movimiento de arrastre, teniendo en cuenta las excepciones de WCAG 2.5.7.',
@@ -229,6 +233,7 @@ const EXTRA_EVIDENCE_ES: Record<string, string> = {
   'FT-REVIEW-024': 'El viewport estrecho observado presenta desbordamiento bidimensional o contenido recortado que requiere revisión contextual.',
   'FT-REVIEW-025': 'El enlace integrado señalado puede depender únicamente de una diferencia de color insuficiente respecto al texto adyacente.',
   'FT-REVIEW-026': 'El contenido señalado presenta movimiento, parpadeo o desplazamiento persistente que requiere revisión contextual.',
+  'FT-REVIEW-027': 'El nombre accesible del enlace señalado es genérico y su propósito necesita revisión en el contexto programático observado.',
   'FT-RUNTIME-006': 'Se observó un movimiento de arrastre real y debe revisarse si existe una alternativa equivalente sin arrastrar.',
 };
 
@@ -391,6 +396,25 @@ function localizedPauseStopHideEvidence(issue: ScanIssue): string | undefined {
   return `${issue.targets[0] ?? 'El contenido señalado'} expone ${source} mientras existe otro contenido visible; ${duration} frente al umbral de ${evidence.thresholdMs} ms.${properties} ${controls} Confirma que comienza automáticamente, supera cinco segundos y no es esencial.`;
 }
 
+function localizedLinkPurposeContextEvidence(issue: ScanIssue): string | undefined {
+  const evidence = issue.linkPurposeContext;
+  if (!evidence) return undefined;
+  const sourceLabels: Record<(typeof evidence.contexts)[number]['source'], string> = {
+    'aria-describedby': 'aria-describedby',
+    sentence: 'misma frase',
+    paragraph: 'mismo párrafo',
+    'list-item': 'mismo elemento de lista',
+    'parent-list-item': 'elemento de lista padre',
+    'table-cell': 'misma celda de tabla',
+    'table-header': 'encabezado de tabla asociado',
+    'block-container': 'contenedor de bloque más cercano',
+  };
+  const contexts = evidence.contexts.length
+    ? `Contextos programáticos candidatos observados: ${evidence.contexts.map((context) => `${sourceLabels[context.source]} (${context.selector}): ${JSON.stringify(context.text)}`).join(' · ')}.`
+    : 'No se ha observado contexto programático adicional en la frase, el párrafo, el elemento de lista, la celda de tabla o la relación aria-describedby inspeccionados.';
+  return `${issue.targets[0] ?? 'El enlace señalado'} tiene el nombre accesible ${JSON.stringify(evidence.accessibleName)}, que coincide con la expresión genérica ${JSON.stringify(evidence.matchedPhrase)}. ${contexts}`;
+}
+
 export function localizedRuleTitle(ruleId: string, fallback: string, language: AppLanguage): string {
   if (language === 'es' && ruleId === 'FT-WCAG-013' && fallback === LANGUAGE_PART_TITLE_EN) {
     return LANGUAGE_PART_TITLE_ES;
@@ -419,6 +443,8 @@ export function localizedScanIssue(issue: ScanIssue, language: AppLanguage): Sca
         ? localizedUseOfColorEvidence(issue)
         : issue.ruleId === 'FT-REVIEW-026'
           ? localizedPauseStopHideEvidence(issue)
+        : issue.ruleId === 'FT-REVIEW-027'
+          ? localizedLinkPurposeContextEvidence(issue)
         : localizedExtraEvidence(issue.ruleId, issue.evidence);
     if (evidence) localized = { ...localized, evidence };
   }

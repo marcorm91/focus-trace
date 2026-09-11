@@ -202,6 +202,16 @@ export const RULES = {
     ),
     references: [wcag('2.2.2', 'Pause, Stop, Hide', 'A', 'pause-stop-hide')],
   },
+  linkPurposeContext: {
+    id: 'FT-REVIEW-027',
+    title: 'Ambiguous link text needs purpose-in-context review',
+    severity: 'serious',
+    ...impact(
+      'Generic link text can hide the destination or action when its surrounding programmatic context is absent, unclear or unavailable to assistive technology. FocusTrace keeps this as review because deciding whether natural-language context communicates purpose requires human judgement.',
+      'Un texto de enlace genérico puede ocultar el destino o la acción cuando su contexto programático circundante falta, no es claro o no está disponible para las tecnologías de asistencia. FocusTrace lo mantiene como revisión porque decidir si el contexto en lenguaje natural comunica el propósito requiere criterio humano.',
+    ),
+    references: [wcag('2.4.4', 'Link Purpose (In Context)', 'A', 'link-purpose-in-context'), act('5effbb', 'Link in context is descriptive')],
+  },
   deprecatedAriaRole: {
     id: 'FT-WARN-001',
     title: 'Deprecated ARIA role is used',
