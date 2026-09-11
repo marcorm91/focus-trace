@@ -44,7 +44,7 @@ test('reviews measured overflow and clipped content at a 320 CSS px viewport', a
     viewportWidth: 320,
   });
   expect(overflow?.reflow?.overflowPixels).toBeGreaterThan(150);
-  expect(overflow?.targets.some((target) => target.startsWith('#wide-navigation'))).toBe(true);
+  expect(overflow?.targets).toEqual(expect.arrayContaining(['#wide-three', '#wide-four']));
   expect(clipped?.reflow).toMatchObject({
     axis: 'horizontal',
     clippedBy: '#clipping-panel',
