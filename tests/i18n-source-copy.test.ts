@@ -298,3 +298,43 @@ describe('Spanish link-purpose context evidence', () => {
     expect(localized.evidence).not.toContain('Generated');
   });
 });
+
+describe('Spanish text-resize evidence', () => {
+  it('localizes structured comparison evidence without losing ratios or selectors', () => {
+    const issue: ScanIssue = {
+      id: 'resize-text',
+      ruleId: 'FT-REVIEW-028',
+      title: 'Text resized to 200% needs content and functionality review',
+      description: 'Generated text-resize review.',
+      evidence: 'Generated text-resize evidence.',
+      severity: 'serious',
+      outcome: 'review',
+      targets: ['#summary'],
+      textResize: {
+        kind: 'insufficient-enlargement',
+        baselineZoomFactor: 1,
+        currentZoomFactor: 2,
+        requiredScale: 2,
+        observedScale: 1.2,
+        label: 'Account summary',
+      },
+      references: [{
+        type: 'WCAG',
+        id: '1.4.4',
+        label: 'Resize Text',
+        level: 'AA',
+        status: 'normative',
+        url: 'https://www.w3.org/TR/WCAG22/#resize-text',
+      }],
+    };
+
+    const localized = localizedScanIssue(issue, 'es');
+
+    expect(localized.title).toContain('ampliado al 200 %');
+    expect(localized.evidence).toContain('#summary');
+    expect(localized.evidence).toContain('1.2:1');
+    expect(localized.evidence).toContain('2:1');
+    expect(localized.references[0]?.label).toBe('Cambio de tamaño del texto');
+    expect(localized.evidence).not.toContain('Generated');
+  });
+});

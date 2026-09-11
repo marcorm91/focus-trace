@@ -106,6 +106,15 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 - Switch EN/ES and confirm title, explanation, evidence, reference label and remediation are localized while selectors and source tokens remain canonical.
 - Manually judge whether each name plus context communicates purpose, test screen-reader presentation and inspect generic wording outside the bounded vocabulary, Shadow DOM and frames. Confirm the product never presents a candidate as an automatic WCAG failure or a non-candidate as proof of conformance.
 
+### WCAG 1.4.4 Resize Text
+
+- Set browser zoom to 100%, analyze the full page and confirm `FT-REVIEW-028` reports that the session-only reference is ready without changing zoom.
+- Set the same tab to 200% and analyze again; confirm the workflow reports a completed comparison and preserves the 100% reference for repeated checks.
+- Cause one text/control to disappear without an equivalent rendered replacement, lose its accessible name, become clipped by `overflow: hidden/clip`, overlap an unrelated subject and shrink through responsive CSS; confirm each signal remains REVIEW with structured zoom, geometry and selector evidence.
+- Replace a hidden responsive subject with rendered content exposing the same bounded text/name signature and confirm disappearance is suppressed. Confirm content already clipped/overlapped at 100% does not become a new resize candidate.
+- Switch EN/ES and confirm title, explanation, evidence, reference label, workflow guidance and remediation are localized while selectors, zoom factors and ratios remain canonical.
+- Test every browser-supported zoom step from 100% through 200%, images of text, captions, transformed/generated/Shadow DOM content, cross-origin frames and task functionality manually. Confirm a quiet comparison is never presented as complete WCAG 1.4.4 conformance.
+
 ### WCAG 1.4.3 Contrast in interactive text states
 
 - Start Trace and exercise a real hover, pointer-active and keyboard-focus state whose rendered text contrast becomes insufficient; confirm `FT-RUNTIME-014` records contextual `REVIEW` evidence only after the trusted interaction.

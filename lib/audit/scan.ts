@@ -1,4 +1,4 @@
-import type { ComponentScanScope, ElementSnapshot, FindingOutcome, ScanIssue, ScanResult } from '../../shared/types';
+import type { ComponentScanScope, ElementSnapshot, FindingOutcome, ScanIssue, ScanResult, TextResizeContext } from '../../shared/types';
 import {
   ALLOWED_ARIA_CHILD_RULE,
   ADVANCED_ARIA_RULES,
@@ -39,6 +39,7 @@ import { evaluateLanguageParts, type LanguagePartEvaluation } from './language-p
 import { evaluateLinkPurposeContext, type LinkPurposeContextEvaluation } from './link-purpose-context';
 import { evaluatePauseStopHide, type PauseStopHideEvaluation } from './pause-stop-hide';
 import { evaluateReflow, type ReflowSignal } from './reflow';
+import { evaluateResizeText, type TextResizeSignal } from './resize-text';
 import { appendMediaAccessibilityReviews } from './media-scan-extension';
 import { collectHeadingOutline, runFocusTraceScan as runBaseFocusTraceScan } from './scan-base';
 import { scopedElements, withScanElementQueryCache } from './scan-elements';
@@ -314,6 +315,23 @@ function linkPurposeContextIssueFor(evaluation: LinkPurposeContextEvaluation): S
     targets: [selectorFor(evaluation.element)],
     evidence: evaluation.detail,
     linkPurposeContext: evaluation.evidence,
+    references: rule.references,
+  };
+}
+
+function resizeTextIssueFor(signal: TextResizeSignal): ScanIssue {
+  const rule = RULES.resizeText;
+  return {
+    id: uid(),
+    ruleId: rule.id,
+    title: rule.title,
+    description: 'FocusTrace compared a bounded 100% reference with the same page at 200% and observed possible loss of text, content or functionality. Review responsive alternatives and the complete visual state before treating it as a conformance failure.',
+    severity: rule.severity,
+    outcome: 'review',
+    targets: [signal.selector],
+    ...(signal.currentElement ? { element: compactElementSnapshot(signal.currentElement) } : {}),
+    evidence: signal.detail,
+    textResize: signal.evidence,
     references: rule.references,
   };
 }
@@ -602,7 +620,27 @@ function appendLinkPurposeContextReview(result: ScanResult, root: Document | Ele
   result.rulesRun += 1;
 }
 
-function runFocusTraceScanWithCache(scope?: ComponentScanScope): ScanResult {
+function appendResizeTextReview(result: ScanResult, context?: TextResizeContext): void {
+  const evaluation = evaluateResizeText(context);
+  const reviews = evaluation.signals.map(resizeTextIssueFor);
+  result.review.push(...reviews);
+  result.textResize = evaluation.assessment;
+  result.ruleResults = [
+    ...(result.ruleResults ?? []),
+    {
+      ruleId: RULES.resizeText.id,
+      applicable: reviews.length,
+      passed: 0,
+      failures: 0,
+      reviews: reviews.length,
+      warnings: 0,
+      coverage: 'findings-only',
+    },
+  ];
+  result.rulesRun += 1;
+}
+
+function runFocusTraceScanWithCache(scope?: ComponentScanScope, textResize?: TextResizeContext): ScanResult {
   const result = runBaseFocusTraceScan(scope);
   const componentScope = result.scope?.type === 'component' ? result.scope : undefined;
   const root = componentScope ? document.querySelector(componentScope.selector) : document;
@@ -615,6 +653,7 @@ function runFocusTraceScanWithCache(scope?: ComponentScanScope): ScanResult {
     appendBypassBlocksReview(result);
     appendLanguageParts(result);
     appendReflowReview(result);
+    appendResizeTextReview(result, textResize);
   }
   appendAutocompletePurposeReview(result, root);
   appendTextSpacingReview(result, root);
@@ -689,6 +728,6 @@ function runFocusTraceScanWithCache(scope?: ComponentScanScope): ScanResult {
   return result;
 }
 
-export function runFocusTraceScan(scope?: ComponentScanScope): ScanResult {
-  return withScanElementQueryCache(() => runFocusTraceScanWithCache(scope));
+export function runFocusTraceScan(scope?: ComponentScanScope, textResize?: TextResizeContext): ScanResult {
+  return withScanElementQueryCache(() => runFocusTraceScanWithCache(scope, textResize));
 }

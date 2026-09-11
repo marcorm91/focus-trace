@@ -24,6 +24,7 @@ const REFERENCE_LABEL_ES: Record<string, string> = {
   'Use of Color': 'Uso del color',
   'Pause, Stop, Hide': 'Pausar, detener u ocultar',
   'Reflow': 'Reajuste del contenido',
+  'Resize Text': 'Cambio de tamaño del texto',
   'Non-text Contrast': 'Contraste no textual',
   'Target Size (Minimum)': 'Tamaño del objetivo (mínimo)',
   'Bypass Blocks': 'Saltar bloques',

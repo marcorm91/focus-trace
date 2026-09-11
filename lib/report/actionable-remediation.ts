@@ -350,6 +350,33 @@ export function actionableRemediationForRule(
     };
   }
 
+  if (ruleId === 'FT-REVIEW-028') {
+    return {
+      options: [
+        tr(
+          language,
+          'Allow text containers and controls to grow or wrap when text is enlarged. Remove fixed dimensions and hidden overflow that clip labels or content, using relative sizing and flexible layout where appropriate.',
+          'Permite que los contenedores de texto y los controles crezcan o ajusten sus líneas al ampliar el texto. Elimina dimensiones fijas y overflow oculto que recorten etiquetas o contenido, utilizando medidas relativas y layouts flexibles cuando corresponda.',
+        ),
+        tr(
+          language,
+          'Adjust responsive breakpoints, spacing and positioning so enlarged text does not overlap other text or controls and every function remains available through an equivalent visible control.',
+          'Ajusta breakpoints responsive, espaciado y posicionamiento para que el texto ampliado no se solape con otros textos o controles y cada función siga disponible mediante un control visible equivalente.',
+        ),
+        tr(
+          language,
+          'Do not counteract browser zoom by reducing CSS font sizes. Ensure the rendered text can reach twice its original effective size through at least one supported text-resize mechanism.',
+          'No contrarrestes el zoom del navegador reduciendo tamaños de fuente CSS. Asegura que el texto renderizado pueda alcanzar el doble de su tamaño efectivo original mediante al menos un mecanismo de ampliación compatible.',
+        ),
+      ],
+      validation: tr(
+        language,
+        'Capture the page at 100%, repeat the analysis at 200%, and inspect every candidate. Also test the browser\'s intermediate zoom steps and confirm that no text, label, control or functionality is clipped, obscured or unavailable.',
+        'Captura la página al 100 %, repite el análisis al 200 % e inspecciona cada candidato. Prueba también los niveles intermedios de zoom del navegador y confirma que ningún texto, etiqueta, control o funcionalidad queda recortado, oculto o inaccesible.',
+      ),
+    };
+  }
+
   return undefined;
 }
 

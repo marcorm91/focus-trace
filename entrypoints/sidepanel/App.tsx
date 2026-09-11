@@ -16,6 +16,7 @@ import type {
   SaveScanResponse,
   ScanResult,
   SessionState,
+  TextResizeBaseline,
 } from '../../shared/types';
 import { localizedUserError } from '../../shared/user-facing-errors';
 import { AuditScopeDialog } from './components/AuditScopeDialog';
@@ -104,6 +105,7 @@ export default function App() {
   const saveScan = useCallback(async (
     result: ScanResult,
     memoryEvidence: FocusMemoryCapturedEvidence[] = [],
+    textResizeBaseline?: TextResizeBaseline,
   ) => {
     if (tabId == null) return;
     const response = (await browser.runtime.sendMessage({
@@ -111,6 +113,7 @@ export default function App() {
       tabId,
       scan: result,
       memoryEvidence,
+      ...(textResizeBaseline ? { textResizeBaseline } : {}),
     } satisfies ExtensionMessage)) as SaveScanResponse | SessionState;
     const next = 'state' in response ? response.state : response;
     setSession(next);
@@ -163,8 +166,20 @@ export default function App() {
         target: { tabId },
         func: () => document.documentElement.removeAttribute('data-focustrace-scan-component'),
       }).catch(() => undefined);
+      const zoomFactor = await browser.tabs.getZoom(tabId).catch(() => undefined);
+      let textResizeBaseline = session.textResizeBaseline;
+      if (zoomFactor != null && Math.abs(zoomFactor - 1) <= 0.05) {
+        textResizeBaseline = (await browser.tabs.sendMessage(tabId, {
+          type: 'FOCUSTRACE_CAPTURE_TEXT_RESIZE_BASELINE',
+          zoomFactor,
+        } satisfies ExtensionMessage)) as TextResizeBaseline;
+      }
       const result = (await browser.tabs.sendMessage(tabId, {
         type: 'FOCUSTRACE_RUN_SCAN',
+        textResize: {
+          ...(zoomFactor != null ? { zoomFactor } : {}),
+          ...(textResizeBaseline ? { baseline: textResizeBaseline } : {}),
+        },
       } satisfies ExtensionMessage)) as ScanResult;
       const structureResults = await browser.scripting.executeScript({
         target: { tabId },
@@ -173,7 +188,7 @@ export default function App() {
       const nextStructure = structureResults[0]?.result as StructureSnapshot | undefined;
       setStructureSnapshot(nextStructure);
       const memoryEvidence = await collectFocusMemoryEvidence(tabId, result).catch(() => []);
-      await saveScan(result, memoryEvidence);
+      await saveScan(result, memoryEvidence, textResizeBaseline);
       try {
         await recordPageAnalysis(tabId, result, auditPlan);
       } catch {
@@ -197,6 +212,7 @@ export default function App() {
     recordPageAnalysis,
     requestPageAccess,
     saveScan,
+    session.textResizeBaseline,
     tabId,
   ]);
 
