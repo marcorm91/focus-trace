@@ -67,6 +67,17 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 - For `line-height`, confirm a genuine soft wrap is required and authored line breaks alone do not establish applicability.
 - Manually apply the complete WCAG text-spacing set together, including paragraph spacing, and verify content/functionality is not lost; do not treat the automated subset as complete 1.4.12 conformance proof.
 
+### WCAG 1.4.10 Reflow
+
+- Set the inspected page to an effective `320` CSS px width with browser zoom or a narrow viewport, rerun Analyze without resetting that state and confirm `FT-REVIEW-024` becomes applicable.
+- Use ordinary navigation or content that forces horizontal document overflow and confirm the REVIEW preserves viewport size, writing mode, scroll extent, overflow pixels and useful protruding selectors.
+- Clip visible text or an interactive control with `overflow: hidden/clip` and confirm partial/complete clipping plus the responsible ancestor are preserved in the finding and JSON export.
+- Repeat with a CSS-hidden desktop alternative and a visible responsive replacement; confirm the hidden alternative is not reported merely because it exists in the DOM.
+- Repeat with a data table, SVG/canvas graphic, video or embedded application as the only two-dimensional surface and confirm it is not automatically treated as a failure/review target.
+- Test above the threshold and confirm the rule is inapplicable; test a clean layout at the threshold and confirm only a bounded PASS is recorded.
+- Switch EN/ES and confirm title, explanation, measured evidence and remediation are localized while selectors and numeric geometry remain unchanged.
+- Manually traverse all content and controls after zooming; confirm the product does not claim complete WCAG 1.4.10 coverage or reset the page's zoom.
+
 ### WCAG 1.4.3 Contrast in interactive text states
 
 - Start Trace and exercise a real hover, pointer-active and keyboard-focus state whose rendered text contrast becomes insufficient; confirm `FT-RUNTIME-014` records contextual `REVIEW` evidence only after the trusted interaction.

@@ -20,6 +20,7 @@ const REFERENCE_LABEL_ES: Record<string, string> = {
   'Identify Input Purpose': 'Identificar el propósito de la entrada',
   'Autocomplete attribute has valid value': 'El atributo autocomplete tiene un valor válido',
   'Contrast (Minimum)': 'Contraste (mínimo)',
+  'Reflow': 'Reajuste del contenido',
   'Non-text Contrast': 'Contraste no textual',
   'Target Size (Minimum)': 'Tamaño del objetivo (mínimo)',
   'Bypass Blocks': 'Saltar bloques',

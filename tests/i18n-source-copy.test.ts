@@ -160,4 +160,32 @@ describe('Spanish localization of synced/source copy', () => {
     expect(localized.evidence).toContain('#save-panel');
     expect(localized.evidence).not.toContain('This element requires');
   });
+
+  it('localizes measured reflow evidence without losing viewport geometry or selectors', () => {
+    const localized = localizedScanIssue(issue({
+      ruleId: 'FT-REVIEW-024',
+      title: 'Narrow viewport may lose content or require two-dimensional scrolling',
+      description: 'FocusTrace observed clipped content in the current narrow viewport.',
+      targets: ['#continue'],
+      evidence: 'Generated reflow evidence.',
+      reflow: {
+        kind: 'clipped-content',
+        axis: 'horizontal',
+        writingMode: 'horizontal-tb',
+        viewportWidth: 320,
+        viewportHeight: 800,
+        scrollWidth: 320,
+        scrollHeight: 800,
+        clippedBy: '#panel',
+        clippedPixels: 80,
+        clipping: 'partial',
+      },
+    }), 'es');
+
+    expect(localized.title).toContain('viewport estrecho');
+    expect(localized.evidence).toContain('320 × 800 píxeles CSS');
+    expect(localized.evidence).toContain('#continue');
+    expect(localized.evidence).toContain('#panel');
+    expect(localized.evidence).not.toContain('Generated reflow evidence');
+  });
 });
