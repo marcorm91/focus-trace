@@ -36,6 +36,7 @@ import { textContrastSubjectsForElement } from './contrast';
 import { evaluateStructuralHtml, type StructuralHtmlSignalKind } from './content-model';
 import { accessibleName, isProgrammaticallyHidden, selectorFor, semanticRole } from './dom';
 import { evaluateLanguageParts, type LanguagePartEvaluation } from './language-parts';
+import { evaluatePauseStopHide, type PauseStopHideEvaluation } from './pause-stop-hide';
 import { evaluateReflow, type ReflowSignal } from './reflow';
 import { appendMediaAccessibilityReviews } from './media-scan-extension';
 import { collectHeadingOutline, runFocusTraceScan as runBaseFocusTraceScan } from './scan-base';
@@ -284,6 +285,22 @@ function useOfColorIssueFor(evaluation: UseOfColorEvaluation): ScanIssue {
   };
 }
 
+function pauseStopHideIssueFor(evaluation: PauseStopHideEvaluation): ScanIssue {
+  const rule = RULES.pauseStopHide;
+  return {
+    id: uid(),
+    ruleId: rule.id,
+    title: rule.title,
+    description: 'FocusTrace observed rendered moving, blinking or scrolling content that may start automatically, continue for more than five seconds and appear alongside other content. Review automatic start, duration, essentiality and any control mechanism before treating it as a conformance failure.',
+    severity: rule.severity,
+    outcome: 'review',
+    targets: [selectorFor(evaluation.element)],
+    ...(evaluation.detail ? { evidence: evaluation.detail } : {}),
+    ...(evaluation.evidence ? { pauseStopHide: evaluation.evidence } : {}),
+    references: rule.references,
+  };
+}
+
 function targetSizeIssueFor(evaluation: TargetSizeEvaluation): ScanIssue {
   const rule = RULES.targetSizeMinimum;
   return {
@@ -525,6 +542,29 @@ function appendInlineLinkUseOfColorReview(result: ScanResult, root: Document | E
   result.rulesRun += 1;
 }
 
+function appendPauseStopHideReview(result: ScanResult, root: Document | Element): void {
+  const evaluations = evaluatePauseStopHide(root);
+  const reviews = evaluations
+    .filter((evaluation) => evaluation.status === 'review')
+    .map(pauseStopHideIssueFor);
+  const passed = evaluations.filter((evaluation) => evaluation.status === 'pass').length;
+
+  result.review.push(...reviews);
+  result.ruleResults = [
+    ...(result.ruleResults ?? []),
+    {
+      ruleId: RULES.pauseStopHide.id,
+      applicable: evaluations.length,
+      passed,
+      failures: 0,
+      reviews: reviews.length,
+      warnings: 0,
+    },
+  ];
+  result.passes += passed;
+  result.rulesRun += 1;
+}
+
 function runFocusTraceScanWithCache(scope?: ComponentScanScope): ScanResult {
   const result = runBaseFocusTraceScan(scope);
   const componentScope = result.scope?.type === 'component' ? result.scope : undefined;
@@ -542,6 +582,7 @@ function runFocusTraceScanWithCache(scope?: ComponentScanScope): ScanResult {
   appendAutocompletePurposeReview(result, root);
   appendTextSpacingReview(result, root);
   appendInlineLinkUseOfColorReview(result, root);
+  appendPauseStopHideReview(result, root);
   appendMediaAccessibilityReviews(result, root);
 
   const signals = evaluateStructuralHtml(root, !componentScope);

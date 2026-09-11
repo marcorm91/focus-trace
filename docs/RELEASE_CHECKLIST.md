@@ -87,6 +87,16 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 - Switch EN/ES and confirm title, explanation, evidence and remediation are localized while selectors, RGB colors and ratios remain canonical.
 - Manually verify normal, hover and focus presentation plus non-link color semantics such as errors, required fields, charts and state indicators; confirm the product does not claim complete WCAG 1.4.1 coverage.
 
+### WCAG 2.2.2 Pause, Stop, Hide — moving content
+
+- Analyze a running Web Animation with changing keyframes, a total active duration over five seconds and separate visible page content; confirm `FT-REVIEW-026` reports REVIEW with the target, duration or indefinite repetition, animation name and changed properties.
+- Repeat with a resolved total active duration of exactly five seconds or less and confirm the bounded duration expectation records PASS.
+- Analyze rendered `<marquee>` content and looping/long/unresolved native `video[autoplay]` without native controls; confirm each applicable candidate remains REVIEW and preserves its motion source.
+- Add native controls to autoplay video and confirm the bounded native-control expectation records PASS. Add a rendered, accessibly named custom control with `aria-controls` pointing to the moving target and confirm its selector is evidence but the result remains REVIEW until behavior is exercised.
+- Confirm hidden targets, stopped/paused animations, effects without changing resolved keyframes, targets without observable parallel content and FocusTrace-owned overlays are omitted.
+- Switch EN/ES and confirm title, explanation, evidence and remediation are localized while selectors, animation properties and numeric timing remain canonical.
+- Manually test automatic start, more-than-five-second duration, essentiality, persistent pause/restart and the auto-updating branch. Confirm the product does not claim complete WCAG 2.2.2 coverage.
+
 ### WCAG 1.4.3 Contrast in interactive text states
 
 - Start Trace and exercise a real hover, pointer-active and keyboard-focus state whose rendered text contrast becomes insufficient; confirm `FT-RUNTIME-014` records contextual `REVIEW` evidence only after the trusted interaction.

@@ -207,6 +207,14 @@ describe('standards registry coverage', () => {
       manualReviewRequired: true,
       en301549: { clause: '9.1.4.13' },
     });
+    expect(wcagCoverageForCriterion('2.2.2')).toMatchObject({
+      level: 'A',
+      coverage: ['review', 'manual'],
+      ruleIds: ['FT-REVIEW-026'],
+      completeness: 'partial',
+      manualReviewRequired: true,
+      en301549: { clause: '9.2.2.2' },
+    });
     expect(wcagCoverageForCriterion('2.4.1')).toMatchObject({
       level: 'A',
       coverage: ['review', 'manual'],

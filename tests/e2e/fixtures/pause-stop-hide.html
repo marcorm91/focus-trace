@@ -1,0 +1,26 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>Pause stop hide fixture</title>
+    <style>
+      @keyframes news-cycle {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(120px); opacity: 0.6; }
+      }
+
+      #moving-news {
+        animation: news-cycle 8s linear infinite alternate;
+        width: max-content;
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>Pause, stop, hide</h1>
+      <div id="moving-news">Automatically moving news</div>
+      <p>The rest of this page remains available while the news moves.</p>
+    </main>
+  </body>
+</html>

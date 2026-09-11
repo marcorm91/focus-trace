@@ -192,6 +192,16 @@ export const RULES = {
     ),
     references: [wcag('1.4.1', 'Use of Color', 'A', 'use-of-color')],
   },
+  pauseStopHide: {
+    id: 'FT-REVIEW-026',
+    title: 'Automatically moving content needs pause, stop or hide review',
+    severity: 'serious',
+    ...impact(
+      'Persistent movement, blinking or scrolling can make the rest of a page difficult or impossible to read and use for people with cognitive, attention or visual disabilities. FocusTrace keeps this as review because automatic start, essentiality and the behavior of custom controls require human verification.',
+      'El movimiento, parpadeo o desplazamiento persistente puede dificultar o impedir leer y utilizar el resto de la página a personas con discapacidades cognitivas, de atención o visuales. FocusTrace lo mantiene como revisión porque el inicio automático, el carácter esencial y el comportamiento de controles personalizados requieren verificación humana.',
+    ),
+    references: [wcag('2.2.2', 'Pause, Stop, Hide', 'A', 'pause-stop-hide')],
+  },
   deprecatedAriaRole: {
     id: 'FT-WARN-001',
     title: 'Deprecated ARIA role is used',

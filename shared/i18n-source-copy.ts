@@ -21,6 +21,7 @@ const REFERENCE_LABEL_ES: Record<string, string> = {
   'Autocomplete attribute has valid value': 'El atributo autocomplete tiene un valor válido',
   'Contrast (Minimum)': 'Contraste (mínimo)',
   'Use of Color': 'Uso del color',
+  'Pause, Stop, Hide': 'Pausar, detener u ocultar',
   'Reflow': 'Reajuste del contenido',
   'Non-text Contrast': 'Contraste no textual',
   'Target Size (Minimum)': 'Tamaño del objetivo (mínimo)',

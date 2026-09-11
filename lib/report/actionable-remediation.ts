@@ -296,6 +296,33 @@ export function actionableRemediationForRule(
     };
   }
 
+  if (ruleId === 'FT-REVIEW-026') {
+    return {
+      options: [
+        tr(
+          language,
+          'Provide a visible, keyboard-operable control that pauses and resumes, stops or hides automatically moving, blinking or scrolling content. Keep the content paused until the user explicitly resumes it.',
+          'Proporciona un control visible y operable por teclado que pause y reanude, detenga u oculte el contenido que se mueve, parpadea o desplaza automáticamente. Mantén el contenido pausado hasta que el usuario lo reanude de forma explícita.',
+        ),
+        tr(
+          language,
+          'For auto-updating information, also allow users to control the update frequency. Associate local controls with their content programmatically where practical, for example with aria-controls, without relying on that relationship alone to implement the behavior.',
+          'Para información que se actualiza automáticamente, permite también controlar la frecuencia de actualización. Relaciona programáticamente los controles locales con su contenido cuando sea práctico, por ejemplo con aria-controls, sin depender únicamente de esa relación para implementar el comportamiento.',
+        ),
+        tr(
+          language,
+          'If non-essential motion does not need to continue, stop it within five seconds. Document an essential-motion exception only when removing the movement would fundamentally change information or functionality and no conforming alternative exists.',
+          'Si el movimiento no esencial no necesita continuar, detenlo en un máximo de cinco segundos. Documenta una excepción por movimiento esencial únicamente cuando eliminarlo cambie fundamentalmente la información o funcionalidad y no exista una alternativa conforme.',
+        ),
+      ],
+      validation: tr(
+        language,
+        'Reload the page without interacting and observe the candidate for more than five seconds alongside the rest of the content. Activate every pause, stop or hide mechanism with keyboard and pointer input; confirm motion stays stopped until explicitly resumed and manually assess essentiality. Separately observe timed text or DOM updates that a single scan cannot detect.',
+        'Recarga la página sin interactuar y observa el candidato durante más de cinco segundos junto al resto del contenido. Activa cada mecanismo de pausa, detención u ocultación con teclado y puntero; confirma que el movimiento permanece detenido hasta reanudarlo explícitamente y valora manualmente si es esencial. Observa por separado las actualizaciones temporizadas de texto o DOM que un único barrido no puede detectar.',
+      ),
+    };
+  }
+
   return undefined;
 }
 

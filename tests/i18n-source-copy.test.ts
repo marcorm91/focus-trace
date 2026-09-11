@@ -224,3 +224,41 @@ describe('Spanish use-of-color evidence', () => {
     expect(localized.evidence).not.toContain('Generated');
   });
 });
+
+describe('Spanish pause-stop-hide evidence', () => {
+  it('localizes structured motion evidence without losing timing, properties or selectors', () => {
+    const issue: ScanIssue = {
+      id: 'moving-carousel',
+      ruleId: 'FT-REVIEW-026',
+      title: 'Automatically moving content needs pause, stop or hide review',
+      description: 'Generated motion review.',
+      evidence: 'Generated motion evidence.',
+      severity: 'serious',
+      outcome: 'review',
+      targets: ['#carousel'],
+      pauseStopHide: {
+        kind: 'moving-or-blinking',
+        source: 'web-animation',
+        automaticStart: 'unknown',
+        parallelContent: 'observed',
+        durationMs: 12_000,
+        thresholdMs: 5_000,
+        repeatsIndefinitely: false,
+        animatedProperties: ['opacity', 'transform'],
+        animationNames: ['carousel-cycle'],
+        controlMechanism: 'candidate-observed',
+        controlSelectors: ['#pause'],
+      },
+      references: [],
+    };
+
+    const localized = localizedScanIssue(issue, 'es');
+
+    expect(localized.title).toContain('movimiento automático');
+    expect(localized.evidence).toContain('#carousel');
+    expect(localized.evidence).toContain('12000 ms');
+    expect(localized.evidence).toContain('opacity, transform');
+    expect(localized.evidence).toContain('#pause');
+    expect(localized.evidence).not.toContain('Generated');
+  });
+});
