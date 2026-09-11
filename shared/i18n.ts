@@ -22,6 +22,7 @@ export function localizedReferenceLabel(reference: StandardReference, language: 
       return 'El elemento con atributo lang tiene una etiqueta de idioma válida';
     }
     if (reference.label === 'Text Spacing') return 'Espaciado de texto';
+    if (reference.label === 'Reflow') return 'Reajuste del contenido';
     if (reference.label === 'Important letter spacing in style attributes is wide enough') {
       return 'El espaciado de letras importante en atributos style es suficiente';
     }
@@ -175,6 +176,10 @@ const EXTRA_COPY_ES: Record<string, { title: string; description: string }> = {
     title: 'El vídeo pregrabado puede carecer de una audiodescripción observable',
     description: 'FocusTrace ha observado vídeo sincronizado probablemente pregrabado sin una pista nativa de descripción ni un control cercano para una versión audiodescrita. Revisa el reproductor, versiones alternativas y el contenido visual real antes de considerarlo un incumplimiento WCAG.',
   },
+  'FT-REVIEW-024': {
+    title: 'El viewport estrecho puede perder contenido o exigir desplazamiento bidimensional',
+    description: 'FocusTrace ha observado desbordamiento bidimensional no exceptuado o contenido renderizado recortado por un ancestro sin desplazamiento en el viewport estrecho actual. Revisa las alternativas responsive y las excepciones WCAG antes de considerarlo un incumplimiento.',
+  },
   'FT-RUNTIME-006': {
     title: 'La interacción de arrastre requiere revisar una alternativa de puntero sencillo',
     description: 'Trace observó un arrastre real. Revisa si la misma funcionalidad puede realizarse con un puntero sencillo sin movimiento de arrastre, teniendo en cuenta las excepciones de WCAG 2.5.7.',
@@ -211,6 +216,7 @@ const EXTRA_EVIDENCE_ES: Record<string, string> = {
   'FT-REVIEW-021': 'El vídeo probablemente pregrabado señalado no expone una audiodescripción ni una alternativa para el medio candidata que FocusTrace pueda observar localmente. La equivalencia y cobertura del contenido visual requieren revisión manual.',
   'FT-REVIEW-022': 'El vídeo señalado presenta señales sólidas de contenido en directo y no expone una pista nativa de subtítulos. Revisa subtítulos personalizados o incrustados y la presencia real de información auditiva.',
   'FT-REVIEW-023': 'El vídeo probablemente pregrabado señalado no expone una pista nativa de descripción ni una versión audiodescrita observable. La precisión, integridad y aplicabilidad de la audiodescripción requieren revisión manual.',
+  'FT-REVIEW-024': 'El viewport estrecho observado presenta desbordamiento bidimensional o contenido recortado que requiere revisión contextual.',
   'FT-RUNTIME-006': 'Se observó un movimiento de arrastre real y debe revisarse si existe una alternativa equivalente sin arrastrar.',
 };
 
@@ -329,6 +335,22 @@ function localizedLanguagePartIssue(issue: ScanIssue): ScanIssue {
   };
 }
 
+function localizedReflowEvidence(issue: ScanIssue): string | undefined {
+  const evidence = issue.reflow;
+  if (!evidence) return undefined;
+  const viewport = `${evidence.viewportWidth} × ${evidence.viewportHeight} píxeles CSS`;
+  if (evidence.kind === 'document-overflow') {
+    const dimension = evidence.axis === 'horizontal' ? evidence.scrollWidth : evidence.scrollHeight;
+    const dimensionLabel = evidence.axis === 'horizontal' ? 'anchura' : 'altura';
+    const axisLabel = evidence.axis === 'horizontal' ? 'horizontal' : 'vertical';
+    return `En un viewport de ${viewport} (${evidence.writingMode}), la ${dimensionLabel} del documento es de ${dimension} píxeles CSS y exige aproximadamente ${evidence.overflowPixels ?? 0} píxeles CSS de desplazamiento ${axisLabel}. Destinos no exceptuados que sobresalen: ${issue.targets.join(', ')}. Revisa si alguna excepción de layout bidimensional resulta esencial.`;
+  }
+
+  const clipping = evidence.clipping === 'complete' ? 'totalmente' : 'parcialmente';
+  const axisLabel = evidence.axis === 'horizontal' ? 'horizontal' : 'vertical';
+  return `En un viewport de ${viewport}, ${issue.targets[0] ?? 'el contenido señalado'} queda recortado ${clipping} por ${evidence.clippedBy ?? 'un ancestro sin desplazamiento'}; aproximadamente ${evidence.clippedPixels ?? 0} píxeles CSS no resultan observables en el eje ${axisLabel}.`;
+}
+
 export function localizedRuleTitle(ruleId: string, fallback: string, language: AppLanguage): string {
   if (language === 'es' && ruleId === 'FT-WCAG-013' && fallback === LANGUAGE_PART_TITLE_EN) {
     return LANGUAGE_PART_TITLE_ES;
@@ -351,7 +373,9 @@ export function localizedScanIssue(issue: ScanIssue, language: AppLanguage): Sca
     description: copy.description,
   }, language);
   if (issue.evidence && localized.evidence === issue.evidence) {
-    const evidence = localizedExtraEvidence(issue.ruleId, issue.evidence);
+    const evidence = issue.ruleId === 'FT-REVIEW-024'
+      ? localizedReflowEvidence(issue)
+      : localizedExtraEvidence(issue.ruleId, issue.evidence);
     if (evidence) localized = { ...localized, evidence };
   }
   return localizeIssueSourceCopy(issue, localized, language);

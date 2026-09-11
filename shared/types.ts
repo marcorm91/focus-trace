@@ -188,6 +188,20 @@ export interface ContrastStateReviewEvidence {
   candidateCount: number;
 }
 
+export interface ReflowEvidence {
+  kind: 'document-overflow' | 'clipped-content';
+  axis: 'horizontal' | 'vertical';
+  writingMode: string;
+  viewportWidth: number;
+  viewportHeight: number;
+  scrollWidth: number;
+  scrollHeight: number;
+  overflowPixels?: number;
+  clippedBy?: string;
+  clippedPixels?: number;
+  clipping?: 'partial' | 'complete';
+}
+
 export interface ScanIssue {
   id: string;
   ruleId: string;
@@ -202,6 +216,7 @@ export interface ScanIssue {
   accessibleName?: AccessibleNameEvidence;
   contrast?: ContrastEvidence;
   contrastState?: ContrastStateReviewEvidence;
+  reflow?: ReflowEvidence;
   references: StandardReference[];
   auditorNote?: AuditorNote;
 }

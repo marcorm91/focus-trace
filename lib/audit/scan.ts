@@ -36,6 +36,7 @@ import { textContrastSubjectsForElement } from './contrast';
 import { evaluateStructuralHtml, type StructuralHtmlSignalKind } from './content-model';
 import { accessibleName, isProgrammaticallyHidden, selectorFor, semanticRole } from './dom';
 import { evaluateLanguageParts, type LanguagePartEvaluation } from './language-parts';
+import { evaluateReflow, type ReflowSignal } from './reflow';
 import { appendMediaAccessibilityReviews } from './media-scan-extension';
 import { collectHeadingOutline, runFocusTraceScan as runBaseFocusTraceScan } from './scan-base';
 import { scopedElements, withScanElementQueryCache } from './scan-elements';
@@ -249,6 +250,22 @@ function textSpacingIssueFor(evaluation: TextSpacingEvaluation): ScanIssue {
   };
 }
 
+function reflowIssueFor(signal: ReflowSignal): ScanIssue {
+  const rule = RULES.reflow;
+  return {
+    id: uid(),
+    ruleId: rule.id,
+    title: rule.title,
+    description: 'FocusTrace observed non-exempt two-dimensional page overflow or rendered content clipped by an unscrollable ancestor in the current narrow viewport. Review responsive alternatives and WCAG exceptions before treating it as a conformance failure.',
+    severity: rule.severity,
+    outcome: 'review',
+    targets: signal.targets.map(selectorFor),
+    evidence: signal.detail,
+    reflow: signal.evidence,
+    references: rule.references,
+  };
+}
+
 function targetSizeIssueFor(evaluation: TargetSizeEvaluation): ScanIssue {
   const rule = RULES.targetSizeMinimum;
   return {
@@ -445,6 +462,28 @@ function appendTextSpacingReview(result: ScanResult, root: Document | Element): 
   result.rulesRun += 1;
 }
 
+function appendReflowReview(result: ScanResult): void {
+  const evaluation = evaluateReflow(document);
+  const reviews = evaluation.signals.map(reflowIssueFor);
+  const applicable = evaluation.status === 'inapplicable' ? 0 : Math.max(1, reviews.length);
+  const passed = evaluation.status === 'pass' ? 1 : 0;
+
+  result.review.push(...reviews);
+  result.ruleResults = [
+    ...(result.ruleResults ?? []),
+    {
+      ruleId: RULES.reflow.id,
+      applicable,
+      passed,
+      failures: 0,
+      reviews: reviews.length,
+      warnings: 0,
+    },
+  ];
+  result.passes += passed;
+  result.rulesRun += 1;
+}
+
 function runFocusTraceScanWithCache(scope?: ComponentScanScope): ScanResult {
   const result = runBaseFocusTraceScan(scope);
   const componentScope = result.scope?.type === 'component' ? result.scope : undefined;
@@ -457,6 +496,7 @@ function runFocusTraceScanWithCache(scope?: ComponentScanScope): ScanResult {
   if (!componentScope) {
     appendBypassBlocksReview(result);
     appendLanguageParts(result);
+    appendReflowReview(result);
   }
   appendAutocompletePurposeReview(result, root);
   appendTextSpacingReview(result, root);

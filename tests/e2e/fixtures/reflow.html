@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Reflow fixture</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font: 16px/1.5 sans-serif; }
+    main { padding: 12px; }
+    #wide-navigation {
+      display: flex;
+      gap: 12px;
+      width: 520px;
+      padding: 8px;
+      background: #eef3ff;
+    }
+    #wide-navigation a { flex: 0 0 112px; }
+    #clipping-panel {
+      width: 280px;
+      height: 56px;
+      margin-top: 20px;
+      overflow: hidden;
+      border: 1px solid #333;
+    }
+    #clipped-action {
+      width: 120px;
+      height: 36px;
+      margin: 9px 0 0 250px;
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Reflow</h1>
+    <nav id="wide-navigation" aria-label="Primary">
+      <a href="#one">One</a>
+      <a href="#two">Two</a>
+      <a href="#three">Three</a>
+      <a href="#four">Four</a>
+    </nav>
+    <div id="clipping-panel">
+      <button id="clipped-action" type="button">Continue</button>
+    </div>
+  </main>
+</body>
+</html>

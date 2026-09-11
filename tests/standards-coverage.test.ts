@@ -177,6 +177,14 @@ describe('standards registry coverage', () => {
       ruleIds: ['FT-RUNTIME-014', 'FT-WCAG-010'],
       completeness: 'partial',
     });
+    expect(wcagCoverageForCriterion('1.4.10')).toMatchObject({
+      level: 'AA',
+      coverage: ['review', 'manual'],
+      ruleIds: ['FT-REVIEW-024'],
+      completeness: 'partial',
+      manualReviewRequired: true,
+      en301549: { clause: '9.1.4.10' },
+    });
     expect(wcagCoverageForCriterion('1.4.12')).toMatchObject({
       level: 'AA',
       coverage: ['review', 'manual'],

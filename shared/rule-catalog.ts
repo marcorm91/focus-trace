@@ -172,6 +172,16 @@ export const RULES = {
     ),
     references: [wcag('2.5.8', 'Target Size (Minimum)', 'AA', 'target-size-minimum')],
   },
+  reflow: {
+    id: 'FT-REVIEW-024',
+    title: 'Narrow viewport may lose content or require two-dimensional scrolling',
+    severity: 'serious',
+    ...impact(
+      'Content that is clipped or requires two-dimensional scrolling at an equivalent 320 CSS pixel viewport can become unavailable or substantially harder to use for people who enlarge content. FocusTrace keeps this as review because WCAG permits essential two-dimensional layouts and the scan observes only the current responsive state.',
+      'El contenido recortado o que exige desplazamiento bidimensional en un viewport equivalente a 320 píxeles CSS puede quedar inaccesible o resultar mucho más difícil de usar para quienes amplían el contenido. FocusTrace lo mantiene como revisión porque WCAG permite layouts bidimensionales esenciales y el barrido solo observa el estado responsive actual.',
+    ),
+    references: [wcag('1.4.10', 'Reflow', 'AA', 'reflow')],
+  },
   deprecatedAriaRole: {
     id: 'FT-WARN-001',
     title: 'Deprecated ARIA role is used',

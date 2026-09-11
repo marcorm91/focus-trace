@@ -154,6 +154,16 @@ A below-threshold observation remains `REVIEW`, never automatic `FAIL`. The ACT 
 
 FocusTrace does not currently automate the paragraph-spacing requirement (`2 × font-size`) or the complete requirement to apply all four spacing values together without loss of content or functionality. The remediation therefore instructs reviewers to perform that combined manual check. These boundaries deliberately favor false negatives over claiming that a syntactic spacing lock proves the whole WCAG criterion.
 
+## Reflow and narrow-viewport review scope
+
+`FT-REVIEW-024` provides conservative current-state evidence for WCAG 1.4.10 Reflow. It is a page-only rule and does not change zoom, resize the inspected tab or inject test styles. For horizontal writing it becomes applicable only when the current layout viewport is at most `320` CSS px wide; for vertical/sideways writing it uses the WCAG-equivalent `256` CSS px height threshold. This means a reviewer can apply browser zoom, rerun Analyze and preserve the exact responsive state that produced the evidence.
+
+The rule measures two observable loss modes. First, it compares the document scroll extent with the current client extent on the cross axis and reports non-exempt terminal elements that protrude beyond it. Second, it inspects rendered direct text, meaningful images and interactive controls for partial or complete clipping by an ancestor whose relevant computed overflow is `hidden` or `clip`, where the clipped portion cannot be reached by scrolling that ancestor. Findings preserve viewport, writing mode, document dimensions, measured overflow/clipping pixels and selectors as structured `reflow` evidence in JSON exports. Traversal is bounded to the first 10,000 live DOM elements, with at most six protruding targets in the document-overflow finding and eight clipped-content findings per scan.
+
+Known two-dimensional surfaces —native/ARIA tables and grids, SVG, canvas, video, iframes/embedded objects and application-role regions— are excluded from automatic findings. CSS-hidden responsive alternatives are also excluded, while an observable replacement can still be assessed in the current layout. A bounded PASS means only that these observable non-exempt overflow/clipping signals were absent in the tested viewport; it never establishes complete WCAG 1.4.10 conformance.
+
+Every negative remains `REVIEW`, never deterministic `FAIL`. FocusTrace cannot prove whether a layout exception is essential, whether content hidden behind a custom overlay remains available through another mechanism, whether a transformed/off-canvas state is intentionally inactive, or whether Shadow DOM and cross-origin embedded content preserve reflow. Reviewers must still traverse the page and verify that all ordinary content and functionality remain available with only one scrolling direction.
+
 ## Media alternatives, captions and descriptions review scope
 
 The media rules deliberately evaluate only native `<audio>` / `<video>` evidence and use bounded positive signals. They never inspect media payloads, transcribe audio, analyze video pixels or claim that candidate alternatives are semantically equivalent.
@@ -410,6 +420,7 @@ The rule is full-page only. Component-scoped analysis does not execute `FT-REVIE
 | FT-REVIEW-021 Prerecorded video may lack an observable media alternative or audio description | REVIEW/PASS | WCAG 1.2.3 A · ACT c5a4ea |
 | FT-REVIEW-022 Live video may lack observable captions | REVIEW/PASS | WCAG 1.2.4 AA |
 | FT-REVIEW-023 Prerecorded video may lack an observable audio description | REVIEW/PASS | WCAG 1.2.5 AA · ACT 1ec09b |
+| FT-REVIEW-024 Narrow viewport may lose content or require two-dimensional scrolling | REVIEW/PASS | WCAG 1.4.10 AA |
 
 ## Runtime rules
 
@@ -455,6 +466,7 @@ The rule is full-page only. Component-scoped analysis does not execute `FT-REVIE
 - `FT-REVIEW-021` accepts only observable local candidate alternative/audio-description signals for likely prerecorded synchronized native video. It cannot prove equivalence, description completeness or visual-content applicability, and unknown/custom-player media can remain outside coverage.
 - `FT-REVIEW-022` requires strong live timing evidence and deliberately does not classify HLS/DASH playlist URLs alone as live. It cannot detect arbitrary custom-player or burned-in live captions, prove auditory content when browser APIs are unavailable, or verify live-caption accuracy/completeness/latency.
 - `FT-REVIEW-023` accepts only native descriptions tracks or nearby described-version controls as bounded positive evidence. It does not treat a transcript alone as proof of audio description and cannot verify description accuracy, completeness or applicability to meaningful visual information.
+- `FT-REVIEW-024` evaluates only the current page viewport at the WCAG reflow threshold and detects bounded document overflow plus content clipped by unscrollable `overflow: hidden/clip` ancestors. It does not alter zoom, prove essential two-dimensional exceptions, inspect Shadow DOM/cross-origin frames or detect every overlay, transform and compositing-based loss mode.
 - `FT-REVIEW-019` observes only explicit/user-invalid state and non-empty `aria-errormessage` / `aria-describedby` text candidates. It does not prove semantic adequacy, infer every visual/application-level error message, or exercise every form error.
 - `FT-REVIEW-020` reviews only invalid fields that already expose associated error text plus correction-relevant constraint metadata. Suggestion quality and the WCAG security/purpose exception remain manual, and FocusTrace never reads or stores field values for this rule.
 - Structural HTML checks operate on the parsed live DOM. Browser parser repair can normalize invalid source before FocusTrace runs; the tool does not infer source-level errors that are no longer observable. See [`STRUCTURAL_HTML.md`](STRUCTURAL_HTML.md).

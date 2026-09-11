@@ -242,6 +242,33 @@ export function actionableRemediationForRule(
     };
   }
 
+  if (ruleId === 'FT-REVIEW-024') {
+    return {
+      options: [
+        tr(
+          language,
+          'Let ordinary content wrap into a single column at a 320 CSS px viewport. Replace fixed widths and minimum widths with fluid sizing such as max-width, percentages, grid/flex wrapping or responsive breakpoints.',
+          'Permite que el contenido ordinario se reajuste en una sola columna con un viewport de 320 píxeles CSS. Sustituye anchuras y mínimos fijos por dimensiones fluidas como max-width, porcentajes, grid/flex con salto o breakpoints responsive.',
+        ),
+        tr(
+          language,
+          'Do not hide or clip text and controls when content wraps. Remove fixed heights or overflow clipping where they cut content, and keep responsive navigation and actions visible and operable.',
+          'No ocultes ni recortes texto o controles cuando el contenido se reajuste. Elimina alturas fijas o recortes por overflow cuando corten contenido y mantén visibles y operables la navegación y las acciones responsive.',
+        ),
+        tr(
+          language,
+          'Keep two-dimensional scrolling only where the information or operation genuinely requires a two-dimensional layout, such as a data table, map or diagram, and confine that scrolling to the relevant component when possible.',
+          'Conserva el desplazamiento bidimensional solo cuando la información u operación necesite realmente un layout de dos dimensiones, como una tabla de datos, un mapa o un diagrama, y limita ese desplazamiento al componente correspondiente cuando sea posible.',
+        ),
+      ],
+      validation: tr(
+        language,
+        'Set the effective page viewport to 320 CSS px wide for horizontal writing (commonly 400% browser zoom on a 1280 CSS px window), rerun Analyze without resetting zoom, and traverse all content and controls. Confirm that ordinary content needs only one scrolling direction and that nothing is clipped, lost or inoperable; manually validate every essential two-dimensional exception.',
+        'Ajusta el viewport efectivo de la página a 320 píxeles CSS de ancho para escritura horizontal —habitualmente 400 % de zoom del navegador sobre una ventana de 1280 píxeles CSS—, vuelve a ejecutar Analizar sin restablecer el zoom y recorre todo el contenido y los controles. Confirma que el contenido ordinario solo necesita una dirección de desplazamiento y que nada queda recortado, perdido o inoperable; valida manualmente cada excepción bidimensional esencial.',
+      ),
+    };
+  }
+
   return undefined;
 }
 

@@ -13,7 +13,7 @@ describe('scan categories', () => {
     expect(scanCategoryForRule('FT-WCAG-013')).toBe('structure');
     expect(scanCategoryForRule('FT-REVIEW-014')).toBe('forms');
     expect(scanCategoryForRule('FT-REVIEW-015')).toBe('names');
-    for (const mediaRule of ['FT-REVIEW-016', 'FT-REVIEW-017', 'FT-REVIEW-018', 'FT-REVIEW-021', 'FT-REVIEW-022', 'FT-REVIEW-023']) {
+    for (const mediaRule of ['FT-REVIEW-016', 'FT-REVIEW-017', 'FT-REVIEW-018', 'FT-REVIEW-021', 'FT-REVIEW-022', 'FT-REVIEW-023', 'FT-REVIEW-024']) {
       expect(scanCategoryForRule(mediaRule)).toBe('other');
     }
     expect(scanCategoryForRule('FT-REVIEW-019')).toBe('forms');
