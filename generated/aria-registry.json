@@ -1,5 +1,5 @@
 {
-  "schemaVersion": 2,
+  "schemaVersion": 3,
   "source": {
     "repository": "w3c/aria",
     "ref": "main",
@@ -13,7 +13,9 @@
     "deprecatedRoles": 1,
     "deprecatedRolePropertyPairs": 351,
     "disallowedRolePropertyPairs": 53,
-    "requiredRolePropertyPairs": 11
+    "requiredRolePropertyPairs": 11,
+    "requiredParentRolePairs": 34,
+    "allowedChildRolePairs": 32
   },
   "properties": {
     "aria-activedescendant": "property",
@@ -76,6 +78,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -119,6 +123,8 @@
         "alert",
         "dialog"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -162,6 +168,8 @@
       "parentRoles": [
         "structure"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -201,6 +209,8 @@
       "parentRoles": [
         "document"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -245,6 +255,8 @@
       "parentRoles": [
         "landmark"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -287,6 +299,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -329,6 +343,8 @@
       "parentRoles": [
         "command"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -371,6 +387,15 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [
+        "figure",
+        "grid",
+        "group",
+        "radiogroup",
+        "table",
+        "treegrid"
+      ],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -417,6 +442,10 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [
+        "row"
+      ],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -465,6 +494,8 @@
       "parentRoles": [
         "input"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -511,6 +542,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -559,6 +592,10 @@
         "gridcell",
         "sectionhead"
       ],
+      "requiredParentRoles": [
+        "row"
+      ],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -612,6 +649,8 @@
       "parentRoles": [
         "input"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -658,6 +697,8 @@
       "parentRoles": [
         "widget"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -700,6 +741,8 @@
       "parentRoles": [
         "article"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -745,6 +788,8 @@
       "parentRoles": [
         "landmark"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -787,6 +832,8 @@
       "parentRoles": [
         "widget"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -829,6 +876,8 @@
       "parentRoles": [
         "landmark"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -871,6 +920,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -917,6 +968,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -963,6 +1016,8 @@
       "parentRoles": [
         "window"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -1006,6 +1061,8 @@
       "parentRoles": [
         "list"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": true,
       "deprecatedVersion": "1.2",
       "supportedProperties": [
@@ -1048,6 +1105,8 @@
       "parentRoles": [
         "structure"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -1090,6 +1149,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -1136,6 +1197,10 @@
       "parentRoles": [
         "list"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [
+        "article"
+      ],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -1178,6 +1243,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -1220,6 +1287,8 @@
       "parentRoles": [
         "landmark"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -1262,6 +1331,8 @@
       "parentRoles": [
         "structure"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -1311,6 +1382,12 @@
         "composite",
         "table"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [
+        "caption",
+        "row",
+        "rowgroup"
+      ],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -1359,6 +1436,10 @@
         "cell",
         "widget"
       ],
+      "requiredParentRoles": [
+        "row"
+      ],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -1406,6 +1487,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -1448,6 +1531,8 @@
       "parentRoles": [
         "sectionhead"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -1493,6 +1578,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -1533,6 +1620,8 @@
     {
       "name": "img",
       "parentRoles": [],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [],
@@ -1545,6 +1634,8 @@
       "parentRoles": [
         "widget"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -1586,6 +1677,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -1632,6 +1725,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -1674,6 +1769,8 @@
       "parentRoles": [
         "command"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -1714,6 +1811,10 @@
       "name": "list",
       "parentRoles": [
         "section"
+      ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [
+        "listitem"
       ],
       "deprecated": false,
       "deprecatedVersion": null,
@@ -1756,6 +1857,11 @@
       "name": "listbox",
       "parentRoles": [
         "select"
+      ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [
+        "group",
+        "option"
       ],
       "deprecated": false,
       "deprecatedVersion": null,
@@ -1802,6 +1908,11 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [
+        "directory",
+        "list"
+      ],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -1846,6 +1957,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -1888,6 +2001,8 @@
       "parentRoles": [
         "landmark"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -1930,6 +2045,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -1976,6 +2093,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -2018,6 +2137,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -2059,6 +2180,14 @@
       "name": "menu",
       "parentRoles": [
         "select"
+      ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [
+        "group",
+        "menuitem",
+        "menuitemcheckbox",
+        "menuitemradio",
+        "separator"
       ],
       "deprecated": false,
       "deprecatedVersion": null,
@@ -2104,6 +2233,14 @@
       "parentRoles": [
         "menu"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [
+        "group",
+        "menuitem",
+        "menuitemcheckbox",
+        "menuitemradio",
+        "separator"
+      ],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -2148,6 +2285,12 @@
       "parentRoles": [
         "command"
       ],
+      "requiredParentRoles": [
+        "group",
+        "menu",
+        "menubar"
+      ],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -2191,6 +2334,12 @@
       "parentRoles": [
         "menuitem"
       ],
+      "requiredParentRoles": [
+        "group",
+        "menu",
+        "menubar"
+      ],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -2239,6 +2388,12 @@
       "parentRoles": [
         "menuitem"
       ],
+      "requiredParentRoles": [
+        "group",
+        "menu",
+        "menubar"
+      ],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -2287,6 +2442,8 @@
       "parentRoles": [
         "range"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -2335,6 +2492,8 @@
       "parentRoles": [
         "landmark"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -2377,6 +2536,8 @@
       "parentRoles": [
         "structure"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -2423,6 +2584,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -2465,6 +2628,11 @@
       "parentRoles": [
         "input"
       ],
+      "requiredParentRoles": [
+        "group",
+        "listbox"
+      ],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -2511,6 +2679,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -2555,6 +2725,8 @@
     {
       "name": "presentation",
       "parentRoles": [],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [],
@@ -2568,6 +2740,8 @@
         "range",
         "widget"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -2614,6 +2788,8 @@
       "parentRoles": [
         "input"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -2661,6 +2837,8 @@
       "parentRoles": [
         "select"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -2705,6 +2883,8 @@
       "parentRoles": [
         "structure"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -2751,6 +2931,8 @@
       "parentRoles": [
         "landmark"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -2791,6 +2973,8 @@
     {
       "name": "roletype",
       "parentRoles": [],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -2833,6 +3017,18 @@
       "parentRoles": [
         "group",
         "widget"
+      ],
+      "requiredParentRoles": [
+        "grid",
+        "rowgroup",
+        "table",
+        "treegrid"
+      ],
+      "allowedChildRoles": [
+        "cell",
+        "columnheader",
+        "gridcell",
+        "rowheader"
       ],
       "deprecated": false,
       "deprecatedVersion": null,
@@ -2885,6 +3081,14 @@
       "parentRoles": [
         "structure"
       ],
+      "requiredParentRoles": [
+        "grid",
+        "table",
+        "treegrid"
+      ],
+      "allowedChildRoles": [
+        "row"
+      ],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -2929,6 +3133,10 @@
         "gridcell",
         "sectionhead"
       ],
+      "requiredParentRoles": [
+        "row"
+      ],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -2983,6 +3191,8 @@
         "range",
         "widget"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -3031,6 +3241,8 @@
       "parentRoles": [
         "landmark"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -3073,6 +3285,8 @@
       "parentRoles": [
         "textbox"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -3121,6 +3335,8 @@
       "parentRoles": [
         "structure"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -3163,6 +3379,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -3205,6 +3423,8 @@
       "parentRoles": [
         "structure"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -3247,6 +3467,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -3290,6 +3512,8 @@
         "composite",
         "group"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -3335,6 +3559,8 @@
         "structure",
         "widget"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -3384,6 +3610,8 @@
         "input",
         "range"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -3433,6 +3661,8 @@
         "input",
         "range"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -3480,6 +3710,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -3522,6 +3754,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -3568,6 +3802,8 @@
       "parentRoles": [
         "roletype"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -3610,6 +3846,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -3655,6 +3893,11 @@
       "name": "suggestion",
       "parentRoles": [
         "section"
+      ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [
+        "deletion",
+        "insertion"
       ],
       "deprecated": false,
       "deprecatedVersion": null,
@@ -3702,6 +3945,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -3748,6 +3993,8 @@
       "parentRoles": [
         "checkbox"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -3797,6 +4044,10 @@
         "sectionhead",
         "widget"
       ],
+      "requiredParentRoles": [
+        "tablist"
+      ],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -3841,6 +4092,12 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [
+        "caption",
+        "row",
+        "rowgroup"
+      ],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -3884,6 +4141,10 @@
       "name": "tablist",
       "parentRoles": [
         "composite"
+      ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [
+        "tab"
       ],
       "deprecated": false,
       "deprecatedVersion": null,
@@ -3930,6 +4191,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -3972,6 +4235,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -4018,6 +4283,8 @@
       "parentRoles": [
         "input"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -4063,6 +4330,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -4109,6 +4378,8 @@
       "parentRoles": [
         "status"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -4151,6 +4422,8 @@
       "parentRoles": [
         "group"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -4195,6 +4468,8 @@
       "parentRoles": [
         "section"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -4241,6 +4516,10 @@
       "parentRoles": [
         "select"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [
+        "treeitem"
+      ],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -4285,6 +4564,12 @@
       "parentRoles": [
         "grid",
         "tree"
+      ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [
+        "caption",
+        "row",
+        "rowgroup"
       ],
       "deprecated": false,
       "deprecatedVersion": null,
@@ -4336,6 +4621,12 @@
         "listitem",
         "option"
       ],
+      "requiredParentRoles": [
+        "group",
+        "tree",
+        "treeitem"
+      ],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -4383,6 +4674,8 @@
       "parentRoles": [
         "roletype"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
@@ -4425,6 +4718,8 @@
       "parentRoles": [
         "roletype"
       ],
+      "requiredParentRoles": [],
+      "allowedChildRoles": [],
       "deprecated": false,
       "deprecatedVersion": null,
       "supportedProperties": [
