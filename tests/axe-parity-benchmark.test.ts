@@ -55,10 +55,10 @@ describe('axe-core parity classification', () => {
       equivalent: 5,
       partial: 23,
       superset: 10,
-      overlap: 23,
-      missing: 43,
+      overlap: 21,
+      missing: 45,
       'not-applicable': 1,
-      covered: 61,
+      covered: 59,
     });
   });
 
