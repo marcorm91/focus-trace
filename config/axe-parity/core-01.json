@@ -1,0 +1,125 @@
+{
+  "schemaVersion": 1,
+  "classifications": [
+    {
+      "axeRuleId": "area-alt",
+      "relationship": "missing",
+      "focusTraceRuleIds": [],
+      "rationale": "FocusTrace does not currently run an area-element accessible-name expectation; the existing link and image rules do not select image-map areas.",
+      "standards": ["WCAG 2.2 2.4.4", "WCAG 2.2 4.1.2"],
+      "evidenceKey": "e01"
+    },
+    {
+      "axeRuleId": "aria-allowed-attr",
+      "relationship": "overlap",
+      "focusTraceRuleIds": ["FT-WARN-020"],
+      "rationale": "FocusTrace checks whether known ARIA states and properties are supported by the resolved role, but its WAI-ARIA 1.3 authoring-warning model and axe applicability/exceptions are not identical.",
+      "standards": ["WAI-ARIA 1.3 roles/states model", "WCAG 2.2 4.1.2"],
+      "evidenceKey": "e02"
+    },
+    {
+      "axeRuleId": "aria-braille-equivalent",
+      "relationship": "missing",
+      "focusTraceRuleIds": [],
+      "rationale": "FocusTrace validates ARIA vocabulary and values but has no rule requiring a non-braille accessible equivalent for braille-specific labels or role descriptions.",
+      "standards": ["WAI-ARIA aria-braillelabel/aria-brailleroledescription", "WCAG 2.2 4.1.2"],
+      "evidenceKey": "e02"
+    },
+    {
+      "axeRuleId": "aria-command-name",
+      "relationship": "partial",
+      "focusTraceRuleIds": ["FT-WCAG-003", "FT-WCAG-005"],
+      "rationale": "FocusTrace deterministically names buttons and links, covering two command-role families, but does not yet provide one equivalent rule for every axe command role such as menuitem variants.",
+      "standards": ["WCAG 2.2 4.1.2", "ACT 97a4e1"],
+      "evidenceKey": "e03"
+    },
+    {
+      "axeRuleId": "aria-conditional-attr",
+      "relationship": "missing",
+      "focusTraceRuleIds": [],
+      "rationale": "FocusTrace validates known, required and supported ARIA attributes, but it does not yet implement axe's role/state conditional-attribute expectation as a dedicated check.",
+      "standards": ["WAI-ARIA conditional states/properties", "WCAG 2.2 4.1.2"],
+      "evidenceKey": "e02"
+    },
+    {
+      "axeRuleId": "aria-deprecated-role",
+      "relationship": "equivalent",
+      "focusTraceRuleIds": ["FT-WARN-001"],
+      "rationale": "FocusTrace explicitly reports use of deprecated ARIA roles from its synchronized ARIA registry; this is materially the same authoring expectation.",
+      "standards": ["WAI-ARIA 1.3 deprecated roles"],
+      "evidenceKey": "e02"
+    },
+    {
+      "axeRuleId": "aria-hidden-body",
+      "relationship": "missing",
+      "focusTraceRuleIds": [],
+      "rationale": "FocusTrace checks focusable descendants of aria-hidden containers but does not currently prohibit aria-hidden=true on the document body itself.",
+      "standards": ["WAI-ARIA aria-hidden", "WCAG 2.2 1.3.1", "WCAG 2.2 4.1.2"],
+      "evidenceKey": "e02"
+    },
+    {
+      "axeRuleId": "aria-hidden-focus",
+      "relationship": "partial",
+      "focusTraceRuleIds": ["FT-WCAG-006"],
+      "rationale": "FocusTrace implements the sequential-focus subset with explicit evidence, while broader focusability/tree edge cases remain outside its current bounded expectation.",
+      "standards": ["WCAG 2.2 4.1.2", "ACT 6cfa84"],
+      "evidenceKey": "e02"
+    },
+    {
+      "axeRuleId": "aria-input-field-name",
+      "relationship": "partial",
+      "focusTraceRuleIds": ["FT-WCAG-004"],
+      "rationale": "FocusTrace checks accessible names for its supported form-field and input-role set, but not every specialized ARIA input applicability path covered by axe.",
+      "standards": ["WCAG 2.2 4.1.2", "ACT e086e5"],
+      "evidenceKey": "e03"
+    },
+    {
+      "axeRuleId": "aria-meter-name",
+      "relationship": "missing",
+      "focusTraceRuleIds": [],
+      "rationale": "FocusTrace does not yet have a specialized accessible-name rule for role=meter.",
+      "standards": ["WCAG 2.2 1.1.1", "WAI-ARIA meter"],
+      "evidenceKey": "e03"
+    },
+    {
+      "axeRuleId": "aria-progressbar-name",
+      "relationship": "missing",
+      "focusTraceRuleIds": [],
+      "rationale": "FocusTrace does not yet have a specialized accessible-name rule for role=progressbar.",
+      "standards": ["WCAG 2.2 1.1.1", "WAI-ARIA progressbar"],
+      "evidenceKey": "e03"
+    },
+    {
+      "axeRuleId": "aria-prohibited-attr",
+      "relationship": "overlap",
+      "focusTraceRuleIds": ["FT-WARN-003"],
+      "rationale": "FocusTrace reports ARIA states/properties prohibited for the resolved role, but it uses the current ARIA authoring registry and warning semantics rather than axe's exact rule contract.",
+      "standards": ["WAI-ARIA prohibited states/properties", "WCAG 2.2 4.1.2"],
+      "evidenceKey": "e02"
+    },
+    {
+      "axeRuleId": "aria-required-attr",
+      "relationship": "overlap",
+      "focusTraceRuleIds": ["FT-WARN-015"],
+      "rationale": "FocusTrace checks required states/properties for resolved ARIA roles; registry version, implicit-role handling and outcome semantics differ from axe.",
+      "standards": ["WAI-ARIA required states/properties", "WCAG 2.2 4.1.2"],
+      "evidenceKey": "e02"
+    },
+    {
+      "axeRuleId": "aria-required-children",
+      "relationship": "overlap",
+      "focusTraceRuleIds": ["FT-WARN-018"],
+      "rationale": "FocusTrace checks incompatible accessibility children for ARIA containers, overlapping axe required-children semantics but not claiming identical accessibility-tree ownership behavior.",
+      "standards": ["WAI-ARIA required owned elements", "WCAG 2.2 1.3.1"],
+      "evidenceKey": "e02"
+    },
+    {
+      "axeRuleId": "aria-required-parent",
+      "relationship": "overlap",
+      "focusTraceRuleIds": ["FT-WARN-017"],
+      "rationale": "FocusTrace checks required accessibility parent context, but its current ARIA model and repair/ownership boundaries are not asserted to be identical to axe.",
+      "standards": ["WAI-ARIA required context roles", "WCAG 2.2 1.3.1"],
+      "evidenceKey": "e02"
+    }
+  ]
+}
