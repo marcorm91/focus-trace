@@ -17,216 +17,34 @@
     "covered": 79
   },
   "severityMappings": [
-    {
-      "focusTraceRuleId": "FT-WCAG-001",
-      "axeRuleIds": [
-        "document-title"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WCAG-002",
-      "axeRuleIds": [
-        "image-alt",
-        "role-img-alt",
-        "svg-img-alt"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WCAG-003",
-      "axeRuleIds": [
-        "button-name"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WCAG-004",
-      "axeRuleIds": [
-        "label",
-        "select-name",
-        "input-button-name",
-        "input-image-alt",
-        "aria-input-field-name",
-        "aria-toggle-field-name"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WCAG-005",
-      "axeRuleIds": [
-        "link-name",
-        "aria-command-name"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WCAG-006",
-      "axeRuleIds": [
-        "aria-hidden-focus"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WCAG-007",
-      "axeRuleIds": [
-        "label-content-name-mismatch"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WCAG-008",
-      "axeRuleIds": [
-        "html-has-lang"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WCAG-009",
-      "axeRuleIds": [
-        "html-lang-valid"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WCAG-010",
-      "axeRuleIds": [
-        "color-contrast"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WCAG-013",
-      "axeRuleIds": [
-        "valid-lang"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WCAG-014",
-      "axeRuleIds": [
-        "aria-tab-name",
-        "aria-tooltip-name",
-        "summary-name"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WCAG-015",
-      "axeRuleIds": [
-        "aria-meter-name",
-        "aria-progressbar-name"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WCAG-016",
-      "axeRuleIds": [
-        "aria-hidden-body"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-REVIEW-025",
-      "axeRuleIds": [
-        "link-in-text-block"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-REVIEW-029",
-      "axeRuleIds": [
-        "aria-braille-equivalent",
-        "aria-roledescription"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WARN-001",
-      "axeRuleIds": [
-        "aria-deprecated-role"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WARN-003",
-      "axeRuleIds": [
-        "aria-prohibited-attr"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WARN-012",
-      "axeRuleIds": [
-        "aria-roles"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WARN-013",
-      "axeRuleIds": [
-        "aria-valid-attr"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WARN-014",
-      "axeRuleIds": [
-        "aria-valid-attr-value"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WARN-015",
-      "axeRuleIds": [
-        "aria-required-attr"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WARN-016",
-      "axeRuleIds": [
-        "aria-valid-attr-value"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WARN-017",
-      "axeRuleIds": [
-        "aria-required-parent"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WARN-018",
-      "axeRuleIds": [
-        "aria-required-children"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WARN-020",
-      "axeRuleIds": [
-        "aria-allowed-attr"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WARN-022",
-      "axeRuleIds": [
-        "aria-dialog-name",
-        "aria-treeitem-name"
-      ],
-      "policy": "highest-impact"
-    },
-    {
-      "focusTraceRuleId": "FT-WARN-023",
-      "axeRuleIds": [
-        "aria-allowed-role",
-        "aria-conditional-attr"
-      ],
-      "policy": "highest-impact"
-    }
+    { "focusTraceRuleId": "FT-WCAG-001", "axeRuleIds": ["document-title"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-002", "axeRuleIds": ["image-alt", "role-img-alt", "svg-img-alt"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-003", "axeRuleIds": ["button-name"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-004", "axeRuleIds": ["label", "select-name", "input-button-name", "input-image-alt", "aria-input-field-name", "aria-toggle-field-name"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-005", "axeRuleIds": ["link-name", "aria-command-name"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-006", "axeRuleIds": ["aria-hidden-focus"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-007", "axeRuleIds": ["label-content-name-mismatch"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-008", "axeRuleIds": ["html-has-lang"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-009", "axeRuleIds": ["html-lang-valid"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-010", "axeRuleIds": ["color-contrast"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-013", "axeRuleIds": ["valid-lang"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-014", "axeRuleIds": ["aria-tab-name", "aria-tooltip-name", "summary-name"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-015", "axeRuleIds": ["aria-meter-name", "aria-progressbar-name"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-016", "axeRuleIds": ["aria-hidden-body"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-REVIEW-025", "axeRuleIds": ["link-in-text-block"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-REVIEW-029", "axeRuleIds": ["aria-braille-equivalent", "aria-roledescription"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-001", "axeRuleIds": ["aria-deprecated-role"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-003", "axeRuleIds": ["aria-prohibited-attr"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-012", "axeRuleIds": ["aria-roles"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-013", "axeRuleIds": ["aria-valid-attr"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-014", "axeRuleIds": ["aria-valid-attr-value"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-015", "axeRuleIds": ["aria-required-attr"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-016", "axeRuleIds": ["aria-valid-attr-value"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-017", "axeRuleIds": ["aria-required-parent"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-018", "axeRuleIds": ["aria-required-children"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-020", "axeRuleIds": ["aria-allowed-attr"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-022", "axeRuleIds": ["aria-dialog-name", "aria-treeitem-name"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-023", "axeRuleIds": ["aria-allowed-role", "aria-conditional-attr"], "policy": "highest-impact" }
   ],
   "classificationFiles": [
     "config/axe-parity/core-01.json",
@@ -241,242 +59,30 @@
     "config/axe-parity/deprecated.json"
   ],
   "evidenceSets": {
-    "e01": {
-      "sources": [
-        "shared/rule-catalog.ts"
-      ],
-      "tests": [
-        "tests/accessible-name.test.ts",
-        "tests/axe-severity-benchmark.test.ts"
-      ]
-    },
-    "e02": {
-      "sources": [
-        "shared/aria-authoring-rules.ts",
-        "shared/rule-catalog.ts"
-      ],
-      "tests": [
-        "tests/aria-validator.test.ts",
-        "tests/axe-severity-benchmark.test.ts"
-      ]
-    },
-    "e03": {
-      "sources": [
-        "shared/rule-catalog.ts",
-        "shared/aria-authoring-rules.ts"
-      ],
-      "tests": [
-        "tests/accessible-name.test.ts",
-        "tests/aria-validator.test.ts"
-      ]
-    },
-    "e04": {
-      "sources": [
-        "shared/rule-catalog.ts",
-        "shared/media-rules.ts"
-      ],
-      "tests": [
-        "tests/pause-stop-hide.test.ts",
-        "tests/media-alternatives.test.ts"
-      ]
-    },
-    "e05": {
-      "sources": [
-        "shared/rule-catalog.ts"
-      ],
-      "tests": [
-        "tests/bypass-blocks.test.ts"
-      ]
-    },
-    "e06": {
-      "sources": [
-        "shared/rule-catalog.ts"
-      ],
-      "tests": [
-        "tests/contrast.test.ts",
-        "tests/unresolved-contrast-policy.test.ts"
-      ]
-    },
-    "e07": {
-      "sources": [
-        "shared/structural-html-rules.ts",
-        "shared/html-authoring-rules.ts"
-      ],
-      "tests": [
-        "tests/content-model.test.ts",
-        "tests/semantics.test.ts"
-      ]
-    },
-    "e08": {
-      "sources": [
-        "shared/rule-catalog.ts"
-      ],
-      "tests": [
-        "tests/semantics.test.ts",
-        "tests/axe-severity-benchmark.test.ts"
-      ]
-    },
-    "e09": {
-      "sources": [
-        "shared/html-authoring-rules.ts"
-      ],
-      "tests": [
-        "tests/semantics.test.ts",
-        "tests/obsolete-html.test.ts"
-      ]
-    },
-    "e10": {
-      "sources": [
-        "shared/rule-catalog.ts"
-      ],
-      "tests": [
-        "tests/accessible-name.test.ts",
-        "tests/semantics.test.ts"
-      ]
-    },
-    "e11": {
-      "sources": [
-        "shared/rule-catalog.ts",
-        "shared/keyboard-pointer-rules.ts"
-      ],
-      "tests": [
-        "tests/keyboard-focus-runtime.test.ts",
-        "tests/keyboard-pointer.test.ts"
-      ]
-    },
-    "e12": {
-      "sources": [
-        "shared/rule-catalog.ts"
-      ],
-      "tests": [
-        "tests/runtime-injection.test.ts",
-        "tests/semantics.test.ts"
-      ]
-    },
-    "e13": {
-      "sources": [
-        "shared/rule-catalog.ts"
-      ],
-      "tests": [
-        "tests/language-parts.test.ts",
-        "tests/language-parts-scan.test.ts"
-      ]
-    },
-    "e14": {
-      "sources": [
-        "shared/rule-catalog.ts"
-      ],
-      "tests": [
-        "tests/use-of-color.test.ts"
-      ]
-    },
-    "e15": {
-      "sources": [
-        "shared/rule-catalog.ts"
-      ],
-      "tests": [
-        "tests/resize-text.test.ts",
-        "tests/resize-text-workflow-contract.test.ts"
-      ]
-    },
-    "e16": {
-      "sources": [
-        "shared/media-rules.ts"
-      ],
-      "tests": [
-        "tests/media-alternatives.test.ts"
-      ]
-    },
-    "e17": {
-      "sources": [
-        "shared/form-purpose-rules.ts"
-      ],
-      "tests": [
-        "tests/autocomplete-purpose.test.ts",
-        "tests/autocomplete-purpose-scan.test.ts"
-      ]
-    },
-    "e18": {
-      "sources": [
-        "shared/text-spacing-rules.ts"
-      ],
-      "tests": [
-        "tests/text-spacing.test.ts",
-        "tests/text-spacing-scan.test.ts"
-      ]
-    },
-    "e19": {
-      "sources": [
-        "shared/rule-catalog.ts"
-      ],
-      "tests": [
-        "tests/target-size.test.ts"
-      ]
-    },
-    "e20": {
-      "sources": [
-        "shared/rule-catalog.ts",
-        "shared/structural-html-rules.ts"
-      ],
-      "tests": [
-        "tests/heading-outline.test.ts",
-        "tests/heading-review-tree-contract.test.ts"
-      ]
-    },
-    "e21": {
-      "sources": [
-        "shared/rule-catalog.ts"
-      ],
-      "tests": [
-        "tests/link-purpose-context.test.ts",
-        "tests/consistent-identification.test.ts"
-      ]
-    },
-    "e22": {
-      "sources": [
-        "shared/specialized-accessible-name-rules.ts",
-        "lib/audit/specialized-accessible-names.ts",
-        "lib/audit/specialized-accessible-name-scan-extension.ts"
-      ],
-      "tests": [
-        "tests/specialized-accessible-names.test.ts"
-      ]
-    },
-    "e23": {
-      "sources": [
-        "shared/element-internals-bridge.ts",
-        "lib/extension/element-internals-main-world.ts",
-        "lib/audit/element-internals-bridge.ts",
-        "lib/audit/element-internals-semantics.ts"
-      ],
-      "tests": [
-        "tests/element-internals-semantics.test.ts"
-      ]
-    },
-    "e24": {
-      "sources": [
-        "generated/aria-registry.json",
-        "shared/aria-role-state-rules.ts",
-        "lib/audit/aria-validator.ts",
-        "lib/audit/aria-role-state-relationships.ts"
-      ],
-      "tests": [
-        "tests/aria-validator.test.ts",
-        "tests/aria-role-relationship-registry.test.ts",
-        "tests/aria-role-state-relationships.test.ts"
-      ]
-    },
-    "e25": {
-      "sources": [
-        "shared/document-structure-rules.ts",
-        "lib/audit/landmarks.ts",
-        "lib/audit/document-structure.ts",
-        "lib/audit/content-model.ts",
-        "lib/audit/scan.ts"
-      ],
-      "tests": [
-        "tests/document-structure-landmarks.test.ts"
-      ]
-    }
+    "e01": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/accessible-name.test.ts", "tests/axe-severity-benchmark.test.ts"] },
+    "e02": { "sources": ["shared/aria-authoring-rules.ts", "shared/rule-catalog.ts"], "tests": ["tests/aria-validator.test.ts", "tests/axe-severity-benchmark.test.ts"] },
+    "e03": { "sources": ["shared/rule-catalog.ts", "shared/aria-authoring-rules.ts"], "tests": ["tests/accessible-name.test.ts", "tests/aria-validator.test.ts"] },
+    "e04": { "sources": ["shared/rule-catalog.ts", "shared/media-rules.ts"], "tests": ["tests/pause-stop-hide.test.ts", "tests/media-alternatives.test.ts"] },
+    "e05": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/bypass-blocks.test.ts"] },
+    "e06": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/contrast.test.ts", "tests/unresolved-contrast-policy.test.ts"] },
+    "e07": { "sources": ["shared/structural-html-rules.ts", "shared/html-authoring-rules.ts"], "tests": ["tests/content-model.test.ts", "tests/semantics.test.ts"] },
+    "e08": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/semantics.test.ts", "tests/axe-severity-benchmark.test.ts"] },
+    "e09": { "sources": ["shared/html-authoring-rules.ts"], "tests": ["tests/semantics.test.ts", "tests/obsolete-html.test.ts"] },
+    "e10": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/accessible-name.test.ts", "tests/semantics.test.ts"] },
+    "e11": { "sources": ["shared/rule-catalog.ts", "shared/keyboard-pointer-rules.ts"], "tests": ["tests/keyboard-focus-runtime.test.ts", "tests/keyboard-pointer.test.ts"] },
+    "e12": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/runtime-injection.test.ts", "tests/semantics.test.ts"] },
+    "e13": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/language-parts.test.ts", "tests/language-parts-scan.test.ts"] },
+    "e14": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/use-of-color.test.ts"] },
+    "e15": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/resize-text.test.ts", "tests/resize-text-workflow-contract.test.ts"] },
+    "e16": { "sources": ["shared/media-rules.ts"], "tests": ["tests/media-alternatives.test.ts"] },
+    "e17": { "sources": ["shared/form-purpose-rules.ts"], "tests": ["tests/autocomplete-purpose.test.ts", "tests/autocomplete-purpose-scan.test.ts"] },
+    "e18": { "sources": ["shared/text-spacing-rules.ts"], "tests": ["tests/text-spacing.test.ts", "tests/text-spacing-scan.test.ts"] },
+    "e19": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/target-size.test.ts"] },
+    "e20": { "sources": ["shared/rule-catalog.ts", "shared/structural-html-rules.ts"], "tests": ["tests/heading-outline.test.ts", "tests/heading-review-tree-contract.test.ts"] },
+    "e21": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/link-purpose-context.test.ts", "tests/consistent-identification.test.ts"] },
+    "e22": { "sources": ["shared/specialized-accessible-name-rules.ts", "lib/audit/specialized-accessible-names.ts", "lib/audit/specialized-accessible-name-scan-extension.ts"], "tests": ["tests/specialized-accessible-names.test.ts"] },
+    "e23": { "sources": ["shared/element-internals-bridge.ts", "lib/extension/element-internals-main-world.ts", "lib/audit/element-internals-bridge.ts", "lib/audit/element-internals-semantics.ts"], "tests": ["tests/element-internals-semantics.test.ts"] },
+    "e24": { "sources": ["generated/aria-registry.json", "shared/aria-role-state-rules.ts", "lib/audit/aria-validator.ts", "lib/audit/aria-role-state-relationships.ts"], "tests": ["tests/aria-validator.test.ts", "tests/aria-role-relationship-registry.test.ts", "tests/aria-role-state-relationships.test.ts"] },
+    "e25": {"sources": ["shared/document-structure-rules.ts", "lib/audit/landmarks.ts", "lib/audit/document-structure.ts", "lib/audit/content-model.ts", "lib/audit/scan.ts"], "tests": ["tests/document-structure-landmarks.test.ts"]}
   }
 }

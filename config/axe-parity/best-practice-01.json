@@ -1,177 +1,19 @@
 {
   "schemaVersion": 1,
   "classifications": [
-    {
-      "axeRuleId": "accesskeys",
-      "relationship": "missing",
-      "focusTraceRuleIds": [],
-      "rationale": "FocusTrace does not currently check uniqueness of accesskey values.",
-      "standards": [
-        "HTML Living Standard accesskey"
-      ],
-      "evidenceKey": "e09"
-    },
-    {
-      "axeRuleId": "aria-allowed-role",
-      "relationship": "partial",
-      "focusTraceRuleIds": [
-        "FT-WARN-023"
-      ],
-      "rationale": "FocusTrace now enforces a bounded set of normative ARIA in HTML host-role constraints for high-impact native elements and keeps the rule findings-only. It does not yet synchronize the complete condition-dependent ARIA in HTML host-element matrix, so the benchmark relationship is partial.",
-      "standards": [
-        "ARIA in HTML document conformance requirements"
-      ],
-      "evidenceKey": "e24"
-    },
-    {
-      "axeRuleId": "aria-dialog-name",
-      "relationship": "partial",
-      "focusTraceRuleIds": [
-        "FT-WARN-022"
-      ],
-      "rationale": "FocusTrace now checks exposed dialog and alertdialog semantics, including native dialog markup, for a usable accessible name and reports missing names as ARIA authoring warnings; its local AccName implementation remains deliberately bounded.",
-      "standards": [
-        "WAI-ARIA dialog/alertdialog",
-        "ARIA APG Dialog Pattern",
-        "AccName"
-      ],
-      "evidenceKey": "e22"
-    },
-    {
-      "axeRuleId": "aria-text",
-      "relationship": "missing",
-      "focusTraceRuleIds": [],
-      "rationale": "FocusTrace does not currently check role=text for focusable descendants.",
-      "standards": [
-        "WAI-ARIA role=text authoring guidance"
-      ],
-      "evidenceKey": "e02"
-    },
-    {
-      "axeRuleId": "aria-treeitem-name",
-      "relationship": "partial",
-      "focusTraceRuleIds": [
-        "FT-WARN-022"
-      ],
-      "rationale": "FocusTrace now checks exposed treeitem roles for a usable accessible name and excludes descendant group subtrees from name-from-content evidence, while retaining warning semantics and a bounded local AccName implementation.",
-      "standards": [
-        "WAI-ARIA treeitem",
-        "ARIA APG Tree View Pattern",
-        "AccName"
-      ],
-      "evidenceKey": "e22"
-    },
-    {
-      "axeRuleId": "empty-heading",
-      "relationship": "partial",
-      "focusTraceRuleIds": [
-        "FT-REVIEW-031"
-      ],
-      "rationale": "FocusTrace now reviews exposed native and ARIA headings that have no usable text or alternative naming contribution. The local content heuristic is deliberately bounded, so this remains partial rather than exact benchmark equivalence.",
-      "standards": [
-        "HTML heading elements",
-        "WCAG 2.2 1.3.1"
-      ],
-      "evidenceKey": "e25"
-    },
-    {
-      "axeRuleId": "empty-table-header",
-      "relationship": "missing",
-      "focusTraceRuleIds": [],
-      "rationale": "FocusTrace does not yet report empty table header cells as a dedicated rule.",
-      "standards": [
-        "HTML table headers",
-        "WCAG 2.2 1.3.1"
-      ],
-      "evidenceKey": "e07"
-    },
-    {
-      "axeRuleId": "frame-tested",
-      "relationship": "not-applicable",
-      "focusTraceRuleIds": [],
-      "rationale": "This rule verifies whether axe-core itself was injected into nested frames. FocusTrace uses its own local inspection architecture, so requiring the axe-core script would contradict the benchmark-only constraint.",
-      "standards": [
-        "axe-core benchmark-specific frame orchestration"
-      ],
-      "evidenceKey": "e12"
-    },
-    {
-      "axeRuleId": "heading-order",
-      "relationship": "partial",
-      "focusTraceRuleIds": [
-        "FT-REVIEW-002"
-      ],
-      "rationale": "FocusTrace reports skipped heading levels for REVIEW, covering the principal static ordering signal without claiming axe's full semantic ordering behavior.",
-      "standards": [
-        "HTML heading outline",
-        "WCAG 2.2 1.3.1",
-        "WCAG 2.2 2.4.6"
-      ],
-      "evidenceKey": "e20"
-    },
-    {
-      "axeRuleId": "image-redundant-alt",
-      "relationship": "missing",
-      "focusTraceRuleIds": [],
-      "rationale": "FocusTrace validates whether images have an accessible name or are decorative, but it does not compare alt text with adjacent visible text for redundancy.",
-      "standards": [
-        "WCAG 2.2 1.1.1",
-        "HTML img alt authoring guidance"
-      ],
-      "evidenceKey": "e09"
-    },
-    {
-      "axeRuleId": "label-title-only",
-      "relationship": "overlap",
-      "focusTraceRuleIds": [
-        "FT-REVIEW-003"
-      ],
-      "rationale": "FocusTrace reports placeholder-derived naming and persistent-label risk; axe's rule covers a wider set of hidden/title-only labeling patterns, so only part of the authoring concern overlaps.",
-      "standards": [
-        "WCAG 2.2 3.3.2",
-        "HTML form labeling"
-      ],
-      "evidenceKey": "e10"
-    },
-    {
-      "axeRuleId": "landmark-banner-is-top-level",
-      "relationship": "overlap",
-      "focusTraceRuleIds": [
-        "FT-REVIEW-033"
-      ],
-      "rationale": "FocusTrace now reviews exposed banner landmarks nested inside another landmark within the same document/application scope. It retains APG-guidance REVIEW semantics rather than reproducing axe best-practice failure behavior.",
-      "standards": [
-        "ARIA APG Landmark Regions",
-        "WAI-ARIA banner role"
-      ],
-      "evidenceKey": "e25"
-    },
-    {
-      "axeRuleId": "landmark-contentinfo-is-top-level",
-      "relationship": "overlap",
-      "focusTraceRuleIds": [
-        "FT-REVIEW-033"
-      ],
-      "rationale": "FocusTrace now reviews exposed contentinfo landmarks nested inside another landmark within the same document/application scope. It retains APG-guidance REVIEW semantics.",
-      "standards": [
-        "ARIA APG Landmark Regions",
-        "WAI-ARIA contentinfo role"
-      ],
-      "evidenceKey": "e25"
-    },
-    {
-      "axeRuleId": "landmark-main-is-top-level",
-      "relationship": "overlap",
-      "focusTraceRuleIds": [
-        "FT-WARN-011",
-        "FT-REVIEW-033"
-      ],
-      "rationale": "FocusTrace validates invalid native main hierarchy and now also reviews nested explicit main landmarks. The combined evidence overlaps the benchmark while preserving separate HTML-authoring and APG-guidance outcomes.",
-      "standards": [
-        "HTML main element",
-        "ARIA APG Landmark Regions"
-      ],
-      "evidenceKey": "e25"
-    }
+    {"axeRuleId":"accesskeys","relationship":"missing","focusTraceRuleIds":[],"rationale":"FocusTrace does not currently check uniqueness of accesskey values.","standards":["HTML Living Standard accesskey"],"evidenceKey":"e09"},
+    {"axeRuleId":"aria-allowed-role","relationship":"partial","focusTraceRuleIds":["FT-WARN-023"],"rationale":"FocusTrace now enforces a bounded set of normative ARIA in HTML host-role constraints for high-impact native elements and keeps the rule findings-only. It does not yet synchronize the complete condition-dependent ARIA in HTML host-element matrix, so the benchmark relationship is partial.","standards":["ARIA in HTML document conformance requirements"],"evidenceKey":"e24"},
+    {"axeRuleId":"aria-dialog-name","relationship":"partial","focusTraceRuleIds":["FT-WARN-022"],"rationale":"FocusTrace now checks exposed dialog and alertdialog semantics, including native dialog markup, for a usable accessible name and reports missing names as ARIA authoring warnings; its local AccName implementation remains deliberately bounded.","standards":["WAI-ARIA dialog/alertdialog","ARIA APG Dialog Pattern","AccName"],"evidenceKey":"e22"},
+    {"axeRuleId":"aria-text","relationship":"missing","focusTraceRuleIds":[],"rationale":"FocusTrace does not currently check role=text for focusable descendants.","standards":["WAI-ARIA role=text authoring guidance"],"evidenceKey":"e02"},
+    {"axeRuleId":"aria-treeitem-name","relationship":"partial","focusTraceRuleIds":["FT-WARN-022"],"rationale":"FocusTrace now checks exposed treeitem roles for a usable accessible name and excludes descendant group subtrees from name-from-content evidence, while retaining warning semantics and a bounded local AccName implementation.","standards":["WAI-ARIA treeitem","ARIA APG Tree View Pattern","AccName"],"evidenceKey":"e22"},
+    {"axeRuleId":"empty-heading","relationship":"partial","focusTraceRuleIds":["FT-REVIEW-031"],"rationale":"FocusTrace now reviews exposed native and ARIA headings that have no usable text or alternative naming contribution. The local content heuristic is deliberately bounded, so this remains partial rather than exact benchmark equivalence.","standards":["HTML heading elements","WCAG 2.2 1.3.1"],"evidenceKey":"e25"},
+    {"axeRuleId":"empty-table-header","relationship":"missing","focusTraceRuleIds":[],"rationale":"FocusTrace does not yet report empty table header cells as a dedicated rule.","standards":["HTML table headers","WCAG 2.2 1.3.1"],"evidenceKey":"e07"},
+    {"axeRuleId":"frame-tested","relationship":"not-applicable","focusTraceRuleIds":[],"rationale":"This rule verifies whether axe-core itself was injected into nested frames. FocusTrace uses its own local inspection architecture, so requiring the axe-core script would contradict the benchmark-only constraint.","standards":["axe-core benchmark-specific frame orchestration"],"evidenceKey":"e12"},
+    {"axeRuleId":"heading-order","relationship":"partial","focusTraceRuleIds":["FT-REVIEW-002"],"rationale":"FocusTrace reports skipped heading levels for REVIEW, covering the principal static ordering signal without claiming axe's full semantic ordering behavior.","standards":["HTML heading outline","WCAG 2.2 1.3.1","WCAG 2.2 2.4.6"],"evidenceKey":"e20"},
+    {"axeRuleId":"image-redundant-alt","relationship":"missing","focusTraceRuleIds":[],"rationale":"FocusTrace validates whether images have an accessible name or are decorative, but it does not compare alt text with adjacent visible text for redundancy.","standards":["WCAG 2.2 1.1.1","HTML img alt authoring guidance"],"evidenceKey":"e09"},
+    {"axeRuleId":"label-title-only","relationship":"overlap","focusTraceRuleIds":["FT-REVIEW-003"],"rationale":"FocusTrace reports placeholder-derived naming and persistent-label risk; axe's rule covers a wider set of hidden/title-only labeling patterns, so only part of the authoring concern overlaps.","standards":["WCAG 2.2 3.3.2","HTML form labeling"],"evidenceKey":"e10"},
+    {"axeRuleId":"landmark-banner-is-top-level","relationship":"overlap","focusTraceRuleIds":["FT-REVIEW-033"],"rationale":"FocusTrace now reviews exposed banner landmarks nested inside another landmark within the same document/application scope. It retains APG-guidance REVIEW semantics rather than reproducing axe best-practice failure behavior.","standards":["ARIA APG Landmark Regions","WAI-ARIA banner role"],"evidenceKey":"e25"},
+    {"axeRuleId":"landmark-contentinfo-is-top-level","relationship":"overlap","focusTraceRuleIds":["FT-REVIEW-033"],"rationale":"FocusTrace now reviews exposed contentinfo landmarks nested inside another landmark within the same document/application scope. It retains APG-guidance REVIEW semantics.","standards":["ARIA APG Landmark Regions","WAI-ARIA contentinfo role"],"evidenceKey":"e25"},
+    {"axeRuleId":"landmark-main-is-top-level","relationship":"overlap","focusTraceRuleIds":["FT-WARN-011","FT-REVIEW-033"],"rationale":"FocusTrace validates invalid native main hierarchy and now also reviews nested explicit main landmarks. The combined evidence overlaps the benchmark while preserving separate HTML-authoring and APG-guidance outcomes.","standards":["HTML main element","ARIA APG Landmark Regions"],"evidenceKey":"e25"}
   ]
 }
