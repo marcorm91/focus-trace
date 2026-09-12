@@ -1,0 +1,51 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <title>ElementInternals fixture</title>
+  </head>
+  <body>
+    <main>
+      <h1>ElementInternals fixture</h1>
+      <label id="email-label" for="labelled-field">Email address</label>
+      <div id="mount"></div>
+    </main>
+    <script>
+      class InternalButton extends HTMLElement {
+        constructor() {
+          super();
+          const internals = this.attachInternals();
+          internals.role = 'button';
+          internals.ariaLabel = 'Save changes';
+        }
+      }
+
+      class InternalField extends HTMLElement {
+        static formAssociated = true;
+        constructor() {
+          super();
+          const internals = this.attachInternals();
+          internals.role = 'textbox';
+        }
+      }
+
+      if (!customElements.get('x-internal-button')) customElements.define('x-internal-button', InternalButton);
+      if (!customElements.get('x-internal-field')) customElements.define('x-internal-field', InternalField);
+
+      window.createElementInternalsFixtures = () => {
+        const mount = document.querySelector('#mount');
+        const namedButton = document.createElement('x-internal-button');
+        namedButton.id = 'named-button';
+        mount.append(namedButton);
+
+        const unnamedField = document.createElement('x-internal-field');
+        unnamedField.id = 'unnamed-field';
+        mount.append(unnamedField);
+
+        const labelledField = document.createElement('x-internal-field');
+        labelledField.id = 'labelled-field';
+        mount.append(labelledField);
+      };
+    </script>
+  </body>
+</html>
