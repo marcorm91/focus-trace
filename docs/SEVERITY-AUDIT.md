@@ -33,7 +33,7 @@ See `docs/AXE-SEVERITY-BENCHMARK.md` for the synchronization and review model.
 | `FT-WARN-015` Missing required ARIA state/property | serious | **critical** | axe `aria-required-attr` is critical. |
 | `FT-WARN-016` Invalid ARIA ID relationship | serious | **critical** | Invalid relationship values overlap the critical axe `aria-valid-attr-value` failure family. |
 | `FT-WARN-017` Missing required ARIA parent | serious | **critical** | axe `aria-required-parent` is critical. |
-| `FT-WARN-018` Missing/incompatible required ARIA children | serious | **critical** | axe `aria-required-children` is critical. |
+| `FT-WARN-018` Incompatible ARIA child role | serious | **critical** | FocusTrace-owned WAI-ARIA allowed-child-role contradiction detector. It is not equivalent to axe `aria-required-children`, which checks mandatory owned-child presence. |
 | `FT-WARN-020` ARIA attribute unsupported by role | serious | **critical** | axe `aria-allowed-attr` is critical. |
 
 Existing equivalent rules that already matched axe keep their severity, including page title, buttons, form fields, links, aria-hidden focus, label-in-name, page language, text contrast, deprecated roles and prohibited ARIA attributes.
@@ -55,6 +55,8 @@ Existing equivalent rules that already matched axe keep their severity, includin
 | `FT-WCAG-011` Non-text contrast | serious | fail / review | FocusTrace-owned WCAG 1.4.11 detector; axe-core 4.13 has no equivalent rule to enforce. |
 | `FT-WCAG-012` Target size minimum | moderate | review | FocusTrace-owned WCAG 2.5.8 geometry/spacing detector. Contextual WCAG exceptions prevent geometric risk alone from becoming an automatic failure. |
 | `FT-WCAG-013` Language of Parts | serious | fail | Aligned with axe `valid-lang`. FocusTrace validates the observable explicit-`lang` subset and does not infer missing language changes from prose. |
+| `FT-WCAG-014` Specialized control name | serious | fail | Covers exposed tab, tooltip and native summary naming. The targeted axe rules are serious, but FocusTrace records only `partial` parity because its local AccName implementation is deliberately bounded. |
+| `FT-WCAG-015` Meter/progress name | serious | fail | Covers native/ARIA meter and progressbar naming. The targeted axe rules are serious; parity remains `partial` for the bounded local AccName implementation. |
 | `FT-WARN-001` Deprecated ARIA role | minor | warning | Aligned with axe `aria-deprecated-role`. |
 | `FT-WARN-002` Deprecated ARIA property | minor | warning | No exact impact mapping is enforced; deprecation alone is treated as an authoring/compatibility warning. |
 | `FT-WARN-003` Prohibited ARIA property | serious | warning | Aligned with axe `aria-prohibited-attr`. |
@@ -123,10 +125,11 @@ Existing equivalent rules that already matched axe keep their severity, includin
 | `FT-WARN-015` Missing required ARIA property | critical | `aria-required-attr` · critical |
 | `FT-WARN-016` Invalid ARIA ID relationship | critical | `aria-valid-attr-value` failure family · critical |
 | `FT-WARN-017` Required ARIA parent missing | critical | `aria-required-parent` · critical |
-| `FT-WARN-018` Required/incompatible ARIA children | critical | `aria-required-children` · critical |
+| `FT-WARN-018` Incompatible ARIA child role | critical | FocusTrace-specific WAI-ARIA allowed-child-role detector; no direct axe equivalence |
 | `FT-WARN-019` Inconsistent ARIA range/set state | serious | FocusTrace-specific consistency detector |
 | `FT-WARN-020` ARIA property unsupported by role | critical | `aria-allowed-attr` · critical |
 | `FT-WARN-021` Relationship/state contradiction | serious | FocusTrace-specific consistency detector |
+| `FT-WARN-022` Dialog/treeitem accessible name | serious | `aria-dialog-name` / `aria-treeitem-name` · serious benchmark impact, retained as WARNING because both benchmark rules are best-practice rather than automatic WCAG failures |
 
 ## Guardrails
 
