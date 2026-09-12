@@ -261,7 +261,7 @@ function appendAriaSemantics(result: ScanResult, element: Element, role: string)
 }
 
 export function appendElementInternalsSemantics(result: ScanResult, root: ScanRoot): void {
-  refreshElementInternalsSnapshots();
+  refreshElementInternalsSnapshots(root);
 
   for (const element of elementInternalsElements(root)) {
     const snapshot = elementInternalsSnapshot(element);
