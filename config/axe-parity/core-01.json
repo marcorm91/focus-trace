@@ -3,11 +3,11 @@
   "classifications": [
     {
       "axeRuleId": "area-alt",
-      "relationship": "missing",
-      "focusTraceRuleIds": [],
-      "rationale": "FocusTrace does not currently run an area-element accessible-name expectation; the existing link and image rules do not select image-map areas.",
-      "standards": ["WCAG 2.2 2.4.4", "WCAG 2.2 4.1.2"],
-      "evidenceKey": "e01"
+      "relationship": "overlap",
+      "focusTraceRuleIds": ["FT-WARN-009"],
+      "rationale": "FocusTrace reports active area elements that omit alt as an HTML content-model warning, but it does not treat aria-label or aria-labelledby as alternative naming mechanisms for that structural check, so the expectations overlap without being equivalent.",
+      "standards": ["WCAG 2.2 2.4.4", "WCAG 2.2 4.1.2", "HTML area element"],
+      "evidenceKey": "e07"
     },
     {
       "axeRuleId": "aria-allowed-attr",
