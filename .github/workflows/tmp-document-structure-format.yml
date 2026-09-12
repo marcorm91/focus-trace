@@ -1,0 +1,74 @@
+name: Temporary normalize document structure parity diff
+
+on:
+  push:
+    branches:
+      - feat/document-structure-landmarks-0.4.0
+    paths:
+      - .github/workflows/tmp-document-structure-format.yml
+
+permissions:
+  contents: write
+
+jobs:
+  normalize:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feat/document-structure-landmarks-0.4.0
+          fetch-depth: 0
+      - name: Normalize parity JSON against main formatting
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import json
+          import re
+          import subprocess
+
+          classification_paths = [
+              'config/axe-parity/best-practice-01.json',
+              'config/axe-parity/best-practice-02.json',
+              'config/axe-parity/experimental.json',
+          ]
+
+          for filename in classification_paths:
+              desired = json.loads(Path(filename).read_text())
+              desired_by_id = {entry['axeRuleId']: entry for entry in desired['classifications']}
+              main_text = subprocess.check_output(['git', 'show', f'origin/main:{filename}'], text=True)
+              output = []
+              for line in main_text.splitlines():
+                  match = re.search(r'"axeRuleId":"([^"]+)"', line)
+                  if not match:
+                      output.append(line)
+                      continue
+                  rule_id = match.group(1)
+                  entry = desired_by_id[rule_id]
+                  suffix = ',' if line.rstrip().endswith(',') else ''
+                  output.append('    ' + json.dumps(entry, ensure_ascii=False, separators=(',', ':')) + suffix)
+              Path(filename).write_text('\n'.join(output) + '\n')
+
+          filename = 'config/axe-equivalents.json'
+          desired = json.loads(Path(filename).read_text())
+          text = subprocess.check_output(['git', 'show', f'origin/main:{filename}'], text=True)
+          for key in ['equivalent', 'partial', 'superset', 'overlap', 'missing', 'not-applicable', 'covered']:
+              value = desired['summary'][key]
+              text = re.sub(rf'("{re.escape(key)}": )\d+', rf'\g<1>{value}', text, count=1)
+
+          e25 = desired['evidenceSets']['e25']
+          marker = '    "e24": { "sources": ["generated/aria-registry.json", "shared/aria-role-state-rules.ts", "lib/audit/aria-validator.ts", "lib/audit/aria-role-state-relationships.ts"], "tests": ["tests/aria-validator.test.ts", "tests/aria-role-relationship-registry.test.ts", "tests/aria-role-state-relationships.test.ts"] }'
+          if marker not in text:
+              raise SystemExit('e24 formatting marker missing')
+          e25_line = '    "e25": ' + json.dumps(e25, ensure_ascii=False)
+          text = text.replace(marker, marker + ',\n' + e25_line, 1)
+          Path(filename).write_text(text)
+          PY
+      - name: Validate parity benchmark
+        run: npm run axe:validate
+      - name: Commit normalized parity files
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add config/axe-equivalents.json config/axe-parity/best-practice-01.json config/axe-parity/best-practice-02.json config/axe-parity/experimental.json
+          git commit -m "Chore(a11y): keep parity diff focused"
+          git push
