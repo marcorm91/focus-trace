@@ -10,7 +10,7 @@ import {
   type ElementInternalsLabelSnapshot,
   type ElementInternalsSemanticSnapshot,
 } from '../../shared/element-internals-bridge';
-import type { ScanRoot } from './scan-elements';
+import { scopedElements, type ScanRoot } from './scan-elements';
 
 const MAX_CUSTOM_ELEMENTS = 2000;
 const MAX_LABELS = 16;
@@ -62,20 +62,20 @@ function validSnapshot(value: unknown, expectedKeys: Set<string>): ElementIntern
   };
 }
 
-function customElementCandidates(): Element[] {
-  return Array.from(document.querySelectorAll('*'))
+function customElementCandidates(root: ScanRoot): Element[] {
+  return scopedElements(root, '*')
     .filter((element) => element.localName.includes('-'))
     .slice(0, MAX_CUSTOM_ELEMENTS);
 }
 
-export function refreshElementInternalsSnapshots(): number {
+export function refreshElementInternalsSnapshots(root: ScanRoot = document): number {
   snapshots = new WeakMap<Element, ElementInternalsSemanticSnapshot>();
   snapshotElements = [];
 
-  const root = document.documentElement;
-  if (!root) return 0;
+  const documentRoot = document.documentElement;
+  if (!documentRoot) return 0;
 
-  const candidates = customElementCandidates();
+  const candidates = customElementCandidates(root);
   if (!candidates.length) return 0;
 
   const requestId = `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 10)}`;
@@ -89,14 +89,14 @@ export function refreshElementInternalsSnapshots(): number {
     byKey.set(key, element);
   }
 
-  const previousRequest = root.getAttribute(ELEMENT_INTERNALS_REQUEST_ATTRIBUTE);
-  const previousResponse = root.getAttribute(ELEMENT_INTERNALS_RESPONSE_ATTRIBUTE);
-  root.setAttribute(ELEMENT_INTERNALS_REQUEST_ATTRIBUTE, requestId);
-  root.removeAttribute(ELEMENT_INTERNALS_RESPONSE_ATTRIBUTE);
+  const previousRequest = documentRoot.getAttribute(ELEMENT_INTERNALS_REQUEST_ATTRIBUTE);
+  const previousResponse = documentRoot.getAttribute(ELEMENT_INTERNALS_RESPONSE_ATTRIBUTE);
+  documentRoot.setAttribute(ELEMENT_INTERNALS_REQUEST_ATTRIBUTE, requestId);
+  documentRoot.removeAttribute(ELEMENT_INTERNALS_RESPONSE_ATTRIBUTE);
 
   try {
     window.dispatchEvent(new Event(ELEMENT_INTERNALS_REQUEST_EVENT));
-    const raw = root.getAttribute(ELEMENT_INTERNALS_RESPONSE_ATTRIBUTE);
+    const raw = documentRoot.getAttribute(ELEMENT_INTERNALS_RESPONSE_ATTRIBUTE);
     if (!raw || raw.length > 2_000_000) return 0;
 
     const parsed = JSON.parse(raw) as Partial<ElementInternalsBridgeResponse>;
@@ -119,10 +119,10 @@ export function refreshElementInternalsSnapshots(): number {
       if (oldValue == null) element.removeAttribute(ELEMENT_INTERNALS_KEY_ATTRIBUTE);
       else element.setAttribute(ELEMENT_INTERNALS_KEY_ATTRIBUTE, oldValue);
     }
-    if (previousRequest == null) root.removeAttribute(ELEMENT_INTERNALS_REQUEST_ATTRIBUTE);
-    else root.setAttribute(ELEMENT_INTERNALS_REQUEST_ATTRIBUTE, previousRequest);
-    if (previousResponse == null) root.removeAttribute(ELEMENT_INTERNALS_RESPONSE_ATTRIBUTE);
-    else root.setAttribute(ELEMENT_INTERNALS_RESPONSE_ATTRIBUTE, previousResponse);
+    if (previousRequest == null) documentRoot.removeAttribute(ELEMENT_INTERNALS_REQUEST_ATTRIBUTE);
+    else documentRoot.setAttribute(ELEMENT_INTERNALS_REQUEST_ATTRIBUTE, previousRequest);
+    if (previousResponse == null) documentRoot.removeAttribute(ELEMENT_INTERNALS_RESPONSE_ATTRIBUTE);
+    else documentRoot.setAttribute(ELEMENT_INTERNALS_RESPONSE_ATTRIBUTE, previousResponse);
   }
 }
 
