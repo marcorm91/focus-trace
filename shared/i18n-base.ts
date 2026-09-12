@@ -61,6 +61,8 @@ const RULE_TITLES_EN: Record<string, string> = {
   'FT-WCAG-010': 'Text color contrast',
   'FT-WCAG-011': 'Non-text visual contrast',
   'FT-WCAG-012': 'Pointer target size and spacing',
+  'FT-WCAG-014': 'Specialized interactive control has a non-empty accessible name',
+  'FT-WCAG-015': 'Meter or progress indicator has a non-empty accessible name',
 };
 
 const RULE_TITLES_ES: Record<string, string> = {
@@ -76,6 +78,9 @@ const RULE_TITLES_ES: Record<string, string> = {
   'FT-WCAG-010': 'Contraste de color del texto',
   'FT-WCAG-011': 'Contraste visual no textual',
   'FT-WCAG-012': 'Tamaño y separación de objetivos de puntero',
+  'FT-WCAG-014': 'El control interactivo especializado tiene un nombre accesible no vacío',
+  'FT-WCAG-015': 'El medidor o indicador de progreso tiene un nombre accesible no vacío',
+  'FT-WARN-022': 'El diálogo ARIA o elemento de árbol no tiene un nombre accesible utilizable',
   'FT-WARN-001': 'Se utiliza un rol ARIA obsoleto',
   'FT-WARN-002': 'El estado o propiedad ARIA está obsoleto para este rol',
   'FT-WARN-003': 'El estado o propiedad ARIA está prohibido para este rol',
@@ -182,6 +187,15 @@ const SCAN_COPY_ES: Record<string, { description: string; evidence?: string }> =
   },
   'FT-WCAG-012': {
     description: 'Este objetivo de puntero no tiene un área de 24 × 24 CSS px verificada de forma determinista y su círculo de separación de 24 CSS px interseca con otro objetivo observado. Revisa las excepciones de WCAG antes de tratarlo como un incumplimiento.',
+  },
+  'FT-WCAG-014': {
+    description: 'Este control especializado expuesto tiene un nombre accesible vacío, por lo que las tecnologías de asistencia no pueden identificar de forma fiable qué representa.',
+  },
+  'FT-WCAG-015': {
+    description: 'Este medidor o indicador de progreso expuesto tiene un nombre accesible vacío, por lo que el valor puede quedar expuesto sin identificar qué representa.',
+  },
+  'FT-WARN-022': {
+    description: 'Este diálogo ARIA o elemento de árbol expuesto no tiene un nombre accesible utilizable. Corrige la autoría semántica para que el componente pueda identificarse mediante tecnologías de asistencia.',
   },
   'FT-WARN-001': {
     description: 'Este rol ARIA explícito está marcado como obsoleto en el registro WAI-ARIA actual.',
@@ -362,6 +376,11 @@ function localizedDynamicEvidence(issue: ScanIssue): string | undefined {
   }
   if (issue.ruleId === 'FT-WCAG-012') {
     return localizedTargetSizeEvidence(issue.evidence);
+  }
+  if (['FT-WCAG-014', 'FT-WCAG-015', 'FT-WARN-022'].includes(issue.ruleId)) {
+    return issue.evidence
+      .replace(/^(.+) accessible name = (.+); source = (.+)\.$/, '$1: nombre accesible = $2; fuente = $3.')
+      .replace(/^(.+) accessible-name computation returned an empty string\.$/, 'El cálculo del nombre accesible de $1 devolvió una cadena vacía.');
   }
   if (issue.ruleId === 'FT-WARN-001') {
     return issue.evidence.replace('; deprecated since ARIA ', '; obsoleto desde ARIA ');
