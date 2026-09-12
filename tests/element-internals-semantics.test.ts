@@ -53,7 +53,7 @@ afterEach(() => {
 });
 
 describe('ElementInternals semantic bridge', () => {
-  it('accepts only bounded normalized semantic data and never exposes arbitrary page objects', () => {
+  it('accepts only bounded normalized semantic data and never exposes arbitrary page fields', () => {
     render('<x-field id="field"></x-field>');
     cleanups.push(installFixtureBridge((_element, _key) => ({
       role: 'textbox',
@@ -63,10 +63,8 @@ describe('ElementInternals semantic bridge', () => {
       },
       labels: [{ id: 'label', text: 'Visible label' }],
       formAssociated: true,
-      // Runtime responses can contain arbitrary page-owned fields; the isolated
-      // parser must ignore everything outside the normalized contract.
-      extra: (() => 'not allowed') as never,
-    })));
+      extra: 'must be discarded',
+    } as unknown as Omit<ElementInternalsSemanticSnapshot, 'key'>)));
 
     expect(refreshElementInternalsSnapshots()).toBe(1);
     const snapshot = elementInternalsSnapshot(document.querySelector('#field')!);
@@ -80,7 +78,7 @@ describe('ElementInternals semantic bridge', () => {
       labels: [{ id: 'label', text: 'Visible label' }],
       formAssociated: true,
     });
-    expect(Object.values(snapshot ?? {}).some((value) => typeof value === 'function')).toBe(false);
+    expect((snapshot as unknown as Record<string, unknown>)?.extra).toBeUndefined();
   });
 
   it('treats an ElementInternals-only role and aria-label as applicable naming evidence', () => {
