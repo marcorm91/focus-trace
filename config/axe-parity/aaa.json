@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "classifications": [
+    {"axeRuleId":"color-contrast-enhanced","relationship":"overlap","focusTraceRuleIds":["FT-WCAG-010"],"rationale":"FocusTrace's text contrast engine measures the same rendered color evidence but applies AA thresholds, not the enhanced AAA ratios.","standards":["WCAG 2.2 1.4.6"],"evidenceKey":"e06"},
+    {"axeRuleId":"identical-links-same-purpose","relationship":"overlap","focusTraceRuleIds":["FT-REVIEW-015","FT-REVIEW-027"],"rationale":"FocusTrace reviews repeated-function identification across pages and ambiguous link purpose in context, but it does not yet implement axe's same-accessible-name/same-purpose comparison exactly.","standards":["WCAG 2.2 2.4.9","WCAG 2.2 3.2.4"],"evidenceKey":"e21"},
+    {"axeRuleId":"meta-refresh-no-exceptions","relationship":"missing","focusTraceRuleIds":[],"rationale":"FocusTrace does not currently inspect meta refresh, including the stricter AAA no-exceptions variant.","standards":["WCAG 2.2 2.2.4","WCAG 2.2 3.2.5","HTML meta refresh"],"evidenceKey":"e08"}
+  ]
+}
