@@ -41,6 +41,7 @@
     "specs:sync": "node tools/specs-sync.mjs",
     "axe:sync": "node tools/axe-sync.mjs",
     "axe:validate": "node tools/axe-validate.mjs",
+    "axe:summary": "node tools/axe-parity-summary.mjs",
     "standards:sync": "node tools/standards-sync.mjs",
     "standards:validate": "node tools/standards-validate.mjs",
     "postinstall": "wxt prepare"

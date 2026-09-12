@@ -66,8 +66,8 @@ describe('axe-core severity benchmark', () => {
     expect(axeRegistry.summary.minor).toBe(axeRegistry.rules.filter((rule) => rule.impact === 'minor').length);
   });
 
-  it('keeps every declared FocusTrace ↔ axe equivalence resolvable', () => {
-    for (const mapping of axeEquivalents.mappings) {
+  it('keeps every declared FocusTrace ↔ axe severity mapping resolvable', () => {
+    for (const mapping of axeEquivalents.severityMappings) {
       expect(ALL_RULES.has(mapping.focusTraceRuleId), `Missing FocusTrace rule ${mapping.focusTraceRuleId}`).toBe(true);
       for (const axeRuleId of mapping.axeRuleIds) {
         expect(AXE_RULES.has(axeRuleId), `${mapping.focusTraceRuleId} maps to missing axe rule ${axeRuleId}`).toBe(true);
@@ -76,7 +76,7 @@ describe('axe-core severity benchmark', () => {
   });
 
   it('aligns mapped FocusTrace severities to the highest equivalent axe impact', () => {
-    for (const mapping of axeEquivalents.mappings.filter((entry) => entry.policy === 'highest-impact')) {
+    for (const mapping of axeEquivalents.severityMappings.filter((entry) => entry.policy === 'highest-impact')) {
       const rule = ALL_RULES.get(mapping.focusTraceRuleId);
       expect(rule, `Missing FocusTrace rule ${mapping.focusTraceRuleId}`).toBeDefined();
       const expected = highestAxeImpact(mapping.axeRuleIds);
@@ -84,9 +84,9 @@ describe('axe-core severity benchmark', () => {
     }
   });
 
-  it('keeps the full axe critical list queryable even when FocusTrace has no equivalent rule yet', () => {
+  it('keeps the full axe critical list queryable even when FocusTrace has no severity mapping yet', () => {
     const critical = axeRegistry.rules.filter((rule) => rule.impact === 'critical');
-    const mapped = new Set(axeEquivalents.mappings.flatMap((entry) => entry.axeRuleIds));
+    const mapped = new Set(axeEquivalents.severityMappings.flatMap((entry) => entry.axeRuleIds));
     expect(critical.length).toBeGreaterThan(0);
     expect(critical.some((rule) => !mapped.has(rule.id))).toBe(true);
   });

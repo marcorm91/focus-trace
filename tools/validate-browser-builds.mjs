@@ -1,5 +1,5 @@
-import { existsSync, readFileSync } from 'node:fs';
-import { resolve } from 'node:path';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
+import { extname, resolve } from 'node:path';
 
 const packageJson = JSON.parse(readFileSync(resolve('package.json'), 'utf8'));
 const EXPECTED_OPTIONAL_HOSTS = ['http://*/*', 'https://*/*', '<all_urls>'];
@@ -9,6 +9,17 @@ const BUILD_TARGETS = ['chrome-mv3', 'edge-mv3', 'firefox-mv3'];
 const REQUIRED_LOCALES = ['en', 'es'];
 const REQUIRED_LOCALE_MESSAGES = ['extensionName', 'extensionDescription', 'actionTitle'];
 const REQUIRED_RUNTIME_SCRIPTS = ['runtime.js', 'focus-visible.js', 'hover-focus-content.js'];
+const TEXT_BUILD_EXTENSIONS = new Set(['.css', '.html', '.js', '.json', '.map', '.txt']);
+const AXE_BENCHMARK_SENTINELS = [
+  'dequelabs/axe-core',
+  'frame-tested',
+  'External implementation benchmark only; WCAG, ACT, WAI-ARIA, AccName, HTML and APG remain the normative sources.',
+];
+const FORBIDDEN_BENCHMARK_PATHS = [
+  'config/axe-equivalents.json',
+  'config/axe-parity',
+  'generated/axe-rule-severities.json',
+];
 
 function readManifest(target) {
   return JSON.parse(readFileSync(resolve('.output', target, 'manifest.json'), 'utf8'));
@@ -61,6 +72,36 @@ function hasFirefoxOptionalDevtoolsAndHosts(manifest) {
   const legacyHosts = EXPECTED_OPTIONAL_HOSTS.every((host) => optionalPermissions.includes(host));
   const mv3Hosts = sameValues(manifest.optional_host_permissions, EXPECTED_OPTIONAL_HOSTS);
   return hasDevtools && (legacyHosts || mv3Hosts);
+}
+
+function listBuildFiles(root) {
+  const files = [];
+  for (const entry of readdirSync(root, { withFileTypes: true })) {
+    const path = resolve(root, entry.name);
+    if (entry.isDirectory()) files.push(...listBuildFiles(path));
+    else if (entry.isFile()) files.push(path);
+  }
+  return files;
+}
+
+function assertBenchmarkDataExcluded(target) {
+  const root = resolve('.output', target);
+  for (const relativePath of FORBIDDEN_BENCHMARK_PATHS) {
+    assert(
+      !existsSync(resolve(root, relativePath)),
+      `${target} must not ship development-only axe benchmark path ${relativePath}`,
+    );
+  }
+
+  for (const path of listBuildFiles(root)) {
+    if (!TEXT_BUILD_EXTENSIONS.has(extname(path))) continue;
+    const content = readFileSync(path, 'utf8');
+    const sentinel = AXE_BENCHMARK_SENTINELS.find((value) => content.includes(value));
+    assert(
+      !sentinel,
+      `${target} must not ship development-only axe benchmark data; ${path} contains ${JSON.stringify(sentinel)}`,
+    );
+  }
 }
 
 const chrome = readManifest('chrome-mv3');
@@ -136,6 +177,7 @@ for (const target of BUILD_TARGETS) {
     sameValues(Object.keys(englishMessages), Object.keys(spanishMessages)),
     `${target} native extension locale catalogs must keep EN/ES key parity`,
   );
+  assertBenchmarkDataExcluded(target);
 }
 
 for (const [name, manifest] of Object.entries({ chrome, edge })) {
@@ -167,4 +209,4 @@ assert(
   'Firefox must declare that it does not collect/transmit data',
 );
 
-console.log('Browser builds validated: exact required permissions, native EN/ES extension metadata, optional host access, optional Firefox DevTools access, no persistent content scripts, safe CSP, shared DevTools registration, on-demand runtime content-script sets, and required release files for chrome-mv3, edge-mv3 and firefox-mv3.');
+console.log('Browser builds validated: exact required permissions, native EN/ES extension metadata, optional host access, optional Firefox DevTools access, no persistent content scripts, safe CSP, shared DevTools registration, on-demand runtime content-script sets, required release files, and no development-only axe benchmark data for chrome-mv3, edge-mv3 and firefox-mv3.');

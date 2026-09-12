@@ -12,6 +12,24 @@ function formatImpact(impact) {
   return impact ?? 'unrated';
 }
 
+function severityMappings(mapping) {
+  if (mapping.schemaVersion === 1) {
+    if (!Array.isArray(mapping.mappings)) {
+      throw new Error('axe equivalence schema v1 must expose mappings.');
+    }
+    return mapping.mappings;
+  }
+
+  if (mapping.schemaVersion === 2) {
+    if (!Array.isArray(mapping.severityMappings)) {
+      throw new Error('axe parity schema v2 must expose severityMappings.');
+    }
+    return mapping.severityMappings;
+  }
+
+  throw new Error(`unsupported axe equivalence schema version: ${mapping.schemaVersion}`);
+}
+
 export function axeDiffReport(before, after, mapping) {
   const previous = indexRules(before);
   const current = indexRules(after);
@@ -22,7 +40,8 @@ export function axeDiffReport(before, after, mapping) {
     .sort()
     .map((id) => ({ id, before: previous.get(id).impact, after: current.get(id).impact }));
 
-  const mappedAxeIds = new Set(mapping.mappings.flatMap((entry) => entry.axeRuleIds));
+  const mappings = severityMappings(mapping);
+  const mappedAxeIds = new Set(mappings.flatMap((entry) => entry.axeRuleIds));
   const critical = after.rules.filter((rule) => rule.impact === 'critical').map((rule) => rule.id).sort();
   const mappedCritical = critical.filter((id) => mappedAxeIds.has(id));
   const unmappedCritical = critical.filter((id) => !mappedAxeIds.has(id));
@@ -58,11 +77,11 @@ export function axeDiffReport(before, after, mapping) {
     '### Critical benchmark coverage',
     '',
     `- axe critical rules: **${critical.length}**`,
-    `- referenced by current FocusTrace equivalence map: **${mappedCritical.length}**`,
-    `- not currently mapped to an equivalent FocusTrace rule: **${unmappedCritical.length}**`,
+    `- referenced by current FocusTrace severity benchmark: **${mappedCritical.length}**`,
+    `- not currently referenced by a FocusTrace severity mapping: **${unmappedCritical.length}**`,
   );
   if (unmappedCritical.length > 0) {
-    lines.push('', 'Unmapped does not automatically mean missing coverage: some axe rules have no equivalent FocusTrace detector or have intentionally different scope.', '', ...unmappedCritical.map((id) => `- \`${id}\``));
+    lines.push('', 'Unmapped does not automatically mean missing coverage: consult the parity classification because FocusTrace may have partial, broader or intentionally different scope.', '', ...unmappedCritical.map((id) => `- \`${id}\``));
   }
   lines.push('');
 
