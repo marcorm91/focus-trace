@@ -1,3 +1,5 @@
+// @vitest-environment jsdom
+
 import { beforeEach, describe, expect, it } from 'vitest';
 import { evaluateAriaRoleStateRelationships } from '../lib/audit/aria-role-state-relationships';
 
