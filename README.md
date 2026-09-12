@@ -77,8 +77,12 @@ FocusTrace uses WCAG 2.2 as its conformance source. WCAG 2.2 criteria are also r
 | `FT-WCAG-011` | Required non-text visual information reaches the required contrast when deterministic evidence exists. | FAIL / REVIEW / PASS | WCAG 1.4.11 AA |
 | `FT-WCAG-012` | Pointer targets contain a verifiable 24 × 24 CSS px area or meet an observable spacing/inline exception; unresolved semantic exceptions remain for review. | REVIEW / PASS | WCAG 2.5.8 AA |
 | `FT-WCAG-013` | Explicit `lang` values on rendered human-language content use a known primary language subtag. Code-like contexts are excluded. | FAIL / PASS | WCAG 3.1.2 AA · ACT de46e4 · IANA |
+| `FT-WCAG-014` | Exposed tabs, tooltips and native summary controls have a non-empty accessible name. | FAIL / PASS | WCAG 4.1.2 · WAI-ARIA · AccName |
+| `FT-WCAG-015` | Exposed native/ARIA meters and progress indicators have a non-empty accessible name. | FAIL / PASS | WCAG 1.1.1 · WAI-ARIA · AccName |
 
 `FT-WCAG-013` validates only explicit language declarations on rendered text that inherits the tested `lang`. FocusTrace does not use NLP to infer unmarked language changes, and it excludes code-like contexts such as `code`, `pre`, `samp`, `kbd` and `var` to avoid treating programming-language labels as human-language failures. A PASS therefore means the observed declaration is valid, not that every change of human language on the page has been identified.
+
+`FT-WCAG-014`, `FT-WCAG-015` and `FT-WARN-022` reuse the same bounded accessible-name evidence model. Tabs, tooltips, treeitems and native `summary` controls can use name-from-content where their semantics allow it; a treeitem excludes descendant `group` content from its own computed content name. Dialogs, meters and progress indicators rely on author-provided naming mechanisms. Programmatically hidden targets are inapplicable, and broken `aria-labelledby` references remain visible in diagnostic candidates instead of being silently repaired.
 
 ### Contextual and structural reviews
 
@@ -176,6 +180,7 @@ For semantic signals, FocusTrace tries to distinguish function before recommendi
 | `FT-WARN-019` | ARIA range, position or set states contradict each other. | WARNING | WAI-ARIA 1.3 |
 | `FT-WARN-020` | A known ARIA state/property is not supported by the resolved role. | WARNING | WAI-ARIA 1.3 |
 | `FT-WARN-021` | An ARIA relationship resolves, but exposed state contradicts the relationship or related content. | WARNING | WAI-ARIA 1.3 |
+| `FT-WARN-022` | Exposed dialog/alertdialog and treeitem semantics have a usable accessible name. | WARNING / PASS | WAI-ARIA · APG · AccName |
 
 FocusTrace resolves observable accessibility relationships and `aria-owns` rather than comparing direct DOM parents only. These warnings identify authoring evidence; a separate WCAG rule must decide when that evidence proves a conformance failure.
 

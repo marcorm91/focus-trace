@@ -75,19 +75,19 @@
     },
     {
       "axeRuleId": "aria-meter-name",
-      "relationship": "missing",
-      "focusTraceRuleIds": [],
-      "rationale": "FocusTrace does not yet have a specialized accessible-name rule for role=meter.",
-      "standards": ["WCAG 2.2 1.1.1", "WAI-ARIA meter"],
-      "evidenceKey": "e03"
+      "relationship": "partial",
+      "focusTraceRuleIds": ["FT-WCAG-015"],
+      "rationale": "FocusTrace now checks exposed native meter elements and explicit role=meter elements for a non-empty accessible name, including native label and ARIA naming sources, while retaining a deliberately bounded local AccName implementation.",
+      "standards": ["WCAG 2.2 1.1.1", "WAI-ARIA meter", "AccName"],
+      "evidenceKey": "e22"
     },
     {
       "axeRuleId": "aria-progressbar-name",
-      "relationship": "missing",
-      "focusTraceRuleIds": [],
-      "rationale": "FocusTrace does not yet have a specialized accessible-name rule for role=progressbar.",
-      "standards": ["WCAG 2.2 1.1.1", "WAI-ARIA progressbar"],
-      "evidenceKey": "e03"
+      "relationship": "partial",
+      "focusTraceRuleIds": ["FT-WCAG-015"],
+      "rationale": "FocusTrace now checks exposed native progress elements and explicit role=progressbar elements for a non-empty accessible name, including native label and ARIA naming sources, while retaining a deliberately bounded local AccName implementation.",
+      "standards": ["WCAG 2.2 1.1.1", "WAI-ARIA progressbar", "AccName"],
+      "evidenceKey": "e22"
     },
     {
       "axeRuleId": "aria-prohibited-attr",

@@ -20,6 +20,7 @@ import {
   type PrerecordedCaptionEvaluation,
   type PrerecordedVideoAlternativeEvaluation,
 } from './media-alternatives';
+import { appendSpecializedAccessibleNameChecks } from './specialized-accessible-name-scan-extension';
 
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -194,4 +195,5 @@ export function appendMediaAccessibilityReviews(result: ScanResult, root: ScanRo
   );
 
   appendFormErrorReviews(result, root);
+  appendSpecializedAccessibleNameChecks(result, root);
 }
