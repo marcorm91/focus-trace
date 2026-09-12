@@ -1,5 +1,5 @@
 import { accessibleName, isProgrammaticallyHidden } from './dom';
-import { effectiveAriaRole, resolvedExplicitAriaRole } from './aria-validator';
+import { effectiveAriaRole, hasAccessibilityAncestorRole, resolvedExplicitAriaRole } from './aria-validator';
 import { scopedElements, type ScanRoot } from './scan-elements';
 
 export type AriaRoleStateRelationshipFamily =
@@ -45,15 +45,6 @@ function explicitRoleName(element: Element): string | null {
   return resolvedExplicitAriaRole(element)?.name ?? null;
 }
 
-function hasTreegridAncestor(element: Element): boolean {
-  let current = element.parentElement;
-  while (current) {
-    if (effectiveAriaRole(current) === 'treegrid') return true;
-    current = current.parentElement;
-  }
-  return false;
-}
-
 function hostRoleConstraint(element: Element): string | null {
   const role = explicitRoleName(element);
   if (!role) return null;
@@ -92,7 +83,7 @@ function nativeCheckedConstraint(element: Element): string | null {
 }
 
 function rowConditionalConstraint(element: Element): string | null {
-  if (effectiveAriaRole(element) !== 'row' || hasTreegridAncestor(element)) return null;
+  if (effectiveAriaRole(element) !== 'row' || hasAccessibilityAncestorRole(element, 'treegrid')) return null;
   const authored = ROW_CONDITIONAL_PROPERTIES.filter((property) => element.hasAttribute(property));
   if (!authored.length) return null;
   return `${authored.join(', ')} ${authored.length === 1 ? 'is' : 'are'} only conditionally applicable to role=row in a treegrid context; no treegrid DOM ancestor was observed.`;

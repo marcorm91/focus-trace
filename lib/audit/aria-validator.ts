@@ -264,6 +264,18 @@ function hasRequiredParent(element: Element, role: AriaRoleRecord, model: Owners
   return parentRole != null && role.requiredParentRoles.includes(parentRole);
 }
 
+export function hasAccessibilityAncestorRole(element: Element, roleName: string): boolean {
+  const model = buildOwnershipModel();
+  let current = semanticParent(element, model);
+  const seen = new Set<Element>();
+  while (current && !seen.has(current)) {
+    if (effectiveAriaRole(current) === roleName) return true;
+    seen.add(current);
+    current = semanticParent(current, model);
+  }
+  return false;
+}
+
 function activeDescendantSignal(element: Element, model: OwnershipModel): AriaValidationSignal | null {
   if (!element.hasAttribute('aria-activedescendant')) return null;
   const ids = tokens(element.getAttribute('aria-activedescendant'));
