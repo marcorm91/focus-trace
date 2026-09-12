@@ -4,6 +4,8 @@ import languageRegistryJson from '../../generated/language-subtags.json';
 export interface AriaRoleRecord {
   name: string;
   parentRoles: string[];
+  requiredParentRoles?: string[];
+  allowedChildRoles?: string[];
   deprecated: boolean;
   deprecatedVersion: string | null;
   supportedProperties: string[];

@@ -13,33 +13,33 @@
       "axeRuleId": "aria-allowed-attr",
       "relationship": "overlap",
       "focusTraceRuleIds": ["FT-WARN-020"],
-      "rationale": "FocusTrace checks whether known ARIA states and properties are supported by the resolved role and now includes normalized ElementInternals role/property evidence when the MAIN-world bridge captured it. Its WAI-ARIA 1.3 authoring-warning model and axe applicability/exceptions are still not identical.",
+      "rationale": "FocusTrace checks whether known ARIA states and properties are supported by the resolved role and includes normalized ElementInternals role/property evidence when the MAIN-world bridge captured it. Its WAI-ARIA 1.3 authoring-warning model and axe applicability/exceptions are still not identical.",
       "standards": ["WAI-ARIA 1.3 roles/states model", "WCAG 2.2 4.1.2"],
       "evidenceKey": "e23"
     },
     {
       "axeRuleId": "aria-braille-equivalent",
-      "relationship": "missing",
-      "focusTraceRuleIds": [],
-      "rationale": "FocusTrace validates ARIA vocabulary and values but has no rule requiring a non-braille accessible equivalent for braille-specific labels or role descriptions.",
+      "relationship": "partial",
+      "focusTraceRuleIds": ["FT-REVIEW-029"],
+      "rationale": "FocusTrace reviews non-empty braille labels and braille role descriptions for observable non-braille accessible-name or aria-roledescription counterparts. It deliberately keeps SHOULD-level and user-agent-dependent authoring expectations as REVIEW rather than asserting axe-equivalent deterministic failure semantics.",
       "standards": ["WAI-ARIA aria-braillelabel/aria-brailleroledescription", "WCAG 2.2 4.1.2"],
-      "evidenceKey": "e02"
+      "evidenceKey": "e24"
     },
     {
       "axeRuleId": "aria-command-name",
       "relationship": "partial",
       "focusTraceRuleIds": ["FT-WCAG-003", "FT-WCAG-005"],
-      "rationale": "FocusTrace deterministically names buttons and links and now applies those checks to captured ElementInternals-only command roles, but it still does not provide one equivalent rule for every axe command role such as all menuitem variants.",
+      "rationale": "FocusTrace deterministically names buttons and links and applies those checks to captured ElementInternals-only command roles, but it still does not provide one equivalent rule for every axe command role such as all menuitem variants.",
       "standards": ["WCAG 2.2 4.1.2", "ACT 97a4e1"],
       "evidenceKey": "e23"
     },
     {
       "axeRuleId": "aria-conditional-attr",
-      "relationship": "missing",
-      "focusTraceRuleIds": [],
-      "rationale": "FocusTrace validates known, required and supported ARIA attributes, but it does not yet implement axe's role/state conditional-attribute expectation as a dedicated check.",
-      "standards": ["WAI-ARIA conditional states/properties", "WCAG 2.2 4.1.2"],
-      "evidenceKey": "e02"
+      "relationship": "partial",
+      "focusTraceRuleIds": ["FT-WARN-023"],
+      "rationale": "FocusTrace now detects bounded conditional ARIA misuse including treegrid-only row properties outside treegrid context and native checkbox/radio state conflicts. The implementation intentionally does not claim axe's complete conditional-attribute matrix.",
+      "standards": ["WAI-ARIA conditional states/properties", "ARIA in HTML", "WCAG 2.2 4.1.2"],
+      "evidenceKey": "e24"
     },
     {
       "axeRuleId": "aria-deprecated-role",
@@ -51,11 +51,11 @@
     },
     {
       "axeRuleId": "aria-hidden-body",
-      "relationship": "missing",
-      "focusTraceRuleIds": [],
-      "rationale": "FocusTrace checks focusable descendants of aria-hidden containers but does not currently prohibit aria-hidden=true on the document body itself.",
-      "standards": ["WAI-ARIA aria-hidden", "WCAG 2.2 1.3.1", "WCAG 2.2 4.1.2"],
-      "evidenceKey": "e02"
+      "relationship": "equivalent",
+      "focusTraceRuleIds": ["FT-WCAG-016"],
+      "rationale": "FocusTrace deterministically fails a top-level document body that declares aria-hidden=true and keeps the check inapplicable to component roots, materially matching the benchmark condition while citing ARIA in HTML and WCAG directly.",
+      "standards": ["ARIA in HTML body requirements", "WCAG 2.2 1.3.1", "WCAG 2.2 4.1.2"],
+      "evidenceKey": "e24"
     },
     {
       "axeRuleId": "aria-hidden-focus",
@@ -101,25 +101,25 @@
       "axeRuleId": "aria-required-attr",
       "relationship": "overlap",
       "focusTraceRuleIds": ["FT-WARN-015"],
-      "rationale": "FocusTrace checks required states/properties for resolved ARIA roles and now accepts captured ElementInternals reflections as observable required-state evidence. Registry version, implicit-role handling and outcome semantics still differ from axe.",
+      "rationale": "FocusTrace checks required states/properties for resolved ARIA roles and accepts captured ElementInternals reflections as observable required-state evidence. Registry version, implicit-role handling and outcome semantics still differ from axe.",
       "standards": ["WAI-ARIA required states/properties", "WCAG 2.2 4.1.2"],
       "evidenceKey": "e23"
     },
     {
       "axeRuleId": "aria-required-children",
-      "relationship": "missing",
-      "focusTraceRuleIds": [],
-      "rationale": "FocusTrace validates whether semantic children are allowed by supported ARIA container roles, but it does not yet verify that required owned child roles are present.",
-      "standards": ["WAI-ARIA required owned elements", "WCAG 2.2 1.3.1"],
-      "evidenceKey": "e02"
+      "relationship": "overlap",
+      "focusTraceRuleIds": ["FT-WARN-018"],
+      "rationale": "FocusTrace now derives allowed accessibility child roles directly from the synchronized WAI-ARIA 1.3 role model and reports incompatible semantic children after aria-owns ownership is resolved. It deliberately does not invent a missing-child failure where the current normative allowed-child wording does not require a child to be present, so the relationship is overlap rather than equivalent.",
+      "standards": ["WAI-ARIA 1.3 allowed accessibility child roles", "WCAG 2.2 1.3.1"],
+      "evidenceKey": "e24"
     },
     {
       "axeRuleId": "aria-required-parent",
       "relationship": "overlap",
       "focusTraceRuleIds": ["FT-WARN-017"],
-      "rationale": "FocusTrace checks required accessibility parent context, but its current ARIA model and repair/ownership boundaries are not asserted to be identical to axe.",
-      "standards": ["WAI-ARIA required context roles", "WCAG 2.2 1.3.1"],
-      "evidenceKey": "e02"
+      "rationale": "FocusTrace now derives required accessibility-parent roles directly from the synchronized WAI-ARIA 1.3 role model and resolves transparent wrappers plus valid aria-owns ownership. Outcome and repair boundaries remain intentionally conservative, so it is still classified as overlap.",
+      "standards": ["WAI-ARIA 1.3 required accessibility parent roles", "WCAG 2.2 1.3.1"],
+      "evidenceKey": "e24"
     }
   ]
 }

@@ -8,13 +8,13 @@
   "policy": "Every axe-core 4.13 rule has exactly one reviewed relationship. Equivalent is reserved for materially matching expectations; partial, superset and overlap preserve meaningful non-binary coverage without overclaiming.",
   "summary": {
     "total": 105,
-    "equivalent": 5,
-    "partial": 30,
+    "equivalent": 6,
+    "partial": 33,
     "superset": 10,
-    "overlap": 21,
-    "missing": 38,
+    "overlap": 22,
+    "missing": 33,
     "not-applicable": 1,
-    "covered": 66
+    "covered": 71
   },
   "severityMappings": [
     { "focusTraceRuleId": "FT-WCAG-001", "axeRuleIds": ["document-title"], "policy": "highest-impact" },
@@ -30,7 +30,9 @@
     { "focusTraceRuleId": "FT-WCAG-013", "axeRuleIds": ["valid-lang"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WCAG-014", "axeRuleIds": ["aria-tab-name", "aria-tooltip-name", "summary-name"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WCAG-015", "axeRuleIds": ["aria-meter-name", "aria-progressbar-name"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-016", "axeRuleIds": ["aria-hidden-body"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-REVIEW-025", "axeRuleIds": ["link-in-text-block"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-REVIEW-029", "axeRuleIds": ["aria-braille-equivalent", "aria-roledescription"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WARN-001", "axeRuleIds": ["aria-deprecated-role"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WARN-003", "axeRuleIds": ["aria-prohibited-attr"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WARN-012", "axeRuleIds": ["aria-roles"], "policy": "highest-impact" },
@@ -39,8 +41,10 @@
     { "focusTraceRuleId": "FT-WARN-015", "axeRuleIds": ["aria-required-attr"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WARN-016", "axeRuleIds": ["aria-valid-attr-value"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WARN-017", "axeRuleIds": ["aria-required-parent"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-018", "axeRuleIds": ["aria-required-children"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WARN-020", "axeRuleIds": ["aria-allowed-attr"], "policy": "highest-impact" },
-    { "focusTraceRuleId": "FT-WARN-022", "axeRuleIds": ["aria-dialog-name", "aria-treeitem-name"], "policy": "highest-impact" }
+    { "focusTraceRuleId": "FT-WARN-022", "axeRuleIds": ["aria-dialog-name", "aria-treeitem-name"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-023", "axeRuleIds": ["aria-allowed-role", "aria-conditional-attr"], "policy": "highest-impact" }
   ],
   "classificationFiles": [
     "config/axe-parity/core-01.json",
@@ -77,6 +81,7 @@
     "e20": { "sources": ["shared/rule-catalog.ts", "shared/structural-html-rules.ts"], "tests": ["tests/heading-outline.test.ts", "tests/heading-review-tree-contract.test.ts"] },
     "e21": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/link-purpose-context.test.ts", "tests/consistent-identification.test.ts"] },
     "e22": { "sources": ["shared/specialized-accessible-name-rules.ts", "lib/audit/specialized-accessible-names.ts", "lib/audit/specialized-accessible-name-scan-extension.ts"], "tests": ["tests/specialized-accessible-names.test.ts"] },
-    "e23": { "sources": ["shared/element-internals-bridge.ts", "lib/extension/element-internals-main-world.ts", "lib/audit/element-internals-bridge.ts", "lib/audit/element-internals-semantics.ts"], "tests": ["tests/element-internals-semantics.test.ts"] }
+    "e23": { "sources": ["shared/element-internals-bridge.ts", "lib/extension/element-internals-main-world.ts", "lib/audit/element-internals-bridge.ts", "lib/audit/element-internals-semantics.ts"], "tests": ["tests/element-internals-semantics.test.ts"] },
+    "e24": { "sources": ["generated/aria-registry.json", "shared/aria-role-state-rules.ts", "lib/audit/aria-validator.ts", "lib/audit/aria-role-state-relationships.ts"], "tests": ["tests/aria-validator.test.ts", "tests/aria-role-relationship-registry.test.ts", "tests/aria-role-state-relationships.test.ts"] }
   }
 }

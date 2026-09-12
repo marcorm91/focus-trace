@@ -36,40 +36,6 @@ type OwnershipModel = {
 const KNOWN_PROPERTIES = new Set(Object.keys(ariaRegistryJson.properties));
 const TRANSPARENT_ROLES = new Set<string | null>([null, 'generic', 'none', 'presentation']);
 
-const REQUIRED_PARENT: Record<string, string[]> = {
-  caption: ['figure', 'grid', 'radiogroup', 'table', 'treegrid'],
-  cell: ['row'],
-  columnheader: ['row'],
-  gridcell: ['row'],
-  listitem: ['list'],
-  row: ['grid', 'rowgroup', 'table', 'treegrid'],
-  rowgroup: ['grid', 'table', 'treegrid'],
-  rowheader: ['row'],
-  tab: ['tablist'],
-};
-
-const GROUPED_PARENT: Record<string, { direct: string[]; throughGroup: string[] }> = {
-  menuitem: { direct: ['menu', 'menubar'], throughGroup: ['menu', 'menubar'] },
-  menuitemcheckbox: { direct: ['menu', 'menubar'], throughGroup: ['menu', 'menubar'] },
-  menuitemradio: { direct: ['menu', 'menubar'], throughGroup: ['menu', 'menubar'] },
-  option: { direct: ['listbox'], throughGroup: ['listbox'] },
-  treeitem: { direct: ['tree'], throughGroup: ['treeitem'] },
-};
-
-const ALLOWED_CHILD: Record<string, string[]> = {
-  grid: ['caption', 'row', 'rowgroup'],
-  table: ['caption', 'row', 'rowgroup'],
-  treegrid: ['caption', 'row', 'rowgroup'],
-  rowgroup: ['row'],
-  row: ['cell', 'columnheader', 'gridcell', 'rowheader'],
-  list: ['listitem'],
-  listbox: ['group', 'option'],
-  menu: ['group', 'menuitem', 'menuitemcheckbox', 'menuitemradio', 'separator'],
-  menubar: ['group', 'menuitem', 'menuitemcheckbox', 'menuitemradio', 'separator'],
-  tablist: ['tab'],
-  tree: ['treeitem'],
-};
-
 const IDREF_LIST = new Set([
   'aria-controls', 'aria-describedby', 'aria-details', 'aria-errormessage',
   'aria-flowto', 'aria-labelledby', 'aria-owns',
@@ -291,20 +257,23 @@ function accessibilityDescendant(owner: Element, target: Element, model: Ownersh
   return false;
 }
 
-function hasRequiredParent(element: Element, role: string, model: OwnershipModel): boolean {
+function hasRequiredParent(element: Element, role: AriaRoleRecord, model: OwnershipModel): boolean {
   const parent = semanticParent(element, model);
   if (!parent) return false;
   const parentRole = effectiveAriaRole(parent);
-  const direct = REQUIRED_PARENT[role];
-  if (direct) return parentRole != null && direct.includes(parentRole);
+  return parentRole != null && (role.requiredParentRoles ?? []).includes(parentRole);
+}
 
-  const grouped = GROUPED_PARENT[role];
-  if (!grouped) return true;
-  if (parentRole != null && grouped.direct.includes(parentRole)) return true;
-  if (parentRole !== 'group') return false;
-  const groupParent = semanticParent(parent, model);
-  const groupParentRole = groupParent ? effectiveAriaRole(groupParent) : null;
-  return groupParentRole != null && grouped.throughGroup.includes(groupParentRole);
+export function hasAccessibilityAncestorRole(element: Element, roleName: string): boolean {
+  const model = buildOwnershipModel();
+  let current = semanticParent(element, model);
+  const seen = new Set<Element>();
+  while (current && !seen.has(current)) {
+    if (effectiveAriaRole(current) === roleName) return true;
+    seen.add(current);
+    current = semanticParent(current, model);
+  }
+  return false;
 }
 
 function activeDescendantSignal(element: Element, model: OwnershipModel): AriaValidationSignal | null {
@@ -482,12 +451,12 @@ export function evaluateAdvancedAria(root: ScanRoot): AriaValidationSignal[] {
         }
       }
 
-      if ((REQUIRED_PARENT[explicitRole.name] || GROUPED_PARENT[explicitRole.name]) && !hasRequiredParent(element, explicitRole.name, ownership)) {
-        result.push({ kind: 'required-parent', element, detail: `role=${JSON.stringify(explicitRole.name)} is not inside its required accessibility-parent context after transparent wrappers and valid aria-owns ownership are resolved.` });
-      }
+      if ((explicitRole.requiredParentRoles ?? []).length && !hasRequiredParent(element, explicitRole, ownership)) {
+    result.push({ kind: 'required-parent', element, detail: `role=${JSON.stringify(explicitRole.name)} is not inside one of its synchronized WAI-ARIA required accessibility-parent roles (${(explicitRole.requiredParentRoles ?? []).join(', ')}) after transparent wrappers and valid aria-owns ownership are resolved.` });
+  }
 
-      const allowed = ALLOWED_CHILD[explicitRole.name];
-      if (allowed) {
+  const allowed = explicitRole.allowedChildRoles ?? [];
+  if (allowed.length) {
         for (const child of semanticChildren(element, ownership)) {
           const childRole = effectiveAriaRole(child);
           if (childRole && !allowed.includes(childRole)) {

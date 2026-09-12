@@ -63,15 +63,15 @@ The exhaustive review of all 105 axe-core 4.13.0 rules produces this baseline:
 
 | Relationship | Rules |
 | --- | ---: |
-| Equivalent | 5 |
-| Partial | 30 |
+| Equivalent | 6 |
+| Partial | 33 |
 | Superset | 10 |
-| Overlap | 21 |
-| Missing | 38 |
+| Overlap | 22 |
+| Missing | 33 |
 | Not applicable | 1 |
 | **Total** | **105** |
 
-`covered` is reported as 66 rules: equivalent + partial + superset + overlap. This is a planning metric only. It does **not** mean FocusTrace behaves identically to axe-core for 59 rules; only the five `equivalent` entries make that stronger claim.
+`covered` is reported as 71 rules: equivalent + partial + superset + overlap. This is a planning metric only. It does **not** mean FocusTrace behaves identically to axe-core for 71 rules; only the six `equivalent` entries make that stronger claim.
 
 The one `not-applicable` rule is `frame-tested`. That rule checks whether axe-core itself was injected into nested frames. Requiring axe-core injection would conflict with FocusTrace's local, independent runtime architecture and therefore is not a functional parity target.
 
@@ -128,16 +128,11 @@ The relationship type must still be consulted before treating any of those areas
 
 ## Genuine gaps established by the review
 
-Thirty-eight axe-core rules currently have no implemented FocusTrace expectation matching their tested condition. Important gap families include:
+Thirty-three axe-core rules currently have no implemented FocusTrace expectation matching their tested condition. Important gap families include:
 
 ### Modern ARIA
 
-Specialized naming for dialog, meter, progressbar, tab, tooltip, treeitem and native summary is now implemented as bounded `partial` coverage in #226. Remaining gaps in this family include:
-
-- ARIA conditional attributes;
-- ARIA required owned-child presence;
-- braille-equivalent naming;
-- host-element allowed-role restrictions.
+Specialized naming for dialog, meter, progressbar, tab, tooltip, treeitem and native summary is implemented as bounded coverage in #226. #228 adds synchronized required-parent/allowed-child role relationships, bounded host/conditional authoring checks, braille/custom role-description review and the deterministic hidden-body condition. The corresponding benchmark entries move conservatively from `missing` to `partial`, `overlap` or `equivalent` according to the implemented applicability; FocusTrace does not claim complete ARIA in HTML host-role coverage.
 
 ### Frames, landmarks and document structure
 
@@ -169,13 +164,9 @@ Specialized naming for dialog, meter, progressbar, tab, tooltip, treeitem and na
 
 The machine-readable classification files are the source of truth for the complete list.
 
-## Priority after specialized accessible names
+## Priority after ARIA role/state relationships
 
-The specialized accessible-name family is now implemented in #226. The next planned foundation is **ElementInternals semantics and form-associated labels** (#227), so modern custom elements can feed the same evidence contract where browser-observable data allows it.
-
-ElementInternals is the logical next step because it extends the same semantic and accessible-name evidence model to modern form-associated custom elements without broadening browser permissions. It must remain conservative when internals are unavailable or browser behavior differs.
-
-Frame accessible names remain a separate gap family because frame collection and cross-document inspection have different applicability and runtime constraints.
+#228 establishes the synchronized ARIA relationship foundation and raises the benchmark planning metric to 71/105. The next roadmap block is **document structure and landmarks** (#229). That work remains separate because page-level landmark placement, uniqueness and structure have different applicability from ARIA role/property authoring.
 
 ## Required evidence for later parity changes
 

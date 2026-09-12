@@ -532,3 +532,14 @@ The bridge captures only data produced after its `attachInternals()` wrapper is 
 
 The transferred payload is deliberately bounded and serializable: role, known ARIA reflection strings, up to a bounded number of label text/ID snapshots and form-associated state. Page-owned objects, functions, control values and arbitrary properties are not transferred.
 
+
+
+## ARIA role, state and relationship validation
+
+`FT-WCAG-016` is a page-only deterministic check for `body[aria-hidden="true"]`. ARIA in HTML explicitly prohibits hiding the document body from the accessibility tree; component scans do not execute this document-level expectation. The rule records FAIL only for the explicit top-level `true` value and otherwise records bounded PASS evidence.
+
+`FT-WARN-023` collects bounded host-language and conditional ARIA authoring contradictions. Current coverage includes high-impact ARIA in HTML role restrictions, native checkbox/radio `aria-checked` conflicts, and treegrid-only row states/properties. Accessibility parent context resolves valid `aria-owns` ownership as well as DOM ancestry. These findings remain WARNING because invalid ARIA authoring is not automatically a complete WCAG failure.
+
+`FT-REVIEW-029` checks observable equivalence for `aria-braillelabel`, `aria-brailleroledescription` and `aria-roledescription`. Empty values, missing non-braille counterparts or custom role descriptions without a resolved semantic role remain REVIEW where WAI-ARIA uses SHOULD-level guidance or user-agent repair/exposure can affect the final result.
+
+Required accessibility-parent and allowed accessibility-child relationships are not maintained in parallel tables. `tools/aria-sync.mjs` extracts them from the public WAI-ARIA 1.3 role tables into `generated/aria-registry.json`; `aria-owns`, IDREF and `aria-activedescendant` checks continue to share the same local ownership model. APG guidance is not used as normative evidence for these static authoring outcomes.

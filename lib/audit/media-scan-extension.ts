@@ -7,6 +7,7 @@ import {
 } from '../../shared/media-rules';
 import type { ScanIssue, ScanResult } from '../../shared/types';
 import { selectorFor } from './dom';
+import { appendAriaRoleStateRelationshipChecks } from './aria-role-state-scan-extension';
 import { appendElementInternalsSemantics } from './element-internals-semantics';
 import { appendFormErrorReviews } from './form-error-scan-extension';
 import {
@@ -198,4 +199,5 @@ export function appendMediaAccessibilityReviews(result: ScanResult, root: ScanRo
   appendFormErrorReviews(result, root);
   appendSpecializedAccessibleNameChecks(result, root);
   appendElementInternalsSemantics(result, root);
+  appendAriaRoleStateRelationshipChecks(result, root);
 }

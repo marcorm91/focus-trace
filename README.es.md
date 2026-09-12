@@ -79,6 +79,7 @@ FocusTrace utiliza WCAG 2.2 como fuente de conformidad. Los criterios WCAG 2.2 t
 | `FT-WCAG-013` | Los valores `lang` explícitos de contenido de lenguaje humano renderizado usan un subtag primario de idioma reconocido. Se excluyen contextos con apariencia de código. | FAIL / PASS | WCAG 3.1.2 AA · ACT de46e4 · IANA |
 | `FT-WCAG-014` | Las pestañas, tooltips y controles `summary` nativos expuestos tienen un nombre accesible no vacío. | FAIL / PASS | WCAG 4.1.2 · WAI-ARIA · AccName |
 | `FT-WCAG-015` | Los medidores e indicadores de progreso nativos/ARIA expuestos tienen un nombre accesible no vacío. | FAIL / PASS | WCAG 1.1.1 · WAI-ARIA · AccName |
+| `FT-WCAG-016` | El `body` de nivel superior del documento no declara `aria-hidden="true"`. | FAIL / PASS | WCAG 1.3.1 / 4.1.2 · ARIA in HTML |
 
 `FT-WCAG-013` valida únicamente declaraciones explícitas de idioma sobre texto renderizado que hereda el `lang` evaluado. FocusTrace no utiliza NLP para deducir cambios de idioma sin marcar y excluye contextos con apariencia de código como `code`, `pre`, `samp`, `kbd` y `var` para no tratar etiquetas de lenguajes de programación como fallos de idioma humano. Un PASS significa por tanto que la declaración observada es válida, no que se hayan identificado todos los cambios de idioma humano de la página.
 
@@ -116,6 +117,7 @@ FocusTrace utiliza WCAG 2.2 como fuente de conformidad. Los criterios WCAG 2.2 t
 | `FT-REVIEW-026` | Animaciones Web renderizadas, contenido `<marquee>` o vídeo nativo con `autoplay` pueden moverse, parpadear o desplazarse durante más de cinco segundos junto a otro contenido visible sin un control candidato observable. | REVIEW / PASS | WCAG 2.2.2 A |
 | `FT-REVIEW-027` | Un nombre accesible de enlace no vacío coincide exactamente con una expresión genérica acotada en ES/EN y necesita revisar su contexto programático. | REVIEW | WCAG 2.4.4 A · ACT 5effbb |
 | `FT-REVIEW-028` | Una comparación guiada de la misma página con zoom del navegador al 100 % y al 200 % observa textos o controles que desaparecen, pierden su nombre, quedan recortados/solapados o no duplican su tamaño efectivo. | REVIEW | WCAG 1.4.4 AA |
+| `FT-REVIEW-029` | Las etiquetas o descripciones de rol específicas para braille carecen de una contraparte observable no braille mediante nombre accesible / `aria-roledescription`, o `aria-roledescription` no tiene un rol semántico resuelto. | REVIEW / PASS | WAI-ARIA 1.3 |
 
 Para `FT-REVIEW-012`, FocusTrace considera señal positiva un enlace de fragmento del mismo documento validado y situado antes del bloque de navegación repetitiva candidato. La ausencia del enlace o un destino roto permanece como **REVIEW**, no como FAIL automático, porque WCAG 2.4.1 admite otros mecanismos y la aplicabilidad de bloques repetidos puede requerir contexto entre páginas.
 
@@ -181,6 +183,7 @@ Para las señales semánticas, FocusTrace intenta diferenciar la función antes 
 | `FT-WARN-020` | Un estado o propiedad ARIA conocido no está soportado por el rol resuelto. | WARNING | WAI-ARIA 1.3 |
 | `FT-WARN-021` | Una relación ARIA resuelve, pero el estado expuesto contradice esa relación o el contenido relacionado. | WARNING | WAI-ARIA 1.3 |
 | `FT-WARN-022` | Las semánticas expuestas `dialog`/`alertdialog` y `treeitem` tienen un nombre accesible utilizable. | WARNING / PASS | WAI-ARIA · APG · AccName |
+| `FT-WARN-023` | Se incumple una restricción acotada de rol del lenguaje host de ARIA in HTML o de estado/propiedad condicional. | WARNING | ARIA in HTML · WAI-ARIA 1.3 |
 
 FocusTrace interpreta relaciones observables y `aria-owns`, no se limita a comparar padres DOM directos. Estos avisos identifican evidencia de autoría; una regla WCAG distinta debe decidir cuándo esa evidencia demuestra un fallo de conformidad.
 

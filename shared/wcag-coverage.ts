@@ -10,6 +10,7 @@ import {
 import { KEYBOARD_POINTER_RULES } from './keyboard-pointer-rules';
 import { LANGUAGE_PARTS_RULE } from './language-parts-rules';
 import { MEDIA_RULES } from './media-rules';
+import { ARIA_ROLE_STATE_RELATIONSHIP_RULES } from './aria-role-state-rules';
 import { RULES } from './rule-catalog';
 import { SPECIALIZED_ACCESSIBLE_NAME_RULES } from './specialized-accessible-name-rules';
 import { TEXT_SPACING_RULE } from './text-spacing-rules';
@@ -102,6 +103,7 @@ const COVERAGE_RULES = [
   ...MEDIA_RULES,
   ...KEYBOARD_POINTER_RULES,
   ...SPECIALIZED_ACCESSIBLE_NAME_RULES,
+  ...ARIA_ROLE_STATE_RELATIONSHIP_RULES,
 ];
 
 const ruleReferences = COVERAGE_RULES.flatMap((rule) => {
