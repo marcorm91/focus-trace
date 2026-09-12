@@ -523,3 +523,12 @@ The rule is full-page only. Component-scoped analysis does not execute `FT-REVIE
 - Advanced ARIA checks operate on the live accessibility relationships FocusTrace can derive from DOM semantics and `aria-owns`; they do not claim to reproduce the browser accessibility tree or a screen reader's spoken output. See [`ARIA_VALIDATION.md`](ARIA_VALIDATION.md).
 - Automated static checks are intentionally narrower than the corresponding full WCAG success criteria.
 - Runtime findings are evidence from the observed interaction, not proof that every possible path was exercised.
+
+## ElementInternals evidence
+
+The static engine can augment existing rule applicability with normalized `ElementInternals` evidence captured by the page-world bridge. The bridge is not a new rule family: captured `role`, ARIA reflection strings and `ElementInternals.labels` are routed into the existing accessible-name and ARIA authoring contracts. Author DOM attributes remain authoritative when present.
+
+The bridge captures only data produced after its `attachInternals()` wrapper is installed. Missing bridge data is therefore **unknown/inapplicable evidence**, never a reason to manufacture FAIL or WARNING results. Current-page injection is best effort; reliable early capture applies to later documents where the registered runtime script executes at `document_start`. Firefox 115–127 cannot provide this MAIN-world path and degrades conservatively; Firefox 128+ and supported Chromium builds can provide it after normal page access is granted.
+
+The transferred payload is deliberately bounded and serializable: role, known ARIA reflection strings, up to a bounded number of label text/ID snapshots and form-associated state. Page-owned objects, functions, control values and arbitrary properties are not transferred.
+

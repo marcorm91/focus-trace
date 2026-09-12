@@ -13,9 +13,9 @@
       "axeRuleId": "aria-allowed-attr",
       "relationship": "overlap",
       "focusTraceRuleIds": ["FT-WARN-020"],
-      "rationale": "FocusTrace checks whether known ARIA states and properties are supported by the resolved role, but its WAI-ARIA 1.3 authoring-warning model and axe applicability/exceptions are not identical.",
+      "rationale": "FocusTrace checks whether known ARIA states and properties are supported by the resolved role and now includes normalized ElementInternals role/property evidence when the MAIN-world bridge captured it. Its WAI-ARIA 1.3 authoring-warning model and axe applicability/exceptions are still not identical.",
       "standards": ["WAI-ARIA 1.3 roles/states model", "WCAG 2.2 4.1.2"],
-      "evidenceKey": "e02"
+      "evidenceKey": "e23"
     },
     {
       "axeRuleId": "aria-braille-equivalent",
@@ -29,9 +29,9 @@
       "axeRuleId": "aria-command-name",
       "relationship": "partial",
       "focusTraceRuleIds": ["FT-WCAG-003", "FT-WCAG-005"],
-      "rationale": "FocusTrace deterministically names buttons and links, covering two command-role families, but does not yet provide one equivalent rule for every axe command role such as menuitem variants.",
+      "rationale": "FocusTrace deterministically names buttons and links and now applies those checks to captured ElementInternals-only command roles, but it still does not provide one equivalent rule for every axe command role such as all menuitem variants.",
       "standards": ["WCAG 2.2 4.1.2", "ACT 97a4e1"],
-      "evidenceKey": "e03"
+      "evidenceKey": "e23"
     },
     {
       "axeRuleId": "aria-conditional-attr",
@@ -69,25 +69,25 @@
       "axeRuleId": "aria-input-field-name",
       "relationship": "partial",
       "focusTraceRuleIds": ["FT-WCAG-004"],
-      "rationale": "FocusTrace checks accessible names for its supported form-field and input-role set, but not every specialized ARIA input applicability path covered by axe.",
+      "rationale": "FocusTrace checks accessible names for its supported form-field and input-role set, including captured ElementInternals-only roles and form-associated labels, but not every specialized ARIA input applicability path covered by axe.",
       "standards": ["WCAG 2.2 4.1.2", "ACT e086e5"],
-      "evidenceKey": "e03"
+      "evidenceKey": "e23"
     },
     {
       "axeRuleId": "aria-meter-name",
       "relationship": "partial",
       "focusTraceRuleIds": ["FT-WCAG-015"],
-      "rationale": "FocusTrace now checks exposed native meter elements and explicit role=meter elements for a non-empty accessible name, including native label and ARIA naming sources, while retaining a deliberately bounded local AccName implementation.",
+      "rationale": "FocusTrace checks exposed native meter, explicit role=meter and captured ElementInternals role=meter semantics for a non-empty accessible name while retaining a deliberately bounded local AccName implementation.",
       "standards": ["WCAG 2.2 1.1.1", "WAI-ARIA meter", "AccName"],
-      "evidenceKey": "e22"
+      "evidenceKey": "e23"
     },
     {
       "axeRuleId": "aria-progressbar-name",
       "relationship": "partial",
       "focusTraceRuleIds": ["FT-WCAG-015"],
-      "rationale": "FocusTrace now checks exposed native progress elements and explicit role=progressbar elements for a non-empty accessible name, including native label and ARIA naming sources, while retaining a deliberately bounded local AccName implementation.",
+      "rationale": "FocusTrace checks exposed native progress, explicit role=progressbar and captured ElementInternals role=progressbar semantics for a non-empty accessible name while retaining a deliberately bounded local AccName implementation.",
       "standards": ["WCAG 2.2 1.1.1", "WAI-ARIA progressbar", "AccName"],
-      "evidenceKey": "e22"
+      "evidenceKey": "e23"
     },
     {
       "axeRuleId": "aria-prohibited-attr",
@@ -101,9 +101,9 @@
       "axeRuleId": "aria-required-attr",
       "relationship": "overlap",
       "focusTraceRuleIds": ["FT-WARN-015"],
-      "rationale": "FocusTrace checks required states/properties for resolved ARIA roles; registry version, implicit-role handling and outcome semantics differ from axe.",
+      "rationale": "FocusTrace checks required states/properties for resolved ARIA roles and now accepts captured ElementInternals reflections as observable required-state evidence. Registry version, implicit-role handling and outcome semantics still differ from axe.",
       "standards": ["WAI-ARIA required states/properties", "WCAG 2.2 4.1.2"],
-      "evidenceKey": "e02"
+      "evidenceKey": "e23"
     },
     {
       "axeRuleId": "aria-required-children",

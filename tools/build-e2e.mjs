@@ -15,6 +15,7 @@ await build({
   filterEntrypoints: [
     'audit-print',
     'background',
+    'element-internals-bridge',
     'focus-visible',
     'hover-focus-content',
     'report-print',

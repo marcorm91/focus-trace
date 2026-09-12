@@ -570,3 +570,10 @@ npm run release:check:full
 ```
 
 Consulta [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md) antes de crear una release o cambiar la visibilidad del repositorio.
+
+### Evidencia semántica de ElementInternals
+
+FocusTrace puede usar un bridge acotado en el mundo MAIN para observar semántica definida mediante `ElementInternals` en custom elements. Después de que el usuario conceda el permiso de acceso a páginas ya existente, FocusTrace registra el bridge para futuros documentos en `document_start` y también intenta prepararlo en la página actual. El objeto `ElementInternals` original permanece dentro del mundo de la página y solo se transfieren rol normalizado, strings de reflexión ARIA, texto/IDs de etiquetas asociadas a formulario y un indicador de asociación con formulario. Los atributos DOM definidos por el autor tienen prioridad.
+
+Esta evidencia alimenta las comprobaciones existentes de nombre accesible y autoría ARIA; no crea una afirmación de conformidad separada ni aumenta por sí sola el recuento de paridad con axe-core. Si el bridge no está disponible o `attachInternals()` se ejecutó antes de la inyección en la página actual, FocusTrace trata ese estado interno como desconocido en lugar de inventar un fallo. Chromium permite la ruta necesaria mediante scripting en MAIN. Firefox añadió scripting de extensiones en MAIN en Firefox 128, mientras FocusTrace sigue soportando Firefox 115, por lo que Firefox 115–127 utiliza deliberadamente la inspección normal en mundo aislado. No se añade ningún permiso de navegador.
+
