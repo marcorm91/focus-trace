@@ -80,6 +80,9 @@ const RULE_TITLES_ES: Record<string, string> = {
   'FT-WCAG-012': 'Tamaño y separación de objetivos de puntero',
   'FT-WCAG-014': 'El control interactivo especializado tiene un nombre accesible no vacío',
   'FT-WCAG-015': 'El medidor o indicador de progreso tiene un nombre accesible no vacío',
+  'FT-WCAG-016': 'El body del documento no está oculto del árbol de accesibilidad',
+  'FT-WARN-023': 'Se incumple una restricción ARIA del lenguaje host o condicional',
+  'FT-REVIEW-029': 'La descripción braille o de rol personalizada necesita una semántica equivalente',
   'FT-WARN-022': 'El diálogo ARIA o elemento de árbol no tiene un nombre accesible utilizable',
   'FT-WARN-001': 'Se utiliza un rol ARIA obsoleto',
   'FT-WARN-002': 'El estado o propiedad ARIA está obsoleto para este rol',
@@ -193,6 +196,16 @@ const SCAN_COPY_ES: Record<string, { description: string; evidence?: string }> =
   },
   'FT-WCAG-015': {
     description: 'Este medidor o indicador de progreso expuesto tiene un nombre accesible vacío, por lo que el valor puede quedar expuesto sin identificar qué representa.',
+  },
+  'FT-WCAG-016': {
+    description: 'El body del documento declara aria-hidden="true", lo que puede retirar prácticamente toda la página del árbol de accesibilidad.',
+    evidence: 'ARIA in HTML prohíbe aria-hidden="true" en el elemento body.',
+  },
+  'FT-WARN-023': {
+    description: 'La autoría ARIA entra en conflicto con una restricción semántica del elemento HTML o con la aplicabilidad condicional de un estado o propiedad.',
+  },
+  'FT-REVIEW-029': {
+    description: 'La autoría específica para braille o la descripción personalizada del rol necesita una contraparte semántica no braille observable o un contexto de rol válido.',
   },
   'FT-WARN-022': {
     description: 'Este diálogo ARIA o elemento de árbol expuesto no tiene un nombre accesible utilizable. Corrige la autoría semántica para que el componente pueda identificarse mediante tecnologías de asistencia.',
