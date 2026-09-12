@@ -1,3 +1,5 @@
+import { existsSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 import axeEquivalents from '../config/axe-equivalents.json';
 import aaa from '../config/axe-parity/aaa.json';
@@ -58,6 +60,18 @@ describe('axe-core parity classification', () => {
       'not-applicable': 1,
       covered: 62,
     });
+  });
+
+  it('keeps every declared classification and evidence path backed by a real repository file', () => {
+    for (const path of axeEquivalents.classificationFiles) {
+      expect(existsSync(resolve(path)), `Missing classification file ${path}`).toBe(true);
+    }
+
+    for (const [key, evidence] of Object.entries(axeEquivalents.evidenceSets)) {
+      for (const path of [...evidence.sources, ...evidence.tests]) {
+        expect(existsSync(resolve(path)), `Missing ${key} evidence path ${path}`).toBe(true);
+      }
+    }
   });
 
   it('keeps benchmark-only frame orchestration out of functional parity', () => {
