@@ -138,3 +138,12 @@ The rule catalog remains the source of truth for FocusTrace rule definitions. Th
 The Standards Registry workflow refreshes the latest stable axe rule-impact snapshot every day. If axe adds/removes rules or changes an impact, the workflow generates a diff and opens or refreshes the registry PR; if that cannot be created, it falls back to a GitHub issue.
 
 Automated tests require every declared FocusTrace ↔ axe mapping to resolve and require `highest-impact` mappings to match the current generated axe snapshot. Unmapped axe critical rules are listed by the daily report but do not automatically fail CI, because a missing equivalence can mean different detector scope rather than missing accessibility coverage.
+
+
+## ARIA role-state package (#228)
+
+- `FT-WCAG-016` — **critical**. Explicitly hiding the top-level document body can remove essentially the whole page from the accessibility tree, so the bounded condition is a deterministic FAIL.
+- `FT-WARN-023` — **serious** WARNING. Host-language or conditional ARIA contradictions can cause semantics to be ignored or repaired inconsistently, but the authoring defect alone is not promoted to a complete WCAG failure.
+- `FT-REVIEW-029` — **serious** REVIEW. Braille/custom role-description equivalence can materially affect assistive-technology output, while SHOULD-level guidance and platform repair keep the final judgement contextual.
+
+These severities describe impact when the modeled condition is applicable. APG remains informative and is not presented as normative WCAG evidence.
