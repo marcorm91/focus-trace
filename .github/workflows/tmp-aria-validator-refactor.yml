@@ -26,55 +26,39 @@ jobs:
           path = Path('lib/audit/aria-validator.ts')
           text = path.read_text()
 
-          text, count = re.subn(
+          text, tables = re.subn(
               r"const REQUIRED_PARENT: Record<string, string\[]> = \{[\s\S]*?const IDREF_LIST = new Set\(\[",
               "const IDREF_LIST = new Set([",
               text,
               count=1,
           )
-          if count != 1:
-              raise SystemExit('Could not remove hard-coded ARIA relationship tables')
 
-          old = '''function hasRequiredParent(element: Element, role: string, model: OwnershipModel): boolean {
-            const parent = semanticParent(element, model);
-            if (!parent) return false;
-            const parentRole = effectiveAriaRole(parent);
-            const direct = REQUIRED_PARENT[role];
-            if (direct) return parentRole != null && direct.includes(parentRole);
-
-            const grouped = GROUPED_PARENT[role];
-            if (!grouped) return true;
-            if (parentRole != null && grouped.direct.includes(parentRole)) return true;
-            if (parentRole !== 'group') return false;
-            const groupParent = semanticParent(parent, model);
-            const groupParentRole = groupParent ? effectiveAriaRole(groupParent) : null;
-            return groupParentRole != null && grouped.throughGroup.includes(groupParentRole);
-          }'''
-          new = '''function hasRequiredParent(element: Element, role: AriaRoleRecord, model: OwnershipModel): boolean {
+          text, parent_fn = re.subn(
+              r"function hasRequiredParent\(element: Element, role: string, model: OwnershipModel\): boolean \{[\s\S]*?\n\}",
+              """function hasRequiredParent(element: Element, role: AriaRoleRecord, model: OwnershipModel): boolean {
             const parent = semanticParent(element, model);
             if (!parent) return false;
             const parentRole = effectiveAriaRole(parent);
             return parentRole != null && role.requiredParentRoles.includes(parentRole);
-          }'''
-          if old not in text:
-              raise SystemExit('Could not replace hasRequiredParent')
-          text = text.replace(old, new)
+          }""",
+              text,
+              count=1,
+          )
 
-          old = '''      if ((REQUIRED_PARENT[explicitRole.name] || GROUPED_PARENT[explicitRole.name]) && !hasRequiredParent(element, explicitRole.name, ownership)) {
-                result.push({ kind: 'required-parent', element, detail: `role=${JSON.stringify(explicitRole.name)} is not inside its required accessibility-parent context after transparent wrappers and valid aria-owns ownership are resolved.` });
-              }
+          text, lookup = re.subn(
+              r"if \(\(REQUIRED_PARENT\[explicitRole\.name\] \|\| GROUPED_PARENT\[explicitRole\.name\]\) && !hasRequiredParent\(element, explicitRole\.name, ownership\)\) \{[\s\S]*?const allowed = ALLOWED_CHILD\[explicitRole\.name\];\n\s*if \(allowed\) \{",
+              """if (explicitRole.requiredParentRoles.length && !hasRequiredParent(element, explicitRole, ownership)) {
+              result.push({ kind: 'required-parent', element, detail: `role=${JSON.stringify(explicitRole.name)} is not inside one of its synchronized WAI-ARIA required accessibility-parent roles (${explicitRole.requiredParentRoles.join(', ')}) after transparent wrappers and valid aria-owns ownership are resolved.` });
+            }
 
-              const allowed = ALLOWED_CHILD[explicitRole.name];
-              if (allowed) {'''
-          new = '''      if (explicitRole.requiredParentRoles.length && !hasRequiredParent(element, explicitRole, ownership)) {
-                result.push({ kind: 'required-parent', element, detail: `role=${JSON.stringify(explicitRole.name)} is not inside one of its synchronized WAI-ARIA required accessibility-parent roles (${explicitRole.requiredParentRoles.join(', ')}) after transparent wrappers and valid aria-owns ownership are resolved.` });
-              }
+            const allowed = explicitRole.allowedChildRoles;
+            if (allowed.length) {""",
+              text,
+              count=1,
+          )
 
-              const allowed = explicitRole.allowedChildRoles;
-              if (allowed.length) {'''
-          if old not in text:
-              raise SystemExit('Could not replace validation relationship lookup')
-          text = text.replace(old, new)
+          if (tables, parent_fn, lookup) != (1, 1, 1):
+              raise SystemExit(f'ARIA refactor match counts: tables={tables}, parent_fn={parent_fn}, lookup={lookup}')
 
           path.write_text(text)
           PY
