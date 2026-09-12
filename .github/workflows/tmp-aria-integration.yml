@@ -1,0 +1,69 @@
+name: Temporary ARIA role-state integration
+
+on:
+  push:
+    branches:
+      - feat/aria-role-state-relationships-0.3.3
+    paths:
+      - .github/workflows/tmp-aria-integration.yml
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feat/aria-role-state-relationships-0.3.3
+      - name: Integrate new checks
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          media = Path('lib/audit/media-scan-extension.ts')
+          text = media.read_text()
+          marker = "import { selectorFor } from './dom';\n"
+          addition = marker + "import { appendAriaRoleStateRelationshipChecks } from './aria-role-state-scan-extension';\n"
+          if "appendAriaRoleStateRelationshipChecks" not in text:
+              if marker not in text: raise SystemExit('media import marker missing')
+              text = text.replace(marker, addition, 1)
+              end = "  appendElementInternalsSemantics(result, root);\n}"
+              replacement = "  appendElementInternalsSemantics(result, root);\n  appendAriaRoleStateRelationshipChecks(result, root);\n}"
+              if end not in text: raise SystemExit('media append marker missing')
+              text = text.replace(end, replacement, 1)
+          media.write_text(text)
+
+          coverage = Path('shared/wcag-coverage.ts')
+          text = coverage.read_text()
+          import_marker = "import { RULES } from './rule-catalog';\n"
+          if "ARIA_ROLE_STATE_RELATIONSHIP_RULES" not in text:
+              if import_marker not in text: raise SystemExit('coverage import marker missing')
+              text = text.replace(import_marker, "import { ARIA_ROLE_STATE_RELATIONSHIP_RULES } from './aria-role-state-rules';\n" + import_marker, 1)
+              list_marker = "  ...SPECIALIZED_ACCESSIBLE_NAME_RULES,\n"
+              if list_marker not in text: raise SystemExit('coverage list marker missing')
+              text = text.replace(list_marker, list_marker + "  ...ARIA_ROLE_STATE_RELATIONSHIP_RULES,\n", 1)
+          coverage.write_text(text)
+
+          i18n = Path('shared/i18n-base.ts')
+          text = i18n.read_text()
+          if "'FT-WCAG-016'" not in text:
+              title_marker = "  'FT-WCAG-015': 'El medidor o indicador de progreso tiene un nombre accesible no vacío',\n"
+              title_add = title_marker + "  'FT-WCAG-016': 'El body del documento no está oculto del árbol de accesibilidad',\n  'FT-WARN-023': 'Se incumple una restricción ARIA del lenguaje host o condicional',\n  'FT-REVIEW-029': 'La descripción braille o de rol personalizada necesita una semántica equivalente',\n"
+              if title_marker not in text: raise SystemExit('i18n title marker missing')
+              text = text.replace(title_marker, title_add, 1)
+
+              copy_marker = "  'FT-WARN-022': {\n    description: 'Este diálogo ARIA o elemento de árbol expuesto no tiene un nombre accesible utilizable. Corrige la autoría semántica para que el componente pueda identificarse mediante tecnologías de asistencia.',\n  },\n"
+              copy_add = "  'FT-WCAG-016': {\n    description: 'El body del documento declara aria-hidden=\"true\", lo que puede retirar prácticamente toda la página del árbol de accesibilidad.',\n    evidence: 'ARIA in HTML prohíbe aria-hidden=\"true\" en el elemento body.',\n  },\n  'FT-WARN-023': {\n    description: 'La autoría ARIA entra en conflicto con una restricción semántica del elemento HTML o con la aplicabilidad condicional de un estado o propiedad.',\n  },\n  'FT-REVIEW-029': {\n    description: 'La autoría específica para braille o la descripción personalizada del rol necesita una contraparte semántica no braille observable o un contexto de rol válido.',\n  },\n" + copy_marker
+              if copy_marker not in text: raise SystemExit('i18n copy marker missing')
+              text = text.replace(copy_marker, copy_add, 1)
+          i18n.write_text(text)
+          PY
+      - name: Commit integration
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add lib/audit/media-scan-extension.ts shared/wcag-coverage.ts shared/i18n-base.ts
+          git commit -m "Feat(aria): integrate role-state relationship checks"
+          git push
