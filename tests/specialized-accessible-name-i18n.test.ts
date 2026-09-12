@@ -18,10 +18,30 @@ function issue(
     targets: ['#target'],
     evidence,
     references: ruleId === 'FT-WCAG-015'
-      ? [{ type: 'WCAG', id: '1.1.1', label: 'Non-text Content', level: 'A', status: 'normative' }]
+      ? [{
+        type: 'WCAG',
+        id: '1.1.1',
+        label: 'Non-text Content',
+        level: 'A',
+        status: 'normative',
+        url: 'https://www.w3.org/TR/WCAG22/#non-text-content',
+      }]
       : ruleId === 'FT-WCAG-014'
-        ? [{ type: 'WCAG', id: '4.1.2', label: 'Name, Role, Value', level: 'A', status: 'normative' }]
-        : [{ type: 'WAI-ARIA', id: 'namecalculation', label: 'Accessible name requirements', status: 'editor-draft' }],
+        ? [{
+          type: 'WCAG',
+          id: '4.1.2',
+          label: 'Name, Role, Value',
+          level: 'A',
+          status: 'normative',
+          url: 'https://www.w3.org/TR/WCAG22/#name-role-value',
+        }]
+        : [{
+          type: 'WAI-ARIA',
+          id: 'namecalculation',
+          label: 'Accessible name requirements',
+          status: 'editor-draft',
+          url: 'https://w3c.github.io/aria/#namecalculation',
+        }],
   };
 }
 
