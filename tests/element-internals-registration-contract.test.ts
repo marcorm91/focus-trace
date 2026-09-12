@@ -23,7 +23,7 @@ describe('ElementInternals bridge registration contract', () => {
     const contents = source('lib/extension/page-access.ts');
     const request = contents.indexOf('browser.permissions.request');
     const denied = contents.indexOf('if (!granted) return false');
-    const registration = contents.indexOf('ensureElementInternalsBridgeRegistered');
+    const registration = contents.indexOf('await ensureElementInternalsBridgeRegistered();');
 
     expect(request).toBeGreaterThanOrEqual(0);
     expect(denied).toBeGreaterThan(request);
