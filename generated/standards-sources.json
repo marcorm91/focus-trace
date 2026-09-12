@@ -21,8 +21,8 @@
       "authority": "W3C",
       "url": "https://www.w3.org/WAI/ARIA/apg/",
       "role": "informative",
-      "contentHash": "a22dbb98b95306dbe54c2cca816c69ce9b55572702952b29b3cc8c867a9aee4b",
-      "lastModified": "Thu, 10 Sep 2026 02:58:41 GMT"
+      "contentHash": "05621c156691f8a140abd4c7c60c90abea559e720863e82d9ee704057c6c093d",
+      "lastModified": "Sat, 12 Sep 2026 01:26:38 GMT"
     },
     {
       "id": "core-aam",
@@ -98,8 +98,8 @@
       "authority": "W3C",
       "url": "https://www.w3.org/WAI/standards-guidelines/wcag/changelog/",
       "role": "informative",
-      "contentHash": "af4a8db5688b8832dc1ffee4bee37ce4833cc98a71d44a6ab6242ad6426ff6b3",
-      "lastModified": "Thu, 10 Sep 2026 02:58:41 GMT"
+      "contentHash": "b7f82c2189d500ff59c190768309f4e65c275eb258e0b2b32e03a40ee3cb97cc",
+      "lastModified": "Sat, 12 Sep 2026 01:26:38 GMT"
     },
     {
       "id": "wcag22",
