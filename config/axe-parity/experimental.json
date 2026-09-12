@@ -1,0 +1,12 @@
+{
+  "schemaVersion": 1,
+  "classifications": [
+    {"axeRuleId":"css-orientation-lock","relationship":"missing","focusTraceRuleIds":[],"rationale":"FocusTrace does not currently test whether authored CSS or script locks operation to a single display orientation.","standards":["WCAG 2.2 1.3.4","CSS/device orientation"],"evidenceKey":"e08"},
+    {"axeRuleId":"focus-order-semantics","relationship":"overlap","focusTraceRuleIds":["FT-REVIEW-008","FT-RUNTIME-011"],"rationale":"FocusTrace reviews generic interactive elements and observed pointer actions lacking keyboard reachability, intersecting focus-order semantics without reproducing axe's exact static role test.","standards":["WCAG 2.2 2.4.3","ARIA APG native semantics guidance"],"evidenceKey":"e11"},
+    {"axeRuleId":"hidden-content","relationship":"partial","focusTraceRuleIds":["FT-WCAG-006","FT-RUNTIME-005"],"rationale":"FocusTrace reports actionable hidden/focus mismatches rather than enumerating all hidden content, so it covers only the accessibility-relevant subset of this review-item rule.","standards":["WAI-ARIA hidden content","WCAG 2.2 4.1.2"],"evidenceKey":"e11"},
+    {"axeRuleId":"label-content-name-mismatch","relationship":"partial","focusTraceRuleIds":["FT-WCAG-007"],"rationale":"FocusTrace explicitly implements the text-content subset of ACT 2ee8b8 and excludes CSS-generated text, images of text and broader visual-label inference.","standards":["WCAG 2.2 2.5.3","ACT 2ee8b8"],"evidenceKey":"e08"},
+    {"axeRuleId":"p-as-heading","relationship":"missing","focusTraceRuleIds":[],"rationale":"FocusTrace does not currently infer heading misuse from bold/italic/font-size styling on paragraph elements.","standards":["WCAG 2.2 1.3.1","HTML heading semantics"],"evidenceKey":"e20"},
+    {"axeRuleId":"table-fake-caption","relationship":"missing","focusTraceRuleIds":[],"rationale":"FocusTrace does not yet infer visually caption-like table content that should use caption markup.","standards":["WCAG 2.2 1.3.1","HTML table caption"],"evidenceKey":"e07"},
+    {"axeRuleId":"td-has-header","relationship":"missing","focusTraceRuleIds":[],"rationale":"FocusTrace does not yet calculate header associations for data cells in larger tables.","standards":["WCAG 2.2 1.3.1","HTML table header associations"],"evidenceKey":"e07"}
+  ]
+}
