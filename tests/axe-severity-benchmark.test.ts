@@ -15,6 +15,7 @@ import {
 } from '../shared/html-authoring-rules';
 import { LANGUAGE_PARTS_RULE } from '../shared/language-parts-rules';
 import { RULES, type RuleDefinition } from '../shared/rule-catalog';
+import { SPECIALIZED_ACCESSIBLE_NAME_RULES } from '../shared/specialized-accessible-name-rules';
 import { STRUCTURAL_HTML_RULES } from '../shared/structural-html-rules';
 import type { Severity } from '../shared/types';
 
@@ -34,7 +35,13 @@ const HTML_RULES: RuleDefinition[] = [
 ];
 
 const ALL_RULES = new Map(
-  [...Object.values(RULES), LANGUAGE_PARTS_RULE, ...HTML_RULES, ...ADVANCED_ARIA_RULES].map((rule) => [rule.id, rule] as const),
+  [
+    ...Object.values(RULES),
+    LANGUAGE_PARTS_RULE,
+    ...HTML_RULES,
+    ...ADVANCED_ARIA_RULES,
+    ...SPECIALIZED_ACCESSIBLE_NAME_RULES,
+  ].map((rule) => [rule.id, rule] as const),
 );
 const AXE_RULES = new Map(axeRegistry.rules.map((rule) => [rule.id, rule] as const));
 const IMPACT_RANK: Record<AxeImpact, number> = {
