@@ -1,9 +1,10 @@
 # axe-core 4.13.0 parity audit
 
-Status: initial baseline  
-FocusTrace baseline: 0.2.9 (`main` at `3b625911523dcdb014b5d1524e5dc4d868d90b67`)  
+Status: exhaustive classification complete  
+FocusTrace baseline: 0.2.9  
 External benchmark: axe-core 4.13.0  
-Tracking issue: #224
+Baseline tracking issue: #224  
+Classification tracking issue: #225
 
 ## Purpose
 
@@ -41,195 +42,180 @@ The synchronized 4.13.0 registry contains 105 rules:
 | Minor | 14 |
 | **Total** | **105** |
 
-The current FocusTrace benchmark maps 29 unique axe-core rules to 22 FocusTrace rules. Seventy-six axe rules have no explicit mapping entry. “Unmapped” must not be interpreted as “missing”: several already overlap implemented FocusTrace behavior.
-
 ## Classification model
 
-Every axe-core rule must be assigned one relationship:
+Every axe-core 4.13.0 rule is assigned exactly one relationship:
 
 | Relationship | Meaning |
 | --- | --- |
 | `equivalent` | The tested applicability, expectation and relevant exceptions are materially equivalent. |
 | `partial` | FocusTrace implements a strict subset of the external rule. |
 | `superset` | FocusTrace includes the external expectation and adds supported evidence or scope. |
-| `overlap` | The rules share some evidence but have materially different applicability or outcomes. |
+| `overlap` | The rules share meaningful evidence but have materially different applicability or outcomes. |
 | `missing` | No implemented FocusTrace check provides the tested expectation. |
-| `not-applicable` | Intentionally outside the defined FocusTrace target, with rationale. |
+| `not-applicable` | Intentionally outside the defined FocusTrace target, with a documented rationale. |
 
-Classification requires source and test evidence. Similar titles or shared WCAG references are insufficient.
+Classification is conservative. Similar titles, common selectors or shared WCAG references are not enough to claim equivalence. Each non-missing relationship points to concrete FocusTrace rule identifiers and an evidence set containing implementation and test files.
 
-## Confirmed current benchmark coverage
+## Reviewed parity summary
 
-The current mapping already covers representative areas including:
+The exhaustive review of all 105 axe-core 4.13.0 rules produces this baseline:
 
-- document title;
+| Relationship | Rules |
+| --- | ---: |
+| Equivalent | 5 |
+| Partial | 23 |
+| Superset | 10 |
+| Overlap | 24 |
+| Missing | 42 |
+| Not applicable | 1 |
+| **Total** | **105** |
+
+`covered` is reported as 62 rules: equivalent + partial + superset + overlap. This is a planning metric only. It does **not** mean FocusTrace behaves identically to axe-core for 62 rules; only the five `equivalent` entries make that stronger claim.
+
+The one `not-applicable` rule is `frame-tested`. That rule checks whether axe-core itself was injected into nested frames. Requiring axe-core injection would conflict with FocusTrace's local, independent runtime architecture and therefore is not a functional parity target.
+
+## Data layout
+
+The benchmark is development-only data:
+
+- `generated/axe-rule-severities.json` stores the pinned axe-core 4.13.0 public rule inventory and impact metadata.
+- `config/axe-equivalents.json` stores the schema, benchmark policy, reproducible summary, severity mappings and evidence sets.
+- `config/axe-parity/*.json` stores the exhaustive per-rule classifications.
+- `tools/axe-validate.mjs` validates the registry, schema, relationships, evidence references and summary.
+- `tools/axe-parity-summary.mjs` prints the reproducible coverage summary and the current missing rule IDs.
+- `tests/axe-parity-benchmark.test.ts` enforces the 105/105 classification invariant and verifies evidence paths exist.
+
+Run:
+
+```bash
+npm run axe:validate
+npm run axe:summary
+```
+
+`npm run release:check` already includes `npm run axe:validate`.
+
+## Bundle isolation
+
+The benchmark must never become a runtime dependency.
+
+Browser-build validation checks that the benchmark files are absent from Chrome, Edge and Firefox output and also scans generated text assets for benchmark-only sentinels. This protects against an accidental future import that would bundle the external benchmark data into the extension.
+
+There is no runtime axe-core/Deque API, service, account or network dependency.
+
+## What the classification changes publicly
+
+Nothing in #225 changes FocusTrace rule behavior or user-facing capability identifiers. The English and Spanish public catalogs therefore remain unchanged for this issue. A later functional rule PR must update the appropriate public catalogs and rule documentation when it changes actual product capability.
+
+## Confirmed strengths in the current baseline
+
+The review confirms meaningful existing FocusTrace coverage across:
+
+- document title and page language;
 - image, SVG and image-role alternatives;
-- button, link and form-control names;
+- button, link and form-control naming;
+- several ARIA vocabulary, role, state/property and ownership checks;
 - hidden focusable content;
-- visible label in accessible name;
-- page language presence and validity;
-- text contrast;
-- several core ARIA authoring constraints.
+- visible-label-in-name analysis;
+- text contrast and use-of-color evidence;
+- target-size review;
+- HTML structural/content-model validation;
+- heading, landmark and bypass reviews;
+- media alternatives and pause/stop/hide evidence;
+- runtime keyboard/focus evidence that has no direct static axe equivalent.
 
-This mapping remains useful but is too coarse to establish complete equivalence.
+The relationship type must still be consulted before treating any of those areas as equivalent.
 
-## Unmapped families
+## Genuine gaps established by the review
 
-The current benchmark leaves 76 axe-core rules without an explicit relationship.
+Forty-two axe-core rules currently have no implemented FocusTrace expectation matching their tested condition. Important gap families include:
 
-| Family | Raw unmapped count | Initial interpretation |
-| --- | ---: | --- |
-| ARIA | 13 | Mixture of genuine name/role gaps and likely validator overlap |
-| Names and labels | 7 | Several specialized name sources and duplicate-label cases need review |
-| Structure and landmarks | 17 | Some existing review overlap; significant deterministic coverage remains |
-| Tables and lists | 9 | Content-model warnings may overlap, but table relationships are a likely gap |
-| Media, images and frames | 8 | Existing media reviews overlap; frame-specific rules need attention |
-| Visual/CSS | 4 | Target size is already implemented but unmapped; viewport rules need review |
-| Keyboard/navigation | 3 | Runtime evidence overlaps; static best-practice expectations differ |
-| Forms | 1 | Existing autocomplete review likely overlaps but is deliberately conservative |
-| Other/best practice | 14 | Includes existing warning/review overlap and genuine missing checks |
-| **Total** | **76** | Must be classified from implementation and tests |
+### Accessible names and modern ARIA
 
-## High-confidence mapping corrections to investigate first
-
-These entries are not yet declared equivalent. They are the first candidates for source-level verification:
-
-| axe-core rule | FocusTrace candidate | Expected relationship |
-| --- | --- | --- |
-| `target-size` | `FT-WCAG-012` | partial or overlap |
-| `duplicate-id` | `FT-WARN-004` | overlap |
-| `duplicate-id-active` | `FT-WARN-004` | overlap |
-| `nested-interactive` | `FT-WARN-010` | partial or overlap |
-| `heading-order` | `FT-REVIEW-002` | partial or overlap |
-| `bypass` | `FT-REVIEW-012` | partial |
-| `skip-link` | `FT-REVIEW-012` | overlap |
-| `autocomplete-valid` | `FT-REVIEW-014` | partial or overlap |
-| `identical-links-same-purpose` | `FT-REVIEW-015` | overlap |
-| `blink` / `marquee` | `FT-REVIEW-026` | partial or overlap |
-| `audio-caption` / `video-caption` | existing media reviews | partial or overlap |
-| `no-autoplay-audio` | existing media/motion reviews | partial or overlap |
-
-FocusTrace intentionally reports many of these as REVIEW or WARNING. Matching the same DOM pattern does not justify claiming deterministic equivalence.
-
-## Priority gap order
-
-### P0 — Make the benchmark accurate
-
-1. Extend the mapping schema with relationship and rationale.
-2. Classify all existing overlap.
-3. Add validation for the new schema.
-4. Generate summary counts automatically.
-5. Confirm benchmark data and tooling are excluded from browser bundles.
-6. Preserve offline release validation.
-
-### P1 — Accessible names and modern ARIA
-
-Review and implement high-impact coverage for:
-
-- dialog names;
-- meter and progressbar names;
-- tab, tooltip and treeitem names;
-- summary names;
+- dialog, meter, progressbar, tab, tooltip and treeitem naming;
 - ARIA conditional attributes;
-- ARIA descriptions and braille equivalence;
-- ElementInternals-backed ARIA and form-associated labels.
+- braille-equivalent naming;
+- host-element allowed-role restrictions.
 
-The exact outcome type must follow the applicable standard and observable evidence.
+### Frames, landmarks and document structure
 
-### P1 — Frames, landmarks and document structure
+- frame titles and frame-title uniqueness;
+- focusable frame content;
+- banner/contentinfo placement and uniqueness;
+- full landmark-region coverage;
+- empty headings and page-level h1 guidance.
 
-Review and implement:
+### Tables
 
-- frame title and uniqueness;
-- focusable content in frames;
-- explicit untested-frame evidence;
-- one-main and unique-landmark expectations;
-- top-level landmark placement;
-- named/unique regions;
-- empty or heading-like paragraph reviews;
-- scrollable region keyboard access.
-
-### P1 — Tables and lists
-
-Review and implement:
-
-- native/ARIA list ownership;
-- definition-list structure;
+- `headers` IDREF relationships;
+- header-to-data-cell association;
 - empty table headers;
-- table header/data associations;
-- `headers` and `scope` validity;
-- fake captions and duplicate names.
+- `scope` validity;
+- fake captions and duplicate table naming.
 
-### P2 — Browser/layout behavior
+### Browser and authoring behavior
 
-Review and implement:
+- accesskey uniqueness;
+- meta refresh variants;
+- CSS orientation locking;
+- server-side image maps;
+- object alternatives;
+- scrollable-region focusability;
+- redundant image alternative text.
 
-- viewport zoom restrictions;
-- orientation lock;
-- refresh/redirect behavior;
-- advanced contrast edge cases;
-- hidden content diagnostics;
-- generated and rendered content boundaries.
+The machine-readable classification files are the source of truth for the complete list.
 
-### P2 — Best-practice and authoring signals
+## Priority after classification
 
-Classify separately from WCAG failures:
+The first functional implementation family remains **accessible names for specialized ARIA widgets and related native elements**.
 
-- access keys;
-- redundant alternative text;
-- page-level heading guidance;
-- region guidance;
-- identical-link guidance;
-- presentational-role conflicts.
+This is a strong next step because it has high user impact, can reuse the current semantic/name infrastructure, is largely deterministic, has a bounded fixture surface and closes several explicit benchmark gaps without coupling FocusTrace to axe-core implementation details.
 
-## First functional implementation candidate
+Candidate gaps include:
 
-After the P0 classification, the first coherent rule family should be **accessible names for specialized ARIA widgets and native disclosure/frame elements**.
+- `aria-dialog-name`;
+- `aria-meter-name`;
+- `aria-progressbar-name`;
+- `aria-tab-name`;
+- `aria-tooltip-name`;
+- `aria-treeitem-name`;
+- `summary-name`;
+- frame accessible names in a separate focused change if frame collection requires different runtime handling.
 
-Reasons:
+## Required evidence for later parity changes
 
-- high user impact;
-- strong deterministic potential;
-- reuse of the current semantic/name infrastructure;
-- direct benefit to page and component scans;
-- a bounded set of fixtures;
-- alignment with current ARIA and ElementInternals changes;
-- foundation for guided APG workflows.
+For every relationship change or new FocusTrace rule, prefer evidence covering:
 
-The implementation should be split if ElementInternals requires a different page-world collection mechanism or additional permission review.
-
-## Required test evidence
-
-For every relationship or new rule:
-
-- applicable passing example;
-- applicable failing or review example;
-- inapplicable example;
-- hidden-content case;
+- an applicable passing example;
+- an applicable failing or review example;
+- an inapplicable example;
+- hidden-content behavior where relevant;
 - native and ARIA variants where relevant;
-- invalid-reference case;
+- invalid-reference behavior;
 - browser-rendered E2E coverage when computed state matters;
 - explicit known limitations.
 
-For parity claims, FocusTrace fixtures and external benchmark behavior must be recorded separately. axe-core output must never become the normative reason for a FocusTrace result.
+FocusTrace fixtures and external benchmark behavior must be recorded separately. axe-core output must never become the normative reason for a FocusTrace result.
 
 ## Release constraints
 
-- No version bump or tag on the audit branch.
+- No version bump or tag for the audit/classification work.
 - No new runtime network access.
 - No broader browser permission without explicit review.
 - No copied Pro code, text or gated material.
-- Keep README.md and README.es.md semantically aligned for capability changes.
+- Keep README.md and README.es.md semantically aligned when public capabilities change.
 - Update docs/RULES.md when rule behavior changes.
 - Run `npm run capabilities:validate` for public capability changes.
 - Run `npm run release:check:full` before release work.
 
-## Completion criteria
+## Completion criteria for #225
 
-The audit is complete when:
+#225 is complete when:
 
-1. all 105 axe-core rules have an evidence-backed relationship;
-2. existing FocusTrace coverage is no longer counted as missing because of absent mappings;
-3. genuine gaps have standards references and implementation/test plans;
-4. the first functional rule family has shipped through a focused PR;
-5. the generated summary can be reproduced by repository validation scripts.
+1. all 105 axe-core 4.13.0 rules are classified exactly once;
+2. every relationship includes rationale and standards references;
+3. implemented relationships point to FocusTrace source/test evidence;
+4. validation fails on missing, duplicate or inconsistent classifications;
+5. the summary is reproducible from repository data;
+6. benchmark-only data is excluded from browser builds;
+7. no runtime axe-core dependency is introduced.
