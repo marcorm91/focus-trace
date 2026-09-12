@@ -124,8 +124,8 @@ export const ALLOWED_ARIA_CHILD_RULE: RuleDefinition = {
   title: 'ARIA container exposes an incompatible accessibility child role',
   severity: 'critical',
   ...impact(
-    'A composite or structural ARIA container with incompatible accessibility children can expose a relationship that does not match the ARIA role model. This aligns with the critical axe-core aria-required-children benchmark.',
-    'Un contenedor ARIA compuesto o estructural con hijos de accesibilidad incompatibles puede exponer una relación que no coincide con el modelo de roles ARIA. Se alinea con la referencia crítica de aria-required-children de axe-core.',
+    'A composite or structural ARIA container with incompatible accessibility children can expose a relationship that does not match the WAI-ARIA allowed-child role model.',
+    'Un contenedor ARIA compuesto o estructural con hijos de accesibilidad incompatibles puede exponer una relación que no coincide con el modelo de roles hijo permitidos de WAI-ARIA.',
   ),
   references: [ariaChildrenReference],
 };
