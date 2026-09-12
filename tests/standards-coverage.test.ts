@@ -277,7 +277,7 @@ describe('standards registry coverage', () => {
 
   it('keeps ACT traceability attached to the FocusTrace check that supplies it', () => {
     expect(wcagCoverageForCriterion('1.1.1')).toMatchObject({
-      ruleIds: ['FT-WCAG-002'],
+      ruleIds: ['FT-WCAG-002', 'FT-WCAG-015'],
       actRuleIds: ['23a2a8'],
     });
     expect(wcagCoverageForCriterion('1.1.1')?.checks[0]).toMatchObject({

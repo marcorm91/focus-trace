@@ -53,12 +53,12 @@ describe('axe-core parity classification', () => {
     expect(summary).toEqual({
       total: 105,
       equivalent: 5,
-      partial: 23,
+      partial: 30,
       superset: 10,
       overlap: 21,
-      missing: 45,
+      missing: 38,
       'not-applicable': 1,
-      covered: 59,
+      covered: 66,
     });
   });
 
