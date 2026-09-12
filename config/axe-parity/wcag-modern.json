@@ -1,0 +1,8 @@
+{
+  "schemaVersion": 1,
+  "classifications": [
+    {"axeRuleId":"autocomplete-valid","relationship":"partial","focusTraceRuleIds":["FT-REVIEW-014"],"rationale":"FocusTrace validates standard autocomplete purpose tokens but keeps applicability contextual because WCAG depends on whether the field collects information about the user.","standards":["WCAG 2.2 1.3.5","ACT 73f2c2"],"evidenceKey":"e17"},
+    {"axeRuleId":"avoid-inline-spacing","relationship":"partial","focusTraceRuleIds":["FT-REVIEW-016"],"rationale":"FocusTrace implements the three inline-!important ACT spacing subsets and intentionally omits paragraph spacing and full combined-loss testing.","standards":["WCAG 2.2 1.4.12","ACT 24afc2","ACT 78fd32","ACT 9e45ec"],"evidenceKey":"e18"},
+    {"axeRuleId":"target-size","relationship":"partial","focusTraceRuleIds":["FT-WCAG-012"],"rationale":"FocusTrace evaluates observable 24px geometry, spacing and inline exceptions but retains REVIEW where equivalent, essential or user-agent exceptions need context.","standards":["WCAG 2.2 2.5.8"],"evidenceKey":"e19"}
+  ]
+}
