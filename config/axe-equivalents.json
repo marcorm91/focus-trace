@@ -1,8 +1,22 @@
 {
-  "schemaVersion": 1,
-  "benchmark": "axe-core",
-  "policy": "Mapped FocusTrace rules use the highest impact among equivalent axe-core rules when policy is highest-impact. Rules without a reliable semantic equivalent remain owned by FocusTrace.",
-  "mappings": [
+  "schemaVersion": 2,
+  "benchmark": {
+    "name": "axe-core",
+    "release": "4.13.0",
+    "role": "External implementation benchmark only; WCAG, ACT, WAI-ARIA, AccName, HTML and APG remain the normative sources."
+  },
+  "policy": "Every axe-core 4.13 rule has exactly one reviewed relationship. Equivalent is reserved for materially matching expectations; partial, superset and overlap preserve meaningful non-binary coverage without overclaiming.",
+  "summary": {
+    "total": 105,
+    "equivalent": 5,
+    "partial": 23,
+    "superset": 10,
+    "overlap": 24,
+    "missing": 42,
+    "not-applicable": 1,
+    "covered": 62
+  },
+  "severityMappings": [
     { "focusTraceRuleId": "FT-WCAG-001", "axeRuleIds": ["document-title"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WCAG-002", "axeRuleIds": ["image-alt", "role-img-alt", "svg-img-alt"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WCAG-003", "axeRuleIds": ["button-name"], "policy": "highest-impact" },
@@ -25,5 +39,40 @@
     { "focusTraceRuleId": "FT-WARN-017", "axeRuleIds": ["aria-required-parent"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WARN-018", "axeRuleIds": ["aria-required-children"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WARN-020", "axeRuleIds": ["aria-allowed-attr"], "policy": "highest-impact" }
-  ]
+  ],
+  "classificationFiles": [
+    "config/axe-parity/core-01.json",
+    "config/axe-parity/core-02.json",
+    "config/axe-parity/core-03.json",
+    "config/axe-parity/core-04.json",
+    "config/axe-parity/wcag-modern.json",
+    "config/axe-parity/best-practice-01.json",
+    "config/axe-parity/best-practice-02.json",
+    "config/axe-parity/aaa.json",
+    "config/axe-parity/experimental.json",
+    "config/axe-parity/deprecated.json"
+  ],
+  "evidenceSets": {
+    "e01": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/accessible-name.test.ts", "tests/axe-severity-benchmark.test.ts"] },
+    "e02": { "sources": ["shared/aria-authoring-rules.ts", "shared/rule-catalog.ts"], "tests": ["tests/aria-validator.test.ts", "tests/axe-severity-benchmark.test.ts"] },
+    "e03": { "sources": ["shared/rule-catalog.ts", "shared/aria-authoring-rules.ts"], "tests": ["tests/accessible-name.test.ts", "tests/aria-validator.test.ts"] },
+    "e04": { "sources": ["shared/rule-catalog.ts", "shared/media-rules.ts"], "tests": ["tests/pause-stop-hide.test.ts", "tests/media-alternatives.test.ts"] },
+    "e05": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/bypass-blocks.test.ts"] },
+    "e06": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/contrast.test.ts", "tests/unresolved-contrast-policy.test.ts"] },
+    "e07": { "sources": ["shared/structural-html-rules.ts", "shared/html-authoring-rules.ts"], "tests": ["tests/content-model.test.ts", "tests/semantics.test.ts"] },
+    "e08": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/semantics.test.ts", "tests/axe-severity-benchmark.test.ts"] },
+    "e09": { "sources": ["shared/html-authoring-rules.ts"], "tests": ["tests/semantics.test.ts", "tests/obsolete-html.test.ts"] },
+    "e10": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/accessible-name.test.ts", "tests/semantics.test.ts"] },
+    "e11": { "sources": ["shared/rule-catalog.ts", "shared/keyboard-pointer-rules.ts"], "tests": ["tests/keyboard-focus-runtime.test.ts", "tests/keyboard-pointer.test.ts"] },
+    "e12": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/runtime-injection.test.ts", "tests/semantics.test.ts"] },
+    "e13": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/language-parts.test.ts", "tests/language-parts-scan.test.ts"] },
+    "e14": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/use-of-color.test.ts"] },
+    "e15": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/resize-text.test.ts", "tests/resize-text-workflow-contract.test.ts"] },
+    "e16": { "sources": ["shared/media-rules.ts"], "tests": ["tests/media-alternatives.test.ts"] },
+    "e17": { "sources": ["shared/form-purpose-rules.ts"], "tests": ["tests/autocomplete-purpose.test.ts", "tests/autocomplete-purpose-scan.test.ts"] },
+    "e18": { "sources": ["shared/text-spacing-rules.ts"], "tests": ["tests/text-spacing.test.ts", "tests/text-spacing-scan.test.ts"] },
+    "e19": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/target-size.test.ts"] },
+    "e20": { "sources": ["shared/rule-catalog.ts", "shared/structural-html-rules.ts"], "tests": ["tests/heading-outline.test.ts", "tests/heading-review-tree-contract.test.ts"] },
+    "e21": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/link-purpose-context.test.ts", "tests/consistent-identification.test.ts"] }
+  }
 }
