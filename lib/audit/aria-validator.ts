@@ -261,7 +261,7 @@ function hasRequiredParent(element: Element, role: AriaRoleRecord, model: Owners
   const parent = semanticParent(element, model);
   if (!parent) return false;
   const parentRole = effectiveAriaRole(parent);
-  return parentRole != null && role.requiredParentRoles.includes(parentRole);
+  return parentRole != null && (role.requiredParentRoles ?? []).includes(parentRole);
 }
 
 export function hasAccessibilityAncestorRole(element: Element, roleName: string): boolean {
@@ -451,11 +451,11 @@ export function evaluateAdvancedAria(root: ScanRoot): AriaValidationSignal[] {
         }
       }
 
-      if (explicitRole.requiredParentRoles.length && !hasRequiredParent(element, explicitRole, ownership)) {
-    result.push({ kind: 'required-parent', element, detail: `role=${JSON.stringify(explicitRole.name)} is not inside one of its synchronized WAI-ARIA required accessibility-parent roles (${explicitRole.requiredParentRoles.join(', ')}) after transparent wrappers and valid aria-owns ownership are resolved.` });
+      if ((explicitRole.requiredParentRoles ?? []).length && !hasRequiredParent(element, explicitRole, ownership)) {
+    result.push({ kind: 'required-parent', element, detail: `role=${JSON.stringify(explicitRole.name)} is not inside one of its synchronized WAI-ARIA required accessibility-parent roles (${(explicitRole.requiredParentRoles ?? []).join(', ')}) after transparent wrappers and valid aria-owns ownership are resolved.` });
   }
 
-  const allowed = explicitRole.allowedChildRoles;
+  const allowed = explicitRole.allowedChildRoles ?? [];
   if (allowed.length) {
         for (const child of semanticChildren(element, ownership)) {
           const childRole = effectiveAriaRole(child);

@@ -69,11 +69,13 @@ export function buildAriaRegistry(roleInfo, specHtml) {
 
       const section = roleSection(specHtml, role.name);
       const deprecatedVersion = deprecatedRoleVersion(specHtml, role.name);
+      const requiredParentRoles = roleReferences(section, 'role-scope');
+      const allowedChildRoles = roleReferences(section, 'role-mustcontain');
       return {
         name: role.name,
         parentRoles: sortedUnique(role.parentRoles ?? []),
-        requiredParentRoles: roleReferences(section, 'role-scope'),
-        allowedChildRoles: roleReferences(section, 'role-mustcontain'),
+        ...(requiredParentRoles.length ? { requiredParentRoles } : {}),
+        ...(allowedChildRoles.length ? { allowedChildRoles } : {}),
         deprecated: Boolean(deprecatedVersion),
         deprecatedVersion,
         supportedProperties: sortedUnique(allProperties.map((property) => property.name).filter(Boolean)),
@@ -88,8 +90,8 @@ export function buildAriaRegistry(roleInfo, specHtml) {
   const deprecatedRolePropertyPairs = roles.reduce((total, role) => total + role.deprecatedProperties.length, 0);
   const disallowedRolePropertyPairs = roles.reduce((total, role) => total + role.disallowedProperties.length, 0);
   const requiredRolePropertyPairs = roles.reduce((total, role) => total + role.requiredProperties.length, 0);
-  const requiredParentRolePairs = roles.reduce((total, role) => total + role.requiredParentRoles.length, 0);
-  const allowedChildRolePairs = roles.reduce((total, role) => total + role.allowedChildRoles.length, 0);
+  const requiredParentRolePairs = roles.reduce((total, role) => total + (role.requiredParentRoles?.length ?? 0), 0);
+  const allowedChildRolePairs = roles.reduce((total, role) => total + (role.allowedChildRoles?.length ?? 0), 0);
 
   return {
     schemaVersion: 3,

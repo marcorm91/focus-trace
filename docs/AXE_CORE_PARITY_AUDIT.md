@@ -71,7 +71,7 @@ The exhaustive review of all 105 axe-core 4.13.0 rules produces this baseline:
 | Not applicable | 1 |
 | **Total** | **105** |
 
-`covered` is reported as 71 rules: equivalent + partial + superset + overlap. This is a planning metric only. It does **not** mean FocusTrace behaves identically to axe-core for 59 rules; only the five `equivalent` entries make that stronger claim.
+`covered` is reported as 71 rules: equivalent + partial + superset + overlap. This is a planning metric only. It does **not** mean FocusTrace behaves identically to axe-core for 71 rules; only the six `equivalent` entries make that stronger claim.
 
 The one `not-applicable` rule is `frame-tested`. That rule checks whether axe-core itself was injected into nested frames. Requiring axe-core injection would conflict with FocusTrace's local, independent runtime architecture and therefore is not a functional parity target.
 
