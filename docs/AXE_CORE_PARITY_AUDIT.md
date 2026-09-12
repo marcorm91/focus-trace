@@ -103,9 +103,9 @@ Browser-build validation checks that the benchmark files are absent from Chrome,
 
 There is no runtime axe-core/Deque API, service, account or network dependency.
 
-## What the classification changes publicly
+## What #226 changes publicly
 
-Nothing in #225 changes FocusTrace rule behavior or user-facing capability identifiers. The English and Spanish public catalogs therefore remain unchanged for this issue. A later functional rule PR must update the appropriate public catalogs and rule documentation when it changes actual product capability.
+#226 adds three public FocusTrace contracts: `FT-WCAG-014`, `FT-WCAG-015` and `FT-WARN-022`. The English and Spanish capability catalogs and the rule methodology documentation are updated together. The benchmark relationships for the seven targeted axe-core rules move from `missing` to conservative `partial` coverage; no rule is promoted to `equivalent`.
 
 ## Confirmed strengths in the current baseline
 
@@ -113,7 +113,7 @@ The review confirms meaningful existing FocusTrace coverage across:
 
 - document title and page language;
 - image, SVG and image-role alternatives;
-- button, link and form-control naming;
+- button, link, form-control and specialized widget naming;
 - several ARIA vocabulary, role, state/property and ownership checks;
 - hidden focusable content;
 - visible-label-in-name analysis;
@@ -173,18 +173,9 @@ The machine-readable classification files are the source of truth for the comple
 
 The specialized accessible-name family is now implemented in #226. The next planned foundation is **ElementInternals semantics and form-associated labels** (#227), so modern custom elements can feed the same evidence contract where browser-observable data allows it.
 
-This is a strong next step because it has high user impact, can reuse the current semantic/name infrastructure, is largely deterministic, has a bounded fixture surface and closes several explicit benchmark gaps without coupling FocusTrace to axe-core implementation details.
+ElementInternals is the logical next step because it extends the same semantic and accessible-name evidence model to modern form-associated custom elements without broadening browser permissions. It must remain conservative when internals are unavailable or browser behavior differs.
 
-Candidate gaps include:
-
-- `aria-dialog-name`;
-- `aria-meter-name`;
-- `aria-progressbar-name`;
-- `aria-tab-name`;
-- `aria-tooltip-name`;
-- `aria-treeitem-name`;
-- `summary-name`;
-- frame accessible names in a separate focused change if frame collection requires different runtime handling.
+Frame accessible names remain a separate gap family because frame collection and cross-document inspection have different applicability and runtime constraints.
 
 ## Required evidence for later parity changes
 
