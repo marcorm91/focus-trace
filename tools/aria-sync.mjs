@@ -46,6 +46,16 @@ function sortedUnique(values) {
   return [...new Set(values)].sort();
 }
 
+function roleReferences(section, className) {
+  const classPattern = className.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const cell = section.match(new RegExp(`<td\\s+class=["']${classPattern}["'][^>]*>([\\s\\S]*?)<\\/td>`, 'i'))?.[1] ?? '';
+  return sortedUnique(
+    [...cell.matchAll(/<rref>([^<]+)<\/rref>/gi)]
+      .map((match) => normaliseText(match[1] ?? ''))
+      .filter(Boolean),
+  );
+}
+
 export function buildAriaRegistry(roleInfo, specHtml) {
   const version = ariaVersionFromSpec(specHtml);
   const propertyKinds = new Map();
@@ -57,10 +67,13 @@ export function buildAriaRegistry(roleInfo, specHtml) {
         if (property.name && property.is) propertyKinds.set(property.name, property.is);
       }
 
+      const section = roleSection(specHtml, role.name);
       const deprecatedVersion = deprecatedRoleVersion(specHtml, role.name);
       return {
         name: role.name,
         parentRoles: sortedUnique(role.parentRoles ?? []),
+        requiredParentRoles: roleReferences(section, 'role-scope'),
+        allowedChildRoles: roleReferences(section, 'role-mustcontain'),
         deprecated: Boolean(deprecatedVersion),
         deprecatedVersion,
         supportedProperties: sortedUnique(allProperties.map((property) => property.name).filter(Boolean)),
@@ -75,9 +88,11 @@ export function buildAriaRegistry(roleInfo, specHtml) {
   const deprecatedRolePropertyPairs = roles.reduce((total, role) => total + role.deprecatedProperties.length, 0);
   const disallowedRolePropertyPairs = roles.reduce((total, role) => total + role.disallowedProperties.length, 0);
   const requiredRolePropertyPairs = roles.reduce((total, role) => total + role.requiredProperties.length, 0);
+  const requiredParentRolePairs = roles.reduce((total, role) => total + role.requiredParentRoles.length, 0);
+  const allowedChildRolePairs = roles.reduce((total, role) => total + role.allowedChildRoles.length, 0);
 
   return {
-    schemaVersion: 2,
+    schemaVersion: 3,
     source: {
       repository: ARIA_REPOSITORY,
       ref: ARIA_REF,
@@ -92,6 +107,8 @@ export function buildAriaRegistry(roleInfo, specHtml) {
       deprecatedRolePropertyPairs,
       disallowedRolePropertyPairs,
       requiredRolePropertyPairs,
+      requiredParentRolePairs,
+      allowedChildRolePairs,
     },
     properties,
     roles,
@@ -117,6 +134,6 @@ if (invokedDirectly) {
   const output = process.argv[2] ?? DEFAULT_OUTPUT;
   const registry = await syncAriaRegistry(output);
   console.log(
-    `ARIA registry synced: ${registry.summary.roles} roles, ${registry.summary.deprecatedRoles} deprecated roles, ${registry.summary.deprecatedRolePropertyPairs} deprecated role/property pairs.`,
+    `ARIA registry synced: ${registry.summary.roles} roles, ${registry.summary.deprecatedRoles} deprecated roles, ${registry.summary.requiredParentRolePairs} required-parent pairs, ${registry.summary.allowedChildRolePairs} allowed-child pairs.`,
   );
 }
