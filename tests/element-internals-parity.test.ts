@@ -3,16 +3,16 @@ import equivalents from '../config/axe-equivalents.json';
 import core01 from '../config/axe-parity/core-01.json';
 
 describe('ElementInternals axe-core parity evidence', () => {
-  it('strengthens existing relationships without inflating the reviewed coverage total', () => {
+  it('keeps the reviewed coverage total aligned after later roadmap packages', () => {
     expect(equivalents.summary).toMatchObject({
       total: 105,
-      equivalent: 5,
-      partial: 30,
+      equivalent: 6,
+      partial: 33,
       superset: 10,
-      overlap: 21,
-      missing: 38,
+      overlap: 22,
+      missing: 33,
       'not-applicable': 1,
-      covered: 66,
+      covered: 71,
     });
   });
 
