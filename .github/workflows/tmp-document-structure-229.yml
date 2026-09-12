@@ -1,0 +1,769 @@
+name: Temporary implement document structure coverage
+
+on:
+  push:
+    branches:
+      - feat/document-structure-landmarks-0.4.0
+    paths:
+      - .github/workflows/tmp-document-structure-229.yml
+
+permissions:
+  contents: write
+
+jobs:
+  implement:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feat/document-structure-landmarks-0.4.0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - name: Add document structure rules and evaluator
+        run: |
+          cat > shared/document-structure-rules.ts <<'EOF'
+          import type { RuleDefinition } from './rule-catalog';
+          import type { StandardReference } from './types';
+
+          const htmlHeadings: StandardReference = {
+            type: 'HTML',
+            id: 'headings-and-sections',
+            label: 'HTML Living Standard · Headings and sections',
+            status: 'normative',
+            url: 'https://html.spec.whatwg.org/multipage/sections.html#headings-and-sections',
+          };
+
+          const landmarkGuidance: StandardReference = {
+            type: 'WAI-ARIA APG',
+            id: 'landmark-regions',
+            label: 'ARIA Authoring Practices Guide · Landmark Regions',
+            status: 'informative',
+            url: 'https://www.w3.org/WAI/ARIA/apg/practices/landmark-regions/',
+          };
+
+          const ariaRegion: StandardReference = {
+            type: 'WAI-ARIA',
+            id: 'region',
+            label: 'WAI-ARIA · region role',
+            status: 'editor-draft',
+            url: 'https://w3c.github.io/aria/#region',
+          };
+
+          export const PAGE_LEVEL_ONE_HEADING_RULE: RuleDefinition = {
+            id: 'FT-REVIEW-030',
+            title: 'Page should expose a level-one heading',
+            severity: 'moderate',
+            severityRationale: {
+              en: 'A page without a level-one heading can make its hierarchy and primary topic harder to identify, but heading strategy remains contextual and is therefore reviewed rather than failed automatically.',
+              es: 'Una página sin encabezado de nivel uno puede dificultar identificar su jerarquía y tema principal, pero la estrategia de encabezados depende del contexto y por eso se revisa en lugar de fallar automáticamente.',
+            },
+            references: [htmlHeadings],
+          };
+
+          export const EMPTY_HEADING_RULE: RuleDefinition = {
+            id: 'FT-REVIEW-031',
+            title: 'Exposed heading should contain usable content',
+            severity: 'moderate',
+            severityRationale: {
+              en: 'An exposed empty heading adds a navigation stop without communicating a section topic. FocusTrace keeps the result as review because rendered or alternative content can require contextual verification.',
+              es: 'Un encabezado vacío expuesto añade una parada de navegación sin comunicar el tema de una sección. FocusTrace mantiene el resultado como revisión porque el contenido renderizado o alternativo puede requerir verificación contextual.',
+            },
+            references: [htmlHeadings],
+          };
+
+          export const PARAGRAPH_AS_HEADING_RULE: RuleDefinition = {
+            id: 'FT-REVIEW-032',
+            title: 'Heading-like paragraph needs semantic review',
+            severity: 'moderate',
+            severityRationale: {
+              en: 'Text styled prominently like a heading but authored as a paragraph can hide document structure from assistive technology. Styling is only a heuristic, so FocusTrace never promotes this signal to an automatic failure.',
+              es: 'Un texto con apariencia destacada de encabezado pero creado como párrafo puede ocultar la estructura del documento a las tecnologías de asistencia. El estilo solo es una heurística, por lo que FocusTrace nunca convierte esta señal en un fallo automático.',
+            },
+            references: [htmlHeadings],
+          };
+
+          export const TOP_LEVEL_LANDMARK_RULE: RuleDefinition = {
+            id: 'FT-REVIEW-033',
+            title: 'Primary landmarks should be top level',
+            severity: 'moderate',
+            severityRationale: {
+              en: 'Nesting banner, main, complementary or contentinfo landmarks inside other landmarks can make the page-level structure harder to understand. APG expresses this as authoring guidance, so FocusTrace reports REVIEW.',
+              es: 'Anidar landmarks banner, main, complementary o contentinfo dentro de otros landmarks puede dificultar comprender la estructura de nivel de página. APG lo expresa como guía de autoría, por lo que FocusTrace informa REVIEW.',
+            },
+            references: [landmarkGuidance],
+          };
+
+          export const DUPLICATE_SINGLETON_LANDMARK_RULE: RuleDefinition = {
+            id: 'FT-REVIEW-034',
+            title: 'Repeated banner or contentinfo landmarks need review',
+            severity: 'moderate',
+            severityRationale: {
+              en: 'Multiple banner or contentinfo landmarks in the same document scope can make global page regions ambiguous. Nested document/application scopes are evaluated independently and the result remains contextual review.',
+              es: 'Varios landmarks banner o contentinfo dentro del mismo ámbito documental pueden volver ambiguas las regiones globales de la página. Los ámbitos document/application anidados se evalúan por separado y el resultado sigue siendo una revisión contextual.',
+            },
+            references: [landmarkGuidance],
+          };
+
+          export const LANDMARK_COVERAGE_RULE: RuleDefinition = {
+            id: 'FT-REVIEW-035',
+            title: 'Perceivable page content should be contained by landmarks',
+            severity: 'moderate',
+            severityRationale: {
+              en: 'Content outside landmark regions can be easier to overlook when assistive-technology users navigate by landmarks. Because landmark coverage is an APG best practice and page design is contextual, FocusTrace reports REVIEW.',
+              es: 'El contenido situado fuera de regiones landmark puede ser más fácil de pasar por alto al navegar mediante landmarks con tecnologías de asistencia. Como la cobertura por landmarks es una buena práctica APG y el diseño depende del contexto, FocusTrace informa REVIEW.',
+            },
+            references: [landmarkGuidance],
+          };
+
+          export const REGION_NAME_RULE: RuleDefinition = {
+            id: 'FT-WARN-024',
+            title: 'Explicit region landmark requires an accessible name',
+            severity: 'moderate',
+            severityRationale: {
+              en: 'An explicitly authored region without an accessible name cannot communicate the purpose that distinguishes the region from surrounding content. This is reported as an ARIA authoring warning rather than a WCAG failure.',
+              es: 'Una región creada explícitamente sin nombre accesible no puede comunicar el propósito que la distingue del contenido circundante. Se informa como aviso de autoría ARIA y no como fallo WCAG.',
+            },
+            references: [ariaRegion, landmarkGuidance],
+          };
+
+          export const DOCUMENT_STRUCTURE_RULES = [
+            PAGE_LEVEL_ONE_HEADING_RULE,
+            EMPTY_HEADING_RULE,
+            PARAGRAPH_AS_HEADING_RULE,
+            TOP_LEVEL_LANDMARK_RULE,
+            DUPLICATE_SINGLETON_LANDMARK_RULE,
+            LANDMARK_COVERAGE_RULE,
+            REGION_NAME_RULE,
+          ] as const;
+          EOF
+
+          cat > lib/audit/landmarks.ts <<'EOF'
+          import { accessibleNameDetails, isProgrammaticallyHidden } from './dom';
+          import { scopedElements } from './scan-elements';
+          import { registeredExplicitAriaRole } from './standards-registry';
+
+          export type LandmarkRole = 'banner' | 'complementary' | 'contentinfo' | 'form' | 'main' | 'navigation' | 'region' | 'search';
+
+          const LANDMARK_ROLES = new Set<LandmarkRole>([
+            'banner',
+            'complementary',
+            'contentinfo',
+            'form',
+            'main',
+            'navigation',
+            'region',
+            'search',
+          ]);
+          const SECTIONING_ANCESTOR_SELECTOR = 'article, aside, main, nav, section';
+          const LANDMARK_CANDIDATE_SELECTOR = 'header, footer, main, nav, aside, section, form, search, [role]';
+
+          function asLandmarkRole(value: string | undefined): LandmarkRole | null {
+            return value && LANDMARK_ROLES.has(value as LandmarkRole) ? value as LandmarkRole : null;
+          }
+
+          function explicitRole(element: Element): string | undefined {
+            return element.hasAttribute('role') ? registeredExplicitAriaRole(element)?.name : undefined;
+          }
+
+          function nativeLandmarkRole(element: Element): LandmarkRole | null {
+            switch (element.tagName) {
+              case 'MAIN': return 'main';
+              case 'NAV': return 'navigation';
+              case 'ASIDE': return 'complementary';
+              case 'SEARCH': return 'search';
+              case 'HEADER':
+                return element.parentElement?.closest(SECTIONING_ANCESTOR_SELECTOR) ? null : 'banner';
+              case 'FOOTER':
+                return element.parentElement?.closest(SECTIONING_ANCESTOR_SELECTOR) ? null : 'contentinfo';
+              case 'SECTION':
+                return accessibleNameDetails(element).name ? 'region' : null;
+              case 'FORM':
+                return accessibleNameDetails(element).name ? 'form' : null;
+              default:
+                return null;
+            }
+          }
+
+          export function landmarkRoleForElement(element: Element): LandmarkRole | null {
+            const explicit = explicitRole(element);
+            if (explicit) return asLandmarkRole(explicit);
+            return nativeLandmarkRole(element);
+          }
+
+          export function pageLandmarks(): Element[] {
+            return scopedElements(document, LANDMARK_CANDIDATE_SELECTOR)
+              .filter((element) => !isProgrammaticallyHidden(element) && landmarkRoleForElement(element) != null);
+          }
+
+          export function landmarkScopeOwner(element: Element): Element | Document {
+            let current = element.parentElement;
+            while (current) {
+              const role = registeredExplicitAriaRole(current)?.name;
+              if (role === 'document' || role === 'application') return current;
+              current = current.parentElement;
+            }
+            return document;
+          }
+
+          export function nearestContainingLandmark(
+            element: Element,
+            includeSelf = false,
+          ): { element: Element; role: LandmarkRole } | null {
+            let current: Element | null = includeSelf ? element : element.parentElement;
+            while (current) {
+              const explicit = registeredExplicitAriaRole(current)?.name;
+              if (explicit === 'document' || explicit === 'application') return null;
+              const role = landmarkRoleForElement(current);
+              if (role) return { element: current, role };
+              current = current.parentElement;
+            }
+            return null;
+          }
+          EOF
+
+          cat > lib/audit/document-structure.ts <<'EOF'
+          import type { RuleDefinition } from '../../shared/rule-catalog';
+          import {
+            DOCUMENT_STRUCTURE_RULES,
+            DUPLICATE_SINGLETON_LANDMARK_RULE,
+            EMPTY_HEADING_RULE,
+            LANDMARK_COVERAGE_RULE,
+            PAGE_LEVEL_ONE_HEADING_RULE,
+            PARAGRAPH_AS_HEADING_RULE,
+            REGION_NAME_RULE,
+            TOP_LEVEL_LANDMARK_RULE,
+          } from '../../shared/document-structure-rules';
+          import { accessibleNameDetails, isMarkedDecorative, isProgrammaticallyHidden } from './dom';
+          import {
+            landmarkRoleForElement,
+            landmarkScopeOwner,
+            nearestContainingLandmark,
+            pageLandmarks,
+            type LandmarkRole,
+          } from './landmarks';
+          import { scopedElements } from './scan-elements';
+          import { registeredExplicitAriaRole } from './standards-registry';
+
+          export type DocumentStructureOutcome = 'review' | 'warning';
+
+          export interface DocumentStructureSignal {
+            rule: RuleDefinition;
+            outcome: DocumentStructureOutcome;
+            element: Element;
+            description: string;
+            evidence: string;
+          }
+
+          const TOP_LEVEL_ROLES = new Set<LandmarkRole>(['banner', 'main', 'complementary', 'contentinfo']);
+          const CONTENT_SELECTOR = 'h1, h2, h3, h4, h5, h6, p, a, button, input, select, textarea, img, table, ul, ol, dl, video, audio, canvas, svg';
+
+          function normalizedText(value: string | null | undefined): string {
+            return value?.replace(/\s+/g, ' ').trim() ?? '';
+          }
+
+          function headingLevel(element: Element): number | null {
+            const explicit = element.hasAttribute('role') ? registeredExplicitAriaRole(element)?.name : undefined;
+            if (explicit && explicit !== 'heading') return null;
+            if (explicit === 'heading') {
+              const raw = element.getAttribute('aria-level');
+              if (raw) {
+                const parsed = Number.parseInt(raw, 10);
+                if (Number.isFinite(parsed) && parsed > 0) return parsed;
+              }
+            }
+            if (/^H[1-6]$/.test(element.tagName)) return Number(element.tagName.slice(1));
+            return explicit === 'heading' ? null : null;
+          }
+
+          function headingHasUsableContent(element: Element): boolean {
+            if (normalizedText(element.textContent)) return true;
+            if (accessibleNameDetails(element).name) return true;
+            for (const descendant of element.querySelectorAll('img[alt], [aria-label], [aria-labelledby], svg title')) {
+              if (normalizedText(descendant.textContent) || accessibleNameDetails(descendant).name) return true;
+            }
+            return false;
+          }
+
+          function numericFontWeight(value: string): number {
+            if (value === 'bold') return 700;
+            if (value === 'normal') return 400;
+            const parsed = Number.parseInt(value, 10);
+            return Number.isFinite(parsed) ? parsed : 400;
+          }
+
+          function paragraphLooksLikeHeading(element: HTMLParagraphElement): boolean {
+            const text = normalizedText(element.textContent);
+            if (!text || text.length > 120 || element.closest('h1, h2, h3, h4, h5, h6, [role="heading"]')) return false;
+            const style = getComputedStyle(element);
+            const bodyStyle = document.body ? getComputedStyle(document.body) : style;
+            const fontSize = Number.parseFloat(style.fontSize) || 16;
+            const bodySize = Number.parseFloat(bodyStyle.fontSize) || 16;
+            const weight = numericFontWeight(style.fontWeight);
+            return weight >= 600 && fontSize >= Math.max(bodySize * 1.2, bodySize + 2);
+          }
+
+          function meaningfulContent(element: Element): boolean {
+            if (isProgrammaticallyHidden(element)) return false;
+            if (element instanceof HTMLImageElement) return !isMarkedDecorative(element);
+            if (element instanceof HTMLInputElement && element.type.toLowerCase() === 'hidden') return false;
+            if (['INPUT', 'SELECT', 'TEXTAREA', 'BUTTON', 'A', 'IMG', 'VIDEO', 'AUDIO', 'CANVAS', 'SVG', 'TABLE'].includes(element.tagName)) return true;
+            return Boolean(normalizedText(element.textContent));
+          }
+
+          function add(
+            signals: DocumentStructureSignal[],
+            rule: RuleDefinition,
+            outcome: DocumentStructureOutcome,
+            element: Element,
+            description: string,
+            evidence: string,
+          ) {
+            signals.push({ rule, outcome, element, description, evidence });
+          }
+
+          function evaluateHeadings(signals: DocumentStructureSignal[]) {
+            const headings = scopedElements(document, 'h1, h2, h3, h4, h5, h6, [role]')
+              .filter((element) => headingLevel(element) != null && !isProgrammaticallyHidden(element));
+
+            if (!headings.some((heading) => headingLevel(heading) === 1)) {
+              add(
+                signals,
+                PAGE_LEVEL_ONE_HEADING_RULE,
+                'review',
+                document.body ?? document.documentElement,
+                'The page does not expose a visible level-one heading. Review whether a level-one heading should identify the primary page topic.',
+                'No visible native H1 or role="heading" with aria-level="1" was detected.',
+              );
+            }
+
+            for (const heading of headings) {
+              if (headingHasUsableContent(heading)) continue;
+              add(
+                signals,
+                EMPTY_HEADING_RULE,
+                'review',
+                heading,
+                'This exposed heading does not contain text or another usable naming contribution. Review whether the heading is accidental, visually generated, or missing its intended content.',
+                `Resolved heading level=${headingLevel(heading)}; no usable text or alternative contribution was detected.`,
+              );
+            }
+
+            for (const paragraph of scopedElements(document, 'p')) {
+              if (!(paragraph instanceof HTMLParagraphElement) || isProgrammaticallyHidden(paragraph) || !paragraphLooksLikeHeading(paragraph)) continue;
+              const style = getComputedStyle(paragraph);
+              add(
+                signals,
+                PARAGRAPH_AS_HEADING_RULE,
+                'review',
+                paragraph,
+                'This short paragraph is visually styled like a heading but does not expose heading semantics. Review whether it represents a section heading and should use native heading markup.',
+                `font-size=${style.fontSize}; font-weight=${style.fontWeight}; text=${JSON.stringify(normalizedText(paragraph.textContent).slice(0, 120))}.`,
+              );
+            }
+          }
+
+          function evaluateLandmarkPlacement(signals: DocumentStructureSignal[]) {
+            const landmarks = pageLandmarks();
+            for (const landmark of landmarks) {
+              const role = landmarkRoleForElement(landmark);
+              if (!role || !TOP_LEVEL_ROLES.has(role)) continue;
+              const parent = nearestContainingLandmark(landmark);
+              if (!parent) continue;
+              add(
+                signals,
+                TOP_LEVEL_LANDMARK_RULE,
+                'review',
+                landmark,
+                `The ${role} landmark is nested inside a ${parent.role} landmark. Review whether this page-level landmark should be moved to the top level of its document/application scope.`,
+                `${role} landmark is contained by ${parent.role} landmark.`,
+              );
+            }
+
+            for (const role of ['banner', 'contentinfo'] as const) {
+              const byScope = new Map<Element | Document, Element[]>();
+              for (const landmark of landmarks.filter((element) => landmarkRoleForElement(element) === role)) {
+                const owner = landmarkScopeOwner(landmark);
+                const group = byScope.get(owner) ?? [];
+                group.push(landmark);
+                byScope.set(owner, group);
+              }
+              for (const group of byScope.values()) {
+                if (group.length <= 1) continue;
+                for (const landmark of group) {
+                  add(
+                    signals,
+                    DUPLICATE_SINGLETON_LANDMARK_RULE,
+                    'review',
+                    landmark,
+                    `This document scope exposes ${group.length} ${role} landmarks. Review whether one page-level ${role} region is sufficient or whether nested document/application scopes are intended.`,
+                    `${group.length} exposed ${role} landmarks share the same document/application scope.`,
+                  );
+                }
+              }
+            }
+
+            for (const element of scopedElements(document, '[role]')) {
+              if (isProgrammaticallyHidden(element) || registeredExplicitAriaRole(element)?.name !== 'region') continue;
+              if (accessibleNameDetails(element).name) continue;
+              add(
+                signals,
+                REGION_NAME_RULE,
+                'warning',
+                element,
+                'An explicitly authored region landmark has no accessible name. WAI-ARIA requires authors to provide a name that identifies the purpose of a region.',
+                'role="region" resolved with an empty accessible name.',
+              );
+            }
+          }
+
+          function evaluateLandmarkCoverage(signals: DocumentStructureSignal[]) {
+            const uncovered = scopedElements(document, CONTENT_SELECTOR)
+              .filter((element) => meaningfulContent(element) && !nearestContainingLandmark(element, true));
+            const uncoveredSet = new Set(uncovered);
+            const roots = uncovered.filter((element) => {
+              let parent = element.parentElement;
+              while (parent) {
+                if (uncoveredSet.has(parent)) return false;
+                parent = parent.parentElement;
+              }
+              return true;
+            }).slice(0, 20);
+
+            for (const element of roots) {
+              add(
+                signals,
+                LANDMARK_COVERAGE_RULE,
+                'review',
+                element,
+                'This perceivable page content is not contained within an exposed landmark. Review whether the page can be organized so landmark navigation covers the relevant content.',
+                `No banner, complementary, contentinfo, form, main, navigation, region or search landmark contains this ${element.tagName.toLowerCase()} element.`,
+              );
+            }
+          }
+
+          export function evaluateDocumentStructure(): DocumentStructureSignal[] {
+            const signals: DocumentStructureSignal[] = [];
+            evaluateHeadings(signals);
+            evaluateLandmarkPlacement(signals);
+            evaluateLandmarkCoverage(signals);
+            return signals;
+          }
+
+          export { DOCUMENT_STRUCTURE_RULES };
+          EOF
+
+      - name: Integrate document structure into scan
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          path = Path('lib/audit/scan.ts')
+          text = path.read_text()
+          marker = "import { INPUT_PURPOSE_AUTOCOMPLETE_RULE } from '../../shared/form-purpose-rules';\n"
+          replacement = marker + "import { DOCUMENT_STRUCTURE_RULES } from '../../shared/document-structure-rules';\n"
+          if marker not in text:
+              raise SystemExit('scan import marker missing')
+          text = text.replace(marker, replacement, 1)
+          marker = "import { accessibleName, isProgrammaticallyHidden, selectorFor, semanticRole } from './dom';\n"
+          replacement = marker + "import { evaluateDocumentStructure, type DocumentStructureSignal } from './document-structure';\n"
+          if marker not in text:
+              raise SystemExit('scan evaluator import marker missing')
+          text = text.replace(marker, replacement, 1)
+
+          insertion_marker = "function appendResizeTextReview(result: ScanResult, context?: TextResizeContext): void {"
+          index = text.index(insertion_marker)
+          block = '''function documentStructureIssueFor(signal: DocumentStructureSignal): ScanIssue {\n  return {\n    id: uid(),\n    ruleId: signal.rule.id,\n    title: signal.rule.title,\n    description: signal.description,\n    severity: signal.rule.severity,\n    outcome: signal.outcome,\n    targets: [selectorFor(signal.element)],\n    evidence: signal.evidence,\n    references: signal.rule.references,\n  };\n}\n\nfunction appendDocumentStructureReviews(result: ScanResult): void {\n  const signals = evaluateDocumentStructure();\n  const additions = signals.map((signal) => ({ signal, issue: documentStructureIssueFor(signal) }));\n  result.review.push(...additions.filter(({ issue }) => issue.outcome === 'review').map(({ issue }) => issue));\n  result.warnings.push(...additions.filter(({ issue }) => issue.outcome === 'warning').map(({ issue }) => issue));\n  result.ruleResults = [\n    ...(result.ruleResults ?? []),\n    ...DOCUMENT_STRUCTURE_RULES.map((rule) => {\n      const findings = additions.filter(({ issue }) => issue.ruleId === rule.id).map(({ issue }) => issue);\n      return {\n        ruleId: rule.id,\n        applicable: findings.length,\n        passed: 0,\n        failures: 0,\n        reviews: findings.filter((issue) => issue.outcome === 'review').length,\n        warnings: findings.filter((issue) => issue.outcome === 'warning').length,\n        coverage: 'findings-only' as const,\n      };\n    }),\n  ];\n  result.rulesRun += DOCUMENT_STRUCTURE_RULES.length;\n}\n\n'''
+          text = text[:index] + block + text[index:]
+
+          marker = "  if (!componentScope) {\n    appendBypassBlocksReview(result);"
+          replacement = "  if (!componentScope) {\n    appendDocumentStructureReviews(result);\n    appendBypassBlocksReview(result);"
+          if marker not in text:
+              raise SystemExit('scan page-only marker missing')
+          text = text.replace(marker, replacement, 1)
+          path.write_text(text)
+          PY
+
+      - name: Extend repeated-landmark naming coverage
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('lib/audit/content-model.ts')
+          text = path.read_text()
+          old = '''function resolvedLandmarkRole(element: Element): 'navigation' | 'complementary' | 'search' | undefined {\n  const explicit = element.getAttribute('role')?.trim().toLowerCase().split(/\\s+/)[0];\n  if (explicit === 'navigation' || explicit === 'complementary' || explicit === 'search') return explicit;\n  if (element.tagName === 'NAV') return 'navigation';\n  if (element.tagName === 'ASIDE') return 'complementary';\n  if (element.tagName === 'SEARCH') return 'search';\n  return undefined;\n}\n\nfunction evaluateRepeatedLandmarks(root: ScanRoot, signals: StructuralHtmlSignal[]) {\n  const landmarks = scopedElements(root, 'nav, aside, search, [role="navigation"], [role="complementary"], [role="search"]')\n'''
+          new = '''function resolvedLandmarkRole(element: Element): 'navigation' | 'complementary' | 'search' | 'region' | 'form' | undefined {\n  const explicit = element.getAttribute('role')?.trim().toLowerCase().split(/\\s+/)[0];\n  if (explicit === 'navigation' || explicit === 'complementary' || explicit === 'search' || explicit === 'region' || explicit === 'form') return explicit;\n  if (element.tagName === 'NAV') return 'navigation';\n  if (element.tagName === 'ASIDE') return 'complementary';\n  if (element.tagName === 'SEARCH') return 'search';\n  if (element.tagName === 'SECTION' && accessibleNameDetails(element).name) return 'region';\n  if (element.tagName === 'FORM' && accessibleNameDetails(element).name) return 'form';\n  return undefined;\n}\n\nfunction evaluateRepeatedLandmarks(root: ScanRoot, signals: StructuralHtmlSignal[]) {\n  const landmarks = scopedElements(root, 'nav, aside, search, section, form, [role="navigation"], [role="complementary"], [role="search"], [role="region"], [role="form"]')\n'''
+          if old not in text:
+              raise SystemExit('repeated landmark block marker missing')
+          path.write_text(text.replace(old, new, 1))
+          PY
+
+      - name: Add tests
+        run: |
+          cat > tests/document-structure-landmarks.test.ts <<'EOF'
+          // @vitest-environment jsdom
+
+          import { beforeEach, describe, expect, it } from 'vitest';
+          import { evaluateDocumentStructure } from '../lib/audit/document-structure';
+          import { runFocusTraceScan } from '../lib/audit/scan';
+
+          function render(body: string, styles = '') {
+            document.open();
+            document.write(`<!doctype html><html lang="en"><head><title>Structure test</title>${styles ? `<style>${styles}</style>` : ''}</head><body>${body}</body></html>`);
+            document.close();
+          }
+
+          function ids() {
+            return evaluateDocumentStructure().map((signal) => signal.rule.id);
+          }
+
+          describe('document structure and landmark coverage', () => {
+            beforeEach(() => render('<main><h1>Page</h1></main>'));
+
+            it('reviews a page with no level-one heading but accepts native and ARIA level-one headings', () => {
+              render('<main><h2>Section</h2></main>');
+              expect(ids()).toContain('FT-REVIEW-030');
+
+              render('<main><div role="heading" aria-level="1">ARIA page title</div></main>');
+              expect(ids()).not.toContain('FT-REVIEW-030');
+            });
+
+            it('reviews exposed empty headings without flagging hidden or alternatively named headings', () => {
+              render('<main><h1>Page</h1><h2 id="empty"></h2><h2 aria-hidden="true"></h2><h2 aria-label="Named"></h2><h2><img alt="Image heading"></h2></main>');
+              const matches = evaluateDocumentStructure().filter((signal) => signal.rule.id === 'FT-REVIEW-031');
+              expect(matches).toHaveLength(1);
+              expect(matches[0]?.element.id).toBe('empty');
+            });
+
+            it('keeps paragraph-as-heading detection heuristic and review-only', () => {
+              render(
+                '<main><h1>Page</h1><p id="looks-heading" style="font-size:24px;font-weight:700">Account details</p><p id="body-copy">Normal paragraph content.</p></main>',
+                'body{font-size:16px}',
+              );
+              const match = evaluateDocumentStructure().find((signal) => signal.rule.id === 'FT-REVIEW-032');
+              expect(match?.element.id).toBe('looks-heading');
+              expect(match?.outcome).toBe('review');
+            });
+
+            it('reviews nested page-level landmarks but respects native scoped header/footer semantics', () => {
+              render(`<header><h1>Site</h1></header><main>
+                <div id="nested-banner" role="banner">Nested banner</div>
+                <aside id="nested-aside">Related</aside>
+                <header id="section-header">Local header</header>
+                <footer id="section-footer">Local footer</footer>
+              </main><footer>Site footer</footer>`);
+              const matches = evaluateDocumentStructure().filter((signal) => signal.rule.id === 'FT-REVIEW-033');
+              expect(matches.map((signal) => signal.element.id)).toEqual(expect.arrayContaining(['nested-banner', 'nested-aside']));
+              expect(matches.map((signal) => signal.element.id)).not.toEqual(expect.arrayContaining(['section-header', 'section-footer']));
+            });
+
+            it('reviews multiple banner and contentinfo landmarks within one document scope', () => {
+              render('<header><h1>Site</h1></header><div role="banner" aria-label="Secondary"></div><main>Content</main><footer>One</footer><div role="contentinfo" aria-label="Two"></div>');
+              const matches = evaluateDocumentStructure().filter((signal) => signal.rule.id === 'FT-REVIEW-034');
+              expect(matches.filter((signal) => signal.evidence.includes('banner'))).toHaveLength(2);
+              expect(matches.filter((signal) => signal.evidence.includes('contentinfo'))).toHaveLength(2);
+            });
+
+            it('reviews meaningful content outside landmarks but not content covered by a main landmark', () => {
+              render('<header><h1>Site</h1></header><p id="outside">Uncovered notice</p><main><p id="inside">Covered content</p></main>');
+              const matches = evaluateDocumentStructure().filter((signal) => signal.rule.id === 'FT-REVIEW-035');
+              expect(matches.map((signal) => signal.element.id)).toContain('outside');
+              expect(matches.map((signal) => signal.element.id)).not.toContain('inside');
+            });
+
+            it('warns for an explicit unnamed region and accepts a named region', () => {
+              render('<main><h1>Page</h1><div id="unnamed" role="region">A</div><div id="named" role="region" aria-label="Account">B</div></main>');
+              const matches = evaluateDocumentStructure().filter((signal) => signal.rule.id === 'FT-WARN-024');
+              expect(matches).toHaveLength(1);
+              expect(matches[0]?.element.id).toBe('unnamed');
+              expect(matches[0]?.outcome).toBe('warning');
+            });
+
+            it('extends repeated landmark naming review to region and form landmarks', () => {
+              render(`<main><h1>Page</h1>
+                <section aria-label="Details">One</section><section aria-label="Details">Two</section>
+                <form aria-label="Lookup"></form><form aria-label="Lookup"></form>
+              </main>`);
+              const result = runFocusTraceScan();
+              const matches = result.review.filter((issue) => issue.ruleId === 'FT-REVIEW-010');
+              expect(matches).toHaveLength(4);
+            });
+
+            it('does not apply whole-document structure rules to component scans', () => {
+              render('<div id="component"><h2></h2><p style="font-size:24px;font-weight:700">Title</p></div>');
+              const result = runFocusTraceScan({ type: 'component', selector: '#component', tag: 'div' });
+              const documentRules = new Set(['FT-REVIEW-030', 'FT-REVIEW-031', 'FT-REVIEW-032', 'FT-REVIEW-033', 'FT-REVIEW-034', 'FT-REVIEW-035', 'FT-WARN-024']);
+              expect(result.ruleResults?.some((rule) => documentRules.has(rule.ruleId))).toBe(false);
+              expect([...result.issues, ...result.review, ...result.warnings].some((issue) => documentRules.has(issue.ruleId))).toBe(false);
+            });
+          });
+          EOF
+
+      - name: Update benchmark classifications and evidence
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          def load(path):
+              return json.loads(Path(path).read_text())
+          def save(path, data):
+              Path(path).write_text(json.dumps(data, indent=2, ensure_ascii=False) + '\n')
+          def update(path, rule_id, **changes):
+              data = load(path)
+              entry = next((entry for entry in data['classifications'] if entry['axeRuleId'] == rule_id), None)
+              if entry is None:
+                  raise SystemExit(f'{rule_id} missing from {path}')
+              entry.update(changes)
+              save(path, data)
+
+          e25 = 'e25'
+          update('config/axe-parity/best-practice-01.json', 'empty-heading',
+                 relationship='partial', focusTraceRuleIds=['FT-REVIEW-031'],
+                 rationale='FocusTrace now reviews exposed native and ARIA headings that have no usable text or alternative naming contribution. The local content heuristic is deliberately bounded, so this remains partial rather than exact benchmark equivalence.',
+                 standards=['HTML heading elements', 'WCAG 2.2 1.3.1'], evidenceKey=e25)
+          update('config/axe-parity/best-practice-01.json', 'landmark-banner-is-top-level',
+                 relationship='overlap', focusTraceRuleIds=['FT-REVIEW-033'],
+                 rationale='FocusTrace now reviews exposed banner landmarks nested inside another landmark within the same document/application scope. It retains APG-guidance REVIEW semantics rather than reproducing axe best-practice failure behavior.',
+                 standards=['ARIA APG Landmark Regions', 'WAI-ARIA banner role'], evidenceKey=e25)
+          update('config/axe-parity/best-practice-01.json', 'landmark-contentinfo-is-top-level',
+                 relationship='overlap', focusTraceRuleIds=['FT-REVIEW-033'],
+                 rationale='FocusTrace now reviews exposed contentinfo landmarks nested inside another landmark within the same document/application scope. It retains APG-guidance REVIEW semantics.',
+                 standards=['ARIA APG Landmark Regions', 'WAI-ARIA contentinfo role'], evidenceKey=e25)
+          update('config/axe-parity/best-practice-01.json', 'landmark-main-is-top-level',
+                 focusTraceRuleIds=['FT-WARN-011', 'FT-REVIEW-033'],
+                 rationale='FocusTrace validates invalid native main hierarchy and now also reviews nested explicit main landmarks. The combined evidence overlaps the benchmark while preserving separate HTML-authoring and APG-guidance outcomes.',
+                 evidenceKey=e25)
+
+          update('config/axe-parity/best-practice-02.json', 'landmark-no-duplicate-banner',
+                 relationship='overlap', focusTraceRuleIds=['FT-REVIEW-034'],
+                 rationale='FocusTrace now reviews multiple exposed banner landmarks in the same document/application scope while preserving contextual APG semantics.',
+                 standards=['ARIA APG Landmark Regions', 'WAI-ARIA banner role'], evidenceKey=e25)
+          update('config/axe-parity/best-practice-02.json', 'landmark-no-duplicate-contentinfo',
+                 relationship='overlap', focusTraceRuleIds=['FT-REVIEW-034'],
+                 rationale='FocusTrace now reviews multiple exposed contentinfo landmarks in the same document/application scope while preserving contextual APG semantics.',
+                 standards=['ARIA APG Landmark Regions', 'WAI-ARIA contentinfo role'], evidenceKey=e25)
+          update('config/axe-parity/best-practice-02.json', 'page-has-heading-one',
+                 relationship='overlap', focusTraceRuleIds=['FT-REVIEW-030'],
+                 rationale='FocusTrace now reviews pages without a visible native H1 or ARIA heading at level one, keeping page-heading strategy contextual rather than treating the best-practice signal as a WCAG failure.',
+                 standards=['HTML h1 element', 'ARIA document structure guidance'], evidenceKey=e25)
+          update('config/axe-parity/best-practice-02.json', 'region',
+                 relationship='partial', focusTraceRuleIds=['FT-REVIEW-035'],
+                 rationale='FocusTrace now reviews meaningful page content that is outside exposed landmark regions, using a bounded set of perceivable content subjects and conservative REVIEW outcomes.',
+                 standards=['ARIA APG Landmark Regions'], evidenceKey=e25)
+          update('config/axe-parity/best-practice-02.json', 'landmark-unique',
+                 rationale='FocusTrace checks repeated navigation, complementary, search, region and form landmarks for distinguishable names. The rule remains partial because FocusTrace deliberately separates singleton landmark constraints and contextual naming exceptions.',
+                 evidenceKey=e25)
+          update('config/axe-parity/experimental.json', 'p-as-heading',
+                 relationship='overlap', focusTraceRuleIds=['FT-REVIEW-032'],
+                 rationale='FocusTrace now uses a conservative font-size plus font-weight heuristic to surface short paragraph text that may be visually functioning as a heading. Because visual intent cannot be proven statically, the result remains REVIEW and only overlaps the benchmark heuristic.',
+                 standards=['WCAG 2.2 1.3.1', 'HTML heading semantics'], evidenceKey=e25)
+
+          equivalents = load('config/axe-equivalents.json')
+          equivalents['summary'] = {
+              'total': 105,
+              'equivalent': 6,
+              'partial': 35,
+              'superset': 10,
+              'overlap': 28,
+              'missing': 25,
+              'not-applicable': 1,
+              'covered': 79,
+          }
+          equivalents['evidenceSets']['e25'] = {
+              'sources': [
+                  'shared/document-structure-rules.ts',
+                  'lib/audit/landmarks.ts',
+                  'lib/audit/document-structure.ts',
+                  'lib/audit/content-model.ts',
+                  'lib/audit/scan.ts',
+              ],
+              'tests': ['tests/document-structure-landmarks.test.ts'],
+          }
+          save('config/axe-equivalents.json', equivalents)
+          PY
+
+      - name: Update public rule documentation
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          english = '''\n\n### Document structure and landmark coverage\n\nFocusTrace keeps page-structure best practices separate from deterministic WCAG failures. `FT-REVIEW-030` reviews the absence of a level-one heading, `FT-REVIEW-031` exposed empty headings, `FT-REVIEW-032` paragraphs that visually resemble headings, `FT-REVIEW-033` nested page-level landmarks, `FT-REVIEW-034` repeated banner/contentinfo landmarks, and `FT-REVIEW-035` perceivable content outside landmarks. `FT-WARN-024` reports an explicitly authored `role="region"` with no accessible name as an ARIA authoring warning. These page-wide checks do not run during component scans.\n'''
+          spanish = '''\n\n### Cobertura de estructura del documento y landmarks\n\nFocusTrace mantiene las buenas prácticas de estructura de página separadas de los fallos WCAG deterministas. `FT-REVIEW-030` revisa la ausencia de un encabezado de nivel uno, `FT-REVIEW-031` los encabezados vacíos expuestos, `FT-REVIEW-032` los párrafos que visualmente parecen encabezados, `FT-REVIEW-033` los landmarks de nivel de página anidados, `FT-REVIEW-034` los landmarks banner/contentinfo repetidos y `FT-REVIEW-035` el contenido perceptible situado fuera de landmarks. `FT-WARN-024` informa como aviso de autoría ARIA de un `role="region"` creado explícitamente sin nombre accesible. Estas comprobaciones de página completa no se ejecutan en escaneos de componente.\n'''
+          for name, block in [('README.md', english), ('README.es.md', spanish)]:
+              path = Path(name)
+              text = path.read_text()
+              if 'FT-REVIEW-030' not in text:
+                  path.write_text(text.rstrip() + block + '\n')
+
+          rules = Path('docs/RULES.md')
+          rules_text = rules.read_text()
+          if '## Document structure and landmark coverage' not in rules_text:
+              rules.write_text(rules_text.rstrip() + '''\n\n## Document structure and landmark coverage\n\n- `FT-REVIEW-030` — page has no exposed level-one heading. Whole-document review only.\n- `FT-REVIEW-031` — exposed native/ARIA heading has no usable text or alternative naming contribution.\n- `FT-REVIEW-032` — a short paragraph is substantially larger and bold relative to body text and may be acting as a visual heading. Heuristic REVIEW only.\n- `FT-REVIEW-033` — banner, main, complementary or contentinfo landmark is nested inside another landmark in the same document/application scope.\n- `FT-REVIEW-034` — more than one exposed banner or contentinfo landmark exists in the same document/application scope.\n- `FT-REVIEW-035` — bounded perceivable page content is outside any exposed landmark region.\n- `FT-WARN-024` — explicit `role="region"` resolves with an empty accessible name.\n\nNative header/footer landmarks follow HTML scoping: headers and footers inside article, aside, main, nav or section are not treated as banner/contentinfo. Repeated navigation, complementary, search, region and form landmarks continue to use `FT-REVIEW-010` for distinguishable-name review. Component scans intentionally omit the page-wide rules above.\n''')
+
+          severity = Path('docs/SEVERITY-AUDIT.md')
+          severity_text = severity.read_text()
+          if 'FT-REVIEW-030' not in severity_text:
+              severity.write_text(severity_text.rstrip() + '''\n\n### Document structure and landmarks\n\n`FT-REVIEW-030`, `FT-REVIEW-031`, `FT-REVIEW-032`, `FT-REVIEW-033`, `FT-REVIEW-034` and `FT-REVIEW-035` are `moderate` REVIEW signals: they expose document-structure and landmark best-practice risks without converting contextual APG/HTML guidance into automatic WCAG failures. `FT-WARN-024` is a `moderate` authoring warning because an explicit ARIA region requires an accessible name, while the warning alone is not presented as a deterministic WCAG failure.\n''')
+
+          parity = Path('docs/AXE_CORE_PARITY_AUDIT.md')
+          parity_text = parity.read_text()
+          parity_text = parity_text.replace('71/105', '79/105').replace('71 of 105', '79 of 105').replace('71 de 105', '79 de 105')
+          if '## Document structure applicability update' not in parity_text:
+              parity_text = parity_text.rstrip() + '''\n\n## Document structure applicability update\n\nIssue #229 adds evidence for level-one/empty/visually inferred headings, page-level landmark placement, duplicate banner/contentinfo landmarks, landmark-region coverage and explicit region naming. The reviewed axe-core 4.13 benchmark therefore moves to **79 covered relationships out of 105**, with 25 still classified as missing and one benchmark-specific rule not applicable. Best-practice relationships remain REVIEW/overlap/partial where context prevents exact deterministic equivalence.\n'''
+          parity.write_text(parity_text + '\n')
+          PY
+
+      - name: Update parity and page-scan baselines
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          replacements = {
+            'tests/axe-parity-benchmark.test.ts': [
+              ('partial: 33,', 'partial: 35,'),
+              ('overlap: 22,', 'overlap: 28,'),
+              ('missing: 33,', 'missing: 25,'),
+              ('covered: 71,', 'covered: 79,'),
+            ],
+            'tests/element-internals-parity.test.ts': [
+              ('partial: 33,', 'partial: 35,'),
+              ('overlap: 22,', 'overlap: 28,'),
+              ('missing: 33,', 'missing: 25,'),
+              ('covered: 71,', 'covered: 79,'),
+            ],
+            'tests/scan.fixtures.test.ts': [
+              ('expect(result.rulesRun).toBe(65);', 'expect(result.rulesRun).toBe(72);'),
+            ],
+          }
+          for name, pairs in replacements.items():
+              path = Path(name)
+              text = path.read_text()
+              for old, new in pairs:
+                  if old not in text:
+                      raise SystemExit(f'{name}: marker missing: {old}')
+                  text = text.replace(old, new)
+              path.write_text(text)
+          PY
+
+      - name: Validate focused implementation
+        run: |
+          npm run standards:validate
+          npm run axe:validate
+          npm run capabilities:validate
+          npm run rules:validate
+          npm run i18n:validate
+          npm run check
+          npx vitest run tests/document-structure-landmarks.test.ts tests/scan.fixtures.test.ts tests/component-scan.test.ts tests/axe-parity-benchmark.test.ts tests/element-internals-parity.test.ts
+      - name: Show remaining stale baselines
+        if: always()
+        run: |
+          grep -RIn "rulesRun.*65\|toBe(65)\|covered: 71\|missing: 33\|partial: 33\|overlap: 22" tests || true
+      - name: Commit implementation
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add shared/document-structure-rules.ts lib/audit/landmarks.ts lib/audit/document-structure.ts lib/audit/scan.ts lib/audit/content-model.ts tests/document-structure-landmarks.test.ts tests/scan.fixtures.test.ts tests/axe-parity-benchmark.test.ts tests/element-internals-parity.test.ts config/axe-equivalents.json config/axe-parity/best-practice-01.json config/axe-parity/best-practice-02.json config/axe-parity/experimental.json README.md README.es.md docs/RULES.md docs/SEVERITY-AUDIT.md docs/AXE_CORE_PARITY_AUDIT.md
+          git commit -m "Feat(a11y): add document structure and landmark coverage"
+          git push
