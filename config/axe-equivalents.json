@@ -76,6 +76,7 @@
     "e19": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/target-size.test.ts"] },
     "e20": { "sources": ["shared/rule-catalog.ts", "shared/structural-html-rules.ts"], "tests": ["tests/heading-outline.test.ts", "tests/heading-review-tree-contract.test.ts"] },
     "e21": { "sources": ["shared/rule-catalog.ts"], "tests": ["tests/link-purpose-context.test.ts", "tests/consistent-identification.test.ts"] },
-    "e22": { "sources": ["shared/specialized-accessible-name-rules.ts", "lib/audit/specialized-accessible-names.ts", "lib/audit/specialized-accessible-name-scan-extension.ts"], "tests": ["tests/specialized-accessible-names.test.ts"] }
+    "e22": { "sources": ["shared/specialized-accessible-name-rules.ts", "lib/audit/specialized-accessible-names.ts", "lib/audit/specialized-accessible-name-scan-extension.ts"], "tests": ["tests/specialized-accessible-names.test.ts"] },
+    "e23": { "sources": ["shared/element-internals-bridge.ts", "lib/extension/element-internals-main-world.ts", "lib/audit/element-internals-bridge.ts", "lib/audit/element-internals-semantics.ts"], "tests": ["tests/element-internals-semantics.test.ts"] }
   }
 }
