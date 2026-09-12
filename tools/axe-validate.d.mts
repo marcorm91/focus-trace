@@ -26,4 +26,5 @@ export function validateAxeMappings(
   axeRuleIds: Set<string>,
   classifications: AxeClassification[],
   expectedRelease: string,
+  root?: string,
 ): AxeParitySummary;
