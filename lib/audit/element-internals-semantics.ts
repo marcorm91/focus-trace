@@ -47,7 +47,7 @@ function textFromReferences(raw: string | null): string {
     .trim()
     .split(/\s+/)
     .map((id) => document.getElementById(id))
-    .filter((target): target is Element => target != null)
+    .filter((target): target is HTMLElement => target != null)
     .map((target) => accessibleNameDiagnostics(target).name || target.textContent || '')
     .join(' ')
     .replace(/\s+/g, ' ')
