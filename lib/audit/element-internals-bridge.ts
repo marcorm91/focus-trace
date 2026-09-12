@@ -152,7 +152,3 @@ export function elementInternalsRole(element: Element): string | undefined {
 export function elementInternalsLabelText(element: Element): string {
   return snapshots.get(element)?.labels.map((label) => label.text).filter(Boolean).join(' ').replace(/\s+/g, ' ').trim() ?? '';
 }
-
-export function isElementInternalsFormAssociated(element: Element): boolean {
-  return snapshots.get(element)?.formAssociated === true;
-}
