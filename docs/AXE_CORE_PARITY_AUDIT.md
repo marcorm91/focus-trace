@@ -66,12 +66,12 @@ The exhaustive review of all 105 axe-core 4.13.0 rules produces this baseline:
 | Equivalent | 5 |
 | Partial | 23 |
 | Superset | 10 |
-| Overlap | 23 |
-| Missing | 43 |
+| Overlap | 21 |
+| Missing | 45 |
 | Not applicable | 1 |
 | **Total** | **105** |
 
-`covered` is reported as 61 rules: equivalent + partial + superset + overlap. This is a planning metric only. It does **not** mean FocusTrace behaves identically to axe-core for 61 rules; only the five `equivalent` entries make that stronger claim.
+`covered` is reported as 59 rules: equivalent + partial + superset + overlap. This is a planning metric only. It does **not** mean FocusTrace behaves identically to axe-core for 59 rules; only the five `equivalent` entries make that stronger claim.
 
 The one `not-applicable` rule is `frame-tested`. That rule checks whether axe-core itself was injected into nested frames. Requiring axe-core injection would conflict with FocusTrace's local, independent runtime architecture and therefore is not a functional parity target.
 
@@ -128,7 +128,7 @@ The relationship type must still be consulted before treating any of those areas
 
 ## Genuine gaps established by the review
 
-Forty-three axe-core rules currently have no implemented FocusTrace expectation matching their tested condition. Important gap families include:
+Forty-five axe-core rules currently have no implemented FocusTrace expectation matching their tested condition. Important gap families include:
 
 ### Accessible names and modern ARIA
 
@@ -154,10 +154,12 @@ Forty-three axe-core rules currently have no implemented FocusTrace expectation 
 - `scope` validity;
 - fake captions and duplicate table naming.
 
-### Browser and authoring behavior
+### Browser, media and authoring behavior
 
 - accesskey uniqueness;
 - meta refresh variants;
+- `user-scalable` / `maximum-scale` viewport restrictions at the 200% and 500% thresholds;
+- autoplaying audio or audible video beyond three seconds without a stop/mute mechanism;
 - CSS orientation locking;
 - server-side image maps;
 - object alternatives;
