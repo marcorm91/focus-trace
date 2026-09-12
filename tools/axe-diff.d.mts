@@ -20,18 +20,14 @@ interface AxeSeverityMapping {
   axeRuleIds: string[];
 }
 
-interface AxeMappingV1 {
-  schemaVersion: 1;
-  mappings: AxeSeverityMapping[];
-}
-
-interface AxeMappingV2 {
-  schemaVersion: 2;
-  severityMappings: AxeSeverityMapping[];
+interface AxeMapping {
+  schemaVersion: number;
+  mappings?: AxeSeverityMapping[];
+  severityMappings?: AxeSeverityMapping[];
 }
 
 export function axeDiffReport(
   before: AxeRegistry,
   after: AxeRegistry,
-  mapping: AxeMappingV1 | AxeMappingV2,
+  mapping: AxeMapping,
 ): string;
