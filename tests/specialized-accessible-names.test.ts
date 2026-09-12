@@ -85,6 +85,21 @@ describe('specialized accessible-name evaluation', () => {
     });
   }
 
+  it('covers native dialog and alertdialog variants without changing warning semantics', () => {
+    mount(`
+      <main><h1>Fixture</h1>
+        <dialog id="native" open aria-label="Native preferences"></dialog>
+        <div id="alert" role="alertdialog" aria-label="Session warning"></div>
+      </main>
+    `);
+    const evaluations = evaluateSpecializedAccessibleNames(document).filter((entry) => entry.kind === 'dialog');
+    expect(evaluations).toHaveLength(2);
+    expect(evaluations.map((entry) => entry.evidence.name)).toEqual(
+      expect.arrayContaining(['Native preferences', 'Session warning']),
+    );
+    expect(evaluations.every((entry) => entry.family === 'aria-warning' && entry.outcome === 'pass')).toBe(true);
+  });
+
   it('excludes a nested group subtree from a treeitem name', () => {
     mount(`
       <main><h1>Fixture</h1>
