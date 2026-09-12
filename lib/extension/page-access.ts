@@ -1,5 +1,8 @@
 import { browser } from '#imports';
-import { ensureElementInternalsBridgeRegistered } from './element-internals-registration';
+import {
+  ensureElementInternalsBridgeRegistered,
+  injectElementInternalsBridge,
+} from './element-internals-registration';
 
 export const WEB_PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'] as const;
 
@@ -55,11 +58,13 @@ export async function requestWebPageAccess(): Promise<boolean> {
 export async function requestActivePageAccess(): Promise<WebPageTab | undefined> {
   if (!(await requestWebPageAccess())) return undefined;
   const tab = await activeWebPageTab();
+  if (tab) await injectElementInternalsBridge(tab.id);
   return tab;
 }
 
 export async function requestTabPageAccess(tabId: number): Promise<WebPageTab | undefined> {
   if (!(await requestWebPageAccess())) return undefined;
   const tab = await webPageTabById(tabId);
+  if (tab) await injectElementInternalsBridge(tab.id);
   return tab;
 }
