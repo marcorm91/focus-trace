@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import axeEquivalents from '../config/axe-equivalents.json';
 import axeRegistry from '../generated/axe-rule-severities.json';
 import { ADVANCED_ARIA_RULES } from '../shared/aria-authoring-rules';
+import { ARIA_ROLE_STATE_RELATIONSHIP_RULES } from '../shared/aria-role-state-rules';
 import {
   DUPLICATE_ID_RULE,
   GENERIC_INTERACTIVE_SEMANTICS_RULE,
@@ -41,6 +42,7 @@ const ALL_RULES = new Map(
     ...HTML_RULES,
     ...ADVANCED_ARIA_RULES,
     ...SPECIALIZED_ACCESSIBLE_NAME_RULES,
+    ...ARIA_ROLE_STATE_RELATIONSHIP_RULES,
   ].map((rule) => [rule.id, rule] as const),
 );
 const AXE_RULES = new Map(axeRegistry.rules.map((rule) => [rule.id, rule] as const));
