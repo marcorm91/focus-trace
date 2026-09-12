@@ -41,8 +41,8 @@ describe('ARIA role, state and relationship checks', () => {
     expect(warnings[0]!.detail).toContain('already exposes its checked state natively');
   });
 
-  it('warns for row-only treegrid properties outside treegrid and accepts the same authoring inside treegrid', () => {
-    document.body.innerHTML = '<div id="bad" role="row" aria-level="2"></div><div role="treegrid"><div id="good" role="row" aria-level="2"></div></div>';
+  it('warns for row-only treegrid properties outside treegrid and accepts DOM and aria-owns treegrid context', () => {
+    document.body.innerHTML = '<div id="bad" role="row" aria-level="2"></div><div role="treegrid"><div id="dom-good" role="row" aria-level="2"></div></div><div role="treegrid" aria-owns="owned-good"></div><div id="owned-good" role="row" aria-level="2"></div>';
     const warnings = family('host-constraint');
     expect(warnings).toHaveLength(1);
     expect((warnings[0]!.element as HTMLElement).id).toBe('bad');
