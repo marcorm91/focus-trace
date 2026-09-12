@@ -34,10 +34,13 @@ function readString(record: InternalsRecord, property: string): string | undefin
 
 function readLabels(internals: ElementInternals): { labels: ElementInternalsLabelSnapshot[]; formAssociated: boolean } {
   try {
-    const labels = Array.from(internals.labels ?? []).slice(0, MAX_LABELS).map((label) => ({
-      ...(label.id ? { id: label.id.slice(0, 512) } : {}),
-      text: normalized(label.textContent) ?? '',
-    }));
+    const labels = Array.from(internals.labels ?? []).slice(0, MAX_LABELS).map((label) => {
+      const element = label instanceof Element ? label : null;
+      return {
+        ...(element?.id ? { id: element.id.slice(0, 512) } : {}),
+        text: normalized(label.textContent) ?? '',
+      };
+    });
     // `labels` is available only to form-associated custom elements. An empty
     // NodeList is still meaningful evidence that the host is form-associated.
     return { labels, formAssociated: true };
@@ -54,7 +57,6 @@ function readLabels(internals: ElementInternals): { labels: ElementInternalsLabe
 }
 
 function snapshotFor(
-  element: HTMLElement,
   internals: ElementInternals,
   key: string,
 ): ElementInternalsSemanticSnapshot {
@@ -115,7 +117,7 @@ export function installElementInternalsMainWorldBridge(): boolean {
       if (!internals) continue;
       const key = candidate.getAttribute(ELEMENT_INTERNALS_KEY_ATTRIBUTE);
       if (!key || !key.startsWith(`${requestId}:`)) continue;
-      snapshots.push(snapshotFor(candidate, internals, key));
+      snapshots.push(snapshotFor(internals, key));
     }
 
     const response: ElementInternalsBridgeResponse = {
