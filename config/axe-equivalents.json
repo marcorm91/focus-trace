@@ -11,10 +11,10 @@
     "equivalent": 5,
     "partial": 23,
     "superset": 10,
-    "overlap": 24,
-    "missing": 42,
+    "overlap": 23,
+    "missing": 43,
     "not-applicable": 1,
-    "covered": 62
+    "covered": 61
   },
   "severityMappings": [
     { "focusTraceRuleId": "FT-WCAG-001", "axeRuleIds": ["document-title"], "policy": "highest-impact" },
@@ -37,7 +37,6 @@
     { "focusTraceRuleId": "FT-WARN-015", "axeRuleIds": ["aria-required-attr"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WARN-016", "axeRuleIds": ["aria-valid-attr-value"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WARN-017", "axeRuleIds": ["aria-required-parent"], "policy": "highest-impact" },
-    { "focusTraceRuleId": "FT-WARN-018", "axeRuleIds": ["aria-required-children"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WARN-020", "axeRuleIds": ["aria-allowed-attr"], "policy": "highest-impact" }
   ],
   "classificationFiles": [
