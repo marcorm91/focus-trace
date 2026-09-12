@@ -198,7 +198,9 @@ describe('UX polish contract', () => {
     expect(catalog).not.toContain('dequeuniversity.com');
     expect(benchmark).toContain('"repository": "dequelabs/axe-core"');
     expect(benchmark).toMatch(/"tag": "v\d+\.\d+\.\d+/);
-    expect(mappings).toContain('"benchmark": "axe-core"');
+    expect(mappings).toContain('"name": "axe-core"');
+    expect(mappings).toContain('"release": "4.13.0"');
+    expect(mappings).toContain('"severityMappings"');
     expect(mappings).toContain('"focusTraceRuleId": "FT-WCAG-002"');
     expect(mappings).toContain('"image-alt"');
     expect(benchmarkDocs).toContain('does **not** mean FocusTrace runs axe-core');
