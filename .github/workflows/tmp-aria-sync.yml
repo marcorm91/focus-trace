@@ -1,0 +1,35 @@
+name: Temporary ARIA registry refresh
+
+on:
+  push:
+    branches:
+      - feat/aria-role-state-relationships-0.3.3
+    paths:
+      - .github/workflows/tmp-aria-sync.yml
+      - tools/aria-sync.mjs
+
+permissions:
+  contents: write
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feat/aria-role-state-relationships-0.3.3
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+      - run: node tools/aria-sync.mjs
+      - name: Commit synchronized snapshot
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add generated/aria-registry.json
+          if git diff --cached --quiet; then
+            echo "ARIA registry already current."
+          else
+            git commit -m "Chore(aria): refresh synchronized role relationships"
+            git push
+          fi
