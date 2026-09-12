@@ -11,7 +11,7 @@ describe('ElementInternals axe-core parity evidence', () => {
       superset: 10,
       overlap: 21,
       missing: 38,
-      notApplicable: 1,
+      'not-applicable': 1,
       covered: 66,
     });
   });
