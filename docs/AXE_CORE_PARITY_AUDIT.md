@@ -66,12 +66,12 @@ The exhaustive review of all 105 axe-core 4.13.0 rules produces this baseline:
 | Equivalent | 5 |
 | Partial | 23 |
 | Superset | 10 |
-| Overlap | 24 |
-| Missing | 42 |
+| Overlap | 23 |
+| Missing | 43 |
 | Not applicable | 1 |
 | **Total** | **105** |
 
-`covered` is reported as 62 rules: equivalent + partial + superset + overlap. This is a planning metric only. It does **not** mean FocusTrace behaves identically to axe-core for 62 rules; only the five `equivalent` entries make that stronger claim.
+`covered` is reported as 61 rules: equivalent + partial + superset + overlap. This is a planning metric only. It does **not** mean FocusTrace behaves identically to axe-core for 61 rules; only the five `equivalent` entries make that stronger claim.
 
 The one `not-applicable` rule is `frame-tested`. That rule checks whether axe-core itself was injected into nested frames. Requiring axe-core injection would conflict with FocusTrace's local, independent runtime architecture and therefore is not a functional parity target.
 
@@ -128,12 +128,13 @@ The relationship type must still be consulted before treating any of those areas
 
 ## Genuine gaps established by the review
 
-Forty-two axe-core rules currently have no implemented FocusTrace expectation matching their tested condition. Important gap families include:
+Forty-three axe-core rules currently have no implemented FocusTrace expectation matching their tested condition. Important gap families include:
 
 ### Accessible names and modern ARIA
 
 - dialog, meter, progressbar, tab, tooltip and treeitem naming;
 - ARIA conditional attributes;
+- ARIA required owned-child presence;
 - braille-equivalent naming;
 - host-element allowed-role restrictions.
 
