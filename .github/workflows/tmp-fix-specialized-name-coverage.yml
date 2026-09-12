@@ -1,0 +1,42 @@
+name: Temporary specialized-name coverage fix
+
+on:
+  push:
+    branches:
+      - feat/specialized-accessible-names-0.3.1
+
+permissions:
+  contents: write
+
+jobs:
+  patch-coverage-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feat/specialized-accessible-names-0.3.1
+      - name: Apply bounded standards coverage edit
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('tests/standards-coverage.test.ts')
+          text = path.read_text()
+          old = """    expect(wcagCoverageForCriterion('1.1.1')).toMatchObject({
+      ruleIds: ['FT-WCAG-002'],
+      actRuleIds: ['23a2a8'],
+    });"""
+          new = """    expect(wcagCoverageForCriterion('1.1.1')).toMatchObject({
+      ruleIds: ['FT-WCAG-002', 'FT-WCAG-015'],
+      actRuleIds: ['23a2a8'],
+    });"""
+          if text.count(old) != 1:
+              raise SystemExit(f'Expected exactly one coverage block, found {text.count(old)}')
+          path.write_text(text.replace(old, new))
+      - name: Commit coverage fix and remove temporary workflow
+        run: |
+          rm .github/workflows/tmp-fix-specialized-name-coverage.yml
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add tests/standards-coverage.test.ts .github/workflows/tmp-fix-specialized-name-coverage.yml
+          git commit -m "Test(a11y): update WCAG 1.1.1 specialized-name coverage"
+          git push origin HEAD:feat/specialized-accessible-names-0.3.1
