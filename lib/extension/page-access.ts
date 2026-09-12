@@ -1,4 +1,5 @@
 import { browser } from '#imports';
+import { ensureElementInternalsBridgeRegistered } from './element-internals-registration';
 
 export const WEB_PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'] as const;
 
@@ -41,8 +42,14 @@ export async function webPageTabById(tabId: number): Promise<WebPageTab | undefi
  * bootstrap loop and can also lose the transient user gesture required by
  * permissions.request().
  */
-export function requestWebPageAccess(): Promise<boolean> {
-  return browser.permissions.request({ origins: [...WEB_PAGE_ACCESS_ORIGINS] });
+export async function requestWebPageAccess(): Promise<boolean> {
+  const granted = await browser.permissions.request({ origins: [...WEB_PAGE_ACCESS_ORIGINS] });
+  if (!granted) return false;
+  // Registration is best-effort. Chromium and Firefox 128+ can capture future
+  // attachInternals() calls at document_start; older Firefox releases degrade
+  // conservatively and continue with normal isolated-world inspection.
+  await ensureElementInternalsBridgeRegistered();
+  return true;
 }
 
 export async function requestActivePageAccess(): Promise<WebPageTab | undefined> {
