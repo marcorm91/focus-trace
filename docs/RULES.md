@@ -54,6 +54,16 @@ The implementation also supports self-reference inside `aria-labelledby`, multip
 
 A placeholder-derived name is not reported as an empty-name WCAG failure. FocusTrace emits `FT-REVIEW-003` because a programmatic name and a persistent visible label are separate concerns.
 
+## Specialized accessible names
+
+`FT-WCAG-014` checks exposed `tab`, `tooltip` and native `summary` controls. These semantics can obtain a name from their content where the platform naming rules allow it. A supported target with an empty computed name is a deterministic FAIL for the bounded expectation; a named target records PASS.
+
+`FT-WCAG-015` checks native `meter` / `progress` elements and explicit `role="meter"` / `role="progressbar"` semantics. These range indicators require a usable author-provided name; native `<label>` association, `aria-labelledby` and `aria-label` are accepted by the shared name primitive. Name-from-content is not invented for these roles.
+
+`FT-WARN-022` checks exposed `dialog`, `alertdialog` and `treeitem` semantics. Missing names remain ARIA authoring WARNINGs rather than automatic WCAG failures because the external benchmark classifies these checks as best-practice rules. Dialogs require author-provided naming. Treeitems can obtain a name from content, but FocusTrace excludes descendant `role="group"` subtrees and nested treeitems so child branches do not accidentally name their parent item.
+
+Programmatically hidden targets are inapplicable to these checks. Broken `aria-labelledby` references remain represented in the accessible-name diagnostic candidates with an empty unresolved value. The implementation remains a deliberately bounded AccName subset: PASS means the supported naming expectation was met, not that FocusTrace reproduced the browser accessibility tree or every AccName edge case.
+
 ## Label in Name scope
 
 `FT-WCAG-007` implements the automated text-content subset of ACT `2ee8b8` for WCAG 2.5.3. For a name-from-content widget whose accessible name is overridden by `aria-label` or `aria-labelledby`, the visible DOM text must occur intact inside the accessible name after whitespace/case normalization.
