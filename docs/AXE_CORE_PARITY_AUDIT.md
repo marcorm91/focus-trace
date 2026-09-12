@@ -214,3 +214,10 @@ FocusTrace fixtures and external benchmark behavior must be recorded separately.
 5. the summary is reproducible from repository data;
 6. benchmark-only data is excluded from browser builds;
 7. no runtime axe-core dependency is introduced.
+
+## ElementInternals applicability update
+
+The 0.3.2 ElementInternals bridge strengthens evidence for existing `partial` / `overlap` relationships such as `aria-allowed-attr`, `aria-required-attr`, command/input naming and meter/progress naming. It does **not** change the reviewed planning total: FocusTrace remains at **66 / 105 covered**, because this work extends modern custom-element applicability rather than converting any previously missing axe-core rule into equivalent coverage.
+
+The bridge is an independent FocusTrace implementation. axe-core remains a development benchmark only. Normative interpretation continues to come from WAI-ARIA, AccName, HTML and WCAG.
+

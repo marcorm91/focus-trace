@@ -570,3 +570,10 @@ npm run release:check:full
 ```
 
 See [`docs/RELEASE_CHECKLIST.md`](docs/RELEASE_CHECKLIST.md) before tagging a release or changing repository visibility.
+
+### ElementInternals semantic evidence
+
+FocusTrace can use a bounded MAIN-world bridge to observe semantics authored through `ElementInternals` on custom elements. After the user grants the existing page-access permission, FocusTrace registers the bridge for future documents at `document_start` and also attempts to prime the current page. The bridge keeps the raw `ElementInternals` object inside the page world and transfers only normalized role, ARIA reflection strings, form-associated label text/IDs and a form-associated flag. Existing author DOM attributes take precedence.
+
+This evidence feeds the existing accessible-name and ARIA authoring checks; it does not create a separate conformance claim or increase the axe-core parity count by itself. If the bridge is unavailable or an `attachInternals()` call happened before current-page injection, FocusTrace treats the internals state as unknown rather than inventing a failure. Chromium supports the required MAIN-world scripting path. Firefox gained MAIN-world extension scripting in Firefox 128, while FocusTrace still supports Firefox 115, so Firefox 115–127 intentionally falls back to normal isolated-world inspection. No additional browser permission is introduced.
+
