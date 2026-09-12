@@ -147,3 +147,7 @@ Automated tests require every declared FocusTrace ↔ axe mapping to resolve and
 - `FT-REVIEW-029` — **serious** REVIEW. Braille/custom role-description equivalence can materially affect assistive-technology output, while SHOULD-level guidance and platform repair keep the final judgement contextual.
 
 These severities describe impact when the modeled condition is applicable. APG remains informative and is not presented as normative WCAG evidence.
+
+### Document structure and landmarks
+
+`FT-REVIEW-030`, `FT-REVIEW-031`, `FT-REVIEW-032`, `FT-REVIEW-033`, `FT-REVIEW-034` and `FT-REVIEW-035` are `moderate` REVIEW signals: they expose document-structure and landmark best-practice risks without converting contextual APG/HTML guidance into automatic WCAG failures. `FT-WARN-024` is a `moderate` authoring warning because an explicit ARIA region requires an accessible name, while the warning alone is not presented as a deterministic WCAG failure.

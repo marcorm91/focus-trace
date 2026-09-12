@@ -1,18 +1,163 @@
 {
   "schemaVersion": 1,
   "classifications": [
-    {"axeRuleId":"landmark-no-duplicate-banner","relationship":"missing","focusTraceRuleIds":[],"rationale":"FocusTrace has no dedicated rule limiting exposed banner landmarks to one.","standards":["ARIA APG Landmark Regions","WAI-ARIA banner role"],"evidenceKey":"e07"},
-    {"axeRuleId":"landmark-no-duplicate-contentinfo","relationship":"missing","focusTraceRuleIds":[],"rationale":"FocusTrace has no dedicated rule limiting exposed contentinfo landmarks to one.","standards":["ARIA APG Landmark Regions","WAI-ARIA contentinfo role"],"evidenceKey":"e07"},
-    {"axeRuleId":"landmark-no-duplicate-main","relationship":"overlap","focusTraceRuleIds":["FT-REVIEW-005"],"rationale":"FocusTrace reports multiple exposed main landmarks for structural review, but intentionally retains contextual REVIEW semantics.","standards":["HTML main element","ARIA APG Landmark Regions"],"evidenceKey":"e07"},
-    {"axeRuleId":"landmark-one-main","relationship":"overlap","focusTraceRuleIds":["FT-REVIEW-004"],"rationale":"FocusTrace reviews whether a page exposes a primary main landmark, sharing the same structural goal while retaining contextual outcome semantics.","standards":["HTML main element","ARIA APG Landmark Regions"],"evidenceKey":"e07"},
-    {"axeRuleId":"landmark-unique","relationship":"partial","focusTraceRuleIds":["FT-REVIEW-010"],"rationale":"FocusTrace checks repeated navigation, complementary and search landmarks for distinguishable names, but it does not yet cover every landmark role and axe uniqueness condition.","standards":["ARIA APG Landmark Regions"],"evidenceKey":"e07"},
-    {"axeRuleId":"meta-viewport-large","relationship":"missing","focusTraceRuleIds":[],"rationale":"FocusTrace evaluates observed text-resize behavior but does not currently inspect meta viewport user-scalable or maximum-scale directives against the five-times zoom best-practice threshold.","standards":["Deque best practice for 500% zoom","HTML viewport meta"],"evidenceKey":"e15"},
-    {"axeRuleId":"page-has-heading-one","relationship":"missing","focusTraceRuleIds":[],"rationale":"FocusTrace reviews heading order but does not currently require a page or frame to contain a level-one heading.","standards":["HTML h1 element","ARIA APG document structure guidance"],"evidenceKey":"e20"},
-    {"axeRuleId":"presentation-role-conflict","relationship":"overlap","focusTraceRuleIds":["FT-WARN-020"],"rationale":"FocusTrace can report ARIA properties unsupported by a presentational role, but it does not implement axe's complete global-ARIA/tabindex conflict and role-repair expectation.","standards":["WAI-ARIA presentational roles conflict resolution"],"evidenceKey":"e02"},
-    {"axeRuleId":"region","relationship":"missing","focusTraceRuleIds":[],"rationale":"FocusTrace can review main and repeated landmarks but does not currently require all page content to be contained by landmarks.","standards":["ARIA APG Landmark Regions"],"evidenceKey":"e07"},
-    {"axeRuleId":"scope-attr-valid","relationship":"missing","focusTraceRuleIds":[],"rationale":"FocusTrace does not yet validate table scope attribute values and placement.","standards":["HTML th scope attribute"],"evidenceKey":"e07"},
-    {"axeRuleId":"skip-link","relationship":"overlap","focusTraceRuleIds":["FT-REVIEW-012"],"rationale":"FocusTrace reviews availability of practical bypass mechanisms, including skip-link evidence, while axe specifically validates skip-link focus targets.","standards":["WCAG 2.2 2.4.1","HTML fragment navigation"],"evidenceKey":"e05"},
-    {"axeRuleId":"tabindex","relationship":"overlap","focusTraceRuleIds":["FT-REVIEW-001"],"rationale":"FocusTrace detects positive tabindex and reports it for contextual focus-order review; axe treats the same syntax as a best-practice failure.","standards":["WCAG 2.2 2.4.3","HTML tabindex"],"evidenceKey":"e11"},
-    {"axeRuleId":"table-duplicate-name","relationship":"missing","focusTraceRuleIds":[],"rationale":"FocusTrace does not compare table caption text with legacy summary text.","standards":["HTML table caption/summary authoring"],"evidenceKey":"e07"}
+    {
+      "axeRuleId": "landmark-no-duplicate-banner",
+      "relationship": "overlap",
+      "focusTraceRuleIds": [
+        "FT-REVIEW-034"
+      ],
+      "rationale": "FocusTrace now reviews multiple exposed banner landmarks in the same document/application scope while preserving contextual APG semantics.",
+      "standards": [
+        "ARIA APG Landmark Regions",
+        "WAI-ARIA banner role"
+      ],
+      "evidenceKey": "e25"
+    },
+    {
+      "axeRuleId": "landmark-no-duplicate-contentinfo",
+      "relationship": "overlap",
+      "focusTraceRuleIds": [
+        "FT-REVIEW-034"
+      ],
+      "rationale": "FocusTrace now reviews multiple exposed contentinfo landmarks in the same document/application scope while preserving contextual APG semantics.",
+      "standards": [
+        "ARIA APG Landmark Regions",
+        "WAI-ARIA contentinfo role"
+      ],
+      "evidenceKey": "e25"
+    },
+    {
+      "axeRuleId": "landmark-no-duplicate-main",
+      "relationship": "overlap",
+      "focusTraceRuleIds": [
+        "FT-REVIEW-005"
+      ],
+      "rationale": "FocusTrace reports multiple exposed main landmarks for structural review, but intentionally retains contextual REVIEW semantics.",
+      "standards": [
+        "HTML main element",
+        "ARIA APG Landmark Regions"
+      ],
+      "evidenceKey": "e07"
+    },
+    {
+      "axeRuleId": "landmark-one-main",
+      "relationship": "overlap",
+      "focusTraceRuleIds": [
+        "FT-REVIEW-004"
+      ],
+      "rationale": "FocusTrace reviews whether a page exposes a primary main landmark, sharing the same structural goal while retaining contextual outcome semantics.",
+      "standards": [
+        "HTML main element",
+        "ARIA APG Landmark Regions"
+      ],
+      "evidenceKey": "e07"
+    },
+    {
+      "axeRuleId": "landmark-unique",
+      "relationship": "partial",
+      "focusTraceRuleIds": [
+        "FT-REVIEW-010"
+      ],
+      "rationale": "FocusTrace checks repeated navigation, complementary, search, region and form landmarks for distinguishable names. The rule remains partial because FocusTrace deliberately separates singleton landmark constraints and contextual naming exceptions.",
+      "standards": [
+        "ARIA APG Landmark Regions"
+      ],
+      "evidenceKey": "e25"
+    },
+    {
+      "axeRuleId": "meta-viewport-large",
+      "relationship": "missing",
+      "focusTraceRuleIds": [],
+      "rationale": "FocusTrace evaluates observed text-resize behavior but does not currently inspect meta viewport user-scalable or maximum-scale directives against the five-times zoom best-practice threshold.",
+      "standards": [
+        "Deque best practice for 500% zoom",
+        "HTML viewport meta"
+      ],
+      "evidenceKey": "e15"
+    },
+    {
+      "axeRuleId": "page-has-heading-one",
+      "relationship": "overlap",
+      "focusTraceRuleIds": [
+        "FT-REVIEW-030"
+      ],
+      "rationale": "FocusTrace now reviews pages without a visible native H1 or ARIA heading at level one, keeping page-heading strategy contextual rather than treating the best-practice signal as a WCAG failure.",
+      "standards": [
+        "HTML h1 element",
+        "ARIA document structure guidance"
+      ],
+      "evidenceKey": "e25"
+    },
+    {
+      "axeRuleId": "presentation-role-conflict",
+      "relationship": "overlap",
+      "focusTraceRuleIds": [
+        "FT-WARN-020"
+      ],
+      "rationale": "FocusTrace can report ARIA properties unsupported by a presentational role, but it does not implement axe's complete global-ARIA/tabindex conflict and role-repair expectation.",
+      "standards": [
+        "WAI-ARIA presentational roles conflict resolution"
+      ],
+      "evidenceKey": "e02"
+    },
+    {
+      "axeRuleId": "region",
+      "relationship": "partial",
+      "focusTraceRuleIds": [
+        "FT-REVIEW-035"
+      ],
+      "rationale": "FocusTrace now reviews meaningful page content that is outside exposed landmark regions, using a bounded set of perceivable content subjects and conservative REVIEW outcomes.",
+      "standards": [
+        "ARIA APG Landmark Regions"
+      ],
+      "evidenceKey": "e25"
+    },
+    {
+      "axeRuleId": "scope-attr-valid",
+      "relationship": "missing",
+      "focusTraceRuleIds": [],
+      "rationale": "FocusTrace does not yet validate table scope attribute values and placement.",
+      "standards": [
+        "HTML th scope attribute"
+      ],
+      "evidenceKey": "e07"
+    },
+    {
+      "axeRuleId": "skip-link",
+      "relationship": "overlap",
+      "focusTraceRuleIds": [
+        "FT-REVIEW-012"
+      ],
+      "rationale": "FocusTrace reviews availability of practical bypass mechanisms, including skip-link evidence, while axe specifically validates skip-link focus targets.",
+      "standards": [
+        "WCAG 2.2 2.4.1",
+        "HTML fragment navigation"
+      ],
+      "evidenceKey": "e05"
+    },
+    {
+      "axeRuleId": "tabindex",
+      "relationship": "overlap",
+      "focusTraceRuleIds": [
+        "FT-REVIEW-001"
+      ],
+      "rationale": "FocusTrace detects positive tabindex and reports it for contextual focus-order review; axe treats the same syntax as a best-practice failure.",
+      "standards": [
+        "WCAG 2.2 2.4.3",
+        "HTML tabindex"
+      ],
+      "evidenceKey": "e11"
+    },
+    {
+      "axeRuleId": "table-duplicate-name",
+      "relationship": "missing",
+      "focusTraceRuleIds": [],
+      "rationale": "FocusTrace does not compare table caption text with legacy summary text.",
+      "standards": [
+        "HTML table caption/summary authoring"
+      ],
+      "evidenceKey": "e07"
+    }
   ]
 }

@@ -373,17 +373,19 @@ function evaluateSectionIdentification(root: ScanRoot, signals: StructuralHtmlSi
   }
 }
 
-function resolvedLandmarkRole(element: Element): 'navigation' | 'complementary' | 'search' | undefined {
+function resolvedLandmarkRole(element: Element): 'navigation' | 'complementary' | 'search' | 'region' | 'form' | undefined {
   const explicit = element.getAttribute('role')?.trim().toLowerCase().split(/\s+/)[0];
-  if (explicit === 'navigation' || explicit === 'complementary' || explicit === 'search') return explicit;
+  if (explicit === 'navigation' || explicit === 'complementary' || explicit === 'search' || explicit === 'region' || explicit === 'form') return explicit;
   if (element.tagName === 'NAV') return 'navigation';
   if (element.tagName === 'ASIDE') return 'complementary';
   if (element.tagName === 'SEARCH') return 'search';
+  if (element.tagName === 'SECTION' && accessibleNameDetails(element).name) return 'region';
+  if (element.tagName === 'FORM' && accessibleNameDetails(element).name) return 'form';
   return undefined;
 }
 
 function evaluateRepeatedLandmarks(root: ScanRoot, signals: StructuralHtmlSignal[]) {
-  const landmarks = scopedElements(root, 'nav, aside, search, [role="navigation"], [role="complementary"], [role="search"]')
+  const landmarks = scopedElements(root, 'nav, aside, search, section, form, [role="navigation"], [role="complementary"], [role="search"], [role="region"], [role="form"]')
     .filter((element) => !isProgrammaticallyHidden(element));
   const groups = new Map<string, Element[]>();
 

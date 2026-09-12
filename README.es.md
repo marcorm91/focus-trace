@@ -580,3 +580,7 @@ FocusTrace puede usar un bridge acotado en el mundo MAIN para observar semántic
 
 Esta evidencia alimenta las comprobaciones existentes de nombre accesible y autoría ARIA; no crea una afirmación de conformidad separada ni aumenta por sí sola el recuento de paridad con axe-core. Si el bridge no está disponible o `attachInternals()` se ejecutó antes de la inyección en la página actual, FocusTrace trata ese estado interno como desconocido en lugar de inventar un fallo. Chromium permite la ruta necesaria mediante scripting en MAIN. Firefox añadió scripting de extensiones en MAIN en Firefox 128, mientras FocusTrace sigue soportando Firefox 115, por lo que Firefox 115–127 utiliza deliberadamente la inspección normal en mundo aislado. No se añade ningún permiso de navegador.
 
+### Cobertura de estructura del documento y landmarks
+
+FocusTrace mantiene las buenas prácticas de estructura de página separadas de los fallos WCAG deterministas. `FT-REVIEW-030` revisa la ausencia de un encabezado de nivel uno, `FT-REVIEW-031` los encabezados vacíos expuestos, `FT-REVIEW-032` los párrafos que visualmente parecen encabezados, `FT-REVIEW-033` los landmarks de nivel de página anidados, `FT-REVIEW-034` los landmarks banner/contentinfo repetidos y `FT-REVIEW-035` el contenido perceptible situado fuera de landmarks. `FT-WARN-024` informa como aviso de autoría ARIA de un `role="region"` creado explícitamente sin nombre accesible. Estas comprobaciones de página completa no se ejecutan en escaneos de componente.
+
