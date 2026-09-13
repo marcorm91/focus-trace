@@ -7,12 +7,12 @@ describe('ElementInternals axe-core parity evidence', () => {
     expect(equivalents.summary).toMatchObject({
       total: 105,
       equivalent: 6,
-      partial: 35,
+      partial: 40,
       superset: 10,
-      overlap: 33,
-      missing: 20,
+      overlap: 32,
+      missing: 16,
       'not-applicable': 1,
-      covered: 84,
+      covered: 88,
     });
   });
 
