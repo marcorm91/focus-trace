@@ -28,5 +28,6 @@ const evaluatorPath = 'lib/audit/table-relationships.ts';
 let evaluator = await readFile(evaluatorPath, 'utf8');
 const unused = "const TABLE_ROOT_ROLES = new Set(['table', 'grid', 'treegrid']);\n";
 evaluator = evaluator.replace(unused, '');
+evaluator = evaluator.replace('for (const [column, span] of [...occupied]) {', 'for (const [column, span] of occupied) {');
 evaluator = evaluator.replace('const rowCells = [...row.children].filter(', 'const rowCells = Array.from(row.children).filter(');
 await writeFile(evaluatorPath, evaluator, 'utf8');
