@@ -1,4 +1,3 @@
-import type { RuleDefinition } from '../../shared/rule-catalog';
 import {
   DUPLICATE_SINGLETON_LANDMARK_RULE,
   EMPTY_HEADING_RULE,
@@ -7,6 +6,7 @@ import {
   PARAGRAPH_AS_HEADING_RULE,
   REGION_NAME_RULE,
   TOP_LEVEL_LANDMARK_RULE,
+  type DocumentStructureRuntimeRule,
 } from '../../shared/document-structure-rules';
 import { accessibleNameDetails, isMarkedDecorative, isProgrammaticallyHidden } from './dom';
 import {
@@ -22,7 +22,7 @@ import { registeredExplicitAriaRole } from './standards-registry';
 export type DocumentStructureOutcome = 'review' | 'warning';
 
 export interface DocumentStructureSignal {
-  rule: RuleDefinition;
+  rule: DocumentStructureRuntimeRule;
   outcome: DocumentStructureOutcome;
   element: Element;
   description: string;
@@ -87,7 +87,7 @@ function meaningfulContent(element: Element): boolean {
 
 function add(
   signals: DocumentStructureSignal[],
-  rule: RuleDefinition,
+  rule: DocumentStructureRuntimeRule,
   outcome: DocumentStructureOutcome,
   element: Element,
   description: string,
@@ -223,4 +223,3 @@ export function evaluateDocumentStructure(): DocumentStructureSignal[] {
   evaluateLandmarkCoverage(signals);
   return signals;
 }
-
