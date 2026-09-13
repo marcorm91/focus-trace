@@ -42,6 +42,10 @@ function directElements(element: Element, ignoreScriptSupporting = true): Elemen
   return ignoreScriptSupporting ? children.filter((child) => !SCRIPT_SUPPORTING.has(child.tagName)) : children;
 }
 
+function hasNonWhitespaceDirectText(element: Element): boolean {
+  return [...element.childNodes].some((node) => node.nodeType === 3 && Boolean(node.textContent?.trim()));
+}
+
 function add(signals: StructuralHtmlSignal[], kind: StructuralHtmlSignalKind, element: Element, detail: string) {
   signals.push({ kind, element, detail });
 }
@@ -132,26 +136,38 @@ function evaluateRequiredContexts(root: ScanRoot, signals: StructuralHtmlSignal[
 
 function evaluateLists(root: ScanRoot, signals: StructuralHtmlSignal[]) {
   for (const list of scopedElements(root, 'ul, ol, menu')) {
+    if (hasNonWhitespaceDirectText(list)) {
+      add(signals, 'content-model', list, `<${tag(list)}> may contain only list items and script-supporting elements as direct content; non-whitespace direct text is not permitted.`);
+    }
     const invalid = directElements(list).filter((child) => child.tagName !== 'LI');
     for (const child of invalid) add(signals, 'content-model', child, `<${tag(list)}> may contain list items as its structural children; unexpected direct child <${tag(child)}> breaks the native list content model.`);
   }
 
   for (const dl of scopedElements(root, 'dl')) {
     const children = directElements(dl);
-    if (!children.length) continue;
+    const hasDirectText = hasNonWhitespaceDirectText(dl);
+    if (!children.length) {
+      if (hasDirectText) add(signals, 'content-model', dl, '<dl> may contain only description groups and script-supporting elements as direct content; non-whitespace direct text is not permitted.');
+      continue;
+    }
     const grouped = children.some((child) => child.tagName === 'DIV');
 
     if (grouped) {
-      if (children.some((child) => child.tagName !== 'DIV')) {
-        add(signals, 'content-model', dl, '<dl> must use either direct dt/dd groups or div-wrapped dt/dd groups; both forms cannot be mixed at the same level.');
+      const mixed = children.some((child) => child.tagName !== 'DIV');
+      if (hasDirectText || mixed) {
+        add(signals, 'content-model', dl, '<dl> using div-wrapped description groups may contain only grouping <div> and script-supporting elements at the top level; direct text or direct dt/dd content cannot be mixed into that branch.');
       }
       for (const group of children.filter((child) => child.tagName === 'DIV')) {
-        if (!isValidDescriptionSequence(directElements(group))) add(signals, 'content-model', group, 'A grouping <div> inside <dl> must contain one or more <dt> elements followed by one or more <dd> elements.');
+        if (hasNonWhitespaceDirectText(group) || !isValidDescriptionSequence(directElements(group))) {
+          add(signals, 'content-model', group, 'A grouping <div> inside <dl> must contain only one or more <dt> elements followed by one or more <dd> elements, apart from script-supporting elements and whitespace.');
+        }
       }
       continue;
     }
 
-    if (!isValidDescriptionSequence(children)) add(signals, 'content-model', dl, '<dl> direct children must form groups of one or more <dt> elements followed by one or more <dd> elements.');
+    if (hasDirectText || !isValidDescriptionSequence(children)) {
+      add(signals, 'content-model', dl, '<dl> direct content must form groups of one or more <dt> elements followed by one or more <dd> elements, apart from script-supporting elements and whitespace.');
+    }
   }
 }
 

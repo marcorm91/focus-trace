@@ -151,3 +151,9 @@ These severities describe impact when the modeled condition is applicable. APG r
 ### Document structure and landmarks
 
 `FT-REVIEW-030`, `FT-REVIEW-031`, `FT-REVIEW-032`, `FT-REVIEW-033`, `FT-REVIEW-034` and `FT-REVIEW-035` are `moderate` REVIEW signals: they expose document-structure and landmark best-practice risks without converting contextual APG/HTML guidance into automatic WCAG failures. `FT-WARN-024` is a `moderate` authoring warning because an explicit ARIA region requires an accessible name, while the warning alone is not presented as a deterministic WCAG failure.
+
+## List-structure package (#230)
+
+`FT-WARN-008` and `FT-WARN-009` remain **moderate authoring warnings** for native list and description-list context/content-model contradictions. The scanner can prove the HTML structure is non-conforming, but that evidence alone does not prove a WCAG failure for the rendered experience.
+
+ARIA list ownership continues to use `FT-WARN-017` and `FT-WARN-018`, whose existing critical authoring impact reflects invalid required-parent/allowed-child accessibility relationships. #230 does not change those severities or promote the warnings to deterministic WCAG failures; it adds focused list fixtures, `aria-owns` coverage and deduplication evidence.
