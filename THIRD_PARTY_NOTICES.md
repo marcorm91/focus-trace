@@ -26,7 +26,7 @@ AXE® is a trademark of Deque Systems, Inc. in the US and other countries. AXE-C
 
 FocusTrace is an independent project and is not affiliated with, sponsored by, endorsed by or certified by Deque Systems, Inc. References to AXE® or AXE-CORE® are descriptive references to Deque software and its public repository only.
 
-Deque's current trademark policy is available at <https://www.deque.com/legal/trademarks/>.
+Deque's current trademark policy is available at <https://www.deque.com/legal/trademarks/>. FocusTrace's own name and brand policy is documented in [`TRADEMARKS.md`](TRADEMARKS.md).
 
 ## No change to the FocusTrace license
 
