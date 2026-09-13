@@ -1,10 +1,10 @@
 {
   "maxGrowthPercent": 20,
   "baseline": {
-    "totalBytes": 1597132,
-    "runtimeBytes": 367444,
-    "sidepanelJsBytes": 89383,
-    "sidepanelCssBytes": 118939,
-    "sidepanelInitialBytes": 487965
+    "totalBytes": 1910652,
+    "runtimeBytes": 437710,
+    "sidepanelJsBytes": 91484,
+    "sidepanelCssBytes": 120643,
+    "sidepanelInitialBytes": 502441
   }
 }

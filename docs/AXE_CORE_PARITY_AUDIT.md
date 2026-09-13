@@ -166,7 +166,7 @@ The machine-readable classification files are the source of truth for the comple
 
 ## Priority after ARIA role/state relationships
 
-#228 establishes the synchronized ARIA relationship foundation and raises the benchmark planning metric to 71/105. The next roadmap block is **document structure and landmarks** (#229). That work remains separate because page-level landmark placement, uniqueness and structure have different applicability from ARIA role/property authoring.
+#228 establishes the synchronized ARIA relationship foundation and raises the benchmark planning metric to 79/105. The next roadmap block is **document structure and landmarks** (#229). That work remains separate because page-level landmark placement, uniqueness and structure have different applicability from ARIA role/property authoring.
 
 ## Required evidence for later parity changes
 
@@ -211,4 +211,8 @@ FocusTrace fixtures and external benchmark behavior must be recorded separately.
 The 0.3.2 ElementInternals bridge strengthens evidence for existing `partial` / `overlap` relationships such as `aria-allowed-attr`, `aria-required-attr`, command/input naming and meter/progress naming. It does **not** change the reviewed planning total: FocusTrace remains at **66 / 105 covered**, because this work extends modern custom-element applicability rather than converting any previously missing axe-core rule into equivalent coverage.
 
 The bridge is an independent FocusTrace implementation. axe-core remains a development benchmark only. Normative interpretation continues to come from WAI-ARIA, AccName, HTML and WCAG.
+
+## Document structure applicability update
+
+Issue #229 adds evidence for level-one/empty/visually inferred headings, page-level landmark placement, duplicate banner/contentinfo landmarks, landmark-region coverage and explicit region naming. The reviewed axe-core 4.13 benchmark therefore moves to **79 covered relationships out of 105**, with 25 still classified as missing and one benchmark-specific rule not applicable. Best-practice relationships remain REVIEW/overlap/partial where context prevents exact deterministic equivalence.
 

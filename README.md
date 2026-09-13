@@ -580,3 +580,7 @@ FocusTrace can use a bounded MAIN-world bridge to observe semantics authored thr
 
 This evidence feeds the existing accessible-name and ARIA authoring checks; it does not create a separate conformance claim or increase the axe-core parity count by itself. If the bridge is unavailable or an `attachInternals()` call happened before current-page injection, FocusTrace treats the internals state as unknown rather than inventing a failure. Chromium supports the required MAIN-world scripting path. Firefox gained MAIN-world extension scripting in Firefox 128, while FocusTrace still supports Firefox 115, so Firefox 115–127 intentionally falls back to normal isolated-world inspection. No additional browser permission is introduced.
 
+### Document structure and landmark coverage
+
+FocusTrace keeps page-structure best practices separate from deterministic WCAG failures. `FT-REVIEW-030` reviews the absence of a level-one heading, `FT-REVIEW-031` exposed empty headings, `FT-REVIEW-032` paragraphs that visually resemble headings, `FT-REVIEW-033` nested page-level landmarks, `FT-REVIEW-034` repeated banner/contentinfo landmarks, and `FT-REVIEW-035` perceivable content outside landmarks. `FT-WARN-024` reports an explicitly authored `role="region"` with no accessible name as an ARIA authoring warning. These page-wide checks do not run during component scans.
+

@@ -13,6 +13,7 @@ import {
   UNSUPPORTED_ARIA_PROPERTY_RULE,
 } from '../../shared/aria-authoring-rules';
 import { INPUT_PURPOSE_AUTOCOMPLETE_RULE } from '../../shared/form-purpose-rules';
+import { DOCUMENT_STRUCTURE_RULES } from '../../shared/document-structure-rules';
 import { LANGUAGE_PARTS_RULE } from '../../shared/language-parts-rules';
 import { RULES } from '../../shared/rule-catalog';
 import {
@@ -35,6 +36,7 @@ import {
 import { textContrastSubjectsForElement } from './contrast';
 import { evaluateStructuralHtml, type StructuralHtmlSignalKind } from './content-model';
 import { accessibleName, isProgrammaticallyHidden, selectorFor, semanticRole } from './dom';
+import { evaluateDocumentStructure, type DocumentStructureSignal } from './document-structure';
 import { evaluateLanguageParts, type LanguagePartEvaluation } from './language-parts';
 import { evaluateLinkPurposeContext, type LinkPurposeContextEvaluation } from './link-purpose-context';
 import { evaluatePauseStopHide, type PauseStopHideEvaluation } from './pause-stop-hide';
@@ -620,6 +622,43 @@ function appendLinkPurposeContextReview(result: ScanResult, root: Document | Ele
   result.rulesRun += 1;
 }
 
+function documentStructureIssueFor(signal: DocumentStructureSignal): ScanIssue {
+  return {
+    id: uid(),
+    ruleId: signal.rule.id,
+    title: signal.rule.title,
+    description: signal.description,
+    severity: signal.rule.severity,
+    outcome: signal.outcome,
+    targets: [selectorFor(signal.element)],
+    evidence: signal.evidence,
+    references: signal.rule.references,
+  };
+}
+
+function appendDocumentStructureReviews(result: ScanResult): void {
+  const signals = evaluateDocumentStructure();
+  const additions = signals.map((signal) => ({ signal, issue: documentStructureIssueFor(signal) }));
+  result.review.push(...additions.filter(({ issue }) => issue.outcome === 'review').map(({ issue }) => issue));
+  result.warnings.push(...additions.filter(({ issue }) => issue.outcome === 'warning').map(({ issue }) => issue));
+  result.ruleResults = [
+    ...(result.ruleResults ?? []),
+    ...DOCUMENT_STRUCTURE_RULES.map((rule) => {
+      const findings = additions.filter(({ issue }) => issue.ruleId === rule.id).map(({ issue }) => issue);
+      return {
+        ruleId: rule.id,
+        applicable: findings.length,
+        passed: 0,
+        failures: 0,
+        reviews: findings.filter((issue) => issue.outcome === 'review').length,
+        warnings: findings.filter((issue) => issue.outcome === 'warning').length,
+        coverage: 'findings-only' as const,
+      };
+    }),
+  ];
+  result.rulesRun += DOCUMENT_STRUCTURE_RULES.length;
+}
+
 function appendResizeTextReview(result: ScanResult, context?: TextResizeContext): void {
   const evaluation = evaluateResizeText(context);
   const reviews = evaluation.signals.map(resizeTextIssueFor);
@@ -650,6 +689,7 @@ function runFocusTraceScanWithCache(scope?: ComponentScanScope, textResize?: Tex
   pruneUnresolvedContrastReviews(result);
   annotateObservedContrastStates(result);
   if (!componentScope) {
+    appendDocumentStructureReviews(result);
     appendBypassBlocksReview(result);
     appendLanguageParts(result);
     appendReflowReview(result);
