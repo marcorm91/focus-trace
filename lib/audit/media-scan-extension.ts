@@ -9,6 +9,7 @@ import type { ScanIssue, ScanResult } from '../../shared/types';
 import { selectorFor } from './dom';
 import { appendAriaRoleStateRelationshipChecks } from './aria-role-state-scan-extension';
 import { appendElementInternalsSemantics } from './element-internals-semantics';
+import { appendEmbeddedContentChecks } from './embedded-content-scan-extension';
 import { appendFormErrorReviews } from './form-error-scan-extension';
 import {
   evaluateLiveCaptions,
@@ -23,6 +24,7 @@ import {
   type PrerecordedVideoAlternativeEvaluation,
 } from './media-alternatives';
 import { appendSpecializedAccessibleNameChecks } from './specialized-accessible-name-scan-extension';
+import { reconcileSpecializedImageAlternatives } from './specialized-image-alternatives';
 import { appendTableRelationshipChecks } from './table-scan-extension';
 
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -122,6 +124,8 @@ function appendRuleResult(
 }
 
 export function appendMediaAccessibilityReviews(result: ScanResult, root: ScanRoot): void {
+  reconcileSpecializedImageAlternatives(result, root);
+
   const audioEvaluations = evaluatePrerecordedAudioAlternatives(root);
   const audioReviews = audioEvaluations
     .filter((evaluation) => evaluation.outcome === 'review')
@@ -202,4 +206,5 @@ export function appendMediaAccessibilityReviews(result: ScanResult, root: ScanRo
   appendSpecializedAccessibleNameChecks(result, root);
   appendElementInternalsSemantics(result, root);
   appendAriaRoleStateRelationshipChecks(result, root);
+  appendEmbeddedContentChecks(result, root);
 }

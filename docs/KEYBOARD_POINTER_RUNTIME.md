@@ -72,6 +72,16 @@ Focus-indicator evidence is attributed only to real `focus` / `focus-visible` st
 
 The detailed implementation boundary is documented in `docs/INTERACTIVE_CONTRAST.md`.
 
+## Embedded-content severity cross-reference
+
+These rules are **static analysis**, not Trace runtime rules. They are listed here because this document forms part of the CI severity-documentation bundle together with `docs/SEVERITY-AUDIT.md`; detailed applicability remains in `docs/RULES.md`.
+
+- `FT-WCAG-018` — **serious FAIL** when an exposed `object[data]` has no usable accessible alternative. Missing meaningful non-text information can make the embedded content unavailable to screen-reader users.
+- `FT-WCAG-019` — **serious FAIL** when an exposed frame has no usable accessible name. An unnamed browsing context can make its purpose impossible to identify while navigating frames.
+- `FT-WCAG-020` — **serious FAIL** for the bounded same-origin case where a frame with negative `tabindex` contains a sequentially focusable descendant. The evidence demonstrates a keyboard-reachability barrier without claiming coverage of inaccessible cross-origin content.
+- `FT-REVIEW-038` — **serious REVIEW** when exposed frames share the same accessible name. Equivalent-purpose frames may validly share a name, so purpose equivalence remains contextual.
+- `FT-REVIEW-039` — **moderate REVIEW** when the nested frame document cannot be evaluated because it is cross-origin, opaque, unavailable or sandboxed without same-origin access. This is an explicit coverage boundary, not an accessibility failure by itself.
+
 ## Shared guardrails
 
 - Only trusted user interaction is considered; synthetic test events from the page are not treated as user evidence.
