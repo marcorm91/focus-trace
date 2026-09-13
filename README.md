@@ -584,3 +584,8 @@ This evidence feeds the existing accessible-name and ARIA authoring checks; it d
 
 FocusTrace keeps page-structure best practices separate from deterministic WCAG failures. `FT-REVIEW-030` reviews the absence of a level-one heading, `FT-REVIEW-031` exposed empty headings, `FT-REVIEW-032` paragraphs that visually resemble headings, `FT-REVIEW-033` nested page-level landmarks, `FT-REVIEW-034` repeated banner/contentinfo landmarks, and `FT-REVIEW-035` perceivable content outside landmarks. `FT-WARN-024` reports an explicitly authored `role="region"` with no accessible name as an ARIA authoring warning. These page-wide checks do not run during component scans.
 
+### Table names, headers and cell relationships
+
+FocusTrace evaluates native HTML tables and explicit ARIA `table`, `grid` and `treegrid` structures with a conservative evidence model. `FT-WCAG-017` can report FAIL only when a simple exposed data table has a deterministically missing cell-to-header relationship; spanning, indexed, owned or otherwise ambiguous table models remain REVIEW rather than being promoted to a conformance failure.
+
+`FT-WARN-025` reports exposed header cells without usable header text. `FT-WARN-026` validates native `scope` tokens and their table context. `FT-WARN-027` reports `headers` IDREFs that are empty, unresolved, point to non-header elements, hidden headers or headers in another table. `FT-REVIEW-036` surfaces headers that appear not to describe any data cell, while `FT-REVIEW-037` keeps duplicate/caption-like table naming patterns for human review. The same bounded evaluator runs in full-page and component scans.

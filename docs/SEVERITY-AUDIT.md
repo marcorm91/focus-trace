@@ -157,3 +157,12 @@ These severities describe impact when the modeled condition is applicable. APG r
 `FT-WARN-008` and `FT-WARN-009` remain **moderate authoring warnings** for native list and description-list context/content-model contradictions. The scanner can prove the HTML structure is non-conforming, but that evidence alone does not prove a WCAG failure for the rendered experience.
 
 ARIA list ownership continues to use `FT-WARN-017` and `FT-WARN-018`, whose existing critical authoring impact reflects invalid required-parent/allowed-child accessibility relationships. #230 does not change those severities or promote the warnings to deterministic WCAG failures; it adds focused list fixtures, `aria-owns` coverage and deduplication evidence.
+
+## Table relationship severity decisions
+
+- `FT-WCAG-017` — **serious**: losing a proven row/column header relationship can remove essential context; FAIL is restricted to deterministic simple cases and ambiguous complex models remain REVIEW.
+- `FT-WARN-025` — **moderate**: an exposed empty header declares semantics without usable identifying content.
+- `FT-WARN-026` — **moderate**: invalid or inapplicable `scope` authoring can contradict the native table model.
+- `FT-WARN-027` — **serious**: broken `headers` IDREFs explicitly encode an unreliable cell/header relationship.
+- `FT-REVIEW-036` — **moderate**: a header that appears unused may indicate an incomplete model, but complex layouts need human context.
+- `FT-REVIEW-037` — **minor**: duplicate or caption-like naming is primarily an identification/usability concern and remains contextual review.

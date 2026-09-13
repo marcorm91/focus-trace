@@ -567,3 +567,9 @@ For `dl`, FocusTrace accepts either direct groups of one or more `dt` followed b
 Explicit `role="list"` / `role="listitem"` relationships reuse the synchronized WAI-ARIA registry and the existing accessibility-ownership model. Valid `aria-owns` can therefore establish listitem parentage. Conversely, repurposing a native list as another ARIA container does not erase the implicit semantics of descendant native `li` elements: for example, `ul[role="menu"] > li` exposes an incompatible `listitem` child unless the author supplies semantics appropriate to the menu pattern.
 
 These checks are authoring **WARNINGs**, not automatic WCAG failures. Hidden malformed HTML or explicit ARIA remains observable to the authoring validators because conformance errors still exist in source structure; FocusTrace does not infer a user-facing WCAG failure solely from that condition. Native orphan items are handled by the HTML parent-context rule and are not duplicated as ARIA required-parent findings unless the author explicitly supplies the ARIA role.
+
+## Table names, headers and cell relationships
+
+`FT-WCAG-017` evaluates the observable cell-to-header relationship subset of WCAG 1.3.1 for native and supported ARIA table models. Simple deterministic missing relationships may FAIL; complex or ambiguous relationships remain REVIEW. `FT-WARN-025`, `FT-WARN-026` and `FT-WARN-027` cover empty headers, invalid native `scope` authoring and broken `headers` IDREFs. `FT-REVIEW-036` and `FT-REVIEW-037` cover apparently unused headers and table naming/caption patterns that require human context.
+
+Layout-like native tables without data-table evidence are not converted into deterministic relationship failures. Programmatically hidden table roots are excluded. Component analysis uses the same bounded table evaluator while limiting reported targets to the selected scope.
