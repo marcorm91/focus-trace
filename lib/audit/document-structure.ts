@@ -10,154 +10,121 @@ import {
 } from '../../shared/document-structure-rules';
 import { accessibleNameDetails, isMarkedDecorative, isProgrammaticallyHidden } from './dom';
 import {
+  containingLandmarkRole,
   landmarkRoleForElement,
   landmarkScopeOwner,
-  nearestContainingLandmark,
   pageLandmarks,
   type LandmarkRole,
 } from './landmarks';
 import { scopedElements } from './scan-elements';
 import { registeredExplicitAriaRole } from './standards-registry';
 
-export type DocumentStructureOutcome = 'review' | 'warning';
-
 export interface DocumentStructureSignal {
   rule: DocumentStructureRuntimeRule;
-  outcome: DocumentStructureOutcome;
+  outcome: 'review' | 'warning';
   element: Element;
   description: string;
   evidence: string;
 }
 
-const TOP_LEVEL_ROLES = new Set<LandmarkRole>(['banner', 'main', 'complementary', 'contentinfo']);
-const CONTENT_SELECTOR = 'h1,h2,h3,h4,h5,h6,p,a,button,input,select,textarea,img,table,ul,ol,dl,video,audio,canvas,svg';
-
-function normalizedText(value: string | null | undefined): string {
-  return value?.replace(/\s+/g, ' ').trim() ?? '';
-}
+const text = (value: string | null | undefined) => value?.replace(/\s+/g, ' ').trim() ?? '';
 
 function headingLevel(element: Element): number | null {
-  const explicit = element.hasAttribute('role') ? registeredExplicitAriaRole(element)?.name : undefined;
-  if (explicit && explicit !== 'heading') return null;
-  if (explicit === 'heading') {
+  const role = element.hasAttribute('role') ? registeredExplicitAriaRole(element)?.name : undefined;
+  if (role && role !== 'heading') return null;
+  if (role === 'heading') {
     const level = Number.parseInt(element.getAttribute('aria-level') ?? '', 10);
     if (level > 0) return level;
   }
-  return /^H[1-6]$/.test(element.tagName) ? Number(element.tagName.slice(1)) : null;
+  return /^H[1-6]$/.test(element.tagName) ? Number(element.tagName[1]) : null;
 }
 
 function headingHasContent(element: Element): boolean {
-  if (normalizedText(element.textContent) || accessibleNameDetails(element).name) return true;
+  if (text(element.textContent) || accessibleNameDetails(element).name) return true;
   for (const child of element.querySelectorAll('img[alt],[aria-label],[aria-labelledby],svg title')) {
-    if (normalizedText(child.textContent) || accessibleNameDetails(child).name) return true;
+    if (text(child.textContent) || accessibleNameDetails(child).name) return true;
   }
   return false;
 }
 
 function paragraphLooksLikeHeading(element: HTMLParagraphElement): boolean {
-  const text = normalizedText(element.textContent);
-  if (!text || text.length > 120 || element.closest('h1,h2,h3,h4,h5,h6,[role="heading"]')) return false;
+  const value = text(element.textContent);
+  if (!value || value.length > 120 || element.closest('h1,h2,h3,h4,h5,h6,[role="heading"]')) return false;
   const style = getComputedStyle(element);
-  const fontSize = Number.parseFloat(style.fontSize) || 16;
+  const size = Number.parseFloat(style.fontSize) || 16;
   const bodySize = Number.parseFloat(getComputedStyle(document.body).fontSize) || 16;
   const weight = Number.parseInt(style.fontWeight, 10) || (style.fontWeight === 'bold' ? 700 : 400);
-  return weight >= 600 && fontSize >= Math.max(bodySize * 1.2, bodySize + 2);
+  return weight >= 600 && size >= Math.max(bodySize * 1.2, bodySize + 2);
 }
 
-function meaningfulContent(element: Element): boolean {
+function meaningful(element: Element): boolean {
   if (isProgrammaticallyHidden(element)) return false;
   if (element instanceof HTMLImageElement) return !isMarkedDecorative(element);
   if (element instanceof HTMLInputElement && element.type === 'hidden') return false;
-  return Boolean(normalizedText(element.textContent)) || /^(INPUT|SELECT|TEXTAREA|BUTTON|A|IMG|VIDEO|AUDIO|CANVAS|SVG|TABLE)$/.test(element.tagName);
-}
-
-function add(
-  signals: DocumentStructureSignal[],
-  rule: DocumentStructureRuntimeRule,
-  outcome: DocumentStructureOutcome,
-  element: Element,
-  description: string,
-  evidence: string,
-) {
-  signals.push({ rule, outcome, element, description, evidence });
-}
-
-function evaluateHeadings(signals: DocumentStructureSignal[]) {
-  const headings = scopedElements(document, 'h1,h2,h3,h4,h5,h6,[role]')
-    .filter((element) => headingLevel(element) != null && !isProgrammaticallyHidden(element));
-
-  if (!headings.some((heading) => headingLevel(heading) === 1)) {
-    add(signals, PAGE_LEVEL_ONE_HEADING_RULE, 'review', document.body ?? document.documentElement,
-      'No exposed level-one heading was found.', 'No H1 or aria-level=1 heading.');
-  }
-
-  for (const heading of headings) {
-    if (headingHasContent(heading)) continue;
-    add(signals, EMPTY_HEADING_RULE, 'review', heading,
-      'This exposed heading has no usable content.', `heading level=${headingLevel(heading)}`);
-  }
-
-  for (const paragraph of scopedElements(document, 'p')) {
-    if (!(paragraph instanceof HTMLParagraphElement) || isProgrammaticallyHidden(paragraph) || !paragraphLooksLikeHeading(paragraph)) continue;
-    const style = getComputedStyle(paragraph);
-    add(signals, PARAGRAPH_AS_HEADING_RULE, 'review', paragraph,
-      'This styled paragraph may be acting as a heading.', `${style.fontSize}/${style.fontWeight}: ${normalizedText(paragraph.textContent).slice(0, 120)}`);
-  }
-}
-
-function evaluateLandmarkPlacement(signals: DocumentStructureSignal[]) {
-  const landmarks = pageLandmarks();
-  for (const landmark of landmarks) {
-    const role = landmarkRoleForElement(landmark);
-    if (!role || !TOP_LEVEL_ROLES.has(role)) continue;
-    const parent = nearestContainingLandmark(landmark);
-    if (parent) add(signals, TOP_LEVEL_LANDMARK_RULE, 'review', landmark,
-      `${role} is nested inside ${parent.role}.`, `${role} inside ${parent.role}`);
-  }
-
-  for (const role of ['banner', 'contentinfo'] as const) {
-    const byScope = new Map<Element | Document, Element[]>();
-    for (const landmark of landmarks.filter((element) => landmarkRoleForElement(element) === role)) {
-      const owner = landmarkScopeOwner(landmark);
-      const group = byScope.get(owner) ?? [];
-      group.push(landmark);
-      byScope.set(owner, group);
-    }
-    for (const group of byScope.values()) {
-      if (group.length <= 1) continue;
-      for (const landmark of group) add(signals, DUPLICATE_SINGLETON_LANDMARK_RULE, 'review', landmark,
-        `${group.length} ${role} landmarks share one scope.`, `${group.length} ${role} landmarks`);
-    }
-  }
-
-  for (const element of scopedElements(document, '[role]')) {
-    if (isProgrammaticallyHidden(element) || registeredExplicitAriaRole(element)?.name !== 'region' || accessibleNameDetails(element).name) continue;
-    add(signals, REGION_NAME_RULE, 'warning', element,
-      'Explicit region has no accessible name.', 'role=region; name empty');
-  }
-}
-
-function evaluateLandmarkCoverage(signals: DocumentStructureSignal[]) {
-  const uncovered = scopedElements(document, CONTENT_SELECTOR)
-    .filter((element) => meaningfulContent(element) && !nearestContainingLandmark(element, true));
-  const uncoveredSet = new Set(uncovered);
-  const roots = uncovered.filter((element) => {
-    let parent = element.parentElement;
-    while (parent) {
-      if (uncoveredSet.has(parent)) return false;
-      parent = parent.parentElement;
-    }
-    return true;
-  }).slice(0, 20);
-
-  for (const element of roots) add(signals, LANDMARK_COVERAGE_RULE, 'review', element,
-    'Visible content is outside exposed landmarks.', `${element.tagName.toLowerCase()} outside landmarks`);
+  return Boolean(text(element.textContent)) || /^(INPUT|SELECT|TEXTAREA|BUTTON|A|IMG|VIDEO|AUDIO|CANVAS|SVG|TABLE)$/.test(element.tagName);
 }
 
 export function evaluateDocumentStructure(): DocumentStructureSignal[] {
   const signals: DocumentStructureSignal[] = [];
-  evaluateHeadings(signals);
-  evaluateLandmarkPlacement(signals);
-  evaluateLandmarkCoverage(signals);
+  const add = (
+    rule: DocumentStructureRuntimeRule,
+    outcome: 'review' | 'warning',
+    element: Element,
+    description: string,
+    evidence: string,
+  ) => signals.push({ rule, outcome, element, description, evidence });
+
+  const headings = scopedElements(document, 'h1,h2,h3,h4,h5,h6,[role]')
+    .filter((element) => headingLevel(element) != null && !isProgrammaticallyHidden(element));
+  if (!headings.some((heading) => headingLevel(heading) === 1)) {
+    add(PAGE_LEVEL_ONE_HEADING_RULE, 'review', document.body ?? document.documentElement,
+      'No exposed level-one heading was found.', 'No H1 or aria-level=1 heading.');
+  }
+  for (const heading of headings) {
+    if (!headingHasContent(heading)) add(EMPTY_HEADING_RULE, 'review', heading,
+      'This exposed heading has no usable content.', `heading level=${headingLevel(heading)}`);
+  }
+  for (const paragraph of scopedElements(document, 'p')) {
+    if (!(paragraph instanceof HTMLParagraphElement) || isProgrammaticallyHidden(paragraph) || !paragraphLooksLikeHeading(paragraph)) continue;
+    const style = getComputedStyle(paragraph);
+    add(PARAGRAPH_AS_HEADING_RULE, 'review', paragraph,
+      'This styled paragraph may be acting as a heading.', `${style.fontSize}/${style.fontWeight}: ${text(paragraph.textContent).slice(0, 120)}`);
+  }
+
+  const landmarks = pageLandmarks();
+  for (const landmark of landmarks) {
+    const role = landmarkRoleForElement(landmark);
+    if (!role || !(['banner', 'main', 'complementary', 'contentinfo'] as LandmarkRole[]).includes(role)) continue;
+    const parentRole = containingLandmarkRole(landmark);
+    if (parentRole) add(TOP_LEVEL_LANDMARK_RULE, 'review', landmark,
+      `${role} is nested inside ${parentRole}.`, `${role} inside ${parentRole}`);
+  }
+  for (const role of ['banner', 'contentinfo'] as const) {
+    const matches = landmarks.filter((element) => landmarkRoleForElement(element) === role);
+    for (const landmark of matches) {
+      const owner = landmarkScopeOwner(landmark);
+      const count = matches.filter((element) => landmarkScopeOwner(element) === owner).length;
+      if (count > 1) add(DUPLICATE_SINGLETON_LANDMARK_RULE, 'review', landmark,
+        `${count} ${role} landmarks share one scope.`, `${count} ${role} landmarks`);
+    }
+  }
+  for (const element of scopedElements(document, '[role]')) {
+    if (!isProgrammaticallyHidden(element) && registeredExplicitAriaRole(element)?.name === 'region' && !accessibleNameDetails(element).name) {
+      add(REGION_NAME_RULE, 'warning', element, 'Explicit region has no accessible name.', 'role=region; name empty');
+    }
+  }
+
+  const uncovered = scopedElements(document, 'h1,h2,h3,h4,h5,h6,p,a,button,input,select,textarea,img,table,ul,ol,dl,video,audio,canvas,svg')
+    .filter((element) => meaningful(element) && !containingLandmarkRole(element, true));
+  const set = new Set(uncovered);
+  for (const element of uncovered) {
+    let parent = element.parentElement;
+    while (parent && !set.has(parent)) parent = parent.parentElement;
+    if (parent) continue;
+    add(LANDMARK_COVERAGE_RULE, 'review', element,
+      'Visible content is outside exposed landmarks.', `${element.tagName.toLowerCase()} outside landmarks`);
+    if (signals.filter(({ rule }) => rule === LANDMARK_COVERAGE_RULE).length >= 20) break;
+  }
+
   return signals;
 }
