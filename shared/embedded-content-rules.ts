@@ -77,7 +77,7 @@ const htmlObject: StandardReference = {
 };
 
 export const OBJECT_ALTERNATIVE_RULE: RuleDefinition = {
-  id: 'FT-WCAG-017',
+  id: 'FT-WCAG-018',
   title: 'Embedded object has a non-empty accessible alternative',
   severity: 'serious',
   severityRationale: {
@@ -88,7 +88,7 @@ export const OBJECT_ALTERNATIVE_RULE: RuleDefinition = {
 };
 
 export const FRAME_ACCESSIBLE_NAME_RULE: RuleDefinition = {
-  id: 'FT-WCAG-018',
+  id: 'FT-WCAG-019',
   title: 'Embedded frame has a non-empty accessible name',
   severity: 'serious',
   severityRationale: {
@@ -99,7 +99,7 @@ export const FRAME_ACCESSIBLE_NAME_RULE: RuleDefinition = {
 };
 
 export const FRAME_FOCUSABLE_CONTENT_RULE: RuleDefinition = {
-  id: 'FT-WCAG-019',
+  id: 'FT-WCAG-020',
   title: 'Frame with focusable content remains reachable from sequential keyboard navigation',
   severity: 'serious',
   severityRationale: {
@@ -110,7 +110,7 @@ export const FRAME_FOCUSABLE_CONTENT_RULE: RuleDefinition = {
 };
 
 export const FRAME_NAME_UNIQUENESS_REVIEW_RULE: RuleDefinition = {
-  id: 'FT-REVIEW-037',
+  id: 'FT-REVIEW-038',
   title: 'Frames with the same name need equivalent-purpose review',
   severity: 'serious',
   severityRationale: {
@@ -121,7 +121,7 @@ export const FRAME_NAME_UNIQUENESS_REVIEW_RULE: RuleDefinition = {
 };
 
 export const EMBEDDED_CONTENT_UNEVALUATED_REVIEW_RULE: RuleDefinition = {
-  id: 'FT-REVIEW-038',
+  id: 'FT-REVIEW-039',
   title: 'Embedded frame content was not evaluated',
   severity: 'moderate',
   severityRationale: {
