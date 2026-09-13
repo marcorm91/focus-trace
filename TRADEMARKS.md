@@ -30,6 +30,16 @@ Do not reuse the official FocusTrace logo as the primary icon for a modified dis
 
 Do not use the FocusTrace name, logo or project presentation in a way that suggests sponsorship, certification, endorsement or official maintenance when none exists.
 
+## Third-party trademarks
+
+FocusTrace documentation uses third-party product names only as truthful descriptive references.
+
+AXE® is a trademark of Deque Systems, Inc. in the US and other countries. AXE-CORE® is a trademark of Deque Systems, Inc. in the US and other countries.
+
+FocusTrace is an independent project and is not affiliated with, sponsored by, endorsed by or certified by Deque Systems, Inc. The FocusTrace name, logo, browser-store presentation and release artifacts must not use AXE®, AXE-CORE® or other Deque marks in a way that suggests they are official Deque products or that Deque has approved the project.
+
+See [`THIRD_PARTY_NOTICES.md`](THIRD_PARTY_NOTICES.md) for the benchmark attribution and upstream licensing information. Deque's trademark policy is available at <https://www.deque.com/legal/trademarks/>.
+
 ## Community contributions
 
 Normal references to FocusTrace in issues, pull requests, documentation, screenshots and community discussion are encouraged and do not require separate permission when they are accurate and non-misleading.

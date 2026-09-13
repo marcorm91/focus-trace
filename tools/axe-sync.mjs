@@ -52,6 +52,27 @@ async function loadRule(entry, tag) {
   };
 }
 
+function benchmarkNotice(snapshot) {
+  const { release, tag } = snapshot.source;
+  return `# AXE-CORE® benchmark snapshot notice
+
+This notice applies to [\`axe-rule-severities.json\`](./axe-rule-severities.json).
+
+- Source repository: \`${AXE_REPOSITORY}\`
+- Source release: \`${release}\`
+- Source tag: \`${tag}\`
+- License: Mozilla Public License 2.0 (\`MPL-2.0\`)
+- Upstream license: <https://github.com/${AXE_REPOSITORY}/blob/${tag}/LICENSE>
+- MPL 2.0: <https://www.mozilla.org/MPL/2.0/>
+
+The snapshot contains only development benchmark metadata mechanically extracted from public AXE-CORE® rule JSON files: rule identifier, impact, enabled state and tags. It is not imported by the FocusTrace runtime and is excluded from browser builds.
+
+FocusTrace's parity classifications and implementation are independently authored. This snapshot is used only to compare coverage and maintain reproducible severity/reference metadata.
+
+AXE-CORE® is a trademark of Deque Systems, Inc. in the US and other countries. FocusTrace is not affiliated with, sponsored by, endorsed by or certified by Deque Systems, Inc.
+`;
+}
+
 export async function syncAxeRuleSeverities(output = 'generated/axe-rule-severities.json') {
   const release = await fetchJson(`${AXE_API}/releases/latest`);
   const tag = release.tag_name;
@@ -96,6 +117,7 @@ export async function syncAxeRuleSeverities(output = 'generated/axe-rule-severit
 
   await mkdir(dirname(output), { recursive: true });
   await writeFile(output, `${JSON.stringify(snapshot, null, 2)}\n`, 'utf8');
+  await writeFile(output.replace(/\.json$/i, '.NOTICE.md'), benchmarkNotice(snapshot), 'utf8');
   return snapshot;
 }
 
