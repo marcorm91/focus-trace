@@ -4,6 +4,7 @@ import axeRegistry from '../generated/axe-rule-severities.json';
 import { ADVANCED_ARIA_RULES } from '../shared/aria-authoring-rules';
 import { ARIA_ROLE_STATE_RELATIONSHIP_RULES } from '../shared/aria-role-state-rules';
 import { EMBEDDED_CONTENT_RULES } from '../shared/embedded-content-rules';
+import { FORM_AUDIT_RULES } from '../shared/form-audit-rules';
 import {
   DUPLICATE_ID_RULE,
   GENERIC_INTERACTIVE_SEMANTICS_RULE,
@@ -45,6 +46,7 @@ const ALL_RULES = new Map(
     ...SPECIALIZED_ACCESSIBLE_NAME_RULES,
     ...ARIA_ROLE_STATE_RELATIONSHIP_RULES,
     ...EMBEDDED_CONTENT_RULES,
+    ...FORM_AUDIT_RULES,
   ].map((rule) => [rule.id, rule] as const),
 );
 const AXE_RULES = new Map(axeRegistry.rules.map((rule) => [rule.id, rule] as const));
