@@ -23,3 +23,11 @@ if (component.includes('expect(result.rulesRun).toBe(72);')) {
   component = component.replace('expect(result.rulesRun).toBe(72);', 'expect(result.rulesRun).toBe(78);');
   await writeFile(componentPath, component, 'utf8');
 }
+
+const evaluatorPath = 'lib/audit/table-relationships.ts';
+let evaluator = await readFile(evaluatorPath, 'utf8');
+const unused = "const TABLE_ROOT_ROLES = new Set(['table', 'grid', 'treegrid']);\n";
+if (evaluator.includes(unused)) {
+  evaluator = evaluator.replace(unused, '');
+  await writeFile(evaluatorPath, evaluator, 'utf8');
+}
