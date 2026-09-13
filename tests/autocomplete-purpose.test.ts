@@ -34,14 +34,16 @@ describe('WCAG 1.3.5 autocomplete purpose review', () => {
       <input id="wrong-order" autocomplete="work shipping email">
       <input id="extra" autocomplete="email invalid">
       <input id="double-field" autocomplete="address-line1 address-line2">
+      <input id="empty-section" autocomplete="section- email">
     `);
 
     const evaluations = evaluateAutocompletePurpose();
-    expect(evaluations).toHaveLength(5);
+    expect(evaluations).toHaveLength(6);
     expect(evaluations.every((entry) => entry.outcome === 'review')).toBe(true);
     expect(evaluations.find((entry) => entry.element.id === 'missing-field')?.reason).toContain('required autocomplete field');
     expect(evaluations.find((entry) => entry.element.id === 'wrong-contact')?.reason).toContain('contact hint');
     expect(evaluations.find((entry) => entry.element.id === 'extra')?.reason).toContain('Unexpected autocomplete token');
+    expect(evaluations.find((entry) => entry.element.id === 'empty-section')?.reason).toContain('non-empty section identifier');
   });
 
   it('does not manufacture a finding for unknown-only custom taxonomies', () => {
@@ -49,7 +51,7 @@ describe('WCAG 1.3.5 autocomplete purpose review', () => {
     expect(evaluateAutocompletePurpose()).toEqual([]);
   });
 
-  it('treats empty, on/off, disabled, hidden and fixed-value controls as inapplicable', () => {
+  it('treats empty, on/off, disabled, readonly, hidden and fixed-value controls as inapplicable', () => {
     render(`
       <input autocomplete="">
       <input autocomplete="   ">
@@ -57,6 +59,8 @@ describe('WCAG 1.3.5 autocomplete purpose review', () => {
       <input autocomplete="ON">
       <input autocomplete="shipping" disabled>
       <input autocomplete="shipping" aria-disabled="true">
+      <input autocomplete="email" readonly>
+      <textarea autocomplete="street-address" readonly></textarea>
       <input autocomplete="shipping" style="display:none">
       <input type="submit" autocomplete="email">
     `);
