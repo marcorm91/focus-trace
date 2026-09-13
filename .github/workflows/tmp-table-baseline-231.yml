@@ -9,7 +9,6 @@ permissions:
 
 jobs:
   fix:
-    if: github.event.head_commit.message == 'Chore(ci): align table scan fixture baseline'
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
