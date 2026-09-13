@@ -46,9 +46,17 @@ function headingLevel(element: Element): number | null {
   return /^H[1-6]$/.test(element.tagName) ? Number(element.tagName.slice(1)) : null;
 }
 
+function headingHasContent(element: Element): boolean {
+  if (normalizedText(element.textContent) || accessibleNameDetails(element).name) return true;
+  for (const child of element.querySelectorAll('img[alt],[aria-label],[aria-labelledby],svg title')) {
+    if (normalizedText(child.textContent) || accessibleNameDetails(child).name) return true;
+  }
+  return false;
+}
+
 function paragraphLooksLikeHeading(element: HTMLParagraphElement): boolean {
   const text = normalizedText(element.textContent);
-  if (!text || text.length > 120) return false;
+  if (!text || text.length > 120 || element.closest('h1,h2,h3,h4,h5,h6,[role="heading"]')) return false;
   const style = getComputedStyle(element);
   const fontSize = Number.parseFloat(style.fontSize) || 16;
   const bodySize = Number.parseFloat(getComputedStyle(document.body).fontSize) || 16;
@@ -84,7 +92,7 @@ function evaluateHeadings(signals: DocumentStructureSignal[]) {
   }
 
   for (const heading of headings) {
-    if (normalizedText(heading.textContent) || accessibleNameDetails(heading).name) continue;
+    if (headingHasContent(heading)) continue;
     add(signals, EMPTY_HEADING_RULE, 'review', heading,
       'This exposed heading has no usable content.', `heading level=${headingLevel(heading)}`);
   }
