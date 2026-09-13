@@ -543,3 +543,15 @@ The transferred payload is deliberately bounded and serializable: role, known AR
 `FT-REVIEW-029` checks observable equivalence for `aria-braillelabel`, `aria-brailleroledescription` and `aria-roledescription`. Empty values, missing non-braille counterparts or custom role descriptions without a resolved semantic role remain REVIEW where WAI-ARIA uses SHOULD-level guidance or user-agent repair/exposure can affect the final result.
 
 Required accessibility-parent and allowed accessibility-child relationships are not maintained in parallel tables. `tools/aria-sync.mjs` extracts them from the public WAI-ARIA 1.3 role tables into `generated/aria-registry.json`; `aria-owns`, IDREF and `aria-activedescendant` checks continue to share the same local ownership model. APG guidance is not used as normative evidence for these static authoring outcomes.
+
+## Document structure and landmark coverage
+
+- `FT-REVIEW-030` — page has no exposed level-one heading. Whole-document review only.
+- `FT-REVIEW-031` — exposed native/ARIA heading has no usable text or alternative naming contribution.
+- `FT-REVIEW-032` — a short paragraph is substantially larger and bold relative to body text and may be acting as a visual heading. Heuristic REVIEW only.
+- `FT-REVIEW-033` — banner, main, complementary or contentinfo landmark is nested inside another landmark in the same document/application scope.
+- `FT-REVIEW-034` — more than one exposed banner or contentinfo landmark exists in the same document/application scope.
+- `FT-REVIEW-035` — bounded perceivable page content is outside any exposed landmark region.
+- `FT-WARN-024` — explicit `role="region"` resolves with an empty accessible name.
+
+Native header/footer landmarks follow HTML scoping: headers and footers inside article, aside, main, nav or section are not treated as banner/contentinfo. Repeated navigation, complementary, search, region and form landmarks continue to use `FT-REVIEW-010` for distinguishable-name review. Component scans intentionally omit the page-wide rules above.
