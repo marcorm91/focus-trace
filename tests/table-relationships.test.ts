@@ -10,10 +10,6 @@ function render(body: string) {
   document.close();
 }
 
-function signals(kind: Parameters<ReturnType<typeof evaluateTableRelationships>['signals']['filter']>[0] extends never ? never : string) {
-  return evaluateTableRelationships(document).signals.filter((entry) => entry.kind === kind);
-}
-
 describe('table names, headers and cell relationships', () => {
   it('passes a simple native table with column headers', () => {
     render('<table><caption>People</caption><tr><th scope="col">Name</th><th scope="col">Age</th></tr><tr><td>Ana</td><td>30</td></tr></table>');
@@ -25,9 +21,9 @@ describe('table names, headers and cell relationships', () => {
   });
 
   it('fails an orphan data cell in a simple table with proven header structure', () => {
-    render('<table><tr><th scope="col">Name</th><th scope="col">Age</th></tr><tr><td>Ana</td><td id="orphan" colspan="1">30</td></tr><tr><td>Ben</td></tr></table>');
-    const evaluation = evaluateTableRelationships(document);
-    expect(evaluation.signals.some((signal) => signal.kind === 'missing-cell-header' && signal.outcome === 'fail')).toBe(true);
+    render('<table><tr><th scope="row">Person</th><td>Ana</td></tr><tr><td id="orphan">Age</td><td>30</td></tr></table>');
+    const finding = evaluateTableRelationships(document).signals.find((signal) => signal.kind === 'missing-cell-header' && signal.element.id === 'orphan');
+    expect(finding?.outcome).toBe('fail');
   });
 
   it('downgrades unresolved complex spanning relationships to review', () => {
@@ -91,7 +87,7 @@ describe('table names, headers and cell relationships', () => {
 
   it('supports simple ARIA table/grid header semantics conservatively', () => {
     render(`<div role="table" aria-label="People"><div role="row"><div role="columnheader">Name</div><div role="columnheader">Age</div></div><div role="row"><div id="aria-a" role="cell">Ana</div><div role="cell">30</div></div></div>
-      <div role="grid" aria-label="Complex" aria-colcount="4"><div role="row"><div role="columnheader">Name</div></div><div role="row"><div id="aria-complex" role="gridcell">Ana</div></div></div>`);
+      <div role="grid" aria-label="Complex" aria-colcount="4"><div role="row"><div role="columnheader">Name</div></div><div role="row"><div id="aria-complex" role="gridcell" aria-colindex="2">Ana</div></div></div>`);
     const evaluation = evaluateTableRelationships(document);
     expect(evaluation.signals.some((signal) => signal.kind === 'missing-cell-header' && signal.element.id === 'aria-a')).toBe(false);
     const complex = evaluation.signals.find((signal) => signal.kind === 'missing-cell-header' && signal.element.id === 'aria-complex');
