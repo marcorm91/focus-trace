@@ -28,63 +28,47 @@ const ariaTable: StandardReference = {
   url: 'https://w3c.github.io/aria/#table',
 };
 
-const CELL_HEADER_RELATIONSHIP_RULE_ID = 'FT-WCAG-017';
-const EMPTY_TABLE_HEADER_RULE_ID = 'FT-WARN-025';
-const TABLE_SCOPE_RULE_ID = 'FT-WARN-026';
-const TABLE_HEADERS_REFERENCE_RULE_ID = 'FT-WARN-027';
-const TABLE_HEADER_USAGE_RULE_ID = 'FT-REVIEW-036';
-const TABLE_NAMING_RULE_ID = 'FT-REVIEW-037';
+export const CELL_HEADER_RELATIONSHIP_RULE: TableRuntimeRule = {
+  id: 'FT-WCAG-017',
+  title: 'Data table cell has a determinable header relationship',
+  severity: 'serious',
+  references: [wcagInfoRelationships, htmlTables, ariaTable],
+};
 
-function runtimeRule(
-  id: string,
-  title: string,
-  severity: RuleDefinition['severity'],
-  references: StandardReference[],
-): TableRuntimeRule {
-  return { id, title, severity, references };
-}
+export const EMPTY_TABLE_HEADER_RULE: TableRuntimeRule = {
+  id: 'FT-WARN-025',
+  title: 'Table header cell should expose usable header text',
+  severity: 'moderate',
+  references: [htmlTables, ariaTable],
+};
 
-export const CELL_HEADER_RELATIONSHIP_RULE = runtimeRule(
-  CELL_HEADER_RELATIONSHIP_RULE_ID,
-  'Data table cell has a determinable header relationship',
-  'serious',
-  [wcagInfoRelationships, htmlTables, ariaTable],
-);
+export const TABLE_SCOPE_RULE: TableRuntimeRule = {
+  id: 'FT-WARN-026',
+  title: 'Table scope usage must match the HTML table model',
+  severity: 'moderate',
+  references: [htmlTables],
+};
 
-export const EMPTY_TABLE_HEADER_RULE = runtimeRule(
-  EMPTY_TABLE_HEADER_RULE_ID,
-  'Table header cell should expose usable header text',
-  'moderate',
-  [htmlTables, ariaTable],
-);
+export const TABLE_HEADERS_REFERENCE_RULE: TableRuntimeRule = {
+  id: 'FT-WARN-027',
+  title: 'Table headers references must resolve to header cells in the same table',
+  severity: 'serious',
+  references: [wcagInfoRelationships, htmlTables],
+};
 
-export const TABLE_SCOPE_RULE = runtimeRule(
-  TABLE_SCOPE_RULE_ID,
-  'Table scope usage must match the HTML table model',
-  'moderate',
-  [htmlTables],
-);
+export const TABLE_HEADER_USAGE_RULE: TableRuntimeRule = {
+  id: 'FT-REVIEW-036',
+  title: 'Table header should describe at least one data cell',
+  severity: 'moderate',
+  references: [wcagInfoRelationships, htmlTables, ariaTable],
+};
 
-export const TABLE_HEADERS_REFERENCE_RULE = runtimeRule(
-  TABLE_HEADERS_REFERENCE_RULE_ID,
-  'Table headers references must resolve to header cells in the same table',
-  'serious',
-  [wcagInfoRelationships, htmlTables],
-);
-
-export const TABLE_HEADER_USAGE_RULE = runtimeRule(
-  TABLE_HEADER_USAGE_RULE_ID,
-  'Table header should describe at least one data cell',
-  'moderate',
-  [wcagInfoRelationships, htmlTables, ariaTable],
-);
-
-export const TABLE_NAMING_RULE = runtimeRule(
-  TABLE_NAMING_RULE_ID,
-  'Table naming and caption-like content need review',
-  'minor',
-  [htmlTables, ariaTable],
-);
+export const TABLE_NAMING_RULE: TableRuntimeRule = {
+  id: 'FT-REVIEW-037',
+  title: 'Table naming and caption-like content need review',
+  severity: 'minor',
+  references: [htmlTables, ariaTable],
+};
 
 export const TABLE_RULES = [
   CELL_HEADER_RELATIONSHIP_RULE,
