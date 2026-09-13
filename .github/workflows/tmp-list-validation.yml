@@ -1,4 +1,4 @@
-name: Temporary list documentation validation
+name: Temporary list cleanup
 
 on:
   push:
@@ -11,32 +11,11 @@ permissions:
   contents: write
 
 jobs:
-  document:
+  cleanup:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: feat/list-structure-validation-0.4.1
-      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
-        with:
-          node-version: 22
-          cache: npm
-      - run: npm ci --no-audit --no-fund
-      - name: Apply documentation and parity patch
-        run: python tools/tmp-list-docs.py
-      - name: Validate contracts
-        run: |
-          npm run standards:validate
-          npm run axe:validate
-          npm run capabilities:validate
-          npm run rules:validate
-          npm run i18n:validate
-          npm run deadcode:validate
-          npx vitest run tests/list-structure.test.ts tests/axe-parity-benchmark.test.ts
-      - name: Commit documentation and parity evidence
-        run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
-          git add README.md README.es.md docs/RULES.md docs/SEVERITY-AUDIT.md docs/AXE_CORE_PARITY_AUDIT.md config/axe-equivalents.json config/axe-parity/core-02.json config/axe-parity/core-03.json
-          git commit -m "Docs(a11y): document list structure coverage"
-          git push
+      - name: Remove accidental helper branches
+        run: git push origin --delete tmp/list-validation-work noop-placeholder || true
