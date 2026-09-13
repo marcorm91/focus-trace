@@ -163,8 +163,8 @@ Para las señales semánticas, FocusTrace intenta diferenciar la función antes 
 | `FT-WARN-005` | Elementos HTML completamente obsoletos. | WARNING | HTML Living Standard |
 | `FT-WARN-006` | Atributos HTML obsoletos y no conformes. | WARNING | HTML Living Standard |
 | `FT-WARN-007` | Características HTML obsoletas pero todavía conformes. | WARNING | HTML Living Standard |
-| `FT-WARN-008` | Elemento fuera del padre o ancestro nativo requerido. | WARNING | HTML Living Standard |
-| `FT-WARN-009` | Violación del modelo de contenido, grupo u orden permitido por HTML. | WARNING | HTML Living Standard |
+| `FT-WARN-008` | Elemento fuera del padre o ancestro nativo requerido, incluidos los elementos de listas y listas de descripción. | WARNING | HTML Living Standard |
+| `FT-WARN-009` | Violación del modelo de contenido, grupo u orden permitido por HTML, incluido contenido directo inválido en listas y agrupación incorrecta en listas de descripción. | WARNING | HTML Living Standard |
 | `FT-WARN-010` | Estructura conflictiva con controles interactivos o etiquetas anidadas. | WARNING | HTML Living Standard |
 | `FT-WARN-011` | Jerarquía nativa inválida relacionada con `main`. | WARNING | HTML Living Standard |
 

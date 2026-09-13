@@ -16,17 +16,17 @@ WCAG, ACT Rules, WAI-ARIA, AccName, HTML and related standards remain the normat
 
 ### FocusTrace
 
-The 0.2.9 public capability catalog contains 105 identifiers:
+The current public capability catalog contains 118 source-defined identifiers:
 
 | Family | Count |
 | --- | ---: |
-| Deterministic WCAG rules | 13 |
-| Contextual page/site reviews | 28 |
-| HTML/ARIA authoring warnings | 21 |
+| Deterministic WCAG rules | 16 |
+| Contextual page/site reviews | 35 |
+| HTML/ARIA authoring warnings | 24 |
 | Runtime WCAG reviews | 16 |
 | Runtime ARIA warnings | 6 |
 | APG runtime checks | 21 |
-| **Total** | **105** |
+| **Total** | **118** |
 
 These counts are not directly comparable with axe-core. FocusTrace includes runtime evidence, APG behavior, contextual review and authoring warnings in the same public catalog.
 
@@ -64,14 +64,14 @@ The exhaustive review of all 105 axe-core 4.13.0 rules produces this baseline:
 | Relationship | Rules |
 | --- | ---: |
 | Equivalent | 6 |
-| Partial | 33 |
+| Partial | 35 |
 | Superset | 10 |
-| Overlap | 22 |
-| Missing | 33 |
+| Overlap | 28 |
+| Missing | 25 |
 | Not applicable | 1 |
 | **Total** | **105** |
 
-`covered` is reported as 71 rules: equivalent + partial + superset + overlap. This is a planning metric only. It does **not** mean FocusTrace behaves identically to axe-core for 71 rules; only the six `equivalent` entries make that stronger claim.
+`covered` is reported as 79 rules: equivalent + partial + superset + overlap. This is a planning metric only. It does **not** mean FocusTrace behaves identically to axe-core for 71 rules; only the six `equivalent` entries make that stronger claim.
 
 The one `not-applicable` rule is `frame-tested`. That rule checks whether axe-core itself was injected into nested frames. Requiring axe-core injection would conflict with FocusTrace's local, independent runtime architecture and therefore is not a functional parity target.
 
@@ -128,7 +128,7 @@ The relationship type must still be consulted before treating any of those areas
 
 ## Genuine gaps established by the review
 
-Thirty-three axe-core rules currently have no implemented FocusTrace expectation matching their tested condition. Important gap families include:
+Twenty-five axe-core rules currently have no implemented FocusTrace expectation matching their tested condition. Important gap families include:
 
 ### Modern ARIA
 
@@ -164,9 +164,9 @@ Specialized naming for dialog, meter, progressbar, tab, tooltip, treeitem and na
 
 The machine-readable classification files are the source of truth for the complete list.
 
-## Priority after ARIA role/state relationships
+## Priority after list-structure validation
 
-#228 establishes the synchronized ARIA relationship foundation and raises the benchmark planning metric to 79/105. The next roadmap block is **document structure and landmarks** (#229). That work remains separate because page-level landmark placement, uniqueness and structure have different applicability from ARIA role/property authoring.
+#229 established the document-structure and landmark layer, and #230 strengthens native/ARIA list evidence without changing the already-covered axe list relationships. The benchmark planning metric therefore remains **79/105**. The next roadmap block is **table names, headers and relationships** (#231).
 
 ## Required evidence for later parity changes
 
@@ -216,3 +216,8 @@ The bridge is an independent FocusTrace implementation. axe-core remains a devel
 
 Issue #229 adds evidence for level-one/empty/visually inferred headings, page-level landmark placement, duplicate banner/contentinfo landmarks, landmark-region coverage and explicit region naming. The reviewed axe-core 4.13 benchmark therefore moves to **79 covered relationships out of 105**, with 25 still classified as missing and one benchmark-specific rule not applicable. Best-practice relationships remain REVIEW/overlap/partial where context prevents exact deterministic equivalence.
 
+## List-structure applicability update
+
+Issue #230 strengthens the four already-covered list benchmark relationships (`list`, `listitem`, `definition-list`, `dlitem`) rather than converting a missing axe-core rule. The reviewed planning metric therefore remains **79/105 covered**, with 25 missing and one benchmark-specific rule not applicable.
+
+Native list evidence now includes significant direct-text violations, description-list branch/group validation and same-target deduplication. ARIA fixtures verify direct and `aria-owns` listitem parentage, orphan explicit listitems, incompatible accessibility children and the HTML/ARIA crossing where a native list is repurposed to another composite role while descendant `li` semantics remain exposed. These remain authoring WARNINGs rather than automatic WCAG failures.

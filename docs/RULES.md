@@ -555,3 +555,15 @@ Required accessibility-parent and allowed accessibility-child relationships are 
 - `FT-WARN-024` — explicit `role="region"` resolves with an empty accessible name.
 
 Native header/footer landmarks follow HTML scoping: headers and footers inside article, aside, main, nav or section are not treated as banner/contentinfo. Repeated navigation, complementary, search, region and form landmarks continue to use `FT-REVIEW-010` for distinguishable-name review. Component scans intentionally omit the page-wide rules above.
+
+## Native and ARIA list structure
+
+Issue #230 strengthens the existing structural contracts rather than adding parallel list-specific rule IDs. Native HTML violations continue to use `FT-WARN-008` for invalid parent/ancestor context and `FT-WARN-009` for invalid child/group/order content models. Explicit ARIA list relationships continue to use the synchronized `FT-WARN-017` required-parent and `FT-WARN-018` allowed-child checks.
+
+For native `ul`, `ol` and `menu`, FocusTrace accepts list-item children plus script-supporting elements and formatting whitespace. Non-whitespace direct text is reported once on the list container, while unexpected direct element children keep their existing element-targeted content-model warning. Native `li` continues to require a direct `ul`, `ol` or `menu` parent.
+
+For `dl`, FocusTrace accepts either direct groups of one or more `dt` followed by one or more `dd`, or `div`-wrapped groups with that same sequence. The two grouping forms cannot be mixed at one level, and non-whitespace direct text is not treated as valid structural content. When direct text and an invalid sequence affect the same `dl` or grouping `div`, FocusTrace emits one content-model signal for that target instead of duplicate findings.
+
+Explicit `role="list"` / `role="listitem"` relationships reuse the synchronized WAI-ARIA registry and the existing accessibility-ownership model. Valid `aria-owns` can therefore establish listitem parentage. Conversely, repurposing a native list as another ARIA container does not erase the implicit semantics of descendant native `li` elements: for example, `ul[role="menu"] > li` exposes an incompatible `listitem` child unless the author supplies semantics appropriate to the menu pattern.
+
+These checks are authoring **WARNINGs**, not automatic WCAG failures. Hidden malformed HTML or explicit ARIA remains observable to the authoring validators because conformance errors still exist in source structure; FocusTrace does not infer a user-facing WCAG failure solely from that condition. Native orphan items are handled by the HTML parent-context rule and are not duplicated as ARIA required-parent findings unless the author explicitly supplies the ARIA role.

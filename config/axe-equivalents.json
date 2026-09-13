@@ -83,6 +83,7 @@
     "e22": { "sources": ["shared/specialized-accessible-name-rules.ts", "lib/audit/specialized-accessible-names.ts", "lib/audit/specialized-accessible-name-scan-extension.ts"], "tests": ["tests/specialized-accessible-names.test.ts"] },
     "e23": { "sources": ["shared/element-internals-bridge.ts", "lib/extension/element-internals-main-world.ts", "lib/audit/element-internals-bridge.ts", "lib/audit/element-internals-semantics.ts"], "tests": ["tests/element-internals-semantics.test.ts"] },
     "e24": { "sources": ["generated/aria-registry.json", "shared/aria-role-state-rules.ts", "lib/audit/aria-validator.ts", "lib/audit/aria-role-state-relationships.ts"], "tests": ["tests/aria-validator.test.ts", "tests/aria-role-relationship-registry.test.ts", "tests/aria-role-state-relationships.test.ts"] },
-    "e25": {"sources": ["shared/document-structure-rules.ts", "lib/audit/landmarks.ts", "lib/audit/document-structure.ts", "lib/audit/content-model.ts", "lib/audit/scan.ts"], "tests": ["tests/document-structure-landmarks.test.ts"]}
+    "e25": {"sources": ["shared/document-structure-rules.ts", "lib/audit/landmarks.ts", "lib/audit/document-structure.ts", "lib/audit/content-model.ts", "lib/audit/scan.ts"], "tests": ["tests/document-structure-landmarks.test.ts"]},
+    "e26": {"sources": ["lib/audit/content-model.ts", "lib/audit/aria-validator.ts", "generated/aria-registry.json"], "tests": ["tests/list-structure.test.ts", "tests/content-model.test.ts", "tests/aria-validator.test.ts"]}
   }
 }
