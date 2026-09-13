@@ -1,6 +1,6 @@
 # Third-party notices
 
-FocusTrace source code is distributed under `GPL-3.0-only` as described in [`LICENSE`](LICENSE). Some development-only benchmark and standards metadata comes from third-party public sources and remains subject to the applicable upstream terms described below.
+FocusTrace source code is distributed under `GPL-3.0-only` as described in [`LICENSE`](LICENSE). Some development-only benchmark metadata comes from third-party public sources and remains subject to the applicable upstream terms described below.
 
 ## AXE-CORE® benchmark metadata
 
