@@ -11,10 +11,10 @@
     "equivalent": 6,
     "partial": 35,
     "superset": 10,
-    "overlap": 28,
-    "missing": 25,
+    "overlap": 33,
+    "missing": 20,
     "not-applicable": 1,
-    "covered": 79
+    "covered": 84
   },
   "severityMappings": [
     { "focusTraceRuleId": "FT-WCAG-001", "axeRuleIds": ["document-title"], "policy": "highest-impact" },
@@ -84,6 +84,7 @@
     "e23": { "sources": ["shared/element-internals-bridge.ts", "lib/extension/element-internals-main-world.ts", "lib/audit/element-internals-bridge.ts", "lib/audit/element-internals-semantics.ts"], "tests": ["tests/element-internals-semantics.test.ts"] },
     "e24": { "sources": ["generated/aria-registry.json", "shared/aria-role-state-rules.ts", "lib/audit/aria-validator.ts", "lib/audit/aria-role-state-relationships.ts"], "tests": ["tests/aria-validator.test.ts", "tests/aria-role-relationship-registry.test.ts", "tests/aria-role-state-relationships.test.ts"] },
     "e25": {"sources": ["shared/document-structure-rules.ts", "lib/audit/landmarks.ts", "lib/audit/document-structure.ts", "lib/audit/content-model.ts", "lib/audit/scan.ts"], "tests": ["tests/document-structure-landmarks.test.ts"]},
-    "e26": {"sources": ["lib/audit/content-model.ts", "lib/audit/aria-validator.ts", "generated/aria-registry.json"], "tests": ["tests/list-structure.test.ts", "tests/content-model.test.ts", "tests/aria-validator.test.ts"]}
+    "e26": {"sources": ["lib/audit/content-model.ts", "lib/audit/aria-validator.ts", "generated/aria-registry.json"], "tests": ["tests/list-structure.test.ts", "tests/content-model.test.ts", "tests/aria-validator.test.ts"]},
+    "e27": {"sources": ["shared/table-rules.ts", "lib/audit/table-relationships.ts", "lib/audit/table-scan-extension.ts"], "tests": ["tests/table-relationships.test.ts", "tests/table-rule-contracts.test.ts"]}
   }
 }
