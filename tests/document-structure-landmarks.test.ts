@@ -3,6 +3,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { evaluateDocumentStructure } from '../lib/audit/document-structure';
 import { runFocusTraceScan } from '../lib/audit/scan';
+import { DOCUMENT_STRUCTURE_RULE_DEFINITIONS } from '../shared/document-structure-rules';
 
 function render(body: string, styles = '') {
   document.open();
@@ -13,6 +14,8 @@ function render(body: string, styles = '') {
 function ids() {
   return evaluateDocumentStructure().map((signal) => signal.rule.id);
 }
+
+const DOCUMENT_RULE_IDS = new Set(DOCUMENT_STRUCTURE_RULE_DEFINITIONS.map((rule) => rule.id));
 
 describe('document structure and landmark coverage', () => {
   beforeEach(() => render('<main><h1>Page</h1></main>'));
@@ -89,8 +92,7 @@ describe('document structure and landmark coverage', () => {
   it('does not apply whole-document structure rules to component scans', () => {
     render('<div id="component"><h2></h2><p style="font-size:24px;font-weight:700">Title</p></div>');
     const result = runFocusTraceScan({ type: 'component', selector: '#component', tag: 'div' });
-    const documentRules = new Set(['FT-REVIEW-030', 'FT-REVIEW-031', 'FT-REVIEW-032', 'FT-REVIEW-033', 'FT-REVIEW-034', 'FT-REVIEW-035', 'FT-WARN-024']);
-    expect(result.ruleResults?.some((rule) => documentRules.has(rule.ruleId))).toBe(false);
-    expect([...result.issues, ...result.review, ...result.warnings].some((issue) => documentRules.has(issue.ruleId))).toBe(false);
+    expect(result.ruleResults?.some((rule) => DOCUMENT_RULE_IDS.has(rule.ruleId))).toBe(false);
+    expect([...result.issues, ...result.review, ...result.warnings].some((issue) => DOCUMENT_RULE_IDS.has(issue.ruleId))).toBe(false);
   });
 });
