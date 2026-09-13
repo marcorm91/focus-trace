@@ -26,6 +26,6 @@ jobs:
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add lib/audit/media-scan-extension.ts tests/component-scan.test.ts
+          git add lib/audit/media-scan-extension.ts lib/audit/table-relationships.ts tests/component-scan.test.ts
           git diff --cached --quiet || git commit -m 'Feat(a11y): integrate table relationship scan'
           git push
