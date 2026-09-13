@@ -102,6 +102,10 @@ function autocompleteTokens(value: string): string[] {
     .map((token) => token.toLowerCase());
 }
 
+function isValidSectionToken(token: string | undefined): boolean {
+  return Boolean(token && /^section-.+$/i.test(token));
+}
+
 function isApplicableControl(element: AutocompletePurposeControl, value: string): boolean {
   const normalized = trimAsciiWhitespace(value);
   if (!normalized) return false;
@@ -110,6 +114,7 @@ function isApplicableControl(element: AutocompletePurposeControl, value: string)
   if (tokens.length === 1 && (tokens[0] === 'on' || tokens[0] === 'off')) return false;
   if (isDisabledUiComponent(element)) return false;
   if (element instanceof HTMLInputElement && FIXED_INPUT_TYPES.has(element.type.toLowerCase())) return false;
+  if ((element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement) && element.readOnly) return false;
   if (isProgrammaticallyHidden(element)) return false;
 
   const role = semanticRole(element);
@@ -131,7 +136,12 @@ function usesStandardAutocompleteSyntax(tokens: string[]): boolean {
 function parseStandardAutocomplete(tokens: string[]): { valid: true } | { valid: false; reason: string } {
   let index = 0;
 
-  if (tokens[index]?.startsWith('section-')) index += 1;
+  if (tokens[index]?.startsWith('section-')) {
+    if (!isValidSectionToken(tokens[index])) {
+      return { valid: false, reason: 'The section-* autocomplete token must include a non-empty section identifier after "section-".' };
+    }
+    index += 1;
+  }
   if (MODE_HINTS.has(tokens[index] ?? '')) index += 1;
 
   const contactHint = CONTACT_HINTS.has(tokens[index] ?? '') ? tokens[index] : undefined;
@@ -172,9 +182,9 @@ export function evaluateAutocompletePurpose(root: Document | Element = document)
 
     const tokens = autocompleteTokens(value);
     if (!usesStandardAutocompleteSyntax(tokens)) {
-      // ACT 73f2c2 explicitly notes that custom taxonomies can satisfy the
-      // criterion even when they do not match the HTML autocomplete vocabulary.
-      // FocusTrace therefore does not manufacture a finding from unknown-only values.
+      // ACT 73f2c2 notes that custom taxonomies can satisfy the criterion even
+      // when they do not match the HTML autocomplete vocabulary. FocusTrace
+      // therefore does not manufacture a finding from unknown-only values.
       continue;
     }
 
