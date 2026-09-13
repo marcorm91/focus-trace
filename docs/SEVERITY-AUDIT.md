@@ -28,7 +28,7 @@ See `docs/AXE-SEVERITY-BENCHMARK.md` for the synchronization and review model.
 | --- | --- | --- | --- |
 | `FT-WCAG-002` Image name | serious | **critical** | The broad FocusTrace image-name detector includes native images; axe `image-alt` is critical. The combined rule adopts the highest equivalent axe impact. |
 | `FT-WARN-012` Invalid / unresolved ARIA role | serious | **critical** | axe `aria-roles` is critical. |
-| `FT-WARN-013` Unknown `aria-*` attribute | moderate | **critical** | axe `aria-valid-attr` is critical. |
+| `FT-WARN-013` Unknown ARIA attribute | moderate | **critical** | axe `aria-valid-attr` is critical. |
 | `FT-WARN-014` Invalid ARIA value | serious | **critical** | axe `aria-valid-attr-value` is critical. |
 | `FT-WARN-015` Missing required ARIA state/property | serious | **critical** | axe `aria-required-attr` is critical. |
 | `FT-WARN-016` Invalid ARIA ID relationship | serious | **critical** | Invalid relationship values overlap the critical axe `aria-valid-attr-value` failure family. |
@@ -166,3 +166,8 @@ ARIA list ownership continues to use `FT-WARN-017` and `FT-WARN-018`, whose exis
 - `FT-WARN-027` — **serious**: broken `headers` IDREFs explicitly encode an unreliable cell/header relationship.
 - `FT-REVIEW-036` — **moderate**: a header that appears unused may indicate an incomplete model, but complex layouts need human context.
 - `FT-REVIEW-037` — **minor**: duplicate or caption-like naming is primarily an identification/usability concern and remains contextual review.
+
+## Form audit severity decisions
+
+- `FT-REVIEW-040` — **serious** REVIEW. Ambiguous or weakly exposed labels, group names, instructions and required-state cues can make data-entry tasks materially difficult to understand or complete. The rule maps to axe `form-field-multiple-labels` and `label-title-only`; the latter carries serious benchmark impact, so the FocusTrace mapping adopts the highest benchmark impact while preserving REVIEW semantics because multiple labels, instruction placement and naming adequacy still require context.
+- `FT-REVIEW-019` and `FT-REVIEW-020` retain their existing severities. The #233 form package tightens their privacy boundary: associated error text may be inspected only to determine whether non-empty text exists, but the message text and editable field values are not persisted in finding evidence.
