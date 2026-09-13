@@ -3,11 +3,11 @@
   "classifications": [
     {
       "axeRuleId": "area-alt",
-      "relationship": "overlap",
-      "focusTraceRuleIds": ["FT-WARN-009"],
-      "rationale": "FocusTrace reports active area elements that omit alt as an HTML content-model warning, but it does not treat aria-label or aria-labelledby as alternative naming mechanisms for that structural check, so the expectations overlap without being equivalent.",
+      "relationship": "partial",
+      "focusTraceRuleIds": ["FT-WCAG-005"],
+      "rationale": "FocusTrace applies its existing link accessible-name rule to active area[href] elements and accepts alt, aria-label, aria-labelledby and title through the shared local name computation. Hidden-tree and platform applicability differ from axe, so this remains partial rather than equivalent.",
       "standards": ["WCAG 2.2 2.4.4", "WCAG 2.2 4.1.2", "HTML area element"],
-      "evidenceKey": "e07"
+      "evidenceKey": "e28"
     },
     {
       "axeRuleId": "aria-allowed-attr",
