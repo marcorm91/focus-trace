@@ -24,15 +24,15 @@ function issueFor(evaluation: EmbeddedContentEvaluation): ScanIssue {
 
 function descriptionFor(evaluation: EmbeddedContentEvaluation): string {
   switch (evaluation.rule.id) {
-    case 'FT-WCAG-017':
-      return 'This embedded object exposes non-text content without a usable accessible alternative. Provide a non-empty accessible name or mark the object presentational only when it is genuinely decorative.';
     case 'FT-WCAG-018':
-      return 'This exposed frame has an empty accessible name, so assistive-technology users cannot identify the purpose of the embedded browsing context.';
+      return 'This embedded object exposes non-text content without a usable accessible alternative. Provide a non-empty accessible name or mark the object presentational only when it is genuinely decorative.';
     case 'FT-WCAG-019':
+      return 'This exposed frame has an empty accessible name, so assistive-technology users cannot identify the purpose of the embedded browsing context.';
+    case 'FT-WCAG-020':
       return 'This frame is removed from sequential keyboard navigation while its same-origin embedded document contains at least one sequentially focusable descendant.';
-    case 'FT-REVIEW-037':
-      return 'Several exposed frames share the same accessible name. Review whether they have an equivalent purpose; otherwise give each frame a distinguishable name.';
     case 'FT-REVIEW-038':
+      return 'Several exposed frames share the same accessible name. Review whether they have an equivalent purpose; otherwise give each frame a distinguishable name.';
+    case 'FT-REVIEW-039':
       return 'FocusTrace could inspect the frame element but could not evaluate the embedded document. Nested content must not be reported as clean when that inspection boundary exists.';
     default:
       return 'Review the embedded-content evidence collected by FocusTrace.';
