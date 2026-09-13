@@ -72,7 +72,6 @@ interface MutableStats {
   warnings: number;
 }
 
-const TABLE_ROOT_ROLES = new Set(['table', 'grid', 'treegrid']);
 const ARIA_CELL_ROLES = new Set(['cell', 'gridcell', 'rowheader', 'columnheader']);
 const VALID_SCOPE = new Set(['row', 'col', 'rowgroup', 'colgroup']);
 
@@ -131,13 +130,13 @@ function nativeModel(root: TableRoot): Model {
   let complex = false;
 
   rows.forEach((row, rowIndex) => {
-    for (const [column, span] of [...occupied]) {
+    for (const [column, span] of occupied) {
       span.remaining -= 1;
       if (span.remaining <= 0) occupied.delete(column);
     }
 
     let column = 0;
-    const rowCells = [...row.children].filter((child) =>
+    const rowCells = Array.from(row.children).filter((child) =>
       (child.tagName === 'TH' || child.tagName === 'TD') && nearestTableRoot(child) === root.element && !isProgrammaticallyHidden(child),
     );
 

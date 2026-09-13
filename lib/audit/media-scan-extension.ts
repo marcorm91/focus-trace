@@ -23,6 +23,7 @@ import {
   type PrerecordedVideoAlternativeEvaluation,
 } from './media-alternatives';
 import { appendSpecializedAccessibleNameChecks } from './specialized-accessible-name-scan-extension';
+import { appendTableRelationshipChecks } from './table-scan-extension';
 
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -196,6 +197,7 @@ export function appendMediaAccessibilityReviews(result: ScanResult, root: ScanRo
     audioDescriptionReviews.length,
   );
 
+  appendTableRelationshipChecks(result, root);
   appendFormErrorReviews(result, root);
   appendSpecializedAccessibleNameChecks(result, root);
   appendElementInternalsSemantics(result, root);
