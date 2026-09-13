@@ -24,7 +24,7 @@ describe('embedded content accessibility', () => {
       <iframe id="aria" aria-label="Payment"></iframe>
     `);
 
-    const frames = evaluationsFor('FT-WCAG-018');
+    const frames = evaluationsFor('FT-WCAG-019');
     expect(frames).toHaveLength(3);
     expect(frames.find((entry) => entry.element.id === 'untitled')?.outcome).toBe('fail');
     expect(frames.find((entry) => entry.element.id === 'title')?.outcome).toBe('pass');
@@ -38,7 +38,7 @@ describe('embedded content accessibility', () => {
       <iframe id="three" title="Support"></iframe>
     `);
 
-    const uniqueness = evaluationsFor('FT-REVIEW-037');
+    const uniqueness = evaluationsFor('FT-REVIEW-038');
     expect(uniqueness.filter((entry) => entry.outcome === 'review').map((entry) => entry.element.id).sort()).toEqual(['one', 'two']);
     expect(uniqueness.find((entry) => entry.element.id === 'three')?.outcome).toBe('pass');
   });
@@ -46,7 +46,7 @@ describe('embedded content accessibility', () => {
   it('states explicitly when cross-origin embedded content was not evaluated', () => {
     mount('<iframe id="remote" title="Remote help" src="https://example.org/help"></iframe>');
 
-    const coverage = evaluationsFor('FT-REVIEW-038');
+    const coverage = evaluationsFor('FT-REVIEW-039');
     expect(coverage).toHaveLength(1);
     expect(coverage[0]?.outcome).toBe('review');
     expect(coverage[0]?.detail).toContain('embedded descendants were not inspected');
@@ -62,7 +62,7 @@ describe('embedded content accessibility', () => {
     embedded!.write('<!doctype html><html><body><button type="button">Save</button></body></html>');
     embedded!.close();
 
-    const focusability = evaluationsFor('FT-WCAG-019');
+    const focusability = evaluationsFor('FT-WCAG-020');
     expect(focusability).toHaveLength(1);
     expect(focusability[0]?.outcome).toBe('fail');
     expect(focusability[0]?.detail).toContain('(button)');
@@ -78,7 +78,7 @@ describe('embedded content accessibility', () => {
     embedded!.write('<!doctype html><html><body><p>Read-only preview</p></body></html>');
     embedded!.close();
 
-    expect(evaluationsFor('FT-WCAG-019')).toMatchObject([{ outcome: 'pass' }]);
+    expect(evaluationsFor('FT-WCAG-020')).toMatchObject([{ outcome: 'pass' }]);
   });
 
   it('uses the shared accessible-name computation for object alternatives', () => {
@@ -88,7 +88,7 @@ describe('embedded content accessibility', () => {
       <object id="missing" data="/photo.jpg"></object>
     `);
 
-    const objects = evaluationsFor('FT-WCAG-017');
+    const objects = evaluationsFor('FT-WCAG-018');
     expect(objects).toHaveLength(3);
     expect(objects.find((entry) => entry.element.id === 'named')?.outcome).toBe('pass');
     expect(objects.find((entry) => entry.element.id === 'title')?.outcome).toBe('pass');
