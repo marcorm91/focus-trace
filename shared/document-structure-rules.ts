@@ -1,8 +1,4 @@
 import type { RuleDefinition } from './rule-catalog';
-import {
-  REPEATED_LANDMARK_LABEL_RULE,
-  SECTION_HEADING_REVIEW_RULE,
-} from './structural-html-rules';
 import type { StandardReference } from './types';
 
 export type DocumentStructureRuntimeRule = Pick<RuleDefinition, 'id' | 'title' | 'severity' | 'references'>;
@@ -47,9 +43,6 @@ const DUPLICATE_SINGLETON_LANDMARK_RULE_TITLE = 'Repeated banner or contentinfo 
 const LANDMARK_COVERAGE_RULE_TITLE = 'Perceivable page content should be contained by landmarks';
 const REGION_NAME_RULE_TITLE = 'Explicit region landmark requires an accessible name';
 
-const headingRuntimeReferences = SECTION_HEADING_REVIEW_RULE.references;
-const landmarkRuntimeReferences = REPEATED_LANDMARK_LABEL_RULE.references;
-
 function runtimeRule(id: string, title: string, references: StandardReference[]): DocumentStructureRuntimeRule {
   return { id, title, severity: 'moderate', references };
 }
@@ -57,43 +50,43 @@ function runtimeRule(id: string, title: string, references: StandardReference[])
 export const PAGE_LEVEL_ONE_HEADING_RULE = runtimeRule(
   PAGE_LEVEL_ONE_HEADING_RULE_ID,
   PAGE_LEVEL_ONE_HEADING_RULE_TITLE,
-  headingRuntimeReferences,
+  [htmlHeadings],
 );
 
 export const EMPTY_HEADING_RULE = runtimeRule(
   EMPTY_HEADING_RULE_ID,
   EMPTY_HEADING_RULE_TITLE,
-  headingRuntimeReferences,
+  [htmlHeadings],
 );
 
 export const PARAGRAPH_AS_HEADING_RULE = runtimeRule(
   PARAGRAPH_AS_HEADING_RULE_ID,
   PARAGRAPH_AS_HEADING_RULE_TITLE,
-  headingRuntimeReferences,
+  [htmlHeadings],
 );
 
 export const TOP_LEVEL_LANDMARK_RULE = runtimeRule(
   TOP_LEVEL_LANDMARK_RULE_ID,
   TOP_LEVEL_LANDMARK_RULE_TITLE,
-  landmarkRuntimeReferences,
+  [landmarkGuidance],
 );
 
 export const DUPLICATE_SINGLETON_LANDMARK_RULE = runtimeRule(
   DUPLICATE_SINGLETON_LANDMARK_RULE_ID,
   DUPLICATE_SINGLETON_LANDMARK_RULE_TITLE,
-  landmarkRuntimeReferences,
+  [landmarkGuidance],
 );
 
 export const LANDMARK_COVERAGE_RULE = runtimeRule(
   LANDMARK_COVERAGE_RULE_ID,
   LANDMARK_COVERAGE_RULE_TITLE,
-  landmarkRuntimeReferences,
+  [landmarkGuidance],
 );
 
 export const REGION_NAME_RULE = runtimeRule(
   REGION_NAME_RULE_ID,
   REGION_NAME_RULE_TITLE,
-  [ariaRegion],
+  [ariaRegion, landmarkGuidance],
 );
 
 export const DOCUMENT_STRUCTURE_RULES = [
