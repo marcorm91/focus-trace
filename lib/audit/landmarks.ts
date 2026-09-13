@@ -2,80 +2,49 @@ import { accessibleNameDetails, isProgrammaticallyHidden } from './dom';
 import { scopedElements } from './scan-elements';
 import { registeredExplicitAriaRole } from './standards-registry';
 
-export type LandmarkRole = 'banner' | 'complementary' | 'contentinfo' | 'form' | 'main' | 'navigation' | 'region' | 'search';
+const ROLES = ['banner', 'complementary', 'contentinfo', 'form', 'main', 'navigation', 'region', 'search'] as const;
+export type LandmarkRole = (typeof ROLES)[number];
 
-const LANDMARK_ROLES = new Set<LandmarkRole>([
-  'banner',
-  'complementary',
-  'contentinfo',
-  'form',
-  'main',
-  'navigation',
-  'region',
-  'search',
-]);
-const SECTIONING_ANCESTOR_SELECTOR = 'article, aside, main, nav, section';
-const LANDMARK_CANDIDATE_SELECTOR = 'header, footer, main, nav, aside, section, form, search, [role]';
-
-function asLandmarkRole(value: string | undefined): LandmarkRole | null {
-  return value && LANDMARK_ROLES.has(value as LandmarkRole) ? value as LandmarkRole : null;
-}
-
-function explicitRole(element: Element): string | undefined {
-  return element.hasAttribute('role') ? registeredExplicitAriaRole(element)?.name : undefined;
-}
-
-function nativeLandmarkRole(element: Element): LandmarkRole | null {
+export function landmarkRoleForElement(element: Element): LandmarkRole | null {
+  const explicit = element.hasAttribute('role') ? registeredExplicitAriaRole(element)?.name : undefined;
+  if (explicit && (ROLES as readonly string[]).includes(explicit)) return explicit as LandmarkRole;
+  const named = () => Boolean(accessibleNameDetails(element).name);
   switch (element.tagName) {
     case 'MAIN': return 'main';
     case 'NAV': return 'navigation';
     case 'ASIDE': return 'complementary';
     case 'SEARCH': return 'search';
-    case 'HEADER':
-      return element.parentElement?.closest(SECTIONING_ANCESTOR_SELECTOR) ? null : 'banner';
-    case 'FOOTER':
-      return element.parentElement?.closest(SECTIONING_ANCESTOR_SELECTOR) ? null : 'contentinfo';
-    case 'SECTION':
-      return accessibleNameDetails(element).name ? 'region' : null;
-    case 'FORM':
-      return accessibleNameDetails(element).name ? 'form' : null;
-    default:
-      return null;
+    case 'HEADER': return element.parentElement?.closest('article,aside,main,nav,section') ? null : 'banner';
+    case 'FOOTER': return element.parentElement?.closest('article,aside,main,nav,section') ? null : 'contentinfo';
+    case 'SECTION': return named() ? 'region' : null;
+    case 'FORM': return named() ? 'form' : null;
+    default: return null;
   }
 }
 
-export function landmarkRoleForElement(element: Element): LandmarkRole | null {
-  const explicit = explicitRole(element);
-  if (explicit) return asLandmarkRole(explicit);
-  return nativeLandmarkRole(element);
-}
-
 export function pageLandmarks(): Element[] {
-  return scopedElements(document, LANDMARK_CANDIDATE_SELECTOR)
+  return scopedElements(document, 'header,footer,main,nav,aside,section,form,search,[role]')
     .filter((element) => !isProgrammaticallyHidden(element) && landmarkRoleForElement(element) != null);
 }
 
+function scopeRole(element: Element): string | undefined {
+  return element.hasAttribute('role') ? registeredExplicitAriaRole(element)?.name : undefined;
+}
+
 export function landmarkScopeOwner(element: Element): Element | Document {
-  let current = element.parentElement;
-  while (current) {
-    const role = registeredExplicitAriaRole(current)?.name;
+  for (let current = element.parentElement; current; current = current.parentElement) {
+    const role = scopeRole(current);
     if (role === 'document' || role === 'application') return current;
-    current = current.parentElement;
   }
   return document;
 }
 
-export function nearestContainingLandmark(
-  element: Element,
-  includeSelf = false,
-): { element: Element; role: LandmarkRole } | null {
-  let current: Element | null = includeSelf ? element : element.parentElement;
-  while (current) {
-    const explicit = registeredExplicitAriaRole(current)?.name;
+export function containingLandmarkRole(element: Element, includeSelf = false): LandmarkRole | null {
+  for (let current: Element | null = includeSelf ? element : element.parentElement; current; current = current.parentElement) {
+    const explicit = scopeRole(current);
     if (explicit === 'document' || explicit === 'application') return null;
     const role = landmarkRoleForElement(current);
-    if (role) return { element: current, role };
-    current = current.parentElement;
+    if (role) return role;
   }
   return null;
 }
