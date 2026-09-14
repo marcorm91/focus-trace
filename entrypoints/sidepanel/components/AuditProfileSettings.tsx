@@ -4,6 +4,7 @@ import {
   ALL_AUDIT_PROFILE_SEVERITIES,
   ALL_AUDIT_RULE_FAMILIES,
   AUDIT_PROFILE_VERSION,
+  DEFAULT_AUDIT_PROFILE_ID,
   activeAuditProfile,
   type AuditProfile,
   type AuditProfileScope,
@@ -69,7 +70,7 @@ function toggleValue<T extends string>(values: T[], value: T, enabled: boolean):
 
 export function AuditProfileSettings({ language }: { language: AppLanguage }) {
   const [profiles, setProfiles] = useState<AuditProfile[]>([]);
-  const [activeProfileId, setActiveProfileId] = useState('default-aa');
+  const [activeProfileId, setActiveProfileId] = useState(DEFAULT_AUDIT_PROFILE_ID);
   const [draft, setDraft] = useState<AuditProfile>();
   const [status, setStatus] = useState<string>();
 
@@ -141,7 +142,7 @@ export function AuditProfileSettings({ language }: { language: AppLanguage }) {
 
   const resetProfiles = async () => {
     await resetStoredAuditProfiles();
-    await refresh(tr(language, 'Profiles reset to the default AA profile.', 'Perfiles restablecidos al perfil AA predeterminado.'));
+    await refresh(tr(language, 'Profiles reset to the complete default profile.', 'Perfiles restablecidos al perfil completo predeterminado.'));
   };
 
   if (!draft) return null;
@@ -194,6 +195,7 @@ export function AuditProfileSettings({ language }: { language: AppLanguage }) {
           disabled={!editable}
           onChange={(event) => setDraft({ ...draft, standard: event.currentTarget.value as AuditProfileStandard })}
         >
+          <option value="all">{tr(language, 'All supported rules', 'Todas las reglas compatibles')}</option>
           <option value="A">WCAG 2.2 A</option>
           <option value="AA">WCAG 2.2 AA</option>
           <option value="AAA">WCAG 2.2 AAA</option>
