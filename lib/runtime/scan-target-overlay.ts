@@ -148,7 +148,7 @@ export function locateScanTargetInPage(
       const nextSelector = tokens[index + 1]?.trim();
       if (!nextSelector) return null;
       if (boundary === 'shadow') {
-        const shadow = (current as Element & { shadowRoot?: ShadowRoot | null }).shadowRoot ?? null;
+        const shadow: ShadowRoot | null = (current as Element & { shadowRoot?: ShadowRoot | null }).shadowRoot ?? null;
         if (!shadow || shadow.mode !== 'open') return null;
         context = shadow;
       } else if (boundary === 'frame') {
