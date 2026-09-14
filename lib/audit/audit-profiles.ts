@@ -221,12 +221,13 @@ export function issueMatchesAuditProfile(issue: ScanIssue, profile: AuditProfile
   if (profile.ruleIds.length && !profile.ruleIds.includes(issue.ruleId.toUpperCase())) return false;
   if (referenceTypesAreRestricted(profile)
     && !issue.references.some((reference) => profile.referenceTypes.includes(reference.type))) return false;
-  if (profile.standard === 'all') return true;
+  const standard = profile.standard;
+  if (standard === 'all') return true;
   const wcagLevels = issue.references
     .filter((reference) => reference.type === 'WCAG' && reference.level)
     .map((reference) => reference.level!);
   if (!wcagLevels.length) return true;
-  return wcagLevels.some((level) => levelRank(level) <= levelRank(profile.standard));
+  return wcagLevels.some((level) => levelRank(level) <= levelRank(standard));
 }
 
 export function scanScopeForProfile(scan: ScanResult): Exclude<AuditProfileScope, 'site'> {
