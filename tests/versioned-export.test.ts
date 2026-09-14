@@ -40,7 +40,7 @@ function scan(issues: ScanIssue[] = [finding()]): ScanResult {
   return {
     engine: 'FocusTrace Rules',
     standard: 'WCAG 2.2',
-    url: 'https://example.test/account?token=secret&utm_source=test&view=compact',
+    url: 'https://example.test/account?token=secret&utm_source=test&view=compact#private-account',
     title: 'Cuenta “José”',
     scannedAt: 100,
     scope: { type: 'page' },
@@ -126,12 +126,12 @@ function csvColumnCount(row: string): number {
 }
 
 describe('versioned exports', () => {
-  it('round-trips a schema-versioned session envelope and redacts secret/tracking URL parameters', () => {
+  it('round-trips a schema-versioned session envelope and redacts query/fragment values', () => {
     const envelope = buildSessionExport({ scan: scan(), events: [runtimeReview], generatedAt: 500 });
     expect(envelope.schemaVersion).toBe(FOCUSTRACE_EXPORT_SCHEMA_VERSION);
     expect(envelope.kind).toBe('session');
     expect(envelope.generatedAt).toBe(500);
-    expect(envelope.subject.url).toBe('https://example.test/account?view=compact');
+    expect(envelope.subject.url).toBe('https://example.test/account?[redacted]#[redacted]');
     expect(envelope.context).toEqual({
       scope: { type: 'page' },
       coverage: { passes: 8, rulesRun: 11, staticFindings: 3, runtimeFindings: 1 },
@@ -146,7 +146,8 @@ describe('versioned exports', () => {
     expect(roundTrip).toEqual(envelope);
     expect(roundTrip.findings[0].references[0]).toMatchObject({ type: 'WCAG', id: '4.1.2' });
     expect(jsonText).not.toContain('token=secret');
-    expect(jsonText).not.toContain('utm_source');
+    expect(jsonText).not.toContain('view=compact');
+    expect(jsonText).not.toContain('private-account');
     expect(() => parseVersionedJson('{"schemaVersion":"2.0.0"}')).toThrow(/schema/i);
   });
 
@@ -161,6 +162,7 @@ describe('versioned exports', () => {
     expect(csv).toContain('"Give the button an accessible name');
     expect(csv).toContain('"\'=Needs human review"');
     expect(csv).not.toContain('token=secret');
+    expect(csv).not.toContain('private-account');
 
     const rows = csv.slice(1).trimEnd().split('\r\n');
     expect(rows).toHaveLength(5);
@@ -178,6 +180,7 @@ describe('versioned exports', () => {
     expect(html).toContain('Give the button an accessible name');
     expect(html).toContain('WCAG 4.1.2');
     expect(html).not.toContain('<visible>');
+    expect(html).not.toContain('private-account');
   });
 
   it('emits GitHub-compatible SARIF 2.1.0 while keeping review and warning results non-failing', () => {
@@ -202,6 +205,7 @@ describe('versioned exports', () => {
     expect(failure.properties.remediation).toContain('Give the button an accessible name');
     expect(review.level).toBe('note');
     expect(warning.level).toBe('note');
+    expect(JSON.stringify(sarif)).not.toContain('private-account');
   });
 
   it('uses JUnit failures only for deterministic FAIL and preserves REVIEW/WARNING plus provenance', () => {
@@ -215,6 +219,7 @@ describe('versioned exports', () => {
     expect(junit.match(/<skipped message="REVIEW"\/>/g)).toHaveLength(2);
     expect(junit.match(/<skipped message="WARNING"\/>/g)).toHaveLength(1);
     expect(junit).toContain('Botón “Guardar” sin nombre &lt;visible&gt;');
+    expect(junit).not.toContain('private-account');
   });
 
   it('normalizes Site Audit pages into the same v1 contract with template, limits and coverage metadata', () => {
@@ -250,7 +255,8 @@ describe('versioned exports', () => {
     expect(sarif.runs[0].tool.driver.rules).toHaveLength(1);
   });
 
-  it('redacts credentials from malformed URL-like strings conservatively', () => {
-    expect(sanitizeExportUrl('https://user:pass@example.test/path?session=abc&ok=1')).toBe('https://example.test/path?ok=1');
+  it('uses the shared privacy fallback for invalid URL-like strings', () => {
+    expect(sanitizeExportUrl('https://user:pass@example.test/path?session=abc&ok=1#private')).toBe('https://example.test/path?[redacted]#[redacted]');
+    expect(sanitizeExportUrl('http://[invalid-secret')).toBe('[redacted-url]');
   });
 });
