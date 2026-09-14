@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, resolve } from 'node:path';
+import { fileURLToPath } from 'node:url';
 import type { Page } from '@playwright/test';
 import type { AuditProfile } from '../lib/audit/audit-profiles';
 import {
@@ -54,12 +55,32 @@ export interface FocusTraceThresholdSummary {
   warnings: number;
 }
 
-const DEFAULT_SCANNER_PATH = resolve('dist/cli/browser-scanner.js');
+const DEFAULT_SCANNER_PATH = resolve(
+  dirname(fileURLToPath(import.meta.url)),
+  '../dist/cli/browser-scanner.js',
+);
+const SAFE_ARTIFACT_BASENAME = /^[A-Za-z0-9][A-Za-z0-9._-]{0,79}$/;
 
 function normalizeThreshold(value: number | undefined, label: string): number | undefined {
   if (value == null) return undefined;
   if (!Number.isFinite(value) || value < 0 || !Number.isInteger(value)) {
     throw new Error(`${label} must be a non-negative integer.`);
+  }
+  return value;
+}
+
+function normalizeArtifactBasename(value: string | undefined): string {
+  const basename = value?.trim() || 'focustrace';
+  if (!SAFE_ARTIFACT_BASENAME.test(basename)) {
+    throw new Error('Artifact basename must be 1-80 characters using only letters, numbers, dot, underscore or hyphen.');
+  }
+  return basename;
+}
+
+function normalizeGeneratedAt(value: number | undefined, fallback: number): number {
+  if (value == null) return fallback;
+  if (!Number.isFinite(value) || value < 0 || !Number.isInteger(value)) {
+    throw new Error('generatedAt must be a non-negative integer timestamp.');
   }
   return value;
 }
@@ -160,12 +181,13 @@ export async function writeFocusTraceArtifacts(
   options: FocusTraceArtifactOptions,
 ): Promise<string[]> {
   const formats = options.formats ?? ['sarif', 'junit'];
-  const basename = options.basename?.trim() || 'focustrace';
+  const basename = normalizeArtifactBasename(options.basename);
   const directory = resolve(options.directory);
+  const generatedAt = normalizeGeneratedAt(options.generatedAt, result.envelope.generatedAt);
   await mkdir(directory, { recursive: true });
   const envelope = {
     ...result.envelope,
-    generatedAt: options.generatedAt ?? result.envelope.generatedAt,
+    generatedAt,
   };
   const paths: string[] = [];
   for (const format of formats) {
