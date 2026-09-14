@@ -108,6 +108,23 @@ function siteAudit(): SiteAuditResult {
   };
 }
 
+function csvColumnCount(row: string): number {
+  let columns = 1;
+  let quoted = false;
+  for (let index = 0; index < row.length; index += 1) {
+    if (row[index] === '"') {
+      if (quoted && row[index + 1] === '"') {
+        index += 1;
+      } else {
+        quoted = !quoted;
+      }
+    } else if (row[index] === ',' && !quoted) {
+      columns += 1;
+    }
+  }
+  return columns;
+}
+
 describe('versioned exports', () => {
   it('round-trips a schema-versioned session envelope and redacts secret/tracking URL parameters', () => {
     const envelope = buildSessionExport({ scan: scan(), events: [runtimeReview], generatedAt: 500 });
@@ -120,7 +137,9 @@ describe('versioned exports', () => {
       coverage: { passes: 8, rulesRun: 11, staticFindings: 3, runtimeFindings: 1 },
     });
     expect(envelope.summary).toEqual({ findings: 4, failures: 1, reviews: 2, warnings: 1 });
+    expect(envelope.findings[0].remediation).toContain('Give the button an accessible name');
     expect(envelope.findings.at(-1)).toMatchObject({ source: 'runtime', outcome: 'review', ruleId: 'FT-RUNTIME-FOCUS' });
+    expect(envelope.findings.at(-1)?.remediation).toContain('WCAG 2.4.3');
 
     const jsonText = renderVersionedJson(envelope);
     const roundTrip = parseVersionedJson(jsonText);
@@ -131,16 +150,21 @@ describe('versioned exports', () => {
     expect(() => parseVersionedJson('{"schemaVersion":"2.0.0"}')).toThrow(/schema/i);
   });
 
-  it('exports UTF-8 CSV with context, BOM, CRLF, RFC-style quoting and spreadsheet formula protection', () => {
+  it('exports UTF-8 CSV with context, aligned records, BOM, CRLF, quoting and formula protection', () => {
     const csv = renderVersionedCsv(buildSessionExport({ scan: scan(), events: [] }));
     expect(csv.charCodeAt(0)).toBe(0xFEFF);
     expect(csv).toContain('\r\n');
     expect(csv).toContain('"summary","1.0.0","session","WCAG 2.2"');
-    expect(csv).toContain('"{\""type\"":\""page\""}"');
+    expect(csv).toContain('"{""type"":""page""}"');
     expect(csv).toContain('"Botón “Guardar” sin nombre <visible>"');
     expect(csv).toContain('"Computed name = """"; texto: áéíóú 日本語"');
+    expect(csv).toContain('"Give the button an accessible name');
     expect(csv).toContain('"\'=Needs human review"');
     expect(csv).not.toContain('token=secret');
+
+    const rows = csv.slice(1).trimEnd().split('\r\n');
+    expect(rows).toHaveLength(5);
+    expect(rows.every((row) => csvColumnCount(row) === 24)).toBe(true);
   });
 
   it('escapes standalone HTML without losing context, remediation or Unicode', () => {
@@ -151,6 +175,7 @@ describe('versioned exports', () => {
     expect(html).toContain('&quot;type&quot;:&quot;page&quot;');
     expect(html).toContain('&lt;visible&gt;');
     expect(html).toContain('accessible name &amp; keep it meaningful');
+    expect(html).toContain('Give the button an accessible name');
     expect(html).toContain('WCAG 4.1.2');
     expect(html).not.toContain('<visible>');
   });
@@ -167,12 +192,14 @@ describe('versioned exports', () => {
       standard: 'WCAG 2.2',
     });
     expect(sarif.runs[0].properties.scope).toContain('"type":"page"');
+    expect(typeof sarif.runs[0].properties.summary).toBe('string');
     expect(sarif.runs[0].results.every((result: { locations?: unknown[] }) => result.locations?.length)).toBe(true);
 
     const failure = sarif.runs[0].results.find((result: { properties: { focusTraceOutcome: string } }) => result.properties.focusTraceOutcome === 'fail');
     const review = sarif.runs[0].results.find((result: { properties: { focusTraceOutcome: string } }) => result.properties.focusTraceOutcome === 'review');
     const warning = sarif.runs[0].results.find((result: { properties: { focusTraceOutcome: string } }) => result.properties.focusTraceOutcome === 'warning');
     expect(failure.level).toBe('error');
+    expect(failure.properties.remediation).toContain('Give the button an accessible name');
     expect(review.level).toBe('note');
     expect(warning.level).toBe('note');
   });
@@ -183,6 +210,7 @@ describe('versioned exports', () => {
     expect(junit).toContain('<property name="standard" value="WCAG 2.2"/>');
     expect(junit).toContain('<property name="scope" value="{&quot;type&quot;:&quot;page&quot;}"/>');
     expect(junit).toContain('name="standards" value="WCAG 4.1.2"');
+    expect(junit).toContain('name="remediation" value="Give the button an accessible name');
     expect(junit.match(/<failure /g)).toHaveLength(1);
     expect(junit.match(/<skipped message="REVIEW"\/>/g)).toHaveLength(2);
     expect(junit.match(/<skipped message="WARNING"\/>/g)).toHaveLength(1);
@@ -194,6 +222,7 @@ describe('versioned exports', () => {
     expect(envelope.kind).toBe('site-audit');
     expect(envelope.summary).toEqual({ findings: 3, failures: 1, reviews: 1, warnings: 1 });
     expect(envelope.findings[0]).toMatchObject({ source: 'site-audit', template: 'Account' });
+    expect(envelope.findings[0].remediation).toContain('Give the button an accessible name');
     expect(envelope.context.scope).toMatchObject({
       mode: 'automatic',
       maxDiscoveredUrls: 500,
