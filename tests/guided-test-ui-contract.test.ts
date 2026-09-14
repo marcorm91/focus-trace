@@ -7,16 +7,36 @@ const component = fs.readFileSync(
   path.join(root, 'entrypoints/sidepanel/components/GuidedTestPanel.tsx'),
   'utf8',
 );
+const workspace = fs.readFileSync(
+  path.join(root, 'entrypoints/sidepanel/views/AuditReportWorkspace.tsx'),
+  'utf8',
+);
 const css = fs.readFileSync(
   path.join(root, 'entrypoints/sidepanel/components/guided-test-panel.css'),
   'utf8',
 );
+const coverage = JSON.parse(
+  fs.readFileSync(path.join(root, 'config/guided-tests.json'), 'utf8'),
+) as {
+  automatedConformance: boolean;
+  tests: Array<{ id: string; coverage: string; automated: boolean }>;
+};
 
 describe('guided test UI contract', () => {
   it('keeps manual evidence visually and semantically separate from automated conformance', () => {
     expect(component).toContain('Not an automated conformance result.');
     expect(component).toContain('Guided test · manual evidence');
     expect(component).toContain("role=\"note\"");
+  });
+
+  it('exposes the guided workflow in Report while standards coverage remains explicitly manual', () => {
+    expect(workspace).toContain('<GuidedTestPanel scan={scan} language={language} />');
+    expect(coverage.automatedConformance).toBe(false);
+    expect(coverage.tests).toContainEqual(expect.objectContaining({
+      id: 'FT-GUIDED-001',
+      coverage: 'guided-manual',
+      automated: false,
+    }));
   });
 
   it('uses native keyboard-operable controls and announces state changes', () => {
