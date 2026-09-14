@@ -7,4 +7,7 @@ export default defineConfig({
   workers: 1,
   timeout: 20_000,
   reporter: process.env.CI ? 'line' : 'list',
+  use: {
+    channel: 'chromium',
+  },
 });
