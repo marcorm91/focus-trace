@@ -164,8 +164,10 @@ function comparableScanContext(previous: ScanResult | undefined, current: Profil
   const previousScope = previous.scope?.type ?? 'page';
   const currentScope = current.scope?.type ?? 'page';
   if (previousScope !== currentScope) return false;
-  if (previousScope === 'component' && currentScope === 'component'
-    && previous.scope?.selector !== current.scope?.selector) return false;
+  const previousComponentScope = previous.scope?.type === 'component' ? previous.scope : undefined;
+  const currentComponentScope = current.scope?.type === 'component' ? current.scope : undefined;
+  if (previousComponentScope && currentComponentScope
+    && previousComponentScope.selector !== currentComponentScope.selector) return false;
   return auditProfileSnapshotKey(previous) === auditProfileSnapshotKey(current);
 }
 
