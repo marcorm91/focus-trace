@@ -645,3 +645,11 @@ A guided definition contains localized steps and prompts, allowed manual answers
 The framework never reads form values automatically. Stored page context drops query strings and fragments, and common sensitive patterns in free-text notes are redacted before persistence. Guided outcomes are `guided-pass`, `guided-issue`, `guided-review` or `not-applicable`; all remain auditor-provided evidence and **never become automated conformance claims**.
 
 `FT-GUIDED-001` is the sample end-to-end workflow for WCAG 1.3.3 Sensory Characteristics. It asks the auditor to review page instructions and decide whether meaning relies only on color, shape, size, visual position, orientation or sound. See [`docs/GUIDED_TESTS.md`](docs/GUIDED_TESTS.md) for the lifecycle, privacy boundaries and reporting model.
+
+### Guided keyboard, focus and dialog tests
+
+The guided framework now includes keyboard operability, focus order/visibility and dialog-lifecycle workflows. These tests reuse the existing FocusTrace runtime event stream: relevant Trace events are attached as bounded `runtime-observation` evidence when a step is saved, while the auditor's answer remains a separate manual record.
+
+Modal focus containment is not treated as a keyboard trap by itself. While a modal dialog is open, keeping Tab/Shift+Tab inside the dialog is expected; the guided workflow asks the auditor to report a problem only when focus escapes unexpectedly, the dialog cannot be closed with its expected keyboard mechanism, or focus is not restored to a logical destination after close.
+
+The new guided workflows remain `guided-manual` and `automated: false`; they do not change automated PASS/FAIL totals or axe-core parity.

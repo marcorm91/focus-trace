@@ -43,7 +43,7 @@ export interface GuidedTestDefinition {
 }
 
 export interface GuidedEvidence {
-  kind: 'page-context' | 'manual-answer' | 'manual-note';
+  kind: 'page-context' | 'manual-answer' | 'manual-note' | 'runtime-observation';
   label: string;
   value: string;
   capturedAt: number;
@@ -94,7 +94,7 @@ const GUIDED_OUTCOMES: GuidedOutcome[] = [
   'guided-review',
   'not-applicable',
 ];
-const EVIDENCE_KINDS: GuidedEvidence['kind'][] = ['page-context', 'manual-answer', 'manual-note'];
+const EVIDENCE_KINDS: GuidedEvidence['kind'][] = ['page-context', 'manual-answer', 'manual-note', 'runtime-observation'];
 
 const SENSITIVE_ASSIGNMENT = /\b(password|passwd|pwd|token|secret|api[_-]?key|authorization|cookie|session|value)\s*[:=]\s*([^\s,;]+)/gi;
 const EMAIL = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
@@ -134,7 +134,7 @@ function boundedEvidence(evidence: GuidedEvidence[]): GuidedEvidence[] {
     .map((item) => ({
       ...item,
       label: redactGuidedText(item.label, GUIDED_MAX_EVIDENCE_LABEL_LENGTH),
-      value: redactGuidedText(item.value),
+      value: redactGuidedText(item.value, GUIDED_MAX_EVIDENCE_VALUE_LENGTH),
     }));
 }
 
@@ -167,6 +167,21 @@ export function startGuidedTest(
         capturedAt: now,
       }] : [],
     })),
+  };
+}
+
+export function appendGuidedEvidence(
+  session: GuidedTestSession,
+  evidence: GuidedEvidence[],
+  now = Date.now(),
+): GuidedTestSession {
+  if (session.status !== 'active' || evidence.length === 0) return session;
+  return {
+    ...session,
+    updatedAt: now,
+    steps: session.steps.map((step, index) => index === session.currentStepIndex
+      ? { ...step, evidence: boundedEvidence([...step.evidence, ...evidence]) }
+      : step),
   };
 }
 

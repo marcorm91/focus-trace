@@ -40,7 +40,19 @@ All guided evidence remains local to the extension and uses the existing storage
 
 `FT-GUIDED-001` proves the complete framework using WCAG 2.2 Success Criterion 1.3.3 Sensory Characteristics (Level A). It asks the auditor to inspect relevant instructions and then decide whether any instruction relies only on characteristics such as color, shape, size, visual position, orientation, or sound without another textual or programmatic way to identify the target.
 
-The sample is intentionally contextual. FocusTrace records the auditor's judgement but does not infer a deterministic WCAG failure from page text. Future issues can register additional guided definitions on the same framework; keyboard, focus, and dialog workflows are scoped separately.
+The sample is intentionally contextual. FocusTrace records the auditor's judgement but does not infer a deterministic WCAG failure from page text.
+
+## Keyboard, focus and dialog workflows
+
+`FT-GUIDED-002` guides a keyboard-only pass for WCAG 2.1.1 and 2.1.2. It asks the auditor to start from a known focus point, operate pointer-equivalent actions using keyboard input, and verify that focus can leave non-modal components through standard or documented keys.
+
+`FT-GUIDED-003` covers WCAG 2.4.3 and 2.4.7 through sequential focus order, focus visibility, and contextual focus movement after navigation or dynamic UI changes.
+
+`FT-GUIDED-004` covers dialog entry, modal containment, close/Escape behavior and focus restoration, using WCAG 2.1.2, WCAG 2.4.3 and the WAI-ARIA APG modal-dialog pattern as references. Intentional Tab/Shift+Tab containment inside an open modal is valid behavior and is not classified as a keyboard trap by itself.
+
+These workflows reuse the existing FocusTrace Trace/runtime stream rather than introducing a second recorder. When a guided step is saved, up to two relevant events from that step are copied into bounded `runtime-observation` evidence. Manual answers and notes remain separate evidence kinds, so observed behavior and auditor judgement are distinguishable in persisted sessions and reports.
+
+Runtime observations support review but never decide the guided result automatically. A dialog problem remains contextual: examples include unexpected focus escape, inability to close the dialog through the expected keyboard mechanism, or illogical focus restoration after close.
 
 ## Reporting and standards coverage
 
