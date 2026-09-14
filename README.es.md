@@ -636,3 +636,12 @@ En hallazgos runtime compatibles, Recheck solo vuelve a resolver el objetivo reg
 
 Recheck sigue siendo local-first. Los resultados actualizan el informe actual, la auditoría multipágina guardada y FocusTrace Memory conservando los localizadores/vistas previas existentes de Memory y la evidencia original. La acción usa controles nativos operables por teclado y un estado `aria-live` en layouts estrechos de side-panel/DevTools; no transmite datos de la página inspeccionada.
 
+### Pruebas guiadas de accesibilidad
+
+FocusTrace incluye ahora un framework reutilizable para comprobaciones que requieren acciones del usuario o criterio contextual. Las pruebas guiadas aparecen en el Informe y se etiquetan explícitamente como **Prueba guiada · evidencia manual** para que sus resultados no puedan confundirse con los recuentos automáticos PASS/FAIL.
+
+Una definición guiada contiene pasos y prompts localizados, respuestas manuales permitidas, evidencia capturada de forma acotada y un resultado de finalización. Las sesiones pueden pausarse, reanudarse, cancelarse y reiniciarse. El progreso interrumpido se conserva localmente en un estado acotado de `browser.storage.session`: como máximo 8 sesiones, 20 pasos por sesión, 4 registros de evidencia por paso y 240 caracteres por nota del auditor.
+
+El framework nunca lee automáticamente valores de formularios. El contexto de página guardado elimina query strings y fragmentos, y los patrones sensibles habituales de las notas libres se redactan antes de persistir. Los resultados guiados son `guided-pass`, `guided-issue`, `guided-review` o `not-applicable`; todos siguen siendo evidencia aportada por el auditor y **nunca se convierten en afirmaciones automáticas de conformidad**.
+
+`FT-GUIDED-001` es el flujo completo de muestra para WCAG 1.3.3 Características sensoriales. Pide al auditor revisar las instrucciones de la página y decidir si el significado depende únicamente de color, forma, tamaño, posición visual, orientación o sonido. Consulta [`docs/GUIDED_TESTS.md`](docs/GUIDED_TESTS.md) para el ciclo de vida, los límites de privacidad y el modelo de informes.

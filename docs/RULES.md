@@ -602,3 +602,12 @@ Recheck history updates the current session/report and the saved multipage audit
 
 The UI contract is accessibility-critical: Recheck is exposed as a native button, results are announced through a live status region, evidence/details remain keyboard reachable, and action/status layout must continue to work in narrow DevTools/side-panel widths and forced-colors mode.
 
+## Guided/manual test methodology
+
+Guided tests are a separate evidence workflow for accessibility questions that cannot be represented responsibly as a fully automated rule. Definitions provide localized steps/prompts, an explicit manual-answer vocabulary and bounded evidence. The framework supports pause, resume, cancel and restart, and validates recovered session state before reuse.
+
+Guided state is stored locally in `browser.storage.session` with explicit limits: 8 retained sessions, 20 steps per session, 4 evidence records per step and 240 characters per free-text note. Page context removes query strings and fragments. The framework never reads editable form values automatically, while free-text notes apply defensive redaction for common email, long-number and secret/token/password-like assignment patterns before persistence.
+
+Completion produces `guided-pass`, `guided-issue`, `guided-review` or `not-applicable`. These values are **manual auditor evidence**. They are excluded from automated PASS/FAIL/REVIEW/WARNING totals and cannot establish automated conformance with the referenced WCAG criterion. Machine-readable declarations live in `config/guided-tests.json` with `coverage: "guided-manual"` and `automated: false`, separate from the axe-core parity benchmark.
+
+`FT-GUIDED-001` is the framework sample for WCAG 1.3.3 Sensory Characteristics (Level A). It guides the auditor through relevant instructions and asks for contextual judgement about reliance on shape, color, size, visual position, orientation or sound. The sample demonstrates the full workflow without pretending natural-language/context judgement is deterministic. See [`GUIDED_TESTS.md`](GUIDED_TESTS.md) for the full lifecycle and privacy model.

@@ -636,3 +636,12 @@ Supported runtime findings use Recheck only to resolve the recorded target on th
 
 Recheck is local-first. Results update the current report, saved multipage audit and FocusTrace Memory while preserving existing Memory locators/visual previews and the original evidence. The action uses native keyboard-operable controls and an `aria-live` status in narrow side-panel/DevTools layouts; it does not transmit inspected-page data.
 
+### Guided accessibility tests
+
+FocusTrace now includes a reusable framework for checks that require user action or contextual judgement. Guided tests live in the Report workspace and are explicitly labelled **Guided test · manual evidence** so their outcomes cannot be confused with automated PASS/FAIL counts.
+
+A guided definition contains localized steps and prompts, allowed manual answers, bounded captured evidence and a completion outcome. Sessions can be paused, resumed, cancelled and restarted. Interrupted progress is kept locally in bounded `browser.storage.session` state: at most 8 sessions, 20 steps per session, 4 evidence records per step and 240 characters per auditor note.
+
+The framework never reads form values automatically. Stored page context drops query strings and fragments, and common sensitive patterns in free-text notes are redacted before persistence. Guided outcomes are `guided-pass`, `guided-issue`, `guided-review` or `not-applicable`; all remain auditor-provided evidence and **never become automated conformance claims**.
+
+`FT-GUIDED-001` is the sample end-to-end workflow for WCAG 1.3.3 Sensory Characteristics. It asks the auditor to review page instructions and decide whether meaning relies only on color, shape, size, visual position, orientation or sound. See [`docs/GUIDED_TESTS.md`](docs/GUIDED_TESTS.md) for the lifecycle, privacy boundaries and reporting model.

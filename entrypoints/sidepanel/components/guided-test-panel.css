@@ -1,0 +1,123 @@
+.guided-test-panel {
+  display: grid;
+  gap: 14px;
+}
+
+.guided-test-heading {
+  display: flex;
+  gap: 12px;
+  align-items: flex-start;
+  justify-content: space-between;
+  flex-wrap: wrap;
+}
+
+.guided-test-heading h2,
+.guided-test-step h3 {
+  margin: 0;
+}
+
+.guided-coverage-badge {
+  border: 1px solid currentColor;
+  border-radius: 999px;
+  padding: 4px 8px;
+  font-size: 14px;
+  font-weight: 700;
+}
+
+.guided-test-boundary,
+.guided-test-empty,
+.guided-test-state,
+.guided-test-result,
+.guided-test-step {
+  margin: 0;
+}
+
+.guided-test-boundary {
+  border-inline-start: 4px solid currentColor;
+  padding-inline-start: 12px;
+}
+
+.guided-test-progress {
+  font-weight: 700;
+}
+
+.guided-test-step {
+  display: grid;
+  gap: 12px;
+}
+
+.guided-test-step fieldset {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding: 12px;
+}
+
+.guided-test-step legend {
+  padding-inline: 6px;
+  font-weight: 700;
+}
+
+.guided-answer {
+  display: flex;
+  gap: 8px;
+  align-items: flex-start;
+}
+
+.guided-answer input {
+  margin-top: 3px;
+}
+
+.guided-note {
+  display: grid;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.guided-note textarea {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 84px;
+  resize: vertical;
+  font: inherit;
+}
+
+.guided-test-actions {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.guided-test-result {
+  display: grid;
+  gap: 10px;
+}
+
+.guided-test-result ol {
+  display: grid;
+  gap: 8px;
+  margin: 0;
+  padding-inline-start: 24px;
+}
+
+.guided-test-result li {
+  display: grid;
+  gap: 2px;
+}
+
+.guided-test-status:empty {
+  display: none;
+}
+
+@media (max-width: 420px) {
+  .guided-test-actions > button {
+    flex: 1 1 100%;
+  }
+}
+
+@media (forced-colors: active) {
+  .guided-test-boundary,
+  .guided-coverage-badge {
+    border-color: CanvasText;
+  }
+}
