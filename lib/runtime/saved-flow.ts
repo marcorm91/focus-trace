@@ -1,4 +1,3 @@
-import { findingNodeSignature, type FindingNodeSignature } from '../audit/finding-recheck';
 import { sanitizeRuntimeUrl } from './url-privacy';
 import type { FindingOutcome, RuntimeEvent, RuntimeEventKind, RuntimeInteraction } from '../../shared/types';
 
@@ -112,23 +111,10 @@ export function savedFlowTargetSignature(event: RuntimeEvent): SavedFlowTargetSi
 }
 
 export function savedFlowFindingSignature(event: RuntimeEvent): SavedFlowTargetSignature | undefined {
-  const target = savedFlowTargetSignature(event);
-  if (!target) return undefined;
-  const signature: FindingNodeSignature = findingNodeSignature({
-    id: event.id,
-    ruleId: event.ruleId ?? `runtime:${event.kind}`,
-    outcome: event.outcome ?? 'review',
-    impact: event.severity,
-    message: event.title,
-    targets: [target.locator],
-    ...(event.element ? { element: event.element } : {}),
-  });
-  return {
-    locator: signature.locator,
-    ...(signature.tag ? { tag: signature.tag } : {}),
-    ...(signature.id ? { id: signature.id.slice(0, 120) } : {}),
-    ...(signature.role ? { role: signature.role.slice(0, 80) } : {}),
-  };
+  // Saved regression baselines intentionally keep only the same minimal target
+  // metadata used for action/checkpoint resolution. Names, class names, event
+  // detail and page text are excluded from persistent flow storage.
+  return savedFlowTargetSignature(event);
 }
 
 function keyFromEvent(event: RuntimeEvent): string | undefined {
