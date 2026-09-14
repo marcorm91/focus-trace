@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { APG_GUIDED_PATTERN_METADATA, APG_GUIDED_TESTS, guidedApgPatternMetadata, isInformativeApgGuidedTest } from '../lib/guided-tests/apg-catalog';
+import { isRecoverableGuidedSession, startGuidedTest } from '../lib/guided-tests/framework';
 import { guidedRuntimeEvidence, hasGuidedRuntimeEvidence } from '../lib/guided-tests/runtime-evidence';
 import type { RuntimeEvent } from '../shared/types';
 
@@ -52,6 +53,19 @@ describe('guided APG widget-pattern catalog', () => {
     expect(isInformativeApgGuidedTest('FT-GUIDED-001')).toBe(false);
   });
 
+  it('keeps the selected APG variation recoverable as bounded session metadata', () => {
+    const definition = APG_GUIDED_TESTS[0]!;
+    const session = {
+      ...startGuidedTest(definition, { url: 'https://example.test/tabs?secret=removed', title: 'Tabs fixture' }, 100),
+      variationId: 'manual-activation',
+    };
+
+    expect(isRecoverableGuidedSession(session)).toBe(true);
+    expect(session.variationId).toBe('manual-activation');
+    expect(session.pageUrl).toBe('https://example.test/tabs');
+    expect(isRecoverableGuidedSession({ ...session, variationId: 'x'.repeat(121) })).toBe(false);
+  });
+
   it('reuses only pattern-relevant APG runtime findings for tabs', () => {
     const evidence = guidedRuntimeEvidence([
       runtimeEvent({ kind: 'aria-widget', timestamp: 101, title: 'Tab did not select', ruleId: 'FT-APG-004', outcome: 'review' }),
@@ -60,7 +74,7 @@ describe('guided APG widget-pattern catalog', () => {
     ], 'FT-GUIDED-009', 100, 110);
 
     expect(evidence).toHaveLength(2);
-    expect(evidence.some((item) => item.value.includes('FT-APG-005'))).toBe(false);
+    expect(evidence.some((item) => item.value.includes('Unrelated menu finding'))).toBe(false);
     expect(evidence[0]?.value).toContain('Tab did not select');
     expect(evidence[1]?.value).toContain('ArrowRight');
   });
