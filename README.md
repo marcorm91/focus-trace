@@ -492,7 +492,7 @@ Full-page analysis prepares bounded Structure evidence together with the rule-en
 
 ## License and project identity
 
-FocusTrace source code is distributed under **the GNU General Public License version 3 only (`GPL-3.0-only`)**. See [`LICENSE`](LICENSE).
+FocusTrace source code is distributed under the **GNU General Public License version 3 only (`GPL-3.0-only`)**. See [`LICENSE`](LICENSE).
 
 The FocusTrace name, logo and project identity are not granted by the source-code license for use in a way that presents an unofficial fork as the official project. See [`TRADEMARKS.md`](TRADEMARKS.md).
 
