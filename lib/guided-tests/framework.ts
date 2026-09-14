@@ -1,0 +1,248 @@
+export type GuidedLocalizedText = {
+  en: string;
+  es: string;
+};
+
+export type GuidedManualAnswer =
+  | 'acknowledged'
+  | 'pass'
+  | 'issue'
+  | 'not-applicable'
+  | 'uncertain';
+
+export type GuidedOutcome =
+  | 'guided-pass'
+  | 'guided-issue'
+  | 'guided-review'
+  | 'not-applicable';
+
+export type GuidedSessionStatus = 'active' | 'paused' | 'completed' | 'cancelled';
+
+export interface GuidedStandardReference {
+  type: 'WCAG' | 'ACT' | 'WAI-ARIA' | 'WAI-ARIA APG' | 'HTML';
+  id: string;
+  label: string;
+  url: string;
+  level?: 'A' | 'AA' | 'AAA';
+}
+
+export interface GuidedTestStepDefinition {
+  id: string;
+  title: GuidedLocalizedText;
+  prompt: GuidedLocalizedText;
+  answers: GuidedManualAnswer[];
+}
+
+export interface GuidedTestDefinition {
+  id: string;
+  title: GuidedLocalizedText;
+  description: GuidedLocalizedText;
+  references: GuidedStandardReference[];
+  steps: GuidedTestStepDefinition[];
+  coverage: 'guided-manual';
+}
+
+export interface GuidedEvidence {
+  kind: 'page-context' | 'manual-answer' | 'manual-note';
+  label: string;
+  value: string;
+  capturedAt: number;
+}
+
+export interface GuidedStepState {
+  stepId: string;
+  answer?: GuidedManualAnswer;
+  answeredAt?: number;
+  evidence: GuidedEvidence[];
+}
+
+export interface GuidedTestSession {
+  version: 1;
+  id: string;
+  testId: string;
+  pageUrl: string;
+  pageTitle: string;
+  startedAt: number;
+  updatedAt: number;
+  status: GuidedSessionStatus;
+  currentStepIndex: number;
+  steps: GuidedStepState[];
+  outcome?: GuidedOutcome;
+  completedAt?: number;
+}
+
+export const GUIDED_MAX_STEPS = 20;
+export const GUIDED_MAX_EVIDENCE_PER_STEP = 4;
+export const GUIDED_MAX_NOTE_LENGTH = 240;
+
+const SENSITIVE_ASSIGNMENT = /\b(password|passwd|pwd|token|secret|api[_-]?key|authorization|cookie|session|value)\s*[:=]\s*([^\s,;]+)/gi;
+const EMAIL = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
+const LONG_NUMBER = /\b(?:\d[ -]?){12,19}\b/g;
+
+function cleanControlCharacters(value: string): string {
+  return value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, ' ');
+}
+
+export function redactGuidedText(value: string, limit = GUIDED_MAX_NOTE_LENGTH): string {
+  return cleanControlCharacters(value)
+    .replace(SENSITIVE_ASSIGNMENT, '$1=[redacted]')
+    .replace(EMAIL, '[redacted-email]')
+    .replace(LONG_NUMBER, '[redacted-number]')
+    .replace(/\s+/g, ' ')
+    .trim()
+    .slice(0, limit);
+}
+
+export function normalizeGuidedPageUrl(value: string): string {
+  try {
+    const url = new URL(value);
+    return `${url.origin}${url.pathname}`;
+  } catch {
+    return value.split(/[?#]/, 1)[0]?.slice(0, 500) ?? '';
+  }
+}
+
+function boundedEvidence(evidence: GuidedEvidence[]): GuidedEvidence[] {
+  return evidence
+    .slice(-GUIDED_MAX_EVIDENCE_PER_STEP)
+    .map((item) => ({
+      ...item,
+      label: redactGuidedText(item.label, 80),
+      value: redactGuidedText(item.value),
+    }));
+}
+
+function sessionId(testId: string, startedAt: number): string {
+  return `${testId}:${startedAt.toString(36)}`;
+}
+
+export function startGuidedTest(
+  definition: GuidedTestDefinition,
+  page: { url: string; title?: string },
+  now = Date.now(),
+): GuidedTestSession {
+  const steps = definition.steps.slice(0, GUIDED_MAX_STEPS);
+  return {
+    version: 1,
+    id: sessionId(definition.id, now),
+    testId: definition.id,
+    pageUrl: normalizeGuidedPageUrl(page.url),
+    pageTitle: redactGuidedText(page.title ?? '', 160),
+    startedAt: now,
+    updatedAt: now,
+    status: 'active',
+    currentStepIndex: 0,
+    steps: steps.map((step, index) => ({
+      stepId: step.id,
+      evidence: index === 0 ? [{
+        kind: 'page-context',
+        label: 'Page',
+        value: normalizeGuidedPageUrl(page.url),
+        capturedAt: now,
+      }] : [],
+    })),
+  };
+}
+
+function deriveOutcome(steps: GuidedStepState[]): GuidedOutcome {
+  const answers = steps.map((step) => step.answer).filter(Boolean) as GuidedManualAnswer[];
+  if (answers.includes('issue')) return 'guided-issue';
+  if (answers.includes('uncertain')) return 'guided-review';
+  const substantive = answers.filter((answer) => answer !== 'acknowledged');
+  if (substantive.length > 0 && substantive.every((answer) => answer === 'not-applicable')) {
+    return 'not-applicable';
+  }
+  return 'guided-pass';
+}
+
+export function answerGuidedStep(
+  session: GuidedTestSession,
+  definition: GuidedTestDefinition,
+  answer: GuidedManualAnswer,
+  note = '',
+  now = Date.now(),
+): GuidedTestSession {
+  if (session.status !== 'active') return session;
+  const step = definition.steps[session.currentStepIndex];
+  if (!step || !step.answers.includes(answer)) return session;
+
+  const steps = session.steps.map((item, index) => {
+    if (index !== session.currentStepIndex) return item;
+    const evidence: GuidedEvidence[] = [
+      ...item.evidence,
+      {
+        kind: 'manual-answer',
+        label: 'Manual answer',
+        value: answer,
+        capturedAt: now,
+      },
+    ];
+    const redactedNote = redactGuidedText(note);
+    if (redactedNote) {
+      evidence.push({
+        kind: 'manual-note',
+        label: 'Auditor note',
+        value: redactedNote,
+        capturedAt: now,
+      });
+    }
+    return {
+      ...item,
+      answer,
+      answeredAt: now,
+      evidence: boundedEvidence(evidence),
+    };
+  });
+
+  const lastStep = session.currentStepIndex >= Math.min(definition.steps.length, GUIDED_MAX_STEPS) - 1;
+  return {
+    ...session,
+    steps,
+    updatedAt: now,
+    currentStepIndex: lastStep ? session.currentStepIndex : session.currentStepIndex + 1,
+    ...(lastStep ? {
+      status: 'completed' as const,
+      completedAt: now,
+      outcome: deriveOutcome(steps),
+    } : {}),
+  };
+}
+
+export function pauseGuidedTest(session: GuidedTestSession, now = Date.now()): GuidedTestSession {
+  return session.status === 'active'
+    ? { ...session, status: 'paused', updatedAt: now }
+    : session;
+}
+
+export function resumeGuidedTest(session: GuidedTestSession, now = Date.now()): GuidedTestSession {
+  return session.status === 'paused'
+    ? { ...session, status: 'active', updatedAt: now }
+    : session;
+}
+
+export function cancelGuidedTest(session: GuidedTestSession, now = Date.now()): GuidedTestSession {
+  if (session.status === 'completed' || session.status === 'cancelled') return session;
+  return { ...session, status: 'cancelled', updatedAt: now };
+}
+
+export function restartGuidedTest(
+  definition: GuidedTestDefinition,
+  session: GuidedTestSession,
+  now = Date.now(),
+): GuidedTestSession {
+  return startGuidedTest(definition, { url: session.pageUrl, title: session.pageTitle }, now);
+}
+
+export function isRecoverableGuidedSession(value: unknown): value is GuidedTestSession {
+  if (!value || typeof value !== 'object') return false;
+  const session = value as Partial<GuidedTestSession>;
+  return session.version === 1
+    && typeof session.id === 'string'
+    && typeof session.testId === 'string'
+    && typeof session.pageUrl === 'string'
+    && typeof session.startedAt === 'number'
+    && typeof session.updatedAt === 'number'
+    && ['active', 'paused', 'completed', 'cancelled'].includes(String(session.status))
+    && Array.isArray(session.steps)
+    && session.steps.length <= GUIDED_MAX_STEPS;
+}
