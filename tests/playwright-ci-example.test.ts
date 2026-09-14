@@ -21,5 +21,6 @@ describe('Playwright CI example contract', () => {
     expect(example).not.toMatch(/runFocusTraceScan\s*\(/);
     expect(config).toContain("testDir: './examples/playwright'");
     expect(config).toContain("testMatch: '**/*.example.ts'");
+    expect(config).toContain("channel: 'chromium'");
   });
 });
