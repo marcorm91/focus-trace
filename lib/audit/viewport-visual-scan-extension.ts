@@ -5,7 +5,6 @@ import {
 } from '../../shared/viewport-visual-rules';
 import type { ScanIssue, ScanResult } from '../../shared/types';
 import { selectorFor } from './dom';
-import { downgradeUncertainStackingContrast } from './visual-contrast-policy';
 import { evaluateOrientationLock, evaluateViewportZoom } from './viewport-visual';
 
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
@@ -52,7 +51,6 @@ function appendRuleResult(
 }
 
 export function appendViewportVisualChecks(result: ScanResult, root: Document | Element): void {
-  downgradeUncertainStackingContrast(result, root instanceof Document ? root : root.ownerDocument);
   if (!(root instanceof Document)) return;
 
   const viewport = evaluateViewportZoom(root);
