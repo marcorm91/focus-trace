@@ -3,7 +3,7 @@
 import { access, mkdir, readFile, writeFile } from 'node:fs/promises';
 import { dirname, isAbsolute, resolve } from 'node:path';
 import { fileURLToPath, pathToFileURL } from 'node:url';
-import { chromium } from '@playwright/test';
+import { chromium, type Browser } from '@playwright/test';
 import { renderFocusTraceCliBaseline } from '../lib/core/baseline';
 import { CliUsageError, cliHelp, parseCliArgs } from './args';
 import type { CliBrowserRunInput, CliBrowserRunOutput, FocusTraceCliBridge } from './protocol';
@@ -62,6 +62,14 @@ function knownBrowserError(error: unknown): string {
   return 'Unable to audit the requested target.';
 }
 
+async function launchLocalBrowser(headed: boolean): Promise<Browser> {
+  try {
+    return await chromium.launch({ headless: !headed });
+  } catch {
+    throw new CliRuntimeError('Unable to launch the local Chromium runtime.');
+  }
+}
+
 async function execute(): Promise<number> {
   let options;
   try {
@@ -89,11 +97,20 @@ async function execute(): Promise<number> {
     throw new CliRuntimeError('The FocusTrace CLI browser scanner is unavailable. Run npm run cli:build first.');
   }
 
-  const browser = await chromium.launch({ headless: !options.headed });
+  const browser = await launchLocalBrowser(options.headed);
   let result: CliBrowserRunOutput;
   try {
-    const page = await browser.newPage();
-    await page.addInitScript({ path: scannerPath });
+    let page;
+    try {
+      page = await browser.newPage();
+    } catch {
+      throw new CliRuntimeError('Unable to create the local Chromium audit page.');
+    }
+    try {
+      await page.addInitScript({ path: scannerPath });
+    } catch {
+      throw new CliRuntimeError('Unable to load the FocusTrace scanner into the local audit page.');
+    }
     try {
       await page.goto(target, { waitUntil: 'load', timeout: options.timeoutMs });
     } catch {
@@ -116,7 +133,11 @@ async function execute(): Promise<number> {
       throw new CliRuntimeError(knownBrowserError(error));
     }
   } finally {
-    await browser.close();
+    try {
+      await browser.close();
+    } catch {
+      // Closing a local browser must not hide an already-completed audit result.
+    }
   }
 
   if (options.outputPath) await writeText(options.outputPath, result.rendered, 'output');
