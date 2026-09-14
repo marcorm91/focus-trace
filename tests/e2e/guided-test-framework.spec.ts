@@ -60,7 +60,8 @@ test('guided tests recover after interruption and stay separate from automated c
   await panel.getByRole('button', { name: /Pause|Pausar/ }).click();
   await expect(panel.getByText(/Your progress is stored locally|Tu progreso está guardado localmente/)).toBeVisible();
 
-  await panel.reload();
+  await panel.getByRole('button', { name: 'Trace', exact: true }).click();
+  await expect(panel.getByRole('button', { name: /Start trace|Iniciar traza/ })).toBeVisible();
   await panel.getByRole('button', { name: /Report|Informe/ }).click();
   await expect(panel.getByRole('button', { name: /Resume|Reanudar/ })).toBeVisible();
   await panel.getByRole('button', { name: /Resume|Reanudar/ }).click();
