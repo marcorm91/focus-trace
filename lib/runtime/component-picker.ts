@@ -24,10 +24,11 @@ export async function pickComponentInPage(language: AppLanguage): Promise<Compon
     let current: Element | null = element;
     while (current) {
       let segment = current.tagName.toLowerCase();
-      const parent = current.parentElement;
+      const parent: Element | null = current.parentElement;
       if (parent && parent.getRootNode() === root) {
-        const siblings = Array.from(parent.children).filter((item) => item.tagName === current!.tagName);
-        if (siblings.length > 1) segment += `:nth-of-type(${siblings.indexOf(current) + 1})`;
+        const siblings: Element[] = Array.from(parent.children);
+        const sameTag = siblings.filter((item: Element) => item.tagName === current!.tagName);
+        if (sameTag.length > 1) segment += `:nth-of-type(${sameTag.indexOf(current) + 1})`;
       }
       segments.unshift(segment);
       const candidate = segments.join(' > ');
