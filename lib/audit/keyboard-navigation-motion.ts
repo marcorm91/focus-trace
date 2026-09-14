@@ -64,7 +64,7 @@ function normalizedAccesskeyTokens(element: Element): string[] {
   if (!raw) return [];
   return raw
     .split(/\s+/)
-    .map((token) => token.normalize('NFC').toLocaleLowerCase())
+    .map((token) => token.normalize('NFC').toLowerCase())
     .filter((token) => Array.from(token).length === 1);
 }
 
@@ -156,10 +156,10 @@ function scrollDistances(element: HTMLElement): { horizontal: number; vertical: 
 export function evaluateScrollableRegions(root: ScanRoot = document): ScrollableRegionEvaluation[] {
   const evaluations: ScrollableRegionEvaluation[] = [];
   let reviews = 0;
-  const candidates = scopedElements<HTMLElement>(root, '*').slice(0, MAX_SCROLLABLE_CANDIDATES);
+  const candidates = scopedElements(root, '*').slice(0, MAX_SCROLLABLE_CANDIDATES);
 
   for (const element of candidates) {
-    if (element instanceof HTMLIFrameElement || !rendered(element)) continue;
+    if (!(element instanceof HTMLElement) || element instanceof HTMLIFrameElement || !rendered(element)) continue;
     const style = getComputedStyle(element);
     const overflowX = style.overflowX || style.overflow;
     const overflowY = style.overflowY || style.overflow;
