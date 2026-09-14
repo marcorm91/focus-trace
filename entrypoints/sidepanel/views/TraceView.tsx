@@ -487,6 +487,7 @@ export function TraceView({
               journey={journey}
               semantics={transitionSemantics}
               recording={recording}
+              breakpoints={breakpointSettings}
               level={level}
               language={language}
               onSelectFocusTarget={onSelectStep}
