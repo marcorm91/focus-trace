@@ -607,3 +607,11 @@ SVG and image-role alternatives continue to use `FT-WCAG-002`, including direct 
 `FT-REVIEW-040` adds a bounded form-authoring REVIEW family for multiple native labels, title-only accessible names, exposed unnamed groups, constraint metadata without a resolved instruction relationship and visible required wording without a programmatic required state. The existing `FT-REVIEW-014`, `FT-REVIEW-019` and `FT-REVIEW-020` continue to cover input purpose, error identification and correction-suggestion evidence.
 
 Form evidence is deliberately privacy-bounded. FocusTrace does not read or persist editable field values for these checks, and associated error-message text is no longer copied into finding evidence: only the existence and relationship of non-empty text is retained. Ambiguous instruction quality, whether multiple labels are intentional and the adequacy of correction guidance remain human REVIEW rather than automatic FAIL.
+
+### Viewport, zoom, reflow and visual presentation
+
+`FT-WCAG-021` checks the ACT-observable viewport syntax that can block 200% enlargement: `user-scalable=no` or a finite non-negative `maximum-scale` below `2` becomes a bounded FAIL. This does not claim complete WCAG 1.4.4 conformance, and browser overrides or alternative resize mechanisms remain outside the atomic syntax check.
+
+`FT-REVIEW-041` keeps finite `maximum-scale` ceilings from 2× up to, but not including, 5× as a minor larger-zoom compatibility review. The 5× threshold is not presented as an additional WCAG requirement. Existing `FT-REVIEW-024` narrow-viewport reflow evidence and `FT-REVIEW-028` 100%→200% resize comparison remain the authoritative observed-layout workflows rather than being duplicated.
+
+`FT-REVIEW-042` reviews visible content with a resolvable quarter-turn `transform` or `rotate` authored under portrait/landscape media queries. Essential-orientation exceptions, inaccessible stylesheets, script-driven locking and alternate controls remain contextual. Contrast remains conservative too: when a separately stacked painted element makes the effective backdrop ambiguous, a deterministic contrast failure is downgraded to REVIEW instead of guessing the composed background. See [`docs/VISUAL_PRESENTATION.md`](docs/VISUAL_PRESENTATION.md) for the bounded methodology and scan budgets.

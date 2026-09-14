@@ -2,6 +2,7 @@ import { FORM_LABELING_AND_INSTRUCTIONS_RULE } from '../../shared/form-audit-rul
 import type { ScanIssue, ScanResult } from '../../shared/types';
 import { selectorFor } from './dom';
 import { evaluateFormAudit, type FormAuditEvaluation } from './form-audit';
+import { appendViewportVisualChecks } from './viewport-visual-scan-extension';
 
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 type ScanRoot = Document | Element;
@@ -38,4 +39,6 @@ export function appendFormAuditReviews(result: ScanResult, root: ScanRoot): void
     },
   ];
   result.rulesRun += 1;
+
+  appendViewportVisualChecks(result, root);
 }
