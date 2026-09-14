@@ -65,6 +65,7 @@ test('saved flows remain available in Replay with an empty current Trace and can
   });
 
   await panel.getByRole('button', { name: 'Trace', exact: true }).click();
+  await panel.getByRole('tab', { name: /Replay/ }).click();
   await expect(panel.getByRole('heading', { level: 3, name: /Saved user flows|Flujos de usuario guardados/ })).toBeVisible();
   await expect(panel.getByLabel(/Saved scenario|Escenario guardado/)).toHaveValue('flow-browser-test');
   await expect(panel.getByText('Manual checkout regression')).toBeVisible();
