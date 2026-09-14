@@ -2,11 +2,18 @@ import {
   SITE_AUDIT_MAX_SCANNED_PAGES,
   SITE_AUDIT_SAMPLES_PER_FAMILY,
   type SiteAuditRouteFamily,
+  type SiteAuditSampleReason,
 } from './model';
 
 interface ParentStats {
   total: number;
   children: Map<string, number>;
+}
+
+export interface SiteAuditSampleSelection {
+  routeFamilyId: string;
+  url: string;
+  selectionReason: SiteAuditSampleReason;
 }
 
 function pathSegments(value: string): string[] {
@@ -26,7 +33,9 @@ function parentKey(segments: string[], index: number): string {
 
 export function buildRoutePatterns(urls: string[]): Map<string, string> {
   const stats = new Map<string, ParentStats>();
-  const parsed = urls.map((url) => ({ url, segments: pathSegments(url) }));
+  const parsed = [...urls]
+    .sort((left, right) => left.localeCompare(right))
+    .map((url) => ({ url, segments: pathSegments(url) }));
 
   for (const { segments } of parsed) {
     segments.forEach((segment, index) => {
@@ -42,8 +51,6 @@ export function buildRoutePatterns(urls: string[]): Map<string, string> {
   for (const { url, segments } of parsed) {
     const pattern = segments.map((segment, index) => {
       if (isIntrinsicDynamicSegment(segment)) return ':id';
-      // Preserve the site's top-level information architecture. Dynamic slug
-      // inference starts below it, where product/article/category instances live.
       if (index === 0) return segment;
       const parent = stats.get(parentKey(segments, index));
       if (!parent || parent.children.size < 3) return segment;
@@ -58,53 +65,70 @@ export function buildRoutePatterns(urls: string[]): Map<string, string> {
   return result;
 }
 
-function spreadSamples(urls: string[], count: number): string[] {
-  if (urls.length <= count) return [...urls];
-  if (count <= 1) return urls.length ? [urls[0]!] : [];
-  const indexes = new Set<number>();
-  for (let i = 0; i < count; i += 1) {
-    indexes.add(Math.round((i * (urls.length - 1)) / (count - 1)));
-  }
-  return [...indexes].map((index) => urls[index]!);
+function boundedSamplesPerFamily(value: number): number {
+  if (!Number.isFinite(value)) return SITE_AUDIT_SAMPLES_PER_FAMILY;
+  return Math.max(1, Math.min(SITE_AUDIT_SAMPLES_PER_FAMILY, Math.floor(value)));
 }
 
-export function buildRouteFamilies(urls: string[]): SiteAuditRouteFamily[] {
+function boundedMaxPages(value: number): number {
+  if (!Number.isFinite(value)) return SITE_AUDIT_MAX_SCANNED_PAGES;
+  return Math.max(1, Math.min(SITE_AUDIT_MAX_SCANNED_PAGES, Math.floor(value)));
+}
+
+function spreadSamples(urls: string[], count: number): string[] {
+  const sorted = [...urls].sort((left, right) => left.localeCompare(right));
+  if (sorted.length <= count) return sorted;
+  if (count <= 1) return sorted.length ? [sorted[0]!] : [];
+  const indexes = new Set<number>();
+  for (let i = 0; i < count; i += 1) {
+    indexes.add(Math.round((i * (sorted.length - 1)) / (count - 1)));
+  }
+  return [...indexes].map((index) => sorted[index]!);
+}
+
+export function buildRouteFamilies(
+  urls: string[],
+  samplesPerFamily = SITE_AUDIT_SAMPLES_PER_FAMILY,
+): SiteAuditRouteFamily[] {
   const patterns = buildRoutePatterns(urls);
   const grouped = new Map<string, string[]>();
-  for (const url of urls) {
+  for (const url of [...urls].sort((left, right) => left.localeCompare(right))) {
     const pattern = patterns.get(url) ?? new URL(url).pathname;
     const group = grouped.get(pattern) ?? [];
     group.push(url);
     grouped.set(pattern, group);
   }
 
+  const sampleCount = boundedSamplesPerFamily(samplesPerFamily);
   return [...grouped.entries()]
     .sort((a, b) => b[1].length - a[1].length || a[0].localeCompare(b[0]))
     .map(([pattern, familyUrls], index) => ({
       id: `R${String(index + 1).padStart(2, '0')}`,
       pattern,
       urls: familyUrls,
-      sampleUrls: spreadSamples(familyUrls, SITE_AUDIT_SAMPLES_PER_FAMILY),
+      sampleUrls: spreadSamples(familyUrls, sampleCount),
     }));
 }
 
-export function selectSiteAuditSamples(families: SiteAuditRouteFamily[]): Array<{ routeFamilyId: string; url: string }> {
-  const selected: Array<{ routeFamilyId: string; url: string }> = [];
+export function selectSiteAuditSamples(
+  families: SiteAuditRouteFamily[],
+  maxPages = SITE_AUDIT_MAX_SCANNED_PAGES,
+): SiteAuditSampleSelection[] {
+  const limit = boundedMaxPages(maxPages);
+  const selected: SiteAuditSampleSelection[] = [];
   const queues = families.map((family) => ({ family, urls: [...family.sampleUrls] }));
 
-  // First get one representative of as many families as possible.
   for (const item of queues) {
     const url = item.urls.shift();
-    if (url) selected.push({ routeFamilyId: item.family.id, url });
-    if (selected.length >= SITE_AUDIT_MAX_SCANNED_PAGES) return selected;
+    if (url) selected.push({ routeFamilyId: item.family.id, url, selectionReason: 'family-first' });
+    if (selected.length >= limit) return selected;
   }
 
-  // Then add second/third samples, prioritising families with the widest impact.
   for (let pass = 1; pass < SITE_AUDIT_SAMPLES_PER_FAMILY; pass += 1) {
     for (const item of queues) {
       const url = item.urls.shift();
-      if (url) selected.push({ routeFamilyId: item.family.id, url });
-      if (selected.length >= SITE_AUDIT_MAX_SCANNED_PAGES) return selected;
+      if (url) selected.push({ routeFamilyId: item.family.id, url, selectionReason: 'family-spread' });
+      if (selected.length >= limit) return selected;
     }
   }
   return selected;
