@@ -39,6 +39,7 @@ The evaluator is bounded to 1,000 candidate elements, 2,000 descendants per regi
 `FT-REVIEW-044` evaluates native `audio[autoplay]` and `video[autoplay]` candidates for the observable WCAG 1.4.2 / ACT `80f0bf` signals.
 
 - Muted media or media with zero volume is excluded from the review.
+- Visual rendering is not required: an `<audio>` element without controls is commonly not rendered while its audio can still affect WCAG 1.4.2.
 - Known duration of three seconds or less records a bounded PASS.
 - Native media controls record a bounded PASS for the observable stop/volume mechanism.
 - Longer or unresolved unmuted autoplay without native controls remains REVIEW.
