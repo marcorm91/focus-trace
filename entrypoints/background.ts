@@ -1,14 +1,20 @@
 import { browser, defineBackground } from '#imports';
+import { applyAuditProfile, type ProfiledScanResult } from '../lib/audit/audit-profiles';
+import { loadActiveAuditProfile } from '../lib/audit/audit-profile-storage';
+import {
+  applyFindingLifecycle,
+  deduplicateScanResult,
+} from '../lib/audit/finding-lifecycle';
+import { updateStoredMultipageAuditScan } from '../lib/audit/multipage-audit-storage';
 import {
   captureVisibleTabFromSource,
   visibleTabCaptureSource,
 } from '../lib/extension/visible-tab-capture';
+import { ensureRuntimeScripts } from '../lib/extension/runtime-injection';
 import {
   recordFocusMemoryScan,
   updateFocusMemoryScanNotes,
 } from '../lib/focus-memory/storage';
-import { updateStoredMultipageAuditScan } from '../lib/audit/multipage-audit-storage';
-import { ensureRuntimeScripts } from '../lib/extension/runtime-injection';
 import type { FocusVisibleCaptureMessage } from '../lib/runtime/focus-visible';
 import {
   appendRuntimeEventsToSession,
@@ -26,9 +32,11 @@ import { updateSessionAuditorNote } from '../shared/auditor-notes';
 import type {
   AuditorNotePersistenceWarning,
   ExtensionMessage,
+  FocusMemoryCapturedEvidence,
   RuntimeInjectionMode,
   SaveScanResponse,
   SaveAuditorNoteResponse,
+  ScanResult,
   SessionState,
 } from '../shared/types';
 
@@ -135,6 +143,52 @@ function configurePanelAction() {
   }
 
   void browser.sidePanel.setPanelBehavior({ openPanelOnActionClick: true }).catch(() => undefined);
+}
+
+function comparableScanContext(previous: ScanResult | undefined, current: ProfiledScanResult): boolean {
+  if (!previous || previous.url !== current.url) return false;
+  const previousScope = previous.scope?.type ?? 'page';
+  const currentScope = current.scope?.type ?? 'page';
+  if (previousScope !== currentScope) return false;
+  if (previousScope === 'component' && currentScope === 'component'
+    && previous.scope?.selector !== current.scope?.selector) return false;
+  const previousProfileId = (previous as ProfiledScanResult).auditProfile?.id;
+  const currentProfileId = current.auditProfile?.id;
+  return previousProfileId === currentProfileId;
+}
+
+function remapCapturedEvidence(
+  source: ScanResult,
+  current: ScanResult,
+  capturedEvidence: FocusMemoryCapturedEvidence[] | undefined,
+): FocusMemoryCapturedEvidence[] {
+  if (!capturedEvidence?.length) return [];
+  const byFindingId = new Map<string, FocusMemoryCapturedEvidence>();
+  for (const evidence of capturedEvidence) {
+    const sourceIssue = source.issues[evidence.issueIndex];
+    if (sourceIssue) byFindingId.set(sourceIssue.id, evidence);
+  }
+  return current.issues.flatMap((issue, issueIndex) => {
+    const evidence = byFindingId.get(issue.id);
+    return evidence ? [{ ...evidence, issueIndex }] : [];
+  });
+}
+
+async function normalizeSavedScan(
+  state: SessionState,
+  scan: ScanResult,
+): Promise<ProfiledScanResult> {
+  const incoming = scan as ProfiledScanResult;
+  const profiled = incoming.auditProfile
+    ? incoming
+    : applyAuditProfile(incoming, await loadActiveAuditProfile());
+
+  if (state.scan?.scannedAt === profiled.scannedAt) {
+    return deduplicateScanResult(profiled) as ProfiledScanResult;
+  }
+
+  const previous = comparableScanContext(state.scan, profiled) ? state.scan : undefined;
+  return applyFindingLifecycle(previous, profiled) as ProfiledScanResult;
 }
 
 export default defineBackground(() => {
@@ -265,11 +319,13 @@ export default defineBackground(() => {
     if (message.type === 'FOCUSTRACE_SAVE_SCAN') {
       return serializeTabWrite(message.tabId, async () => {
         const state = await getSession(message.tabId);
-        const next = updateSessionScan(state, message.scan, message.textResizeBaseline);
+        const normalizedScan = await normalizeSavedScan(state, message.scan);
+        const remappedEvidence = remapCapturedEvidence(message.scan, normalizedScan, message.memoryEvidence);
+        const next = updateSessionScan(state, normalizedScan, message.textResizeBaseline);
         await saveSession(next);
         let warning: SaveScanResponse['warning'];
         try {
-          await recordFocusMemoryScan(message.scan, message.memoryEvidence);
+          await recordFocusMemoryScan(normalizedScan, remappedEvidence);
         } catch {
           warning = 'focus-memory-write-failed';
         }
