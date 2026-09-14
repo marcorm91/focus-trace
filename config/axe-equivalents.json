@@ -9,12 +9,12 @@
   "summary": {
     "total": 105,
     "equivalent": 6,
-    "partial": 42,
+    "partial": 45,
     "superset": 10,
     "overlap": 31,
-    "missing": 15,
+    "missing": 12,
     "not-applicable": 1,
-    "covered": 89
+    "covered": 92
   },
   "severityMappings": [
     { "focusTraceRuleId": "FT-WCAG-001", "axeRuleIds": ["document-title"], "policy": "highest-impact" },
@@ -34,10 +34,13 @@
     { "focusTraceRuleId": "FT-WCAG-018", "axeRuleIds": ["object-alt"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WCAG-019", "axeRuleIds": ["frame-title"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WCAG-020", "axeRuleIds": ["frame-focusable-content"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-021", "axeRuleIds": ["meta-viewport"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-REVIEW-025", "axeRuleIds": ["link-in-text-block"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-REVIEW-029", "axeRuleIds": ["aria-braille-equivalent", "aria-roledescription"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-REVIEW-038", "axeRuleIds": ["frame-title-unique"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-REVIEW-040", "axeRuleIds": ["form-field-multiple-labels", "label-title-only"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-REVIEW-041", "axeRuleIds": ["meta-viewport-large"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-REVIEW-042", "axeRuleIds": ["css-orientation-lock"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WARN-001", "axeRuleIds": ["aria-deprecated-role"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WARN-003", "axeRuleIds": ["aria-prohibited-attr"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WARN-012", "axeRuleIds": ["aria-roles"], "policy": "highest-impact" },
@@ -92,6 +95,7 @@
     "e26": { "sources": ["lib/audit/content-model.ts", "lib/audit/aria-validator.ts", "generated/aria-registry.json"], "tests": ["tests/list-structure.test.ts", "tests/content-model.test.ts", "tests/aria-validator.test.ts"] },
     "e27": { "sources": ["shared/table-rules.ts", "lib/audit/table-relationships.ts", "lib/audit/table-scan-extension.ts"], "tests": ["tests/table-relationships.test.ts", "tests/table-rule-contracts.test.ts"] },
     "e28": { "sources": ["shared/embedded-content-rules.ts", "lib/audit/embedded-content.ts", "lib/audit/embedded-content-scan-extension.ts", "lib/audit/specialized-image-alternatives.ts"], "tests": ["tests/embedded-content.test.ts"] },
-    "e29": { "sources": ["shared/form-audit-rules.ts", "lib/audit/form-audit.ts", "lib/audit/form-audit-scan-extension.ts", "lib/audit/form-errors.ts", "lib/audit/autocomplete-purpose.ts"], "tests": ["tests/form-audit.test.ts", "tests/form-errors.test.ts", "tests/autocomplete-purpose.test.ts"] }
+    "e29": { "sources": ["shared/form-audit-rules.ts", "lib/audit/form-audit.ts", "lib/audit/form-audit-scan-extension.ts", "lib/audit/form-errors.ts", "lib/audit/autocomplete-purpose.ts"], "tests": ["tests/form-audit.test.ts", "tests/form-errors.test.ts", "tests/autocomplete-purpose.test.ts"] },
+    "e30": { "sources": ["shared/viewport-visual-rules.ts", "lib/audit/viewport-visual.ts", "lib/audit/viewport-visual-scan-extension.ts", "lib/audit/visual-contrast-policy.ts"], "tests": ["tests/viewport-visual.test.ts", "tests/e2e/viewport-visual.spec.ts", "tests/e2e/reflow.spec.ts", "tests/e2e/resize-text.spec.ts"] }
   }
 }
