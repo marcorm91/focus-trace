@@ -619,3 +619,13 @@ Completion produces `guided-pass`, `guided-issue`, `guided-review` or `not-appli
 Observed runtime events can support the auditor's judgement but never determine the guided outcome automatically. In particular, intentional focus containment inside an open modal dialog is valid behavior and is not classified as a keyboard trap merely because Tab/Shift+Tab cannot move outside the modal. A problem is contextual when focus escapes unexpectedly, the expected close mechanism is unavailable, or focus restoration after close is illogical.
 
 These workflows remain outside automated conformance totals and outside axe-core parity counts.
+
+## Guided table, form, resize and multimedia evidence
+
+`FT-GUIDED-005` through `FT-GUIDED-008` add manual/contextual review for complex table header associations (WCAG 1.3.1), form instructions and error recovery (WCAG 3.3.1–3.3.4), text resize/reflow (WCAG 1.4.4 and 1.4.10), and prerecorded multimedia alternatives (WCAG 1.2.1, 1.2.2, 1.2.3 and 1.2.5). Each substantive guided step has a structured criterion mapping displayed in the UI.
+
+The table workflow complements static table semantics by asking the auditor to judge whether grouped and multi-level headers describe representative data cells correctly. The form workflow uses synthetic test data and records only the manual judgement; guided code does not read or persist form values. The resize/reflow workflow reuses the existing 200% Resize Text comparison and 320 CSS px Reflow baseline, then asks for the contextual loss/overlap/operability judgement.
+
+The multimedia workflow records only manual equivalence/quality answers and optional redacted notes. It does not copy or store audio, video, captions or transcript payloads. `FT-GUIDED-005` through `FT-GUIDED-008` also opt out of runtime Trace evidence attachment, keeping these contextual checks bounded to manual evidence.
+
+All four remain `guided-manual` / `automated: false` and remain outside automated PASS/FAIL/REVIEW/WARNING totals and axe-core parity counts.

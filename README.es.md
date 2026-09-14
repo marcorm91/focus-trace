@@ -653,3 +653,11 @@ El framework guiado incluye ahora recorridos de operabilidad por teclado, orden/
 La contención del foco dentro de un modal no se considera por sí sola un bloqueo de teclado. Mientras un diálogo modal está abierto, mantener Tab/Shift+Tab dentro del diálogo es el comportamiento esperado; el flujo guiado pide marcar un problema solo si el foco escapa de forma inesperada, el diálogo no puede cerrarse con su mecanismo de teclado previsto o el foco no se restaura a un destino lógico después del cierre.
 
 Los nuevos flujos siguen siendo `guided-manual` y `automated: false`; no modifican los totales automáticos PASS/FAIL ni la paridad con axe-core.
+
+### Pruebas guiadas de tablas, formularios, resize y multimedia
+
+El catálogo guiado también incluye flujos contextuales para asociaciones complejas de cabeceras de tablas, instrucciones/recuperación de errores en formularios, resize de texto al 200 % más reflow a 320 px CSS y alternativas para multimedia pregrabada. Cada paso sustantivo se vincula al criterio WCAG que se está evaluando para que la respuesta manual quede trazada hasta su requisito normativo.
+
+Estos flujos deliberadamente **no** adjuntan eventos runtime de Trace. Las pruebas de formularios usan datos sintéticos y la capa guiada nunca lee ni guarda valores de campos. Las revisiones multimedia almacenan solo la valoración del auditor y una nota opcional redactada; FocusTrace no copia ni persiste audio, vídeo, subtítulos ni transcripciones.
+
+El flujo de resize/reflow reutiliza las líneas base existentes de Resize Text y Reflow de FocusTrace y pide al auditor el juicio contextual que las mediciones por sí solas no pueden demostrar. Los cuatro flujos siguen siendo `guided-manual` / `automated: false` y no modifican los recuentos de reglas automáticas ni la paridad con axe-core.

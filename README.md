@@ -653,3 +653,11 @@ The guided framework now includes keyboard operability, focus order/visibility a
 Modal focus containment is not treated as a keyboard trap by itself. While a modal dialog is open, keeping Tab/Shift+Tab inside the dialog is expected; the guided workflow asks the auditor to report a problem only when focus escapes unexpectedly, the dialog cannot be closed with its expected keyboard mechanism, or focus is not restored to a logical destination after close.
 
 The new guided workflows remain `guided-manual` and `automated: false`; they do not change automated PASS/FAIL totals or axe-core parity.
+
+### Guided table, form, resize and multimedia tests
+
+The guided catalog also includes contextual workflows for complex table header associations, form instructions/error recovery, 200% text resize plus 320 CSS px reflow, and prerecorded multimedia alternatives. Each substantive step is mapped to the WCAG criterion branch being judged so the manual answer remains traceable to its normative requirement.
+
+These workflows deliberately do **not** attach runtime Trace events. Form checks use synthetic test data and the guided layer never reads or stores field values. Multimedia checks store only the auditor's judgement and optional redacted note; FocusTrace does not copy or persist audio, video, captions or transcript payloads.
+
+The resize/reflow workflow reuses FocusTrace's existing Resize Text and Reflow baselines and asks the auditor for the contextual judgement that measurements alone cannot prove. All four workflows remain `guided-manual` / `automated: false` and do not change automatic rule or axe-core parity counts.
