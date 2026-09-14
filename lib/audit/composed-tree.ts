@@ -88,10 +88,11 @@ function localSelectorFor(element: Element, root: SelectorRoot): string {
   let current: Element | null = element;
   while (current) {
     let part = current.tagName.toLowerCase();
-    const parent = current.parentElement;
+    const parent: Element | null = current.parentElement;
     if (parent && parent.getRootNode() === root) {
-      const siblings = Array.from(parent.children).filter((candidate) => candidate.tagName === current!.tagName);
-      if (siblings.length > 1) part += `:nth-of-type(${siblings.indexOf(current) + 1})`;
+      const siblings: Element[] = Array.from(parent.children);
+      const sameTag = siblings.filter((candidate: Element) => candidate.tagName === current!.tagName);
+      if (sameTag.length > 1) part += `:nth-of-type(${sameTag.indexOf(current) + 1})`;
     }
     parts.unshift(part);
 
@@ -161,7 +162,7 @@ export function resolveComposedSelector(
     if (!selector) return null;
 
     if (boundary === 'shadow') {
-      const shadowRoot = (current as Element & { shadowRoot?: ShadowRoot | null }).shadowRoot ?? null;
+      const shadowRoot: ShadowRoot | null = (current as Element & { shadowRoot?: ShadowRoot | null }).shadowRoot ?? null;
       if (!shadowRoot || shadowRoot.mode !== 'open') return null;
       context = shadowRoot;
     } else if (boundary === 'frame') {
@@ -287,7 +288,7 @@ export function traverseComposedTree(
       }
     }
 
-    const shadowRoot = (element as Element & { shadowRoot?: ShadowRoot | null }).shadowRoot ?? null;
+    const shadowRoot: ShadowRoot | null = (element as Element & { shadowRoot?: ShadowRoot | null }).shadowRoot ?? null;
     if (shadowRoot?.mode === 'open') {
       if (shadowRootsTraversed >= budget.maxShadowRoots) {
         noteBudget(element);
