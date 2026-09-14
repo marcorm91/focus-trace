@@ -13,6 +13,10 @@ permissions:
 jobs:
   sync:
     runs-on: ubuntu-latest
+    env:
+      DOC_EN: "IyMjIEd1aWRlZCBhY2Nlc3NpYmlsaXR5IHRlc3RzCgpGb2N1c1RyYWNlIG5vdyBpbmNsdWRlcyBhIHJldXNhYmxlIGZyYW1ld29yayBmb3IgY2hlY2tzIHRoYXQgcmVxdWlyZSB1c2VyIGFjdGlvbiBvciBjb250ZXh0dWFsIGp1ZGdlbWVudC4gR3VpZGVkIHRlc3RzIGxpdmUgaW4gdGhlIFJlcG9ydCB3b3Jrc3BhY2UgYW5kIGFyZSBleHBsaWNpdGx5IGxhYmVsbGVkICoqR3VpZGVkIHRlc3QgwrcgbWFudWFsIGV2aWRlbmNlKiogc28gdGhlaXIgb3V0Y29tZXMgY2Fubm90IGJlIGNvbmZ1c2VkIHdpdGggYXV0b21hdGVkIFBBU1MvRkFJTCBjb3VudHMuCgpBIGd1aWRlZCBkZWZpbml0aW9uIGNvbnRhaW5zIGxvY2FsaXplZCBzdGVwcyBhbmQgcHJvbXB0cywgYWxsb3dlZCBtYW51YWwgYW5zd2VycywgYm91bmRlZCBjYXB0dXJlZCBldmlkZW5jZSBhbmQgYSBjb21wbGV0aW9uIG91dGNvbWUuIFNlc3Npb25zIGNhbiBiZSBwYXVzZWQsIHJlc3VtZWQsIGNhbmNlbGxlZCBhbmQgcmVzdGFydGVkLiBJbnRlcnJ1cHRlZCBwcm9ncmVzcyBpcyBrZXB0IGxvY2FsbHkgaW4gYm91bmRlZCBgYnJvd3Nlci5zdG9yYWdlLnNlc3Npb25gIHN0YXRlOiBhdCBtb3N0IDggc2Vzc2lvbnMsIDIwIHN0ZXBzIHBlciBzZXNzaW9uLCA0IGV2aWRlbmNlIHJlY29yZHMgcGVyIHN0ZXAgYW5kIDI0MCBjaGFyYWN0ZXJzIHBlciBhdWRpdG9yIG5vdGUuCgpUaGUgZnJhbWV3b3JrIG5ldmVyIHJlYWRzIGZvcm0gdmFsdWVzIGF1dG9tYXRpY2FsbHkuIFN0b3JlZCBwYWdlIGNvbnRleHQgZHJvcHMgcXVlcnkgc3RyaW5ncyBhbmQgZnJhZ21lbnRzLCBhbmQgY29tbW9uIHNlbnNpdGl2ZSBwYXR0ZXJucyBpbiBmcmVlLXRleHQgbm90ZXMgYXJlIHJlZGFjdGVkIGJlZm9yZSBwZXJzaXN0ZW5jZS4gR3VpZGVkIG91dGNvbWVzIGFyZSBgZ3VpZGVkLXBhc3NgLCBgZ3VpZGVkLWlzc3VlYCwgYGd1aWRlZC1yZXZpZXdgIG9yIGBub3QtYXBwbGljYWJsZWA7IGFsbCByZW1haW4gYXVkaXRvci1wcm92aWRlZCBldmlkZW5jZSBhbmQgKipuZXZlciBiZWNvbWUgYXV0b21hdGVkIGNvbmZvcm1hbmNlIGNsYWltcyoqLgoKYEZULUdVSURFRC0wMDFgIGlzIHRoZSBzYW1wbGUgZW5kLXRvLWVuZCB3b3JrZmxvdyBmb3IgV0NBRyAxLjMuMyBTZW5zb3J5IENoYXJhY3RlcmlzdGljcy4gSXQgYXNrcyB0aGUgYXVkaXRvciB0byByZXZpZXcgcGFnZSBpbnN0cnVjdGlvbnMgYW5kIGRlY2lkZSB3aGV0aGVyIG1lYW5pbmcgcmVsaWVzIG9ubHkgb24gY29sb3IsIHNoYXBlLCBzaXplLCB2aXN1YWwgcG9zaXRpb24sIG9yaWVudGF0aW9uIG9yIHNvdW5kLiBTZWUgW2Bkb2NzL0dVSURFRF9URVNUUy5tZGBdKGRvY3MvR1VJREVEX1RFU1RTLm1kKSBmb3IgdGhlIGxpZmVjeWNsZSwgcHJpdmFjeSBib3VuZGFyaWVzIGFuZCByZXBvcnRpbmcgbW9kZWwuCg=="
+      DOC_ES: "IyMjIFBydWViYXMgZ3VpYWRhcyBkZSBhY2Nlc2liaWxpZGFkCgpGb2N1c1RyYWNlIGluY2x1eWUgYWhvcmEgdW4gZnJhbWV3b3JrIHJldXRpbGl6YWJsZSBwYXJhIGNvbXByb2JhY2lvbmVzIHF1ZSByZXF1aWVyZW4gYWNjaW9uZXMgZGVsIHVzdWFyaW8gbyBjcml0ZXJpbyBjb250ZXh0dWFsLiBMYXMgcHJ1ZWJhcyBndWlhZGFzIGFwYXJlY2VuIGVuIGVsIEluZm9ybWUgeSBzZSBldGlxdWV0YW4gZXhwbMOtY2l0YW1lbnRlIGNvbW8gKipQcnVlYmEgZ3VpYWRhIMK3IGV2aWRlbmNpYSBtYW51YWwqKiBwYXJhIHF1ZSBzdXMgcmVzdWx0YWRvcyBubyBwdWVkYW4gY29uZnVuZGlyc2UgY29uIGxvcyByZWN1ZW50b3MgYXV0b23DoXRpY29zIFBBU1MvRkFJTC4KClVuYSBkZWZpbmljacOzbiBndWlhZGEgY29udGllbmUgcGFzb3MgeSBwcm9tcHRzIGxvY2FsaXphZG9zLCByZXNwdWVzdGFzIG1hbnVhbGVzIHBlcm1pdGlkYXMsIGV2aWRlbmNpYSBjYXB0dXJhZGEgZGUgZm9ybWEgYWNvdGFkYSB5IHVuIHJlc3VsdGFkbyBkZSBmaW5hbGl6YWNpw7NuLiBMYXMgc2VzaW9uZXMgcHVlZGVuIHBhdXNhcnNlLCByZWFudWRhcnNlLCBjYW5jZWxhcnNlIHkgcmVpbmljaWFyc2UuIEVsIHByb2dyZXNvIGludGVycnVtcGlkbyBzZSBjb25zZXJ2YSBsb2NhbG1lbnRlIGVuIHVuIGVzdGFkbyBhY290YWRvIGRlIGBicm93c2VyLnN0b3JhZ2Uuc2Vzc2lvbmA6IGNvbW8gbcOheGltbyA4IHNlc2lvbmVzLCAyMCBwYXNvcyBwb3Igc2VzacOzbiwgNCByZWdpc3Ryb3MgZGUgZXZpZGVuY2lhIHBvciBwYXNvIHkgMjQwIGNhcmFjdGVyZXMgcG9yIG5vdGEgZGVsIGF1ZGl0b3IuCgpFbCBmcmFtZXdvcmsgbnVuY2EgbGVlIGF1dG9tw6F0aWNhbWVudGUgdmFsb3JlcyBkZSBmb3JtdWxhcmlvcy4gRWwgY29udGV4dG8gZGUgcMOhZ2luYSBndWFyZGFkbyBlbGltaW5hIHF1ZXJ5IHN0cmluZ3MgeSBmcmFnbWVudG9zLCB5IGxvcyBwYXRyb25lcyBzZW5zaWJsZXMgaGFiaXR1YWxlcyBkZSBsYXMgbm90YXMgbGlicmVzIHNlIHJlZGFjdGFuIGFudGVzIGRlIHBlcnNpc3Rpci4gTG9zIHJlc3VsdGFkb3MgZ3VpYWRvcyBzb24gYGd1aWRlZC1wYXNzYCwgYGd1aWRlZC1pc3N1ZWAsIGBndWlkZWQtcmV2aWV3YCBvIGBub3QtYXBwbGljYWJsZWA7IHRvZG9zIHNpZ3VlbiBzaWVuZG8gZXZpZGVuY2lhIGFwb3J0YWRhIHBvciBlbCBhdWRpdG9yIHkgKipudW5jYSBzZSBjb252aWVydGVuIGVuIGFmaXJtYWNpb25lcyBhdXRvbcOhdGljYXMgZGUgY29uZm9ybWlkYWQqKi4KCmBGVC1HVUlERUQtMDAxYCBlcyBlbCBmbHVqbyBjb21wbGV0byBkZSBtdWVzdHJhIHBhcmEgV0NBRyAxLjMuMyBDYXJhY3RlcsOtc3RpY2FzIHNlbnNvcmlhbGVzLiBQaWRlIGFsIGF1ZGl0b3IgcmV2aXNhciBsYXMgaW5zdHJ1Y2Npb25lcyBkZSBsYSBww6FnaW5hIHkgZGVjaWRpciBzaSBlbCBzaWduaWZpY2FkbyBkZXBlbmRlIMO6bmljYW1lbnRlIGRlIGNvbG9yLCBmb3JtYSwgdGFtYcOxbywgcG9zaWNpw7NuIHZpc3VhbCwgb3JpZW50YWNpw7NuIG8gc29uaWRvLiBDb25zdWx0YSBbYGRvY3MvR1VJREVEX1RFU1RTLm1kYF0oZG9jcy9HVUlERURfVEVTVFMubWQpIHBhcmEgZWwgY2ljbG8gZGUgdmlkYSwgbG9zIGzDrW1pdGVzIGRlIHByaXZhY2lkYWQgeSBlbCBtb2RlbG8gZGUgaW5mb3JtZXMuCg=="
+      DOC_RULES: "IyMgR3VpZGVkL21hbnVhbCB0ZXN0IG1ldGhvZG9sb2d5CgpHdWlkZWQgdGVzdHMgYXJlIGEgc2VwYXJhdGUgZXZpZGVuY2Ugd29ya2Zsb3cgZm9yIGFjY2Vzc2liaWxpdHkgcXVlc3Rpb25zIHRoYXQgY2Fubm90IGJlIHJlcHJlc2VudGVkIHJlc3BvbnNpYmx5IGFzIGEgZnVsbHkgYXV0b21hdGVkIHJ1bGUuIERlZmluaXRpb25zIHByb3ZpZGUgbG9jYWxpemVkIHN0ZXBzL3Byb21wdHMsIGFuIGV4cGxpY2l0IG1hbnVhbC1hbnN3ZXIgdm9jYWJ1bGFyeSBhbmQgYm91bmRlZCBldmlkZW5jZS4gVGhlIGZyYW1ld29yayBzdXBwb3J0cyBwYXVzZSwgcmVzdW1lLCBjYW5jZWwgYW5kIHJlc3RhcnQsIGFuZCB2YWxpZGF0ZXMgcmVjb3ZlcmVkIHNlc3Npb24gc3RhdGUgYmVmb3JlIHJldXNlLgoKR3VpZGVkIHN0YXRlIGlzIHN0b3JlZCBsb2NhbGx5IGluIGBicm93c2VyLnN0b3JhZ2Uuc2Vzc2lvbmAgd2l0aCBleHBsaWNpdCBsaW1pdHM6IDggcmV0YWluZWQgc2Vzc2lvbnMsIDIwIHN0ZXBzIHBlciBzZXNzaW9uLCA0IGV2aWRlbmNlIHJlY29yZHMgcGVyIHN0ZXAgYW5kIDI0MCBjaGFyYWN0ZXJzIHBlciBmcmVlLXRleHQgbm90ZS4gUGFnZSBjb250ZXh0IHJlbW92ZXMgcXVlcnkgc3RyaW5ncyBhbmQgZnJhZ21lbnRzLiBUaGUgZnJhbWV3b3JrIG5ldmVyIHJlYWRzIGVkaXRhYmxlIGZvcm0gdmFsdWVzIGF1dG9tYXRpY2FsbHksIHdoaWxlIGZyZWUtdGV4dCBub3RlcyBhcHBseSBkZWZlbnNpdmUgcmVkYWN0aW9uIGZvciBjb21tb24gZW1haWwsIGxvbmctbnVtYmVyIGFuZCBzZWNyZXQvdG9rZW4vcGFzc3dvcmQtbGlrZSBhc3NpZ25tZW50IHBhdHRlcm5zIGJlZm9yZSBwZXJzaXN0ZW5jZS4KCkNvbXBsZXRpb24gcHJvZHVjZXMgYGd1aWRlZC1wYXNzYCwgYGd1aWRlZC1pc3N1ZWAsIGBndWlkZWQtcmV2aWV3YCBvciBgbm90LWFwcGxpY2FibGVgLiBUaGVzZSB2YWx1ZXMgYXJlICoqbWFudWFsIGF1ZGl0b3IgZXZpZGVuY2UqKi4gVGhleSBhcmUgZXhjbHVkZWQgZnJvbSBhdXRvbWF0ZWQgUEFTUy9GQUlML1JFVklFVy9XQVJOSU5HIHRvdGFscyBhbmQgY2Fubm90IGVzdGFibGlzaCBhdXRvbWF0ZWQgY29uZm9ybWFuY2Ugd2l0aCB0aGUgcmVmZXJlbmNlZCBXQ0FHIGNyaXRlcmlvbi4gTWFjaGluZS1yZWFkYWJsZSBkZWNsYXJhdGlvbnMgbGl2ZSBpbiBgY29uZmlnL2d1aWRlZC10ZXN0cy5qc29uYCB3aXRoIGBjb3ZlcmFnZTogImd1aWRlZC1tYW51YWwiYCBhbmQgYGF1dG9tYXRlZDogZmFsc2VgLCBzZXBhcmF0ZSBmcm9tIHRoZSBheGUtY29yZSBwYXJpdHkgYmVuY2htYXJrLgoKYEZULUdVSURFRC0wMDFgIGlzIHRoZSBmcmFtZXdvcmsgc2FtcGxlIGZvciBXQ0FHIDEuMy4zIFNlbnNvcnkgQ2hhcmFjdGVyaXN0aWNzIChMZXZlbCBBKS4gSXQgZ3VpZGVzIHRoZSBhdWRpdG9yIHRocm91Z2ggcmVsZXZhbnQgaW5zdHJ1Y3Rpb25zIGFuZCBhc2tzIGZvciBjb250ZXh0dWFsIGp1ZGdlbWVudCBhYm91dCByZWxpYW5jZSBvbiBzaGFwZSwgY29sb3IsIHNpemUsIHZpc3VhbCBwb3NpdGlvbiwgb3JpZW50YXRpb24gb3Igc291bmQuIFRoZSBzYW1wbGUgZGVtb25zdHJhdGVzIHRoZSBmdWxsIHdvcmtmbG93IHdpdGhvdXQgcHJldGVuZGluZyBuYXR1cmFsLWxhbmd1YWdlL2NvbnRleHQganVkZ2VtZW50IGlzIGRldGVybWluaXN0aWMuIFNlZSBbYEdVSURFRF9URVNUUy5tZGBdKEdVSURFRF9URVNUUy5tZCkgZm9yIHRoZSBmdWxsIGxpZmVjeWNsZSBhbmQgcHJpdmFjeSBtb2RlbC4K"
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -21,53 +25,21 @@ jobs:
         shell: bash
         run: |
           python - <<'PY'
+          import base64
+          import os
           from pathlib import Path
 
           additions = {
-              'README.md': r'''
-
-### Guided accessibility tests
-
-FocusTrace now includes a reusable framework for checks that require user action or contextual judgement. Guided tests live in the Report workspace and are explicitly labelled **Guided test · manual evidence** so their outcomes cannot be confused with automated PASS/FAIL counts.
-
-A guided definition contains localized steps and prompts, allowed manual answers, bounded captured evidence and a completion outcome. Sessions can be paused, resumed, cancelled and restarted. Interrupted progress is kept locally in bounded `browser.storage.session` state: at most 8 sessions, 20 steps per session, 4 evidence records per step and 240 characters per auditor note.
-
-The framework never reads form values automatically. Stored page context drops query strings and fragments, and common sensitive patterns in free-text notes are redacted before persistence. Guided outcomes are `guided-pass`, `guided-issue`, `guided-review` or `not-applicable`; all remain auditor-provided evidence and **never become automated conformance claims**.
-
-`FT-GUIDED-001` is the sample end-to-end workflow for WCAG 1.3.3 Sensory Characteristics. It asks the auditor to review page instructions and decide whether meaning relies only on color, shape, size, visual position, orientation or sound. See [`docs/GUIDED_TESTS.md`](docs/GUIDED_TESTS.md) for the lifecycle, privacy boundaries and reporting model.
-''',
-              'README.es.md': r'''
-
-### Pruebas guiadas de accesibilidad
-
-FocusTrace incluye ahora un framework reutilizable para comprobaciones que requieren acciones del usuario o criterio contextual. Las pruebas guiadas aparecen en el Informe y se etiquetan explícitamente como **Prueba guiada · evidencia manual** para que sus resultados no puedan confundirse con los recuentos automáticos PASS/FAIL.
-
-Una definición guiada contiene pasos y prompts localizados, respuestas manuales permitidas, evidencia capturada de forma acotada y un resultado de finalización. Las sesiones pueden pausarse, reanudarse, cancelarse y reiniciarse. El progreso interrumpido se conserva localmente en un estado acotado de `browser.storage.session`: como máximo 8 sesiones, 20 pasos por sesión, 4 registros de evidencia por paso y 240 caracteres por nota del auditor.
-
-El framework nunca lee automáticamente valores de formularios. El contexto de página guardado elimina query strings y fragmentos, y los patrones sensibles habituales de las notas libres se redactan antes de persistir. Los resultados guiados son `guided-pass`, `guided-issue`, `guided-review` o `not-applicable`; todos siguen siendo evidencia aportada por el auditor y **nunca se convierten en afirmaciones automáticas de conformidad**.
-
-`FT-GUIDED-001` es el flujo completo de muestra para WCAG 1.3.3 Características sensoriales. Pide al auditor revisar las instrucciones de la página y decidir si el significado depende únicamente de color, forma, tamaño, posición visual, orientación o sonido. Consulta [`docs/GUIDED_TESTS.md`](docs/GUIDED_TESTS.md) para el ciclo de vida, los límites de privacidad y el modelo de informes.
-''',
-              'docs/RULES.md': r'''
-
-## Guided/manual test methodology
-
-Guided tests are a separate evidence workflow for accessibility questions that cannot be represented responsibly as a fully automated rule. Definitions provide localized steps/prompts, an explicit manual-answer vocabulary and bounded evidence. The framework supports pause, resume, cancel and restart, and validates recovered session state before reuse.
-
-Guided state is stored locally in `browser.storage.session` with explicit limits: 8 retained sessions, 20 steps per session, 4 evidence records per step and 240 characters per free-text note. Page context removes query strings and fragments. The framework never reads editable form values automatically, while free-text notes apply defensive redaction for common email, long-number and secret/token/password-like assignment patterns before persistence.
-
-Completion produces `guided-pass`, `guided-issue`, `guided-review` or `not-applicable`. These values are **manual auditor evidence**. They are excluded from automated PASS/FAIL/REVIEW/WARNING totals and cannot establish automated conformance with the referenced WCAG criterion. Machine-readable declarations live in `config/guided-tests.json` with `coverage: "guided-manual"` and `automated: false`, separate from the axe-core parity benchmark.
-
-`FT-GUIDED-001` is the framework sample for WCAG 1.3.3 Sensory Characteristics (Level A). It guides the auditor through relevant instructions and asks for contextual judgement about reliance on shape, color, size, visual position, orientation or sound. The sample demonstrates the full workflow without pretending natural-language/context judgement is deterministic. See [`GUIDED_TESTS.md`](GUIDED_TESTS.md) for the full lifecycle and privacy model.
-''',
+              'README.md': ('### Guided accessibility tests', os.environ['DOC_EN']),
+              'README.es.md': ('### Pruebas guiadas de accesibilidad', os.environ['DOC_ES']),
+              'docs/RULES.md': ('## Guided/manual test methodology', os.environ['DOC_RULES']),
           }
-
-          for filename, addition in additions.items():
+          for filename, (marker, payload) in additions.items():
               path = Path(filename)
               text = path.read_text(encoding='utf-8')
-              marker = addition.strip().splitlines()[0]
               if marker not in text:
-                  path.write_text(text.rstrip() + addition + '\n', encoding='utf-8')
+                  addition = base64.b64decode(payload).decode('utf-8')
+                  path.write_text(text.rstrip() + '\n\n' + addition, encoding='utf-8')
           PY
           git config user.name "Marco Romero"
           git config user.email "marco_antonio88_9@hotmail.com"
