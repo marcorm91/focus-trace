@@ -32,7 +32,7 @@ Cancelled runs remain local evidence but are not treated as completed guided res
 
 The framework never reads form control values automatically. Stored page context removes query strings and fragments. Free-text evidence is normalized and common sensitive patterns are redacted before persistence, including email addresses, long payment/account-like numbers, and assignments whose labels look like passwords, tokens, secrets, API keys, authorization, cookies, sessions, or values.
 
-Redaction is a defensive boundary, not a promise that arbitrary free text can never contain personal data. The UI therefore tells auditors not to enter passwords, tokens, or form values.
+Redaction is a defensive boundary, not a promise that arbitrary free text can never contain personal data. The UI therefore tells auditors to record only their judgement and not to enter passwords, tokens, form values, captions, transcripts or media content.
 
 All guided evidence remains local to the extension and uses the existing storage permission. The framework does not add host permissions and does not transmit inspected-page data.
 
@@ -53,6 +53,18 @@ The sample is intentionally contextual. FocusTrace records the auditor's judgeme
 These workflows reuse the existing FocusTrace Trace/runtime stream rather than introducing a second recorder. When a guided step is saved, up to two relevant events from that step are copied into bounded `runtime-observation` evidence. Manual answers and notes remain separate evidence kinds, so observed behavior and auditor judgement are distinguishable in persisted sessions and reports.
 
 Runtime observations support review but never decide the guided result automatically. A dialog problem remains contextual: examples include unexpected focus escape, inability to close the dialog through the expected keyboard mechanism, or illogical focus restoration after close.
+
+## Table, form, resize and multimedia workflows
+
+`FT-GUIDED-005` reviews complex table header relationships for WCAG 1.3.1. The auditor checks row, column and grouped headers and representative data cells using the table semantics already exposed by FocusTrace. The workflow records the judgement, not cell contents.
+
+`FT-GUIDED-006` covers WCAG 3.3.1, 3.3.2, 3.3.3 and 3.3.4. It asks the auditor to review instructions, trigger representative validation with synthetic data, judge error identification and suggestions, and verify review/reversal/confirmation where consequential submissions require it. Field values are never captured by the guided workflow.
+
+`FT-GUIDED-007` covers WCAG 1.4.4 and 1.4.10. It reuses the existing Resize Text 200% comparison and the Reflow 320 CSS px baseline, then asks the auditor to decide whether content, controls and functionality remain available without unacceptable clipping, overlap or two-dimensional scrolling.
+
+`FT-GUIDED-008` covers prerecorded multimedia alternatives for WCAG 1.2.1, 1.2.2, 1.2.3 and 1.2.5. The auditor judges captions, equivalent alternatives and audio description quality. FocusTrace stores only the manual judgement and optional redacted note; it does not copy or persist audio, video, caption or transcript payloads.
+
+Each substantive step in these four workflows has an explicit WCAG criterion mapping shown in the guided UI and retained by the static workflow definition. Unlike the keyboard/focus/dialog workflows, `FT-GUIDED-005` through `FT-GUIDED-008` do not attach runtime Trace observations automatically.
 
 ## Reporting and standards coverage
 
