@@ -1,5 +1,5 @@
 import { useEffect, useMemo, useState } from 'react';
-import { SAMPLE_GUIDED_TEST } from '../../../lib/guided-tests/catalog';
+import { GUIDED_TESTS } from '../../../lib/guided-tests/catalog';
 import {
   answerGuidedStep,
   cancelGuidedTest,
@@ -7,12 +7,14 @@ import {
   restartGuidedTest,
   resumeGuidedTest,
   startGuidedTest,
+  type GuidedEvidence,
   type GuidedManualAnswer,
   type GuidedTestSession,
 } from '../../../lib/guided-tests/framework';
+import { guidedRuntimeEvidence } from '../../../lib/guided-tests/runtime-evidence';
 import { loadGuidedSession, saveGuidedSession } from '../../../lib/guided-tests/storage';
 import { tr, type AppLanguage } from '../../../shared/i18n';
-import type { ScanResult } from '../../../shared/types';
+import type { RuntimeEvent, ScanResult } from '../../../shared/types';
 import './guided-test-panel.css';
 
 function localText(text: { en: string; es: string }, language: AppLanguage): string {
@@ -22,7 +24,7 @@ function localText(text: { en: string; es: string }, language: AppLanguage): str
 function answerLabel(answer: GuidedManualAnswer, language: AppLanguage): string {
   const labels: Record<GuidedManualAnswer, [string, string]> = {
     acknowledged: ['Reviewed — continue', 'Revisado — continuar'],
-    pass: ['No sensory-only instruction found', 'No he encontrado instrucciones solo sensoriales'],
+    pass: ['No issue found', 'No he encontrado problema'],
     issue: ['Issue found', 'He encontrado un problema'],
     'not-applicable': ['Not applicable', 'No aplica'],
     uncertain: ['Needs further review', 'Necesita más revisión'],
@@ -45,8 +47,50 @@ function outcomeLabel(session: GuidedTestSession, language: AppLanguage): string
   }
 }
 
-export function GuidedTestPanel({ scan, language }: { scan?: ScanResult; language: AppLanguage }) {
-  const definition = SAMPLE_GUIDED_TEST;
+function referenceBadge(references: { type: string; id: string; level?: string }[]): string {
+  return references
+    .slice(0, 3)
+    .map((reference) => `${reference.type === 'WCAG' ? 'WCAG ' : ''}${reference.id}${reference.level ? ` · ${reference.level}` : ''}`)
+    .join(' · ');
+}
+
+function RuntimeEvidenceList({ evidence, language }: { evidence: GuidedEvidence[]; language: AppLanguage }) {
+  if (!evidence.length) return null;
+  return (
+    <div className="guided-runtime-evidence" role="note">
+      <strong>{tr(language, 'Observed runtime evidence', 'Evidencia runtime observada')}</strong>
+      <p>{tr(
+        language,
+        'Captured from the existing Trace/runtime event stream. Your answer remains a separate manual judgement.',
+        'Capturada desde el flujo existente de eventos de Trace/runtime. Tu respuesta sigue siendo un criterio manual separado.',
+      )}</p>
+      <ul>
+        {evidence.map((item, index) => (
+          <li key={`${item.sourceEventId ?? item.capturedAt}-${index}`}>
+            <strong>{item.label}</strong>
+            <span>{item.value}</span>
+          </li>
+        ))}
+      </ul>
+    </div>
+  );
+}
+
+export function GuidedTestPanel({
+  scan,
+  events,
+  language,
+}: {
+  scan?: ScanResult;
+  events: RuntimeEvent[];
+  language: AppLanguage;
+}) {
+  const defaultTestId = GUIDED_TESTS.find((test) => test.id === 'FT-GUIDED-002')?.id ?? GUIDED_TESTS[0]?.id ?? '';
+  const [selectedTestId, setSelectedTestId] = useState(defaultTestId);
+  const definition = useMemo(
+    () => GUIDED_TESTS.find((test) => test.id === selectedTestId) ?? GUIDED_TESTS[0]!,
+    [selectedTestId],
+  );
   const [session, setSession] = useState<GuidedTestSession>();
   const [loading, setLoading] = useState(false);
   const [note, setNote] = useState('');
@@ -61,6 +105,7 @@ export function GuidedTestPanel({ scan, language }: { scan?: ScanResult; languag
     setSession(undefined);
     setNote('');
     setSelectedAnswer(undefined);
+    setStatusMessage('');
     if (!pageUrl) return () => { active = false; };
     setLoading(true);
     void loadGuidedSession(pageUrl, definition.id)
@@ -78,6 +123,11 @@ export function GuidedTestPanel({ scan, language }: { scan?: ScanResult; languag
     return definition.steps[session.currentStepIndex];
   }, [definition.steps, session]);
 
+  const observedEvidence = useMemo(() => {
+    if (!session || session.status !== 'active' || !step) return [];
+    return guidedRuntimeEvidence(definition.id, step.id, events, session.startedAt);
+  }, [definition.id, events, session, step]);
+
   const persist = async (next: GuidedTestSession, message: string) => {
     setSession(next);
     setNote('');
@@ -93,8 +143,15 @@ export function GuidedTestPanel({ scan, language }: { scan?: ScanResult; languag
   };
 
   const submit = async () => {
-    if (!session || !selectedAnswer) return;
-    const next = answerGuidedStep(session, definition, selectedAnswer, note);
+    if (!session || !selectedAnswer || !step) return;
+    const next = answerGuidedStep(
+      session,
+      definition,
+      selectedAnswer,
+      note,
+      Date.now(),
+      observedEvidence,
+    );
     const message = next.status === 'completed'
       ? tr(language, 'Guided test completed. Result added to this report.', 'Prueba guiada completada. Resultado añadido a este informe.')
       : tr(language, 'Step saved. Continue with the next step.', 'Paso guardado. Continúa con el siguiente paso.');
@@ -140,19 +197,28 @@ export function GuidedTestPanel({ scan, language }: { scan?: ScanResult; languag
     <section className="panel guided-test-panel" aria-labelledby="guided-test-title">
       <div className="guided-test-heading">
         <div>
-          <span className="report-kicker">{tr(language, 'Guided test · manual evidence', 'Prueba guiada · evidencia manual')}</span>
+          <span className="report-kicker">{tr(language, 'Guided tests · manual + runtime evidence', 'Pruebas guiadas · evidencia manual + runtime')}</span>
           <h2 id="guided-test-title">{localText(definition.title, language)}</h2>
         </div>
-        <span className="guided-coverage-badge">WCAG 1.3.3 · A</span>
+        <span className="guided-coverage-badge">{referenceBadge(definition.references)}</span>
       </div>
+
+      <label className="guided-test-selector">
+        <span>{tr(language, 'Guided workflow', 'Flujo guiado')}</span>
+        <select value={definition.id} onChange={(event) => setSelectedTestId(event.currentTarget.value)}>
+          {GUIDED_TESTS.map((test) => (
+            <option key={test.id} value={test.id}>{localText(test.title, language)}</option>
+          ))}
+        </select>
+      </label>
 
       <p>{localText(definition.description, language)}</p>
       <p className="guided-test-boundary" role="note">
         <strong>{tr(language, 'Not an automated conformance result.', 'No es un resultado automático de conformidad.')}</strong>{' '}
         {tr(
           language,
-          'FocusTrace records your judgement and bounded evidence separately from automated PASS/FAIL counts.',
-          'FocusTrace registra tu criterio y evidencia acotada por separado de los recuentos automáticos PASS/FAIL.',
+          'FocusTrace keeps observed runtime events and your manual answer distinguishable. Neither guided evidence stream changes automated PASS/FAIL totals.',
+          'FocusTrace mantiene diferenciados los eventos runtime observados y tu respuesta manual. Ninguno de los dos flujos guiados modifica los totales automáticos PASS/FAIL.',
         )}
       </p>
 
@@ -195,17 +261,21 @@ export function GuidedTestPanel({ scan, language }: { scan?: ScanResult; languag
           <strong>{outcomeLabel(session, language)}</strong>
           <p>{tr(
             language,
-            'This is auditor-provided evidence. It remains separate from automated rule totals and should be reviewed with the recorded steps below.',
-            'Esta evidencia la proporciona el auditor. Permanece separada de los totales automáticos y debe revisarse junto con los pasos registrados.',
+            'This remains a guided result. Manual answers and observed runtime evidence are shown separately below.',
+            'Este sigue siendo un resultado guiado. Las respuestas manuales y la evidencia runtime observada se muestran por separado a continuación.',
           )}</p>
           <ol>
             {session.steps.map((item, index) => {
               const definitionStep = definition.steps[index];
               if (!definitionStep) return null;
+              const runtimeEvidence = item.evidence.filter((entry) => entry.kind === 'runtime-observation');
               return (
                 <li key={item.stepId}>
                   <strong>{localText(definitionStep.title, language)}</strong>
-                  <span>{item.answer ? answerLabel(item.answer, language) : tr(language, 'No answer', 'Sin respuesta')}</span>
+                  <span>{tr(language, 'Manual answer', 'Respuesta manual')}: {item.answer ? answerLabel(item.answer, language) : tr(language, 'No answer', 'Sin respuesta')}</span>
+                  {runtimeEvidence.length > 0 && (
+                    <span>{tr(language, 'Observed events', 'Eventos observados')}: {runtimeEvidence.map((entry) => entry.label).join(' · ')}</span>
+                  )}
                 </li>
               );
             })}
@@ -225,6 +295,8 @@ export function GuidedTestPanel({ scan, language }: { scan?: ScanResult; languag
           </div>
           <h3>{localText(step.title, language)}</h3>
           <p>{localText(step.prompt, language)}</p>
+
+          <RuntimeEvidenceList evidence={observedEvidence} language={language} />
 
           <fieldset>
             <legend>{tr(language, 'Record your manual answer', 'Registra tu respuesta manual')}</legend>
