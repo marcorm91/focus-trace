@@ -101,3 +101,22 @@ test('dialog guided workflow explains intentional modal containment', async ({ c
   await expect(panel.getByText(/may intentionally remain inside it|pueden permanecer intencionadamente dentro/)).toBeVisible();
   await expect(panel.getByText(/only if focus escapes unexpectedly|solo si el foco escapa de forma inesperada/)).toBeVisible();
 });
+
+test('multimedia guided workflow maps manual evidence without capturing media payloads', async ({ context, extensionWorker }) => {
+  const panel = await openSidepanel(context, extensionWorker);
+  await saveScan(panel);
+
+  await panel.getByRole('button', { name: /Report|Informe/ }).click();
+  await panel.getByLabel(/Guided workflow|Flujo guiado/).selectOption('FT-GUIDED-008');
+  await expect(panel.getByRole('heading', { level: 2, name: /Multimedia alternatives review|Revisión de alternativas multimedia/ })).toBeVisible();
+  await expect(panel.getByText(/without copying or storing media|sin copiar ni guardar contenido/)).toBeVisible();
+
+  await panel.getByRole('button', { name: /Start guided test|Iniciar prueba guiada/ }).click();
+  await expect(panel.getByText(/Step 1 of 3|Paso 1 de 3/)).toBeVisible();
+  await expect(panel.getByText(/Evidence maps to|La evidencia se vincula a/)).toContainText('WCAG 1.2.2');
+  await expect(panel.getByText(/Keep Trace recording|Mantén Trace grabando/)).toHaveCount(0);
+  await expect(panel.getByLabel(/Optional auditor note|Nota opcional del auditor/)).toHaveAttribute(
+    'placeholder',
+    /form values, captions, transcripts or media content|valores de formularios, subtítulos, transcripciones ni contenido multimedia/,
+  );
+});
