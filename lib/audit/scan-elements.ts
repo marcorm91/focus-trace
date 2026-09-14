@@ -1,3 +1,9 @@
+import {
+  traverseComposedTree,
+  type ComposedCoverageLimit,
+  type ComposedTraversalResult,
+} from './composed-tree';
+
 export type ScanRoot = Document | Element;
 
 export interface ScanQueryMetrics {
@@ -8,6 +14,7 @@ export interface ScanQueryMetrics {
 
 type ScanQueryCache = {
   results: WeakMap<ScanRoot, Map<string, Element[]>>;
+  traversals: WeakMap<ScanRoot, ComposedTraversalResult>;
   metrics?: ScanQueryMetrics;
 };
 
@@ -18,7 +25,11 @@ export function withScanElementQueryCache<T>(
   metrics?: ScanQueryMetrics,
 ): T {
   const previous = activeCache;
-  activeCache = { results: new WeakMap(), metrics };
+  activeCache = {
+    results: new WeakMap(),
+    traversals: new WeakMap(),
+    metrics,
+  };
   try {
     return run();
   } finally {
@@ -26,10 +37,23 @@ export function withScanElementQueryCache<T>(
   }
 }
 
+function traversalFor(root: ScanRoot): ComposedTraversalResult {
+  const cache = activeCache;
+  const cached = cache?.traversals.get(root);
+  if (cached) return cached;
+
+  const traversal = traverseComposedTree(root);
+  cache?.traversals.set(root, traversal);
+  if (cache?.metrics) cache.metrics.domQueries += 1;
+  return traversal;
+}
+
 /**
- * Returns the matching scan root and descendants. Identical queries are reused
- * only for the lifetime of one synchronous scan, so later DOM changes can never
- * observe stale results.
+ * Returns matching elements from the complete bounded composed traversal rooted
+ * at `root`: light DOM, open shadow roots, flattened slot assignments and
+ * same-origin nested frame documents. The traversal itself is built once per
+ * synchronous scan and shared across all rule queries so the 10,000-element
+ * budget applies to the scan as a whole rather than once per rule.
  */
 export function scopedElements<T extends Element = Element>(
   root: ScanRoot,
@@ -45,16 +69,24 @@ export function scopedElements<T extends Element = Element>(
     return cached as T[];
   }
 
-  const descendants = [...root.querySelectorAll<T>(selector)];
-  const result = root instanceof Element && root.matches(selector)
-    ? [root as T, ...descendants]
-    : descendants;
+  const result: T[] = [];
+  for (const element of traversalFor(root).elements) {
+    try {
+      if (element.matches(selector)) result.push(element as T);
+    } catch {
+      // A selector valid in the top document can still be unsupported by an
+      // older nested browsing context. Treat that element as non-matching.
+    }
+  }
 
   if (cache) {
     bySelector ??= new Map();
     bySelector.set(selector, result);
     cache.results.set(root, bySelector);
-    if (cache.metrics) cache.metrics.domQueries += 1;
   }
   return result;
+}
+
+export function composedCoverageLimits(root: ScanRoot): readonly ComposedCoverageLimit[] {
+  return traversalFor(root).coverageLimits;
 }
