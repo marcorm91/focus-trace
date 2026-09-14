@@ -215,12 +215,13 @@ export function applyAuditProfile(
   if (!profileSupportsScope(profile, scope)) {
     throw new Error(`Audit profile "${profile.name}" does not include ${scope} scope.`);
   }
+  const deduped = deduplicateScanResult(scan);
   const filter = (issues: ScanIssue[]) => issues.filter((issue) => issueMatchesAuditProfile(issue, profile));
   return {
-    ...deduplicateScanResult(scan),
-    issues: filter(scan.issues),
-    review: filter(scan.review),
-    warnings: filter(scan.warnings ?? []),
+    ...deduped,
+    issues: filter(deduped.issues),
+    review: filter(deduped.review),
+    warnings: filter(deduped.warnings ?? []),
     auditProfile: snapshot(profile),
   };
 }
