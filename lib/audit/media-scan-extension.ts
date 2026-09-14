@@ -27,6 +27,7 @@ import {
 import { appendSpecializedAccessibleNameChecks } from './specialized-accessible-name-scan-extension';
 import { reconcileSpecializedImageAlternatives } from './specialized-image-alternatives';
 import { appendTableRelationshipChecks } from './table-scan-extension';
+import { downgradeUncertainStackingContrast } from './visual-contrast-policy';
 
 const uid = () => `${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
 
@@ -209,4 +210,7 @@ export function appendMediaAccessibilityReviews(result: ScanResult, root: ScanRo
   appendElementInternalsSemantics(result, root);
   appendAriaRoleStateRelationshipChecks(result, root);
   appendEmbeddedContentChecks(result, root);
+
+  const document = root instanceof Document ? root : root.ownerDocument;
+  downgradeUncertainStackingContrast(result, document);
 }
