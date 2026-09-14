@@ -21,6 +21,7 @@ import { RULES, type RuleDefinition } from '../shared/rule-catalog';
 import { SPECIALIZED_ACCESSIBLE_NAME_RULES } from '../shared/specialized-accessible-name-rules';
 import { STRUCTURAL_HTML_RULES } from '../shared/structural-html-rules';
 import type { Severity } from '../shared/types';
+import { VIEWPORT_VISUAL_RULES } from '../shared/viewport-visual-rules';
 
 type AxeImpact = Exclude<Severity, 'info'>;
 
@@ -47,6 +48,7 @@ const ALL_RULES = new Map(
     ...ARIA_ROLE_STATE_RELATIONSHIP_RULES,
     ...EMBEDDED_CONTENT_RULES,
     ...FORM_AUDIT_RULES,
+    ...VIEWPORT_VISUAL_RULES,
   ].map((rule) => [rule.id, rule] as const),
 );
 const AXE_RULES = new Map(axeRegistry.rules.map((rule) => [rule.id, rule] as const));
