@@ -72,7 +72,7 @@ test('APG guided report labels guidance as informative and retains the implement
   await panel.getByRole('button', { name: /Start guided test|Iniciar prueba guiada/ }).click();
   const selectedVariation = panel.getByText(/Implementation variation:\s*Manual activation|Variante de implementación:\s*Activación manual/);
   await expect(selectedVariation).toBeVisible();
-  await expect(panel.getByText(/relevant widget-pattern observations|observaciones relevantes del patrón de widget/)).toBeVisible();
+  await expect(panel.getByText(/relevant widget-pattern observations|observaciones relevantes del patrón de widget/i)).toBeVisible();
 
   for (let index = 0; index < 3; index += 1) {
     await panel.getByRole('radio', { name: /No issue found|No he encontrado problemas/ }).check();
