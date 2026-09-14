@@ -80,7 +80,12 @@ const EMAIL = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
 const LONG_NUMBER = /\b(?:\d[ -]?){12,19}\b/g;
 
 function cleanControlCharacters(value: string): string {
-  return value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, ' ');
+  return Array.from(value, (character) => {
+    const code = character.charCodeAt(0);
+    return code <= 8 || code === 11 || code === 12 || (code >= 14 && code <= 31) || code === 127
+      ? ' '
+      : character;
+  }).join('');
 }
 
 export function redactGuidedText(value: string, limit = GUIDED_MAX_NOTE_LENGTH): string {
