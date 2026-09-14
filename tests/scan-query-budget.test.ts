@@ -1,5 +1,7 @@
 // @vitest-environment jsdom
 
+import { readFileSync } from 'node:fs';
+import { resolve } from 'node:path';
 import { afterEach, describe, expect, it, vi } from 'vitest';
 import { runFocusTraceScan } from '../lib/audit/scan';
 import {
@@ -7,6 +9,17 @@ import {
   withScanElementQueryCache,
   type ScanQueryMetrics,
 } from '../lib/audit/scan-elements';
+
+interface ConformanceBudgetContract {
+  budgets: {
+    rootWideUniversalQueriesPerScan: number;
+  };
+}
+
+const conformanceContract = JSON.parse(
+  readFileSync(resolve(process.cwd(), 'config', 'conformance-coverage.json'), 'utf8'),
+) as ConformanceBudgetContract;
+const ROOT_WIDE_UNIVERSAL_QUERY_BUDGET = conformanceContract.budgets.rootWideUniversalQueriesPerScan;
 
 afterEach(() => {
   document.documentElement.removeAttribute('lang');
@@ -31,7 +44,7 @@ describe('static scan DOM-query budget', () => {
     expect(withScanElementQueryCache(() => scopedElements(document, '*'))).toHaveLength(4);
   });
 
-  it('avoids repeated root-wide querySelectorAll calls during a full page scan', () => {
+  it('keeps root-wide querySelectorAll calls within the configured full-page scan budget', () => {
     document.documentElement.lang = 'en';
     document.head.innerHTML = '<title>Query budget</title>';
     document.body.innerHTML = '<main><h1>Query budget</h1><div><span>Content</span></div></main>';
@@ -41,7 +54,7 @@ describe('static scan DOM-query budget', () => {
 
     const rootWideQueries = querySelectorAll.mock.calls
       .filter(([selector]) => selector === '*');
-    expect(rootWideQueries.length).toBeLessThanOrEqual(1);
+    expect(rootWideQueries.length).toBeLessThanOrEqual(ROOT_WIDE_UNIVERSAL_QUERY_BUDGET);
     expect(result.rulesRun).toBeGreaterThan(0);
   });
 });
