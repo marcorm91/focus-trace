@@ -43,6 +43,11 @@ export interface FocusTraceExportSummary {
   warnings: number;
 }
 
+export interface FocusTraceExportContext {
+  scope: Record<string, unknown>;
+  coverage: Record<string, unknown>;
+}
+
 export interface FocusTraceExportEnvelopeV1 {
   $schema: typeof FOCUSTRACE_EXPORT_SCHEMA_ID;
   schemaVersion: typeof FOCUSTRACE_EXPORT_SCHEMA_VERSION;
@@ -57,6 +62,7 @@ export interface FocusTraceExportEnvelopeV1 {
     origin?: string;
     title?: string;
   };
+  context: FocusTraceExportContext;
   summary: FocusTraceExportSummary;
   findings: FocusTraceExportFinding[];
   metadata?: Record<string, unknown>;
@@ -177,14 +183,18 @@ export function buildSessionExport({
       url: sanitizeExportUrl(scan.url),
       title: scan.title,
     },
+    context: {
+      scope: { ...(scan.scope ?? { type: 'page' }) },
+      coverage: {
+        passes: scan.passes,
+        rulesRun: scan.rulesRun,
+        staticFindings: staticFindings.length,
+        runtimeFindings: runtimeFindings.length,
+      },
+    },
     summary: exportSummary(findings),
     findings,
-    metadata: {
-      scannedAt: scan.scannedAt,
-      scope: scan.scope ?? { type: 'page' },
-      passes: scan.passes,
-      rulesRun: scan.rulesRun,
-    },
+    metadata: { scannedAt: scan.scannedAt },
   };
 }
 
@@ -206,17 +216,23 @@ export function buildSiteAuditExport(
     generatedAt,
     producer: { name: 'FocusTrace', standard: 'WCAG 2.2' },
     subject: { origin: sanitizeExportUrl(result.origin) },
+    context: {
+      scope: result.discovery.scope
+        ? { ...result.discovery.scope, exclusionPrefixes: [...result.discovery.scope.exclusionPrefixes] }
+        : { mode: result.discovery.source },
+      coverage: {
+        discoveredUrls: result.discovery.urls.length,
+        discoveryTruncated: result.discovery.truncated,
+        routeFamilies: result.routeFamilies.length,
+        sampledPages: result.pages.length,
+        scannedPages: result.scannedPages,
+        failedPages: result.failedPages,
+      },
+    },
     summary: exportSummary(findings),
     findings,
     metadata: {
-      scannedPages: result.scannedPages,
-      failedPages: result.failedPages,
-      discovery: {
-        source: result.discovery.source,
-        discoveredUrls: result.discovery.urls.length,
-        truncated: result.discovery.truncated,
-        scope: result.discovery.scope,
-      },
+      discoverySource: result.discovery.source,
       routeFamilies: result.routeFamilies.map((family) => ({
         id: family.id,
         pattern: family.pattern,
@@ -226,6 +242,30 @@ export function buildSiteAuditExport(
       ...(result.comparison ? { comparison: result.comparison } : {}),
     },
   };
+}
+
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return Boolean(value) && typeof value === 'object' && !Array.isArray(value);
+}
+
+export function parseVersionedJson(content: string): FocusTraceExportEnvelopeV1 {
+  const parsed: unknown = JSON.parse(content);
+  if (!isRecord(parsed)
+    || parsed.$schema !== FOCUSTRACE_EXPORT_SCHEMA_ID
+    || parsed.schemaVersion !== FOCUSTRACE_EXPORT_SCHEMA_VERSION
+    || (parsed.kind !== 'session' && parsed.kind !== 'site-audit')
+    || !isRecord(parsed.producer)
+    || parsed.producer.name !== 'FocusTrace'
+    || parsed.producer.standard !== 'WCAG 2.2'
+    || !isRecord(parsed.subject)
+    || !isRecord(parsed.context)
+    || !isRecord(parsed.context.scope)
+    || !isRecord(parsed.context.coverage)
+    || !isRecord(parsed.summary)
+    || !Array.isArray(parsed.findings)) {
+    throw new Error('Unsupported or invalid FocusTrace export schema.');
+  }
+  return parsed as unknown as FocusTraceExportEnvelopeV1;
 }
 
 export function renderVersionedJson(envelope: FocusTraceExportEnvelopeV1): string {
@@ -242,15 +282,26 @@ function referenceList(references: FocusTraceExportReference[]): string {
   return references.map((reference) => `${reference.type} ${reference.id}`).join('; ');
 }
 
+function contextValue(value: Record<string, unknown>): string {
+  return JSON.stringify(value);
+}
+
 export function renderVersionedCsv(envelope: FocusTraceExportEnvelopeV1): string {
   const header = [
-    'schemaVersion', 'kind', 'outcome', 'severity', 'source', 'ruleId', 'title', 'description',
-    'pageUrl', 'template', 'target', 'evidence', 'remediation', 'standards', 'reviewState',
-    'lifecycleState', 'occurrenceCount',
+    'recordType', 'schemaVersion', 'kind', 'standard', 'scope', 'coverage', 'failures', 'reviews', 'warnings',
+    'outcome', 'severity', 'source', 'ruleId', 'title', 'description', 'pageUrl', 'template', 'target',
+    'evidence', 'remediation', 'standards', 'reviewState', 'lifecycleState', 'occurrenceCount',
+  ];
+  const summaryRow = [
+    'summary', envelope.schemaVersion, envelope.kind, envelope.producer.standard,
+    contextValue(envelope.context.scope), contextValue(envelope.context.coverage),
+    envelope.summary.failures, envelope.summary.reviews, envelope.summary.warnings,
+    '', '', '', '', '', '', envelope.subject.url ?? envelope.subject.origin ?? '', '', '', '', '', '', '', '', '',
   ];
   const rows = envelope.findings.map((finding) => [
-    envelope.schemaVersion,
-    envelope.kind,
+    'finding', envelope.schemaVersion, envelope.kind, envelope.producer.standard,
+    contextValue(envelope.context.scope), contextValue(envelope.context.coverage),
+    '', '', '',
     finding.outcome,
     finding.severity,
     finding.source,
@@ -267,7 +318,7 @@ export function renderVersionedCsv(envelope: FocusTraceExportEnvelopeV1): string
     finding.lifecycleState ?? '',
     finding.occurrenceCount ?? '',
   ]);
-  return `\uFEFF${[header, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n')}\r\n`;
+  return `\uFEFF${[header, summaryRow, ...rows].map((row) => row.map(csvCell).join(',')).join('\r\n')}\r\n`;
 }
 
 function escapeHtml(value: unknown): string {
@@ -305,13 +356,19 @@ export function renderVersionedHtml(envelope: FocusTraceExportEnvelopeV1): strin
   <meta charset="utf-8">
   <meta name="viewport" content="width=device-width,initial-scale=1">
   <title>${escapeHtml(subject)} · FocusTrace</title>
-  <style>body{font:16px/1.5 system-ui,sans-serif;margin:2rem;color:#171717}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:.5rem;text-align:left;vertical-align:top}th{background:#f4f4f4}code{font-size:.9em}caption{text-align:left;font-weight:700;margin-bottom:.75rem}</style>
+  <style>body{font:16px/1.5 system-ui,sans-serif;margin:2rem;color:#171717}table{border-collapse:collapse;width:100%}th,td{border:1px solid #ccc;padding:.5rem;text-align:left;vertical-align:top}th{background:#f4f4f4}code{font-size:.9em}caption{text-align:left;font-weight:700;margin-bottom:.75rem}dt{font-weight:700}dd{margin:0 0 .75rem}pre{white-space:pre-wrap;overflow-wrap:anywhere}</style>
 </head>
 <body>
   <main>
     <h1>FocusTrace accessibility export</h1>
     <p><strong>${escapeHtml(subject)}</strong></p>
     <p>Schema ${escapeHtml(envelope.schemaVersion)} · ${envelope.summary.failures} FAIL · ${envelope.summary.reviews} REVIEW · ${envelope.summary.warnings} WARNING</p>
+    <h2>Audit context</h2>
+    <dl>
+      <dt>Standard</dt><dd>${escapeHtml(envelope.producer.standard)}</dd>
+      <dt>Scope</dt><dd><pre>${escapeHtml(contextValue(envelope.context.scope))}</pre></dd>
+      <dt>Coverage</dt><dd><pre>${escapeHtml(contextValue(envelope.context.coverage))}</pre></dd>
+    </dl>
     <table>
       <caption>${envelope.summary.findings} findings</caption>
       <thead><tr><th>Outcome</th><th>Severity</th><th>Rule</th><th>Finding</th><th>Description</th><th>Page</th><th>Template</th><th>Target</th><th>Evidence</th><th>Remediation</th><th>Standards</th></tr></thead>
@@ -391,6 +448,15 @@ export function renderVersionedSarif(envelope: FocusTraceExportEnvelopeV1): stri
     version: '2.1.0',
     runs: [{
       tool: { driver: { name: 'FocusTrace', informationUri: 'https://focus-mode.app', rules } },
+      properties: {
+        focusTraceSchemaVersion: envelope.schemaVersion,
+        focusTraceKind: envelope.kind,
+        standard: envelope.producer.standard,
+        subject: envelope.subject.url ?? envelope.subject.origin ?? envelope.subject.title ?? '',
+        scope: contextValue(envelope.context.scope),
+        coverage: contextValue(envelope.context.coverage),
+        summary: envelope.summary,
+      },
       results,
     }],
   }, null, 2)}\n`;
@@ -408,16 +474,26 @@ function escapeXml(value: unknown): string {
 export function renderVersionedJUnit(envelope: FocusTraceExportEnvelopeV1): string {
   const failures = envelope.summary.failures;
   const skipped = envelope.summary.reviews + envelope.summary.warnings;
+  const suiteProperties = [
+    ['schemaVersion', envelope.schemaVersion],
+    ['kind', envelope.kind],
+    ['standard', envelope.producer.standard],
+    ['scope', contextValue(envelope.context.scope)],
+    ['coverage', contextValue(envelope.context.coverage)],
+    ['failures', envelope.summary.failures],
+    ['reviews', envelope.summary.reviews],
+    ['warnings', envelope.summary.warnings],
+  ].map(([name, value]) => `<property name="${escapeXml(name)}" value="${escapeXml(value)}"/>`).join('');
   const cases = envelope.findings.map((finding) => {
     const name = `${finding.ruleId}: ${finding.title}`;
     const classname = `FocusTrace.${finding.source}`;
-    const properties = `<properties><property name="outcome" value="${escapeXml(finding.outcome)}"/><property name="severity" value="${escapeXml(finding.severity)}"/></properties>`;
+    const properties = `<properties><property name="outcome" value="${escapeXml(finding.outcome)}"/><property name="severity" value="${escapeXml(finding.severity)}"/><property name="standards" value="${escapeXml(referenceList(finding.references))}"/></properties>`;
     if (finding.outcome === 'fail') {
       return `  <testcase classname="${escapeXml(classname)}" name="${escapeXml(name)}">${properties}<failure message="${escapeXml(finding.title)}">${escapeXml(finding.evidence ?? finding.description)}</failure></testcase>`;
     }
     return `  <testcase classname="${escapeXml(classname)}" name="${escapeXml(name)}">${properties}<skipped message="${finding.outcome === 'review' ? 'REVIEW' : 'WARNING'}"/><system-out>${escapeXml(finding.evidence ?? finding.description)}</system-out></testcase>`;
   }).join('\n');
-  return `<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="FocusTrace" tests="${envelope.summary.findings}" failures="${failures}" errors="0" skipped="${skipped}">\n${cases}\n</testsuite>\n`;
+  return `<?xml version="1.0" encoding="UTF-8"?>\n<testsuite name="FocusTrace" tests="${envelope.summary.findings}" failures="${failures}" errors="0" skipped="${skipped}">\n  <properties>${suiteProperties}</properties>\n${cases}\n</testsuite>\n`;
 }
 
 export type FocusTraceExportFormat = 'json' | 'html' | 'csv' | 'sarif' | 'junit';
