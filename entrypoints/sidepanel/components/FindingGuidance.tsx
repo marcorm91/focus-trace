@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { browser } from '#imports';
+import { evidenceBasedGuidanceForIssue } from '../../../lib/report/evidence-guidance';
 import { guidanceForIssue, type FindingGuidance as FindingGuidanceModel } from '../../../lib/report/finding-guidance';
 import {
   DUPLICATE_ID_RULE,
@@ -238,9 +239,10 @@ function HeadingReviewContext({ issue, language }: { issue: ScanIssue; language:
 export function FindingGuidance({ issue, language }: { issue: ScanIssue; language: AppLanguage }) {
   const obsolete = obsoleteHtmlGuidance(issue, language);
   const semantic = semanticGuidance(issue, language);
-  const guidance = issue.ruleId === DUPLICATE_ID_RULE.id
+  const baseGuidance = issue.ruleId === DUPLICATE_ID_RULE.id
     ? duplicateIdGuidance(language)
     : obsolete ?? semantic ?? guidanceForIssue(issue, language);
+  const guidance = evidenceBasedGuidanceForIssue(issue, language, baseGuidance);
   const authoringRule = AUTHORING_RULES.find((rule) => rule.id === issue.ruleId);
   const severityRationale = authoringRule
     ? authoringRule.severityRationale[language]
@@ -266,16 +268,35 @@ export function FindingGuidance({ issue, language }: { issue: ScanIssue; languag
       )}
 
       <section>
+        <small>{tr(language, 'Observed problem', 'Problema observado')}</small>
+        <p>{guidance.observedProblem}</p>
+      </section>
+      <section>
         <small>{tr(language, 'User impact', 'Impacto')}</small>
         <p>{guidance.impact}</p>
+      </section>
+      <section>
+        <small>{tr(language, 'How to reproduce', 'Cómo reproducirlo')}</small>
+        <p>{guidance.reproduction}</p>
       </section>
       <section className="finding-guidance-fix">
         <small>{tr(language, 'Suggested fix', 'Propuesta de solución')}</small>
         <p>{guidance.remediation}</p>
       </section>
+      {guidance.example && (
+        <section>
+          <small>{tr(language, 'Example', 'Ejemplo')}</small>
+          <p><strong>{tr(language, 'Avoid:', 'Evita:')}</strong> <code>{guidance.example.bad}</code></p>
+          <p><strong>{tr(language, 'Prefer:', 'Prioriza:')}</strong> <code>{guidance.example.good}</code></p>
+        </section>
+      )}
       <section>
         <small>{tr(language, 'How to verify', 'Cómo validarlo')}</small>
         <p>{guidance.validation}</p>
+      </section>
+      <section>
+        <small>{tr(language, 'Limits and manual review', 'Límites y revisión manual')}</small>
+        <p>{guidance.limitation}</p>
       </section>
     </div>
   );
