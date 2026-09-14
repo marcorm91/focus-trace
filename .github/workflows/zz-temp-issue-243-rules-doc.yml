@@ -1,0 +1,36 @@
+name: Temporary issue 243 rules docs
+
+on:
+  push:
+    branches:
+      - feat/finding-lifecycle-profiles-0.7.1
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feat/finding-lifecycle-profiles-0.7.1
+      - name: Align methodology
+        shell: python
+        run: |
+          from pathlib import Path
+          path = Path('docs/RULES.md')
+          text = path.read_text()
+          old = 'Audit profiles are local reporting/persistence filters, not alternate conformance engines. The built-in profile targets WCAG 2.2 AA and all scopes, severities and FocusTrace rule families. Users can keep up to 20 custom profiles and select page, component and/or Site Audit scope, WCAG A/AA/AAA target, severity set and rule-family set. Rule families are derived independently from FocusTrace rule metadata/naming rather than any axe/Deque runtime dependency. Rules without an explicit WCAG level remain eligible instead of being silently hidden by a level filter.'
+          new = 'Audit profiles are local reporting/persistence filters, not alternate conformance engines. The built-in Complete profile preserves all supported rule levels, scopes, severities and FocusTrace rule families so enabling profiles does not silently reduce the existing FocusTrace result set. Users can keep up to 20 custom profiles and select page, component and/or Site Audit scope, all supported rules or a WCAG A/AA/AAA target, severity set and rule-family set. Rule families are derived independently from FocusTrace rule metadata/naming rather than any axe/Deque runtime dependency. Rules without an explicit WCAG level remain eligible instead of being silently hidden by a level filter.'
+          if old not in text:
+              raise SystemExit('methodology anchor not found')
+          path.write_text(text.replace(old, new, 1))
+          Path('.github/workflows/zz-temp-issue-243-rules-doc.yml').unlink()
+      - name: Commit docs
+        run: |
+          git config user.name "Marco Romero"
+          git config user.email "marco_antonio88_9@hotmail.com"
+          git add -A
+          git commit -m "Docs(a11y): align complete audit profile methodology"
+          git push origin HEAD:feat/finding-lifecycle-profiles-0.7.1
