@@ -10,14 +10,14 @@ Axe-derived data is benchmark-only. It is not a normative source, is not require
 
 ## Deterministic rule coverage
 
-`config/conformance-coverage.json` is the release contract for the public `FT-WCAG-*` static rule family. Every production rule must declare four dimensions:
+`config/conformance-coverage.json` is the release contract for the public `FT-WCAG-*` static rule family. The current contract covers all 22 production `FT-WCAG-*` rules. Every production rule must declare four dimensions:
 
 - **positive**: conforming evidence or the rule's supported PASS path;
 - **negative**: non-conforming evidence, or the rule's non-PASS path when its public behavior is REVIEW/WARNING rather than FAIL;
 - **inapplicable**: evidence that the rule does not apply to a candidate or scope;
 - **exception**: supported standards/implementation exceptions and conservative boundaries.
 
-A dimension can be marked not applicable only when that state does not exist in the implemented rule model, and the contract must explain why. The validator rejects missing production rules, stale rule entries, missing test references, and undocumented dimensions.
+A dimension can be marked not applicable only when that state does not exist in the implemented rule model, and the contract must explain why. The validator rejects missing production rules, stale rule entries, missing test references, and undocumented dimensions. The contract is metadata tying each dimension to executable repository evidence; the referenced behavior remains enforced by the test suites themselves.
 
 Run:
 
@@ -28,14 +28,14 @@ npm run hardening:test
 
 Both are part of the normal release quality gates.
 
-## Regression budgets
+## Regression policy and performance budget
 
-The hardening contract intentionally uses deterministic release budgets where CI variance cannot hide regressions:
+The hardening contract records a zero-tolerance policy for known critical and false-positive regressions. The numeric policy values are validated as release metadata; actual behavior is enforced by the focused hardening suites and the complete test suite rather than inferred from the JSON alone.
 
-| Budget | Release limit | Enforcement |
+| Policy / budget | Release limit | Enforcement |
 | --- | ---: | --- |
-| Critical unresolved regressions | 0 | release tests / CI |
-| Known false-positive regressions | 0 | `tests/qa-hardening.test.ts` and focused hardening gate |
+| Known critical regressions | 0 | focused hardening suites + full unit/integration suite |
+| Known false-positive regressions | 0 | `tests/qa-hardening.test.ts` + focused rule suites |
 | Root-wide universal DOM queries per static scan | 1 | `tests/scan-query-budget.test.ts` |
 
 `tests/performance/static-scan.bench.ts` separately benchmarks generated pages with 1,000, 5,000 and 10,000 elements. Wall-clock and process-memory numbers are intentionally treated as trend data rather than fixed CI pass/fail limits because shared runners make absolute time/RSS thresholds noisy. A deterministic query-complexity budget remains release-blocking.
