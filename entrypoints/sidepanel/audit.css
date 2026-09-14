@@ -326,6 +326,59 @@
   grid-template-columns: 1fr;
 }
 
+.report-rule-target-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  align-items: center;
+}
+
+.finding-recheck-status {
+  min-width: 0;
+  display: grid;
+  gap: 6px;
+  padding: 9px 10px;
+  border: 1px solid var(--ft-border-soft, CanvasText);
+  border-radius: var(--ft-radius-sm, 7px);
+  background: var(--ft-surface-subtle, Canvas);
+}
+
+.finding-recheck-status p,
+.finding-recheck-status small {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.finding-recheck-status small {
+  color: var(--ft-muted, GrayText);
+}
+
+.finding-recheck-heading {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 5px 10px;
+}
+
+.finding-recheck-heading time {
+  color: var(--ft-muted, GrayText);
+  font-size: 12px;
+}
+
+.finding-recheck-evidence {
+  min-width: 0;
+}
+
+.finding-recheck-evidence summary {
+  cursor: pointer;
+  font-weight: 700;
+}
+
+.finding-recheck-evidence p {
+  margin-top: 6px;
+}
+
 @media (max-width: 480px) {
   .audit-overview-heading {
     display: grid;
@@ -361,11 +414,16 @@
   .audit-page-report-body {
     padding: 14px;
   }
+
+  .report-rule-target-actions > button {
+    flex: 1 1 160px;
+  }
 }
 
 @media (forced-colors: active) {
   .audit-page-report,
-  .export-audit-report {
+  .export-audit-report,
+  .finding-recheck-status {
     border-color: ButtonText;
   }
 }
