@@ -110,17 +110,17 @@ function evidencePreservingExistingObservation(
     const previous = existingByFingerprint.get(descriptor.fingerprint);
     if (!previous) return;
     const locator = previous.locator?.trim();
+    if (!locator) return;
     const dataUrl = previous.previewDataUrl?.startsWith('data:image/')
       ? previous.previewDataUrl
       : undefined;
     const capturedAt = dataUrl && typeof previous.previewCapturedAt === 'number'
       ? previous.previewCapturedAt
       : undefined;
-    if (!locator && !dataUrl) return;
 
     merged.push({
       issueIndex,
-      ...(locator ? { locator } : {}),
+      locator,
       ...(dataUrl ? { dataUrl } : {}),
       ...(capturedAt != null ? { capturedAt } : {}),
     });
