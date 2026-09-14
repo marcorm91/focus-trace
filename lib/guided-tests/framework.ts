@@ -60,6 +60,7 @@ export interface GuidedTestSession {
   version: 1;
   id: string;
   testId: string;
+  variationId?: string;
   pageUrl: string;
   pageTitle: string;
   startedAt: number;
@@ -315,6 +316,7 @@ export function isRecoverableGuidedSession(value: unknown): value is GuidedTestS
   if (session.version !== 1
     || !isBoundedString(session.id, GUIDED_MAX_IDENTIFIER_LENGTH, false)
     || !isBoundedString(session.testId, GUIDED_MAX_IDENTIFIER_LENGTH, false)
+    || (session.variationId != null && !isBoundedString(session.variationId, GUIDED_MAX_IDENTIFIER_LENGTH, false))
     || !isBoundedString(session.pageUrl, GUIDED_MAX_PAGE_URL_LENGTH, false)
     || !isBoundedString(session.pageTitle, GUIDED_MAX_PAGE_TITLE_LENGTH)
     || !isFiniteTimestamp(session.startedAt)

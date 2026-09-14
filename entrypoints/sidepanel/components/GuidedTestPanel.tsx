@@ -101,7 +101,7 @@ export function GuidedTestPanel({
     return definition.steps[session.currentStepIndex];
   }, [definition.steps, session]);
   const stepCriteria = step ? guidedStepCriteria(definition.id, step.id) : [];
-  const recordedVariationId = session?.steps[0]?.evidence.find((evidence) => evidence.label === 'APG implementation variation')?.value;
+  const recordedVariationId = session?.variationId;
   const effectiveVariationId = recordedVariationId || selectedVariationId || apgMetadata?.variations[0]?.id;
   const effectiveVariation = apgMetadata?.variations.find((variation) => variation.id === effectiveVariationId);
 
@@ -118,14 +118,7 @@ export function GuidedTestPanel({
     const now = Date.now();
     let next = startGuidedTest(definition, { url: pageUrl, title: pageTitle }, now);
     const variationId = selectedVariationId || apgMetadata?.variations[0]?.id;
-    if (apgMetadata && variationId) {
-      next = appendGuidedEvidence(next, [{
-        kind: 'manual-note',
-        label: 'APG implementation variation',
-        value: variationId,
-        capturedAt: now,
-      }], now);
-    }
+    if (apgMetadata && variationId) next = { ...next, variationId };
     await persist(next, tr(language, 'Guided test started.', 'Prueba guiada iniciada.'));
   };
 
@@ -170,8 +163,11 @@ export function GuidedTestPanel({
       await start();
       return;
     }
+    let next = restartGuidedTest(definition, session);
+    const variationId = session.variationId || selectedVariationId || apgMetadata?.variations[0]?.id;
+    if (apgMetadata && variationId) next = { ...next, variationId };
     await persist(
-      restartGuidedTest(definition, session),
+      next,
       tr(language, 'Guided test restarted.', 'Prueba guiada reiniciada.'),
     );
   };

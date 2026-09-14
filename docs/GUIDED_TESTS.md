@@ -70,7 +70,7 @@ Each substantive step in these four workflows has an explicit WCAG criterion map
 
 `FT-GUIDED-009` through `FT-GUIDED-016` cover tabs, accordion/disclosure, menu, combobox/listbox, tree, grid, carousel and tooltip. They are explicitly labelled **informative APG guidance** because WAI-ARIA APG interaction patterns support implementation review but are not, by themselves, WCAG conformance outcomes.
 
-Each APG workflow asks the auditor to confirm applicability and select an implementation variation before the run. The selected variation is persisted as bounded manual evidence so repeated reviews can distinguish, for example, manual versus automatic tab activation, single versus multi-select widgets, or automatic versus manual carousel rotation.
+Each APG workflow asks the auditor to confirm applicability and select an implementation variation before the run. The selected variation is persisted as bounded session metadata so repeated reviews can distinguish, for example, manual versus automatic tab activation, single versus multi-select widgets, or automatic versus manual carousel rotation without consuming per-step evidence capacity.
 
 Relevant Trace evidence is reused conservatively. `aria-widget` observations are filtered by the rule IDs associated with the selected pattern, while bounded keyboard/focus/virtual-focus/change evidence can support patterns that do not have a dedicated runtime rule. The runtime stream never chooses a guided answer automatically.
 
