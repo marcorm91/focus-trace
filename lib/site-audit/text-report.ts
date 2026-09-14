@@ -7,7 +7,7 @@ import { localizedScanIssue, localizedSeverity, type AppLanguage } from '../../s
 import { localizedRuleSeverityRationale } from '../../shared/rule-catalog';
 import { countBySeverity, severityRank } from '../../shared/severity';
 import { remediationForIssue } from './remediation';
-import type { SiteAuditFindingAggregate, SiteAuditResult } from './model';
+import type { SiteAuditFindingAggregate, SiteAuditResult, SiteAuditSampleReason } from './model';
 
 function line(title: string, value: string | number): string {
   return `${title}: ${value}`;
@@ -18,6 +18,15 @@ function outcomeLabel(outcome: SiteAuditFindingAggregate['outcome'], language: A
   if (outcome === 'fail') return es ? 'FALLO' : 'FAILURE';
   if (outcome === 'review') return es ? 'REVISIÓN' : 'REVIEW';
   return es ? 'AVISO' : 'WARNING';
+}
+
+function sampleReasonLabel(reason: SiteAuditSampleReason | undefined, language: AppLanguage): string | undefined {
+  if (!reason) return undefined;
+  const es = language === 'es';
+  if (reason === 'family-first') return es ? 'primera representante de la familia' : 'first representative of the family';
+  if (reason === 'family-spread') return es ? 'muestra distribuida dentro de la familia' : 'spread sample within the family';
+  if (reason === 'current-session') return es ? 'ruta privada seleccionada con la sesión actual' : 'private route selected with the current session';
+  return es ? 'selección manual explícita' : 'explicit manual selection';
 }
 
 function sortFindings(findings: SiteAuditFindingAggregate[]): SiteAuditFindingAggregate[] {
@@ -105,21 +114,60 @@ function findingLines(finding: SiteAuditFindingAggregate, language: AppLanguage)
 
 export function buildSiteAuditTextReport(result: SiteAuditResult, language: AppLanguage): string {
   const es = language === 'es';
+  const selectedScope = result.discovery.source === 'manual' || result.discovery.source === 'session';
   const output: string[] = [
     es ? 'AUDITORÍA DE SITIO' : 'SITE AUDIT',
     '=================================',
     line(es ? 'Sitio' : 'Site', result.origin),
-    line(es ? 'URLs descubiertas' : 'Discovered URLs', result.discovery.urls.length),
+    line(selectedScope ? (es ? 'URLs seleccionadas' : 'Selected URLs') : (es ? 'URLs descubiertas' : 'Discovered URLs'), result.discovery.urls.length),
     line(es ? 'Plantillas/familias' : 'Templates/families', result.templates.length),
     line(es ? 'Páginas escaneadas' : 'Scanned pages', result.scannedPages),
     line(es ? 'Páginas no auditables' : 'Pages not scanned', result.failedPages),
-    line(es ? 'Origen del descubrimiento' : 'Discovery source', result.discovery.source),
+    line(es ? 'Origen del alcance' : 'Scope source', result.discovery.source),
+  ];
+
+  if (result.discovery.scope) {
+    output.push(
+      line(es ? 'Límite de descubrimiento' : 'Discovery limit', result.discovery.scope.maxDiscoveredUrls),
+      line(es ? 'Límite de páginas escaneadas' : 'Scan limit', result.discovery.scope.maxScannedPages),
+      line(es ? 'Muestras por familia' : 'Samples per family', result.discovery.scope.samplesPerFamily),
+      line(es ? 'Prefijos excluidos' : 'Excluded path prefixes', result.discovery.scope.exclusionPrefixes.length),
+    );
+  }
+
+  const excluded = result.discovery.decisions?.filter((decision) => decision.status === 'excluded') ?? [];
+  if (excluded.length) {
+    output.push('', es ? 'CANDIDATAS EXCLUIDAS' : 'EXCLUDED CANDIDATES', '-------------------');
+    excluded.slice(0, 50).forEach((decision) => output.push(`- ${decision.url} · ${decision.reason}`));
+  }
+
+  if (result.comparison) {
+    output.push('', es ? 'COMPARACIÓN CON BASELINE' : 'BASELINE COMPARISON', '------------------------');
+    if (result.comparison.compatible) {
+      output.push(
+        line(es ? 'Nuevos' : 'New', result.comparison.newCount),
+        line(es ? 'Cambiados' : 'Changed', result.comparison.changedCount),
+        line(es ? 'Resueltos' : 'Resolved', result.comparison.resolvedCount),
+        line(es ? 'Persistentes' : 'Persistent', result.comparison.persistentCount),
+      );
+      result.comparison.findings
+        .filter((finding) => finding.state !== 'persistent')
+        .slice(0, 50)
+        .forEach((finding) => output.push(`- ${finding.state.toUpperCase()} · ${finding.ruleId} · ${finding.routePattern} · ${finding.title}`));
+    } else {
+      output.push(es
+        ? 'El alcance cambió. FocusTrace inicia un nuevo baseline y no infiere resoluciones por ausencia.'
+        : 'The scope changed. FocusTrace starts a new baseline and does not infer resolutions from absence.');
+    }
+  }
+
+  output.push(
     '',
     es
       ? 'Nota de impacto: crítico, grave, moderado y leve son niveles de priorización de FocusTrace; no son niveles WCAG A/AA/AAA.'
       : 'Impact note: critical, serious, moderate and minor are FocusTrace prioritization levels; they are not WCAG A/AA/AAA levels.',
     '',
-  ];
+  );
 
   for (const template of result.templates) {
     const successful = template.sampledPages.filter((page) => page.scan);
@@ -164,7 +212,9 @@ export function buildSiteAuditTextReport(result: SiteAuditResult, language: AppL
 
     output.push(es ? 'Muestras:' : 'Samples:');
     template.sampledPages.forEach((page) => {
-      output.push(`- ${page.url}${page.error ? ` · ERROR: ${page.error}` : ''}`);
+      const reason = sampleReasonLabel(page.selectionReason, language);
+      output.push(`- ${page.url}${reason ? ` · ${reason}` : ''}${page.error ? ` · ERROR: ${page.error}` : ''}`);
+      if (page.structure?.canonical) output.push(`  canonical: ${page.structure.canonical}`);
     });
     output.push('');
   }
@@ -172,9 +222,13 @@ export function buildSiteAuditTextReport(result: SiteAuditResult, language: AppL
   output.push(
     es ? 'NOTA DE ALCANCE' : 'SCOPE NOTE',
     '-------------',
-    es
-      ? 'La auditoría de sitio utiliza muestras representativas y comprobaciones automáticas. Una plantilla sin hallazgos automáticos no demuestra conformidad WCAG completa; siguen siendo necesarias revisión manual y pruebas de estados runtime.'
-      : 'Site Audit uses representative samples and automated checks. A template with no automated findings does not prove complete WCAG conformance; manual review and runtime-state testing are still required.',
+    result.discovery.source === 'session'
+      ? (es
+        ? 'El modo de sesión actual reutiliza la sesión ya abierta en el navegador únicamente durante el escaneo. El historial de baseline no guarda contraseñas, cookies, tokens de sesión ni URLs privadas.'
+        : 'Current-session mode reuses the browser session only during scanning. Baseline history does not store passwords, cookies, session tokens or private URLs.')
+      : (es
+        ? 'La auditoría de sitio utiliza muestras representativas y comprobaciones automáticas. Una plantilla sin hallazgos automáticos no demuestra conformidad WCAG completa; siguen siendo necesarias revisión manual y pruebas de estados runtime.'
+        : 'Site Audit uses representative samples and automated checks. A template with no automated findings does not prove complete WCAG conformance; manual review and runtime-state testing are still required.'),
   );
 
   return `${output.join('\r\n').trim()}\r\n`;
