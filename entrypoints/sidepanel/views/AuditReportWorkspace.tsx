@@ -89,7 +89,7 @@ export function AuditReportWorkspace({
 
   return (
     <div className="audit-report-workspace">
-      <GuidedTestPanel scan={scan} language={language} />
+      <GuidedTestPanel scan={scan} events={events} language={language} />
 
       {audit && summary && (
         <section className="panel audit-overview" aria-labelledby="audit-overview-title">
