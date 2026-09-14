@@ -624,3 +624,15 @@ La evidencia de formularios está limitada deliberadamente por privacidad. Focus
 
 Todas las comprobaciones siguen siendo locales y acotadas. Los controles multimedia personalizados, la política de autoplay del navegador, los controles externos de scroll y el comportamiento de atajos dependiente de plataforma permanecen contextuales. Consulta [`docs/KEYBOARD_NAVIGATION_MOTION.es.md`](docs/KEYBOARD_NAVIGATION_MOTION.es.md) para metodología y límites.
 
+### Recheck por hallazgo
+
+Los hallazgos del informe pueden volver a evaluarse contra la página viva sin perder la evidencia que originó el resultado. FocusTrace mantiene inmutable el hallazgo original y guarda aparte un historial acotado de Recheck con el localizador/evidencia actual y uno de estos estados: `resolved`, `persistent`, `changed`, `missing` o `inconclusive`.
+
+La identidad estable se resuelve de forma conservadora entre DOM normal, Shadow DOM abierto y frames same-origin. Una coincidencia de selector solo se acepta cuando la firma guardada sigue identificando el mismo objetivo; las coincidencias ambiguas o cambios materiales de identidad nunca se reasignan silenciosamente a otro elemento. Las páginas históricas de Site Audit solo ofrecen Recheck en vivo cuando esa página está activa.
+
+`resolved` se utiliza únicamente cuando la regla original tiene cobertura completa para la expectativa evaluada y el resultado actual demuestra que ahora pasa. Si el objetivo desaparece en una regla con cobertura solo de hallazgos, o si no puede establecerse con seguridad la identidad/evidencia actual, el resultado permanece `inconclusive`/`missing` en vez de inventar una corrección. Un hallazgo que vuelve a reproducirse queda como `persistent`; un objetivo resuelto de forma segura pero con identidad/evidencia materialmente distinta queda como `changed`.
+
+En hallazgos runtime compatibles, Recheck solo vuelve a resolver el objetivo registrado en la página actual. Encontrar de nuevo el mismo nodo **no** demuestra que una barrera dependiente de interacción se haya corregido: el comportamiento runtime debe ejercitarse otra vez mediante Trace/Replay, por lo que la UI indica que se requiere replay en lugar de convertir la presencia del nodo en un resultado resuelto.
+
+Recheck sigue siendo local-first. Los resultados actualizan el informe actual, la auditoría multipágina guardada y FocusTrace Memory conservando los localizadores/vistas previas existentes de Memory y la evidencia original. La acción usa controles nativos operables por teclado y un estado `aria-live` en layouts estrechos de side-panel/DevTools; no transmite datos de la página inspeccionada.
+
