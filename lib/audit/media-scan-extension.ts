@@ -10,6 +10,7 @@ import { selectorFor } from './dom';
 import { appendAriaRoleStateRelationshipChecks } from './aria-role-state-scan-extension';
 import { appendElementInternalsSemantics } from './element-internals-semantics';
 import { appendEmbeddedContentChecks } from './embedded-content-scan-extension';
+import { appendFormAuditReviews } from './form-audit-scan-extension';
 import { appendFormErrorReviews } from './form-error-scan-extension';
 import {
   evaluateLiveCaptions,
@@ -203,6 +204,7 @@ export function appendMediaAccessibilityReviews(result: ScanResult, root: ScanRo
 
   appendTableRelationshipChecks(result, root);
   appendFormErrorReviews(result, root);
+  appendFormAuditReviews(result, root);
   appendSpecializedAccessibleNameChecks(result, root);
   appendElementInternalsSemantics(result, root);
   appendAriaRoleStateRelationshipChecks(result, root);

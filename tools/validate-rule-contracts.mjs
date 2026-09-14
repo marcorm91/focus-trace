@@ -11,11 +11,11 @@ const ALLOWED_SEVERITIES = new Set(['critical', 'serious', 'moderate', 'minor', 
 const RULE_DOC_BUNDLES = [
   {
     canonical: 'docs/RULES.md',
-    companions: ['docs/KEYBOARD_POINTER_RUNTIME.md'],
+    companions: ['docs/KEYBOARD_POINTER_RUNTIME.md', 'docs/FORM_AUDIT.md'],
   },
   {
     canonical: 'docs/SEVERITY-AUDIT.md',
-    companions: ['docs/KEYBOARD_POINTER_RUNTIME.md'],
+    companions: ['docs/KEYBOARD_POINTER_RUNTIME.md', 'docs/FORM_AUDIT.md'],
   },
 ];
 

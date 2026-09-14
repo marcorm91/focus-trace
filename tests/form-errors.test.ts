@@ -41,8 +41,9 @@ describe('WCAG form error review', () => {
 
     const [evaluation] = evaluateErrorIdentification(document);
     expect(evaluation).toMatchObject({ outcome: 'pass' });
-    expect(evaluation?.descriptionSignals[0]).toContain('aria-errormessage -> #email-error');
-    expect(evaluation?.detail).toContain('does not verify that the text fully describes');
+    expect(evaluation?.descriptionSignals[0]).toBe('aria-errormessage -> #email-error (non-empty text)');
+    expect(evaluation?.descriptionSignals[0]).not.toContain('Enter a valid email address');
+    expect(evaluation?.detail).toContain('does not persist the associated message text');
 
     const scan = runFocusTraceScan();
     expect(scan.review.some((candidate) => candidate.ruleId === 'FT-REVIEW-019')).toBe(false);
@@ -62,7 +63,7 @@ describe('WCAG form error review', () => {
 
     const [evaluation] = evaluateErrorIdentification(document);
     expect(evaluation?.outcome).toBe('pass');
-    expect(evaluation?.descriptionSignals[0]).toContain('aria-describedby -> #postcode-error');
+    expect(evaluation?.descriptionSignals[0]).toBe('aria-describedby -> #postcode-error (non-empty text)');
   });
 
   it('reviews correction guidance only when an invalid field has associated text and observable constraint metadata', () => {

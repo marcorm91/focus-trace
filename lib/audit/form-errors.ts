@@ -59,21 +59,22 @@ function invalidSignal(element: FormControl): string | undefined {
   return undefined;
 }
 
-function referencedText(element: Element, attribute: 'aria-errormessage' | 'aria-describedby'): string[] {
+function referencedTextSignals(element: Element, attribute: 'aria-errormessage' | 'aria-describedby'): string[] {
   const values: string[] = [];
   const ids = element.getAttribute(attribute)?.trim().split(/\s+/).filter(Boolean) ?? [];
+  const ownerDocument = element.ownerDocument;
   for (const id of ids) {
-    const target = document.getElementById(id);
-    const text = target?.textContent?.replace(/\s+/g, ' ').trim();
-    if (text) values.push(`${attribute} -> #${id}: ${JSON.stringify(text.slice(0, 180))}`);
+    const target = ownerDocument.getElementById(id);
+    const hasText = Boolean(target?.textContent?.replace(/\s+/g, ' ').trim());
+    if (hasText) values.push(`${attribute} -> #${id} (non-empty text)`);
   }
   return values;
 }
 
 function descriptionSignals(element: Element): string[] {
   return [
-    ...referencedText(element, 'aria-errormessage'),
-    ...referencedText(element, 'aria-describedby'),
+    ...referencedTextSignals(element, 'aria-errormessage'),
+    ...referencedTextSignals(element, 'aria-describedby'),
   ];
 }
 
@@ -114,8 +115,8 @@ export function evaluateErrorIdentification(root: ScanRoot): ErrorIdentification
       invalidSignal: signal,
       descriptionSignals: descriptions,
       detail: descriptions.length
-        ? `Observed invalid state: ${signal}. Associated text error candidate(s): ${descriptions.join('; ')}. FocusTrace does not verify that the text fully describes the detected input error.`
-        : `Observed invalid state: ${signal}. No non-empty aria-errormessage or aria-describedby text reference was found. Review visible/application-level error text and whether the automatically detected error is identified and described before treating this as a WCAG failure.`,
+        ? `Observed invalid state: ${signal}. Non-empty associated text error candidate(s) were resolved through ${descriptions.join('; ')}. FocusTrace does not persist the associated message text or verify that it fully describes the detected input error.`
+        : `Observed invalid state: ${signal}. No non-empty aria-errormessage or aria-describedby text reference was resolved. Review visible/application-level error text and whether the automatically detected error is identified and described before treating this as a WCAG failure.`,
     });
   }
 
@@ -139,7 +140,7 @@ export function evaluateErrorSuggestions(root: ScanRoot): ErrorSuggestionEvaluat
       invalidSignal: signal,
       descriptionSignals: descriptions,
       constraintSignals: constraints,
-      detail: `Observed invalid state: ${signal}. Associated error text exists and the control exposes correction-relevant constraint signal(s): ${constraints.join(', ')}. Review whether the message provides a useful correction suggestion when known, while considering the WCAG security/purpose exception.`,
+      detail: `Observed invalid state: ${signal}. Non-empty associated error text exists and the control exposes correction-relevant constraint signal(s): ${constraints.join(', ')}. FocusTrace does not persist the associated message text. Review whether the message provides a useful correction suggestion when known, while considering the WCAG security/purpose exception.`,
     });
   }
 
