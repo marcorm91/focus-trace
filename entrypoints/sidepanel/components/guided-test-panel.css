@@ -24,6 +24,19 @@
   font-weight: 700;
 }
 
+.guided-test-selector {
+  display: grid;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.guided-test-selector select {
+  box-sizing: border-box;
+  width: 100%;
+  min-height: 40px;
+  font: inherit;
+}
+
 .guided-test-boundary,
 .guided-test-empty,
 .guided-test-state,
@@ -44,6 +57,30 @@
 .guided-test-step {
   display: grid;
   gap: 12px;
+}
+
+.guided-runtime-evidence {
+  display: grid;
+  gap: 8px;
+  border: 1px solid currentColor;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.guided-runtime-evidence p,
+.guided-runtime-evidence ul {
+  margin: 0;
+}
+
+.guided-runtime-evidence ul {
+  display: grid;
+  gap: 6px;
+  padding-inline-start: 20px;
+}
+
+.guided-runtime-evidence li {
+  display: grid;
+  gap: 2px;
 }
 
 .guided-test-step fieldset {
@@ -117,7 +154,8 @@
 
 @media (forced-colors: active) {
   .guided-test-boundary,
-  .guided-coverage-badge {
+  .guided-coverage-badge,
+  .guided-runtime-evidence {
     border-color: CanvasText;
   }
 }
