@@ -1,3 +1,4 @@
+import { useId } from 'react';
 import { FINDING_REVIEW_STATES } from '../../../lib/audit/finding-review';
 import { tr, type AppLanguage } from '../../../shared/i18n';
 import type { FindingReviewState } from '../../../shared/types';
@@ -23,10 +24,11 @@ export function FindingReviewStateControl({
   onChange: (state: FindingReviewState) => void | Promise<void>;
   onReset: () => void | Promise<void>;
 }) {
+  const titleId = useId();
   return (
-    <section className="finding-review-state" aria-labelledby="finding-review-state-title">
+    <section className="finding-review-state" aria-labelledby={titleId}>
       <div>
-        <strong id="finding-review-state-title">
+        <strong id={titleId}>
           {tr(language, 'Finding workflow', 'Estado de gestión')}
         </strong>
         <small>
