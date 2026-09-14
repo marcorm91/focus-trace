@@ -492,7 +492,7 @@ export function renderVersionedSarif(envelope: FocusTraceExportEnvelopeV1): stri
         subject: envelope.subject.url ?? envelope.subject.origin ?? envelope.subject.title ?? '',
         scope: contextValue(envelope.context.scope),
         coverage: contextValue(envelope.context.coverage),
-        summary: envelope.summary,
+        summary: JSON.stringify(envelope.summary),
       },
       results,
     }],
@@ -524,7 +524,13 @@ export function renderVersionedJUnit(envelope: FocusTraceExportEnvelopeV1): stri
   const cases = envelope.findings.map((finding) => {
     const name = `${finding.ruleId}: ${finding.title}`;
     const classname = `FocusTrace.${finding.source}`;
-    const properties = `<properties><property name="outcome" value="${escapeXml(finding.outcome)}"/><property name="severity" value="${escapeXml(finding.severity)}"/><property name="standards" value="${escapeXml(referenceList(finding.references))}"/></properties>`;
+    const testcaseProperties = [
+      ['outcome', finding.outcome],
+      ['severity', finding.severity],
+      ['standards', referenceList(finding.references)],
+      ['remediation', finding.remediation ?? ''],
+    ].map(([propertyName, value]) => `<property name="${escapeXml(propertyName)}" value="${escapeXml(value)}"/>`).join('');
+    const properties = `<properties>${testcaseProperties}</properties>`;
     if (finding.outcome === 'fail') {
       return `  <testcase classname="${escapeXml(classname)}" name="${escapeXml(name)}">${properties}<failure message="${escapeXml(finding.title)}">${escapeXml(finding.evidence ?? finding.description)}</failure></testcase>`;
     }
