@@ -11,8 +11,10 @@ import { tr, type AppLanguage } from '../../shared/i18n';
 import type {
   AuditorNoteTarget,
   ExtensionMessage,
+  FindingReviewState,
   FocusMemoryCapturedEvidence,
   SaveAuditorNoteResponse,
+  SaveFindingReviewStateResponse,
   SaveScanResponse,
   ScanResult,
   SessionState,
@@ -142,6 +144,30 @@ export default function App() {
           language,
           'The note is saved in this session, but one local history copy could not be updated.',
           'La nota está guardada en esta sesión, pero no se pudo actualizar una copia del historial local.',
+        ));
+      }
+    } catch (reason) {
+      setError(localizedUserError(reason, language, 'session'));
+      throw reason;
+    }
+  }, [language, setSession, tabId]);
+
+  const saveFindingReview = useCallback(async (findingId: string, state?: FindingReviewState) => {
+    if (tabId == null) return;
+    setError(undefined);
+    try {
+      const response = (await browser.runtime.sendMessage({
+        type: 'FOCUSTRACE_SAVE_FINDING_REVIEW_STATE',
+        tabId,
+        findingId,
+        ...(state ? { state } : {}),
+      } satisfies ExtensionMessage)) as SaveFindingReviewStateResponse;
+      setSession(response.state);
+      if (response.warnings?.length) {
+        setError(tr(
+          language,
+          'The workflow state is saved in this session, but Site Audit history could not be updated.',
+          'El estado de gestión está guardado en esta sesión, pero no se pudo actualizar el historial de Site Audit.',
         ));
       }
     } catch (reason) {
@@ -541,6 +567,7 @@ export default function App() {
             onAnalyzePage={runScan}
             onSelectComponent={runComponentScan}
             onSaveAuditorNote={(findingId, text) => saveAuditorNote({ kind: 'scan-finding', findingId }, text)}
+            onSaveFindingReviewState={saveFindingReview}
           />
         )}
         {view === 'structure' && (

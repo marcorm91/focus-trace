@@ -1,5 +1,6 @@
 export type Severity = 'critical' | 'serious' | 'moderate' | 'minor' | 'info';
 export type FindingOutcome = 'fail' | 'review' | 'warning';
+export type FindingReviewState = 'open' | 'reviewed' | 'accepted' | 'false-positive' | 'resolved' | 'regressed';
 export type ConformanceLevel = 'A' | 'AA' | 'AAA';
 
 export type RuntimeEventKind =
@@ -346,6 +347,8 @@ export interface ScanIssue {
   textResize?: TextResizeEvidence;
   references: StandardReference[];
   auditorNote?: AuditorNote;
+  reviewState?: FindingReviewState;
+  reviewStateUpdatedAt?: number;
 }
 
 export type HeadingSignal = 'empty' | 'level-jump' | 'multiple-h1';
@@ -440,9 +443,15 @@ export type AuditorNoteTarget =
 
 export type AuditorNotePersistenceWarning =
   | 'focus-memory-write-failed'
-  | 'multipage-audit-write-failed';
+  | 'multipage-audit-write-failed'
+  | 'finding-review-write-failed';
 
 export interface SaveAuditorNoteResponse {
+  state: SessionState;
+  warnings?: AuditorNotePersistenceWarning[];
+}
+
+export interface SaveFindingReviewStateResponse {
   state: SessionState;
   warnings?: AuditorNotePersistenceWarning[];
 }
@@ -457,6 +466,7 @@ export type ExtensionMessage =
   | { type: 'FOCUSTRACE_CLEAR_SESSION'; tabId: number }
   | { type: 'FOCUSTRACE_DELETE_INTERACTION'; tabId: number; interactionId: string }
   | { type: 'FOCUSTRACE_SAVE_AUDITOR_NOTE'; tabId: number; target: AuditorNoteTarget; text: string }
+  | { type: 'FOCUSTRACE_SAVE_FINDING_REVIEW_STATE'; tabId: number; findingId: string; state?: FindingReviewState }
   | { type: 'FOCUSTRACE_RESET_TAB'; tabId: number }
   | { type: 'FOCUSTRACE_ENSURE_INJECTED'; tabId: number; mode: RuntimeInjectionMode }
   | { type: 'FOCUSTRACE_SESSION_UPDATED'; state: SessionState }

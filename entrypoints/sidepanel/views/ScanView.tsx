@@ -17,10 +17,11 @@ import {
   tr,
   type AppLanguage,
 } from '../../../shared/i18n';
-import type { FindingOutcome, ScanIssue, ScanResult, Severity } from '../../../shared/types';
+import type { FindingOutcome, FindingReviewState, ScanIssue, ScanResult, Severity } from '../../../shared/types';
 import { Empty, ReferenceList } from '../components/Common';
 import { AuditorNoteEditor } from '../components/AuditorNoteEditor';
 import { FindingGuidance } from '../components/FindingGuidance';
+import { FindingReviewStateControl } from '../components/FindingReviewStateControl';
 import { ImpactMatrix } from '../components/ImpactMatrix';
 import './scan-workspace.css';
 
@@ -127,6 +128,7 @@ export function ScanView({
   onAnalyzePage,
   onSelectComponent,
   onSaveAuditorNote,
+  onSaveFindingReviewState,
 }: {
   scan?: ScanResult | undefined;
   level: ExplanationLevel;
@@ -135,6 +137,7 @@ export function ScanView({
   onAnalyzePage: () => void | Promise<void>;
   onSelectComponent: () => void | Promise<void>;
   onSaveAuditorNote: (findingId: string, text: string) => void | Promise<void>;
+  onSaveFindingReviewState: (findingId: string, state?: FindingReviewState) => void | Promise<void>;
 }) {
   const [filter, setFilter] = useState<ScanFilter>('fail');
   const [category, setCategory] = useState<ScanCategory>('all');
@@ -430,6 +433,7 @@ export function ScanView({
                         language={language}
                         onLocate={onLocate}
                         onSaveAuditorNote={onSaveAuditorNote}
+                        onSaveFindingReviewState={onSaveFindingReviewState}
                         key={issues[0]!.ruleId}
                       />
                     ))}
@@ -450,12 +454,14 @@ function FindingRuleAccordion({
   language,
   onLocate,
   onSaveAuditorNote,
+  onSaveFindingReviewState,
 }: {
   issues: ScanIssue[];
   level: ExplanationLevel;
   language: AppLanguage;
   onLocate: (selector: string) => void | Promise<void>;
   onSaveAuditorNote: (findingId: string, text: string) => void | Promise<void>;
+  onSaveFindingReviewState: (findingId: string, state?: FindingReviewState) => void | Promise<void>;
 }) {
   const [index, setIndex] = useState(0);
   const first = issues[0]!;
@@ -519,6 +525,7 @@ function FindingRuleAccordion({
           language={language}
           onLocate={onLocate}
           onSaveAuditorNote={onSaveAuditorNote}
+          onSaveFindingReviewState={onSaveFindingReviewState}
         />
       </div>
     </details>
@@ -531,12 +538,14 @@ function FindingCard({
   language,
   onLocate,
   onSaveAuditorNote,
+  onSaveFindingReviewState,
 }: {
   issue: ScanIssue;
   level: ExplanationLevel;
   language: AppLanguage;
   onLocate: (selector: string) => void | Promise<void>;
   onSaveAuditorNote: (findingId: string, text: string) => void | Promise<void>;
+  onSaveFindingReviewState: (findingId: string, state?: FindingReviewState) => void | Promise<void>;
 }) {
   const copy = localizedScanIssue(issue, language);
   const description = reportFindingDescription(issue, language);
@@ -793,6 +802,12 @@ function FindingCard({
       )}
 
       <FindingGuidance issue={issue} language={language} />
+      <FindingReviewStateControl
+        state={issue.reviewState}
+        language={language}
+        onChange={(state) => onSaveFindingReviewState(issue.id, state)}
+        onReset={() => onSaveFindingReviewState(issue.id)}
+      />
       <AuditorNoteEditor
         note={issue.auditorNote}
         language={language}

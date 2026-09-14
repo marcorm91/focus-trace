@@ -2,6 +2,7 @@ import { useMemo } from 'react';
 import { localizedSeverity, tr, type AppLanguage } from '../../../shared/i18n';
 import { countByOutcomeAndSeverity } from '../../../shared/severity';
 import type { FindingOutcome, ScanIssue, ScanResult, Severity } from '../../../shared/types';
+import { FindingLifecycleSummary } from './FindingLifecycleSummary';
 import { FocusMemorySummary } from './FocusMemorySummary';
 
 const DISPLAY_SEVERITIES: Severity[] = ['critical', 'serious', 'moderate', 'minor'];
@@ -30,6 +31,7 @@ export function ImpactMatrix({ scan, language }: { scan: ScanResult; language: A
 
   return (
     <>
+      <FindingLifecycleSummary scan={scan} language={language} />
       <FocusMemorySummary scan={scan} language={language} />
 
       {total > 0 && (

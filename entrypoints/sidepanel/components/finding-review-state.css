@@ -1,0 +1,40 @@
+.finding-review-state {
+  display: grid;
+  gap: 10px;
+  margin-top: 14px;
+  padding: 12px;
+  border: 1px solid var(--ft-border-soft);
+  border-radius: 10px;
+}
+
+.finding-review-state > div {
+  display: grid;
+  gap: 4px;
+}
+
+.finding-review-state small {
+  line-height: 1.45;
+}
+
+.finding-review-state label {
+  display: grid;
+  gap: 6px;
+}
+
+.finding-review-state select,
+.finding-review-state button {
+  min-height: 36px;
+}
+
+@media (max-width: 480px) {
+  .finding-review-state select,
+  .finding-review-state button {
+    width: 100%;
+  }
+}
+
+@media (forced-colors: active) {
+  .finding-review-state {
+    border-color: CanvasText;
+  }
+}

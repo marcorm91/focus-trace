@@ -34,6 +34,25 @@ FocusTrace found an authoring or standards-maintenance risk that should be fixed
 
 The automated expectation tested by a rule was met. PASS never means full WCAG conformance.
 
+## Finding deduplication, lifecycle and audit profiles
+
+FocusTrace treats a static finding identity as the combination of its FocusTrace rule ID and normalized primary target. Deduplication is stricter: two findings collapse only when **rule, target and evidence are equivalent**. Evidence includes the outcome/severity and the bounded structured evidence already produced by the rule. Distinct evidence on the same target is never discarded as duplicate noise.
+
+For two compatible static observations, FocusTrace assigns four lifecycle states:
+
+- `new`: the current rule/target identity had no matching finding in the previous compatible observation.
+- `persistent`: the same rule/target retains equivalent outcome, severity and evidence.
+- `changed`: the same rule/target remains but its bounded evidence identity changed.
+- `resolved`: a previous rule/target is absent from the current compatible observation. The old finding remains historical evidence and is not injected into the current result list.
+
+Lifecycle is derived from adjacent observations, so it is reversible: a resolved finding that appears again in the next compatible scan is `new` again. Static Session/Memory comparison uses the same persisted normalized scan. Site Audit recomputes lifecycle against the previous stored scan of the same normalized page before replacement. Recheck does not rewrite the original finding and retains its conservative `missing` and `inconclusive` states. Saved Replay already uses the shared four-state vocabulary for completed runtime comparisons, with `missing-element` and `broken-flow` reserved for journeys that cannot be completed safely. Absence is never promoted to `resolved` when the required comparison is incomplete.
+
+The automatic lifecycle is separate from the auditor-managed workflow state. A static finding can be `open`, `reviewed`, `accepted`, `false-positive`, `resolved` or `regressed` without changing its rule outcome or severity. Managed states and auditor notes are stored locally against a hashed scope/finding identity, bounded to 500 records and removable/resettable by the user. A `resolved` managed finding becomes `regressed` only when the same identity is observed in a later scan timestamp; updating the same observation, including Recheck persistence, does not trigger regression.
+
+Audit profiles are local reporting/persistence filters, not alternate conformance engines. The built-in Complete profile preserves all supported rule levels, scopes, severities and FocusTrace rule families so enabling profiles does not silently reduce the existing FocusTrace result set. Users can keep up to 20 custom profiles and select page, component and/or Site Audit scope, all supported rules or a WCAG A/AA/AAA target, standards-source set, exact FocusTrace rule IDs, severity set and rule-family set. Rule families are derived independently from FocusTrace rule metadata/naming rather than any axe/Deque runtime dependency. Rules without an explicit WCAG level remain eligible instead of being silently hidden by a level filter.
+
+A profile snapshot is persisted with a normalized scan so later comparisons know which configuration produced that evidence. Lifecycle comparison is performed only for compatible document, scope and profile contexts. Changing a profile therefore starts a new comparison baseline instead of claiming that filtered-out findings were resolved. Profile storage stays in `browser.storage.local`; applying, editing, deleting and resetting profiles does not modify the inspected page or transmit page data.
+
 ## Saved user-flow regression methodology
 
 Saved Replay regression is runtime evidence comparison, not an automated WCAG conformance result. A saved flow is derived from an observed Trace and persists only bounded action/checkpoint metadata plus the runtime finding baseline needed for later comparison.

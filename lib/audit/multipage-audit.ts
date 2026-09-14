@@ -1,5 +1,7 @@
 import type { ReportVisualEvidence } from '../report/visual-evidence';
 import type { ScanResult } from '../../shared/types';
+import { auditProfileSnapshotKey } from './audit-profiles';
+import { applyFindingLifecycle } from './finding-lifecycle';
 
 export const MULTIPAGE_AUDIT_VERSION = 1 as const;
 
@@ -121,8 +123,14 @@ export function upsertAuditPage(
   scan: ScanResult,
   visualEvidence?: AuditPageVisualEvidence,
 ): AccessibilityAudit {
-  const record = pageRecord(scan, visualEvidence);
-  const index = audit.pages.findIndex((page) => page.key === record.key);
+  const key = auditPageKey(scan.url);
+  const index = audit.pages.findIndex((page) => page.key === key);
+  const previousCandidate = index >= 0 ? audit.pages[index]!.scan : undefined;
+  const previousScan = previousCandidate
+    && auditProfileSnapshotKey(previousCandidate) === auditProfileSnapshotKey(scan)
+    ? previousCandidate
+    : undefined;
+  const record = pageRecord(applyFindingLifecycle(previousScan, scan), visualEvidence);
   const pages = [...audit.pages];
   if (index >= 0) pages[index] = record;
   else pages.push(record);
@@ -143,13 +151,14 @@ export function applyAuditAnalysis(
 ): MultipageAuditStore {
   if (plan.kind === 'new') {
     const reviewedAt = scan.scannedAt;
+    const normalizedScan = applyFindingLifecycle(undefined, scan);
     const audit: AccessibilityAudit = {
       id: auditId,
       name: plan.site || scan.title || 'Audit',
       createdAt: reviewedAt,
       updatedAt: reviewedAt,
       sites: [plan.site],
-      pages: [pageRecord(scan, visualEvidence)],
+      pages: [pageRecord(normalizedScan, visualEvidence)],
     };
     return {
       version: MULTIPAGE_AUDIT_VERSION,

@@ -1,0 +1,80 @@
+.finding-lifecycle-summary {
+  display: grid;
+  gap: 12px;
+  margin-bottom: 14px;
+  padding: 14px;
+  border: 1px solid var(--border-subtle, currentColor);
+  border-radius: 10px;
+}
+
+.finding-lifecycle-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.finding-lifecycle-heading > div {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.finding-lifecycle-heading small,
+.finding-lifecycle-heading > span {
+  font-size: 14px;
+}
+
+.finding-lifecycle-heading > span {
+  flex: 0 1 auto;
+  max-width: 44%;
+  overflow-wrap: anywhere;
+  text-align: right;
+}
+
+.finding-lifecycle-counts {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.finding-lifecycle-counts > div {
+  display: grid;
+  gap: 2px;
+  padding: 8px;
+  border: 1px solid var(--border-subtle, currentColor);
+  border-radius: 8px;
+}
+
+.finding-lifecycle-counts dt {
+  font-size: 14px;
+}
+
+.finding-lifecycle-counts dd {
+  margin: 0;
+  font-size: 18px;
+  font-weight: 700;
+}
+
+@media (max-width: 480px) {
+  .finding-lifecycle-heading {
+    display: grid;
+  }
+
+  .finding-lifecycle-heading > span {
+    max-width: none;
+    text-align: left;
+  }
+
+  .finding-lifecycle-counts {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (forced-colors: active) {
+  .finding-lifecycle-summary,
+  .finding-lifecycle-counts > div {
+    border-color: CanvasText;
+  }
+}

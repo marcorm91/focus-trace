@@ -1,6 +1,12 @@
 import { browser } from '#imports';
 import type { ScanResult } from '../../shared/types';
 import {
+  applyAuditProfile,
+  profileSupportsScope,
+} from './audit-profiles';
+import { loadActiveAuditProfile } from './audit-profile-storage';
+import { applyStoredFindingReviews } from './finding-review-storage';
+import {
   MULTIPAGE_AUDIT_VERSION,
   activeAuditFromStore,
   applyAuditAnalysis,
@@ -197,7 +203,12 @@ export async function recordMultipageAuditScan(
   visualEvidence?: AuditPageVisualEvidence,
 ): Promise<MultipageAuditStore> {
   const current = await loadMultipageAuditStore();
-  const next = applyAuditAnalysis(current, scan, plan, auditId(), visualEvidence);
+  const activeProfile = await loadActiveAuditProfile();
+  const reviewedScan = await applyStoredFindingReviews(scan);
+  const preparedScan = profileSupportsScope(activeProfile, 'site')
+    ? applyAuditProfile(reviewedScan, activeProfile, 'site')
+    : reviewedScan;
+  const next = applyAuditAnalysis(current, preparedScan, plan, auditId(), visualEvidence);
   await saveMultipageAuditStore(next);
   return loadMultipageAuditStore();
 }
