@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, maximum-scale=1.5, user-scalable=yes">
+  <title>Viewport visual fixture</title>
+  <style>
+    html, body { margin: 0; background: #fff; color: #000; font: 16px/1.5 sans-serif; }
+    main { padding: 24px; }
+    .stage { position: relative; width: 260px; min-height: 80px; }
+    #backdrop { position: absolute; inset: 0; z-index: 0; background: #000; }
+    #stacked { position: relative; z-index: 1; margin: 0; padding: 20px; color: rgb(119, 119, 119); background: transparent; }
+    @media (orientation: portrait) {
+      #orientation-target { transform: rotate(90deg); }
+    }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Viewport visual fixture</h1>
+    <p id="orientation-target">Orientation candidate</p>
+    <div class="stage">
+      <div id="backdrop" aria-hidden="true"></div>
+      <p id="stacked">Stacked contrast text</p>
+    </div>
+  </main>
+</body>
+</html>
