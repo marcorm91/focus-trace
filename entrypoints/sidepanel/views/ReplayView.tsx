@@ -20,10 +20,9 @@ import {
   type ScanTargetHighlightTone,
 } from '../../../lib/runtime/scan-target-overlay';
 import { localeFor, tr, type AppLanguage } from '../../../shared/i18n';
-import type { RuntimeBreakpointSettings, RuntimeEvent, RuntimeInteraction } from '../../../shared/types';
+import type { RuntimeEvent, RuntimeInteraction } from '../../../shared/types';
 import { ActionableRemediation } from '../components/ActionableRemediation';
 import { Empty, ReferenceList } from '../components/Common';
-import { SavedFlowRegressionPanel } from './SavedFlowRegressionPanel';
 
 function phaseLabel(phase: RuntimeReplayPhase, language: AppLanguage): string {
   if (phase === 'trigger') return tr(language, 'Trigger', 'Acción');
@@ -102,7 +101,6 @@ export function ReplayView({
   journey,
   semantics,
   recording,
-  breakpoints,
   level,
   language,
 }: {
@@ -111,7 +109,6 @@ export function ReplayView({
   journey: FocusJourney;
   semantics: FocusTransitionSemantic[];
   recording: boolean;
-  breakpoints: RuntimeBreakpointSettings;
   level: ExplanationLevel;
   language: AppLanguage;
   onSelectFocusTarget: (selector: string) => void | Promise<void>;
@@ -389,14 +386,6 @@ export function ReplayView({
           <ReferenceList references={current.event.references} language={language} />
         ) : null}
       </article>
-      <SavedFlowRegressionPanel
-        events={events}
-        interactions={interactions}
-        recording={recording}
-        breakpoints={breakpoints}
-        language={language}
-      />
-
     </section>
   );
 }

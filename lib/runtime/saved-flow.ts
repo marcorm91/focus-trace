@@ -248,6 +248,7 @@ export function savedFlowCurrentFindings(events: RuntimeEvent[]): SavedFlowCurre
 export function compareSavedFlowFindings(
   baseline: SavedFlowBaselineFinding[],
   current: SavedFlowCurrentFinding[],
+  complete = true,
 ): SavedFlowRegressionResult[] {
   const results: SavedFlowRegressionResult[] = [];
   const matchedCurrent = new Set<number>();
@@ -259,7 +260,9 @@ export function compareSavedFlowFindings(
       && sameTarget(candidate.target, original.target),
     );
     if (exactIndex < 0) {
-      results.push({ state: 'resolved', ruleId: original.ruleId, baseline: original, reason: 'The saved finding was not observed in the current replay evidence.' });
+      if (complete) {
+        results.push({ state: 'resolved', ruleId: original.ruleId, baseline: original, reason: 'The saved finding was not observed after the complete replay finished.' });
+      }
       continue;
     }
 

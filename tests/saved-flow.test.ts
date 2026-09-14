@@ -123,6 +123,19 @@ describe('saved user-flow regressions', () => {
     expect(results.map((result) => result.state)).toEqual(['persistent', 'changed', 'resolved', 'new']);
   });
 
+  it('does not infer resolved findings from an incomplete replay', () => {
+    const baseline: SavedFlowBaselineFinding[] = [
+      { id: 'a', ruleId: 'FT-RUNTIME-001', kind: 'focus-obscured', outcome: 'fail', target: { locator: '#a', tag: 'button' } },
+      { id: 'b', ruleId: 'FT-RUNTIME-002', kind: 'focus-lost', outcome: 'review', target: { locator: '#b', tag: 'a' } },
+    ];
+    const current: SavedFlowCurrentFinding[] = [
+      { ruleId: 'FT-RUNTIME-001', kind: 'focus-obscured', outcome: 'fail', target: { locator: '#a', tag: 'button' } },
+    ];
+
+    const results = compareSavedFlowFindings(baseline, current, false);
+    expect(results.map((result) => result.state)).toEqual(['persistent']);
+  });
+
   it('extracts only current runtime findings and exposes explicit flow failure states', () => {
     const events = [
       event({ id: 'info', kind: 'focus', element: { tag: 'button', selector: '#a' } }),

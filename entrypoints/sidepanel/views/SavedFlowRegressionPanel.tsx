@@ -240,7 +240,7 @@ export function SavedFlowRegressionPanel({
   ) => {
     const session = await stopRegressionRecording(tabId, breakpoints);
     const current = savedFlowCurrentFindings(session.events.filter((event) => event.timestamp >= startedAt));
-    const comparison = compareSavedFlowFindings(flow.baselineFindings, current);
+    const comparison = compareSavedFlowFindings(flow.baselineFindings, current, !failure);
     setResults(failure ? [failure, ...comparison] : comparison);
     setRunState(failure ? 'failed' : 'complete');
     setManualStep(undefined);
