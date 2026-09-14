@@ -1,0 +1,28 @@
+name: FocusTrace Playwright accessibility
+
+on:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  accessibility:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run build:e2e
+      - run: npm run playwright:install:chromium
+      - run: npx playwright test examples/playwright/focustrace.spec.ts
+      - name: Upload FocusTrace reports
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: focustrace-reports
+          path: |
+            artifacts/focustrace/focustrace.sarif.json
+            artifacts/focustrace/focustrace.junit.xml
+          if-no-files-found: warn
