@@ -15,24 +15,40 @@ export async function pickComponentInPage(language: AppLanguage): Promise<Compon
 
   const scopeAttribute = 'data-focustrace-scan-component';
   const es = language === 'es';
-  const selectorFor = (element: Element): string => {
-    if (element.id) return `#${CSS.escape(element.id)}`;
+  const localSelectorFor = (element: Element, root: Document | ShadowRoot): string => {
+    if (element.id) {
+      const direct = `#${CSS.escape(element.id)}`;
+      try { if (root.querySelectorAll(direct).length === 1) return direct; } catch { /* continue */ }
+    }
     const segments: string[] = [];
     let current: Element | null = element;
-    while (current && current !== document.documentElement) {
-      const tag = current.tagName.toLowerCase();
-      const parent: HTMLElement | null = current.parentElement;
-      if (!parent) {
-        segments.unshift(tag);
-        break;
+    while (current) {
+      let segment = current.tagName.toLowerCase();
+      const parent = current.parentElement;
+      if (parent && parent.getRootNode() === root) {
+        const siblings = Array.from(parent.children).filter((item) => item.tagName === current!.tagName);
+        if (siblings.length > 1) segment += `:nth-of-type(${siblings.indexOf(current) + 1})`;
       }
-      const siblings = [...parent.children].filter((candidate) => candidate.tagName === current!.tagName);
-      const position = siblings.indexOf(current) + 1;
-      segments.unshift(siblings.length > 1 ? `${tag}:nth-of-type(${position})` : tag);
+      segments.unshift(segment);
+      const candidate = segments.join(' > ');
+      try { if (root.querySelectorAll(candidate).length === 1 && root.querySelector(candidate) === element) return candidate; } catch { /* continue */ }
+      if (!parent || parent.getRootNode() !== root) break;
       current = parent;
-      if (segments.length >= 7) break;
     }
     return segments.join(' > ');
+  };
+  const selectorFor = (element: Element): string => {
+    const root = element.getRootNode();
+    if (root?.nodeType === 11 && 'host' in (root as object)) {
+      const shadow = root as ShadowRoot;
+      return `${selectorFor(shadow.host)} |shadow| ${localSelectorFor(element, shadow)}`;
+    }
+    return localSelectorFor(element, element.ownerDocument);
+  };
+  const composedParent = (element: Element): Element | null => {
+    if (element.parentElement) return element.parentElement;
+    const root = element.getRootNode();
+    return root?.nodeType === 11 && 'host' in (root as object) ? (root as ShadowRoot).host : null;
   };
 
   const readableLabel = (element: Element): string | undefined => {
@@ -42,7 +58,7 @@ export async function pickComponentInPage(language: AppLanguage): Promise<Compon
     if (labelledBy) {
       const text = labelledBy
         .split(/\s+/)
-        .map((id) => document.getElementById(id)?.textContent?.replace(/\s+/g, ' ').trim() ?? '')
+        .map((id) => element.ownerDocument.getElementById(id)?.textContent?.replace(/\s+/g, ' ').trim() ?? '')
         .filter(Boolean)
         .join(' ')
         .trim();
@@ -141,8 +157,8 @@ export async function pickComponentInPage(language: AppLanguage): Promise<Compon
       resolve(result);
     };
     const onMove = (event: MouseEvent) => {
-      const target = event.target instanceof Element ? event.target : null;
-      if (ignored(target)) return;
+      const target = event.composedPath().find((item) => item instanceof Element && !ignored(item)) as Element | undefined;
+      if (!target) return;
       hovered = target;
       candidate = target;
       render();
@@ -171,9 +187,10 @@ export async function pickComponentInPage(language: AppLanguage): Promise<Compon
         finish({ cancelled: true });
         return;
       }
-      if (event.key === 'ArrowUp' && candidate?.parentElement && candidate.parentElement !== document.documentElement) {
+      const parent = candidate ? composedParent(candidate) : null;
+      if (event.key === 'ArrowUp' && parent && parent !== document.documentElement) {
         event.preventDefault();
-        candidate = candidate.parentElement;
+        candidate = parent;
         render();
         return;
       }

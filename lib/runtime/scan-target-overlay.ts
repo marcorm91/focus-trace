@@ -129,12 +129,56 @@ export function locateScanTargetInPage(
     return { found: true, selector, rendered: true };
   }
 
-  let target: Element | null = null;
-  try {
-    target = document.querySelector(selector);
-  } catch {
-    return { found: false, selector, rendered: false };
-  }
+  const nestedFrameDocument = (frame: Element): Document | null => {
+    try {
+      const nested = (frame as Element & { contentDocument?: Document | null }).contentDocument ?? null;
+      return nested?.documentElement ? nested : null;
+    } catch { return null; }
+  };
+  const resolveTarget = (path: string): Element | null => {
+    const tokens = path.split(/\s+\|(shadow|frame)\|\s+/);
+    const first = tokens[0]?.trim();
+    if (!first) return null;
+    let context: Document | ShadowRoot = document;
+    let current: Element | null = null;
+    try { current = context.querySelector(first); } catch { return null; }
+    if (!current) return null;
+    for (let index = 1; index < tokens.length; index += 2) {
+      const boundary = tokens[index];
+      const nextSelector = tokens[index + 1]?.trim();
+      if (!nextSelector) return null;
+      if (boundary === 'shadow') {
+        const shadow = (current as Element & { shadowRoot?: ShadowRoot | null }).shadowRoot ?? null;
+        if (!shadow || shadow.mode !== 'open') return null;
+        context = shadow;
+      } else if (boundary === 'frame') {
+        const nested = nestedFrameDocument(current);
+        if (!nested) return null;
+        context = nested;
+      } else return null;
+      try { current = context.querySelector(nextSelector); } catch { return null; }
+      if (!current) return null;
+    }
+    return current;
+  };
+  const topViewportRect = (element: Element) => {
+    const rect = element.getBoundingClientRect();
+    let top = rect.top;
+    let left = rect.left;
+    let owner = element.ownerDocument;
+    while (owner !== document) {
+      try {
+        const frame = owner.defaultView?.frameElement;
+        if (!frame || frame.nodeType !== 1) break;
+        const frameRect = (frame as Element).getBoundingClientRect();
+        top += frameRect.top;
+        left += frameRect.left;
+        owner = (frame as Element).ownerDocument;
+      } catch { break; }
+    }
+    return { top, left, width: rect.width, height: rect.height, right: left + rect.width, bottom: top + rect.height };
+  };
+  const target = resolveTarget(selector);
   if (!target) return { found: false, selector, rendered: false };
 
   const readableLabel = (element: Element): string => {
@@ -144,31 +188,40 @@ export function locateScanTargetInPage(
     if (labelledBy) {
       labelledText = labelledBy
         .split(/\s+/)
-        .map((id) => document.getElementById(id)?.textContent?.replace(/\s+/g, ' ').trim() ?? '')
+        .map((id) => element.ownerDocument.getElementById(id)?.textContent?.replace(/\s+/g, ' ').trim() ?? '')
         .filter(Boolean)
         .join(' ');
     }
     const visible = element.textContent?.replace(/\s+/g, ' ').trim() ?? '';
-    const value = element instanceof HTMLInputElement || element instanceof HTMLTextAreaElement
-      ? element.value.trim()
+    const value = ['input', 'textarea'].includes(element.tagName.toLowerCase())
+      ? String((element as Element & { value?: string }).value ?? '').trim()
       : '';
     return (ariaLabel || labelledText || visible || value).slice(0, 110);
   };
 
   target.scrollIntoView({ block: 'center', inline: 'center', behavior: 'auto' });
+  let owner = target.ownerDocument;
+  while (owner !== document) {
+    try {
+      const frame = owner.defaultView?.frameElement;
+      if (!frame || frame.nodeType !== 1) break;
+      (frame as Element).scrollIntoView({ block: 'center', inline: 'center', behavior: 'auto' });
+      owner = (frame as Element).ownerDocument;
+    } catch { break; }
+  }
 
-  const rect = target.getBoundingClientRect();
+  const rect = topViewportRect(target);
   if (rect.width <= 0 || rect.height <= 0) {
     return { found: true, selector, rendered: false };
   }
 
-  if (options.focusTarget !== false && target instanceof HTMLElement) {
+  if (options.focusTarget !== false && 'focus' in (target as object)) {
     const naturallyFocusable = target.matches(
       'a[href], button, input, select, textarea, summary, iframe, [contenteditable="true"], [tabindex]',
     );
     const previousTabindex = target.getAttribute('tabindex');
     if (!naturallyFocusable) target.setAttribute('tabindex', '-1');
-    target.focus({ preventScroll: true });
+    (target as HTMLElement).focus({ preventScroll: true });
     if (!naturallyFocusable) {
       if (previousTabindex == null) target.removeAttribute('tabindex');
       else target.setAttribute('tabindex', previousTabindex);

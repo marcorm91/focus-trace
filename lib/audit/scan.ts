@@ -27,6 +27,7 @@ import {
 } from '../../shared/structural-html-rules';
 import { TEXT_SPACING_ACT_ID_BY_PROPERTY, TEXT_SPACING_RULE } from '../../shared/text-spacing-rules';
 import { evaluateAdvancedAria, type AriaValidationSignalKind } from './aria-validator';
+import { resolveComposedSelector } from './composed-tree';
 import { evaluateAutocompletePurpose, type AutocompletePurposeEvaluation } from './autocomplete-purpose';
 import { evaluateBypassBlocks } from './bypass-blocks';
 import {
@@ -357,7 +358,7 @@ function elementForIssue(issue: ScanIssue): Element | undefined {
   const target = issue.targets[0];
   if (!target) return undefined;
   try {
-    return document.querySelector(target) ?? undefined;
+    return resolveComposedSelector(target) ?? undefined;
   } catch {
     return undefined;
   }
@@ -682,7 +683,7 @@ function appendResizeTextReview(result: ScanResult, context?: TextResizeContext)
 function runFocusTraceScanWithCache(scope?: ComponentScanScope, textResize?: TextResizeContext): ScanResult {
   const result = runBaseFocusTraceScan(scope);
   const componentScope = result.scope?.type === 'component' ? result.scope : undefined;
-  const root = componentScope ? document.querySelector(componentScope.selector) : document;
+  const root = componentScope ? resolveComposedSelector(componentScope.selector) : document;
   if (!root) return result;
 
   pruneInactiveTextContrast(result, root);

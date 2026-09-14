@@ -1,57 +1,53 @@
+import { composedSelectorFor } from './composed-tree';
 import { registeredExplicitAriaRole } from './standards-registry';
 
-function selectorResolvesOnlyTo(selector: string, element: Element): boolean {
-  try {
-    const matches = document.querySelectorAll(selector);
-    return matches.length === 1 && matches[0] === element;
-  } catch {
-    return false;
-  }
-}
-
-function isLikelyVolatileId(id: string): boolean {
-  const normalized = id.trim().toLowerCase();
-  if (!normalized) return true;
-
-  return /^(?:yui[_-]|ext-gen|ember\d|react-select-|mui-)/.test(normalized)
-    || /(?:^|[_-])\d{8,}(?:[_-]|$)/.test(normalized);
-}
-
-function stableIdSelector(element: Element): string | undefined {
-  if (!element.id || isLikelyVolatileId(element.id)) return undefined;
-  const selector = `#${CSS.escape(element.id)}`;
-  return selectorResolvesOnlyTo(selector, element) ? selector : undefined;
-}
-
 export function selectorFor(element: Element): string {
-  const directIdSelector = stableIdSelector(element);
-  if (directIdSelector) return directIdSelector;
+  return composedSelectorFor(element);
+}
 
-  const parts: string[] = [];
+function computedStyleFor(element: Element): CSSStyleDeclaration {
+  const view = element.ownerDocument.defaultView;
+  return view?.getComputedStyle(element) ?? getComputedStyle(element);
+}
+
+function tagName(element: Element): string {
+  return element.tagName.toLowerCase();
+}
+
+function composedParentElement(element: Element): Element | null {
+  if (element.parentElement) return element.parentElement;
+  const root = element.getRootNode();
+  if (root?.nodeType === 11 && 'host' in (root as object)) return (root as ShadowRoot).host;
+  if (element === element.ownerDocument.documentElement) {
+    try {
+      const frame = element.ownerDocument.defaultView?.frameElement;
+      return frame && frame.nodeType === 1 ? frame as Element : null;
+    } catch {
+      return null;
+    }
+  }
+  return null;
+}
+
+function hasInertAncestor(element: Element): boolean {
   let current: Element | null = element;
   while (current) {
-    let part = current.tagName.toLowerCase();
-    const parent: Element | null = current.parentElement;
-    if (parent) {
-      const currentTag = current.tagName;
-      const siblings = [...parent.children].filter((child) => child.tagName === currentTag);
-      if (siblings.length > 1) part += `:nth-of-type(${siblings.indexOf(current) + 1})`;
-    }
-    parts.unshift(part);
-
-    const structuralSelector = parts.join(' > ');
-    if (selectorResolvesOnlyTo(structuralSelector, element)) return structuralSelector;
-
-    const ancestorIdSelector = stableIdSelector(current);
-    if (ancestorIdSelector) {
-      parts[0] = ancestorIdSelector;
-      const anchoredSelector = parts.join(' > ');
-      if (selectorResolvesOnlyTo(anchoredSelector, element)) return anchoredSelector;
-    }
-
-    current = parent;
+    if (current.hasAttribute('inert')) return true;
+    current = composedParentElement(current);
   }
-  return parts.join(' > ');
+  return false;
+}
+
+function idReference(element: Element, id: string): Element | null {
+  const root = element.getRootNode();
+  if (root && 'getElementById' in (root as object)) {
+    try {
+      return (root as Document | ShadowRoot).getElementById(id);
+    } catch {
+      // Fall through to the owning document.
+    }
+  }
+  return element.ownerDocument.getElementById(id);
 }
 
 function normalise(value: string | null | undefined): string {
@@ -141,7 +137,7 @@ const ARIA_DISABLED_UI_ROLES = new Set([
 ]);
 
 function isAccNameHidden(element: Element): boolean {
-  const style = getComputedStyle(element);
+  const style = computedStyleFor(element);
   if (style.display === 'none') return true;
   if (style.visibility === 'hidden' || style.visibility === 'collapse') return true;
   if (style.getPropertyValue('content-visibility') === 'hidden') return true;
@@ -149,25 +145,18 @@ function isAccNameHidden(element: Element): boolean {
 }
 
 function labelableLabels(element: Element): readonly HTMLLabelElement[] {
-  if (
-    element instanceof HTMLButtonElement ||
-    element instanceof HTMLInputElement ||
-    element instanceof HTMLMeterElement ||
-    element instanceof HTMLOutputElement ||
-    element instanceof HTMLProgressElement ||
-    element instanceof HTMLSelectElement ||
-    element instanceof HTMLTextAreaElement
-  ) {
-    return element.labels ? [...element.labels] : [];
-  }
-  return [];
+  const tag = tagName(element);
+  if (!['button', 'input', 'meter', 'output', 'progress', 'select', 'textarea'].includes(tag)) return [];
+  const labels = (element as Element & { labels?: NodeListOf<HTMLLabelElement> | null }).labels;
+  return labels ? Array.from(labels) : [];
 }
 
 function embeddedControlValue(element: Element): string {
-  if (element instanceof HTMLInputElement) return normalise(element.value);
-  if (element instanceof HTMLTextAreaElement) return normalise(element.value);
-  if (element instanceof HTMLSelectElement) {
-    return normalise([...element.selectedOptions].map((option) => option.textContent ?? '').join(' '));
+  const tag = tagName(element);
+  if (tag === 'input' || tag === 'textarea') return normalise((element as Element & { value?: string }).value);
+  if (tag === 'select') {
+    const selected = (element as Element & { selectedOptions?: HTMLCollectionOf<HTMLOptionElement> }).selectedOptions;
+    return normalise(selected ? Array.from(selected).map((option) => option.textContent ?? '').join(' ') : '');
   }
   return '';
 }
@@ -183,11 +172,12 @@ function subtreeTextAlternative(root: Element, options: { includeHidden: boolean
       return;
     }
 
-    if (!(node instanceof Element)) return;
-    if (!options.includeHidden && isAccNameHidden(node)) return;
+    if (node.nodeType !== 1) return;
+    const elementNode = node as Element;
+    if (!options.includeHidden && isAccNameHidden(elementNode)) return;
 
-    if (node instanceof HTMLInputElement || node instanceof HTMLSelectElement || node instanceof HTMLTextAreaElement) {
-      const value = embeddedControlValue(node);
+    if (['input', 'select', 'textarea'].includes(tagName(elementNode))) {
+      const value = embeddedControlValue(elementNode);
       if (value) pieces.push(value);
       return;
     }
@@ -195,8 +185,8 @@ function subtreeTextAlternative(root: Element, options: { includeHidden: boolean
     // During name-from-content traversal, a descendant's own ARIA naming
     // mechanism contributes its text alternative. This is what lets an
     // icon-only button inherit a name from <svg role="img" aria-label="…">.
-    if (node.hasAttribute('aria-labelledby') || normalise(node.getAttribute('aria-label'))) {
-      const descendantName = computeName(node, {
+    if (elementNode.hasAttribute('aria-labelledby') || normalise(elementNode.getAttribute('aria-label'))) {
+      const descendantName = computeName(elementNode, {
         allowLabelledBy: true,
         referenced: false,
         visited: new Set([root]),
@@ -205,17 +195,17 @@ function subtreeTextAlternative(root: Element, options: { includeHidden: boolean
       return;
     }
 
-    if (node instanceof HTMLImageElement || node instanceof HTMLAreaElement) {
-      pieces.push(node.getAttribute('alt') || '');
+    if (tagName(elementNode) === 'img' || tagName(elementNode) === 'area') {
+      pieces.push(elementNode.getAttribute('alt') || '');
       return;
     }
 
-    if (node instanceof SVGElement && node.tagName.toLowerCase() === 'title') {
-      pieces.push(node.textContent ?? '');
+    if (elementNode.namespaceURI === 'http://www.w3.org/2000/svg' && tagName(elementNode) === 'title') {
+      pieces.push(elementNode.textContent ?? '');
       return;
     }
 
-    for (const child of node.childNodes) visit(child);
+    for (const child of elementNode.childNodes) visit(child);
   };
 
   for (const child of root.childNodes) visit(child);
@@ -246,7 +236,7 @@ function computeName(element: Element, context: NameContext): AccessibleNameResu
       const references = labelledBy
         .trim()
         .split(/\s+/)
-        .map((id) => document.getElementById(id))
+        .map((id) => idReference(element, id))
         .filter((reference): reference is HTMLElement => reference != null);
 
       if (references.length) {
@@ -277,66 +267,59 @@ function computeName(element: Element, context: NameContext): AccessibleNameResu
   const label = associatedLabelText(element);
   if (label) return { name: label, source: 'label' };
 
-  if (element instanceof HTMLImageElement) {
-    if (element.hasAttribute('alt')) return { name: normalise(element.alt), source: 'alt' };
-    const title = normalise(element.title);
+  const elementTag = tagName(element);
+  if (elementTag === 'img') {
+    if (element.hasAttribute('alt')) return { name: normalise(element.getAttribute('alt')), source: 'alt' };
+    const title = normalise(element.getAttribute('title'));
     if (title) return { name: title, source: 'title' };
   }
-
-  if (element instanceof HTMLAreaElement) {
-    const alt = normalise(element.alt);
+  if (elementTag === 'area') {
+    const alt = normalise(element.getAttribute('alt'));
     if (alt) return { name: alt, source: 'alt' };
-    const title = normalise(element.title);
+    const title = normalise(element.getAttribute('title'));
     if (title) return { name: title, source: 'title' };
   }
-
-  if (element instanceof HTMLInputElement) {
-    const type = element.type.toLowerCase();
-
+  if (elementTag === 'input') {
+    const type = normalise(element.getAttribute('type') || 'text').toLowerCase();
     if (type === 'image') {
-      const alt = normalise(element.alt);
+      const alt = normalise(element.getAttribute('alt'));
       if (alt) return { name: alt, source: 'alt' };
-      const title = normalise(element.title);
+      const title = normalise(element.getAttribute('title'));
       if (title) return { name: title, source: 'title' };
       return { name: 'Submit', source: 'default' };
     }
-
     if (['button', 'submit', 'reset'].includes(type)) {
       const value = normalise(element.getAttribute('value'));
       if (value) return { name: value, source: 'value' };
       if (type === 'submit') return { name: 'Submit', source: 'default' };
       if (type === 'reset') return { name: 'Reset', source: 'default' };
-      const title = normalise(element.title);
+      const title = normalise(element.getAttribute('title'));
       if (title) return { name: title, source: 'title' };
       return { name: '', source: 'none' };
     }
-
     if (TEXT_LIKE_INPUT_TYPES.has(type)) {
-      const title = normalise(element.title);
+      const title = normalise(element.getAttribute('title'));
       if (title) return { name: title, source: 'title' };
-      const placeholder = normalise(element.placeholder);
+      const placeholder = normalise(element.getAttribute('placeholder'));
       if (placeholder) return { name: placeholder, source: 'placeholder' };
       const ariaPlaceholder = normalise(element.getAttribute('aria-placeholder'));
       if (ariaPlaceholder) return { name: ariaPlaceholder, source: 'aria-placeholder' };
       return { name: '', source: 'none' };
     }
-
-    const title = normalise(element.title);
+    const title = normalise(element.getAttribute('title'));
     if (title) return { name: title, source: 'title' };
   }
-
-  if (element instanceof HTMLTextAreaElement) {
-    const title = normalise(element.title);
+  if (elementTag === 'textarea') {
+    const title = normalise(element.getAttribute('title'));
     if (title) return { name: title, source: 'title' };
-    const placeholder = normalise(element.placeholder);
+    const placeholder = normalise(element.getAttribute('placeholder'));
     if (placeholder) return { name: placeholder, source: 'placeholder' };
     const ariaPlaceholder = normalise(element.getAttribute('aria-placeholder'));
     if (ariaPlaceholder) return { name: ariaPlaceholder, source: 'aria-placeholder' };
     return { name: '', source: 'none' };
   }
-
-  if (element instanceof HTMLSelectElement) {
-    const title = normalise(element.title);
+  if (elementTag === 'select') {
+    const title = normalise(element.getAttribute('title'));
     if (title) return { name: title, source: 'title' };
     return { name: '', source: 'none' };
   }
@@ -387,7 +370,7 @@ export function accessibleNameDiagnostics(element: Element): AccessibleNameDiagn
   if (element.hasAttribute('aria-labelledby')) {
     const ids = normalise(element.getAttribute('aria-labelledby')).split(/\s+/).filter(Boolean);
     const value = ids
-      .map((id) => document.getElementById(id))
+      .map((id) => idReference(element, id))
       .filter((reference): reference is HTMLElement => reference != null)
       .map((reference) => accessibleNameDetails(reference).name)
       .join(' ');
@@ -402,11 +385,11 @@ export function accessibleNameDiagnostics(element: Element): AccessibleNameDiagn
     candidates.push(candidate(element, 'label', associatedLabelText(element), result));
   }
 
-  if ((element instanceof HTMLImageElement || element instanceof HTMLAreaElement) && element.hasAttribute('alt')) {
+  if ((tagName(element) === 'img' || tagName(element) === 'area') && element.hasAttribute('alt')) {
     candidates.push(candidate(element, 'alt', element.getAttribute('alt') ?? '', result));
   }
 
-  if (element instanceof HTMLInputElement && element.hasAttribute('value')) {
+  if (tagName(element) === 'input' && element.hasAttribute('value')) {
     candidates.push(candidate(element, 'value', element.getAttribute('value') ?? '', result));
   }
 
@@ -450,23 +433,26 @@ export function accessibleName(element: Element): string {
 export function isProgrammaticallyHidden(element: Element): boolean {
   let current: Element | null = element;
   while (current) {
-    const style = getComputedStyle(current);
+    const style = computedStyleFor(current);
     if (style.display === 'none') return true;
     if (current.getAttribute('aria-hidden')?.toLowerCase() === 'true') return true;
-    current = current.parentElement;
+    current = composedParentElement(current);
   }
-  return getComputedStyle(element).visibility !== 'visible';
+  return computedStyleFor(element).visibility !== 'visible';
 }
 
 function nativeRoleFor(element: Element): string | null {
-  if (element instanceof HTMLButtonElement) return 'button';
-  if (element instanceof HTMLAnchorElement && element.hasAttribute('href')) return 'link';
-  if (element instanceof HTMLAreaElement && element.hasAttribute('href')) return 'link';
-  if (element instanceof HTMLImageElement) return element.hasAttribute('alt') && element.alt === '' ? 'presentation' : 'img';
-  if (element instanceof HTMLSelectElement) return element.multiple || element.size > 1 ? 'listbox' : 'combobox';
-  if (element instanceof HTMLTextAreaElement) return 'textbox';
-  if (element instanceof HTMLInputElement) {
-    switch (element.type.toLowerCase()) {
+  const tag = tagName(element);
+  if (tag === 'button') return 'button';
+  if ((tag === 'a' || tag === 'area') && element.hasAttribute('href')) return 'link';
+  if (tag === 'img') return element.hasAttribute('alt') && element.getAttribute('alt') === '' ? 'presentation' : 'img';
+  if (tag === 'select') {
+    const size = Number.parseInt(element.getAttribute('size') ?? '0', 10);
+    return element.hasAttribute('multiple') || (Number.isFinite(size) && size > 1) ? 'listbox' : 'combobox';
+  }
+  if (tag === 'textarea') return 'textbox';
+  if (tag === 'input') {
+    switch (normalise(element.getAttribute('type') || 'text').toLowerCase()) {
       case 'button':
       case 'submit':
       case 'reset': return 'button';
@@ -484,36 +470,15 @@ function nativeRoleFor(element: Element): string | null {
 }
 
 function matchesDisabled(element: Element): boolean {
-  try {
-    return element.matches(':disabled');
-  } catch {
-    if (element instanceof HTMLButtonElement) return element.disabled;
-    if (element instanceof HTMLInputElement) return element.disabled;
-    if (element instanceof HTMLSelectElement) return element.disabled;
-    if (element instanceof HTMLTextAreaElement) return element.disabled;
-    if (element instanceof HTMLFieldSetElement) return element.disabled;
-    if (element instanceof HTMLOptGroupElement) return element.disabled;
-    if (element instanceof HTMLOptionElement) return element.disabled;
-    return false;
-  }
+  try { return element.matches(':disabled'); } catch { return element.hasAttribute('disabled'); }
 }
 
 function isNativeDisableableElement(element: Element): boolean {
-  return element instanceof HTMLButtonElement
-    || element instanceof HTMLInputElement
-    || element instanceof HTMLSelectElement
-    || element instanceof HTMLTextAreaElement
-    || element instanceof HTMLFieldSetElement
-    || element instanceof HTMLOptGroupElement
-    || element instanceof HTMLOptionElement;
+  return ['button', 'input', 'select', 'textarea', 'fieldset', 'optgroup', 'option'].includes(tagName(element));
 }
 
 function isNativeUiControl(element: Element): boolean {
-  return element instanceof HTMLButtonElement
-    || element instanceof HTMLInputElement
-    || element instanceof HTMLSelectElement
-    || element instanceof HTMLTextAreaElement
-    || element instanceof HTMLOptionElement;
+  return ['button', 'input', 'select', 'textarea', 'option'].includes(tagName(element));
 }
 
 function isNativeElementDisabled(element: Element): boolean {
@@ -529,10 +494,11 @@ export function semanticRole(element: Element): string | null {
 }
 
 function isNativeControlFocusable(element: Element): boolean {
-  if (element instanceof HTMLButtonElement) return !isNativeElementDisabled(element);
-  if (element instanceof HTMLAnchorElement || element instanceof HTMLAreaElement) return element.hasAttribute('href');
-  if (element instanceof HTMLInputElement) return !isNativeElementDisabled(element) && element.type !== 'hidden';
-  if (element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement) return !isNativeElementDisabled(element);
+  const tag = tagName(element);
+  if (tag === 'button') return !isNativeElementDisabled(element);
+  if (tag === 'a' || tag === 'area') return element.hasAttribute('href');
+  if (tag === 'input') return !isNativeElementDisabled(element) && normalise(element.getAttribute('type') || 'text').toLowerCase() !== 'hidden';
+  if (tag === 'select' || tag === 'textarea') return !isNativeElementDisabled(element);
   return element.hasAttribute('tabindex');
 }
 
@@ -546,7 +512,7 @@ export function isDisabledUiComponent(element: Element): boolean {
     ) {
       return true;
     }
-    current = current.parentElement;
+    current = composedParentElement(current);
   }
   return false;
 }
@@ -554,39 +520,35 @@ export function isDisabledUiComponent(element: Element): boolean {
 function isCssHidden(element: Element): boolean {
   let current: Element | null = element;
   while (current) {
-    const style = getComputedStyle(current);
+    const style = computedStyleFor(current);
     if (style.display === 'none') return true;
     if (style.visibility === 'hidden' || style.visibility === 'collapse') return true;
     if (style.getPropertyValue('content-visibility') === 'hidden') return true;
-    current = current.parentElement;
+    current = composedParentElement(current);
   }
   return false;
 }
 
 export function isSequentiallyFocusable(element: Element): boolean {
   if (isCssHidden(element)) return false;
-  if (element.closest('[inert]')) return false;
+  if (hasInertAncestor(element)) return false;
   if (isNativeElementDisabled(element)) return false;
-  if (element instanceof HTMLInputElement && element.type.toLowerCase() === 'hidden') return false;
-
+  const tag = tagName(element);
+  if (tag === 'input' && normalise(element.getAttribute('type') || 'text').toLowerCase() === 'hidden') return false;
   const tabindex = element.getAttribute('tabindex');
   if (tabindex != null) {
     const parsed = Number.parseInt(tabindex, 10);
     return Number.isFinite(parsed) && parsed >= 0;
   }
-
-  if (element instanceof HTMLAnchorElement || element instanceof HTMLAreaElement) return element.hasAttribute('href');
-  if (element instanceof HTMLButtonElement || element instanceof HTMLSelectElement || element instanceof HTMLTextAreaElement) return true;
-  if (element instanceof HTMLInputElement) return true;
-  if (element instanceof HTMLElement && element.tagName === 'SUMMARY') return true;
-  if (element instanceof HTMLIFrameElement) return true;
-  if (element instanceof HTMLAudioElement || element instanceof HTMLVideoElement) return element.controls;
-  if (element instanceof HTMLElement && element.isContentEditable) return true;
+  if (tag === 'a' || tag === 'area') return element.hasAttribute('href');
+  if (['button', 'select', 'textarea', 'input', 'summary', 'iframe', 'frame'].includes(tag)) return true;
+  if (tag === 'audio' || tag === 'video') return element.hasAttribute('controls');
+  if (element.getAttribute('contenteditable')?.trim().toLowerCase() === 'true') return true;
   return false;
 }
 
 export function isMarkedDecorative(element: Element): boolean {
   const role = semanticRole(element);
   if (role === 'none' || role === 'presentation') return true;
-  return element instanceof HTMLImageElement && element.hasAttribute('alt') && element.alt === '' && !element.hasAttribute('role');
+  return tagName(element) === 'img' && element.hasAttribute('alt') && element.getAttribute('alt') === '' && !element.hasAttribute('role');
 }

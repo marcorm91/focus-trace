@@ -11,6 +11,7 @@ import {
 } from '../../shared/html-authoring-rules';
 import { RULES, type RuleDefinition } from '../../shared/rule-catalog';
 import type { ComponentScanScope, FindingOutcome, HeadingSnapshot, ScanIssue, ScanResult } from '../../shared/types';
+import { resolveComposedSelector } from './composed-tree';
 import { evaluateTextContrastForElement, textContrastSubjectsForElement } from './contrast';
 import { accessibleNameDetails, accessibleNameDiagnostics, isMarkedDecorative, isProgrammaticallyHidden, isSequentiallyFocusable, selectorFor, semanticRole } from './dom';
 import { evaluateDuplicateIds } from './duplicate-ids';
@@ -34,7 +35,7 @@ const COMPONENT_SCAN_SCOPE_ATTRIBUTE = 'data-focustrace-scan-component';
 const COMPONENT_FOCUS_SCOPE_ATTRIBUTE = 'data-focustrace-focus-component';
 
 function containsInScope(root: ScanRoot, element: Element): boolean {
-  return root instanceof Document || root === element || root.contains(element);
+  return root instanceof Document || scopedElements(root, '*').includes(element);
 }
 
 function consumePendingComponentScope(): ComponentScanScope | undefined {
@@ -201,7 +202,7 @@ function runAriaHiddenFocusable(root: ScanRoot): RuleExecution {
   const result = emptyExecution(RULES.ariaHiddenFocusable);
   const containers = scopedElements(root, '[aria-hidden]').filter((element) => element.getAttribute('aria-hidden')?.trim().toLowerCase() === 'true');
   for (const container of containers) {
-    const focusable = [container, ...container.querySelectorAll('*')].find((element) => isSequentiallyFocusable(element));
+    const focusable = scopedElements(container, '*').find((element) => isSequentiallyFocusable(element));
     if (!focusable) { result.passes += 1; continue; }
     result.issues.push(finding(RULES.ariaHiddenFocusable, 'fail', focusable, 'An element hidden from assistive technologies remains in sequential keyboard focus navigation.', `Focusable element is inside ${selectorFor(container)} with aria-hidden="true".`));
   }
@@ -547,7 +548,7 @@ function runHeadingJumps(): RuleExecution {
 }
 
 export function runFocusTraceScan(scope: ComponentScanScope | undefined = consumePendingComponentScope()): ScanResult {
-  const root = scope ? document.querySelector(scope.selector) : document;
+  const root = scope ? resolveComposedSelector(scope.selector) : document;
   if (!root) throw new Error('Selected scan component is no longer present on the page.');
   syncFocusWalkComponentScope(scope);
 

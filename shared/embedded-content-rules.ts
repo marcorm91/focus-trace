@@ -122,11 +122,11 @@ export const FRAME_NAME_UNIQUENESS_REVIEW_RULE: RuleDefinition = {
 
 export const EMBEDDED_CONTENT_UNEVALUATED_REVIEW_RULE: RuleDefinition = {
   id: 'FT-REVIEW-039',
-  title: 'Embedded frame content was not evaluated',
+  title: 'Nested audit context was not evaluated',
   severity: 'moderate',
   severityRationale: {
-    en: 'A cross-origin, sandboxed or unavailable embedded document creates an explicit coverage boundary: FocusTrace can still inspect the frame element, but it cannot claim that the nested document is clean.',
-    es: 'Un documento incrustado cross-origin, aislado por sandbox o no disponible crea un límite explícito de cobertura: FocusTrace puede inspeccionar el elemento frame, pero no puede afirmar que el documento anidado esté libre de problemas.',
+    en: 'A closed shadow root, cross-origin frame, sandboxed frame or traversal-budget boundary prevents complete local inspection, so FocusTrace must expose that boundary instead of claiming the nested content is clean.',
+    es: 'Un shadow root cerrado, un frame cross-origin o aislado por sandbox, o un límite del presupuesto de recorrido impiden una inspección local completa, por lo que FocusTrace debe exponer ese límite en vez de afirmar que el contenido anidado está libre de problemas.',
   },
   references: [htmlIframe],
 };
