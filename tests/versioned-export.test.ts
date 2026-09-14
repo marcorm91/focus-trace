@@ -4,6 +4,7 @@ import {
   FOCUSTRACE_EXPORT_SCHEMA_VERSION,
   buildSessionExport,
   buildSiteAuditExport,
+  parseVersionedJson,
   renderVersionedCsv,
   renderVersionedHtml,
   renderVersionedJson,
@@ -108,38 +109,49 @@ function siteAudit(): SiteAuditResult {
 }
 
 describe('versioned exports', () => {
-  it('builds a schema-versioned session envelope and redacts secret/tracking URL parameters', () => {
+  it('round-trips a schema-versioned session envelope and redacts secret/tracking URL parameters', () => {
     const envelope = buildSessionExport({ scan: scan(), events: [runtimeReview], generatedAt: 500 });
     expect(envelope.schemaVersion).toBe(FOCUSTRACE_EXPORT_SCHEMA_VERSION);
     expect(envelope.kind).toBe('session');
     expect(envelope.generatedAt).toBe(500);
     expect(envelope.subject.url).toBe('https://example.test/account?view=compact');
+    expect(envelope.context).toEqual({
+      scope: { type: 'page' },
+      coverage: { passes: 8, rulesRun: 11, staticFindings: 3, runtimeFindings: 1 },
+    });
     expect(envelope.summary).toEqual({ findings: 4, failures: 1, reviews: 2, warnings: 1 });
     expect(envelope.findings.at(-1)).toMatchObject({ source: 'runtime', outcome: 'review', ruleId: 'FT-RUNTIME-FOCUS' });
 
-    const json = JSON.parse(renderVersionedJson(envelope));
-    expect(json.schemaVersion).toBe('1.0.0');
-    expect(json.findings[0].references[0]).toMatchObject({ type: 'WCAG', id: '4.1.2' });
-    expect(renderVersionedJson(envelope)).not.toContain('token=secret');
-    expect(renderVersionedJson(envelope)).not.toContain('utm_source');
+    const jsonText = renderVersionedJson(envelope);
+    const roundTrip = parseVersionedJson(jsonText);
+    expect(roundTrip).toEqual(envelope);
+    expect(roundTrip.findings[0].references[0]).toMatchObject({ type: 'WCAG', id: '4.1.2' });
+    expect(jsonText).not.toContain('token=secret');
+    expect(jsonText).not.toContain('utm_source');
+    expect(() => parseVersionedJson('{"schemaVersion":"2.0.0"}')).toThrow(/schema/i);
   });
 
-  it('exports UTF-8 CSV with BOM, CRLF, RFC-style quoting and spreadsheet formula protection', () => {
+  it('exports UTF-8 CSV with context, BOM, CRLF, RFC-style quoting and spreadsheet formula protection', () => {
     const csv = renderVersionedCsv(buildSessionExport({ scan: scan(), events: [] }));
     expect(csv.charCodeAt(0)).toBe(0xFEFF);
     expect(csv).toContain('\r\n');
+    expect(csv).toContain('"summary","1.0.0","session","WCAG 2.2"');
+    expect(csv).toContain('"{\""type\"":\""page\""}"');
     expect(csv).toContain('"Botón “Guardar” sin nombre <visible>"');
     expect(csv).toContain('"Computed name = """"; texto: áéíóú 日本語"');
     expect(csv).toContain('"\'=Needs human review"');
     expect(csv).not.toContain('token=secret');
   });
 
-  it('escapes standalone HTML without losing Unicode', () => {
+  it('escapes standalone HTML without losing context, remediation or Unicode', () => {
     const html = renderVersionedHtml(buildSessionExport({ scan: scan(), events: [] }));
     expect(html).toContain('<!doctype html>');
     expect(html).toContain('Cuenta “José”');
+    expect(html).toContain('WCAG 2.2');
+    expect(html).toContain('&quot;type&quot;:&quot;page&quot;');
     expect(html).toContain('&lt;visible&gt;');
     expect(html).toContain('accessible name &amp; keep it meaningful');
+    expect(html).toContain('WCAG 4.1.2');
     expect(html).not.toContain('<visible>');
   });
 
@@ -149,6 +161,12 @@ describe('versioned exports', () => {
     expect(sarif.$schema).toContain('sarif-2.1.0');
     expect(sarif.runs[0].tool.driver.name).toBe('FocusTrace');
     expect(sarif.runs[0].tool.driver.rules.length).toBeGreaterThan(0);
+    expect(sarif.runs[0].properties).toMatchObject({
+      focusTraceSchemaVersion: '1.0.0',
+      focusTraceKind: 'session',
+      standard: 'WCAG 2.2',
+    });
+    expect(sarif.runs[0].properties.scope).toContain('"type":"page"');
     expect(sarif.runs[0].results.every((result: { locations?: unknown[] }) => result.locations?.length)).toBe(true);
 
     const failure = sarif.runs[0].results.find((result: { properties: { focusTraceOutcome: string } }) => result.properties.focusTraceOutcome === 'fail');
@@ -159,21 +177,37 @@ describe('versioned exports', () => {
     expect(warning.level).toBe('note');
   });
 
-  it('uses JUnit failures only for deterministic FAIL and preserves REVIEW/WARNING as skipped metadata', () => {
+  it('uses JUnit failures only for deterministic FAIL and preserves REVIEW/WARNING plus provenance', () => {
     const junit = renderVersionedJUnit(buildSessionExport({ scan: scan(), events: [runtimeReview] }));
     expect(junit).toContain('tests="4" failures="1" errors="0" skipped="3"');
+    expect(junit).toContain('<property name="standard" value="WCAG 2.2"/>');
+    expect(junit).toContain('<property name="scope" value="{&quot;type&quot;:&quot;page&quot;}"/>');
+    expect(junit).toContain('name="standards" value="WCAG 4.1.2"');
     expect(junit.match(/<failure /g)).toHaveLength(1);
     expect(junit.match(/<skipped message="REVIEW"\/>/g)).toHaveLength(2);
     expect(junit.match(/<skipped message="WARNING"\/>/g)).toHaveLength(1);
     expect(junit).toContain('Botón “Guardar” sin nombre &lt;visible&gt;');
   });
 
-  it('normalizes Site Audit pages into the same v1 contract with template and scope metadata', () => {
+  it('normalizes Site Audit pages into the same v1 contract with template, limits and coverage metadata', () => {
     const envelope = buildSiteAuditExport(siteAudit());
     expect(envelope.kind).toBe('site-audit');
     expect(envelope.summary).toEqual({ findings: 3, failures: 1, reviews: 1, warnings: 1 });
     expect(envelope.findings[0]).toMatchObject({ source: 'site-audit', template: 'Account' });
-    expect(envelope.metadata?.discovery).toMatchObject({ source: 'mixed', discoveredUrls: 1, truncated: false });
+    expect(envelope.context.scope).toMatchObject({
+      mode: 'automatic',
+      maxDiscoveredUrls: 500,
+      maxScannedPages: 30,
+      samplesPerFamily: 3,
+    });
+    expect(envelope.context.coverage).toMatchObject({
+      discoveredUrls: 1,
+      routeFamilies: 1,
+      sampledPages: 1,
+      scannedPages: 1,
+      failedPages: 0,
+    });
+    expect(envelope.metadata).toMatchObject({ discoverySource: 'mixed' });
   });
 
   it('stays linear and bounded for large result sets', () => {
@@ -182,7 +216,7 @@ describe('versioned exports', () => {
     expect(envelope.summary.findings).toBe(5000);
     const csv = renderVersionedCsv(envelope);
     const sarif = JSON.parse(renderVersionedSarif(envelope));
-    expect(csv.split('\r\n')).toHaveLength(5002);
+    expect(csv.split('\r\n')).toHaveLength(5003);
     expect(sarif.runs[0].results).toHaveLength(5000);
     expect(sarif.runs[0].tool.driver.rules).toHaveLength(1);
   });
