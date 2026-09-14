@@ -153,6 +153,10 @@ function scrollDistances(element: HTMLElement): { horizontal: number; vertical: 
   };
 }
 
+function scrollableOverflow(value: string): boolean {
+  return /(?:^|\s)(?:auto|scroll)(?:\s|$)/.test(value.trim().toLowerCase());
+}
+
 export function evaluateScrollableRegions(root: ScanRoot = document): ScrollableRegionEvaluation[] {
   const evaluations: ScrollableRegionEvaluation[] = [];
   let reviews = 0;
@@ -161,10 +165,11 @@ export function evaluateScrollableRegions(root: ScanRoot = document): Scrollable
   for (const element of candidates) {
     if (!(element instanceof HTMLElement) || element instanceof HTMLIFrameElement || !rendered(element)) continue;
     const style = getComputedStyle(element);
-    const overflowX = style.overflowX || style.overflow;
-    const overflowY = style.overflowY || style.overflow;
-    const xScrollable = /^(auto|scroll)$/.test(overflowX);
-    const yScrollable = /^(auto|scroll)$/.test(overflowY);
+    const authored = element.style;
+    const overflowX = authored.overflowX || authored.overflow || style.overflowX || style.overflow;
+    const overflowY = authored.overflowY || authored.overflow || style.overflowY || style.overflow;
+    const xScrollable = scrollableOverflow(overflowX);
+    const yScrollable = scrollableOverflow(overflowY);
     if (!xScrollable && !yScrollable) continue;
 
     const distances = scrollDistances(element);
@@ -231,6 +236,10 @@ function hasMediaSource(media: HTMLMediaElement): boolean {
   return Boolean(extended.srcObject || media.currentSrc || media.getAttribute('src')?.trim() || media.querySelector('source[src]'));
 }
 
+function authoredMuted(media: HTMLMediaElement): boolean {
+  return media.muted || media.defaultMuted || media.hasAttribute('muted') || media.volume === 0;
+}
+
 export function evaluateAutoplayAudio(root: ScanRoot = document): AutoplayAudioEvaluation[] {
   const evaluations: AutoplayAudioEvaluation[] = [];
   let reviews = 0;
@@ -238,9 +247,9 @@ export function evaluateAutoplayAudio(root: ScanRoot = document): AutoplayAudioE
 
   for (const element of media) {
     // Audible autoplay does not need to be visually rendered: an <audio> element without
-    // controls is commonly display:none while its sound can still affect WCAG 1.4.2.
-    if (!hasMediaSource(element) || !element.isConnected || isProgrammaticallyHidden(element)) continue;
-    if (element.muted || element.volume === 0) continue;
+    // controls is commonly not painted while its sound can still affect WCAG 1.4.2.
+    if (!hasMediaSource(element) || !element.isConnected) continue;
+    if (authoredMuted(element)) continue;
 
     const durationMs = Number.isFinite(element.duration) && element.duration >= 0
       ? Math.round(element.duration * 1_000)
