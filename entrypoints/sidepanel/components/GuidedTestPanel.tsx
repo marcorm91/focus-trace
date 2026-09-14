@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
-import { GUIDED_TESTS } from '../../../lib/guided-tests/catalog';
+import { ALL_GUIDED_TESTS } from '../../../lib/guided-tests/all-catalog';
+import { guidedStepCriteria } from '../../../lib/guided-tests/criterion-map';
 import {
   answerGuidedStep,
   appendGuidedEvidence,
@@ -11,7 +12,7 @@ import {
   type GuidedManualAnswer,
   type GuidedTestSession,
 } from '../../../lib/guided-tests/framework';
-import { guidedRuntimeEvidence } from '../../../lib/guided-tests/runtime-evidence';
+import { guidedRuntimeEvidence, hasGuidedRuntimeEvidence } from '../../../lib/guided-tests/runtime-evidence';
 import { loadGuidedSession, saveGuidedSession } from '../../../lib/guided-tests/storage';
 import { tr, type AppLanguage } from '../../../shared/i18n';
 import type { RuntimeEvent, ScanResult } from '../../../shared/types';
@@ -56,9 +57,9 @@ export function GuidedTestPanel({
   events: RuntimeEvent[];
   language: AppLanguage;
 }) {
-  const [selectedTestId, setSelectedTestId] = useState(GUIDED_TESTS[0]!.id);
+  const [selectedTestId, setSelectedTestId] = useState(ALL_GUIDED_TESTS[0]!.id);
   const definition = useMemo(
-    () => GUIDED_TESTS.find((item) => item.id === selectedTestId) ?? GUIDED_TESTS[0]!,
+    () => ALL_GUIDED_TESTS.find((item) => item.id === selectedTestId) ?? ALL_GUIDED_TESTS[0]!,
     [selectedTestId],
   );
   const [session, setSession] = useState<GuidedTestSession>();
@@ -91,6 +92,7 @@ export function GuidedTestPanel({
     if (!session) return undefined;
     return definition.steps[session.currentStepIndex];
   }, [definition.steps, session]);
+  const stepCriteria = step ? guidedStepCriteria(definition.id, step.id) : [];
 
   const persist = async (next: GuidedTestSession, message: string) => {
     setSession(next);
@@ -175,7 +177,7 @@ export function GuidedTestPanel({
           disabled={session?.status === 'active' || session?.status === 'paused'}
           onChange={(event) => setSelectedTestId(event.currentTarget.value)}
         >
-          {GUIDED_TESTS.map((test) => (
+          {ALL_GUIDED_TESTS.map((test) => (
             <option key={test.id} value={test.id}>{localText(test.title, language)}</option>
           ))}
         </select>
@@ -186,8 +188,8 @@ export function GuidedTestPanel({
         <strong>{tr(language, 'Not an automated conformance result.', 'No es un resultado automático de conformidad.')}</strong>{' '}
         {tr(
           language,
-          'Manual answers and observed Trace events are stored as distinct bounded evidence. Runtime observations support review but never decide the result automatically.',
-          'Las respuestas manuales y los eventos observados de Trace se guardan como evidencia acotada y diferenciada. Las observaciones runtime apoyan la revisión, pero nunca deciden automáticamente el resultado.',
+          'Manual answers and, for runtime-aware workflows, observed Trace events are stored as distinct bounded evidence. Runtime observations support review but never decide the result automatically.',
+          'Las respuestas manuales y, en los flujos con soporte runtime, los eventos observados de Trace se guardan como evidencia acotada y diferenciada. Las observaciones runtime apoyan la revisión, pero nunca deciden automáticamente el resultado.',
         )}
       </p>
 
@@ -238,10 +240,14 @@ export function GuidedTestPanel({
               const definitionStep = definition.steps[index];
               if (!definitionStep) return null;
               const observed = item.evidence.filter((evidence) => evidence.kind === 'runtime-observation');
+              const criteria = guidedStepCriteria(definition.id, definitionStep.id);
               return (
                 <li key={item.stepId}>
                   <strong>{localText(definitionStep.title, language)}</strong>
                   <span>{item.answer ? answerLabel(item.answer, language) : tr(language, 'No answer', 'Sin respuesta')}</span>
+                  {criteria.length > 0 && (
+                    <span>{tr(language, 'Evidence for', 'Evidencia para')}: {criteria.map((criterion) => `WCAG ${criterion}`).join(' · ')}</span>
+                  )}
                   {observed.length > 0 && (
                     <ul aria-label={tr(language, 'Observed runtime evidence', 'Evidencia runtime observada')}>
                       {observed.map((evidence) => <li key={`${evidence.capturedAt}-${evidence.value}`}>{evidence.value}</li>)}
@@ -266,7 +272,13 @@ export function GuidedTestPanel({
           </div>
           <h3>{localText(step.title, language)}</h3>
           <p>{localText(step.prompt, language)}</p>
-          {definition.id !== 'FT-GUIDED-001' && (
+          {stepCriteria.length > 0 && (
+            <p className="guided-test-criteria">
+              <strong>{tr(language, 'Evidence maps to', 'La evidencia se vincula a')}:</strong>{' '}
+              {stepCriteria.map((criterion) => `WCAG ${criterion}`).join(' · ')}
+            </p>
+          )}
+          {hasGuidedRuntimeEvidence(definition.id) && (
             <p className="guided-test-runtime-hint">
               {tr(
                 language,
@@ -299,7 +311,11 @@ export function GuidedTestPanel({
               maxLength={240}
               rows={3}
               onChange={(event) => setNote(event.currentTarget.value)}
-              placeholder={tr(language, 'Do not enter passwords, tokens or form values.', 'No introduzcas contraseñas, tokens ni valores de formularios.')}
+              placeholder={tr(
+                language,
+                'Record the judgement only. Do not enter passwords, tokens, form values, captions, transcripts or media content.',
+                'Registra solo la valoración. No introduzcas contraseñas, tokens, valores de formularios, subtítulos, transcripciones ni contenido multimedia.',
+              )}
             />
           </label>
 

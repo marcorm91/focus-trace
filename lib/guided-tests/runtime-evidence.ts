@@ -37,6 +37,10 @@ function eventSummary(event: RuntimeEvent): string {
   return `${event.kind}: ${event.title}${target}${outcome}`;
 }
 
+export function hasGuidedRuntimeEvidence(testId: string): boolean {
+  return Boolean(EVENT_KINDS_BY_TEST[testId]?.length);
+}
+
 export function guidedRuntimeEvidence(
   events: RuntimeEvent[],
   testId: string,
