@@ -66,6 +66,16 @@ Runtime observations support review but never decide the guided result automatic
 
 Each substantive step in these four workflows has an explicit WCAG criterion mapping shown in the guided UI and retained by the static workflow definition. Unlike the keyboard/focus/dialog workflows, `FT-GUIDED-005` through `FT-GUIDED-008` do not attach runtime Trace observations automatically.
 
+## APG widget-pattern workflows
+
+`FT-GUIDED-009` through `FT-GUIDED-016` cover tabs, accordion/disclosure, menu, combobox/listbox, tree, grid, carousel and tooltip. They are explicitly labelled **informative APG guidance** because WAI-ARIA APG interaction patterns support implementation review but are not, by themselves, WCAG conformance outcomes.
+
+Each APG workflow asks the auditor to confirm applicability and select an implementation variation before the run. The selected variation is persisted as bounded manual evidence so repeated reviews can distinguish, for example, manual versus automatic tab activation, single versus multi-select widgets, or automatic versus manual carousel rotation.
+
+Relevant Trace evidence is reused conservatively. `aria-widget` observations are filtered by the rule IDs associated with the selected pattern, while bounded keyboard/focus/virtual-focus/change evidence can support patterns that do not have a dedicated runtime rule. The runtime stream never chooses a guided answer automatically.
+
+Browser acceptance fixtures provide accessible, failure and review/variation scenarios for all eight supported patterns. They exist to keep the guided instructions and expected interaction branches testable without claiming an automated APG conformance engine.
+
 ## Reporting and standards coverage
 
 Guided tests appear in the Report workspace under an explicit **Guided test · manual evidence** label with a warning that the result is not automated conformance. Completed step answers remain visible with the outcome so a reviewer can understand how the manual conclusion was reached.

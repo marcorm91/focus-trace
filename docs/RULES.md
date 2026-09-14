@@ -629,3 +629,12 @@ The table workflow complements static table semantics by asking the auditor to j
 The multimedia workflow records only manual equivalence/quality answers and optional redacted notes. It does not copy or store audio, video, captions or transcript payloads. `FT-GUIDED-005` through `FT-GUIDED-008` also opt out of runtime Trace evidence attachment, keeping these contextual checks bounded to manual evidence.
 
 All four remain `guided-manual` / `automated: false` and remain outside automated PASS/FAIL/REVIEW/WARNING totals and axe-core parity counts.
+
+
+## Guided APG widget-pattern evidence
+
+`FT-GUIDED-009` through `FT-GUIDED-016` cover tabs, accordion/disclosure, menu, combobox/listbox, tree, grid, carousel and tooltip interaction patterns as **informative APG guidance**. The workflows record applicability, an implementation variation and localized keyboard/focus/state-change judgement. APG references are informative and do not convert a manual outcome into a WCAG conformance result.
+
+Where FocusTrace already observes relevant runtime behavior, guided evidence reuses that stream with pattern-specific filtering. Tabs reuse tab activation findings; disclosure reuses expanded-state evidence; menu reuses open-focus/Escape observations; combobox/listbox, tree and grid reuse active-descendant, selection, roving-tabindex and arrow-navigation observations. Carousel and tooltip retain bounded keyboard/focus/change observations. Runtime evidence can support a manual conclusion but never selects the answer automatically.
+
+The acceptance fixture catalog contains accessible, failure and review/variation scenarios for all eight patterns. These fixtures are test-only and are not shipped as an APG conformance engine. Machine-readable guided declarations remain `coverage: "guided-manual"`, `automated: false`, with the APG set additionally marked `guidance: "apg-informative"`.

@@ -661,3 +661,12 @@ El catálogo guiado también incluye flujos contextuales para asociaciones compl
 Estos flujos deliberadamente **no** adjuntan eventos runtime de Trace. Las pruebas de formularios usan datos sintéticos y la capa guiada nunca lee ni guarda valores de campos. Las revisiones multimedia almacenan solo la valoración del auditor y una nota opcional redactada; FocusTrace no copia ni persiste audio, vídeo, subtítulos ni transcripciones.
 
 El flujo de resize/reflow reutiliza las líneas base existentes de Resize Text y Reflow de FocusTrace y pide al auditor el juicio contextual que las mediciones por sí solas no pueden demostrar. Los cuatro flujos siguen siendo `guided-manual` / `automated: false` y no modifican los recuentos de reglas automáticas ni la paridad con axe-core.
+
+
+### Pruebas guiadas de patrones APG
+
+`FT-GUIDED-009` a `FT-GUIDED-016` convierten las observaciones runtime/APG existentes en flujos manuales repetibles para tabs, acordeón/disclosure, menú, combobox/listbox, tree, grid, carousel y tooltip. Las instrucciones de teclado están localizadas en inglés y español y cada flujo registra si el patrón aplica y la variante de implementación seleccionada.
+
+Estos resultados se etiquetan como **guía APG informativa** en Report. APG describe patrones recomendados de interacción de widgets; un problema guiado APG no es un fallo de conformidad WCAG y no modifica los recuentos automáticos PASS/FAIL/REVIEW/WARNING ni la paridad con axe-core. Las observaciones relevantes de Trace se filtran al patrón revisado y siguen siendo solo evidencia de apoyo.
+
+La suite de navegador incluye fixtures accesibles, de fallo y de review para cada patrón APG compatible. Toda la evidencia permanece local y acotada; la funcionalidad no añade permisos de navegador ni transmisión de datos de la página inspeccionada.
