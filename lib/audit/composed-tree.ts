@@ -1,8 +1,10 @@
+import {
+  CLOSED_SHADOW_HOST_EVENT,
+  CLOSED_SHADOW_REQUEST_EVENT,
+} from '../../shared/nested-context-bridge';
+
 export const SHADOW_PATH_MARKER = '|shadow|';
 export const FRAME_PATH_MARKER = '|frame|';
-
-export const CLOSED_SHADOW_REQUEST_EVENT = 'focustrace:closed-shadow-request:v1';
-export const CLOSED_SHADOW_HOST_EVENT = 'focustrace:closed-shadow-host:v1';
 
 export interface ComposedTraversalLimits {
   maxElements: number;
@@ -109,7 +111,6 @@ export function sameOriginFrameDocument(frame: Element): Document | null {
   try {
     const nested = (frame as Element & { contentDocument?: Document | null }).contentDocument ?? null;
     if (!nested?.documentElement) return null;
-    // Touching documentElement is enough to force the browser's same-origin guard.
     void nested.documentElement.tagName;
     return nested;
   } catch {
@@ -128,7 +129,7 @@ export function composedSelectorFor(element: Element): string {
   const local = localSelectorFor(element, ownerDocument);
   try {
     const frameElement = ownerDocument.defaultView?.frameElement;
-    if (frameElement instanceof Element || (frameElement && frameElement.nodeType === 1)) {
+    if (frameElement && frameElement.nodeType === 1) {
       return `${composedSelectorFor(frameElement as Element)} ${FRAME_PATH_MARKER} ${local}`;
     }
   } catch {
@@ -189,7 +190,9 @@ function knownClosedShadowHosts(targetDocument: Document): Set<Element> {
 
   const collect = (event: Event) => {
     const target = event.target;
-    if (target instanceof Element && target.ownerDocument === targetDocument) hosts.add(target);
+    if (target && (target as Node).nodeType === 1 && (target as Element).ownerDocument === targetDocument) {
+      hosts.add(target as Element);
+    }
   };
 
   view.addEventListener(CLOSED_SHADOW_HOST_EVENT, collect, true);
@@ -241,6 +244,7 @@ export function traverseComposedTree(
     });
   };
 
+  let visitElement: (element: Element, depth: number) => void;
   const visitContainer = (container: Document | ShadowRoot | Element, depth: number) => {
     if (budgetExceeded) return;
     if (depth > budget.maxDepth) {
@@ -253,7 +257,7 @@ export function traverseComposedTree(
     }
   };
 
-  const visitElement = (element: Element, depth: number) => {
+  visitElement = (element: Element, depth: number) => {
     if (budgetExceeded || seenElements.has(element)) return;
     if (depth > budget.maxDepth || elements.length >= budget.maxElements) {
       noteBudget(element);
@@ -333,7 +337,6 @@ export function traverseComposedTree(
 }
 
 export function composedContains(root: ComposedRoot, candidate: Element): boolean {
-  if (isDocument(root)) return traverseComposedTree(root).elements.includes(candidate);
   if (root === candidate) return true;
   return traverseComposedTree(root).elements.includes(candidate);
 }
