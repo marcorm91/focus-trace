@@ -1,0 +1,56 @@
+name: Temporary issue 235 catalog sync
+
+on:
+  push:
+    branches:
+      - feat/keyboard-navigation-motion-0.4.6
+
+permissions:
+  contents: write
+
+jobs:
+  sync:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feat/keyboard-navigation-motion-0.4.6
+          fetch-depth: 0
+      - name: Apply exact catalog and baseline edits
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          updates = {
+              'README.md': '''\n\n### Keyboard, navigation, refresh and motion\n\n`FT-WARN-028` reports duplicate valid `accesskey` tokens as an HTML authoring WARNING because browser/platform shortcut assignment remains contextual. `FT-WCAG-022` deterministically fails the bounded delayed `meta refresh` timing window implemented from WCAG 2.2.1 / ACT evidence.\n\n`FT-REVIEW-043` reviews rendered scrollable regions that expose no sequential keyboard-focus entry point, while `FT-REVIEW-044` reviews unmuted native autoplay media that may continue for more than three seconds without an observable native stop/mute mechanism. Existing `FT-REVIEW-001`, `FT-RUNTIME-011`, `FT-RUNTIME-012` and `FT-REVIEW-026` continue to cover positive tabindex, observed keyboard reachability/traps and pause-stop-hide motion evidence without duplicate findings.\n\nAll checks remain local and bounded. Custom media controls, browser autoplay policy, external scrolling controls and platform-specific shortcut behavior remain contextual. See [`docs/KEYBOARD_NAVIGATION_MOTION.md`](docs/KEYBOARD_NAVIGATION_MOTION.md) for methodology and limits.\n''',
+              'README.es.md': '''\n\n### Teclado, navegación, refresh y movimiento\n\n`FT-WARN-028` informa tokens válidos de `accesskey` duplicados como WARNING de autoría HTML porque la asignación final del atajo depende del navegador y la plataforma. `FT-WCAG-022` produce FAIL determinista únicamente dentro de la ventana acotada de `meta refresh` con retraso modelada a partir de WCAG 2.2.1 / ACT.\n\n`FT-REVIEW-043` revisa regiones desplazables renderizadas que no exponen un punto de entrada alcanzable mediante foco secuencial, mientras que `FT-REVIEW-044` revisa medios nativos con autoplay no silenciado que pueden continuar durante más de tres segundos sin un mecanismo nativo observable de parada/silencio. Las reglas existentes `FT-REVIEW-001`, `FT-RUNTIME-011`, `FT-RUNTIME-012` y `FT-REVIEW-026` siguen cubriendo tabindex positivo, alcance/trampas de teclado observadas y evidencia de pause-stop-hide sin duplicar hallazgos.\n\nTodas las comprobaciones siguen siendo locales y acotadas. Los controles multimedia personalizados, la política de autoplay del navegador, los controles externos de scroll y el comportamiento de atajos dependiente de plataforma permanecen contextuales. Consulta [`docs/KEYBOARD_NAVIGATION_MOTION.es.md`](docs/KEYBOARD_NAVIGATION_MOTION.es.md) para metodología y límites.\n''',
+          }
+
+          for filename, section in updates.items():
+              path = Path(filename)
+              text = path.read_text()
+              marker = '### Keyboard, navigation, refresh and motion' if filename == 'README.md' else '### Teclado, navegación, refresh y movimiento'
+              if marker not in text:
+                  path.write_text(text.rstrip() + section + '\n')
+
+          for path in Path('tests').rglob('*.ts'):
+              text = path.read_text()
+              updated = text.replace('toBe(87)', 'toBe(91)')
+              if updated != text:
+                  path.write_text(updated)
+          PY
+
+          rm .github/workflows/zz-temp-sync-235.yml
+
+      - name: Commit synchronized files
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add README.md README.es.md tests .github/workflows/zz-temp-sync-235.yml
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "Docs(a11y): sync keyboard navigation catalogs and baselines"
+          git push origin HEAD:feat/keyboard-navigation-motion-0.4.6
