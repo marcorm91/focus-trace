@@ -47,3 +47,7 @@ The sample is intentionally contextual. FocusTrace records the auditor's judgeme
 Guided tests appear in the Report workspace under an explicit **Guided test · manual evidence** label with a warning that the result is not automated conformance. Completed step answers remain visible with the outcome so a reviewer can understand how the manual conclusion was reached.
 
 `config/guided-tests.json` is the machine-readable coverage declaration for this framework. Entries use `coverage: "guided-manual"` and `automated: false`. This catalog is intentionally separate from the axe-core parity benchmark and from automatic rule counts.
+
+## Extension boundary
+
+New guided definitions should reuse this lifecycle, privacy model, and result vocabulary instead of creating parallel manual-testing state. Domain-specific workflows can add their own prompts and standards references while keeping manual evidence clearly separated from automatic rule outcomes.
