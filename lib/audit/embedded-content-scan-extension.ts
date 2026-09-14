@@ -33,7 +33,7 @@ function descriptionFor(evaluation: EmbeddedContentEvaluation): string {
     case 'FT-REVIEW-038':
       return 'Several exposed frames share the same accessible name. Review whether they have an equivalent purpose; otherwise give each frame a distinguishable name.';
     case 'FT-REVIEW-039':
-      return 'FocusTrace could inspect the frame element but could not evaluate the embedded document. Nested content must not be reported as clean when that inspection boundary exists.';
+      return 'FocusTrace reached a nested audit boundary it could not traverse completely. Closed shadow content, inaccessible frame descendants or content beyond the shared traversal budget must not be reported as clean.';
     default:
       return 'Review the embedded-content evidence collected by FocusTrace.';
   }

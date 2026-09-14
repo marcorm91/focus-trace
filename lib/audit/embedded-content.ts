@@ -8,7 +8,7 @@ import {
 import type { RuleDefinition } from '../../shared/rule-catalog';
 import type { AccessibleNameEvidence } from '../../shared/types';
 import { accessibleNameDiagnostics, isMarkedDecorative, isProgrammaticallyHidden } from './dom';
-import { scopedElements } from './scan-elements';
+import { composedCoverageLimits, scopedElements } from './scan-elements';
 
 type ScanRoot = Document | Element;
 
@@ -58,9 +58,9 @@ function expectedSameOrigin(element: Element): boolean {
   if (!raw || raw === 'about:blank' || raw.startsWith('#')) return true;
 
   try {
-    const url = new URL(raw, document.baseURI);
+    const url = new URL(raw, element.ownerDocument.baseURI);
     if (url.protocol === 'about:') return true;
-    return url.origin === location.origin;
+    return url.origin === element.ownerDocument.defaultView?.location.origin;
   } catch {
     return false;
   }
@@ -133,7 +133,7 @@ function isSequentialFocusCandidate(element: Element): boolean {
 }
 
 function firstFocusableDescendant(embeddedDocument: Document): Element | undefined {
-  for (const element of embeddedDocument.querySelectorAll('*')) {
+  for (const element of scopedElements(embeddedDocument, '*')) {
     if (isSequentialFocusCandidate(element)) return element;
   }
   return undefined;
@@ -242,9 +242,21 @@ function evaluateFrames(root: ScanRoot): EmbeddedContentEvaluation[] {
   return evaluations;
 }
 
+function evaluateNestedCoverageLimits(root: ScanRoot): EmbeddedContentEvaluation[] {
+  return composedCoverageLimits(root)
+    .filter((limit) => (limit.kind === 'closed-shadow' || limit.kind === 'budget') && limit.element)
+    .map((limit) => ({
+      element: limit.element!,
+      rule: EMBEDDED_CONTENT_UNEVALUATED_REVIEW_RULE,
+      outcome: 'review' as const,
+      detail: limit.detail,
+    }));
+}
+
 export function evaluateEmbeddedContent(root: ScanRoot): EmbeddedContentEvaluation[] {
   return [
     ...evaluateObjects(root),
     ...evaluateFrames(root),
+    ...evaluateNestedCoverageLimits(root),
   ];
 }

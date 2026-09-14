@@ -23,21 +23,78 @@ type MemoryEvidenceMetrics = {
   viewport: { width: number; height: number };
 };
 
+type TopViewportRect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  top: number;
+  left: number;
+  right: number;
+  bottom: number;
+};
+
 function collectVisibleMemoryTargetsInPage(
   candidates: MemoryEvidenceCandidate[],
 ): MemoryEvidenceMetrics[] {
   const results: MemoryEvidenceMetrics[] = [];
+  const frameDocument = (frame: Element): Document | null => {
+    try { return (frame as Element & { contentDocument?: Document | null }).contentDocument ?? null; } catch { return null; }
+  };
+  const resolve = (path: string): Element | null => {
+    const tokens = path.split(/\s+\|(shadow|frame)\|\s+/);
+    const first = tokens[0]?.trim();
+    if (!first) return null;
+    let context: Document | ShadowRoot = document;
+    let current: Element | null = null;
+    try { current = context.querySelector(first); } catch { return null; }
+    if (!current) return null;
+    for (let index = 1; index < tokens.length; index += 2) {
+      const boundary = tokens[index];
+      const nextSelector = tokens[index + 1]?.trim();
+      if (!nextSelector) return null;
+      if (boundary === 'shadow') {
+        const shadow: ShadowRoot | null = (current as Element & { shadowRoot?: ShadowRoot | null }).shadowRoot ?? null;
+        if (!shadow || shadow.mode !== 'open') return null;
+        context = shadow;
+      } else if (boundary === 'frame') {
+        const nested = frameDocument(current);
+        if (!nested) return null;
+        context = nested;
+      } else return null;
+      try { current = context.querySelector(nextSelector); } catch { return null; }
+      if (!current) return null;
+    }
+    return current;
+  };
+  const topRect = (element: Element): TopViewportRect => {
+    const rect: DOMRect = element.getBoundingClientRect();
+    let x: number = rect.x;
+    let y: number = rect.y;
+    let owner: Document = element.ownerDocument;
+    while (owner !== document) {
+      try {
+        const frame = owner.defaultView?.frameElement;
+        if (!frame || frame.nodeType !== 1) break;
+        const frameRect: DOMRect = (frame as Element).getBoundingClientRect();
+        x += frameRect.left;
+        y += frameRect.top;
+        owner = (frame as Element).ownerDocument;
+      } catch { break; }
+    }
+    return { x, y, width: rect.width, height: rect.height, top: y, left: x, right: x + rect.width, bottom: y + rect.height };
+  };
 
   for (const candidate of candidates) {
     let element: Element | null = null;
     try {
-      element = document.querySelector(candidate.selector);
+      element = resolve(candidate.selector);
     } catch {
       continue;
     }
     if (!element) continue;
 
-    const rect = element.getBoundingClientRect();
+    const rect = topRect(element);
     if (rect.width <= 0 || rect.height <= 0) continue;
     const visible = rect.bottom > 0
       && rect.right > 0
