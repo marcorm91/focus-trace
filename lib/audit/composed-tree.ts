@@ -335,8 +335,3 @@ export function traverseComposedTree(
     budgetExceeded,
   };
 }
-
-export function composedContains(root: ComposedRoot, candidate: Element): boolean {
-  if (root === candidate) return true;
-  return traverseComposedTree(root).elements.includes(candidate);
-}
