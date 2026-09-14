@@ -2,11 +2,11 @@ import type { ScanIssue, ScanResult, Severity } from '../../shared/types';
 import { deduplicateScanResult, type LifecycleScanResult } from './finding-lifecycle';
 
 export const AUDIT_PROFILE_VERSION = 1 as const;
-export const DEFAULT_AUDIT_PROFILE_ID = 'default-aa';
+export const DEFAULT_AUDIT_PROFILE_ID = 'default-complete';
 export const MAX_CUSTOM_AUDIT_PROFILES = 20;
 
 export type AuditProfileScope = 'page' | 'component' | 'site';
-export type AuditProfileStandard = 'A' | 'AA' | 'AAA';
+export type AuditProfileStandard = 'all' | 'A' | 'AA' | 'AAA';
 export type AuditRuleFamily =
   | 'semantics'
   | 'structure'
@@ -70,9 +70,9 @@ export function defaultAuditProfile(now = 0): AuditProfile {
   return {
     version: AUDIT_PROFILE_VERSION,
     id: DEFAULT_AUDIT_PROFILE_ID,
-    name: 'WCAG 2.2 AA · Complete',
+    name: 'Complete · all supported rules',
     scopes: [...ALL_AUDIT_PROFILE_SCOPES],
-    standard: 'AA',
+    standard: 'all',
     severities: [...ALL_AUDIT_PROFILE_SEVERITIES],
     ruleFamilies: [...ALL_AUDIT_RULE_FAMILIES],
     createdAt: now,
@@ -96,7 +96,11 @@ export function normalizeAuditProfile(input: Partial<AuditProfile>, now = Date.n
   const scopes = unique(input.scopes ?? [], ALL_AUDIT_PROFILE_SCOPES);
   const severities = unique(input.severities ?? [], ALL_AUDIT_PROFILE_SEVERITIES);
   const ruleFamilies = unique(input.ruleFamilies ?? [], ALL_AUDIT_RULE_FAMILIES);
-  const standard = input.standard === 'A' || input.standard === 'AAA' ? input.standard : 'AA';
+  const standard: AuditProfileStandard = input.standard === 'all'
+    || input.standard === 'A'
+    || input.standard === 'AAA'
+    ? input.standard
+    : 'AA';
   if (!scopes.length || !severities.length || !ruleFamilies.length) return undefined;
   return {
     version: AUDIT_PROFILE_VERSION,
@@ -172,7 +176,7 @@ export function auditRuleFamily(issue: ScanIssue): AuditRuleFamily {
   return 'other';
 }
 
-function levelRank(level: AuditProfileStandard): number {
+function levelRank(level: Exclude<AuditProfileStandard, 'all'>): number {
   if (level === 'A') return 1;
   if (level === 'AA') return 2;
   return 3;
@@ -181,6 +185,7 @@ function levelRank(level: AuditProfileStandard): number {
 export function issueMatchesAuditProfile(issue: ScanIssue, profile: AuditProfile): boolean {
   if (!profile.severities.includes(issue.severity)) return false;
   if (!profile.ruleFamilies.includes(auditRuleFamily(issue))) return false;
+  if (profile.standard === 'all') return true;
   const wcagLevels = issue.references
     .filter((reference) => reference.type === 'WCAG' && reference.level)
     .map((reference) => reference.level!);
@@ -205,6 +210,22 @@ function snapshot(profile: AuditProfile): AuditProfileSnapshot {
     severities: [...profile.severities],
     ruleFamilies: [...profile.ruleFamilies],
   };
+}
+
+function sorted(values: string[]): string[] {
+  return [...values].sort();
+}
+
+export function auditProfileSnapshotKey(scan: ScanResult | undefined): string {
+  const profile = (scan as ProfiledScanResult | undefined)?.auditProfile;
+  if (!profile) return 'unprofiled';
+  return JSON.stringify({
+    id: profile.id,
+    standard: profile.standard,
+    scopes: sorted(profile.scopes),
+    severities: sorted(profile.severities),
+    ruleFamilies: sorted(profile.ruleFamilies),
+  });
 }
 
 export function applyAuditProfile(
