@@ -1,9 +1,7 @@
 import { browser } from '#imports';
-import type { AuditorNote, FindingReviewState, ScanResult } from '../../shared/types';
+import type { FindingReviewState, ScanResult } from '../../shared/types';
 import {
-  FINDING_REVIEW_STORE_VERSION,
   applyFindingReviewStore,
-  emptyFindingReviewStore,
   findingById,
   normalizeFindingReviewStore,
   resetFindingReviewRecord,
@@ -84,24 +82,4 @@ export function clearFindingReviewHistory(): Promise<void> {
   return serializeReviewAccess(async () => {
     await browser.storage.local.remove(FINDING_REVIEW_STORAGE_KEY);
   });
-}
-
-export async function findingReviewStateForScan(scan: ScanResult): Promise<{
-  scan: ScanResult;
-  store: FindingReviewStore;
-}> {
-  const store = await loadStore().catch(() => emptyFindingReviewStore());
-  const applied = applyFindingReviewStore(scan, store);
-  return { scan: applied.scan, store: applied.store };
-}
-
-export function reviewStateWithNote(
-  state: FindingReviewState,
-  auditorNote?: AuditorNote,
-): { version: typeof FINDING_REVIEW_STORE_VERSION; state: FindingReviewState; auditorNote?: AuditorNote } {
-  return {
-    version: FINDING_REVIEW_STORE_VERSION,
-    state,
-    ...(auditorNote ? { auditorNote } : {}),
-  };
 }
