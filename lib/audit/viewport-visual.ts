@@ -227,10 +227,18 @@ function collectOrientationRules(
   }
 }
 
+function currentDocumentStyleSheets(document: Document): CSSStyleSheet[] {
+  const attached = [...document.querySelectorAll<HTMLStyleElement | HTMLLinkElement>('style, link[rel~="stylesheet" i]')]
+    .map((element) => element.sheet)
+    .filter((sheet): sheet is CSSStyleSheet => sheet != null);
+  const adopted = 'adoptedStyleSheets' in document ? [...document.adoptedStyleSheets] : [];
+  return [...new Set([...attached, ...adopted])].slice(0, MAX_STYLE_SHEETS);
+}
+
 export function evaluateOrientationLock(document: Document = window.document): OrientationLockEvaluation[] {
   const evaluations: OrientationLockEvaluation[] = [];
   const counter = { value: 0 };
-  for (const sheet of [...document.styleSheets].slice(0, MAX_STYLE_SHEETS)) {
+  for (const sheet of currentDocumentStyleSheets(document)) {
     let rules: CSSRuleList;
     try {
       rules = sheet.cssRules;
