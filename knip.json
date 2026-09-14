@@ -4,6 +4,7 @@
     "entrypoints/*/main.tsx",
     "cli/index.ts",
     "cli/browser-entry.ts",
+    "integrations/*.ts",
     "lib/core/index.ts",
     "tests/**/*.test.ts",
     "tests/**/*.spec.ts",
@@ -16,6 +17,7 @@
     "lib/**/*.{ts,tsx}",
     "shared/**/*.{ts,tsx}",
     "cli/**/*.ts",
+    "integrations/**/*.ts",
     "tests/**/*.{ts,tsx}",
     "tools/**/*.mjs",
     "*.config.ts"
