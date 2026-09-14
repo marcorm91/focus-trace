@@ -25,7 +25,10 @@ export interface FindingLifecycleComparison {
   counts: Record<FindingLifecycleState, number>;
 }
 
-export type LifecycleScanResult = ScanResult & {
+export type LifecycleScanResult = Omit<ScanResult, 'issues' | 'review' | 'warnings'> & {
+  issues: LifecycleScanIssue[];
+  review: LifecycleScanIssue[];
+  warnings: LifecycleScanIssue[];
   findingLifecycle?: FindingLifecycleComparison;
 };
 
