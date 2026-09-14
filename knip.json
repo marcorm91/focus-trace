@@ -7,7 +7,9 @@
     "lib/core/index.ts",
     "tests/**/*.test.ts",
     "tests/**/*.spec.ts",
-    "tools/**/*.mjs"
+    "tools/**/*.mjs",
+    "vite.cli.browser.config.ts",
+    "vite.cli.node.config.ts"
   ],
   "project": [
     "entrypoints/**/*.{ts,tsx}",
