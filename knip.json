@@ -2,6 +2,9 @@
   "$schema": "https://unpkg.com/knip@6/schema.json",
   "entry": [
     "entrypoints/*/main.tsx",
+    "cli/index.ts",
+    "cli/browser-entry.ts",
+    "lib/core/index.ts",
     "tests/**/*.test.ts",
     "tests/**/*.spec.ts",
     "tools/**/*.mjs"
@@ -10,6 +13,7 @@
     "entrypoints/**/*.{ts,tsx}",
     "lib/**/*.{ts,tsx}",
     "shared/**/*.{ts,tsx}",
+    "cli/**/*.ts",
     "tests/**/*.{ts,tsx}",
     "tools/**/*.mjs",
     "*.config.ts"

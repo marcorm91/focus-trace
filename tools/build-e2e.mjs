@@ -24,3 +24,5 @@ await build({
     'site-audit',
   ],
 });
+
+await import('./build-cli.mjs');
