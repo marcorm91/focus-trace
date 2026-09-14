@@ -51,6 +51,7 @@ FocusTrace utiliza WCAG 2.2 como fuente de conformidad. Los criterios WCAG 2.2 t
 | **Virtual focus** | Widgets con `aria-activedescendant` compatibles | Registra cambios válidos de foco virtual como evidencia informativa sin convertirlos en movimiento de foco DOM ni hallazgo. | Destino virtual disponible en Trace, Journey y Graph. |
 | **Focus Walk** | Página activa | Automatiza el recorrido secuencial de foco para generar evidencia de navegación. | Recorrido de destinos alcanzables. |
 | **Replay** | Sesión Trace grabada | Reproduce la evidencia como lectura sin reejecutar acciones sobre la página. | Secuencia runtime reconstruida. |
+| **Regresión de Replay guardada** | Sesión Trace grabada | Guarda una línea base local y acotada del flujo. Solo las teclas de navegación no textual sobre destinos resueltos de forma única pueden reproducirse automáticamente; clics, cambios de texto/valor, Tab y teclas de activación se detienen para continuación manual explícita. | Resultados `new`, `resolved`, `persistent`, `changed`, `missing-element` y `broken-flow`, con rutas redactadas y metadatos mínimos del destino. |
 | **Recorrido / Journey** | Sesión Trace | Ordena el movimiento de foco cronológicamente. | Historia navegable del foco. |
 | **Grafo / Graph** | Sesión Trace | Representa conexiones observadas entre destinos de foco. | Grafo de navegación observada. |
 | **Breakpoints de accesibilidad** | Trace | Puede pausar la grabación al capturar determinadas causas runtime. | Punto de parada asociado a evidencia determinista. |
@@ -59,6 +60,8 @@ FocusTrace utiliza WCAG 2.2 como fuente de conformidad. Los criterios WCAG 2.2 t
 | **FocusTrace Memory** | Análisis repetidos, activado por defecto | Mantiene historial local limitado y sin caducidad temporal para comparar persistencia, cambios, resoluciones y regresiones. | Observaciones, notas del auditor, localizador y vista previa opcional. |
 | **Informe** | Evidencia estática/runtime disponible | Consolida análisis, historias runtime y Estructura ya generada. | Vista de informe y exportaciones. |
 | **PDF / TXT / Markdown / JSON** | Informe actual o línea base de Memory | Exporta la evidencia y las notas del auditor aplicables reutilizando los datos disponibles sin volver a recorrer silenciosamente todo el DOM. | Artefactos compartibles. |
+
+Las regresiones de Replay guardadas permanecen en el almacenamiento local de la extensión sin caducidad temporal. El almacenamiento se limita a **20 flujos**, **160 pasos por flujo** y **80 hallazgos de referencia por flujo**; el usuario puede borrar un flujo o todos. El esquema guardado excluye contraseñas, valores de campos, notas del auditor, detalle de eventos, nombres accesibles y texto de la página. Las query strings y fragmentos de las rutas se sustituyen por marcadores de redacción. Si el replay se detiene por un destino ambiguo/cambiado, un elemento ausente, una ruta distinta o una cancelación manual, los hallazgos posteriores no se infieren como resueltos.
 
 ### Reglas WCAG estáticas
 

@@ -1,0 +1,120 @@
+.saved-flow-panel {
+  margin-top: 1rem;
+  padding: 1rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.75rem;
+  background: var(--surface-raised);
+}
+
+.saved-flow-heading h3,
+.saved-flow-results h4 {
+  margin: 0;
+}
+
+.saved-flow-heading p,
+.saved-flow-privacy-note,
+.saved-flow-meta,
+.saved-flow-empty,
+.saved-flow-status {
+  margin: 0.45rem 0 0;
+}
+
+.saved-flow-save,
+.saved-flow-library {
+  display: grid;
+  gap: 0.75rem;
+  margin-top: 1rem;
+}
+
+.saved-flow-save label,
+.saved-flow-library label {
+  display: grid;
+  gap: 0.35rem;
+  min-width: 0;
+}
+
+.saved-flow-save input,
+.saved-flow-library select {
+  width: 100%;
+  min-width: 0;
+}
+
+.saved-flow-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.saved-flow-stop {
+  margin-top: 1rem;
+  padding: 0.8rem;
+  border: 1px solid currentColor;
+  border-radius: 0.6rem;
+}
+
+.saved-flow-stop p {
+  margin: 0.45rem 0 0.7rem;
+}
+
+.saved-flow-stop-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.saved-flow-results {
+  margin-top: 1rem;
+}
+
+.saved-flow-results ul {
+  display: grid;
+  gap: 0.5rem;
+  margin: 0.6rem 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.saved-flow-results li {
+  display: grid;
+  gap: 0.2rem;
+  padding: 0.65rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 0.55rem;
+}
+
+.saved-flow-results li strong,
+.saved-flow-results li span,
+.saved-flow-results li small {
+  font-size: 14px;
+}
+
+.saved-flow-results .state-new,
+.saved-flow-results .state-changed,
+.saved-flow-results .state-missing-element,
+.saved-flow-results .state-broken-flow {
+  border-width: 2px;
+}
+
+.saved-flow-privacy-note {
+  font-size: 14px;
+}
+
+@media (max-width: 480px) {
+  .saved-flow-actions {
+    display: grid;
+  }
+
+  .saved-flow-actions button,
+  .saved-flow-stop-actions button,
+  .saved-flow-save button {
+    width: 100%;
+  }
+}
+
+@media (forced-colors: active) {
+  .saved-flow-panel,
+  .saved-flow-stop,
+  .saved-flow-results li {
+    border: 1px solid CanvasText;
+  }
+}

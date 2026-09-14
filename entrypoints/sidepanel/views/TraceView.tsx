@@ -25,6 +25,7 @@ import { FocusGraphView } from './FocusGraphView';
 import { FocusView } from './FocusView';
 import { ReplayView } from './ReplayView';
 import { RuntimeView } from './RuntimeView';
+import { SavedFlowRegressionPanel } from './SavedFlowRegressionPanel';
 import './trace-workspace.css';
 
 type TraceMode = 'replay' | 'journey' | 'interactions' | 'graph';
@@ -493,6 +494,13 @@ export function TraceView({
               onClearFocusTarget={onClearSelection}
             />
           )}
+          <SavedFlowRegressionPanel
+            events={events}
+            interactions={interactions}
+            recording={recording}
+            breakpoints={breakpointSettings}
+            language={language}
+          />
         </div>
         <div
           id="trace-mode-panel-journey"
