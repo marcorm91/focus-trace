@@ -237,7 +237,9 @@ export function evaluateAutoplayAudio(root: ScanRoot = document): AutoplayAudioE
   const media = scopedElements<HTMLMediaElement>(root, 'audio[autoplay], video[autoplay]').slice(0, MAX_MEDIA_CANDIDATES);
 
   for (const element of media) {
-    if (!hasMediaSource(element) || !rendered(element)) continue;
+    // Audible autoplay does not need to be visually rendered: an <audio> element without
+    // controls is commonly display:none while its sound can still affect WCAG 1.4.2.
+    if (!hasMediaSource(element) || !element.isConnected || isProgrammaticallyHidden(element)) continue;
     if (element.muted || element.volume === 0) continue;
 
     const durationMs = Number.isFinite(element.duration) && element.duration >= 0
