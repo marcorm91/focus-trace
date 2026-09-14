@@ -24,15 +24,35 @@
   font-weight: 700;
 }
 
+.guided-test-selector,
+.guided-note {
+  display: grid;
+  gap: 6px;
+  font-weight: 700;
+}
+
+.guided-test-selector select,
+.guided-note textarea {
+  box-sizing: border-box;
+  width: 100%;
+  font: inherit;
+}
+
+.guided-test-selector select {
+  min-height: 36px;
+}
+
 .guided-test-boundary,
 .guided-test-empty,
 .guided-test-state,
 .guided-test-result,
-.guided-test-step {
+.guided-test-step,
+.guided-test-runtime-hint {
   margin: 0;
 }
 
-.guided-test-boundary {
+.guided-test-boundary,
+.guided-test-runtime-hint {
   border-inline-start: 4px solid currentColor;
   padding-inline-start: 12px;
 }
@@ -68,18 +88,9 @@
   margin-top: 3px;
 }
 
-.guided-note {
-  display: grid;
-  gap: 6px;
-  font-weight: 700;
-}
-
 .guided-note textarea {
-  box-sizing: border-box;
-  width: 100%;
   min-height: 84px;
   resize: vertical;
-  font: inherit;
 }
 
 .guided-test-actions {
@@ -93,7 +104,8 @@
   gap: 10px;
 }
 
-.guided-test-result ol {
+.guided-test-result ol,
+.guided-test-result ul {
   display: grid;
   gap: 8px;
   margin: 0;
@@ -117,6 +129,7 @@
 
 @media (forced-colors: active) {
   .guided-test-boundary,
+  .guided-test-runtime-hint,
   .guided-coverage-badge {
     border-color: CanvasText;
   }
