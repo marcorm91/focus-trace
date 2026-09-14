@@ -9,12 +9,12 @@
   "summary": {
     "total": 105,
     "equivalent": 6,
-    "partial": 45,
+    "partial": 49,
     "superset": 10,
     "overlap": 31,
-    "missing": 12,
+    "missing": 8,
     "not-applicable": 1,
-    "covered": 92
+    "covered": 96
   },
   "severityMappings": [
     { "focusTraceRuleId": "FT-WCAG-001", "axeRuleIds": ["document-title"], "policy": "highest-impact" },
@@ -35,12 +35,15 @@
     { "focusTraceRuleId": "FT-WCAG-019", "axeRuleIds": ["frame-title"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WCAG-020", "axeRuleIds": ["frame-focusable-content"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WCAG-021", "axeRuleIds": ["meta-viewport"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WCAG-022", "axeRuleIds": ["meta-refresh"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-REVIEW-025", "axeRuleIds": ["link-in-text-block"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-REVIEW-029", "axeRuleIds": ["aria-braille-equivalent", "aria-roledescription"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-REVIEW-038", "axeRuleIds": ["frame-title-unique"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-REVIEW-040", "axeRuleIds": ["form-field-multiple-labels", "label-title-only"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-REVIEW-041", "axeRuleIds": ["meta-viewport-large"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-REVIEW-042", "axeRuleIds": ["css-orientation-lock"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-REVIEW-043", "axeRuleIds": ["scrollable-region-focusable"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-REVIEW-044", "axeRuleIds": ["no-autoplay-audio"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WARN-001", "axeRuleIds": ["aria-deprecated-role"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WARN-003", "axeRuleIds": ["aria-prohibited-attr"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WARN-012", "axeRuleIds": ["aria-roles"], "policy": "highest-impact" },
@@ -52,7 +55,8 @@
     { "focusTraceRuleId": "FT-WARN-018", "axeRuleIds": ["aria-required-children"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WARN-020", "axeRuleIds": ["aria-allowed-attr"], "policy": "highest-impact" },
     { "focusTraceRuleId": "FT-WARN-022", "axeRuleIds": ["aria-dialog-name", "aria-treeitem-name"], "policy": "highest-impact" },
-    { "focusTraceRuleId": "FT-WARN-023", "axeRuleIds": ["aria-allowed-role", "aria-conditional-attr"], "policy": "highest-impact" }
+    { "focusTraceRuleId": "FT-WARN-023", "axeRuleIds": ["aria-allowed-role", "aria-conditional-attr"], "policy": "highest-impact" },
+    { "focusTraceRuleId": "FT-WARN-028", "axeRuleIds": ["accesskeys"], "policy": "highest-impact" }
   ],
   "classificationFiles": [
     "config/axe-parity/core-01.json",
@@ -96,6 +100,7 @@
     "e27": { "sources": ["shared/table-rules.ts", "lib/audit/table-relationships.ts", "lib/audit/table-scan-extension.ts"], "tests": ["tests/table-relationships.test.ts", "tests/table-rule-contracts.test.ts"] },
     "e28": { "sources": ["shared/embedded-content-rules.ts", "lib/audit/embedded-content.ts", "lib/audit/embedded-content-scan-extension.ts", "lib/audit/specialized-image-alternatives.ts"], "tests": ["tests/embedded-content.test.ts"] },
     "e29": { "sources": ["shared/form-audit-rules.ts", "lib/audit/form-audit.ts", "lib/audit/form-audit-scan-extension.ts", "lib/audit/form-errors.ts", "lib/audit/autocomplete-purpose.ts"], "tests": ["tests/form-audit.test.ts", "tests/form-errors.test.ts", "tests/autocomplete-purpose.test.ts"] },
-    "e30": { "sources": ["shared/viewport-visual-rules.ts", "lib/audit/viewport-visual.ts", "lib/audit/viewport-visual-scan-extension.ts", "lib/audit/visual-contrast-policy.ts"], "tests": ["tests/viewport-visual.test.ts", "tests/e2e/viewport-visual.spec.ts", "tests/e2e/reflow.spec.ts", "tests/e2e/resize-text.spec.ts"] }
+    "e30": { "sources": ["shared/viewport-visual-rules.ts", "lib/audit/viewport-visual.ts", "lib/audit/viewport-visual-scan-extension.ts", "lib/audit/visual-contrast-policy.ts"], "tests": ["tests/viewport-visual.test.ts", "tests/e2e/viewport-visual.spec.ts", "tests/e2e/reflow.spec.ts", "tests/e2e/resize-text.spec.ts"] },
+    "e31": { "sources": ["shared/keyboard-navigation-motion-rules.ts", "lib/audit/keyboard-navigation-motion.ts", "lib/audit/keyboard-navigation-motion-scan-extension.ts", "lib/audit/pause-stop-hide.ts", "shared/keyboard-pointer-rules.ts"], "tests": ["tests/keyboard-navigation-motion.test.ts", "tests/e2e/keyboard-navigation-motion.spec.ts", "tests/pause-stop-hide.test.ts", "tests/keyboard-pointer.test.ts"] }
   }
 }

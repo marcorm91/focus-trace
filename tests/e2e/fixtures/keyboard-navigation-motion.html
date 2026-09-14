@@ -1,0 +1,32 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="refresh" content="72000; url=#automatic-refresh">
+  <title>Keyboard navigation motion fixture</title>
+  <style>
+    body { font: 16px/1.5 sans-serif; }
+    #unreachable-scroll,
+    #reachable-scroll {
+      width: 180px;
+      height: 80px;
+      overflow: auto;
+      border: 1px solid;
+      margin-block: 16px;
+    }
+    .wide { width: 640px; }
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Keyboard navigation motion fixture</h1>
+    <button id="access-one" accesskey="k">First shortcut</button>
+    <button id="access-two" accesskey="K">Second shortcut</button>
+
+    <div id="unreachable-scroll"><div class="wide">Scrollable content without a keyboard entry point</div></div>
+    <div id="reachable-scroll"><button id="scroll-entry" class="wide">Focusable content inside scroll region</button></div>
+
+    <audio id="autoplay-audio" autoplay src="missing-audio-fixture.mp3"></audio>
+  </main>
+</body>
+</html>

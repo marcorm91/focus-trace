@@ -37,21 +37,16 @@ async function scanPage(page: any, extensionWorker: any): Promise<ScanResult> {
   }, tabId) as Promise<ScanResult>;
 }
 
-test('page scan covers viewport restrictions, orientation evidence and stacked contrast conservatively', async ({ page, extensionWorker }) => {
-  await page.goto(`${fixtures.origin}/viewport-visual.html`);
-  await expect(page.locator('#stacked')).toBeVisible();
+test('page scan exposes bounded keyboard, refresh and autoplay-audio evidence', async ({ page, extensionWorker }) => {
+  await page.goto(`${fixtures.origin}/keyboard-navigation-motion.html`);
+  await expect(page.locator('#unreachable-scroll')).toBeVisible();
 
-  const first = await scanPage(page, extensionWorker);
-  expect(first.issues.some((issue) => issue.ruleId === 'FT-WCAG-021')).toBe(true);
-  expect(first.review.some((issue) => issue.ruleId === 'FT-REVIEW-042' && issue.targets.includes('#orientation-target'))).toBe(true);
-  expect(first.issues.some((issue) => issue.ruleId === 'FT-WCAG-010' && issue.targets.includes('#stacked'))).toBe(false);
-  expect(first.review.some((issue) => issue.ruleId === 'FT-WCAG-010' && issue.targets.includes('#stacked'))).toBe(true);
+  const result = await scanPage(page, extensionWorker);
 
-  await page.locator('meta[name="viewport"]').evaluate((meta) => {
-    meta.setAttribute('content', 'width=device-width, maximum-scale=3, user-scalable=yes');
-  });
-  const second = await scanPage(page, extensionWorker);
-  expect(second.issues.some((issue) => issue.ruleId === 'FT-WCAG-021')).toBe(false);
-  expect(second.review.some((issue) => issue.ruleId === 'FT-REVIEW-041')).toBe(true);
-  expect(second.rulesRun).toBe(91);
+  expect(result.warnings.filter((issue) => issue.ruleId === 'FT-WARN-028')).toHaveLength(2);
+  expect(result.issues.some((issue) => issue.ruleId === 'FT-WCAG-022')).toBe(true);
+  expect(result.review.some((issue) => issue.ruleId === 'FT-REVIEW-043' && issue.targets.includes('#unreachable-scroll'))).toBe(true);
+  expect(result.review.some((issue) => issue.ruleId === 'FT-REVIEW-043' && issue.targets.includes('#reachable-scroll'))).toBe(false);
+  expect(result.review.some((issue) => issue.ruleId === 'FT-REVIEW-044' && issue.targets.includes('#autoplay-audio'))).toBe(true);
+  expect(result.rulesRun).toBe(91);
 });

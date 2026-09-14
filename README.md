@@ -615,3 +615,12 @@ Form evidence is deliberately privacy-bounded. FocusTrace does not read or persi
 `FT-REVIEW-041` keeps finite `maximum-scale` ceilings from 2× up to, but not including, 5× as a minor larger-zoom compatibility review. The 5× threshold is not presented as an additional WCAG requirement. Existing `FT-REVIEW-024` narrow-viewport reflow evidence and `FT-REVIEW-028` 100%→200% resize comparison remain the authoritative observed-layout workflows rather than being duplicated.
 
 `FT-REVIEW-042` reviews visible content with a resolvable quarter-turn `transform` or `rotate` authored under portrait/landscape media queries. Essential-orientation exceptions, inaccessible stylesheets, script-driven locking and alternate controls remain contextual. Contrast remains conservative too: when a separately stacked painted element makes the effective backdrop ambiguous, a deterministic contrast failure is downgraded to REVIEW instead of guessing the composed background. See [`docs/VISUAL_PRESENTATION.md`](docs/VISUAL_PRESENTATION.md) for the bounded methodology and scan budgets.
+
+### Keyboard, navigation, refresh and motion
+
+`FT-WARN-028` reports duplicate valid `accesskey` tokens as an HTML authoring WARNING because browser/platform shortcut assignment remains contextual. `FT-WCAG-022` deterministically fails the bounded delayed `meta refresh` timing window implemented from WCAG 2.2.1 / ACT evidence.
+
+`FT-REVIEW-043` reviews rendered scrollable regions that expose no sequential keyboard-focus entry point, while `FT-REVIEW-044` reviews unmuted native autoplay media that may continue for more than three seconds without an observable native stop/mute mechanism. Existing `FT-REVIEW-001`, `FT-RUNTIME-011`, `FT-RUNTIME-012` and `FT-REVIEW-026` continue to cover positive tabindex, observed keyboard reachability/traps and pause-stop-hide motion evidence without duplicate findings.
+
+All checks remain local and bounded. Custom media controls, browser autoplay policy, external scrolling controls and platform-specific shortcut behavior remain contextual. See [`docs/KEYBOARD_NAVIGATION_MOTION.md`](docs/KEYBOARD_NAVIGATION_MOTION.md) for methodology and limits.
+

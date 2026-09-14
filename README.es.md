@@ -615,3 +615,12 @@ La evidencia de formularios está limitada deliberadamente por privacidad. Focus
 `FT-REVIEW-041` conserva como revisión menor de compatibilidad para ampliaciones mayores los límites finitos de `maximum-scale` desde 2× hasta, sin incluir, 5×. El umbral 5× no se presenta como un requisito WCAG adicional. Las evidencias existentes `FT-REVIEW-024` de reflow en viewport estrecho y `FT-REVIEW-028` de comparación 100 %→200 % siguen siendo los flujos autoritativos de layout observado en lugar de duplicarse.
 
 `FT-REVIEW-042` revisa contenido visible con un `transform` o `rotate` resoluble de un cuarto de vuelta definido bajo media queries portrait/landscape. Las excepciones de orientación esencial, hojas de estilo inaccesibles, bloqueos controlados por script y controles alternativos siguen siendo contextuales. El contraste también se mantiene conservador: cuando un elemento pintado en otra capa hace ambiguo el fondo efectivo, un fallo determinista de contraste se degrada a REVIEW en lugar de adivinar la composición final. Consulta [`docs/VISUAL_PRESENTATION.md`](docs/VISUAL_PRESENTATION.md) para la metodología acotada y los límites de análisis.
+
+### Teclado, navegación, refresh y movimiento
+
+`FT-WARN-028` informa tokens válidos de `accesskey` duplicados como WARNING de autoría HTML porque la asignación final del atajo depende del navegador y la plataforma. `FT-WCAG-022` produce FAIL determinista únicamente dentro de la ventana acotada de `meta refresh` con retraso modelada a partir de WCAG 2.2.1 / ACT.
+
+`FT-REVIEW-043` revisa regiones desplazables renderizadas que no exponen un punto de entrada alcanzable mediante foco secuencial, mientras que `FT-REVIEW-044` revisa medios nativos con autoplay no silenciado que pueden continuar durante más de tres segundos sin un mecanismo nativo observable de parada/silencio. Las reglas existentes `FT-REVIEW-001`, `FT-RUNTIME-011`, `FT-RUNTIME-012` y `FT-REVIEW-026` siguen cubriendo tabindex positivo, alcance/trampas de teclado observadas y evidencia de pause-stop-hide sin duplicar hallazgos.
+
+Todas las comprobaciones siguen siendo locales y acotadas. Los controles multimedia personalizados, la política de autoplay del navegador, los controles externos de scroll y el comportamiento de atajos dependiente de plataforma permanecen contextuales. Consulta [`docs/KEYBOARD_NAVIGATION_MOTION.es.md`](docs/KEYBOARD_NAVIGATION_MOTION.es.md) para metodología y límites.
+
