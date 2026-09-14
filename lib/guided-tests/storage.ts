@@ -18,7 +18,7 @@ function emptyStore(): GuidedSessionStore {
 }
 
 export function boundGuidedSessions(sessions: GuidedTestSession[]): GuidedTestSession[] {
-  return sessions
+  return [...sessions]
     .filter(isRecoverableGuidedSession)
     .sort((a, b) => b.updatedAt - a.updatedAt)
     .slice(0, GUIDED_MAX_STORED_SESSIONS);
