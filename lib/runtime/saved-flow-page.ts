@@ -156,7 +156,9 @@ export function inspectSavedFlowTargetInPage(signature: SavedFlowTargetSignature
   const focused = active === element || (element.shadowRoot?.activeElement != null && element.shadowRoot.activeElement === active);
   const role = element.getAttribute('role');
   const dialogLike = element.tagName.toLowerCase() === 'dialog' || role === 'dialog' || role === 'alertdialog';
-  const nativeOpen = element instanceof HTMLDialogElement ? element.open : true;
+  const nativeOpen = typeof HTMLDialogElement !== 'undefined' && element instanceof HTMLDialogElement
+    ? element.open
+    : true;
 
   return {
     status: 'matched',
