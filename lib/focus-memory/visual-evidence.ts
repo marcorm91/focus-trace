@@ -23,6 +23,17 @@ type MemoryEvidenceMetrics = {
   viewport: { width: number; height: number };
 };
 
+type TopViewportRect = {
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  top: number;
+  left: number;
+  right: number;
+  bottom: number;
+};
+
 function collectVisibleMemoryTargetsInPage(
   candidates: MemoryEvidenceCandidate[],
 ): MemoryEvidenceMetrics[] {
@@ -43,7 +54,7 @@ function collectVisibleMemoryTargetsInPage(
       const nextSelector = tokens[index + 1]?.trim();
       if (!nextSelector) return null;
       if (boundary === 'shadow') {
-        const shadow = (current as Element & { shadowRoot?: ShadowRoot | null }).shadowRoot ?? null;
+        const shadow: ShadowRoot | null = (current as Element & { shadowRoot?: ShadowRoot | null }).shadowRoot ?? null;
         if (!shadow || shadow.mode !== 'open') return null;
         context = shadow;
       } else if (boundary === 'frame') {
@@ -56,16 +67,16 @@ function collectVisibleMemoryTargetsInPage(
     }
     return current;
   };
-  const topRect = (element: Element) => {
-    const rect = topRect(element);
-    let x = rect.x;
-    let y = rect.y;
-    let owner = element.ownerDocument;
+  const topRect = (element: Element): TopViewportRect => {
+    const rect: DOMRect = element.getBoundingClientRect();
+    let x: number = rect.x;
+    let y: number = rect.y;
+    let owner: Document = element.ownerDocument;
     while (owner !== document) {
       try {
         const frame = owner.defaultView?.frameElement;
         if (!frame || frame.nodeType !== 1) break;
-        const frameRect = (frame as Element).getBoundingClientRect();
+        const frameRect: DOMRect = (frame as Element).getBoundingClientRect();
         x += frameRect.left;
         y += frameRect.top;
         owner = (frame as Element).ownerDocument;
@@ -83,7 +94,7 @@ function collectVisibleMemoryTargetsInPage(
     }
     if (!element) continue;
 
-    const rect = element.getBoundingClientRect();
+    const rect = topRect(element);
     if (rect.width <= 0 || rect.height <= 0) continue;
     const visible = rect.bottom > 0
       && rect.right > 0
