@@ -1,6 +1,7 @@
 // @vitest-environment jsdom
 
 import { describe, expect, it } from 'vitest';
+import { runFocusTraceScan } from '../lib/audit/scan';
 import { evaluateOrientationLock, evaluateViewportZoom, parseViewportDirectives } from '../lib/audit/viewport-visual';
 
 function render(head = '', body = '<main>Content</main>') {
@@ -60,5 +61,21 @@ describe('viewport and visual presentation checks', () => {
   it('ignores non-quarter-turn orientation transforms', () => {
     render('<style>@media (orientation: landscape) { body { transform: rotate(10deg); } }</style>');
     expect(evaluateOrientationLock(document)).toEqual([]);
+  });
+
+  it('downgrades low text contrast when a painted full-inset sibling defines an ambiguous backdrop', () => {
+    render(
+      `<style>
+        html, body { background: rgb(255, 255, 255); color: rgb(0, 0, 0); font-size: 16px; }
+        .stage { position: relative; min-height: 80px; }
+        #backdrop { position: absolute; top: 0; right: 0; bottom: 0; left: 0; background: rgb(0, 0, 0); }
+        #stacked { position: relative; color: rgb(119, 119, 119); background: transparent; }
+      </style>`,
+      '<main><h1>Contrast</h1><div class="stage"><div id="backdrop" aria-hidden="true"></div><p id="stacked">Stacked contrast text</p></div></main>',
+    );
+
+    const result = runFocusTraceScan();
+    expect(result.issues.some((issue) => issue.ruleId === 'FT-WCAG-010' && issue.targets.includes('#stacked'))).toBe(false);
+    expect(result.review.some((issue) => issue.ruleId === 'FT-WCAG-010' && issue.targets.includes('#stacked'))).toBe(true);
   });
 });
