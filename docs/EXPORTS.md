@@ -2,7 +2,7 @@
 
 FocusTrace can serialize accessibility findings from a page session or Site Audit into a stable interchange model and render that model as JSON, HTML, CSV, SARIF 2.1.0 or JUnit XML.
 
-The export layer is local-first. It operates on results already held by FocusTrace and does not upload inspected-page data to a FocusTrace, Deque or axe service. This issue provides the headless serialization contract used by later CLI/CI integration; it does not add a separate browser UI workflow.
+The export layer is local-first. It operates on results already held by FocusTrace and does not upload inspected-page data to a FocusTrace, Deque or axe service. The reusable core and local CLI consume this same serialization contract; the browser extension does not need a separate exporter implementation.
 
 ## JSON contract
 
@@ -22,6 +22,8 @@ Every export envelope includes:
 - lifecycle and auditor workflow metadata when it exists on the source finding.
 
 For a page session, coverage includes rule/pass and static/runtime finding counts. For Site Audit, scope preserves the configured discovery/page/sample limits and exclusions, while coverage records discovered URLs, route families, sampled/scanned pages, failed pages and whether discovery was truncated.
+
+The local CLI also adds its normalized audit-profile snapshot and baseline-compatibility result to the open `metadata` object. These are optional producer metadata and do not change the v1 required-field contract.
 
 ### Compatibility policy
 
@@ -92,4 +94,4 @@ The pure export functions live in `lib/report/versioned-export.ts`:
 - `renderVersionedJUnit`
 - `renderVersionedExport`
 
-The next CLI/CI layers can use this module without needing browser APIs or a network service.
+The reusable core exposes this module through `lib/core/index.ts`, and the local CLI documented in [`CLI.md`](./CLI.md) consumes it after running the same production scanner used by the extension.
