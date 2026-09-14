@@ -137,14 +137,14 @@ describe('versioned exports', () => {
       coverage: { passes: 8, rulesRun: 11, staticFindings: 3, runtimeFindings: 1 },
     });
     expect(envelope.summary).toEqual({ findings: 4, failures: 1, reviews: 2, warnings: 1 });
-    expect(envelope.findings[0].remediation).toContain('Give the button an accessible name');
+    expect(envelope.findings[0]?.remediation).toContain('Give the button an accessible name');
     expect(envelope.findings.at(-1)).toMatchObject({ source: 'runtime', outcome: 'review', ruleId: 'FT-RUNTIME-FOCUS' });
     expect(envelope.findings.at(-1)?.remediation).toContain('WCAG 2.4.3');
 
     const jsonText = renderVersionedJson(envelope);
     const roundTrip = parseVersionedJson(jsonText);
     expect(roundTrip).toEqual(envelope);
-    expect(roundTrip.findings[0].references[0]).toMatchObject({ type: 'WCAG', id: '4.1.2' });
+    expect(roundTrip.findings[0]?.references[0]).toMatchObject({ type: 'WCAG', id: '4.1.2' });
     expect(jsonText).not.toContain('token=secret');
     expect(jsonText).not.toContain('view=compact');
     expect(jsonText).not.toContain('private-account');
@@ -227,7 +227,7 @@ describe('versioned exports', () => {
     expect(envelope.kind).toBe('site-audit');
     expect(envelope.summary).toEqual({ findings: 3, failures: 1, reviews: 1, warnings: 1 });
     expect(envelope.findings[0]).toMatchObject({ source: 'site-audit', template: 'Account' });
-    expect(envelope.findings[0].remediation).toContain('Give the button an accessible name');
+    expect(envelope.findings[0]?.remediation).toContain('Give the button an accessible name');
     expect(envelope.context.scope).toMatchObject({
       mode: 'automatic',
       maxDiscoveredUrls: 500,
