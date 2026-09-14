@@ -4,13 +4,15 @@ FocusTrace can run inside an existing Playwright test without launching a second
 
 ## Build prerequisites
 
-Install repository dependencies, build the browser scanner and install Playwright Chromium:
+Install repository dependencies, build the browser scanner and install the Playwright browsers used by the repository validation example:
 
 ```bash
 npm ci
 npm run build:e2e
-npm run playwright:install:chromium
+npm run playwright:install:validation
 ```
+
+`playwright:install:validation` installs Chromium and Firefox from the lockfile-pinned Playwright toolchain. The dedicated FocusTrace example executes the injected browser scanner on both engines. The extension E2E suite itself remains Chromium-hosted because Playwright's extension-loading workflow is Chromium-specific.
 
 `build:e2e` builds both the browser extension and `dist/cli/browser-scanner.js`, which is the scanner injected into the Playwright `Page`.
 
@@ -142,11 +144,13 @@ A repository-local example is available at `.github/examples/focustrace-playwrig
 
 1. `npm ci`
 2. `npm run build:e2e`
-3. `npm run playwright:install:chromium`
+3. `npm run playwright:install:validation`
 4. `npm run test:e2e -- --config=playwright.focustrace-example.config.ts`
 5. upload the SARIF and JUnit files as artifacts even when the accessibility checkpoint fails
 
-The dedicated config runs `examples/playwright/focustrace.example.ts` and keeps the example outside the Vitest suite. The example defaults to the repository fixture, so it can execute without an external service. Set `FOCUSTRACE_URL` to point it at an application already started by the consuming pipeline.
+The dedicated config runs `examples/playwright/focustrace.example.ts` in Chromium and Firefox and keeps the example outside the Vitest suite. The example defaults to the repository fixture, so it can execute without an external service. Set `FOCUSTRACE_URL` to point it at an application already started by the consuming pipeline.
+
+If a consuming project intentionally validates only one browser engine, it can provide its own Playwright project selection or config. The repository example installs both engines because its checked-in config declares both.
 
 ## Privacy and evidence boundaries
 
