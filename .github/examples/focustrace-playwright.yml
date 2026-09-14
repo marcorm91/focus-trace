@@ -23,6 +23,8 @@ jobs:
         with:
           name: focustrace-reports
           path: |
-            artifacts/focustrace/focustrace.sarif.json
-            artifacts/focustrace/focustrace.junit.xml
+            artifacts/focustrace/focustrace-chromium.sarif.json
+            artifacts/focustrace/focustrace-chromium.junit.xml
+            artifacts/focustrace/focustrace-firefox.sarif.json
+            artifacts/focustrace/focustrace-firefox.junit.xml
           if-no-files-found: warn
