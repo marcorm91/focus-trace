@@ -8,13 +8,37 @@
       "title": "Sensory characteristics review",
       "coverage": "guided-manual",
       "automated": false,
+      "references": [{ "type": "WCAG", "id": "1.3.3", "level": "A", "label": "Sensory Characteristics" }]
+    },
+    {
+      "id": "FT-GUIDED-002",
+      "title": "Keyboard operability pass",
+      "coverage": "guided-manual",
+      "automated": false,
       "references": [
-        {
-          "type": "WCAG",
-          "id": "1.3.3",
-          "level": "A",
-          "label": "Sensory Characteristics"
-        }
+        { "type": "WCAG", "id": "2.1.1", "level": "A", "label": "Keyboard" },
+        { "type": "WCAG", "id": "2.1.2", "level": "A", "label": "No Keyboard Trap" }
+      ]
+    },
+    {
+      "id": "FT-GUIDED-003",
+      "title": "Focus order and visibility review",
+      "coverage": "guided-manual",
+      "automated": false,
+      "references": [
+        { "type": "WCAG", "id": "2.4.3", "level": "A", "label": "Focus Order" },
+        { "type": "WCAG", "id": "2.4.7", "level": "AA", "label": "Focus Visible" }
+      ]
+    },
+    {
+      "id": "FT-GUIDED-004",
+      "title": "Dialog focus lifecycle",
+      "coverage": "guided-manual",
+      "automated": false,
+      "references": [
+        { "type": "WCAG", "id": "2.1.2", "level": "A", "label": "No Keyboard Trap" },
+        { "type": "WCAG", "id": "2.4.3", "level": "A", "label": "Focus Order" },
+        { "type": "WAI-ARIA APG", "id": "dialog-modal", "label": "Dialog (Modal) Pattern" }
       ]
     }
   ]
