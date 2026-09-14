@@ -1,12 +1,26 @@
 import { readBoundedResponseText } from './bounded-response';
-import { SITE_AUDIT_MAX_DISCOVERED_URLS, type SiteAuditDiscovery } from './model';
+import {
+  SITE_AUDIT_MAX_DISCOVERED_URLS,
+  type SiteAuditDiscovery,
+  type SiteAuditDiscoveryDecision,
+  type SiteAuditDiscoveryReason,
+} from './model';
 
 const TRACKING_QUERY_KEYS = new Set([
   'gclid', 'fbclid', 'msclkid', 'mc_cid', 'mc_eid',
-  'utm_campaign', 'utm_content', 'utm_medium', 'utm_source', 'utm_term',
+]);
+const SENSITIVE_QUERY_KEYS = new Set([
+  'access_token', 'api_key', 'apikey', 'auth', 'authorization', 'code', 'jwt',
+  'password', 'passwd', 'session', 'session_id', 'sessionid', 'sid', 'token',
 ]);
 const MAX_SITEMAPS = 24;
+const MAX_DISCOVERY_DECISIONS = 1_000;
 export const SITE_AUDIT_MAX_FETCH_BYTES = 6_000_000;
+
+export interface SiteAuditDiscoveryOptions {
+  maxDiscoveredUrls?: number;
+  exclusionPrefixes?: string[];
+}
 
 function decodeXml(value: string): string {
   return value
@@ -17,21 +31,48 @@ function decodeXml(value: string): string {
     .replace(/&#39;|&apos;/g, "'");
 }
 
+function shouldRemoveQueryKey(key: string): boolean {
+  const normalized = key.toLowerCase();
+  return TRACKING_QUERY_KEYS.has(normalized)
+    || SENSITIVE_QUERY_KEYS.has(normalized)
+    || normalized.startsWith('utm_')
+    || normalized.startsWith('pk_');
+}
+
 export function normalizeDiscoveredUrl(value: string, origin: string): string | undefined {
   try {
     const url = new URL(value, origin);
     if (!['http:', 'https:'].includes(url.protocol)) return undefined;
     const expected = new URL(origin);
     if (url.origin !== expected.origin) return undefined;
+    url.username = '';
+    url.password = '';
     url.hash = '';
     for (const key of Array.from(url.searchParams.keys())) {
-      if (TRACKING_QUERY_KEYS.has(key.toLowerCase())) url.searchParams.delete(key);
+      if (shouldRemoveQueryKey(key)) url.searchParams.delete(key);
     }
     url.searchParams.sort();
     if (url.pathname.length > 1) url.pathname = url.pathname.replace(/\/+$/, '');
     return url.toString();
   } catch {
     return undefined;
+  }
+}
+
+export function siteAuditDecisionUrl(value: string, origin: string): string {
+  try {
+    const url = new URL(value, origin);
+    url.username = '';
+    url.password = '';
+    url.hash = '';
+    const queryKeys = [...new Set(Array.from(url.searchParams.keys())
+      .filter((key) => !shouldRemoveQueryKey(key)))]
+      .sort();
+    url.search = '';
+    for (const key of queryKeys) url.searchParams.append(key, '…');
+    return `${url.origin}${url.pathname}${url.search}`;
+  } catch {
+    return value.slice(0, 180);
   }
 }
 
@@ -76,23 +117,64 @@ async function fetchText(url: string): Promise<string | undefined> {
   }
 }
 
+function normalizeLimit(value: number | undefined): number {
+  if (!Number.isFinite(value)) return SITE_AUDIT_MAX_DISCOVERED_URLS;
+  return Math.max(1, Math.min(SITE_AUDIT_MAX_DISCOVERED_URLS, Math.floor(value!)));
+}
+
+function normalizeExclusions(values: string[] | undefined): string[] {
+  return [...new Set((values ?? [])
+    .map((value) => value.trim())
+    .filter(Boolean)
+    .map((value) => value.startsWith('/') ? value : `/${value}`))];
+}
+
+function excludedByPrefix(url: string, prefixes: string[]): boolean {
+  const pathname = new URL(url).pathname;
+  return prefixes.some((prefix) => pathname === prefix || pathname.startsWith(prefix.endsWith('/') ? prefix : `${prefix}/`));
+}
+
 export async function discoverSiteUrls(
   sourceUrl: string,
   fallbackLinks: string[] = [],
+  options: SiteAuditDiscoveryOptions = {},
 ): Promise<SiteAuditDiscovery> {
   const source = new URL(sourceUrl);
   const origin = source.origin;
+  const maxDiscoveredUrls = normalizeLimit(options.maxDiscoveredUrls);
+  const exclusionPrefixes = normalizeExclusions(options.exclusionPrefixes);
   const discovered = new Set<string>();
   const sitemapUrls = new Set<string>();
+  const decisions: SiteAuditDiscoveryDecision[] = [];
   let usedRobots = false;
   let usedSitemap = false;
+  let hitLimit = false;
 
-  const addUrl = (candidate: string) => {
-    if (discovered.size >= SITE_AUDIT_MAX_DISCOVERED_URLS) return;
-    const normalized = normalizeDiscoveredUrl(candidate, origin);
-    if (normalized) discovered.add(normalized);
+  const record = (candidate: string, status: SiteAuditDiscoveryDecision['status'], reason: SiteAuditDiscoveryReason) => {
+    if (decisions.length >= MAX_DISCOVERY_DECISIONS) return;
+    decisions.push({ url: siteAuditDecisionUrl(candidate, origin), status, reason });
   };
-  addUrl(sourceUrl);
+
+  const addUrl = (candidate: string, reason: Extract<SiteAuditDiscoveryReason, 'root' | 'sitemap' | 'internal-link'>) => {
+    const normalized = normalizeDiscoveredUrl(candidate, origin);
+    if (!normalized) return;
+    if (excludedByPrefix(normalized, exclusionPrefixes)) {
+      record(normalized, 'excluded', 'excluded-path');
+      return;
+    }
+    if (discovered.has(normalized)) {
+      record(normalized, 'excluded', 'duplicate');
+      return;
+    }
+    if (discovered.size >= maxDiscoveredUrls) {
+      hitLimit = true;
+      record(normalized, 'excluded', 'safety-limit');
+      return;
+    }
+    discovered.add(normalized);
+    record(normalized, 'included', reason);
+  };
+  addUrl(sourceUrl, 'root');
 
   const robotsUrl = new URL('/robots.txt', origin).toString();
   const robots = await fetchText(robotsUrl);
@@ -114,7 +196,7 @@ export async function discoverSiteUrls(
   while (
     queue.length
     && visitedSitemaps.size < MAX_SITEMAPS
-    && discovered.size < SITE_AUDIT_MAX_DISCOVERED_URLS
+    && discovered.size < maxDiscoveredUrls
   ) {
     const sitemapUrl = queue.shift()!;
     if (visitedSitemaps.has(sitemapUrl)) continue;
@@ -134,15 +216,14 @@ export async function discoverSiteUrls(
       continue;
     }
 
-    for (const location of parsed.locations) addUrl(location);
+    for (const location of parsed.locations) addUrl(location, 'sitemap');
   }
 
   let usedLinks = false;
   for (const link of fallbackLinks) {
     const before = discovered.size;
-    addUrl(link);
+    addUrl(link, 'internal-link');
     if (discovered.size > before) usedLinks = true;
-    if (discovered.size >= SITE_AUDIT_MAX_DISCOVERED_URLS) break;
   }
 
   const sourceKind: SiteAuditDiscovery['source'] = usedSitemap && usedLinks
@@ -154,8 +235,9 @@ export async function discoverSiteUrls(
   return {
     origin,
     source: sourceKind,
-    urls: [...discovered],
-    sitemapUrls: [...sitemapUrls],
-    truncated: discovered.size >= SITE_AUDIT_MAX_DISCOVERED_URLS,
+    urls: [...discovered].sort((left, right) => left.localeCompare(right)),
+    sitemapUrls: [...sitemapUrls].sort((left, right) => left.localeCompare(right)),
+    truncated: hitLimit,
+    decisions,
   };
 }
