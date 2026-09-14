@@ -74,6 +74,27 @@ export interface GuidedTestSession {
 export const GUIDED_MAX_STEPS = 20;
 export const GUIDED_MAX_EVIDENCE_PER_STEP = 4;
 export const GUIDED_MAX_NOTE_LENGTH = 240;
+const GUIDED_MAX_PAGE_URL_LENGTH = 500;
+const GUIDED_MAX_PAGE_TITLE_LENGTH = 160;
+const GUIDED_MAX_IDENTIFIER_LENGTH = 120;
+const GUIDED_MAX_EVIDENCE_LABEL_LENGTH = 80;
+const GUIDED_MAX_EVIDENCE_VALUE_LENGTH = 500;
+
+const MANUAL_ANSWERS: GuidedManualAnswer[] = [
+  'acknowledged',
+  'pass',
+  'issue',
+  'not-applicable',
+  'uncertain',
+];
+const SESSION_STATUSES: GuidedSessionStatus[] = ['active', 'paused', 'completed', 'cancelled'];
+const GUIDED_OUTCOMES: GuidedOutcome[] = [
+  'guided-pass',
+  'guided-issue',
+  'guided-review',
+  'not-applicable',
+];
+const EVIDENCE_KINDS: GuidedEvidence['kind'][] = ['page-context', 'manual-answer', 'manual-note'];
 
 const SENSITIVE_ASSIGNMENT = /\b(password|passwd|pwd|token|secret|api[_-]?key|authorization|cookie|session|value)\s*[:=]\s*([^\s,;]+)/gi;
 const EMAIL = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
@@ -101,9 +122,9 @@ export function redactGuidedText(value: string, limit = GUIDED_MAX_NOTE_LENGTH):
 export function normalizeGuidedPageUrl(value: string): string {
   try {
     const url = new URL(value);
-    return `${url.origin}${url.pathname}`;
+    return `${url.origin}${url.pathname}`.slice(0, GUIDED_MAX_PAGE_URL_LENGTH);
   } catch {
-    return value.split(/[?#]/, 1)[0]?.slice(0, 500) ?? '';
+    return value.split(/[?#]/, 1)[0]?.slice(0, GUIDED_MAX_PAGE_URL_LENGTH) ?? '';
   }
 }
 
@@ -112,7 +133,7 @@ function boundedEvidence(evidence: GuidedEvidence[]): GuidedEvidence[] {
     .slice(-GUIDED_MAX_EVIDENCE_PER_STEP)
     .map((item) => ({
       ...item,
-      label: redactGuidedText(item.label, 80),
+      label: redactGuidedText(item.label, GUIDED_MAX_EVIDENCE_LABEL_LENGTH),
       value: redactGuidedText(item.value),
     }));
 }
@@ -132,7 +153,7 @@ export function startGuidedTest(
     id: sessionId(definition.id, now),
     testId: definition.id,
     pageUrl: normalizeGuidedPageUrl(page.url),
-    pageTitle: redactGuidedText(page.title ?? '', 160),
+    pageTitle: redactGuidedText(page.title ?? '', GUIDED_MAX_PAGE_TITLE_LENGTH),
     startedAt: now,
     updatedAt: now,
     status: 'active',
@@ -238,16 +259,68 @@ export function restartGuidedTest(
   return startGuidedTest(definition, { url: session.pageUrl, title: session.pageTitle }, now);
 }
 
+function isFiniteTimestamp(value: unknown): value is number {
+  return typeof value === 'number' && Number.isFinite(value) && value >= 0;
+}
+
+function isBoundedString(value: unknown, maxLength: number, allowEmpty = true): value is string {
+  return typeof value === 'string'
+    && value.length <= maxLength
+    && (allowEmpty || value.length > 0);
+}
+
+function isGuidedAnswer(value: unknown): value is GuidedManualAnswer {
+  return typeof value === 'string' && MANUAL_ANSWERS.includes(value as GuidedManualAnswer);
+}
+
+function isGuidedEvidence(value: unknown): value is GuidedEvidence {
+  if (!value || typeof value !== 'object') return false;
+  const evidence = value as Partial<GuidedEvidence>;
+  return typeof evidence.kind === 'string'
+    && EVIDENCE_KINDS.includes(evidence.kind as GuidedEvidence['kind'])
+    && isBoundedString(evidence.label, GUIDED_MAX_EVIDENCE_LABEL_LENGTH)
+    && isBoundedString(evidence.value, GUIDED_MAX_EVIDENCE_VALUE_LENGTH)
+    && isFiniteTimestamp(evidence.capturedAt);
+}
+
+function isGuidedStepState(value: unknown): value is GuidedStepState {
+  if (!value || typeof value !== 'object') return false;
+  const step = value as Partial<GuidedStepState>;
+  return isBoundedString(step.stepId, GUIDED_MAX_IDENTIFIER_LENGTH, false)
+    && (step.answer == null || isGuidedAnswer(step.answer))
+    && (step.answeredAt == null || isFiniteTimestamp(step.answeredAt))
+    && Array.isArray(step.evidence)
+    && step.evidence.length <= GUIDED_MAX_EVIDENCE_PER_STEP
+    && step.evidence.every(isGuidedEvidence);
+}
+
 export function isRecoverableGuidedSession(value: unknown): value is GuidedTestSession {
   if (!value || typeof value !== 'object') return false;
   const session = value as Partial<GuidedTestSession>;
-  return session.version === 1
-    && typeof session.id === 'string'
-    && typeof session.testId === 'string'
-    && typeof session.pageUrl === 'string'
-    && typeof session.startedAt === 'number'
-    && typeof session.updatedAt === 'number'
-    && ['active', 'paused', 'completed', 'cancelled'].includes(String(session.status))
-    && Array.isArray(session.steps)
-    && session.steps.length <= GUIDED_MAX_STEPS;
+  if (session.version !== 1
+    || !isBoundedString(session.id, GUIDED_MAX_IDENTIFIER_LENGTH, false)
+    || !isBoundedString(session.testId, GUIDED_MAX_IDENTIFIER_LENGTH, false)
+    || !isBoundedString(session.pageUrl, GUIDED_MAX_PAGE_URL_LENGTH, false)
+    || !isBoundedString(session.pageTitle, GUIDED_MAX_PAGE_TITLE_LENGTH)
+    || !isFiniteTimestamp(session.startedAt)
+    || !isFiniteTimestamp(session.updatedAt)
+    || typeof session.status !== 'string'
+    || !SESSION_STATUSES.includes(session.status as GuidedSessionStatus)
+    || !Number.isInteger(session.currentStepIndex)
+    || !Array.isArray(session.steps)
+    || session.steps.length === 0
+    || session.steps.length > GUIDED_MAX_STEPS
+    || session.steps.some((step) => !isGuidedStepState(step))
+    || (session.currentStepIndex as number) < 0
+    || (session.currentStepIndex as number) >= session.steps.length) {
+    return false;
+  }
+
+  if (session.status === 'completed') {
+    return typeof session.outcome === 'string'
+      && GUIDED_OUTCOMES.includes(session.outcome as GuidedOutcome)
+      && isFiniteTimestamp(session.completedAt);
+  }
+
+  return session.outcome == null && session.completedAt == null;
 }
