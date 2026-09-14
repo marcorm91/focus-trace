@@ -34,6 +34,19 @@ function coversPoint(rect: DOMRect, x: number, y: number): boolean {
     && y <= rect.bottom;
 }
 
+function zeroInset(value: string): boolean {
+  const normalized = value.trim().toLowerCase();
+  return normalized === '0px' || normalized === '0';
+}
+
+function fillsContainingBlock(style: CSSStyleDeclaration): boolean {
+  if (style.position !== 'absolute' && style.position !== 'fixed') return false;
+  return zeroInset(style.top)
+    && zeroInset(style.right)
+    && zeroInset(style.bottom)
+    && zeroInset(style.left);
+}
+
 function positionedSiblingBackdropReason(element: Element, x: number, y: number): string | undefined {
   const parent = element.parentElement;
   if (!parent) return undefined;
@@ -47,8 +60,12 @@ function positionedSiblingBackdropReason(element: Element, x: number, y: number)
     const style = getComputedStyle(candidate);
     if (!['absolute', 'fixed', 'sticky', 'relative'].includes(style.position)) continue;
     if (!paintedBackground(candidate)) continue;
-    if (!coversPoint(candidate.getBoundingClientRect(), x, y)) continue;
 
+    if (fillsContainingBlock(style)) {
+      return 'A painted absolute/fixed sibling uses zero offsets on every side, so it fills its containing block and participates in the target backdrop. The effective contrast background cannot be reduced safely to the target ancestor chain.';
+    }
+
+    if (!coversPoint(candidate.getBoundingClientRect(), x, y)) continue;
     return 'A positioned painted sibling overlaps this target at its measured center point. Its final stacking/compositing relationship cannot be reconstructed safely from the target ancestor chain, so the effective contrast background remains ambiguous.';
   }
   return undefined;
@@ -56,7 +73,9 @@ function positionedSiblingBackdropReason(element: Element, x: number, y: number)
 
 function stackedBackdropReason(element: Element, document: Document): string | undefined {
   const rect = element.getBoundingClientRect();
-  if (rect.width <= 0 || rect.height <= 0) return undefined;
+  if (rect.width <= 0 || rect.height <= 0) {
+    return positionedSiblingBackdropReason(element, 0, 0);
+  }
   const x = Math.min(Math.max(rect.left + rect.width / 2, 0), Math.max(0, window.innerWidth - 1));
   const y = Math.min(Math.max(rect.top + rect.height / 2, 0), Math.max(0, window.innerHeight - 1));
 
