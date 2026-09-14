@@ -62,12 +62,3 @@ export async function saveGuidedSession(session: GuidedTestSession): Promise<voi
   ];
   await writeStore({ version: 1, sessions });
 }
-
-export async function removeGuidedSession(pageUrl: string, testId: string): Promise<void> {
-  const page = normalizeGuidedPageUrl(pageUrl);
-  const store = await readStore();
-  await writeStore({
-    version: 1,
-    sessions: store.sessions.filter((session) => !(session.pageUrl === page && session.testId === testId)),
-  });
-}
