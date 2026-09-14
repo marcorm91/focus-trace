@@ -51,6 +51,7 @@ FocusTrace uses WCAG 2.2 as its conformance source. WCAG 2.2 criteria are also r
 | **Virtual focus** | Compatible `aria-activedescendant` widgets | Records valid virtual-focus changes as informational evidence without treating them as DOM focus movement or a finding. | Virtual destination available in Trace, Journey and Graph. |
 | **Focus Walk** | Active page | Automates sequential focus traversal to build navigation evidence. | Journey of reachable focus targets. |
 | **Replay** | Recorded Trace session | Reconstructs evidence read-only without replaying actions against the page. | Runtime sequence. |
+| **Saved Replay regression** | Recorded Trace session | Saves a bounded local user-flow baseline. Only uniquely resolved non-text navigation keys are eligible for automatic replay; clicks, text/value changes, Tab and activation keys stop for explicit manual continuation. | `new`, `resolved`, `persistent`, `changed`, `missing-element` and `broken-flow` results with redacted routes and minimal target metadata. |
 | **Journey** | Trace session | Orders observed focus movement chronologically. | Navigable focus story. |
 | **Graph** | Trace session | Represents observed connections between focus targets. | Focus-navigation graph. |
 | **Accessibility breakpoints** | Trace | Can pause recording after selected deterministic runtime causes are captured. | Breakpoint tied to captured evidence. |
@@ -59,6 +60,8 @@ FocusTrace uses WCAG 2.2 as its conformance source. WCAG 2.2 criteria are also r
 | **FocusTrace Memory** | Repeated scans, enabled by default | Keeps bounded local history without time-based expiry for persistence, changes, resolutions and regressions. | Observations, auditor notes, locator and optional preview. |
 | **Report** | Available static/runtime evidence | Consolidates analysis, runtime stories and already-generated Structure data. | Report view and exports. |
 | **PDF / TXT / Markdown / JSON** | Current report or Memory baseline | Exports the applicable evidence and auditor notes without silently rerunning a full DOM collection. | Shareable artifacts. |
+
+Saved Replay regressions remain in extension-local storage with no time-based expiry. Storage is bounded to **20 flows**, **160 steps per flow** and **80 baseline findings per flow**; users can delete one flow or clear all saved flows. The saved schema excludes passwords, field values, auditor notes, event detail, accessible names and page text. Route query strings and fragments are replaced by redaction markers. A replay that stops on an ambiguous/changed target, missing element, route mismatch or manual cancellation does not infer later findings as resolved.
 
 ### Static WCAG rules
 

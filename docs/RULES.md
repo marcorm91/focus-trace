@@ -34,6 +34,27 @@ FocusTrace found an authoring or standards-maintenance risk that should be fixed
 
 The automated expectation tested by a rule was met. PASS never means full WCAG conformance.
 
+## Saved user-flow regression methodology
+
+Saved Replay regression is runtime evidence comparison, not an automated WCAG conformance result. A saved flow is derived from an observed Trace and persists only bounded action/checkpoint metadata plus the runtime finding baseline needed for later comparison.
+
+The persistent schema is local-first and deliberately redacted. FocusTrace stores at most **20 flows**, **160 steps per flow** and **80 baseline findings per flow**, with no time-based expiry. Users can delete one flow or clear the complete saved-flow library. Passwords, field values, auditor notes, event detail, accessible names, class names and page text are not copied into saved-flow storage. Routes preserve only the origin/path plus redaction markers for query-string or fragment data.
+
+Automatic replay is intentionally narrow. Only non-text navigation keys (`Arrow*`, `Home`, `End`, `PageUp`, `PageDown`, `Escape`) may be dispatched automatically, and only after stable node resolution identifies one unambiguous current target. Clicks, input changes, `Tab`, `Enter`, `Space` and other activation-like actions create an explicit manual stop. FocusTrace never restores or synthesizes stored field values because those values are not retained.
+
+Actions and checkpoints reuse the stable boundary-aware resolution model across the DOM, open Shadow DOM and same-origin frame boundaries. A missing target yields `missing-element`; an ambiguous or materially changed target yields `broken-flow`. Focus, route and dialog transitions are checkpoints. A mismatch stops the run and later steps are not assumed or executed.
+
+Runtime finding comparison uses six states:
+
+- `new`: a current runtime finding was not present in the saved baseline.
+- `persistent`: the same rule/target retains the same runtime outcome and event kind.
+- `changed`: the same rule/target is observed with changed outcome/evidence identity.
+- `resolved`: a baseline finding is absent **after a complete replay only**.
+- `missing-element`: a required saved target cannot be resolved.
+- `broken-flow`: the journey cannot be continued safely, including ambiguous/changed targets or checkpoint mismatch.
+
+An incomplete replay never infers `resolved` from absence. When the flow breaks, FocusTrace may retain evidence actually observed before the stop, but it does not treat unvisited later checkpoints as successful. This preserves the evidence-first rule that absence is meaningful only when the required journey completed.
+
 ## Accessible name computation
 
 FocusTrace records both the computed name and the source that produced it. The current implementation covers the precedence needed by the rule engine for common HTML controls:
