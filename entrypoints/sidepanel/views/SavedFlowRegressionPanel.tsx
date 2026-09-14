@@ -154,6 +154,7 @@ export function SavedFlowRegressionPanel({
   const [runState, setRunState] = useState<RunState>('idle');
   const [runIndex, setRunIndex] = useState(0);
   const [runStartedAt, setRunStartedAt] = useState<number>();
+  const [runTabId, setRunTabId] = useState<number>();
   const [manualStep, setManualStep] = useState<SavedFlowStep>();
   const [results, setResults] = useState<SavedFlowRegressionResult[]>([]);
   const [message, setMessage] = useState<string>();
@@ -244,6 +245,8 @@ export function SavedFlowRegressionPanel({
     setResults(failure ? [failure, ...comparison] : comparison);
     setRunState(failure ? 'failed' : 'complete');
     setManualStep(undefined);
+    setRunStartedAt(undefined);
+    setRunTabId(undefined);
     setMessage(failure
       ? tr(language, 'Replay stopped safely. No later steps were assumed.', 'El replay se detuvo de forma segura. No se asumieron pasos posteriores.')
       : tr(language, 'Regression replay completed.', 'Replay de regresión completado.'));
@@ -345,13 +348,21 @@ export function SavedFlowRegressionPanel({
     setBusy(true);
     setResults([]);
     setMessage(undefined);
+    let startedTabId: number | undefined;
     try {
       const tabId = await activeTabId();
+      startedTabId = tabId;
       const startedAt = await startRegressionRecording(tabId, breakpoints);
       setRunStartedAt(startedAt);
+      setRunTabId(tabId);
       setRunIndex(0);
       await runFrom(selected, 0, startedAt, tabId);
     } catch {
+      if (startedTabId != null) {
+        await stopRegressionRecording(startedTabId, breakpoints).catch(() => undefined);
+      }
+      setRunStartedAt(undefined);
+      setRunTabId(undefined);
       setRunState('failed');
       setMessage(tr(
         language,
@@ -364,15 +375,43 @@ export function SavedFlowRegressionPanel({
   };
 
   const continueManual = async () => {
-    if (!selected || runStartedAt == null || runState !== 'manual-stop' || busy) return;
+    if (!selected || runStartedAt == null || runTabId == null || runState !== 'manual-stop' || busy) return;
     setBusy(true);
     setMessage(undefined);
     try {
-      const tabId = await activeTabId();
+      const currentTabId = await activeTabId();
+      if (currentTabId !== runTabId) {
+        await finish(runTabId, selected, runStartedAt, savedFlowBrokenFlow(
+          manualStep?.id ?? 'manual-step',
+          'The active tab changed during the manual stop, so FocusTrace refused to continue the saved flow on a different page.',
+        ));
+        return;
+      }
       setManualStep(undefined);
-      await runFrom(selected, runIndex + 1, runStartedAt, tabId);
+      await runFrom(selected, runIndex + 1, runStartedAt, runTabId);
     } catch {
-      await finish(await activeTabId(), selected, runStartedAt, savedFlowBrokenFlow(manualStep?.id ?? 'manual-step', 'The manual replay continuation failed.')).catch(() => undefined);
+      await finish(
+        runTabId,
+        selected,
+        runStartedAt,
+        savedFlowBrokenFlow(manualStep?.id ?? 'manual-step', 'The manual replay continuation failed.'),
+      ).catch(() => undefined);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const cancelManualReplay = async () => {
+    if (runTabId == null || runState !== 'manual-stop' || busy) return;
+    setBusy(true);
+    try {
+      await stopRegressionRecording(runTabId, breakpoints).catch(() => undefined);
+      setRunState('idle');
+      setRunStartedAt(undefined);
+      setRunTabId(undefined);
+      setManualStep(undefined);
+      setResults([]);
+      setMessage(tr(language, 'Saved replay cancelled.', 'Replay guardado cancelado.'));
     } finally {
       setBusy(false);
     }
@@ -458,9 +497,14 @@ export function SavedFlowRegressionPanel({
         <div className="saved-flow-stop" role="status" aria-live="polite">
           <strong>{tr(language, 'Manual stop required', 'Se requiere parada manual')}</strong>
           <p>{manualInstruction(manualStep, language)}</p>
-          <button type="button" disabled={busy} onClick={() => void continueManual()}>
-            {tr(language, 'I performed this step — continue', 'He realizado este paso — continuar')}
-          </button>
+          <div className="saved-flow-stop-actions">
+            <button type="button" disabled={busy} onClick={() => void continueManual()}>
+              {tr(language, 'I performed this step — continue', 'He realizado este paso — continuar')}
+            </button>
+            <button type="button" disabled={busy} onClick={() => void cancelManualReplay()}>
+              {tr(language, 'Cancel replay', 'Cancelar replay')}
+            </button>
+          </div>
         </div>
       )}
 
