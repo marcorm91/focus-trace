@@ -12,7 +12,6 @@ test('FocusTrace page checkpoint', async ({ page }) => {
     thresholds: { maxFailures: 0 },
     artifacts: {
       directory: 'artifacts/focustrace',
-      generatedAt: 1_700_000_000_000,
     },
   });
 });
