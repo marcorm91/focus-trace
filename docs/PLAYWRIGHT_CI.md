@@ -143,10 +143,10 @@ A repository-local example is available at `.github/examples/focustrace-playwrig
 1. `npm ci`
 2. `npm run build:e2e`
 3. `npm run playwright:install:chromium`
-4. `npx playwright test examples/playwright/focustrace.spec.ts`
+4. `npm run test:e2e -- --config=playwright.focustrace-example.config.ts`
 5. upload the SARIF and JUnit files as artifacts even when the accessibility checkpoint fails
 
-The example test defaults to the repository fixture, so it can execute without an external service. Set `FOCUSTRACE_URL` to point it at an application already started by the consuming pipeline.
+The dedicated config runs `examples/playwright/focustrace.example.ts` and keeps the example outside the Vitest suite. The example defaults to the repository fixture, so it can execute without an external service. Set `FOCUSTRACE_URL` to point it at an application already started by the consuming pipeline.
 
 ## Privacy and evidence boundaries
 
