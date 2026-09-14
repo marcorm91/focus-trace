@@ -661,3 +661,12 @@ The guided catalog also includes contextual workflows for complex table header a
 These workflows deliberately do **not** attach runtime Trace events. Form checks use synthetic test data and the guided layer never reads or stores field values. Multimedia checks store only the auditor's judgement and optional redacted note; FocusTrace does not copy or persist audio, video, captions or transcript payloads.
 
 The resize/reflow workflow reuses FocusTrace's existing Resize Text and Reflow baselines and asks the auditor for the contextual judgement that measurements alone cannot prove. All four workflows remain `guided-manual` / `automated: false` and do not change automatic rule or axe-core parity counts.
+
+
+### Guided APG widget-pattern tests
+
+`FT-GUIDED-009` through `FT-GUIDED-016` turn the existing runtime/APG observations into repeatable manual workflows for tabs, accordion/disclosure, menu, combobox/listbox, tree, grid, carousel and tooltip patterns. Keyboard instructions are localized in English and Spanish and each workflow records whether the pattern applies plus the selected implementation variation.
+
+These results are labelled **informative APG guidance** in Report. APG describes recommended widget interaction patterns; a guided APG issue is not a WCAG conformance failure and does not change automated PASS/FAIL/REVIEW/WARNING or axe-core parity counts. Relevant Trace observations are filtered to the pattern being reviewed and remain supporting evidence only.
+
+The browser test suite includes accessible, failure and review fixtures for every supported APG pattern. All evidence remains local and bounded; the feature adds no browser permissions or inspected-page transmission.

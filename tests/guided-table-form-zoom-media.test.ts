@@ -4,6 +4,8 @@ import { guidedStepCriteria } from '../lib/guided-tests/criterion-map';
 import { guidedRuntimeEvidence, hasGuidedRuntimeEvidence } from '../lib/guided-tests/runtime-evidence';
 import type { RuntimeEvent } from '../shared/types';
 
+const CONTEXTUAL_TEST_IDS = ['FT-GUIDED-005', 'FT-GUIDED-006', 'FT-GUIDED-007', 'FT-GUIDED-008'] as const;
+
 function event(kind: RuntimeEvent['kind'], timestamp: number): RuntimeEvent {
   return {
     id: `${kind}-${timestamp}`,
@@ -17,7 +19,7 @@ function event(kind: RuntimeEvent['kind'], timestamp: number): RuntimeEvent {
 
 describe('guided table, form, resize and multimedia workflows', () => {
   it('registers the four contextual workflows without claiming automated conformance', () => {
-    for (const id of ['FT-GUIDED-005', 'FT-GUIDED-006', 'FT-GUIDED-007', 'FT-GUIDED-008']) {
+    for (const id of CONTEXTUAL_TEST_IDS) {
       const definition = ALL_GUIDED_TESTS.find((test) => test.id === id);
       expect(definition).toBeDefined();
       expect(definition?.coverage).toBe('guided-manual');
@@ -25,7 +27,8 @@ describe('guided table, form, resize and multimedia workflows', () => {
   });
 
   it('maps each substantive contextual step to WCAG references declared by its workflow', () => {
-    for (const definition of ALL_GUIDED_TESTS.filter((test) => Number(test.id.slice(-3)) >= 5)) {
+    for (const id of CONTEXTUAL_TEST_IDS) {
+      const definition = ALL_GUIDED_TESTS.find((test) => test.id === id)!;
       const declared = new Set(
         definition.references
           .filter((reference) => reference.type === 'WCAG')
@@ -41,7 +44,7 @@ describe('guided table, form, resize and multimedia workflows', () => {
 
   it('keeps contextual workflows manual-only and does not attach runtime observations', () => {
     const events = [event('focus', 110), event('keydown', 120), event('click', 130)];
-    for (const id of ['FT-GUIDED-005', 'FT-GUIDED-006', 'FT-GUIDED-007', 'FT-GUIDED-008']) {
+    for (const id of CONTEXTUAL_TEST_IDS) {
       expect(hasGuidedRuntimeEvidence(id)).toBe(false);
       expect(guidedRuntimeEvidence(events, id, 100, 140)).toEqual([]);
     }

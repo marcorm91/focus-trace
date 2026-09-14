@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { ALL_GUIDED_TESTS } from '../../../lib/guided-tests/all-catalog';
+import { guidedApgPatternMetadata, isInformativeApgGuidedTest } from '../../../lib/guided-tests/apg-catalog';
 import { guidedStepCriteria } from '../../../lib/guided-tests/criterion-map';
 import {
   answerGuidedStep,
@@ -62,7 +63,10 @@ export function GuidedTestPanel({
     () => ALL_GUIDED_TESTS.find((item) => item.id === selectedTestId) ?? ALL_GUIDED_TESTS[0]!,
     [selectedTestId],
   );
+  const apgMetadata = guidedApgPatternMetadata(definition.id);
+  const informativeApg = isInformativeApgGuidedTest(definition.id);
   const [session, setSession] = useState<GuidedTestSession>();
+  const [selectedVariationId, setSelectedVariationId] = useState('');
   const [loading, setLoading] = useState(false);
   const [note, setNote] = useState('');
   const [selectedAnswer, setSelectedAnswer] = useState<GuidedManualAnswer>();
@@ -70,6 +74,10 @@ export function GuidedTestPanel({
 
   const pageUrl = scan?.url;
   const pageTitle = scan?.title;
+
+  useEffect(() => {
+    setSelectedVariationId(guidedApgPatternMetadata(definition.id)?.variations[0]?.id ?? '');
+  }, [definition.id]);
 
   useEffect(() => {
     let active = true;
@@ -93,6 +101,9 @@ export function GuidedTestPanel({
     return definition.steps[session.currentStepIndex];
   }, [definition.steps, session]);
   const stepCriteria = step ? guidedStepCriteria(definition.id, step.id) : [];
+  const recordedVariationId = session?.variationId;
+  const effectiveVariationId = recordedVariationId || selectedVariationId || apgMetadata?.variations[0]?.id;
+  const effectiveVariation = apgMetadata?.variations.find((variation) => variation.id === effectiveVariationId);
 
   const persist = async (next: GuidedTestSession, message: string) => {
     setSession(next);
@@ -104,7 +115,10 @@ export function GuidedTestPanel({
 
   const start = async () => {
     if (!pageUrl) return;
-    const next = startGuidedTest(definition, { url: pageUrl, title: pageTitle });
+    const now = Date.now();
+    let next = startGuidedTest(definition, { url: pageUrl, title: pageTitle }, now);
+    const variationId = selectedVariationId || apgMetadata?.variations[0]?.id;
+    if (apgMetadata && variationId) next = { ...next, variationId };
     await persist(next, tr(language, 'Guided test started.', 'Prueba guiada iniciada.'));
   };
 
@@ -149,22 +163,32 @@ export function GuidedTestPanel({
       await start();
       return;
     }
+    let next = restartGuidedTest(definition, session);
+    const variationId = session.variationId || selectedVariationId || apgMetadata?.variations[0]?.id;
+    if (apgMetadata && variationId) next = { ...next, variationId };
     await persist(
-      restartGuidedTest(definition, session),
+      next,
       tr(language, 'Guided test restarted.', 'Prueba guiada reiniciada.'),
     );
   };
 
-  const referenceBadge = definition.references
+  const wcagBadge = definition.references
     .filter((reference) => reference.type === 'WCAG')
     .map((reference) => `WCAG ${reference.id}`)
     .join(' · ');
+  const apgBadge = definition.references
+    .filter((reference) => reference.type === 'WAI-ARIA APG')
+    .map((reference) => `APG ${reference.id}`)
+    .join(' · ');
+  const referenceBadge = wcagBadge || apgBadge;
 
   return (
     <section className="panel guided-test-panel" aria-labelledby="guided-test-title">
       <div className="guided-test-heading">
         <div>
-          <span className="report-kicker">{tr(language, 'Guided test · manual evidence', 'Prueba guiada · evidencia manual')}</span>
+          <span className="report-kicker">{informativeApg
+            ? tr(language, 'Guided APG test · informative evidence', 'Prueba guiada APG · evidencia informativa')
+            : tr(language, 'Guided test · manual evidence', 'Prueba guiada · evidencia manual')}</span>
           <h2 id="guided-test-title">{localText(definition.title, language)}</h2>
         </div>
         <span className="guided-coverage-badge">{referenceBadge || 'APG'}</span>
@@ -183,14 +207,37 @@ export function GuidedTestPanel({
         </select>
       </label>
 
+      {apgMetadata && (
+        <label className="guided-test-selector">
+          <span>{tr(language, 'Implementation variation', 'Variante de implementación')}</span>
+          <select
+            value={selectedVariationId || apgMetadata.variations[0]?.id || ''}
+            disabled={session?.status === 'active' || session?.status === 'paused'}
+            onChange={(event) => setSelectedVariationId(event.currentTarget.value)}
+          >
+            {apgMetadata.variations.map((variation) => (
+              <option key={variation.id} value={variation.id}>{localText(variation.label, language)}</option>
+            ))}
+          </select>
+        </label>
+      )}
+
       <p>{localText(definition.description, language)}</p>
       <p className="guided-test-boundary" role="note">
-        <strong>{tr(language, 'Not an automated conformance result.', 'No es un resultado automático de conformidad.')}</strong>{' '}
-        {tr(
-          language,
-          'Manual answers and, for runtime-aware workflows, observed Trace events are stored as distinct bounded evidence. Runtime observations support review but never decide the result automatically.',
-          'Las respuestas manuales y, en los flujos con soporte runtime, los eventos observados de Trace se guardan como evidencia acotada y diferenciada. Las observaciones runtime apoyan la revisión, pero nunca deciden automáticamente el resultado.',
-        )}
+        <strong>{informativeApg
+          ? tr(language, 'Informative APG guidance — not a WCAG conformance result.', 'Guía APG informativa — no es un resultado de conformidad WCAG.')
+          : tr(language, 'Not an automated conformance result.', 'No es un resultado automático de conformidad.')}</strong>{' '}
+        {informativeApg
+          ? tr(
+            language,
+            'APG describes expected widget interaction patterns. Record applicability and implementation variation; observed Trace events support the review but do not establish WCAG conformance.',
+            'APG describe patrones esperados de interacción de widgets. Registra aplicabilidad y variante de implementación; los eventos observados de Trace apoyan la revisión, pero no establecen conformidad WCAG.',
+          )
+          : tr(
+            language,
+            'Manual answers and, for runtime-aware workflows, observed Trace events are stored as distinct bounded evidence. Runtime observations support review but never decide the result automatically.',
+            'Las respuestas manuales y, en los flujos con soporte runtime, los eventos observados de Trace se guardan como evidencia acotada y diferenciada. Las observaciones runtime apoyan la revisión, pero nunca deciden automáticamente el resultado.',
+          )}
       </p>
 
       {!scan && (
@@ -230,11 +277,22 @@ export function GuidedTestPanel({
       {session?.status === 'completed' && (
         <div className="guided-test-result" aria-label={tr(language, 'Guided result', 'Resultado guiado')}>
           <strong>{outcomeLabel(session, language)}</strong>
-          <p>{tr(
-            language,
-            'This is auditor-provided evidence. It remains separate from automated rule totals and should be reviewed with the recorded manual and runtime evidence below.',
-            'Esta evidencia la proporciona el auditor. Permanece separada de los totales automáticos y debe revisarse junto con la evidencia manual y runtime registrada.',
-          )}</p>
+          {informativeApg ? (
+            <p>{tr(
+              language,
+              'APG guidance remains informative. This implementation review is separate from WCAG conformance and automated rule totals.',
+              'La guía APG sigue siendo informativa. Esta revisión de implementación permanece separada de la conformidad WCAG y de los totales automáticos.',
+            )}</p>
+          ) : (
+            <p>{tr(
+              language,
+              'This is auditor-provided evidence. It remains separate from automated rule totals and should be reviewed with the recorded manual and runtime evidence below.',
+              'Esta evidencia la proporciona el auditor. Permanece separada de los totales automáticos y debe revisarse junto con la evidencia manual y runtime registrada.',
+            )}</p>
+          )}
+          {effectiveVariation && (
+            <p><strong>{tr(language, 'Implementation variation', 'Variante de implementación')}:</strong>{' '}{localText(effectiveVariation.label, language)}</p>
+          )}
           <ol>
             {session.steps.map((item, index) => {
               const definitionStep = definition.steps[index];
@@ -278,13 +336,24 @@ export function GuidedTestPanel({
               {stepCriteria.map((criterion) => `WCAG ${criterion}`).join(' · ')}
             </p>
           )}
+          {effectiveVariation && (
+            <p className="guided-test-criteria">
+              <strong>{tr(language, 'Implementation variation', 'Variante de implementación')}:</strong>{' '}{localText(effectiveVariation.label, language)}
+            </p>
+          )}
           {hasGuidedRuntimeEvidence(definition.id) && (
             <p className="guided-test-runtime-hint">
-              {tr(
-                language,
-                'Keep Trace recording while you perform this step. Relevant focus, keyboard and dialog events will be attached when you save it.',
-                'Mantén Trace grabando mientras realizas este paso. Los eventos relevantes de foco, teclado y diálogo se adjuntarán al guardarlo.',
-              )}
+              {informativeApg
+                ? tr(
+                  language,
+                  'Keep Trace recording while you perform this step. Relevant widget-pattern observations will be attached when you save it; they support the APG review but never decide it automatically.',
+                  'Mantén Trace grabando mientras realizas este paso. Las observaciones relevantes del patrón de widget se adjuntarán al guardarlo; apoyan la revisión APG, pero nunca la deciden automáticamente.',
+                )
+                : tr(
+                  language,
+                  'Keep Trace recording while you perform this step. Relevant focus, keyboard and dialog events will be attached when you save it.',
+                  'Mantén Trace grabando mientras realizas este paso. Los eventos relevantes de foco, teclado y diálogo se adjuntarán al guardarlo.',
+                )}
             </p>
           )}
 

@@ -84,6 +84,82 @@
         { "type": "WCAG", "id": "1.2.3", "level": "A", "label": "Audio Description or Media Alternative (Prerecorded)" },
         { "type": "WCAG", "id": "1.2.5", "level": "AA", "label": "Audio Description (Prerecorded)" }
       ]
+    },
+    {
+      "id": "FT-GUIDED-009",
+      "title": "Tabs pattern review",
+      "coverage": "guided-manual",
+      "automated": false,
+      "guidance": "apg-informative",
+      "references": [{ "type": "WAI-ARIA APG", "id": "tabs", "label": "Tabs Pattern", "status": "informative" }]
+    },
+    {
+      "id": "FT-GUIDED-010",
+      "title": "Accordion and disclosure review",
+      "coverage": "guided-manual",
+      "automated": false,
+      "guidance": "apg-informative",
+      "references": [
+        { "type": "WAI-ARIA APG", "id": "accordion", "label": "Accordion Pattern", "status": "informative" },
+        { "type": "WAI-ARIA APG", "id": "disclosure", "label": "Disclosure Pattern", "status": "informative" }
+      ]
+    },
+    {
+      "id": "FT-GUIDED-011",
+      "title": "Menu pattern review",
+      "coverage": "guided-manual",
+      "automated": false,
+      "guidance": "apg-informative",
+      "references": [
+        { "type": "WAI-ARIA APG", "id": "menu-button", "label": "Menu Button Pattern", "status": "informative" },
+        { "type": "WAI-ARIA APG", "id": "menubar", "label": "Menu and Menubar Pattern", "status": "informative" }
+      ]
+    },
+    {
+      "id": "FT-GUIDED-012",
+      "title": "Combobox and listbox review",
+      "coverage": "guided-manual",
+      "automated": false,
+      "guidance": "apg-informative",
+      "references": [
+        { "type": "WAI-ARIA APG", "id": "combobox", "label": "Combobox Pattern", "status": "informative" },
+        { "type": "WAI-ARIA APG", "id": "listbox", "label": "Listbox Pattern", "status": "informative" }
+      ]
+    },
+    {
+      "id": "FT-GUIDED-013",
+      "title": "Tree view pattern review",
+      "coverage": "guided-manual",
+      "automated": false,
+      "guidance": "apg-informative",
+      "references": [{ "type": "WAI-ARIA APG", "id": "treeview", "label": "Tree View Pattern", "status": "informative" }]
+    },
+    {
+      "id": "FT-GUIDED-014",
+      "title": "Grid pattern review",
+      "coverage": "guided-manual",
+      "automated": false,
+      "guidance": "apg-informative",
+      "references": [
+        { "type": "WAI-ARIA APG", "id": "grid", "label": "Grid Pattern", "status": "informative" },
+        { "type": "WAI-ARIA APG", "id": "treegrid", "label": "Treegrid Pattern", "status": "informative" }
+      ]
+    },
+    {
+      "id": "FT-GUIDED-015",
+      "title": "Carousel pattern review",
+      "coverage": "guided-manual",
+      "automated": false,
+      "guidance": "apg-informative",
+      "references": [{ "type": "WAI-ARIA APG", "id": "carousel", "label": "Carousel Pattern", "status": "informative" }]
+    },
+    {
+      "id": "FT-GUIDED-016",
+      "title": "Tooltip pattern review",
+      "coverage": "guided-manual",
+      "automated": false,
+      "guidance": "apg-informative",
+      "references": [{ "type": "WAI-ARIA APG", "id": "tooltip", "label": "Tooltip Pattern", "status": "informative" }]
     }
   ]
 }
