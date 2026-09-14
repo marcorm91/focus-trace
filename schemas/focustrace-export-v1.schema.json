@@ -1,0 +1,87 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://focus-mode.app/schemas/focustrace-export-v1.schema.json",
+  "title": "FocusTrace export v1",
+  "description": "Versioned, local-first interchange format for FocusTrace session and Site Audit findings.",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["$schema", "schemaVersion", "kind", "generatedAt", "producer", "subject", "summary", "findings"],
+  "properties": {
+    "$schema": { "const": "https://focus-mode.app/schemas/focustrace-export-v1.schema.json" },
+    "schemaVersion": { "const": "1.0.0" },
+    "kind": { "enum": ["session", "site-audit"] },
+    "generatedAt": { "type": "number" },
+    "producer": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "standard"],
+      "properties": {
+        "name": { "const": "FocusTrace" },
+        "standard": { "const": "WCAG 2.2" }
+      }
+    },
+    "subject": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "url": { "type": "string" },
+        "origin": { "type": "string" },
+        "title": { "type": "string" }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["findings", "failures", "reviews", "warnings"],
+      "properties": {
+        "findings": { "type": "integer", "minimum": 0 },
+        "failures": { "type": "integer", "minimum": 0 },
+        "reviews": { "type": "integer", "minimum": 0 },
+        "warnings": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "findings": {
+      "type": "array",
+      "items": { "$ref": "#/$defs/finding" }
+    },
+    "metadata": { "type": "object" }
+  },
+  "$defs": {
+    "reference": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["type", "id", "label", "url"],
+      "properties": {
+        "type": { "enum": ["HTML", "WCAG", "ACT", "WAI-ARIA", "WAI-ARIA APG"] },
+        "id": { "type": "string" },
+        "label": { "type": "string" },
+        "url": { "type": "string" },
+        "level": { "enum": ["A", "AA", "AAA"] },
+        "status": { "enum": ["normative", "informative", "proposed", "editor-draft"] }
+      }
+    },
+    "finding": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["id", "ruleId", "title", "description", "outcome", "severity", "source", "references"],
+      "properties": {
+        "id": { "type": "string" },
+        "ruleId": { "type": "string" },
+        "title": { "type": "string" },
+        "description": { "type": "string" },
+        "outcome": { "enum": ["fail", "review", "warning"] },
+        "severity": { "enum": ["critical", "serious", "moderate", "minor", "info"] },
+        "source": { "enum": ["scan", "runtime", "site-audit"] },
+        "target": { "type": "string" },
+        "pageUrl": { "type": "string" },
+        "template": { "type": "string" },
+        "evidence": { "type": "string" },
+        "remediation": { "type": "string" },
+        "references": { "type": "array", "items": { "$ref": "#/$defs/reference" } },
+        "reviewState": { "enum": ["open", "reviewed", "accepted", "false-positive", "resolved", "regressed"] },
+        "lifecycleState": { "enum": ["new", "persistent", "changed"] },
+        "occurrenceCount": { "type": "integer", "minimum": 1 }
+      }
+    }
+  }
+}
