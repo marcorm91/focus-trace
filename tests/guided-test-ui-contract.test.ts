@@ -30,13 +30,16 @@ describe('guided test UI contract', () => {
   });
 
   it('exposes the guided workflow in Report while standards coverage remains explicitly manual', () => {
-    expect(workspace).toContain('<GuidedTestPanel scan={scan} language={language} />');
+    expect(workspace).toContain('<GuidedTestPanel scan={scan} events={events} language={language} />');
+    expect(component).toContain('guidedRuntimeEvidence(events, definition.id, session.updatedAt, now)');
     expect(coverage.automatedConformance).toBe(false);
-    expect(coverage.tests).toContainEqual(expect.objectContaining({
-      id: 'FT-GUIDED-001',
-      coverage: 'guided-manual',
-      automated: false,
-    }));
+    for (const id of ['FT-GUIDED-001', 'FT-GUIDED-002', 'FT-GUIDED-003', 'FT-GUIDED-004']) {
+      expect(coverage.tests).toContainEqual(expect.objectContaining({
+        id,
+        coverage: 'guided-manual',
+        automated: false,
+      }));
+    }
   });
 
   it('uses native keyboard-operable controls and announces state changes', () => {
