@@ -1,0 +1,75 @@
+name: Temp issue 241 session metadata
+
+on:
+  push:
+    branches:
+      - feat/guided-apg-widget-patterns-0.6.3
+
+permissions:
+  contents: write
+
+jobs:
+  patch:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feat/guided-apg-widget-patterns-0.6.3
+      - name: Persist APG variation as session metadata
+        shell: bash
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          framework = Path('lib/guided-tests/framework.ts')
+          text = framework.read_text()
+          text = text.replace(
+            "  testId: string;\n  pageUrl: string;\n",
+            "  testId: string;\n  variationId?: string;\n  pageUrl: string;\n",
+            1,
+          )
+          text = text.replace(
+            "    || !isBoundedString(session.testId, GUIDED_MAX_IDENTIFIER_LENGTH, false)\n    || !isBoundedString(session.pageUrl, GUIDED_MAX_PAGE_URL_LENGTH, false)\n",
+            "    || !isBoundedString(session.testId, GUIDED_MAX_IDENTIFIER_LENGTH, false)\n    || (session.variationId != null && !isBoundedString(session.variationId, GUIDED_MAX_IDENTIFIER_LENGTH, false))\n    || !isBoundedString(session.pageUrl, GUIDED_MAX_PAGE_URL_LENGTH, false)\n",
+            1,
+          )
+          framework.write_text(text)
+
+          panel = Path('entrypoints/sidepanel/components/GuidedTestPanel.tsx')
+          text = panel.read_text()
+          text = text.replace(
+            "  const recordedVariationId = session?.steps[0]?.evidence.find((evidence) => evidence.label === 'APG implementation variation')?.value;\n",
+            "  const recordedVariationId = session?.variationId;\n",
+            1,
+          )
+          old_start = """  const start = async () => {\n    if (!pageUrl) return;\n    const now = Date.now();\n    let next = startGuidedTest(definition, { url: pageUrl, title: pageTitle }, now);\n    const variationId = selectedVariationId || apgMetadata?.variations[0]?.id;\n    if (apgMetadata && variationId) {\n      next = appendGuidedEvidence(next, [{\n        kind: 'manual-note',\n        label: 'APG implementation variation',\n        value: variationId,\n        capturedAt: now,\n      }], now);\n    }\n    await persist(next, tr(language, 'Guided test started.', 'Prueba guiada iniciada.'));\n  };\n"""
+          new_start = """  const start = async () => {\n    if (!pageUrl) return;\n    const now = Date.now();\n    let next = startGuidedTest(definition, { url: pageUrl, title: pageTitle }, now);\n    const variationId = selectedVariationId || apgMetadata?.variations[0]?.id;\n    if (apgMetadata && variationId) next = { ...next, variationId };\n    await persist(next, tr(language, 'Guided test started.', 'Prueba guiada iniciada.'));\n  };\n"""
+          if old_start not in text:
+            raise SystemExit('start anchor missing')
+          text = text.replace(old_start, new_start, 1)
+          old_restart = """  const restart = async () => {\n    if (!session) {\n      await start();\n      return;\n    }\n    await persist(\n      restartGuidedTest(definition, session),\n      tr(language, 'Guided test restarted.', 'Prueba guiada reiniciada.'),\n    );\n  };\n"""
+          new_restart = """  const restart = async () => {\n    if (!session) {\n      await start();\n      return;\n    }\n    let next = restartGuidedTest(definition, session);\n    const variationId = session.variationId || selectedVariationId || apgMetadata?.variations[0]?.id;\n    if (apgMetadata && variationId) next = { ...next, variationId };\n    await persist(\n      next,\n      tr(language, 'Guided test restarted.', 'Prueba guiada reiniciada.'),\n    );\n  };\n"""
+          if old_restart not in text:
+            raise SystemExit('restart anchor missing')
+          text = text.replace(old_restart, new_restart, 1)
+          panel.write_text(text)
+
+          guided = Path('docs/GUIDED_TESTS.md')
+          text = guided.read_text().replace(
+            'The selected variation is persisted as bounded manual evidence so repeated reviews can distinguish, for example, manual versus automatic tab activation, single versus multi-select widgets, or automatic versus manual carousel rotation.',
+            'The selected variation is persisted as bounded session metadata so repeated reviews can distinguish, for example, manual versus automatic tab activation, single versus multi-select widgets, or automatic versus manual carousel rotation without consuming per-step evidence capacity.',
+          )
+          guided.write_text(text)
+          PY
+          rm .github/workflows/zz-temp-issue-241-session.yml
+      - name: Commit patch
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            exit 0
+          fi
+          git commit -m "Fix(guided): retain APG implementation variation"
+          git push origin HEAD:feat/guided-apg-widget-patterns-0.6.3
