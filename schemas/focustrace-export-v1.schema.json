@@ -5,7 +5,7 @@
   "description": "Versioned, local-first interchange format for FocusTrace session and Site Audit findings.",
   "type": "object",
   "additionalProperties": false,
-  "required": ["$schema", "schemaVersion", "kind", "generatedAt", "producer", "subject", "summary", "findings"],
+  "required": ["$schema", "schemaVersion", "kind", "generatedAt", "producer", "subject", "context", "summary", "findings"],
   "properties": {
     "$schema": { "const": "https://focus-mode.app/schemas/focustrace-export-v1.schema.json" },
     "schemaVersion": { "const": "1.0.0" },
@@ -27,6 +27,15 @@
         "url": { "type": "string" },
         "origin": { "type": "string" },
         "title": { "type": "string" }
+      }
+    },
+    "context": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["scope", "coverage"],
+      "properties": {
+        "scope": { "type": "object" },
+        "coverage": { "type": "object" }
       }
     },
     "summary": {
