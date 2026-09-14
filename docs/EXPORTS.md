@@ -2,7 +2,7 @@
 
 FocusTrace can serialize accessibility findings from a page session or Site Audit into a stable interchange model and render that model as JSON, HTML, CSV, SARIF 2.1.0 or JUnit XML.
 
-The export layer is local-first. It operates on results already held by FocusTrace and does not upload inspected-page data to a FocusTrace, Deque or axe service.
+The export layer is local-first. It operates on results already held by FocusTrace and does not upload inspected-page data to a FocusTrace, Deque or axe service. This issue provides the headless serialization contract used by later CLI/CI integration; it does not add a separate browser UI workflow.
 
 ## JSON contract
 
@@ -31,15 +31,15 @@ Consumers should key compatibility off `schemaVersion`, not the browser-extensio
 
 ## URL privacy
 
-Exports remove URL user/password credentials and common credential-like query parameters such as tokens, session IDs, authorization values, secrets and keys. Common tracking parameters are removed as well.
+Exports reuse the same URL privacy policy as runtime evidence. Absolute URLs retain only origin and pathname. Relative URLs retain only pathname. Query-string content and fragment content are replaced wholesale with explicit `[redacted]` markers, so user-entered values, tracking data, tokens and session material are not copied into the export. URL user/password credentials are not retained, and malformed URL-like input becomes `[redacted-url]` rather than being echoed back.
 
-Exporters do not intentionally persist cookies, browser storage, passwords or authentication headers.
+Exporters do not intentionally persist cookies, browser storage, passwords, authentication headers or form values.
 
 ## CSV
 
 CSV output is UTF-8 with a BOM and CRLF line endings for clean opening in Excel and LibreOffice. Every field is quoted and embedded quotes are escaped. Cells beginning with spreadsheet formula prefixes (`=`, `+`, `-`, `@`) are prefixed with an apostrophe to avoid formula execution when a CSV is opened.
 
-The first data row is a `summary` record containing schema version, standard, scope, coverage and FAIL/REVIEW/WARNING counts. Finding rows carry the same scope/coverage context plus normalized evidence and standards provenance.
+The first data row is a `summary` record containing schema version, standard, scope, coverage and FAIL/REVIEW/WARNING counts. Finding rows carry the same scope/coverage context plus normalized evidence, remediation and standards provenance. Tests also assert that summary and finding records keep the same column count.
 
 ## HTML
 
@@ -56,7 +56,7 @@ FocusTrace keeps its evidence semantics in SARIF:
 - `WARNING` becomes `note`;
 - the original FocusTrace outcome and severity remain available in result properties.
 
-Each result includes a stable synthetic web-artifact location plus the sanitized page URL in location metadata. This makes the document structurally suitable for SARIF ingestion without pretending that a web DOM selector is a repository source-code line. Run-level properties preserve the FocusTrace schema version, standard, scope, coverage and summary.
+Each result includes a stable synthetic web-artifact location plus the sanitized page URL in location metadata. This makes the document structurally suitable for SARIF ingestion without pretending that a web DOM selector is a repository source-code line. Run-level properties preserve the FocusTrace schema version, standard, scope, coverage and summary as portable property values.
 
 ## JUnit
 
@@ -66,9 +66,13 @@ JUnit uses one testcase per FocusTrace finding:
 - `REVIEW` and `WARNING` are non-failing skipped cases with their original outcome in testcase properties;
 - evidence is kept in the failure body or `system-out` where available;
 - suite properties retain schema version, standard, scope, coverage and outcome totals;
-- testcase properties retain standards provenance.
+- testcase properties retain standards provenance and remediation guidance.
 
 This prevents CI systems from treating a manual-review requirement as a proven accessibility failure.
+
+## Remediation
+
+Static and Site Audit findings reuse FocusTrace's existing rule-specific remediation engine. Runtime findings are converted to the same finding shape before remediation is resolved, so known runtime rules receive their concrete guidance and other rules receive the existing evidence/standard-based fallback. The export layer does not relabel a finding description as remediation.
 
 ## Large exports
 
