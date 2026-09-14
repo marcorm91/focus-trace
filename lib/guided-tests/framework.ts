@@ -1,3 +1,5 @@
+import type { RuntimeEventKind } from '../../shared/types';
+
 export type GuidedLocalizedText = {
   en: string;
   es: string;
@@ -43,10 +45,12 @@ export interface GuidedTestDefinition {
 }
 
 export interface GuidedEvidence {
-  kind: 'page-context' | 'manual-answer' | 'manual-note';
+  kind: 'page-context' | 'manual-answer' | 'manual-note' | 'runtime-observation';
   label: string;
   value: string;
   capturedAt: number;
+  sourceEventId?: string;
+  sourceEventKind?: RuntimeEventKind;
 }
 
 export interface GuidedStepState {
@@ -94,7 +98,12 @@ const GUIDED_OUTCOMES: GuidedOutcome[] = [
   'guided-review',
   'not-applicable',
 ];
-const EVIDENCE_KINDS: GuidedEvidence['kind'][] = ['page-context', 'manual-answer', 'manual-note'];
+const EVIDENCE_KINDS: GuidedEvidence['kind'][] = [
+  'page-context',
+  'manual-answer',
+  'manual-note',
+  'runtime-observation',
+];
 
 const SENSITIVE_ASSIGNMENT = /\b(password|passwd|pwd|token|secret|api[_-]?key|authorization|cookie|session|value)\s*[:=]\s*([^\s,;]+)/gi;
 const EMAIL = /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi;
@@ -134,7 +143,10 @@ function boundedEvidence(evidence: GuidedEvidence[]): GuidedEvidence[] {
     .map((item) => ({
       ...item,
       label: redactGuidedText(item.label, GUIDED_MAX_EVIDENCE_LABEL_LENGTH),
-      value: redactGuidedText(item.value),
+      value: redactGuidedText(item.value, GUIDED_MAX_EVIDENCE_VALUE_LENGTH),
+      ...(item.sourceEventId
+        ? { sourceEventId: redactGuidedText(item.sourceEventId, GUIDED_MAX_IDENTIFIER_LENGTH) }
+        : {}),
     }));
 }
 
@@ -187,6 +199,7 @@ export function answerGuidedStep(
   answer: GuidedManualAnswer,
   note = '',
   now = Date.now(),
+  observedEvidence: GuidedEvidence[] = [],
 ): GuidedTestSession {
   if (session.status !== 'active') return session;
   const step = definition.steps[session.currentStepIndex];
@@ -196,6 +209,7 @@ export function answerGuidedStep(
     if (index !== session.currentStepIndex) return item;
     const evidence: GuidedEvidence[] = [
       ...item.evidence,
+      ...observedEvidence.filter((entry) => entry.kind === 'runtime-observation'),
       {
         kind: 'manual-answer',
         label: 'Manual answer',
@@ -280,7 +294,10 @@ function isGuidedEvidence(value: unknown): value is GuidedEvidence {
     && EVIDENCE_KINDS.includes(evidence.kind as GuidedEvidence['kind'])
     && isBoundedString(evidence.label, GUIDED_MAX_EVIDENCE_LABEL_LENGTH)
     && isBoundedString(evidence.value, GUIDED_MAX_EVIDENCE_VALUE_LENGTH)
-    && isFiniteTimestamp(evidence.capturedAt);
+    && isFiniteTimestamp(evidence.capturedAt)
+    && (evidence.sourceEventId == null
+      || isBoundedString(evidence.sourceEventId, GUIDED_MAX_IDENTIFIER_LENGTH, false))
+    && (evidence.sourceEventKind == null || typeof evidence.sourceEventKind === 'string');
 }
 
 function isGuidedStepState(value: unknown): value is GuidedStepState {
