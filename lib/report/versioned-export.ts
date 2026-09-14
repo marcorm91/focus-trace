@@ -291,9 +291,13 @@ export function renderVersionedHtml(envelope: FocusTraceExportEnvelopeV1): strin
         <td>${escapeHtml(finding.severity)}</td>
         <td><code>${escapeHtml(finding.ruleId)}</code></td>
         <td>${escapeHtml(finding.title)}</td>
+        <td>${escapeHtml(finding.description)}</td>
         <td>${escapeHtml(finding.pageUrl ?? '')}</td>
+        <td>${escapeHtml(finding.template ?? '')}</td>
         <td>${escapeHtml(finding.target ?? '')}</td>
         <td>${escapeHtml(finding.evidence ?? '')}</td>
+        <td>${escapeHtml(finding.remediation ?? '')}</td>
+        <td>${escapeHtml(referenceList(finding.references))}</td>
       </tr>`).join('');
   return `<!doctype html>
 <html lang="en">
@@ -310,7 +314,7 @@ export function renderVersionedHtml(envelope: FocusTraceExportEnvelopeV1): strin
     <p>Schema ${escapeHtml(envelope.schemaVersion)} · ${envelope.summary.failures} FAIL · ${envelope.summary.reviews} REVIEW · ${envelope.summary.warnings} WARNING</p>
     <table>
       <caption>${envelope.summary.findings} findings</caption>
-      <thead><tr><th>Outcome</th><th>Severity</th><th>Rule</th><th>Finding</th><th>Page</th><th>Target</th><th>Evidence</th></tr></thead>
+      <thead><tr><th>Outcome</th><th>Severity</th><th>Rule</th><th>Finding</th><th>Description</th><th>Page</th><th>Template</th><th>Target</th><th>Evidence</th><th>Remediation</th><th>Standards</th></tr></thead>
       <tbody>${rows}
       </tbody>
     </table>
@@ -336,10 +340,14 @@ function sarifArtifactUri(pageUrl: string | undefined, index: number): string {
 }
 
 export function renderVersionedSarif(envelope: FocusTraceExportEnvelopeV1): string {
-  const ruleIds = [...new Set(envelope.findings.map((finding) => finding.ruleId))];
+  const firstFindingByRule = new Map<string, FocusTraceExportFinding>();
+  for (const finding of envelope.findings) {
+    if (!firstFindingByRule.has(finding.ruleId)) firstFindingByRule.set(finding.ruleId, finding);
+  }
+  const ruleIds = [...firstFindingByRule.keys()];
   const ruleIndex = new Map(ruleIds.map((ruleId, index) => [ruleId, index]));
   const rules = ruleIds.map((ruleId) => {
-    const sample = envelope.findings.find((finding) => finding.ruleId === ruleId)!;
+    const sample = firstFindingByRule.get(ruleId)!;
     return {
       id: ruleId,
       name: ruleId.replace(/[^A-Za-z0-9_]+/g, '_').slice(0, 255),
