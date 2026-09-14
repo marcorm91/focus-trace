@@ -1,0 +1,129 @@
+{
+  "schemaVersion": 1,
+  "ruleFamily": "FT-WCAG",
+  "dimensions": ["positive", "negative", "inapplicable", "exception"],
+  "budgets": {
+    "criticalRegressions": 0,
+    "knownFalsePositiveRegressions": 0,
+    "rootWideUniversalQueriesPerScan": 1
+  },
+  "browserValidation": {
+    "chrome": "extension-build-and-chromium-runtime",
+    "edge": "extension-build",
+    "firefox": "extension-build-and-browser-scanner-runtime"
+  },
+  "rules": {
+    "FT-WCAG-001": {
+      "behavior": "fail",
+      "positive": { "test": "tests/scan.fixtures.test.ts", "scenario": "A document with a non-empty title passes." },
+      "negative": { "test": "tests/scan.fixtures.test.ts", "scenario": "The failing fixture has no usable title and reports the rule." },
+      "inapplicable": { "notApplicable": "The page-title rule is document-scoped and is always applicable for a full-page document scan." },
+      "exception": { "notApplicable": "The implemented WCAG 2.4.2 page-title check has no automated authoring exception." }
+    },
+    "FT-WCAG-002": {
+      "behavior": "fail",
+      "positive": { "test": "tests/scan.fixtures.test.ts", "scenario": "A visible image with an accessible alternative passes." },
+      "negative": { "test": "tests/scan.fixtures.test.ts", "scenario": "An image without an accessible alternative fails." },
+      "inapplicable": { "test": "tests/qa-hardening.test.ts", "scenario": "Non-image content and hidden candidates are excluded from image-name evaluation." },
+      "exception": { "test": "tests/scan.fixtures.test.ts", "scenario": "Decorative/hidden semantics are excluded from deterministic image-name failures." }
+    },
+    "FT-WCAG-003": {
+      "behavior": "fail",
+      "positive": { "test": "tests/scan.fixtures.test.ts", "scenario": "A named button passes accessible-name evaluation." },
+      "negative": { "test": "tests/scan.fixtures.test.ts", "scenario": "An unnamed button fails with accessible-name evidence." },
+      "inapplicable": { "test": "tests/component-scan.test.ts", "scenario": "Scopes without button candidates do not create button findings." },
+      "exception": { "test": "tests/scan.fixtures.test.ts", "scenario": "An icon-only button named by a descendant SVG is accepted." }
+    },
+    "FT-WCAG-004": {
+      "behavior": "fail",
+      "positive": { "test": "tests/form-audit.test.ts", "scenario": "A form control with a computed accessible name passes." },
+      "negative": { "test": "tests/scan.fixtures.test.ts", "scenario": "An unnamed form control is reported by the failing fixture." },
+      "inapplicable": { "test": "tests/form-audit.test.ts", "scenario": "Non-form elements are excluded from form-control name evaluation." },
+      "exception": { "test": "tests/scan.fixtures.test.ts", "scenario": "Placeholder fallback is not promoted to an accessible-name failure and remains a review signal." }
+    },
+    "FT-WCAG-005": {
+      "behavior": "fail",
+      "positive": { "test": "tests/scan.fixtures.test.ts", "scenario": "A link with discernible accessible text passes." },
+      "negative": { "test": "tests/scan.fixtures.test.ts", "scenario": "An unnamed link is reported by the failing fixture." },
+      "inapplicable": { "test": "tests/link-purpose-context.test.ts", "scenario": "Content without link candidates does not produce link-name findings." },
+      "exception": { "test": "tests/link-purpose-context.test.ts", "scenario": "Link-purpose context is evaluated without inventing a deterministic failure when context remains ambiguous." }
+    },
+    "FT-WCAG-006": {
+      "behavior": "warning",
+      "positive": { "test": "tests/scan.fixtures.test.ts", "scenario": "Unique identifiers do not produce duplicate-id output." },
+      "negative": { "test": "tests/scan.fixtures.test.ts", "scenario": "The legacy fixture exercises duplicate-id output retained for compatibility." },
+      "inapplicable": { "test": "tests/scan.fixtures.test.ts", "scenario": "Empty id attributes are ignored." },
+      "exception": { "test": "tests/scan.fixtures.test.ts", "scenario": "Current authoring guidance emits duplicate HTML ids as warnings rather than normative WCAG failures." }
+    },
+    "FT-WCAG-007": {
+      "behavior": "fail",
+      "positive": { "test": "tests/label-in-name.test.ts", "scenario": "Visible label text contained in the accessible name passes." },
+      "negative": { "test": "tests/label-in-name.test.ts", "scenario": "A visible label not represented in the accessible name fails." },
+      "inapplicable": { "test": "tests/label-in-name.test.ts", "scenario": "Controls without an applicable visible text label are excluded." },
+      "exception": { "test": "tests/label-in-name.test.ts", "scenario": "Normalization and symbol handling cover Label in Name matching exceptions." }
+    },
+    "FT-WCAG-008": {
+      "behavior": "fail",
+      "positive": { "test": "tests/scan.fixtures.test.ts", "scenario": "A document with a non-empty lang value passes the presence check." },
+      "negative": { "test": "tests/scan.fixtures.test.ts", "scenario": "A document without html lang fails." },
+      "inapplicable": { "notApplicable": "The primary page-language presence rule is document-scoped and always applies to a full-page scan." },
+      "exception": { "notApplicable": "The implemented presence check has no authoring exception once a document is scanned." }
+    },
+    "FT-WCAG-009": {
+      "behavior": "fail",
+      "positive": { "test": "tests/scan.fixtures.test.ts", "scenario": "A known primary language subtag passes." },
+      "negative": { "test": "tests/scan.fixtures.test.ts", "scenario": "An unknown primary language subtag fails." },
+      "inapplicable": { "test": "tests/scan.fixtures.test.ts", "scenario": "When html lang is missing, validity is left inapplicable and FT-WCAG-008 owns the failure." },
+      "exception": { "test": "tests/scan.fixtures.test.ts", "scenario": "Known primary subtags remain accepted when later subtags are non-standard." }
+    },
+    "FT-WCAG-010": {
+      "behavior": "fail",
+      "positive": { "test": "tests/contrast.test.ts", "scenario": "Text meeting the required contrast ratio passes deterministic evaluation." },
+      "negative": { "test": "tests/scan.fixtures.test.ts", "scenario": "Low text contrast produces structured deterministic evidence." },
+      "inapplicable": { "test": "tests/contrast-state-coverage.test.ts", "scenario": "Inactive or non-visible text candidates are excluded only where the standard permits it." },
+      "exception": { "test": "tests/scan.fixtures.test.ts", "scenario": "Unresolvable gradient backgrounds are not converted into false deterministic failures." }
+    },
+    "FT-WCAG-011": {
+      "behavior": "fail",
+      "positive": { "test": "tests/non-text-contrast.test.ts", "scenario": "Deterministically measurable UI boundaries meeting the ratio pass." },
+      "negative": { "test": "tests/non-text-contrast.test.ts", "scenario": "Deterministically measurable low non-text contrast fails." },
+      "inapplicable": { "test": "tests/non-text-contrast.test.ts", "scenario": "Candidates outside the supported deterministic subset are excluded." },
+      "exception": { "test": "tests/interactive-non-text-standards.test.ts", "scenario": "Standard exemptions and contextual boundaries remain non-fail outcomes." }
+    },
+    "FT-WCAG-012": {
+      "behavior": "review",
+      "positive": { "test": "tests/target-size.test.ts", "scenario": "Targets at least 44 by 44 CSS pixels pass the enhanced audit." },
+      "negative": { "test": "tests/target-size.test.ts", "scenario": "Smaller measurable targets produce REVIEW, never an unsupported deterministic FAIL." },
+      "inapplicable": { "test": "tests/target-size.test.ts", "scenario": "Candidates without measurable geometry and hidden/disabled candidates are inapplicable." },
+      "exception": { "test": "tests/target-size.test.ts", "scenario": "Spacing, inline, equivalent-control and user-agent-control exceptions are covered." }
+    },
+    "FT-WCAG-013": {
+      "behavior": "fail",
+      "positive": { "test": "tests/language-parts-scan.test.ts", "scenario": "Explicit language-of-parts markup with a valid language passes." },
+      "negative": { "test": "tests/language-parts-scan.test.ts", "scenario": "Invalid explicit language-of-parts markup fails the deterministic subset." },
+      "inapplicable": { "test": "tests/language-parts.test.ts", "scenario": "Elements without explicit language-part semantics are outside this deterministic subset." },
+      "exception": { "test": "tests/language-parts.test.ts", "scenario": "Language inheritance and excluded/non-human-language cases are handled conservatively." }
+    },
+    "FT-WCAG-014": {
+      "behavior": "fail",
+      "positive": { "test": "tests/specialized-accessible-names.test.ts", "scenario": "Named tab, tooltip and summary candidates pass." },
+      "negative": { "test": "tests/specialized-accessible-names.test.ts", "scenario": "Unnamed deterministic specialized controls fail." },
+      "inapplicable": { "test": "tests/specialized-accessible-names.test.ts", "scenario": "Hidden and non-semantic lookalike markup is excluded." },
+      "exception": { "test": "tests/specialized-accessible-names.test.ts", "scenario": "Accessible-name sources and broken-reference handling follow the shared name calculation contract." }
+    },
+    "FT-WCAG-015": {
+      "behavior": "fail",
+      "positive": { "test": "tests/specialized-accessible-names.test.ts", "scenario": "Named meter and progressbar candidates pass." },
+      "negative": { "test": "tests/specialized-accessible-names.test.ts", "scenario": "Unnamed meter/progressbar candidates fail." },
+      "inapplicable": { "test": "tests/specialized-accessible-names.test.ts", "scenario": "Hidden and non-semantic range lookalikes are excluded." },
+      "exception": { "test": "tests/specialized-accessible-names.test.ts", "scenario": "Native label and ARIA naming paths are both exercised." }
+    },
+    "FT-WCAG-016": {
+      "behavior": "fail",
+      "positive": { "test": "tests/aria-role-state-relationships.test.ts", "scenario": "A top-level body without aria-hidden=true passes." },
+      "negative": { "test": "tests/aria-role-state-relationships.test.ts", "scenario": "A top-level body with aria-hidden=true fails." },
+      "inapplicable": { "test": "tests/aria-role-state-relationships.test.ts", "scenario": "The page-body rule does not run for a component root." },
+      "exception": { "test": "tests/aria-role-state-relationships.test.ts", "scenario": "aria-hidden=false is explicitly accepted and does not behave like true." }
+    }
+  }
+}
