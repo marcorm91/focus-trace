@@ -1,0 +1,74 @@
+.audit-profile-settings {
+  display: grid;
+  gap: 14px;
+}
+
+.audit-profile-field {
+  display: grid;
+  gap: 6px;
+}
+
+.audit-profile-field > span,
+.audit-profile-dimension > strong {
+  font-weight: 700;
+}
+
+.audit-profile-field input,
+.audit-profile-field select {
+  width: 100%;
+  min-height: 36px;
+}
+
+.audit-profile-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.audit-profile-actions button,
+.audit-profile-save {
+  min-height: 36px;
+}
+
+.audit-profile-dimension {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px 12px;
+}
+
+.audit-profile-dimension > strong {
+  grid-column: 1 / -1;
+}
+
+.audit-profile-dimension label {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  min-width: 0;
+}
+
+.audit-profile-dimension input {
+  margin-top: 3px;
+}
+
+.audit-profile-status {
+  margin: 0;
+  font-size: 14px;
+}
+
+@media (max-width: 480px) {
+  .audit-profile-dimension {
+    grid-template-columns: 1fr;
+  }
+
+  .audit-profile-actions button,
+  .audit-profile-save {
+    width: 100%;
+  }
+}
+
+@media (forced-colors: active) {
+  .audit-profile-settings {
+    border: 1px solid CanvasText;
+  }
+}
