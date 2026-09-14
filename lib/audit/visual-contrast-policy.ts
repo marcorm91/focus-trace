@@ -25,13 +25,6 @@ function targetFor(issue: ScanIssue, document: Document): Element | undefined {
   }
 }
 
-function numericZIndex(element: Element): number | undefined {
-  const value = getComputedStyle(element).zIndex.trim().toLowerCase();
-  if (!value || value === 'auto') return undefined;
-  const parsed = Number.parseInt(value, 10);
-  return Number.isFinite(parsed) ? parsed : undefined;
-}
-
 function coversPoint(rect: DOMRect, x: number, y: number): boolean {
   return rect.width > 0
     && rect.height > 0
@@ -43,8 +36,7 @@ function coversPoint(rect: DOMRect, x: number, y: number): boolean {
 
 function positionedSiblingBackdropReason(element: Element, x: number, y: number): string | undefined {
   const parent = element.parentElement;
-  const targetZ = numericZIndex(element);
-  if (!parent || targetZ == null) return undefined;
+  if (!parent) return undefined;
 
   let inspected = 0;
   for (const candidate of parent.children) {
@@ -54,12 +46,10 @@ function positionedSiblingBackdropReason(element: Element, x: number, y: number)
 
     const style = getComputedStyle(candidate);
     if (!['absolute', 'fixed', 'sticky', 'relative'].includes(style.position)) continue;
-    const candidateZ = numericZIndex(candidate);
-    if (candidateZ == null || candidateZ >= targetZ) continue;
     if (!paintedBackground(candidate)) continue;
     if (!coversPoint(candidate.getBoundingClientRect(), x, y)) continue;
 
-    return 'A lower-z-index positioned sibling paints behind this target at its measured center point, so the effective contrast background cannot be reduced safely to the target ancestor chain.';
+    return 'A positioned painted sibling overlaps this target at its measured center point. Its final stacking/compositing relationship cannot be reconstructed safely from the target ancestor chain, so the effective contrast background remains ambiguous.';
   }
   return undefined;
 }
