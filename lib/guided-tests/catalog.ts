@@ -51,7 +51,3 @@ export const GUIDED_TESTS: GuidedTestDefinition[] = [
 ];
 
 export const SAMPLE_GUIDED_TEST = GUIDED_TESTS[0]!;
-
-export function guidedTestById(id: string): GuidedTestDefinition | undefined {
-  return GUIDED_TESTS.find((test) => test.id === id);
-}
