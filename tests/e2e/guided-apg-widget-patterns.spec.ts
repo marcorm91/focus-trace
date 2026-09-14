@@ -70,7 +70,8 @@ test('APG guided report labels guidance as informative and retains the implement
   await variation.selectOption('manual-activation');
 
   await panel.getByRole('button', { name: /Start guided test|Iniciar prueba guiada/ }).click();
-  await expect(panel.getByText(/Manual activation|Activación manual/)).toBeVisible();
+  const selectedVariation = panel.getByText(/Implementation variation:\s*Manual activation|Variante de implementación:\s*Activación manual/);
+  await expect(selectedVariation).toBeVisible();
   await expect(panel.getByText(/relevant widget-pattern observations|observaciones relevantes del patrón de widget/)).toBeVisible();
 
   for (let index = 0; index < 3; index += 1) {
@@ -79,5 +80,5 @@ test('APG guided report labels guidance as informative and retains the implement
   }
 
   await expect(panel.getByText(/APG guidance remains informative|La guía APG sigue siendo informativa/)).toBeVisible();
-  await expect(panel.getByText(/Manual activation|Activación manual/)).toBeVisible();
+  await expect(selectedVariation).toBeVisible();
 });
