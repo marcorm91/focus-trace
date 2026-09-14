@@ -1,4 +1,5 @@
 import type { SiteAuditResult } from '../site-audit/model';
+import { remediationForIssue } from '../site-audit/remediation';
 import type { RuntimeEvent, ScanIssue, ScanResult, Severity, StandardReference } from '../../shared/types';
 
 export const FOCUSTRACE_EXPORT_SCHEMA_VERSION = '1.0.0' as const;
@@ -114,7 +115,7 @@ function issueFinding(
     ...(pageUrl ? { pageUrl: sanitizeExportUrl(pageUrl) } : {}),
     ...(template ? { template } : {}),
     ...(issue.evidence ? { evidence: issue.evidence } : {}),
-    remediation: issue.description,
+    remediation: remediationForIssue(issue, 'en'),
     references: issue.references.map((reference) => ({ ...reference })),
     ...(issue.reviewState ? { reviewState: issue.reviewState } : {}),
     ...(issue.lifecycleState ? { lifecycleState: issue.lifecycleState } : {}),
@@ -124,18 +125,34 @@ function issueFinding(
 
 function runtimeFinding(event: RuntimeEvent, pageUrl?: string): FocusTraceExportFinding | undefined {
   if (!event.outcome) return undefined;
+  const ruleId = runtimeRuleId(event);
+  const references = event.references ?? [];
+  const target = event.element?.selector;
+  const issue: ScanIssue = {
+    id: event.id,
+    ruleId,
+    title: event.title,
+    description: event.detail ?? event.title,
+    severity: event.severity,
+    outcome: event.outcome,
+    targets: target ? [target] : [],
+    ...(event.element ? { element: event.element } : {}),
+    ...(event.detail ? { evidence: event.detail } : {}),
+    references,
+  };
   return {
     id: event.id,
-    ruleId: runtimeRuleId(event),
+    ruleId,
     title: event.title,
     description: event.detail ?? event.title,
     outcome: event.outcome,
     severity: event.severity,
     source: 'runtime',
-    ...(event.element?.selector ? { target: event.element.selector } : {}),
+    ...(target ? { target } : {}),
     ...(pageUrl ? { pageUrl: sanitizeExportUrl(pageUrl) } : {}),
     ...(event.detail ? { evidence: event.detail } : {}),
-    references: (event.references ?? []).map((reference) => ({ ...reference })),
+    remediation: remediationForIssue(issue, 'en'),
+    references: references.map((reference) => ({ ...reference })),
   };
 }
 
