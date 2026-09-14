@@ -64,7 +64,10 @@ function knownBrowserError(error: unknown): string {
 
 async function launchLocalBrowser(headed: boolean): Promise<Browser> {
   try {
-    return await chromium.launch({ headless: !headed });
+    // Use the installed Chromium binary in both local and CI environments. The
+    // project installs Playwright with --no-shell, so relying on the legacy
+    // headless-shell executable would make headless CLI runs fail in CI.
+    return await chromium.launch({ headless: !headed, channel: 'chromium' });
   } catch {
     throw new CliRuntimeError('Unable to launch the local Chromium runtime.');
   }
