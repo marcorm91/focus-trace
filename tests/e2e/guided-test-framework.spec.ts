@@ -113,7 +113,7 @@ test('multimedia guided workflow maps manual evidence without capturing media pa
 
   await panel.getByRole('button', { name: /Start guided test|Iniciar prueba guiada/ }).click();
   await expect(panel.getByText(/Step 1 of 3|Paso 1 de 3/)).toBeVisible();
-  await expect(panel.getByText(/Evidence maps to|La evidencia se vincula a/)).toContainText('WCAG 1.2.2');
+  await expect(panel.locator('.guided-test-criteria')).toContainText('WCAG 1.2.2');
   await expect(panel.getByText(/Keep Trace recording|Mantén Trace grabando/)).toHaveCount(0);
   await expect(panel.getByLabel(/Optional auditor note|Nota opcional del auditor/)).toHaveAttribute(
     'placeholder',
