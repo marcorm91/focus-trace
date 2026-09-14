@@ -6,6 +6,7 @@ import type { StructureSnapshot } from '../../../lib/runtime/structure-evidence'
 import { tr, type AppLanguage } from '../../../shared/i18n';
 import type { RuntimeEvent, ScanResult } from '../../../shared/types';
 import { Empty } from '../components/Common';
+import { GuidedTestPanel } from '../components/GuidedTestPanel';
 import { SessionReportView } from './SessionReportView';
 import './report-workspace.css';
 
@@ -88,6 +89,8 @@ export function AuditReportWorkspace({
 
   return (
     <div className="audit-report-workspace">
+      <GuidedTestPanel scan={scan} language={language} />
+
       {audit && summary && (
         <section className="panel audit-overview" aria-labelledby="audit-overview-title">
           <div className="audit-overview-heading">
