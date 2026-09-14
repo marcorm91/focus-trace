@@ -112,8 +112,10 @@ function authoredCssText(element: Element): string {
   const chunks = [element.getAttribute('style') ?? ''];
   const document = element.ownerDocument;
   const counter = { value: 0 };
-  for (const sheet of [...document.styleSheets]) {
+  for (let index = 0; index < document.styleSheets.length; index += 1) {
     if (counter.value >= MAX_AUTHORED_RULES) break;
+    const sheet = document.styleSheets[index];
+    if (!sheet) continue;
     try {
       appendMatchingRules(sheet.cssRules, element, chunks, counter);
     } catch {
