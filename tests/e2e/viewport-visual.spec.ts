@@ -53,5 +53,5 @@ test('page scan covers viewport restrictions, orientation evidence and stacked c
   const second = await scanPage(page, extensionWorker);
   expect(second.issues.some((issue) => issue.ruleId === 'FT-WCAG-021')).toBe(false);
   expect(second.review.some((issue) => issue.ruleId === 'FT-REVIEW-041')).toBe(true);
-  expect(second.rulesRun).toBe(87);
+  expect(second.rulesRun).toBe(91);
 });
