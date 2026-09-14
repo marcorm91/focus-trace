@@ -59,6 +59,25 @@ describe('guided accessibility-test framework', () => {
     expect(restarted.steps.every((step) => step.answer == null)).toBe(true);
   });
 
+  it('rejects corrupted recovered sessions instead of restoring partial evidence', () => {
+    const started = startGuidedTest(SAMPLE_GUIDED_TEST, { url: 'https://example.test/' }, 10);
+
+    expect(isRecoverableGuidedSession({ ...started, currentStepIndex: 99 })).toBe(false);
+    expect(isRecoverableGuidedSession({ ...started, steps: [] })).toBe(false);
+    expect(isRecoverableGuidedSession({
+      ...started,
+      steps: [{ ...started.steps[0], answer: 'invented-answer' }],
+    })).toBe(false);
+    expect(isRecoverableGuidedSession({
+      ...started,
+      steps: [{
+        ...started.steps[0],
+        evidence: [{ kind: 'manual-note', label: 'Note', value: 'x', capturedAt: Number.NaN }],
+      }],
+    })).toBe(false);
+    expect(isRecoverableGuidedSession({ ...started, status: 'completed' })).toBe(false);
+  });
+
   it('redacts common sensitive values before manual evidence is stored', () => {
     const value = redactGuidedText(
       'email marco@example.com password=hunter2 token=abc123 card 4111 1111 1111 1111',
@@ -71,7 +90,7 @@ describe('guided accessibility-test framework', () => {
     expect(value).toContain('[redacted-number]');
   });
 
-  it('keeps stored guided sessions bounded and prefers the newest evidence', () => {
+  it('keeps stored guided sessions bounded and prefers the newest evidence without mutating input order', () => {
     const sessions = Array.from({ length: GUIDED_MAX_STORED_SESSIONS + 3 }, (_, index) => {
       const session = startGuidedTest(
         SAMPLE_GUIDED_TEST,
@@ -80,10 +99,12 @@ describe('guided accessibility-test framework', () => {
       );
       return { ...session, updatedAt: index + 1 };
     });
+    const originalFirstId = sessions[0]?.id;
 
     const bounded = boundGuidedSessions(sessions);
     expect(bounded).toHaveLength(GUIDED_MAX_STORED_SESSIONS);
     expect(bounded[0]?.updatedAt).toBe(GUIDED_MAX_STORED_SESSIONS + 3);
+    expect(sessions[0]?.id).toBe(originalFirstId);
   });
 
   it('keeps uncertain manual judgement separate as guided review evidence', () => {
