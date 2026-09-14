@@ -37,15 +37,17 @@ function scan(scannedAt: number, issues: ScanIssue[]): ScanResult {
 }
 
 describe('finding lifecycle', () => {
-  it('deduplicates only exact rule, target and evidence matches', () => {
+  it('deduplicates only exact rule, target, remediation and evidence matches', () => {
     const result = deduplicateFindings([
       issue('one'),
       issue('two'),
       issue('three', { evidence: 'different evidence' }),
+      issue('four', { description: 'Materially different remediation context.' }),
     ]);
-    expect(result).toHaveLength(2);
+    expect(result).toHaveLength(3);
     expect(result[0]?.occurrenceCount).toBe(2);
     expect(result[1]?.occurrenceCount).toBe(1);
+    expect(result[2]?.occurrenceCount).toBe(1);
   });
 
   it('marks the same identity and evidence persistent', () => {
