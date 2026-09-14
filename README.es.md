@@ -645,3 +645,12 @@ Una definición guiada contiene pasos y prompts localizados, respuestas manuales
 El framework nunca lee automáticamente valores de formularios. El contexto de página guardado elimina query strings y fragmentos, y los patrones sensibles habituales de las notas libres se redactan antes de persistir. Los resultados guiados son `guided-pass`, `guided-issue`, `guided-review` o `not-applicable`; todos siguen siendo evidencia aportada por el auditor y **nunca se convierten en afirmaciones automáticas de conformidad**.
 
 `FT-GUIDED-001` es el flujo completo de muestra para WCAG 1.3.3 Características sensoriales. Pide al auditor revisar las instrucciones de la página y decidir si el significado depende únicamente de color, forma, tamaño, posición visual, orientación o sonido. Consulta [`docs/GUIDED_TESTS.md`](docs/GUIDED_TESTS.md) para el ciclo de vida, los límites de privacidad y el modelo de informes.
+
+### Pruebas guiadas de teclado, foco y diálogos
+
+El framework de pruebas guiadas incluye ahora tres flujos asistidos por eventos runtime: `FT-GUIDED-002` para operabilidad solo con teclado, `FT-GUIDED-003` para revisar orden/indicador/bloqueo de foco y `FT-GUIDED-004` para el ciclo de foco de diálogos modales. Reutilizan el flujo existente de eventos de Trace/runtime; FocusTrace no inicia un segundo recorder.
+
+El foco, las teclas, los clics y los eventos de diálogo observados se guardan como **observaciones runtime** acotadas, mientras que la respuesta del auditor sigue siendo **evidencia manual** separada. Los resultados continúan siendo `guided-manual` y nunca modifican los totales automáticos PASS/FAIL. En particular, un ciclo de foco dentro de un modal activo sin un evento `dialog-focus-escape` se registra como contención modal intencional y **no** se clasifica automáticamente como bloqueo de teclado.
+
+El flujo de diálogos cubre entrada de foco, contención, Escape/cierre y restauración del foco. El comportamiento APG se trata de forma contextual: las excepciones propias del flujo siguen siendo criterio manual y no fallos deterministas. Consulta [`docs/GUIDED_TESTS.md`](docs/GUIDED_TESTS.md).
+

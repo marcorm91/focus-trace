@@ -51,3 +51,18 @@ Guided tests appear in the Report workspace under an explicit **Guided test · m
 ## Extension boundary
 
 New guided definitions should reuse this lifecycle, privacy model, and result vocabulary instead of creating parallel manual-testing state. Domain-specific workflows can add their own prompts and standards references while keeping manual evidence clearly separated from automatic rule outcomes.
+
+## Keyboard, focus and dialog workflows (0.6.1)
+
+The framework currently exposes three runtime-assisted workflows in addition to the original sensory-characteristics sample:
+
+- `FT-GUIDED-002` — Keyboard operability pass (WCAG 2.1.1): complete the task with Tab/Shift+Tab and expected keyboard activation, including review of pointer-only actions.
+- `FT-GUIDED-003` — Focus order, indicator and trap review (WCAG 2.4.3, 2.4.7 and 2.1.2): review sequential meaning, visible focus and whether non-modal regions can be left by keyboard.
+- `FT-GUIDED-004` — Dialog focus lifecycle (WAI-ARIA APG Dialog pattern plus WCAG 2.4.3 and 2.1.2): review focus entry, modal containment, Escape/dismissal and focus restoration.
+
+These workflows reuse the existing Trace/runtime event stream. Matching focus, keydown, click and dialog events are reduced to bounded `runtime-observation` records when a step is saved. The auditor's radio answer is stored separately as `manual-answer`; observed events never decide the guided outcome by themselves.
+
+### Modal containment versus keyboard traps
+
+A repeated focus sequence is not sufficient evidence of a keyboard trap. While a modal is active, focus cycling is expected. If FocusTrace sees modal focus movement without `dialog-focus-escape`, it records **Observed modal focus containment** and explicitly does not classify that evidence as a trap. A real trap decision remains contextual: the auditor must determine whether the user can dismiss or otherwise leave the interaction with the expected keyboard command. A `dialog-focus-escape` event is surfaced separately as observed evidence because it indicates focus moved outside an open modal.
+
