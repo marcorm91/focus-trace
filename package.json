@@ -27,7 +27,7 @@
     "coverage:critical": "vitest run --config vitest.config.ts --exclude \"tests/e2e/**\" --coverage",
     "quality:validate": "npm run rules:validate && npm run i18n:validate && npm run deadcode:validate && npm run coverage:critical",
     "check": "tsc --noEmit",
-    "lint": "oxlint --deny-warnings entrypoints lib shared cli tests tools playwright.config.ts vitest.config.ts wxt.config.ts vite.cli.browser.config.ts vite.cli.node.config.ts",
+    "lint": "oxlint --deny-warnings entrypoints lib shared cli integrations examples tests tools playwright.config.ts playwright.focustrace-example.config.ts vitest.config.ts wxt.config.ts vite.cli.browser.config.ts vite.cli.node.config.ts",
     "test": "vitest run --exclude \"tests/e2e/**\"",
     "benchmark:scan": "vitest bench tests/performance/static-scan.bench.ts --run",
     "test:e2e": "playwright test",

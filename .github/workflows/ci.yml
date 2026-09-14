@@ -102,6 +102,8 @@ jobs:
           fi
           npm run playwright:install:chromium
       - run: npm run test:e2e
+      - name: Validate reusable FocusTrace Playwright CI example
+        run: npm run test:e2e -- --config=playwright.focustrace-example.config.ts
       - name: Upload E2E failure artifacts
         if: failure()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
@@ -110,5 +112,6 @@ jobs:
           path: |
             test-results
             playwright-report
+            artifacts/focustrace
           if-no-files-found: ignore
           retention-days: 7

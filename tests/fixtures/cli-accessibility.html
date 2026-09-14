@@ -9,5 +9,10 @@
     <h1>CLI fixture</h1>
     <button id="unnamed-button"></button>
   </main>
+  <script>
+    if (new URL(location.href).searchParams.get('state') === 'clean') {
+      document.querySelector('#unnamed-button')?.setAttribute('aria-label', 'Save');
+    }
+  </script>
 </body>
 </html>
