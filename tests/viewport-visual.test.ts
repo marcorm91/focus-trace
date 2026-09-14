@@ -65,13 +65,14 @@ describe('viewport and visual presentation checks', () => {
 
   it('downgrades low text contrast when a painted full-inset sibling defines an ambiguous backdrop', () => {
     render(
-      `<style>
-        html, body { background: rgb(255, 255, 255); color: rgb(0, 0, 0); font-size: 16px; }
-        .stage { position: relative; min-height: 80px; }
-        #backdrop { position: absolute; top: 0; right: 0; bottom: 0; left: 0; z-index: 0; background: rgb(0, 0, 0); }
-        #stacked { position: relative; z-index: 1; color: rgb(119, 119, 119); background: transparent; }
-      </style>`,
-      '<main><h1>Contrast</h1><div class="stage"><div id="backdrop" aria-hidden="true"></div><p id="stacked">Stacked contrast text</p></div></main>',
+      '',
+      `<main style="background:rgb(255,255,255);color:rgb(0,0,0);font-size:16px">
+        <h1>Contrast</h1>
+        <div class="stage" style="position:relative;min-height:80px">
+          <div id="backdrop" aria-hidden="true" style="position:absolute;inset:0;z-index:0;background:rgb(0,0,0)"></div>
+          <p id="stacked" style="position:relative;z-index:1;color:rgb(119,119,119);background:transparent;font-size:16px;font-weight:400">Stacked contrast text</p>
+        </div>
+      </main>`,
     );
 
     const result = runFocusTraceScan();
