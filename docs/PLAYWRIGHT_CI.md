@@ -116,6 +116,8 @@ The default files are:
 
 Both use the versioned export contract from `docs/EXPORTS.md`. Only deterministic FAIL creates a failing JUnit testcase. REVIEW and WARNING remain non-failing cases and retain their FocusTrace outcome metadata.
 
+When the same test runs in multiple Playwright projects, use a project-specific `basename` so one browser does not overwrite another browser's evidence. The repository example uses `focustrace-${testInfo.project.name}`, producing separate Chromium and Firefox SARIF/JUnit files.
+
 For reproducible fixture or snapshot pipelines, provide a fixed `generatedAt` value:
 
 ```ts
@@ -146,9 +148,11 @@ A repository-local example is available at `.github/examples/focustrace-playwrig
 2. `npm run build:e2e`
 3. `npm run playwright:install:validation`
 4. `npm run test:e2e -- --config=playwright.focustrace-example.config.ts`
-5. upload the SARIF and JUnit files as artifacts even when the accessibility checkpoint fails
+5. upload the Chromium and Firefox SARIF/JUnit files as artifacts even when the accessibility checkpoint fails
 
 The dedicated config runs `examples/playwright/focustrace.example.ts` in Chromium and Firefox and keeps the example outside the Vitest suite. The example defaults to the repository fixture, so it can execute without an external service. Set `FOCUSTRACE_URL` to point it at an application already started by the consuming pipeline.
+
+The repository example keeps the reports independent as `focustrace-chromium.sarif.json`, `focustrace-chromium.junit.xml`, `focustrace-firefox.sarif.json` and `focustrace-firefox.junit.xml`, preventing one browser project from overwriting another.
 
 If a consuming project intentionally validates only one browser engine, it can provide its own Playwright project selection or config. The repository example installs both engines because its checked-in config declares both.
 
