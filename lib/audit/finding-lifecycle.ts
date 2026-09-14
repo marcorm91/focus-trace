@@ -33,10 +33,19 @@ function normalize(value: string | undefined): string {
   return value?.replace(/\s+/g, ' ').trim() ?? '';
 }
 
+function referenceIdentity(issue: ScanIssue): string[] {
+  return issue.references
+    .map((reference) => `${reference.type}:${reference.id}:${reference.level ?? ''}:${reference.status ?? ''}`)
+    .sort();
+}
+
 function stableEvidence(issue: ScanIssue): string {
   return JSON.stringify({
     outcome: issue.outcome,
     severity: issue.severity,
+    title: normalize(issue.title),
+    description: normalize(issue.description),
+    references: referenceIdentity(issue),
     evidence: normalize(issue.evidence),
     accessibleName: issue.accessibleName ?? null,
     contrast: issue.contrast ?? null,
