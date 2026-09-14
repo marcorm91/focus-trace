@@ -4,6 +4,7 @@ import type { ScanIssue, ScanResult } from '../../shared/types';
 const CONTRAST_RULE_IDS = new Set([RULES.textContrast.id, RULES.nonTextContrast.id]);
 const MAX_STACK_CHECKS = 100;
 const MAX_SIBLING_BACKDROPS = 50;
+const MAX_AUTHORED_RULES = 5_000;
 
 function paintedBackground(element: Element): boolean {
   const style = getComputedStyle(element);
@@ -76,6 +77,66 @@ function lowerStackedSibling(
   return candidateZ != null && targetZ != null && candidateZ < targetZ;
 }
 
+function appendMatchingRules(
+  rules: CSSRuleList,
+  element: Element,
+  chunks: string[],
+  counter: { value: number },
+): void {
+  for (let index = 0; index < rules.length; index += 1) {
+    if (counter.value >= MAX_AUTHORED_RULES) return;
+    const rule = rules[index];
+    if (!rule) continue;
+    counter.value += 1;
+
+    if (rule instanceof CSSStyleRule) {
+      try {
+        if (element.matches(rule.selectorText)) chunks.push(rule.style.cssText);
+      } catch {
+        // Ignore selectors the current engine cannot evaluate.
+      }
+      continue;
+    }
+
+    if ('cssRules' in rule) {
+      try {
+        appendMatchingRules((rule as CSSGroupingRule).cssRules, element, chunks, counter);
+      } catch {
+        // Inaccessible nested CSSOM remains unknown rather than being bypassed.
+      }
+    }
+  }
+}
+
+function authoredCssText(element: Element): string {
+  const chunks = [element.getAttribute('style') ?? ''];
+  const document = element.ownerDocument;
+  const counter = { value: 0 };
+  for (const sheet of [...document.styleSheets]) {
+    if (counter.value >= MAX_AUTHORED_RULES) break;
+    try {
+      appendMatchingRules(sheet.cssRules, element, chunks, counter);
+    } catch {
+      // Cross-origin/inaccessible stylesheets cannot be used as deterministic evidence.
+    }
+  }
+  return chunks.join(';').toLowerCase();
+}
+
+function authoredBackdropReason(candidate: Element): string | undefined {
+  const css = authoredCssText(candidate);
+  if (!/(?:^|;)\s*position\s*:\s*(?:absolute|fixed)\b/.test(css)) return undefined;
+  const paints = /(?:^|;)\s*background(?:-color|-image)?\s*:\s*(?!transparent\b|none\b)[^;]+/.test(css);
+  if (!paints) return undefined;
+
+  const fullInset = /(?:^|;)\s*inset\s*:\s*0(?:px)?(?:\s+0(?:px)?){0,3}\s*(?:;|$)/.test(css)
+    || ['top', 'right', 'bottom', 'left'].every((property) =>
+      new RegExp(`(?:^|;)\\s*${property}\\s*:\\s*0(?:px)?\\s*(?:;|$)`).test(css));
+  if (!fullInset) return undefined;
+
+  return 'A sibling is authored as an absolute/fixed painted full-inset layer, so it can participate in the target backdrop independently of the ancestor background chain. FocusTrace keeps the effective contrast background unresolved.';
+}
+
 function positionedSiblingBackdropReason(element: Element, x: number, y: number): string | undefined {
   const parent = element.parentElement;
   if (!parent) return undefined;
@@ -87,6 +148,9 @@ function positionedSiblingBackdropReason(element: Element, x: number, y: number)
     if (candidate === element) continue;
     if (inspected >= MAX_SIBLING_BACKDROPS) break;
     inspected += 1;
+
+    const authoredReason = authoredBackdropReason(candidate);
+    if (authoredReason) return authoredReason;
 
     const style = getComputedStyle(candidate);
     if (!['absolute', 'fixed', 'sticky', 'relative'].includes(style.position)) continue;
