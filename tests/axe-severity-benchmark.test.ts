@@ -16,6 +16,7 @@ import {
   OBSOLETE_HTML_ATTRIBUTE_RULE,
   OBSOLETE_HTML_ELEMENT_RULE,
 } from '../shared/html-authoring-rules';
+import { KEYBOARD_NAVIGATION_MOTION_RULES } from '../shared/keyboard-navigation-motion-rules';
 import { LANGUAGE_PARTS_RULE } from '../shared/language-parts-rules';
 import { RULES, type RuleDefinition } from '../shared/rule-catalog';
 import { SPECIALIZED_ACCESSIBLE_NAME_RULES } from '../shared/specialized-accessible-name-rules';
@@ -49,6 +50,7 @@ const ALL_RULES = new Map(
     ...EMBEDDED_CONTENT_RULES,
     ...FORM_AUDIT_RULES,
     ...VIEWPORT_VISUAL_RULES,
+    ...KEYBOARD_NAVIGATION_MOTION_RULES,
   ].map((rule) => [rule.id, rule] as const),
 );
 const AXE_RULES = new Map(axeRegistry.rules.map((rule) => [rule.id, rule] as const));
