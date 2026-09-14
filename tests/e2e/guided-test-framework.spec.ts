@@ -47,13 +47,18 @@ async function saveScan(panel: Awaited<ReturnType<typeof openSidepanel>>) {
   }, scan());
 }
 
-test('guided tests recover after interruption and stay separate from automated conformance', async ({ context, extensionWorker }) => {
+test('guided suite recovers sessions and keeps manual/runtime evidence separate from automated conformance', async ({ context, extensionWorker }) => {
   const panel = await openSidepanel(context, extensionWorker);
   await saveScan(panel);
 
   await panel.getByRole('button', { name: /Report|Informe/ }).click();
-  await expect(panel.getByRole('heading', { level: 2, name: /Sensory characteristics review|Revisión de características sensoriales/ })).toBeVisible();
+  await expect(panel.getByRole('heading', { level: 2, name: /Keyboard operability pass|Recorrido de operabilidad por teclado/ })).toBeVisible();
   await expect(panel.getByText(/Not an automated conformance result|No es un resultado automático de conformidad/)).toBeVisible();
+
+  const workflow = panel.getByLabel(/Guided workflow|Flujo guiado/);
+  await expect(workflow.locator('option')).toHaveCount(4);
+  await workflow.selectOption('FT-GUIDED-001');
+  await expect(panel.getByRole('heading', { level: 2, name: /Sensory characteristics review|Revisión de características sensoriales/ })).toBeVisible();
 
   await panel.getByRole('button', { name: /Start guided test|Iniciar prueba guiada/ }).click();
   await expect(panel.getByText(/Step 1 of 2|Paso 1 de 2/)).toBeVisible();
@@ -75,11 +80,16 @@ test('guided tests recover after interruption and stay separate from automated c
   await panel.getByRole('button', { name: /Save result|Guardar resultado/ }).click();
 
   await expect(panel.getByText(/Manual review: issue found|Revisión manual: se encontró un problema/)).toBeVisible();
-  await expect(panel.getByText(/auditor-provided evidence|evidencia la proporciona el auditor/)).toBeVisible();
+  await expect(panel.getByText(/Manual answers and observed runtime evidence|Las respuestas manuales y la evidencia runtime observada/)).toBeVisible();
 
   await panel.getByRole('button', { name: /Run again|Ejecutar de nuevo/ }).click();
   await expect(panel.getByText(/Step 1 of 2|Paso 1 de 2/)).toBeVisible();
   await panel.getByRole('button', { name: /Cancel|Cancelar/ }).click();
   await expect(panel.getByText(/This manual run is not counted as a completed result|Esta ejecución manual no cuenta como resultado completado/)).toBeVisible();
-  await expect(panel.getByRole('button', { name: /Restart guided test|Reiniciar prueba guiada/ })).toBeVisible();
+
+  await workflow.selectOption('FT-GUIDED-004');
+  await expect(panel.getByRole('heading', { level: 2, name: /Dialog focus lifecycle|Ciclo de foco del diálogo/ })).toBeVisible();
+  await panel.getByRole('button', { name: /Start guided test|Iniciar prueba guiada/ }).click();
+  await expect(panel.getByText(/Step 1 of 4|Paso 1 de 4/)).toBeVisible();
+  await expect(panel.getByText(/Open the dialog and inspect initial focus|Abre el diálogo y revisa el foco inicial/)).toBeVisible();
 });
