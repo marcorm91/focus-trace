@@ -2,7 +2,7 @@ import { mkdtemp, readFile, rm } from 'node:fs/promises';
 import { tmpdir } from 'node:os';
 import { basename, join, resolve } from 'node:path';
 import { pathToFileURL } from 'node:url';
-import { chromium, expect, test } from '@playwright/test';
+import { chromium, expect, test, type Page } from '@playwright/test';
 import {
   focusTraceCheckpoint,
   scanFocusTrace,
@@ -12,7 +12,7 @@ import {
 const fixturePath = resolve('tests/fixtures/cli-accessibility.html');
 const fixtureUrl = pathToFileURL(fixturePath).href;
 
-async function withInstalledChromium(run: (page: Awaited<ReturnType<Awaited<ReturnType<typeof chromium.launch>>['newPage']>>) => Promise<void>): Promise<void> {
+async function withInstalledChromium(run: (page: Page) => Promise<void>): Promise<void> {
   const browser = await chromium.launch({ headless: true, channel: 'chromium' });
   try {
     const page = await browser.newPage();
