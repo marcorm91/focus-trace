@@ -13,7 +13,8 @@ describe('FocusTrace Memory wiring contract', () => {
     const evidence = source('lib/focus-memory/visual-evidence.ts');
     const hook = source('entrypoints/sidepanel/hooks/useFocusTraceMemory.ts');
 
-    expect(background).toContain('recordFocusMemoryScan(message.scan, message.memoryEvidence)');
+    expect(background).toContain('recordFocusMemoryScan(normalizedScan, remappedEvidence)');
+    expect(background).toContain('normalizeSavedScan(state, message.scan)');
     expect(app).toContain('collectFocusMemoryEvidence(tabId, result)');
     expect(app).toContain('memoryEvidence,');
     expect(evidence).toContain('focusMemorySettingsState()');

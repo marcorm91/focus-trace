@@ -31,5 +31,7 @@ describe('audit profile UI contract', () => {
     expect(backgroundSource).toContain('normalizeSavedScan');
     expect(backgroundSource).toContain('applyFindingLifecycle');
     expect(backgroundSource).toContain('recordFocusMemoryScan(normalizedScan, remappedEvidence)');
+    expect(backgroundSource).toContain('profileSupportsScope(activeProfile, scanScope)');
+    expect(backgroundSource).toContain('auditProfileSnapshotKey(previous) === auditProfileSnapshotKey(current)');
   });
 });

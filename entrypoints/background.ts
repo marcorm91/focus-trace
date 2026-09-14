@@ -1,5 +1,11 @@
 import { browser, defineBackground } from '#imports';
-import { applyAuditProfile, type ProfiledScanResult } from '../lib/audit/audit-profiles';
+import {
+  applyAuditProfile,
+  auditProfileSnapshotKey,
+  profileSupportsScope,
+  scanScopeForProfile,
+  type ProfiledScanResult,
+} from '../lib/audit/audit-profiles';
 import { loadActiveAuditProfile } from '../lib/audit/audit-profile-storage';
 import {
   applyFindingLifecycle,
@@ -152,9 +158,7 @@ function comparableScanContext(previous: ScanResult | undefined, current: Profil
   if (previousScope !== currentScope) return false;
   if (previousScope === 'component' && currentScope === 'component'
     && previous.scope?.selector !== current.scope?.selector) return false;
-  const previousProfileId = (previous as ProfiledScanResult).auditProfile?.id;
-  const currentProfileId = current.auditProfile?.id;
-  return previousProfileId === currentProfileId;
+  return auditProfileSnapshotKey(previous) === auditProfileSnapshotKey(current);
 }
 
 function remapCapturedEvidence(
@@ -179,9 +183,13 @@ async function normalizeSavedScan(
   scan: ScanResult,
 ): Promise<ProfiledScanResult> {
   const incoming = scan as ProfiledScanResult;
+  const activeProfile = await loadActiveAuditProfile();
+  const scanScope = scanScopeForProfile(incoming);
   const profiled = incoming.auditProfile
     ? incoming
-    : applyAuditProfile(incoming, await loadActiveAuditProfile());
+    : profileSupportsScope(activeProfile, scanScope)
+      ? applyAuditProfile(incoming, activeProfile, scanScope)
+      : deduplicateScanResult(incoming) as ProfiledScanResult;
 
   if (state.scan?.scannedAt === profiled.scannedAt) {
     return deduplicateScanResult(profiled) as ProfiledScanResult;

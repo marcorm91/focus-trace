@@ -110,7 +110,7 @@ describe('multipage audit model', () => {
     expect(next.audits[0]?.pages).toHaveLength(2);
   });
 
-  it('aggregates the latest page results for the audit cover', () => {
+  it('aggregates deduplicated latest page results for the audit cover', () => {
     let store = applyAuditAnalysis(
       emptyMultipageAuditStore(),
       scan('https://bidafarma.es/', 100, 2),
@@ -124,7 +124,7 @@ describe('multipage audit model', () => {
       'unused',
     );
     const summary = auditSummary(store.audits[0]!);
-    expect(summary).toMatchObject({ pages: 2, failures: 6, reviews: 0, warnings: 0 });
+    expect(summary).toMatchObject({ pages: 2, failures: 2, reviews: 0, warnings: 0 });
   });
 
   it('removes saved page reports and drops an audit when its final page is deleted', () => {

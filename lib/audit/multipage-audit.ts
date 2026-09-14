@@ -1,5 +1,6 @@
 import type { ReportVisualEvidence } from '../report/visual-evidence';
 import type { ScanResult } from '../../shared/types';
+import { auditProfileSnapshotKey } from './audit-profiles';
 import { applyFindingLifecycle } from './finding-lifecycle';
 
 export const MULTIPAGE_AUDIT_VERSION = 1 as const;
@@ -124,7 +125,11 @@ export function upsertAuditPage(
 ): AccessibilityAudit {
   const key = auditPageKey(scan.url);
   const index = audit.pages.findIndex((page) => page.key === key);
-  const previousScan = index >= 0 ? audit.pages[index]!.scan : undefined;
+  const previousCandidate = index >= 0 ? audit.pages[index]!.scan : undefined;
+  const previousScan = previousCandidate
+    && auditProfileSnapshotKey(previousCandidate) === auditProfileSnapshotKey(scan)
+    ? previousCandidate
+    : undefined;
   const record = pageRecord(applyFindingLifecycle(previousScan, scan), visualEvidence);
   const pages = [...audit.pages];
   if (index >= 0) pages[index] = record;

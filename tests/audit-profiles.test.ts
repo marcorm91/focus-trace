@@ -4,6 +4,7 @@ import {
   ALL_AUDIT_RULE_FAMILIES,
   activeAuditProfile,
   applyAuditProfile,
+  auditProfileSnapshotKey,
   auditRuleFamily,
   defaultAuditProfile,
   deleteAuditProfile,
@@ -58,9 +59,9 @@ function custom(overrides: Partial<AuditProfile> = {}): AuditProfile {
 }
 
 describe('audit profiles', () => {
-  it('ships a complete local AA profile', () => {
+  it('ships a complete local profile that preserves all supported findings', () => {
     const profile = activeAuditProfile(emptyAuditProfileStore());
-    expect(profile.standard).toBe('AA');
+    expect(profile.standard).toBe('all');
     expect(profile.scopes).toEqual(['page', 'component', 'site']);
     expect(profile.severities).toEqual(ALL_AUDIT_PROFILE_SEVERITIES);
     expect(profile.ruleFamilies).toEqual(ALL_AUDIT_RULE_FAMILIES);
@@ -101,9 +102,15 @@ describe('audit profiles', () => {
     expect(saved.activeProfileId).toBe('custom');
     expect(saved.profiles).toHaveLength(2);
     const removed = deleteAuditProfile(saved, 'custom');
-    expect(removed.activeProfileId).toBe('default-aa');
+    expect(removed.activeProfileId).toBe('default-complete');
     expect(removed.profiles).toHaveLength(1);
     expect(resetAuditProfiles()).toEqual(emptyAuditProfileStore());
+  });
+
+  it('changes the profile snapshot identity when an existing profile configuration changes', () => {
+    const first = applyAuditProfile(scan([issue('one')]), custom({ scopes: ['page'], severities: ['serious'] }), 'page');
+    const second = applyAuditProfile(scan([issue('one')]), custom({ scopes: ['page'], severities: ['minor'] }), 'page');
+    expect(auditProfileSnapshotKey(first)).not.toBe(auditProfileSnapshotKey(second));
   });
 
   it('does not apply a profile outside its declared scope', () => {
