@@ -138,10 +138,10 @@ function angleToDegrees(token: string): number | undefined {
 
 function rotationFromTransform(value: string): number | undefined {
   const normalized = value.trim();
-  const rotate = normalized.match(/(?:^|\s)rotate(?:z)?\(\s*([^\)]+)\s*\)/i)?.[1];
+  const rotate = normalized.match(/(?:^|\s)rotate(?:z)?\(\s*([^)]+)\s*\)/i)?.[1];
   if (rotate) return angleToDegrees(rotate);
 
-  const matrix = normalized.match(/matrix\(\s*([^\)]+)\s*\)/i)?.[1];
+  const matrix = normalized.match(/matrix\(\s*([^)]+)\s*\)/i)?.[1];
   if (matrix) {
     const parts = matrix.split(',').map((part) => Number.parseFloat(part.trim()));
     if (parts.length === 6 && parts.every(Number.isFinite)) {
@@ -149,7 +149,7 @@ function rotationFromTransform(value: string): number | undefined {
     }
   }
 
-  const matrix3d = normalized.match(/matrix3d\(\s*([^\)]+)\s*\)/i)?.[1];
+  const matrix3d = normalized.match(/matrix3d\(\s*([^)]+)\s*\)/i)?.[1];
   if (matrix3d) {
     const parts = matrix3d.split(',').map((part) => Number.parseFloat(part.trim()));
     if (parts.length === 16 && parts.every(Number.isFinite)) {
@@ -184,7 +184,9 @@ function collectOrientationRules(
   counter: { value: number },
   inheritedOrientation?: 'portrait' | 'landscape',
 ): void {
-  for (const rule of [...rules]) {
+  for (let index = 0; index < rules.length; index += 1) {
+    const rule = rules[index];
+    if (!rule) continue;
     if (counter.value >= MAX_RULES || evaluations.length >= MAX_MATCHED_ELEMENTS) return;
     counter.value += 1;
 
