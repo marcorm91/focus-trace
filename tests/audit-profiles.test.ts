@@ -65,6 +65,19 @@ describe('audit profiles', () => {
     expect(profile.scopes).toEqual(['page', 'component', 'site']);
     expect(profile.severities).toEqual(ALL_AUDIT_PROFILE_SEVERITIES);
     expect(profile.ruleFamilies).toEqual(ALL_AUDIT_RULE_FAMILIES);
+
+    const preserved = applyAuditProfile(scan([
+      issue('aaa', {
+        references: [{ type: 'WCAG', id: '1.4.6', label: 'Enhanced contrast', url: 'https://www.w3.org/', level: 'AAA' }],
+      }),
+      issue('warning', {
+        outcome: 'warning',
+        severity: 'info',
+        references: [],
+      }),
+    ]), profile, 'page');
+    expect(preserved.issues.map((item) => item.id)).toContain('aaa');
+    expect(preserved.warnings.map((item) => item.id)).toContain('warning');
   });
 
   it('filters by severity, WCAG target and rule family', () => {
