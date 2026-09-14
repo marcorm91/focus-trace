@@ -103,8 +103,8 @@ jobs:
           )
           replace(
               'README.es.md',
-              'Los perfiles de auditoría se guardan únicamente en el perfil del navegador y están limitados al perfil WCAG 2.2 AA integrado más **20 perfiles personalizados**. Un perfil selecciona el alcance página/componente/Site Audit, el objetivo WCAG A/AA/AAA, las severidades y las familias de reglas de FocusTrace.',
-              'Los perfiles de auditoría se guardan únicamente en el perfil del navegador y están limitados a un perfil completo integrado más **20 perfiles personalizados**. El perfil integrado conserva todos los hallazgos compatibles; los perfiles personalizados pueden seleccionar el alcance página/componente/Site Audit, todas las reglas compatibles o un objetivo WCAG A/AA/AAA, las severidades y las familias de reglas de FocusTrace.',
+              'Los perfiles de auditoría permanecen solo en el perfil del navegador y están limitados al perfil WCAG 2.2 AA integrado más **20 perfiles personalizados**. Un perfil selecciona alcance de página/componente/Site Audit, objetivo WCAG A/AA/AAA, severidades y familias de reglas de FocusTrace.',
+              'Los perfiles de auditoría permanecen solo en el perfil del navegador y están limitados a un perfil completo integrado más **20 perfiles personalizados**. El perfil integrado conserva todos los hallazgos compatibles; los perfiles personalizados pueden seleccionar alcance de página/componente/Site Audit, todas las reglas compatibles o un objetivo WCAG A/AA/AAA, severidades y familias de reglas de FocusTrace.',
           )
 
           workflow = Path('.github/workflows/zz-temp-issue-243-final.yml')
