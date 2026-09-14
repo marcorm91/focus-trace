@@ -1,4 +1,4 @@
-import { defineConfig } from '@playwright/test';
+import { defineConfig, devices } from '@playwright/test';
 
 export default defineConfig({
   testDir: './examples/playwright',
@@ -7,7 +7,14 @@ export default defineConfig({
   workers: 1,
   timeout: 20_000,
   reporter: process.env.CI ? 'line' : 'list',
-  use: {
-    channel: 'chromium',
-  },
+  projects: [
+    {
+      name: 'chromium',
+      use: { ...devices['Desktop Chrome'] },
+    },
+    {
+      name: 'firefox',
+      use: { ...devices['Desktop Firefox'] },
+    },
+  ],
 });
