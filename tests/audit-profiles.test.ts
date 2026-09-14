@@ -65,6 +65,8 @@ describe('audit profiles', () => {
     expect(profile.standard).toBe('all');
     expect(profile.scopes).toEqual(['page', 'component', 'site']);
     expect(profile.severities).toEqual(ALL_AUDIT_PROFILE_SEVERITIES);
+    expect(profile.referenceTypes).toEqual(['WCAG', 'ACT', 'WAI-ARIA', 'WAI-ARIA APG', 'HTML']);
+    expect(profile.ruleIds).toEqual([]);
     expect(profile.ruleFamilies).toEqual(ALL_AUDIT_RULE_FAMILIES);
 
     const preserved = applyAuditProfile(scan([
@@ -96,6 +98,25 @@ describe('audit profiles', () => {
     ]), profile, 'page');
     expect(filtered.issues.map((item) => item.id)).toEqual(['keep']);
     expect(filtered.auditProfile?.id).toBe('custom');
+  });
+
+  it('reproduces exact rule and standards-source filters', () => {
+    const profile = custom({
+      standard: 'all',
+      referenceTypes: ['WCAG'],
+      ruleIds: ['FT-COLOR-001'],
+      severities: ['serious'],
+      ruleFamilies: ['visual'],
+      scopes: ['page'],
+    });
+    const filtered = applyAuditProfile(scan([
+      issue('keep'),
+      issue('other-rule', { ruleId: 'FT-COLOR-002' }),
+      issue('other-source', { references: [{ type: 'ACT', id: 'abc', label: 'ACT', url: 'https://www.w3.org/' }] }),
+    ]), profile, 'page');
+    expect(filtered.issues.map((item) => item.id)).toEqual(['keep']);
+    expect(filtered.auditProfile?.ruleIds).toEqual(['FT-COLOR-001']);
+    expect(filtered.auditProfile?.referenceTypes).toEqual(['WCAG']);
   });
 
   it('classifies representative rule families without third-party metadata', () => {

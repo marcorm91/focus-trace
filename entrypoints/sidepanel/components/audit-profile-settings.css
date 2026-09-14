@@ -14,9 +14,15 @@
 }
 
 .audit-profile-field input,
-.audit-profile-field select {
+.audit-profile-field select,
+.audit-profile-field textarea {
   width: 100%;
   min-height: 36px;
+}
+
+.audit-profile-field textarea {
+  resize: vertical;
+  min-height: 88px;
 }
 
 .audit-profile-actions {

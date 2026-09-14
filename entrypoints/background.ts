@@ -11,6 +11,13 @@ import {
   applyFindingLifecycle,
   deduplicateScanResult,
 } from '../lib/audit/finding-lifecycle';
+import {
+  applyStoredFindingReviews,
+  clearFindingReviewHistory,
+  resetStoredFindingReview,
+  saveFindingReviewState,
+  syncStoredFindingReviewNote,
+} from '../lib/audit/finding-review-storage';
 import { updateStoredMultipageAuditScan } from '../lib/audit/multipage-audit-storage';
 import {
   captureVisibleTabFromSource,
@@ -42,6 +49,7 @@ import type {
   RuntimeInjectionMode,
   SaveScanResponse,
   SaveAuditorNoteResponse,
+  SaveFindingReviewStateResponse,
   ScanResult,
   SessionState,
 } from '../shared/types';
@@ -191,12 +199,13 @@ async function normalizeSavedScan(
       ? applyAuditProfile(incoming, activeProfile, scanScope)
       : deduplicateScanResult(incoming) as ProfiledScanResult;
 
-  if (state.scan?.scannedAt === profiled.scannedAt) {
-    return deduplicateScanResult(profiled) as ProfiledScanResult;
-  }
-
-  const previous = comparableScanContext(state.scan, profiled) ? state.scan : undefined;
-  return applyFindingLifecycle(previous, profiled) as ProfiledScanResult;
+  const normalized = state.scan?.scannedAt === profiled.scannedAt
+    ? deduplicateScanResult(profiled) as ProfiledScanResult
+    : applyFindingLifecycle(
+        comparableScanContext(state.scan, profiled) ? state.scan : undefined,
+        profiled,
+      ) as ProfiledScanResult;
+  return await applyStoredFindingReviews(normalized) as ProfiledScanResult;
 }
 
 export default defineBackground(() => {
@@ -268,11 +277,13 @@ export default defineBackground(() => {
         const warnings: AuditorNotePersistenceWarning[] = [];
         if (message.target.kind === 'scan-finding' && next.scan) {
           const results = await Promise.allSettled([
+            syncStoredFindingReviewNote(next.scan, message.target.findingId),
             updateFocusMemoryScanNotes(next.scan),
             updateStoredMultipageAuditScan(next.scan),
           ]);
-          if (results[0]?.status === 'rejected') warnings.push('focus-memory-write-failed');
-          if (results[1]?.status === 'rejected') warnings.push('multipage-audit-write-failed');
+          if (results[0]?.status === 'rejected') warnings.push('finding-review-write-failed');
+          if (results[1]?.status === 'rejected') warnings.push('focus-memory-write-failed');
+          if (results[2]?.status === 'rejected') warnings.push('multipage-audit-write-failed');
         }
         await broadcast(next);
         return {
@@ -282,10 +293,33 @@ export default defineBackground(() => {
       });
     }
 
+    if (message.type === 'FOCUSTRACE_SAVE_FINDING_REVIEW_STATE') {
+      return serializeTabWrite(message.tabId, async () => {
+        const current = await getSession(message.tabId);
+        if (!current.scan) return { state: current } satisfies SaveFindingReviewStateResponse;
+        const nextScan = message.state
+          ? await saveFindingReviewState(current.scan, message.findingId, message.state)
+          : await resetStoredFindingReview(current.scan, message.findingId);
+        const next = nextScan === current.scan ? current : { ...current, scan: nextScan };
+        if (next !== current) await saveSession(next);
+        const warnings: AuditorNotePersistenceWarning[] = [];
+        if (next.scan) {
+          const persisted = await Promise.allSettled([updateStoredMultipageAuditScan(next.scan)]);
+          if (persisted[0]?.status === 'rejected') warnings.push('multipage-audit-write-failed');
+        }
+        await broadcast(next);
+        return {
+          state: next,
+          ...(warnings.length ? { warnings } : {}),
+        } satisfies SaveFindingReviewStateResponse;
+      });
+    }
+
     if (message.type === 'FOCUSTRACE_RESET_TAB') {
       return serializeTabWrite(message.tabId, async () => {
         const current = await getSession(message.tabId);
         const next = resetSessionState(current, message.tabId);
+        await clearFindingReviewHistory();
         await saveSession(next);
         await browser.tabs.sendMessage(message.tabId, {
           type: 'FOCUSTRACE_SET_RECORDING',

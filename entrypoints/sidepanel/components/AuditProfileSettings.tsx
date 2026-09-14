@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import {
+  ALL_AUDIT_PROFILE_REFERENCE_TYPES,
   ALL_AUDIT_PROFILE_SCOPES,
   ALL_AUDIT_PROFILE_SEVERITIES,
   ALL_AUDIT_RULE_FAMILIES,
@@ -7,6 +8,7 @@ import {
   DEFAULT_AUDIT_PROFILE_ID,
   activeAuditProfile,
   type AuditProfile,
+  type AuditProfileReferenceType,
   type AuditProfileScope,
   type AuditProfileStandard,
   type AuditRuleFamily,
@@ -59,6 +61,8 @@ function copyForEditing(profile: AuditProfile): AuditProfile {
   return {
     ...profile,
     scopes: [...profile.scopes],
+    referenceTypes: [...profile.referenceTypes],
+    ruleIds: [...profile.ruleIds],
     severities: [...profile.severities],
     ruleFamilies: [...profile.ruleFamilies],
   };
@@ -122,11 +126,11 @@ export function AuditProfileSettings({ language }: { language: AppLanguage }) {
 
   const saveDraft = async () => {
     if (!draft || draft.builtIn) return;
-    if (!draft.name.trim() || !draft.scopes.length || !draft.severities.length || !draft.ruleFamilies.length) {
+    if (!draft.name.trim() || !draft.scopes.length || !draft.referenceTypes.length || !draft.severities.length || !draft.ruleFamilies.length) {
       setStatus(tr(
         language,
-        'Keep a name and at least one scope, severity and rule family.',
-        'Mantén un nombre y al menos un alcance, severidad y familia de reglas.',
+        'Keep a name and at least one scope, standards source, severity and rule family.',
+        'Mantén un nombre y al menos un alcance, fuente normativa, severidad y familia de reglas.',
       ));
       return;
     }
@@ -232,6 +236,21 @@ export function AuditProfileSettings({ language }: { language: AppLanguage }) {
         ))}
       </div>
 
+      <div className="audit-profile-dimension" role="group" aria-label={tr(language, 'Profile standards sources', 'Fuentes normativas del perfil')}>
+        <strong>{tr(language, 'Standards sources', 'Fuentes normativas')}</strong>
+        {ALL_AUDIT_PROFILE_REFERENCE_TYPES.map((referenceType) => (
+          <label key={referenceType}>
+            <input
+              type="checkbox"
+              disabled={!editable}
+              checked={draft.referenceTypes.includes(referenceType)}
+              onChange={(event) => setDraft({ ...draft, referenceTypes: toggleValue<AuditProfileReferenceType>(draft.referenceTypes, referenceType, event.currentTarget.checked) })}
+            />
+            <span>{referenceType}</span>
+          </label>
+        ))}
+      </div>
+
       <div className="audit-profile-dimension" role="group" aria-label={tr(language, 'Profile rule families', 'Familias de reglas del perfil')}>
         <strong>{tr(language, 'Rule families', 'Familias de reglas')}</strong>
         {ALL_AUDIT_RULE_FAMILIES.map((family) => (
@@ -246,6 +265,28 @@ export function AuditProfileSettings({ language }: { language: AppLanguage }) {
           </label>
         ))}
       </div>
+
+      <label className="audit-profile-field">
+        <span>{tr(language, 'Exact rule IDs', 'IDs exactos de regla')}</span>
+        <textarea
+          rows={4}
+          disabled={!editable}
+          value={draft.ruleIds.join('\n')}
+          placeholder="FT-WCAG-003\nFT-REVIEW-024"
+          aria-describedby="audit-profile-rule-ids-help"
+          onChange={(event) => setDraft({
+            ...draft,
+            ruleIds: event.currentTarget.value.split(/[\s,]+/).map((value) => value.trim()).filter(Boolean),
+          })}
+        />
+        <small id="audit-profile-rule-ids-help">
+          {tr(
+            language,
+            'Leave empty to include every rule allowed by the other filters. Use FocusTrace rule IDs separated by spaces, commas or new lines.',
+            'Déjalo vacío para incluir todas las reglas permitidas por los demás filtros. Usa IDs de FocusTrace separados por espacios, comas o líneas.',
+          )}
+        </small>
+      </label>
 
       <button className="audit-profile-save" type="button" disabled={!editable} onClick={() => void saveDraft()}>
         {tr(language, 'Save and apply profile', 'Guardar y aplicar perfil')}

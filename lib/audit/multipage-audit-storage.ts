@@ -5,6 +5,7 @@ import {
   profileSupportsScope,
 } from './audit-profiles';
 import { loadActiveAuditProfile } from './audit-profile-storage';
+import { applyStoredFindingReviews } from './finding-review-storage';
 import {
   MULTIPAGE_AUDIT_VERSION,
   activeAuditFromStore,
@@ -203,9 +204,10 @@ export async function recordMultipageAuditScan(
 ): Promise<MultipageAuditStore> {
   const current = await loadMultipageAuditStore();
   const activeProfile = await loadActiveAuditProfile();
+  const reviewedScan = await applyStoredFindingReviews(scan);
   const preparedScan = profileSupportsScope(activeProfile, 'site')
-    ? applyAuditProfile(scan, activeProfile, 'site')
-    : scan;
+    ? applyAuditProfile(reviewedScan, activeProfile, 'site')
+    : reviewedScan;
   const next = applyAuditAnalysis(current, preparedScan, plan, auditId(), visualEvidence);
   await saveMultipageAuditStore(next);
   return loadMultipageAuditStore();

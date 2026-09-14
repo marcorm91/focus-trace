@@ -216,7 +216,7 @@ export function applyFindingReviewStore(
     if (!record) {
       return issue.reviewState === 'open'
         ? issue
-        : { ...issue, reviewState: 'open', reviewStateUpdatedAt: undefined };
+        : { ...issue, reviewState: 'open' };
     }
 
     let effective = record;
