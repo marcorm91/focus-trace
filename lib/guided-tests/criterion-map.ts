@@ -25,7 +25,3 @@ const STEP_CRITERIA: Record<string, Record<string, readonly string[]>> = {
 export function guidedStepCriteria(testId: string, stepId: string): readonly string[] {
   return STEP_CRITERIA[testId]?.[stepId] ?? [];
 }
-
-export function guidedTestHasCriterionMap(testId: string): boolean {
-  return Object.keys(STEP_CRITERIA[testId] ?? {}).length > 0;
-}
