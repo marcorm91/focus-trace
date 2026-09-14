@@ -15,14 +15,22 @@ function paintedBackground(element: Element): boolean {
   return alpha == null || Number.parseFloat(alpha) > 0;
 }
 
-function targetFor(issue: ScanIssue, document: Document): Element | undefined {
-  const selector = issue.targets[0];
-  if (!selector) return undefined;
-  try {
-    return document.querySelector(selector) ?? undefined;
-  } catch {
-    return undefined;
+function targetsFor(issue: ScanIssue, document: Document): Element[] {
+  const targets: Element[] = [];
+  const seen = new Set<Element>();
+  for (const selector of issue.targets) {
+    if (!selector) continue;
+    try {
+      const element = document.querySelector(selector);
+      if (element && !seen.has(element)) {
+        seen.add(element);
+        targets.push(element);
+      }
+    } catch {
+      // Invalid or pseudo-element-like selectors are not resolvable DOM targets.
+    }
   }
+  return targets;
 }
 
 function coversPoint(rect: DOMRect, x: number, y: number): boolean {
@@ -140,8 +148,12 @@ export function downgradeUncertainStackingContrast(
       continue;
     }
     checked += 1;
-    const element = targetFor(issue, document);
-    const reason = element ? stackedBackdropReason(element, document) : undefined;
+
+    let reason: string | undefined;
+    for (const element of targetsFor(issue, document)) {
+      reason = stackedBackdropReason(element, document);
+      if (reason) break;
+    }
     if (!reason) {
       retained.push(issue);
       continue;
