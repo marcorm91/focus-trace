@@ -1,0 +1,140 @@
+name: temp-issue-242-hardening
+on:
+  push:
+    branches: [feat/saved-user-flow-regression-0.7.0]
+permissions:
+  contents: write
+jobs:
+  patch:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: feat/saved-user-flow-regression-0.7.0
+      - name: Harden saved replay lifecycle
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+
+          # Only infer resolved findings after a complete replay.
+          path = Path('lib/runtime/saved-flow.ts')
+          text = path.read_text()
+          text = text.replace(
+              "export function compareSavedFlowFindings(\n  baseline: SavedFlowBaselineFinding[],\n  current: SavedFlowCurrentFinding[],\n): SavedFlowRegressionResult[] {",
+              "export function compareSavedFlowFindings(\n  baseline: SavedFlowBaselineFinding[],\n  current: SavedFlowCurrentFinding[],\n  complete = true,\n): SavedFlowRegressionResult[] {",
+              1,
+          )
+          old = """    if (exactIndex < 0) {
+      results.push({ state: 'resolved', ruleId: original.ruleId, baseline: original, reason: 'The saved finding was not observed in the current replay evidence.' });
+      continue;
+    }"""
+          new = """    if (exactIndex < 0) {
+      if (complete) {
+        results.push({ state: 'resolved', ruleId: original.ruleId, baseline: original, reason: 'The saved finding was not observed after the complete replay finished.' });
+      }
+      continue;
+    }"""
+          if old not in text:
+              raise SystemExit('saved-flow comparison anchor missing')
+          path.write_text(text.replace(old, new, 1))
+
+          # Add an explicit incomplete-run assertion.
+          path = Path('tests/saved-flow.test.ts')
+          text = path.read_text()
+          anchor = """  it('extracts only current runtime findings and exposes explicit flow failure states', () => {"""
+          test = """  it('does not infer resolved findings from an incomplete replay', () => {
+    const baseline: SavedFlowBaselineFinding[] = [
+      { id: 'a', ruleId: 'FT-RUNTIME-001', kind: 'focus-obscured', outcome: 'fail', target: { locator: '#a', tag: 'button' } },
+      { id: 'b', ruleId: 'FT-RUNTIME-002', kind: 'focus-lost', outcome: 'review', target: { locator: '#b', tag: 'a' } },
+    ];
+    const current: SavedFlowCurrentFinding[] = [
+      { ruleId: 'FT-RUNTIME-001', kind: 'focus-obscured', outcome: 'fail', target: { locator: '#a', tag: 'button' } },
+    ];
+
+    const results = compareSavedFlowFindings(baseline, current, false);
+    expect(results.map((result) => result.state)).toEqual(['persistent']);
+  });
+
+"""
+          if anchor not in text:
+              raise SystemExit('saved-flow test anchor missing')
+          path.write_text(text.replace(anchor, test + anchor, 1))
+
+          # Saved flows belong to the Replay tab panel but must stay mounted while
+          # the current session is cleared for the regression run.
+          replay = Path('entrypoints/sidepanel/views/ReplayView.tsx')
+          text = replay.read_text()
+          text = text.replace(
+              "import type { RuntimeBreakpointSettings, RuntimeEvent, RuntimeInteraction } from '../../../shared/types';",
+              "import type { RuntimeEvent, RuntimeInteraction } from '../../../shared/types';",
+              1,
+          )
+          text = text.replace("\nimport { SavedFlowRegressionPanel } from './SavedFlowRegressionPanel';", "", 1)
+          text = text.replace("  recording,\n  breakpoints,\n  level,", "  recording,\n  level,", 1)
+          text = text.replace("  recording: boolean;\n  breakpoints: RuntimeBreakpointSettings;\n  level: ExplanationLevel;", "  recording: boolean;\n  level: ExplanationLevel;", 1)
+          panel = """      <SavedFlowRegressionPanel
+        events={events}
+        interactions={interactions}
+        recording={recording}
+        breakpoints={breakpoints}
+        language={language}
+      />
+
+"""
+          if panel not in text:
+              raise SystemExit('Replay saved-flow panel anchor missing')
+          replay.write_text(text.replace(panel, '', 1))
+
+          trace = Path('entrypoints/sidepanel/views/TraceView.tsx')
+          text = trace.read_text()
+          import_anchor = "import { RuntimeView } from './RuntimeView';"
+          if import_anchor not in text:
+              raise SystemExit('Trace import anchor missing')
+          text = text.replace(import_anchor, import_anchor + "\nimport { SavedFlowRegressionPanel } from './SavedFlowRegressionPanel';", 1)
+          text = text.replace("              recording={recording}\n              breakpoints={breakpointSettings}\n              level={level}", "              recording={recording}\n              level={level}", 1)
+          close_anchor = """          {mode === 'replay' && (
+            <ReplayView
+              events={events}
+              interactions={interactions}
+              journey={journey}
+              semantics={transitionSemantics}
+              recording={recording}
+              level={level}
+              language={language}
+              onSelectFocusTarget={onSelectStep}
+              onClearFocusTarget={onClearSelection}
+            />
+          )}
+        </div>"""
+          replacement = """          {mode === 'replay' && (
+            <ReplayView
+              events={events}
+              interactions={interactions}
+              journey={journey}
+              semantics={transitionSemantics}
+              recording={recording}
+              level={level}
+              language={language}
+              onSelectFocusTarget={onSelectStep}
+              onClearFocusTarget={onClearSelection}
+            />
+          )}
+          <SavedFlowRegressionPanel
+            events={events}
+            interactions={interactions}
+            recording={recording}
+            breakpoints={breakpointSettings}
+            language={language}
+          />
+        </div>"""
+          if close_anchor not in text:
+              raise SystemExit('Trace replay panel anchor missing')
+          trace.write_text(text.replace(close_anchor, replacement, 1))
+          PY
+          git rm .github/workflows/zz-temp-issue-242-hardening.yml
+          git config user.name github-actions[bot]
+          git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+          git add lib/runtime/saved-flow.ts tests/saved-flow.test.ts entrypoints/sidepanel/views/ReplayView.tsx entrypoints/sidepanel/views/TraceView.tsx
+          git commit -m "Fix(replay): keep saved regression lifecycle conservative"
+          git push origin HEAD:feat/saved-user-flow-regression-0.7.0
