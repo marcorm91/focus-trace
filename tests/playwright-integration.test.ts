@@ -1,5 +1,12 @@
+import { mkdtemp, rm } from 'node:fs/promises';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
 import { describe, expect, it } from 'vitest';
-import { assertFocusTrace, summarizeFocusTraceThresholds } from '../integrations/playwright';
+import {
+  assertFocusTrace,
+  summarizeFocusTraceThresholds,
+  writeFocusTraceArtifacts,
+} from '../integrations/playwright';
 import type { CliBrowserRunOutput } from '../cli/protocol';
 
 function result(findings: Array<{ outcome: 'fail' | 'review' | 'warning'; lifecycleState?: 'new' | 'persistent' | 'changed' }>): CliBrowserRunOutput {
@@ -73,5 +80,21 @@ describe('Playwright integration thresholds', () => {
   it('rejects invalid thresholds instead of silently coercing them', () => {
     expect(() => assertFocusTrace(result([]), { maxFailures: -1 })).toThrow(/non-negative integer/);
     expect(() => assertFocusTrace(result([]), { maxReviews: 0.5 })).toThrow(/non-negative integer/);
+  });
+
+  it('rejects artifact path traversal and invalid deterministic timestamps', async () => {
+    const directory = await mkdtemp(join(tmpdir(), 'focustrace-artifacts-'));
+    try {
+      await expect(writeFocusTraceArtifacts(result([]), {
+        directory,
+        basename: '../escape',
+      })).rejects.toThrow(/Artifact basename/);
+      await expect(writeFocusTraceArtifacts(result([]), {
+        directory,
+        generatedAt: -1,
+      })).rejects.toThrow(/generatedAt/);
+    } finally {
+      await rm(directory, { recursive: true, force: true });
+    }
   });
 });
