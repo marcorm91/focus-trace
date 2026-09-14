@@ -2,6 +2,7 @@
 
 @import url('./style.css') layer(foundation);
 @import url('./scope-tabs.css') layer(components);
+@import url('./scope-expansion.css') layer(components);
 @import url('./hero-polish.css') layer(components);
 @import url('./visual-system.css') layer(theme);
 @import url('./severity.css') layer(theme);
