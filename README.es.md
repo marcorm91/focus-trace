@@ -645,3 +645,11 @@ Una definición guiada contiene pasos y prompts localizados, respuestas manuales
 El framework nunca lee automáticamente valores de formularios. El contexto de página guardado elimina query strings y fragmentos, y los patrones sensibles habituales de las notas libres se redactan antes de persistir. Los resultados guiados son `guided-pass`, `guided-issue`, `guided-review` o `not-applicable`; todos siguen siendo evidencia aportada por el auditor y **nunca se convierten en afirmaciones automáticas de conformidad**.
 
 `FT-GUIDED-001` es el flujo completo de muestra para WCAG 1.3.3 Características sensoriales. Pide al auditor revisar las instrucciones de la página y decidir si el significado depende únicamente de color, forma, tamaño, posición visual, orientación o sonido. Consulta [`docs/GUIDED_TESTS.md`](docs/GUIDED_TESTS.md) para el ciclo de vida, los límites de privacidad y el modelo de informes.
+
+### Pruebas guiadas de teclado, foco y diálogos
+
+El framework guiado incluye ahora recorridos de operabilidad por teclado, orden/visibilidad del foco y ciclo de vida de diálogos. Estas pruebas reutilizan el flujo de eventos runtime existente de FocusTrace: los eventos relevantes de Trace se adjuntan como evidencia acotada `runtime-observation` al guardar cada paso, mientras que la respuesta del auditor permanece como un registro manual separado.
+
+La contención del foco dentro de un modal no se considera por sí sola un bloqueo de teclado. Mientras un diálogo modal está abierto, mantener Tab/Shift+Tab dentro del diálogo es el comportamiento esperado; el flujo guiado pide marcar un problema solo si el foco escapa de forma inesperada, el diálogo no puede cerrarse con su mecanismo de teclado previsto o el foco no se restaura a un destino lógico después del cierre.
+
+Los nuevos flujos siguen siendo `guided-manual` y `automated: false`; no modifican los totales automáticos PASS/FAIL ni la paridad con axe-core.
