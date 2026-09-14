@@ -23,23 +23,28 @@ const coverage = JSON.parse(
 };
 
 describe('guided test UI contract', () => {
-  it('keeps manual evidence visually and semantically separate from automated conformance', () => {
+  it('keeps manual judgement and runtime observations separate from automated conformance', () => {
     expect(component).toContain('Not an automated conformance result.');
-    expect(component).toContain('Guided test · manual evidence');
+    expect(component).toContain('Guided tests · manual + runtime evidence');
+    expect(component).toContain('Observed runtime evidence');
+    expect(component).toContain('Your answer remains a separate manual judgement.');
     expect(component).toContain("role=\"note\"");
   });
 
-  it('exposes the guided workflow in Report while standards coverage remains explicitly manual', () => {
-    expect(workspace).toContain('<GuidedTestPanel scan={scan} language={language} />');
+  it('feeds the existing runtime event stream into Report and keeps coverage explicitly manual', () => {
+    expect(workspace).toContain('<GuidedTestPanel scan={scan} events={events} language={language} />');
     expect(coverage.automatedConformance).toBe(false);
-    expect(coverage.tests).toContainEqual(expect.objectContaining({
-      id: 'FT-GUIDED-001',
-      coverage: 'guided-manual',
-      automated: false,
-    }));
+    for (const id of ['FT-GUIDED-001', 'FT-GUIDED-002', 'FT-GUIDED-003', 'FT-GUIDED-004']) {
+      expect(coverage.tests).toContainEqual(expect.objectContaining({
+        id,
+        coverage: 'guided-manual',
+        automated: false,
+      }));
+    }
   });
 
   it('uses native keyboard-operable controls and announces state changes', () => {
+    expect(component).toContain('<select');
     expect(component).toContain('<fieldset>');
     expect(component).toContain('type="radio"');
     expect(component).toContain('type="button"');
@@ -50,6 +55,7 @@ describe('guided test UI contract', () => {
   it('supports narrow layouts and forced-colors without tiny text', () => {
     expect(css).toContain('@media (max-width: 420px)');
     expect(css).toContain('@media (forced-colors: active)');
+    expect(css).toContain('.guided-runtime-evidence');
     expect(css).not.toMatch(/font-size:\s*(?:1[0-3]|[0-9])px/);
   });
 });
