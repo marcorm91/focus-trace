@@ -363,7 +363,7 @@
 
 .finding-recheck-heading time {
   color: var(--ft-muted, GrayText);
-  font-size: 12px;
+  font-size: 14px;
 }
 
 .finding-recheck-evidence {
