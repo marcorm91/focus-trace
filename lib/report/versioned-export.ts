@@ -1,5 +1,6 @@
 import type { SiteAuditResult } from '../site-audit/model';
 import { remediationForIssue } from '../site-audit/remediation';
+import { sanitizeRuntimeUrl } from '../runtime/url-privacy';
 import type { RuntimeEvent, ScanIssue, ScanResult, Severity, StandardReference } from '../../shared/types';
 
 export const FOCUSTRACE_EXPORT_SCHEMA_VERSION = '1.0.0' as const;
@@ -74,22 +75,8 @@ interface LifecycleIssue extends ScanIssue {
   occurrenceCount?: number;
 }
 
-const SECRET_QUERY_KEY = /^(?:access[_-]?token|auth|authorization|code|credential|jwt|key|password|secret|session|sessionid|sid|token)$/i;
-const TRACKING_QUERY_KEY = /^(?:utm_.+|fbclid|gclid|msclkid)$/i;
-
 export function sanitizeExportUrl(value: string | undefined): string | undefined {
-  if (!value) return undefined;
-  try {
-    const url = new URL(value);
-    url.username = '';
-    url.password = '';
-    for (const key of [...url.searchParams.keys()]) {
-      if (SECRET_QUERY_KEY.test(key) || TRACKING_QUERY_KEY.test(key)) url.searchParams.delete(key);
-    }
-    return url.href;
-  } catch {
-    return value.replace(/([?&])([^=&]*(?:token|secret|password|session|auth|key)[^=]*)=[^&#]*/gi, '$1$2=[redacted]');
-  }
+  return value ? sanitizeRuntimeUrl(value) : undefined;
 }
 
 function runtimeRuleId(event: RuntimeEvent): string {
