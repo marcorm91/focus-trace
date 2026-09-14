@@ -45,23 +45,59 @@ function reportFixture(): SiteAuditResult {
     passes: 0,
     rulesRun: 1,
   };
-  const pages: SiteAuditPageResult[] = [{ url, routeFamilyId: family.id, scan }];
+  const pages: SiteAuditPageResult[] = [{
+    url,
+    routeFamilyId: family.id,
+    selectionReason: 'family-first',
+    scan,
+  }];
 
   return {
     origin: 'https://example.test',
-    generatedAt: 1,
+    generatedAt: 2,
     discovery: {
       origin: 'https://example.test',
-      source: 'manual',
+      source: 'links',
       urls: [url],
       sitemapUrls: [],
       truncated: false,
+      decisions: [
+        { url, status: 'included', reason: 'internal-link' },
+        { url: 'https://example.test/logout', status: 'excluded', reason: 'excluded-path' },
+      ],
+      scope: {
+        mode: 'automatic',
+        maxDiscoveredUrls: 100,
+        maxScannedPages: 10,
+        samplesPerFamily: 2,
+        exclusionPrefixes: ['/logout'],
+      },
     },
     routeFamilies: [family],
     pages,
     templates: buildSiteAuditTemplates([family], pages),
     scannedPages: 1,
     failedPages: 0,
+    comparison: {
+      previousGeneratedAt: 1,
+      compatible: true,
+      newCount: 1,
+      persistentCount: 0,
+      changedCount: 0,
+      resolvedCount: 1,
+      findings: [{
+        key: '/products/:item::FT-WCAG-010::main > p.price',
+        ruleId: 'FT-WCAG-010',
+        title: 'Text contrast is below the required minimum',
+        routePattern: '/products/:item',
+        targetShape: 'main > p.price',
+        outcome: 'fail',
+        severity: 'serious',
+        sampleCount: 1,
+        totalSamples: 1,
+        state: 'new',
+      }],
+    },
   };
 }
 
@@ -72,7 +108,7 @@ describe('Site Audit report view', () => {
     );
 
     expect(html).toContain('Site Audit complete');
-    expect(html).toContain('URLs selected');
+    expect(html).toContain('URLs discovered');
     expect(html).toContain('Text color contrast');
     expect(html).toContain('Affected component');
     expect(html).toContain('Exact selector');
@@ -82,15 +118,29 @@ describe('Site Audit report view', () => {
     expect(html).toContain('target="_blank" rel="noreferrer"');
   });
 
+  it('renders discovery and baseline evidence from the completed audit', () => {
+    const html = renderToStaticMarkup(
+      <SiteAuditReport result={reportFixture()} language="en" onRunAgain={() => undefined} />,
+    );
+
+    expect(html).toContain('Why pages were included or excluded');
+    expect(html).toContain('excluded path');
+    expect(html).toContain('Changes since the previous Site Audit');
+    expect(html).toContain('first representative for this route family');
+    expect(html).toContain('<strong>1</strong>new');
+  });
+
   it('keeps the extracted report bilingual', () => {
     const html = renderToStaticMarkup(
       <SiteAuditReport result={reportFixture()} language="es" onRunAgain={() => undefined} />,
     );
 
     expect(html).toContain('Site Audit completado');
-    expect(html).toContain('URLs seleccionadas');
+    expect(html).toContain('URLs descubiertas');
     expect(html).toContain('Componente afectado');
     expect(html).toContain('Capturar evidencia visual');
     expect(html).toContain('Abrir página de muestra');
+    expect(html).toContain('Por qué se incluyeron o excluyeron páginas');
+    expect(html).toContain('Cambios desde el Site Audit anterior');
   });
 });
