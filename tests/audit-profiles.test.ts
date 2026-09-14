@@ -61,6 +61,7 @@ function custom(overrides: Partial<AuditProfile> = {}): AuditProfile {
 describe('audit profiles', () => {
   it('ships a complete local profile that preserves all supported findings', () => {
     const profile = activeAuditProfile(emptyAuditProfileStore());
+    expect(profile.name).toContain('Complete');
     expect(profile.standard).toBe('all');
     expect(profile.scopes).toEqual(['page', 'component', 'site']);
     expect(profile.severities).toEqual(ALL_AUDIT_PROFILE_SEVERITIES);
