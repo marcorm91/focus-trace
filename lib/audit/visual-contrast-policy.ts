@@ -3,6 +3,7 @@ import type { ScanIssue, ScanResult } from '../../shared/types';
 
 const CONTRAST_RULE_IDS = new Set([RULES.textContrast.id, RULES.nonTextContrast.id]);
 const MAX_STACK_CHECKS = 100;
+const MAX_SIBLING_BACKDROPS = 50;
 
 function paintedBackground(element: Element): boolean {
   const style = getComputedStyle(element);
@@ -10,7 +11,7 @@ function paintedBackground(element: Element): boolean {
   if (style.backgroundImage && style.backgroundImage !== 'none') return true;
   const color = style.backgroundColor.trim().toLowerCase();
   if (!color || color === 'transparent' || color === 'rgba(0, 0, 0, 0)') return false;
-  const alpha = color.match(/rgba?\([^\)]*[,\s/]\s*([\d.]+)\s*\)$/)?.[1];
+  const alpha = color.match(/rgba?\([^)]*[,\s/]\s*([\d.]+)\s*\)$/)?.[1];
   return alpha == null || Number.parseFloat(alpha) > 0;
 }
 
@@ -24,23 +25,65 @@ function targetFor(issue: ScanIssue, document: Document): Element | undefined {
   }
 }
 
+function numericZIndex(element: Element): number | undefined {
+  const value = getComputedStyle(element).zIndex.trim().toLowerCase();
+  if (!value || value === 'auto') return undefined;
+  const parsed = Number.parseInt(value, 10);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function coversPoint(rect: DOMRect, x: number, y: number): boolean {
+  return rect.width > 0
+    && rect.height > 0
+    && x >= rect.left
+    && x <= rect.right
+    && y >= rect.top
+    && y <= rect.bottom;
+}
+
+function positionedSiblingBackdropReason(element: Element, x: number, y: number): string | undefined {
+  const parent = element.parentElement;
+  const targetZ = numericZIndex(element);
+  if (!parent || targetZ == null) return undefined;
+
+  let inspected = 0;
+  for (const candidate of parent.children) {
+    if (candidate === element) continue;
+    if (inspected >= MAX_SIBLING_BACKDROPS) break;
+    inspected += 1;
+
+    const style = getComputedStyle(candidate);
+    if (!['absolute', 'fixed', 'sticky', 'relative'].includes(style.position)) continue;
+    const candidateZ = numericZIndex(candidate);
+    if (candidateZ == null || candidateZ >= targetZ) continue;
+    if (!paintedBackground(candidate)) continue;
+    if (!coversPoint(candidate.getBoundingClientRect(), x, y)) continue;
+
+    return 'A lower-z-index positioned sibling paints behind this target at its measured center point, so the effective contrast background cannot be reduced safely to the target ancestor chain.';
+  }
+  return undefined;
+}
+
 function stackedBackdropReason(element: Element, document: Document): string | undefined {
-  if (typeof document.elementsFromPoint !== 'function') return undefined;
   const rect = element.getBoundingClientRect();
   if (rect.width <= 0 || rect.height <= 0) return undefined;
   const x = Math.min(Math.max(rect.left + rect.width / 2, 0), Math.max(0, window.innerWidth - 1));
   const y = Math.min(Math.max(rect.top + rect.height / 2, 0), Math.max(0, window.innerHeight - 1));
-  const stack = document.elementsFromPoint(x, y);
-  const ownIndex = stack.findIndex((candidate) => candidate === element || element.contains(candidate));
-  if (ownIndex < 0) return undefined;
 
-  for (const candidate of stack.slice(ownIndex + 1)) {
-    if (candidate === document.documentElement || candidate === document.body) continue;
-    if (element.contains(candidate) || candidate.contains(element)) continue;
-    if (!paintedBackground(candidate)) continue;
-    return 'A separately stacked painted element is rendered behind this target, so the effective contrast background cannot be reduced safely to the target ancestor chain.';
+  if (typeof document.elementsFromPoint === 'function') {
+    const stack = document.elementsFromPoint(x, y);
+    const ownIndex = stack.findIndex((candidate) => candidate === element || element.contains(candidate));
+    if (ownIndex >= 0) {
+      for (const candidate of stack.slice(ownIndex + 1)) {
+        if (candidate === document.documentElement || candidate === document.body) continue;
+        if (element.contains(candidate) || candidate.contains(element)) continue;
+        if (!paintedBackground(candidate)) continue;
+        return 'A separately stacked painted element is rendered behind this target, so the effective contrast background cannot be reduced safely to the target ancestor chain.';
+      }
+    }
   }
-  return undefined;
+
+  return positionedSiblingBackdropReason(element, x, y);
 }
 
 export function downgradeUncertainStackingContrast(
