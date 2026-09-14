@@ -47,6 +47,7 @@ describe('Site Audit scope modes', () => {
     const families = buildRouteFamilies(urls);
     const samples = selectManualSiteAuditSamples(families, urls);
     expect(samples.map((sample) => sample.url)).toEqual(urls);
+    expect(samples.every((sample) => sample.selectionReason === 'manual-selection')).toBe(true);
 
     const discovery = manualSiteAuditDiscovery('https://example.test', {
       urls,
@@ -59,7 +60,24 @@ describe('Site Audit scope modes', () => {
     expect(discovery.urls).toEqual(urls);
   });
 
-  it('renders complete roving tabs for automatic and manual URL audits', () => {
+  it('uses the same explicit selection boundary for current-session private routes', () => {
+    const urls = ['https://example.test/account', 'https://example.test/dashboard'];
+    const families = buildRouteFamilies(urls);
+    const discovery = manualSiteAuditDiscovery('https://example.test', {
+      urls,
+      totalValid: urls.length,
+      invalid: [],
+      duplicateCount: 0,
+      truncated: false,
+    }, 'session');
+    expect(discovery.source).toBe('session');
+    expect(selectManualSiteAuditSamples(families, urls, 'session'))
+      .toEqual(expect.arrayContaining([
+        expect.objectContaining({ selectionReason: 'current-session' }),
+      ]));
+  });
+
+  it('renders complete roving tabs for automatic, manual and current-session audits', () => {
     const app = source('entrypoints/site-audit/main.tsx');
     const scope = source('lib/site-audit/scope.ts');
     const css = source('entrypoints/site-audit/scope-tabs.css');
@@ -68,15 +86,19 @@ describe('Site Audit scope modes', () => {
     expect(app).toContain('useRovingTabs');
     expect(app).toContain("scopeTabProps('automatic')");
     expect(app).toContain("scopeTabProps('manual')");
+    expect(app).toContain("scopeTabProps('session')");
     expect(app).toContain('role="tablist"');
     expect(app).toContain('aria-controls="site-scope-panel-automatic"');
     expect(app).toContain('aria-controls="site-scope-panel-manual"');
+    expect(app).toContain('aria-controls="site-scope-panel-session"');
     expect(app).toContain('id="site-scope-panel-automatic"');
     expect(app).toContain('id="site-scope-panel-manual"');
+    expect(app).toContain('id="site-scope-panel-session"');
     expect(app).toContain("hidden={mode !== 'automatic'}");
     expect(app).toContain("hidden={mode !== 'manual'}");
+    expect(app).toContain("hidden={mode !== 'session'}");
     expect(app).toContain('selectManualSiteAuditSamples');
-    expect(scope).toContain("source: 'manual'");
+    expect(scope).toContain('source: mode');
     expect(css).toContain('.site-scope-tabs');
     expect(css).toContain("button[aria-selected='true']");
   });
