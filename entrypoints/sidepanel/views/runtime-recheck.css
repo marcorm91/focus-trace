@@ -1,0 +1,43 @@
+.runtime-finding-recheck {
+  display: grid;
+  gap: 7px;
+  margin-top: 8px;
+}
+
+.runtime-finding-recheck > button {
+  justify-self: start;
+  max-width: 100%;
+  white-space: normal;
+}
+
+.runtime-finding-recheck > div {
+  min-width: 0;
+  display: grid;
+  gap: 5px;
+  padding: 8px 10px;
+  border: 1px solid var(--ft-border-soft, CanvasText);
+  border-radius: var(--ft-radius-sm, 7px);
+  background: var(--ft-surface-subtle, Canvas);
+}
+
+.runtime-finding-recheck p,
+.runtime-finding-recheck small {
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.runtime-finding-recheck small {
+  color: var(--ft-muted, GrayText);
+}
+
+@media (max-width: 480px) {
+  .runtime-finding-recheck > button {
+    width: 100%;
+  }
+}
+
+@media (forced-colors: active) {
+  .runtime-finding-recheck > div {
+    border-color: ButtonText;
+  }
+}

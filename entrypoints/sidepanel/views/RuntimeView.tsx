@@ -1,4 +1,6 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
+import { browser } from '#imports';
+import type { FindingRecheckState } from '../../../lib/audit/finding-recheck';
 import { RUNTIME_BREAKPOINTS } from '../../../lib/runtime/breakpoints';
 import {
   explanationForCause,
@@ -7,6 +9,12 @@ import {
   outcomeLabel,
   type ExplanationLevel,
 } from '../../../lib/runtime/explanations';
+import { resolveFindingTargetInPage } from '../../../lib/runtime/finding-recheck-page';
+import {
+  evaluateRuntimeFindingRecheck,
+  runtimeFindingSignature,
+  type RuntimeFindingRecheckAttempt,
+} from '../../../lib/runtime/runtime-finding-recheck';
 import { humanRuntimeEventDetail, runtimeEventKindLabel } from '../../../lib/runtime/runtime-presentation';
 import { deletableManualInteractionIds } from '../../../lib/runtime/trace-evidence-editing';
 import { localizedBreakpoint, tr, type AppLanguage } from '../../../shared/i18n';
@@ -20,6 +28,14 @@ import type {
 import { ActionableRemediation } from '../components/ActionableRemediation';
 import { AuditorNoteEditor } from '../components/AuditorNoteEditor';
 import { Empty, ReferenceList, timeLabel } from '../components/Common';
+
+function runtimeRecheckStateLabel(state: FindingRecheckState, language: AppLanguage): string {
+  if (state === 'resolved') return tr(language, 'Resolved', 'Resuelto');
+  if (state === 'persistent') return tr(language, 'Still present', 'Sigue presente');
+  if (state === 'changed') return tr(language, 'Target changed', 'Elemento cambiado');
+  if (state === 'missing') return tr(language, 'Target missing', 'Elemento ausente');
+  return tr(language, 'Replay required', 'Requiere repetir la interacción');
+}
 
 export function RuntimeView({
   events,
@@ -373,6 +389,35 @@ function RuntimeEventRow({
 }) {
   const title = humanRuntimeEventTitle(event, language);
   const detail = humanRuntimeEventDetail(event, language);
+  const signature = event.outcome ? runtimeFindingSignature(event) : undefined;
+  const [rechecking, setRechecking] = useState(false);
+  const [recheck, setRecheck] = useState<RuntimeFindingRecheckAttempt>();
+  const [recheckError, setRecheckError] = useState<string>();
+
+  const recheckRuntimeFinding = async () => {
+    if (!signature || rechecking) return;
+    setRechecking(true);
+    setRecheckError(undefined);
+    try {
+      const [tab] = await browser.tabs.query({ active: true, currentWindow: true });
+      if (tab?.id == null) throw new Error('No active inspected page is available.');
+      const result = await browser.scripting.executeScript({
+        target: { tabId: tab.id },
+        func: resolveFindingTargetInPage,
+        args: [signature],
+      });
+      const resolution = result[0]?.result;
+      if (!resolution) throw new Error('FocusTrace could not resolve the recorded runtime target.');
+      const next = evaluateRuntimeFindingRecheck(event, resolution);
+      if (!next) throw new Error('This runtime event cannot be rechecked safely.');
+      setRecheck(next);
+    } catch (reason) {
+      setRecheckError(reason instanceof Error ? reason.message : String(reason));
+    } finally {
+      setRechecking(false);
+    }
+  };
+
   return (
     <li className={`${event.outcome ? 'runtime-finding ' : ''}${level === 'simple' ? 'simple-event' : ''}`.trim()}>
       {level === 'developer' && (
@@ -389,6 +434,37 @@ function RuntimeEventRow({
         {level !== 'simple' && detail && <p>{detail}</p>}
         {event.outcome && (
           <ActionableRemediation ruleId={event.ruleId} language={language} />
+        )}
+        {signature && (
+          <div className="runtime-finding-recheck">
+            <button
+              type="button"
+              disabled={rechecking}
+              aria-describedby={recheck || recheckError ? `runtime-recheck-${event.id}` : undefined}
+              onClick={() => void recheckRuntimeFinding()}
+            >
+              {rechecking
+                ? tr(language, 'Rechecking target…', 'Recomprobando elemento…')
+                : tr(language, 'Recheck runtime target', 'Recomprobar elemento runtime')}
+            </button>
+            {(recheck || recheckError) && (
+              <div id={`runtime-recheck-${event.id}`} role="status" aria-live="polite">
+                {recheck ? (
+                  <>
+                    <strong>{runtimeRecheckStateLabel(recheck.state, language)}</strong>
+                    <p>{recheck.reason}</p>
+                    <small>{tr(
+                      language,
+                      'The original runtime event is preserved. FocusTrace will not call it resolved until the original interaction is replayed and the behavior is observed again.',
+                      'El evento runtime original se conserva. FocusTrace no lo marcará como resuelto hasta repetir la interacción original y volver a observar el comportamiento.',
+                    )}</small>
+                  </>
+                ) : (
+                  <p>{recheckError}</p>
+                )}
+              </div>
+            )}
+          </div>
         )}
         {level === 'developer' && event.mutation?.attribute && (
           <p className="mutation-values">

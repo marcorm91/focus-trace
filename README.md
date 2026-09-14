@@ -624,3 +624,15 @@ Form evidence is deliberately privacy-bounded. FocusTrace does not read or persi
 
 All checks remain local and bounded. Custom media controls, browser autoplay policy, external scrolling controls and platform-specific shortcut behavior remain contextual. See [`docs/KEYBOARD_NAVIGATION_MOTION.md`](docs/KEYBOARD_NAVIGATION_MOTION.md) for methodology and limits.
 
+### Per-finding Recheck
+
+Report findings can be re-evaluated against the live page without discarding the evidence that produced the original result. FocusTrace keeps the original finding immutable and stores bounded Recheck history separately, including the current locator/evidence and one of `resolved`, `persistent`, `changed`, `missing` or `inconclusive`.
+
+Stable identity is conservative across light DOM, open Shadow DOM and same-origin frame boundaries. A selector match is accepted only when the stored element signature still identifies the same target; ambiguous matches or material identity changes are never silently attached to a different element. Historical Site Audit pages offer live Recheck only while that page is active.
+
+`resolved` is used only when the original rule has complete coverage for the tested expectation and the current rule result proves that expectation now passes. If the target disappears under a findings-only rule, or identity/current evidence cannot be established safely, the result stays `inconclusive`/`missing` rather than inventing a fix. A reproduced finding remains `persistent`; a safely resolved target with materially different identity/evidence is `changed`.
+
+Supported runtime findings use Recheck only to resolve the recorded target on the current page. Finding the same node again does **not** prove that an interaction-dependent barrier is fixed: runtime behavior must be exercised again through Trace/Replay evidence, so the UI reports that replay is required instead of converting node presence into a resolved outcome.
+
+Recheck is local-first. Results update the current report, saved multipage audit and FocusTrace Memory while preserving existing Memory locators/visual previews and the original evidence. The action uses native keyboard-operable controls and an `aria-live` status in narrow side-panel/DevTools layouts; it does not transmit inspected-page data.
+

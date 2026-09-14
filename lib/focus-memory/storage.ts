@@ -2,6 +2,7 @@ import { browser } from '#imports';
 import {
   FOCUS_MEMORY_SETTINGS_STORAGE_KEY,
   FOCUS_MEMORY_STORAGE_KEY,
+  focusMemoryFailureDescriptors,
   focusMemoryScopeKey,
   normalizeFocusMemorySettings,
   normalizeFocusMemoryStore,
@@ -83,6 +84,51 @@ function scanIsSuppressed(settings: FocusMemorySettings, scan: ScanResult): bool
     && scan.scannedAt <= settings.ignoreScansAtOrBefore;
 }
 
+function evidencePreservingExistingObservation(
+  scan: ScanResult,
+  capturedEvidence: FocusMemoryCapturedEvidence[],
+  observations: ReturnType<typeof normalizeFocusMemoryStore>['observations'],
+): FocusMemoryCapturedEvidence[] {
+  const observationId = `${focusMemoryScopeKey(scan)}:${scan.scannedAt}`;
+  const existing = observations.find((observation) => observation.id === observationId);
+  if (!existing?.failureDetails?.length) return capturedEvidence;
+
+  const suppliedByIssue = new Map(capturedEvidence.map((item) => [item.issueIndex, item]));
+  const existingByFingerprint = new Map(
+    existing.failureDetails.map((descriptor) => [descriptor.fingerprint, descriptor]),
+  );
+  const descriptors = focusMemoryFailureDescriptors(scan);
+  const merged: FocusMemoryCapturedEvidence[] = [];
+
+  descriptors.forEach((descriptor, issueIndex) => {
+    const supplied = suppliedByIssue.get(issueIndex);
+    if (supplied) {
+      merged.push(supplied);
+      return;
+    }
+
+    const previous = existingByFingerprint.get(descriptor.fingerprint);
+    if (!previous) return;
+    const locator = previous.locator?.trim();
+    if (!locator) return;
+    const dataUrl = previous.previewDataUrl?.startsWith('data:image/')
+      ? previous.previewDataUrl
+      : undefined;
+    const capturedAt = dataUrl && typeof previous.previewCapturedAt === 'number'
+      ? previous.previewCapturedAt
+      : undefined;
+
+    merged.push({
+      issueIndex,
+      locator,
+      ...(dataUrl ? { dataUrl } : {}),
+      ...(capturedAt != null ? { capturedAt } : {}),
+    });
+  });
+
+  return merged;
+}
+
 export function focusMemorySettingsState(): Promise<{
   settings: FocusMemorySettings;
   hasHistory: boolean;
@@ -117,7 +163,8 @@ export function recordFocusMemoryScan(
     const { settings, store, resolvedFindings } = await loadMemoryStorage();
     if (!settings.enabled || scanIsSuppressed(settings, scan)) return undefined;
 
-    const result = recordFocusMemoryObservation(store, scan, Date.now(), capturedEvidence);
+    const evidence = evidencePreservingExistingObservation(scan, capturedEvidence, store.observations);
+    const result = recordFocusMemoryObservation(store, scan, Date.now(), evidence);
     const resolved = applyResolvedFindingMemory(
       result.comparison,
       result.history,
