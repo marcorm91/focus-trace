@@ -24,6 +24,8 @@ export interface TextContrastSubject {
   pseudo?: TextContrastPseudo;
 }
 
+export type GeneratedContentContrastKind = 'none' | 'text' | 'symbol';
+
 export interface AccessibleColorSuggestion {
   hex: string;
   rgb: string;
@@ -45,6 +47,7 @@ interface OklabColor {
 }
 
 const WHITE: RgbaColor = { r: 255, g: 255, b: 255, a: 1 };
+const ICON_FONT_FAMILY_PATTERN = /(?:font\s*awesome|fontawesome|material\s+(?:icons|symbols)|glyphicons|icomoon|ionicons|bootstrap\s+icons)/i;
 
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
@@ -634,6 +637,54 @@ function hasDirectRenderedText(element: Element): boolean {
   );
 }
 
+function unquoteGeneratedContent(content: string): string {
+  const value = content.trim();
+  if (value.length < 2) return value;
+  const first = value[0];
+  const last = value[value.length - 1];
+  return (first === last && (first === '"' || first === "'")) ? value.slice(1, -1) : value;
+}
+
+function generatedContentCodePoints(value: string): number[] {
+  const singleCssEscape = value.match(/^\\([0-9a-f]{1,6})\s?$/i)?.[1];
+  if (singleCssEscape) return [Number.parseInt(singleCssEscape, 16)];
+  return [...value]
+    .map((character) => character.codePointAt(0))
+    .filter((codePoint): codePoint is number => codePoint != null);
+}
+
+function isPrivateUseCodePoint(codePoint: number): boolean {
+  return (codePoint >= 0xe000 && codePoint <= 0xf8ff)
+    || (codePoint >= 0xf0000 && codePoint <= 0xffffd)
+    || (codePoint >= 0x100000 && codePoint <= 0x10fffd);
+}
+
+/**
+ * Classifies generated CSS content before WCAG 1.4.3 text-contrast evaluation.
+ * Icon-font glyphs and standalone symbolic characters are visual symbols, not
+ * human-language text. Their contrast belongs to the non-text model (1.4.11)
+ * when the visual cue is required, and their semantics belong to a real DOM
+ * element rather than to the ::before/::after pseudo-element itself.
+ */
+export function classifyGeneratedContentForContrast(
+  content: string,
+  fontFamily = '',
+): GeneratedContentContrastKind {
+  const normalized = content.trim();
+  if (!normalized || normalized === 'none' || normalized === 'normal' || normalized === '""' || normalized === "''") {
+    return 'none';
+  }
+
+  const value = unquoteGeneratedContent(normalized);
+  if (!value) return 'none';
+  if (ICON_FONT_FAMILY_PATTERN.test(fontFamily)) return 'symbol';
+
+  const codePoints = generatedContentCodePoints(value);
+  if (codePoints.some(isPrivateUseCodePoint)) return 'symbol';
+  if (codePoints.length === 1 && /^\p{S}$/u.test(String.fromCodePoint(codePoints[0]!))) return 'symbol';
+  return 'text';
+}
+
 /**
  * Returns every independently styled text surface rendered by an element.
  * Form values are not DOM text nodes, and placeholders use their own pseudo
@@ -670,7 +721,7 @@ export function textContrastSubjectsForElement(element: Element): TextContrastSu
     for (const pseudo of ['::before', '::after'] as const) {
       const style = getComputedStyle(element, pseudo);
       const content = style.content?.trim();
-      if (!content || content === 'none' || content === 'normal' || content === '""' || content === "''") continue;
+      if (classifyGeneratedContentForContrast(content ?? '', style.fontFamily) !== 'text') continue;
       subjects.push({ subject: 'generated text', pseudo });
     }
   }
