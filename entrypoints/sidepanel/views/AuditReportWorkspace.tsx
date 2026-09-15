@@ -94,7 +94,7 @@ export function AuditReportWorkspace({
         <summary>
           <span>
             <strong>{tr(language, 'Manual checks', 'Comprobaciones manuales')}</strong>
-            <small>{tr(language, 'Guided tests and 200% text resize', 'Pruebas guiadas y texto al 200 %')}</small>
+            <small>{tr(language, 'Guided tests', 'Pruebas guiadas')}</small>
           </span>
         </summary>
         <div className="report-manual-checks-body">
@@ -173,7 +173,7 @@ export function AuditReportWorkspace({
                     <span className="audit-page-index">{String(index + 1).padStart(2, '0')}</span>
                     <span className="audit-page-copy">
                       <strong>{page.title || page.url}</strong>
-                      <small>{page.url}</small>
+                      <small title={page.url}>{page.url}</small>
                       <span>{tr(language, 'Review performed', 'Revisión realizada')}: {formatReviewTime(page.reviewedAt, language)}</span>
                     </span>
                     <span className="audit-page-counts" aria-label={tr(language, 'Page findings', 'Hallazgos de página')}>

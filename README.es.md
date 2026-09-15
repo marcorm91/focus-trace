@@ -685,3 +685,5 @@ Estos resultados se etiquetan como **guía APG informativa** en Report. APG desc
 La suite de navegador incluye fixtures accesibles, de fallo y de review para cada patrón APG compatible. Toda la evidencia permanece local y acotada; la funcionalidad no añade permisos de navegador ni transmisión de datos de la página inspeccionada.
 
 Informe reúne las pruebas guiadas y el estado actual del texto al 200 % en el acordeón **Comprobaciones manuales**, cerrado inicialmente. Revisión se centra en los hallazgos y deja de mostrar el resumen del ciclo de vida y la tarjeta de estado del zoom; se mantienen los datos de evolución y el análisis de ampliación.
+
+Las URLs largas de la lista de páginas de Informe y del índice de auditoría del PDF se limitan visualmente a dos líneas con elipsis; las URLs completas se conservan en los datos del informe.

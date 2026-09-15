@@ -219,33 +219,35 @@ export function GuidedTestPanel({
         <span className="guided-coverage-badge">{referenceBadge || 'APG'}</span>
       </div>
 
-      <label className="guided-test-selector">
-        <span>{tr(language, 'Guided workflow', 'Flujo guiado')}</span>
-        <select
-          value={selectedTestId}
-          disabled={saving || session?.status === 'active' || session?.status === 'paused'}
-          onChange={(event) => setSelectedTestId(event.currentTarget.value)}
-        >
-          {ALL_GUIDED_TESTS.map((test) => (
-            <option key={test.id} value={test.id}>{localText(test.title, language)}</option>
-          ))}
-        </select>
-      </label>
-
-      {apgMetadata && (
+      <div className="guided-test-selectors">
         <label className="guided-test-selector">
-          <span>{tr(language, 'Implementation variation', 'Variante de implementación')}</span>
+          <span>{tr(language, 'Guided workflow', 'Flujo guiado')}</span>
           <select
-            value={selectedVariationId || apgMetadata.variations[0]?.id || ''}
+            value={selectedTestId}
             disabled={saving || session?.status === 'active' || session?.status === 'paused'}
-            onChange={(event) => setSelectedVariationId(event.currentTarget.value)}
+            onChange={(event) => setSelectedTestId(event.currentTarget.value)}
           >
-            {apgMetadata.variations.map((variation) => (
-              <option key={variation.id} value={variation.id}>{localText(variation.label, language)}</option>
+            {ALL_GUIDED_TESTS.map((test) => (
+              <option key={test.id} value={test.id}>{localText(test.title, language)}</option>
             ))}
           </select>
         </label>
-      )}
+
+        {apgMetadata && (
+          <label className="guided-test-selector">
+            <span>{tr(language, 'Implementation variation', 'Variante de implementación')}</span>
+            <select
+              value={selectedVariationId || apgMetadata.variations[0]?.id || ''}
+              disabled={saving || session?.status === 'active' || session?.status === 'paused'}
+              onChange={(event) => setSelectedVariationId(event.currentTarget.value)}
+            >
+              {apgMetadata.variations.map((variation) => (
+                <option key={variation.id} value={variation.id}>{localText(variation.label, language)}</option>
+              ))}
+            </select>
+          </label>
+        )}
+      </div>
 
       <p>{localText(definition.description, language)}</p>
       <p className="guided-test-boundary" role="note">
