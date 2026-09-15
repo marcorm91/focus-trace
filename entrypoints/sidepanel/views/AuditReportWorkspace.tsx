@@ -6,6 +6,7 @@ import type { StructureSnapshot } from '../../../lib/runtime/structure-evidence'
 import { tr, type AppLanguage } from '../../../shared/i18n';
 import type { RuntimeEvent, ScanResult } from '../../../shared/types';
 import { Empty } from '../components/Common';
+import { TextResizeCheck } from '../components/TextResizeCheck';
 import { GuidedTestPanel } from '../components/GuidedTestPanel';
 import { SessionReportView } from './SessionReportView';
 import './report-workspace.css';
@@ -89,7 +90,18 @@ export function AuditReportWorkspace({
 
   return (
     <div className="audit-report-workspace">
-      <GuidedTestPanel scan={scan} events={events} language={language} />
+      <details className="panel report-manual-checks">
+        <summary>
+          <span>
+            <strong>{tr(language, 'Manual checks', 'Comprobaciones manuales')}</strong>
+            <small>{tr(language, 'Guided tests and 200% text resize', 'Pruebas guiadas y texto al 200 %')}</small>
+          </span>
+        </summary>
+        <div className="report-manual-checks-body">
+          <TextResizeCheck scan={scan} language={language} />
+          <GuidedTestPanel scan={scan} events={events} language={language} />
+        </div>
+      </details>
 
       {audit && summary && (
         <section className="panel audit-overview" aria-labelledby="audit-overview-title">
