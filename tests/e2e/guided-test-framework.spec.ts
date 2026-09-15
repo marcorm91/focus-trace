@@ -144,7 +144,10 @@ test('manual checks use a keyboard accordion and themed controls outside Review'
   await disclosure.focus();
   await disclosure.press('Enter');
   await expect(accordion).toHaveAttribute('open', '');
-  await expect(accordion.locator('.report-text-resize')).toContainText('451');
+  await expect(accordion.locator('.guided-text-resize-status')).toHaveCount(0);
+  await panel.getByLabel(/Guided workflow|Flujo guiado/).selectOption('FT-GUIDED-007');
+  await expect(accordion.locator('.guided-text-resize-status')).toContainText('451');
+  await panel.getByLabel(/Guided workflow|Flujo guiado/).selectOption('FT-GUIDED-001');
   const start = accordion.getByRole('button', { name: /Start guided test|Iniciar prueba guiada/ });
   await expect(start).toBeVisible();
   const styles = await start.evaluate((button) => {

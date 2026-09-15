@@ -154,3 +154,9 @@ html[data-ft-focused-subview-open] .topbar {
     width: auto;
   }
 }
+
+.focus-journey-view .manual-focus-controls button.stop,
+.focus-journey-view .manual-focus-controls button.stop:hover:not(:disabled) {
+  background: #b42318;
+  color: #fff;
+}
