@@ -159,7 +159,7 @@
 .report-manual-checks > summary::-webkit-details-marker { display: none; }
 .report-manual-checks > summary > span { display: grid; gap: 4px; min-width: 0; }
 .report-manual-checks > summary strong { font-size: 16px; }
-.report-manual-checks > summary small { color: var(--ft-muted); font-weight: 400; }
+.report-manual-checks > summary small { font-size: 14px; color: var(--ft-muted); font-weight: 400; }
 .report-manual-checks > summary::after {
   content: '';
   flex: 0 0 18px;
