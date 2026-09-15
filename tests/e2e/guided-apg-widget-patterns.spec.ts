@@ -85,6 +85,7 @@ test('APG guided report labels guidance as informative and retains the implement
   await expect(panel.getByText(/relevant widget-pattern observations|observaciones relevantes del patrón de widget/i)).toBeVisible();
 
   for (let index = 0; index < 3; index += 1) {
+    await expect(panel.locator('.guided-test-progress')).toHaveText(new RegExp(`Step ${index + 1} of 3|Paso ${index + 1} de 3`));
     await panel.getByRole('radio', { name: /No issue found|No he encontrado problemas/ }).check();
     await panel.getByRole('button', { name: index === 2 ? /Save result|Guardar resultado/ : /Save and continue|Guardar y continuar/ }).click();
   }
