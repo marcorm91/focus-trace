@@ -39,21 +39,23 @@ export function FindingReviewStateControl({
           )}
         </small>
       </div>
-      <label>
-        <span>{tr(language, 'Status', 'Estado')}</span>
-        <select
-          value={state}
-          aria-label={tr(language, 'Finding workflow status', 'Estado de gestión del hallazgo')}
-          onChange={(event) => void onChange(event.currentTarget.value as FindingReviewState)}
-        >
-          {FINDING_REVIEW_STATES.map((candidate) => (
-            <option key={candidate} value={candidate}>{stateLabel(candidate, language)}</option>
-          ))}
-        </select>
-      </label>
-      <button type="button" onClick={() => void onReset()}>
-        {tr(language, 'Reset status', 'Restablecer estado')}
-      </button>
+      <div className="finding-review-state-controls">
+        <label>
+          <span>{tr(language, 'Status', 'Estado')}</span>
+          <select
+            value={state}
+            aria-label={tr(language, 'Finding workflow status', 'Estado de gestión del hallazgo')}
+            onChange={(event) => void onChange(event.currentTarget.value as FindingReviewState)}
+          >
+            {FINDING_REVIEW_STATES.map((candidate) => (
+              <option key={candidate} value={candidate}>{stateLabel(candidate, language)}</option>
+            ))}
+          </select>
+        </label>
+        <button className="export-text-report" type="button" onClick={() => void onReset()}>
+          {tr(language, 'Reset status', 'Restablecer estado')}
+        </button>
+      </div>
     </section>
   );
 }

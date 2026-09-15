@@ -15,8 +15,8 @@
 }
 
 .finding-guidance .finding-guidance-fix {
-  border-color: color-mix(in srgb, #08745b 30%, transparent);
-  background: color-mix(in srgb, #08745b 6%, Canvas);
+  border-color: color-mix(in srgb, var(--ft-success, #08745b) 35%, var(--ft-surface, #fff));
+  background: var(--ft-success-soft, #edf9f4);
 }
 
 .finding-guidance .finding-heading-context {
