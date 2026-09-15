@@ -4,11 +4,7 @@ import type { ScanResult } from '../../../shared/types';
 export function TextResizeCheck({ scan, language }: { scan?: ScanResult; language: AppLanguage }) {
   if (!scan || scan.scope?.type === 'component' || !scan.textResize) return null;
   return (
-    <section className="report-text-resize" aria-label={tr(language, '200% text resize check', 'Comprobación de texto al 200 %')}>
-      {scan.textResize && (
-        <div className="notice" role="status">
-          <strong>{tr(language, '200% text resize check', 'Comprobación de texto al 200 %')}</strong>
-          <p>
+    <p className="guided-text-resize-status" role="status" aria-label={tr(language, '200% text resize check', 'Comprobación de texto al 200 %')}>
             {scan.textResize.phase === 'baseline-captured'
               ? tr(
                   language,
@@ -38,9 +34,6 @@ export function TextResizeCheck({ scan, language }: { scan?: ScanResult; languag
                         'FocusTrace could not read browser zoom. Check text resizing manually at 200%.',
                         'FocusTrace no ha podido leer el zoom del navegador. Comprueba manualmente la ampliación del texto al 200 %.',
                       )}
-          </p>
-        </div>
-      )}
-    </section>
+    </p>
   );
 }

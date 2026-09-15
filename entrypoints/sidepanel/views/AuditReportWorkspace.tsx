@@ -6,7 +6,6 @@ import type { StructureSnapshot } from '../../../lib/runtime/structure-evidence'
 import { tr, type AppLanguage } from '../../../shared/i18n';
 import type { RuntimeEvent, ScanResult } from '../../../shared/types';
 import { Empty } from '../components/Common';
-import { TextResizeCheck } from '../components/TextResizeCheck';
 import { GuidedTestPanel } from '../components/GuidedTestPanel';
 import { SessionReportView } from './SessionReportView';
 import './report-workspace.css';
@@ -98,7 +97,6 @@ export function AuditReportWorkspace({
           </span>
         </summary>
         <div className="report-manual-checks-body">
-          <TextResizeCheck scan={scan} language={language} />
           <GuidedTestPanel scan={scan} events={events} language={language} />
         </div>
       </details>

@@ -139,8 +139,8 @@
   display: block;
   min-width: 0;
   padding: 0;
-  border: 1px solid var(--ft-border-soft);
-  border-radius: var(--ft-radius-lg);
+  border: 1px solid var(--ft-border, CanvasText);
+  border-radius: var(--ft-radius-md, 9px);
   background: var(--ft-surface);
 }
 
@@ -167,9 +167,8 @@
   background: currentColor;
   mask: var(--ft-i-chevron-right) center / contain no-repeat;
 }
-.report-manual-checks[open] > summary { border-radius: var(--ft-radius-lg) var(--ft-radius-lg) 0 0; }
+.report-manual-checks[open] > summary { border-radius: var(--ft-radius-md, 9px) var(--ft-radius-md, 9px) 0 0; }
 .report-manual-checks[open] > summary::after { mask-image: var(--ft-i-chevron-down); }
-.report-manual-checks > summary:hover { background: var(--ft-surface-subtle); }
 .report-manual-checks > summary:focus-visible,
 .guided-test-panel :is(button, select, textarea, input, h3):focus-visible {
   outline: 3px solid var(--ft-focus);
@@ -182,14 +181,6 @@
   border-top: 1px solid var(--ft-border-faint);
   min-width: 0;
 }
-.report-text-resize {
-  padding: 12px;
-  border: 1px solid var(--ft-border-soft);
-  border-radius: var(--ft-radius-md);
-  background: var(--ft-surface-subtle);
-}
-.report-text-resize .notice { margin: 0; padding: 0; border: 0; background: none; text-align: start; }
-.report-text-resize p { margin: 6px 0 0; }
 .guided-test-panel { min-width: 0; color: var(--ft-text); }
 .guided-test-panel p { margin: 0; line-height: 1.6; }
 .guided-test-heading h2 { margin-top: 8px; font-size: 18px; line-height: 1.4; }
@@ -227,7 +218,7 @@
   .guided-test-panel button { width: 100%; }
 }
 @media (forced-colors: active) {
-  .report-manual-checks, .report-text-resize, .guided-test-step fieldset,
+  .report-manual-checks, .guided-test-step fieldset,
   .guided-test-panel :is(button, select, textarea) { border-color: CanvasText; }
   .guided-test-boundary, .guided-test-runtime-hint { border-color: Highlight; }
 }

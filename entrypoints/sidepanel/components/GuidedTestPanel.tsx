@@ -17,6 +17,7 @@ import { guidedRuntimeEvidence, hasGuidedRuntimeEvidence } from '../../../lib/gu
 import { loadGuidedSession, saveGuidedSession } from '../../../lib/guided-tests/storage';
 import { tr, type AppLanguage } from '../../../shared/i18n';
 import type { RuntimeEvent, ScanResult } from '../../../shared/types';
+import { TextResizeCheck } from './TextResizeCheck';
 import './guided-test-panel.css';
 
 function localText(text: { en: string; es: string }, language: AppLanguage): string {
@@ -250,6 +251,7 @@ export function GuidedTestPanel({
       </div>
 
       <p>{localText(definition.description, language)}</p>
+      {definition.id === 'FT-GUIDED-007' && <TextResizeCheck scan={scan} language={language} />}
       <p className="guided-test-boundary" role="note">
         <strong>{informativeApg
           ? tr(language, 'Informative APG guidance — not a WCAG conformance result.', 'Guía APG informativa — no es un resultado de conformidad WCAG.')
