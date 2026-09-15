@@ -6,12 +6,13 @@ import { focusTraceCheckpoint } from '../../integrations/playwright';
 const target = process.env.FOCUSTRACE_URL
   ?? `${pathToFileURL(resolve('tests/fixtures/cli-accessibility.html')).href}?state=clean`;
 
-test('FocusTrace page checkpoint', async ({ page }) => {
+test('FocusTrace page checkpoint', async ({ page }, testInfo) => {
   await page.goto(target);
   await focusTraceCheckpoint(page, {
     thresholds: { maxFailures: 0 },
     artifacts: {
       directory: 'artifacts/focustrace',
+      basename: `focustrace-${testInfo.project.name}`,
     },
   });
 });
