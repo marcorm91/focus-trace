@@ -102,3 +102,7 @@
     background: ButtonText;
   }
 }
+
+.report-accordion-section > .report-heading-list + .report-empty-line {
+  margin-top: 14px;
+}
