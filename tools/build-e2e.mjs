@@ -5,7 +5,7 @@
 //
 // Keep the established runtime suite isolated from that unrelated bundling
 // change. The normal release build still includes and validates devtools.html
-// and devtools-panel.html, while DevTools has its own contract/build validation
+// and the shared sidepanel.html application, while DevTools has its own contract/build validation
 // plus the packaged manual smoke checklist in docs/DEVTOOLS.md.
 process.env.FOCUSTRACE_E2E = '1';
 

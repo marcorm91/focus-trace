@@ -451,6 +451,17 @@ export function localizedRuleTitle(ruleId: string, fallback: string, language: A
 
 export function localizedScanIssue(issue: ScanIssue, language: AppLanguage): ScanIssue {
   if (language === 'es' && issue.ruleId === 'FT-WCAG-013') return localizedLanguagePartIssue(issue);
+  if (language === 'es'
+    && (issue.ruleId === 'FT-WCAG-010' || issue.ruleId === 'FT-WCAG-011')
+    && issue.outcome === 'review'
+    && issue.description.includes('backdrop verification budget was exhausted')) {
+    const localized = localizeIssueSourceCopy(issue, baseLocalizedScanIssue(issue, language), language);
+    return {
+      ...localized,
+      description: 'FocusTrace ha medido un candidato de contraste, pero se ha alcanzado el límite de comprobaciones del fondo. Revisa los píxeles realmente renderizados antes de considerarlo un fallo WCAG.',
+      evidence: `${localized.evidence ?? ''} Se ha alcanzado el límite de 100 comprobaciones de fondo por análisis. El fondo efectivo de este candidato no se ha verificado; revisa manualmente la composición visual.`.trim(),
+    };
+  }
 
   const copy = language === 'es' ? EXTRA_COPY_ES[issue.ruleId] : undefined;
   if (!copy) {

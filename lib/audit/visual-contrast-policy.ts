@@ -1,5 +1,6 @@
 import { RULES } from '../../shared/rule-catalog';
 import type { ScanIssue, ScanResult } from '../../shared/types';
+import { parseCssColor } from './contrast';
 
 const CONTRAST_RULE_IDS = new Set([RULES.textContrast.id, RULES.nonTextContrast.id]);
 const MAX_STACK_CHECKS = 100;
@@ -12,8 +13,8 @@ function paintedBackground(element: Element): boolean {
   if (style.backgroundImage && style.backgroundImage !== 'none') return true;
   const color = style.backgroundColor.trim().toLowerCase();
   if (!color || color === 'transparent' || color === 'rgba(0, 0, 0, 0)') return false;
-  const alpha = color.match(/rgba?\([^)]*[,\s/]\s*([\d.]+)\s*\)$/)?.[1];
-  return alpha == null || Number.parseFloat(alpha) > 0;
+  const parsed = parseCssColor(color);
+  return parsed == null || parsed.a > 0;
 }
 
 function targetsFor(issue: ScanIssue, document: Document): Element[] {
@@ -209,16 +210,20 @@ export function downgradeUncertainStackingContrast(
   let checked = 0;
 
   for (const issue of result.issues) {
-    if (!CONTRAST_RULE_IDS.has(issue.ruleId) || checked >= MAX_STACK_CHECKS) {
+    if (!CONTRAST_RULE_IDS.has(issue.ruleId)) {
       retained.push(issue);
       continue;
     }
-    checked += 1;
-
-    let reason: string | undefined;
-    for (const element of targetsFor(issue, document)) {
-      reason = stackedBackdropReason(element, document);
-      if (reason) break;
+    const budgetExhausted = checked >= MAX_STACK_CHECKS;
+    let reason: string | undefined = budgetExhausted
+      ? 'The per-scan limit of 100 contrast backdrop checks was reached. The effective rendered background of this remaining candidate was not verified; review the composed pixels manually.'
+      : undefined;
+    if (!budgetExhausted) {
+      checked += 1;
+      for (const element of targetsFor(issue, document)) {
+        reason = stackedBackdropReason(element, document);
+        if (reason) break;
+      }
     }
     if (!reason) {
       retained.push(issue);
@@ -228,7 +233,9 @@ export function downgradeUncertainStackingContrast(
     downgraded.push({
       ...issue,
       outcome: 'review',
-      description: 'FocusTrace measured a contrast candidate, but a separately stacked painted backdrop makes the effective rendered background ambiguous. Review the actual composed pixels before treating this as a WCAG failure.',
+      description: budgetExhausted
+        ? 'FocusTrace measured a contrast candidate, but the backdrop verification budget was exhausted. Review the actual composed pixels before treating this as a WCAG failure.'
+        : 'FocusTrace measured a contrast candidate, but a separately stacked painted backdrop makes the effective rendered background ambiguous. Review the actual composed pixels before treating this as a WCAG failure.',
       evidence: issue.evidence ? `${issue.evidence} ${reason}` : reason,
     });
 

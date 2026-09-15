@@ -143,12 +143,24 @@ export function compareFindingLifecycle(
     const before = previousByIdentity.get(identity) ?? [];
     const now = currentByIdentity.get(identity) ?? [];
     const usedBefore = new Set<number>();
+    const exactMatches = new Map<ScanIssue, number>();
 
+    // Reserve all unchanged evidence before pairing changed findings. Otherwise
+    // an earlier changed finding can consume a later finding's exact match.
     for (const currentIssue of now) {
       const currentEvidenceKey = findingEvidenceKey(currentIssue);
       const exactIndex = before.findIndex((previousIssue, index) =>
         !usedBefore.has(index) && findingEvidenceKey(previousIssue) === currentEvidenceKey,
       );
+      if (exactIndex >= 0) {
+        exactMatches.set(currentIssue, exactIndex);
+        usedBefore.add(exactIndex);
+      }
+    }
+
+    for (const currentIssue of now) {
+      const currentEvidenceKey = findingEvidenceKey(currentIssue);
+      const exactIndex = exactMatches.get(currentIssue) ?? -1;
       const fallbackIndex = exactIndex >= 0
         ? exactIndex
         : before.findIndex((_previousIssue, index) => !usedBefore.has(index));
