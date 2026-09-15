@@ -2,6 +2,30 @@
 
 All notable FocusTrace release changes are summarized here. Detailed release notes remain under `docs/changelog/RELEASE_NOTES_<version>.md`.
 
+## 1.0.0
+
+### Added
+
+- Expanded specialized accessible names, ElementInternals, ARIA relationships, landmarks, lists, tables, forms and embedded-content evidence.
+- Added viewport, orientation and keyboard/navigation/motion checks plus bounded open-shadow, slot and same-origin frame traversal.
+- Added guided manual workflows and APG widget-pattern tests, stable per-finding Recheck and saved local user-flow regression scenarios.
+- Added finding lifecycle/state management, reusable audit profiles, bilingual remediation and expanded Site Audit comparison.
+- Added versioned JSON/HTML/CSV/SARIF/JUnit exports, a shared local CLI, and Playwright/CI integrations.
+
+### Fixed
+
+- Prevented generated icon glyphs from being treated indiscriminately as ordinary text contrast.
+- Corrected opaque RGB backdrop detection and retained unverified contrast candidates as REVIEW after the verification budget.
+- Reserved exact lifecycle evidence before pairing changed findings.
+- Strengthened composed-context/browser regressions and aligned local release validation with the Chromium/Firefox CI matrix.
+
+### Release scope
+
+- Preserves local-first operation, optional production page permissions, conservative outcomes and existing data/schema compatibility.
+- Does not claim complete WCAG/EN certification or current full axe parity. Expert beta, manual AT/packaged-browser validation and store publication remain separately tracked under #250.
+
+See `docs/changelog/RELEASE_NOTES_1.0.0.md` for the complete release notes and validation boundary.
+
 ## 0.2.9
 
 ### Added
