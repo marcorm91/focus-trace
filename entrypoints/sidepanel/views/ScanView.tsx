@@ -718,7 +718,7 @@ function FindingCard({
             </div>
           )}
 
-          {issue.contrast.reason && issue.outcome !== 'review' && <p>{issue.contrast.reason}</p>}
+          {issue.contrast.reason && issue.outcome !== 'review' && <p>{copy.contrast?.reason}</p>}
         </div>
       )}
 

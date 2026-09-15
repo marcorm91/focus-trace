@@ -1,5 +1,5 @@
 import { useMemo, useState } from 'react';
-import { tr, type AppLanguage } from '../../../shared/i18n';
+import { localizedReferenceLabel, tr, type AppLanguage } from '../../../shared/i18n';
 import {
   EN_301_549_WEB_STANDARD,
   WCAG_COVERAGE,
@@ -13,6 +13,10 @@ function coverageLabel(mode: WcagCoverageMode, language: AppLanguage): string {
   if (mode === 'site-audit') return 'Site Audit';
   if (mode === 'manual') return tr(language, 'Manual', 'Manual');
   return tr(language, 'Not covered', 'No cubierto');
+}
+
+function criterionTitle(criterion: (typeof WCAG_COVERAGE)[number], language: AppLanguage): string {
+  return localizedReferenceLabel({ type: 'WCAG', id: criterion.id, label: criterion.title, url: criterion.url }, language);
 }
 
 export function StandardsCoverageMatrix({ language }: { language: AppLanguage }) {
@@ -29,12 +33,13 @@ export function StandardsCoverageMatrix({ language }: { language: AppLanguage })
     return scopedCriteria.filter((criterion) => [
       criterion.id,
       criterion.title,
+      criterionTitle(criterion, language),
       criterion.level,
       ...criterion.ruleIds,
       ...criterion.actRuleIds,
       criterion.en301549?.clause ?? '',
     ].some((value) => value.toLocaleLowerCase().includes(normalizedQuery)));
-  }, [normalizedQuery, scopedCriteria]);
+  }, [normalizedQuery, scopedCriteria, language]);
 
   const assisted = scopedCriteria.filter((criterion) => criterion.implemented).length;
   const uncovered = scopedCriteria.length - assisted;
@@ -114,7 +119,7 @@ export function StandardsCoverageMatrix({ language }: { language: AppLanguage })
               <tr key={criterion.id}>
                 <th scope="row">
                   <a href={criterion.url} target="_blank" rel="noreferrer">{criterion.id}</a>
-                  <span>{criterion.title}</span>
+                  <span>{criterionTitle(criterion, language)}</span>
                   <small>{tr(language, 'Level', 'Nivel')} {criterion.level}</small>
                 </th>
                 <td>

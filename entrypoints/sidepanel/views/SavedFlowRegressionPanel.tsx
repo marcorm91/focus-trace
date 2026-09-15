@@ -1,3 +1,4 @@
+import { localizedAuditEvidence } from '../../../shared/i18n-audit-evidence';
 import { useEffect, useMemo, useState } from 'react';
 import { browser } from '#imports';
 import { resolveFindingTargetInPage } from '../../../lib/runtime/finding-recheck-page';
@@ -518,7 +519,7 @@ export function SavedFlowRegressionPanel({
               <li key={`${result.state}-${result.ruleId ?? result.stepId ?? index}`} className={`state-${result.state}`}>
                 <strong>{resultLabel(result.state, language)}</strong>
                 <span>{result.ruleId ?? result.stepId ?? tr(language, 'Flow checkpoint', 'Checkpoint del flujo')}</span>
-                <small>{result.reason}</small>
+                <small>{localizedAuditEvidence(result.reason, language)}</small>
               </li>
             ))}
           </ul>
