@@ -62,6 +62,7 @@ test('APG guided report labels guidance as informative and retains the implement
   await saveScan(panel);
 
   await panel.getByRole('button', { name: /Report|Informe/ }).click();
+  await panel.locator('.report-manual-checks > summary').click();
   await panel.getByLabel(/Guided workflow|Flujo guiado/).selectOption('FT-GUIDED-009');
 
   await expect(panel.getByRole('heading', { level: 2, name: /Tabs pattern review|Revisión del patrón de pestañas/ })).toBeVisible();

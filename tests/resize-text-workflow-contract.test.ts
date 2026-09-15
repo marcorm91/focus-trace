@@ -3,7 +3,7 @@ import { resolve } from 'node:path';
 import { describe, expect, it } from 'vitest';
 
 const app = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/App.tsx'), 'utf8');
-const scanView = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/views/ScanView.tsx'), 'utf8');
+const scanView = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/components/TextResizeCheck.tsx'), 'utf8');
 const runtime = readFileSync(resolve(process.cwd(), 'entrypoints/runtime.content.ts'), 'utf8');
 
 describe('guided 200% text-resize workflow', () => {

@@ -26,6 +26,7 @@ function scan() {
     url: 'https://example.test/guided?token=secret#step',
     title: 'Guided sample page',
     scannedAt: 100,
+    textResize: { phase: 'baseline-captured', subjectsCaptured: 451 },
     scope: { type: 'page' as const },
     issues: [],
     review: [],
@@ -52,6 +53,7 @@ test('guided tests recover after interruption and stay separate from automated c
   await saveScan(panel);
 
   await panel.getByRole('button', { name: /Report|Informe/ }).click();
+  await panel.locator('.report-manual-checks > summary').click();
   await expect(panel.getByRole('heading', { level: 2, name: /Sensory characteristics review|Revisión de características sensoriales/ })).toBeVisible();
   await expect(panel.getByText(/Not an automated conformance result|No es un resultado automático de conformidad/)).toBeVisible();
 
@@ -63,6 +65,7 @@ test('guided tests recover after interruption and stay separate from automated c
   await panel.getByRole('button', { name: 'Trace', exact: true }).click();
   await expect(panel.getByRole('button', { name: /Start trace|Iniciar traza/ })).toBeVisible();
   await panel.getByRole('button', { name: /Report|Informe/ }).click();
+  await panel.locator('.report-manual-checks > summary').click();
   await expect(panel.getByRole('button', { name: /Resume|Reanudar/ })).toBeVisible();
   await panel.getByRole('button', { name: /Resume|Reanudar/ }).click();
 
@@ -89,6 +92,7 @@ test('dialog guided workflow explains intentional modal containment', async ({ c
   await saveScan(panel);
 
   await panel.getByRole('button', { name: /Report|Informe/ }).click();
+  await panel.locator('.report-manual-checks > summary').click();
   await panel.getByLabel(/Guided workflow|Flujo guiado/).selectOption('FT-GUIDED-004');
   await expect(panel.getByRole('heading', { level: 2, name: /Dialog focus lifecycle|Ciclo de foco en diálogos/ })).toBeVisible();
   await panel.getByRole('button', { name: /Start guided test|Iniciar prueba guiada/ }).click();
@@ -107,6 +111,7 @@ test('multimedia guided workflow maps manual evidence without capturing media pa
   await saveScan(panel);
 
   await panel.getByRole('button', { name: /Report|Informe/ }).click();
+  await panel.locator('.report-manual-checks > summary').click();
   await panel.getByLabel(/Guided workflow|Flujo guiado/).selectOption('FT-GUIDED-008');
   await expect(panel.getByRole('heading', { level: 2, name: /Multimedia alternatives review|Revisión de alternativas multimedia/ })).toBeVisible();
   await expect(panel.getByText(/without copying or storing media|sin copiar ni guardar contenido/)).toBeVisible();
@@ -119,4 +124,42 @@ test('multimedia guided workflow maps manual evidence without capturing media pa
     'placeholder',
     /form values, captions, transcripts or media content|valores de formularios, subtítulos, transcripciones ni contenido multimedia/,
   );
+});
+
+
+test('manual checks use a keyboard accordion and themed controls outside Review', async ({ context, extensionWorker }) => {
+  const panel = await openSidepanel(context, extensionWorker);
+  await panel.setViewportSize({ width: 360, height: 850 });
+  await saveScan(panel);
+  await expect(panel.locator('.finding-lifecycle-summary')).toHaveCount(0);
+  await expect(panel.getByText(/200% text resize check|Comprobación de texto al 200 %/)).toHaveCount(0);
+  await panel.getByRole('button', { name: /Report|Informe/ }).click();
+  const accordion = panel.locator('.report-manual-checks');
+  await expect(accordion).not.toHaveAttribute('open', '');
+  const disclosure = accordion.locator('summary');
+  await disclosure.focus();
+  await disclosure.press('Enter');
+  await expect(accordion).toHaveAttribute('open', '');
+  await expect(accordion.locator('.report-text-resize')).toContainText('451');
+  const start = accordion.getByRole('button', { name: /Start guided test|Iniciar prueba guiada/ });
+  await expect(start).toBeVisible();
+  const styles = await start.evaluate((button) => {
+    const css = getComputedStyle(button);
+    return { height: button.getBoundingClientRect().height, radius: parseFloat(css.borderRadius), style: css.borderStyle };
+  });
+  expect(styles.height).toBeGreaterThanOrEqual(40);
+  expect(styles.radius).toBeGreaterThan(0);
+  expect(styles.style).toBe('solid');
+  for (const colorScheme of ['light', 'dark'] as const) {
+    await panel.emulateMedia({ colorScheme });
+    expect(await panel.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth)).toBe(true);
+  }
+  await start.click();
+  await expect(accordion.locator('h3')).toBeFocused();
+  await accordion.getByRole('button', { name: /Cancel|Cancelar/ }).click();
+  await panel.getByLabel(/Guided workflow|Flujo guiado/).selectOption('FT-GUIDED-004');
+  await expect(accordion.locator('.guided-test-status')).toBeEmpty();
+  await disclosure.focus();
+  await disclosure.press('Space');
+  await expect(accordion).not.toHaveAttribute('open', '');
 });

@@ -85,3 +85,7 @@ Guided tests appear in the Report workspace under an explicit **Guided test · m
 ## Extension boundary
 
 New guided definitions should reuse this lifecycle, privacy model, and result vocabulary instead of creating parallel manual-testing state. Domain-specific workflows can add their own prompts and standards references while keeping manual evidence clearly separated from automatic rule outcomes.
+
+## Report workspace
+
+Open **Report → Manual checks** to choose a guided workflow or inspect the current 200% text-resize status. The native accordion is initially collapsed and keyboard-operable. Controls use the extension theme. Save failures retain the current answer and show an error; switching workflows clears stale status messages. Review no longer shows the lifecycle summary or text-resize status card; this does not remove underlying evidence or change rule evaluation.

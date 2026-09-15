@@ -683,3 +683,5 @@ El flujo de resize/reflow reutiliza las líneas base existentes de Resize Text y
 Estos resultados se etiquetan como **guía APG informativa** en Report. APG describe patrones recomendados de interacción de widgets; un problema guiado APG no es un fallo de conformidad WCAG y no modifica los recuentos automáticos PASS/FAIL/REVIEW/WARNING ni la paridad con axe-core. Las observaciones relevantes de Trace se filtran al patrón revisado y siguen siendo solo evidencia de apoyo.
 
 La suite de navegador incluye fixtures accesibles, de fallo y de review para cada patrón APG compatible. Toda la evidencia permanece local y acotada; la funcionalidad no añade permisos de navegador ni transmisión de datos de la página inspeccionada.
+
+Informe reúne las pruebas guiadas y el estado actual del texto al 200 % en el acordeón **Comprobaciones manuales**, cerrado inicialmente. Revisión se centra en los hallazgos y deja de mostrar el resumen del ciclo de vida y la tarjeta de estado del zoom; se mantienen los datos de evolución y el análisis de ampliación.

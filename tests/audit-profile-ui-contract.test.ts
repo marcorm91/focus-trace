@@ -3,7 +3,7 @@ import { describe, expect, it } from 'vitest';
 
 const profileSource = readFileSync('entrypoints/sidepanel/components/AuditProfileSettings.tsx', 'utf8');
 const profileCss = readFileSync('entrypoints/sidepanel/components/audit-profile-settings.css', 'utf8');
-const lifecycleSource = readFileSync('entrypoints/sidepanel/components/FindingLifecycleSummary.tsx', 'utf8');
+const reviewSource = readFileSync('entrypoints/sidepanel/components/ImpactMatrix.tsx', 'utf8');
 const backgroundSource = readFileSync('entrypoints/background.ts', 'utf8');
 
 describe('audit profile UI contract', () => {
@@ -21,10 +21,8 @@ describe('audit profile UI contract', () => {
     expect(profileCss).toContain('min-height: 36px');
   });
 
-  it('surfaces all four lifecycle states and the applied profile', () => {
-    expect(lifecycleSource).toContain("['new', 'persistent', 'changed', 'resolved']");
-    expect(lifecycleSource).toContain('Applied audit profile');
-    expect(lifecycleSource).toContain('Resolved findings remain history evidence');
+  it('keeps the lifecycle summary out of Review', () => {
+    expect(reviewSource).not.toContain('FindingLifecycleSummary');
   });
 
   it('normalizes findings before Session and Memory persistence', () => {

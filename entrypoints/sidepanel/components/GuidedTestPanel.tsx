@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { ALL_GUIDED_TESTS } from '../../../lib/guided-tests/all-catalog';
 import { guidedApgPatternMetadata, isInformativeApgGuidedTest } from '../../../lib/guided-tests/apg-catalog';
 import { guidedStepCriteria } from '../../../lib/guided-tests/criterion-map';
@@ -68,6 +68,9 @@ export function GuidedTestPanel({
   const [session, setSession] = useState<GuidedTestSession>();
   const [selectedVariationId, setSelectedVariationId] = useState('');
   const [loading, setLoading] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState('');
+  const stepHeading = useRef<HTMLHeadingElement>(null);
   const [note, setNote] = useState('');
   const [selectedAnswer, setSelectedAnswer] = useState<GuidedManualAnswer>();
   const [statusMessage, setStatusMessage] = useState('');
@@ -82,35 +85,57 @@ export function GuidedTestPanel({
   useEffect(() => {
     let active = true;
     setSession(undefined);
+    setStatusMessage('');
+    setError('');
+    setLoading(false);
     setNote('');
     setSelectedAnswer(undefined);
     if (!pageUrl) return () => { active = false; };
     setLoading(true);
     void loadGuidedSession(pageUrl, definition.id)
       .then((stored) => {
-        if (active) setSession(stored);
+        if (active) {
+          setSession(stored);
+          if (stored?.variationId) setSelectedVariationId(stored.variationId);
+        }
+      })
+      .catch(() => {
+        if (active) setError(tr(language, 'Could not load the guided session. Try selecting the workflow again.', 'No se ha podido cargar la sesión guiada. Vuelve a seleccionar el flujo.'));
       })
       .finally(() => {
         if (active) setLoading(false);
       });
     return () => { active = false; };
-  }, [definition.id, pageUrl]);
+  }, [definition.id, pageUrl, language]);
 
   const step = useMemo(() => {
     if (!session) return undefined;
     return definition.steps[session.currentStepIndex];
   }, [definition.steps, session]);
+  useEffect(() => {
+    if (session?.status === 'active') stepHeading.current?.focus();
+  }, [session?.id, session?.currentStepIndex, session?.status]);
+
   const stepCriteria = step ? guidedStepCriteria(definition.id, step.id) : [];
   const recordedVariationId = session?.variationId;
   const effectiveVariationId = recordedVariationId || selectedVariationId || apgMetadata?.variations[0]?.id;
   const effectiveVariation = apgMetadata?.variations.find((variation) => variation.id === effectiveVariationId);
 
   const persist = async (next: GuidedTestSession, message: string) => {
-    setSession(next);
-    setNote('');
-    setSelectedAnswer(undefined);
-    setStatusMessage(message);
-    await saveGuidedSession(next);
+    if (saving) return;
+    setSaving(true);
+    setError('');
+    try {
+      await saveGuidedSession(next);
+      setSession(next);
+      setNote('');
+      setSelectedAnswer(undefined);
+      setStatusMessage(message);
+    } catch {
+      setError(tr(language, 'Could not save your progress. Your current answer is kept; try again.', 'No se ha podido guardar el progreso. Se conserva tu respuesta actual; inténtalo de nuevo.'));
+    } finally {
+      setSaving(false);
+    }
   };
 
   const start = async () => {
@@ -183,7 +208,7 @@ export function GuidedTestPanel({
   const referenceBadge = wcagBadge || apgBadge;
 
   return (
-    <section className="panel guided-test-panel" aria-labelledby="guided-test-title">
+    <section className="guided-test-panel" aria-busy={saving || loading} aria-labelledby="guided-test-title">
       <div className="guided-test-heading">
         <div>
           <span className="report-kicker">{informativeApg
@@ -198,7 +223,7 @@ export function GuidedTestPanel({
         <span>{tr(language, 'Guided workflow', 'Flujo guiado')}</span>
         <select
           value={selectedTestId}
-          disabled={session?.status === 'active' || session?.status === 'paused'}
+          disabled={saving || session?.status === 'active' || session?.status === 'paused'}
           onChange={(event) => setSelectedTestId(event.currentTarget.value)}
         >
           {ALL_GUIDED_TESTS.map((test) => (
@@ -212,7 +237,7 @@ export function GuidedTestPanel({
           <span>{tr(language, 'Implementation variation', 'Variante de implementación')}</span>
           <select
             value={selectedVariationId || apgMetadata.variations[0]?.id || ''}
-            disabled={session?.status === 'active' || session?.status === 'paused'}
+            disabled={saving || session?.status === 'active' || session?.status === 'paused'}
             onChange={(event) => setSelectedVariationId(event.currentTarget.value)}
           >
             {apgMetadata.variations.map((variation) => (
@@ -249,7 +274,7 @@ export function GuidedTestPanel({
       {scan && loading && <p role="status">{tr(language, 'Loading guided session…', 'Cargando sesión guiada…')}</p>}
 
       {scan && !loading && !session && (
-        <button className="primary" type="button" onClick={() => void start()}>
+        <button className="export-pdf-report" type="button" disabled={saving} onClick={() => void start()}>
           {tr(language, 'Start guided test', 'Iniciar prueba guiada')}
         </button>
       )}
@@ -258,10 +283,10 @@ export function GuidedTestPanel({
         <div className="guided-test-state">
           <strong>{tr(language, 'Paused', 'En pausa')}</strong>
           <p>{tr(language, 'Your progress is stored locally for this page.', 'Tu progreso está guardado localmente para esta página.')}</p>
-          <div className="guided-test-actions">
-            <button className="primary" type="button" onClick={() => void resume()}>{tr(language, 'Resume', 'Reanudar')}</button>
-            <button type="button" onClick={() => void restart()}>{tr(language, 'Restart', 'Reiniciar')}</button>
-            <button type="button" onClick={() => void cancel()}>{tr(language, 'Cancel', 'Cancelar')}</button>
+          <div className="guided-test-actions actions">
+            <button className="export-pdf-report" type="button" disabled={saving} onClick={() => void resume()}>{tr(language, 'Resume', 'Reanudar')}</button>
+            <button className="export-text-report" type="button" disabled={saving} onClick={() => void restart()}>{tr(language, 'Restart', 'Reiniciar')}</button>
+            <button className="export-text-report" type="button" disabled={saving} onClick={() => void cancel()}>{tr(language, 'Cancel', 'Cancelar')}</button>
           </div>
         </div>
       )}
@@ -270,7 +295,7 @@ export function GuidedTestPanel({
         <div className="guided-test-state">
           <strong>{tr(language, 'Cancelled', 'Cancelada')}</strong>
           <p>{tr(language, 'This manual run is not counted as a completed result.', 'Esta ejecución manual no cuenta como resultado completado.')}</p>
-          <button className="primary" type="button" onClick={() => void restart()}>{tr(language, 'Restart guided test', 'Reiniciar prueba guiada')}</button>
+          <button className="export-pdf-report" type="button" disabled={saving} onClick={() => void restart()}>{tr(language, 'Restart guided test', 'Reiniciar prueba guiada')}</button>
         </div>
       )}
 
@@ -315,7 +340,7 @@ export function GuidedTestPanel({
               );
             })}
           </ol>
-          <button type="button" onClick={() => void restart()}>{tr(language, 'Run again', 'Ejecutar de nuevo')}</button>
+          <button className="export-text-report" type="button" disabled={saving} onClick={() => void restart()}>{tr(language, 'Run again', 'Ejecutar de nuevo')}</button>
         </div>
       )}
 
@@ -328,7 +353,7 @@ export function GuidedTestPanel({
               `Paso ${session.currentStepIndex + 1} de ${definition.steps.length}`,
             )}
           </div>
-          <h3>{localText(step.title, language)}</h3>
+          <h3 ref={stepHeading} tabIndex={-1}>{localText(step.title, language)}</h3>
           <p>{localText(step.prompt, language)}</p>
           {stepCriteria.length > 0 && (
             <p className="guided-test-criteria">
@@ -388,19 +413,20 @@ export function GuidedTestPanel({
             />
           </label>
 
-          <div className="guided-test-actions">
-            <button className="primary" type="button" disabled={!selectedAnswer} onClick={() => void submit()}>
+          <div className="guided-test-actions actions">
+            <button className="export-pdf-report" type="button" disabled={saving || !selectedAnswer} onClick={() => void submit()}>
               {session.currentStepIndex === definition.steps.length - 1
                 ? tr(language, 'Save result', 'Guardar resultado')
                 : tr(language, 'Save and continue', 'Guardar y continuar')}
             </button>
-            <button type="button" onClick={() => void pause()}>{tr(language, 'Pause', 'Pausar')}</button>
-            <button type="button" onClick={() => void cancel()}>{tr(language, 'Cancel', 'Cancelar')}</button>
-            <button type="button" onClick={() => void restart()}>{tr(language, 'Restart', 'Reiniciar')}</button>
+            <button className="export-text-report" type="button" disabled={saving} onClick={() => void pause()}>{tr(language, 'Pause', 'Pausar')}</button>
+            <button className="export-text-report" type="button" disabled={saving} onClick={() => void cancel()}>{tr(language, 'Cancel', 'Cancelar')}</button>
+            <button className="export-text-report" type="button" disabled={saving} onClick={() => void restart()}>{tr(language, 'Restart', 'Reiniciar')}</button>
           </div>
         </div>
       )}
 
+      {error && <p className="guided-test-error" role="alert">{error}</p>}
       <p className="guided-test-status" role="status" aria-live="polite" aria-atomic="true">{statusMessage}</p>
     </section>
   );
