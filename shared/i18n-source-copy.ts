@@ -1,7 +1,85 @@
+import { localizedAuditEvidence } from './i18n-audit-evidence';
 import { localizedContrastReason, type AppLanguage } from './i18n-base';
 import type { ScanIssue, StandardReference } from './types';
 
 const REFERENCE_LABEL_ES: Record<string, string> = {
+  'Meaningful Sequence': 'Secuencia significativa',
+  'Sensory Characteristics': 'Características sensoriales',
+  "Sign Language (Prerecorded)": "Lengua de signos (pregrabada)",
+  "Extended Audio Description (Prerecorded)": "Audiodescripción ampliada (pregrabada)",
+  "Media Alternative (Prerecorded)": "Alternativa para el medio (pregrabada)",
+  "Audio-only (Live)": "Solo audio (en directo)",
+  "Identify Purpose": "Identificar el propósito",
+  "Images of Text": "Imágenes de texto",
+  "Contrast (Enhanced)": "Contraste (mejorado)",
+  "Low or No Background Audio": "Sonido de fondo bajo o ausente",
+  "Visual Presentation": "Presentación visual",
+  "Images of Text (No Exception)": "Imágenes de texto (sin excepciones)",
+  "Character Key Shortcuts": "Atajos de teclado con caracteres",
+  "No Timing": "Sin límites de tiempo",
+  "Interruptions": "Interrupciones",
+  "Re-authenticating": "Reautenticación",
+  "Timeouts": "Tiempos de espera",
+  "Three Flashes or Below Threshold": "Tres destellos o por debajo del umbral",
+  "Three Flashes": "Tres destellos",
+  "Animation from Interactions": "Animación de las interacciones",
+  "Multiple Ways": "Múltiples vías",
+  "Location": "Ubicación",
+  "Link Purpose (Link Only)": "Propósito de los enlaces (solo enlaces)",
+  "Section Headings": "Encabezados de sección",
+  "Focus Not Obscured (Enhanced)": "Foco no oculto (mejorado)",
+  "Focus Appearance": "Apariencia del foco",
+  "Pointer Gestures": "Gestos del puntero",
+  "Motion Actuation": "Activación mediante movimiento",
+  "Target Size (Enhanced)": "Tamaño del objetivo (mejorado)",
+  "Concurrent Input Mechanisms": "Mecanismos de entrada simultáneos",
+  "Unusual Words": "Palabras inusuales",
+  "Abbreviations": "Abreviaturas",
+  "Reading Level": "Nivel de lectura",
+  "Pronunciation": "Pronunciación",
+  "Change on Request": "Cambios a petición",
+  "Error Prevention (Legal, Financial, Data)": "Prevención de errores (legales, financieros, de datos)",
+  "Help": "Ayuda",
+  "Error Prevention (All)": "Prevención de errores (todos)",
+  "Redundant Entry": "Entrada redundante",
+  "Accessible Authentication (Minimum)": "Autenticación accesible (mínima)",
+  "Accessible Authentication (Enhanced)": "Autenticación accesible (mejorada)",
+  "Parsing (Obsolete and removed)": "Procesamiento (obsoleto y eliminado)",
+
+  "ARIA Authoring Practices Guide · Providing Accessible Names and Descriptions": "Guía de prácticas de autoría ARIA · Nombres y descripciones accesibles",
+  "ARIA in HTML · Author conformance requirements": "ARIA en HTML · Requisitos de conformidad para autores",
+  "Audio Control": "Control del audio",
+  "Audio or video element avoids automatically playing audio": "El elemento de audio o vídeo evita reproducir audio automáticamente",
+  "Content on Hover or Focus": "Contenido al pasar el puntero o recibir el foco",
+  "Element in sequential focus order has visible focus": "El elemento del orden secuencial de foco tiene un indicador de foco visible",
+  "Focus Visible": "Foco visible",
+  "Focusable element has no keyboard trap via standard navigation": "El elemento enfocable no atrapa el teclado durante la navegación estándar",
+  "HTML Living Standard · Headings and sections": "Estándar HTML · Encabezados y secciones",
+  "HTML Living Standard · Tabular data": "Estándar HTML · Datos tabulares",
+  "HTML Living Standard · The iframe element": "Estándar HTML · El elemento iframe",
+  "HTML Living Standard · The object element": "Estándar HTML · El elemento object",
+  "HTML accesskey attribute": "Atributo HTML accesskey",
+  "HTML form control labeling and fieldset/legend semantics": "Etiquetado de controles HTML y semántica de fieldset/legend",
+  "HTML viewport meta": "Metadatos HTML del viewport",
+  "Iframe element has accessible name": "El elemento iframe tiene nombre accesible",
+  "Iframe elements with identical accessible names have equivalent purpose": "Los elementos iframe con nombres accesibles idénticos tienen un propósito equivalente",
+  "Iframe with negative tabindex has no focusable content": "El iframe con tabindex negativo no contiene contenido enfocable",
+  "Keyboard": "Teclado",
+  "Keyboard (No Exception)": "Teclado (sin excepciones)",
+  "Meta element has no refresh delay": "El elemento meta no tiene un retraso de actualización",
+  "Meta viewport allows for zoom": "Los metadatos del viewport permiten ampliar",
+  "No Keyboard Trap": "Sin trampas para el foco del teclado",
+  "Object element rendering non-text content has non-empty accessible name": "El elemento object que muestra contenido no textual tiene un nombre accesible no vacío",
+  "Orientation": "Orientación",
+  "Orientation of the page is not restricted using CSS transforms": "La orientación de la página no se restringe mediante transformaciones CSS",
+  "Pointer Cancellation": "Cancelación del puntero",
+  "Scrollable element is keyboard accessible": "El elemento desplazable es accesible mediante teclado",
+  "Timing Adjustable": "Tiempo ajustable",
+  "WAI-ARIA 1.3 Editor Draft · Accessible name requirements": "WAI-ARIA 1.3 · Borrador editorial · Requisitos de nombre accesible",
+  "WAI-ARIA · region role": "WAI-ARIA · Rol region",
+  "WAI-ARIA · table, grid and cell roles": "WAI-ARIA · Roles de tabla, cuadrícula y celda",
+  "WCAG 2.2 · 1.3.1 Info and Relationships": "WCAG 2.2 · 1.3.1 Información y relaciones",
+
   'Page Titled': 'Página titulada',
   'HTML page has non-empty title': 'La página HTML tiene un título no vacío',
   'Non-text Content': 'Contenido no textual',
@@ -151,6 +229,8 @@ function fallbackTechnicalEvidence(
 }
 
 function localizeResidualEvidence(ruleId: string, evidence: string): string {
+  const translated = localizedAuditEvidence(evidence, 'es');
+  if (translated !== evidence) return translated;
   if (ruleId === 'FT-REVIEW-003') {
     const match = evidence.match(/^Accessible name (.+) is sourced from (placeholder|aria-placeholder)\.$/);
     if (match) return `El nombre accesible ${match[1]} procede de ${match[2]}.`;
@@ -200,8 +280,8 @@ export function localizeIssueSourceCopy(
   const title = localized.title === source.title && looksLikeEnglishProse(localized.title)
     ? spanishFallbackTitle(source.ruleId)
     : localized.title;
-  const description = localized.description === source.description && looksLikeEnglishProse(localized.description)
-    ? spanishFallbackDescription()
+  const description = localized.description.startsWith(source.description) && looksLikeEnglishProse(source.description)
+    ? spanishFallbackDescription() + localized.description.slice(source.description.length)
     : localized.description;
   const evidence = localized.evidence && source.evidence && localized.evidence === source.evidence
     ? localizeResidualEvidence(source.ruleId, localized.evidence)

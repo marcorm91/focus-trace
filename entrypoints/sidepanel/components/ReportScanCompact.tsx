@@ -1,3 +1,4 @@
+import { localizedAuditEvidence } from '../../../shared/i18n-audit-evidence';
 import { useEffect, useMemo, useState } from 'react';
 import { browser } from '#imports';
 import {
@@ -202,12 +203,12 @@ function ReportRuleAccordion({
                     {formatRecheckTime(latestRecheck.checkedAt, language)}
                   </time>
                 </div>
-                <p>{latestRecheck.reason}</p>
+                <p>{localizedAuditEvidence(latestRecheck.reason, language)}</p>
                 {latestRecheck.current?.evidence
                   && latestRecheck.current.evidence !== latestRecheck.original.evidence && (
                     <details className="finding-recheck-evidence">
                       <summary>{tr(language, 'Current evidence', 'Evidencia actual')}</summary>
-                      <p>{latestRecheck.current.evidence}</p>
+                      <p>{localizedScanIssue({ ...issue, evidence: latestRecheck.current.evidence }, language).evidence}</p>
                     </details>
                   )}
                 <small>{tr(

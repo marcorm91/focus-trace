@@ -1,3 +1,4 @@
+import { localizedAuditEvidence } from '../../../shared/i18n-audit-evidence';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { browser } from '#imports';
 import type { FindingRecheckState } from '../../../lib/audit/finding-recheck';
@@ -452,7 +453,7 @@ function RuntimeEventRow({
                 {recheck ? (
                   <>
                     <strong>{runtimeRecheckStateLabel(recheck.state, language)}</strong>
-                    <p>{recheck.reason}</p>
+                    <p>{localizedAuditEvidence(recheck.reason, language)}</p>
                     <small>{tr(
                       language,
                       'The original runtime event is preserved. FocusTrace will not call it resolved until the original interaction is replayed and the behavior is observed again.',
