@@ -85,4 +85,25 @@ describe('finding lifecycle', () => {
     expect(current.issues[0]?.lifecycleState).toBe('persistent');
     expect(current.findingLifecycle?.counts.resolved).toBe(1);
   });
+
+  it.each([
+    ['C', 'A'],
+    ['A', 'C'],
+  ])('reserves exact evidence before changed matches: %s, %s', (first, second) => {
+    const previous = scan(1, [issue('old-a', { evidence: 'A' }), issue('old-b', { evidence: 'B' })]);
+    const current = applyFindingLifecycle(previous, scan(2, [
+      issue('first', { evidence: first }), issue('second', { evidence: second }),
+    ]));
+    expect(current.findingLifecycle?.counts).toEqual({ new: 0, persistent: 1, changed: 1, resolved: 0 });
+    expect(current.issues.find((finding) => finding.evidence === 'A')?.lifecycleState).toBe('persistent');
+    expect(current.issues.find((finding) => finding.evidence === 'C')?.lifecycleState).toBe('changed');
+  });
+
+  it('does not consume a persistent match when another finding is new', () => {
+    const result = compareFindingLifecycle(scan(1, [issue('old', { evidence: 'A' })]), scan(2, [
+      issue('new', { evidence: 'B' }), issue('same', { evidence: 'A' }),
+    ]));
+    expect(result.counts).toEqual({ new: 1, persistent: 1, changed: 0, resolved: 0 });
+  });
+
 });

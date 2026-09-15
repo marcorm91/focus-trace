@@ -66,6 +66,6 @@ Manual AT verification should therefore be recorded as release evidence when a c
 
 ## Release gate
 
-`npm run release:check:full` remains the authoritative local release command. It includes standards validation, benchmark-data validation, capability/rule contracts, conformance hardening, focused false-positive/performance regressions, type/lint/unit checks, Chrome/Edge/Firefox builds, build validation, bundle limits, and Playwright E2E.
+`npm run release:check:full` remains the authoritative local release command. It includes standards validation, benchmark-data validation, capability/rule contracts, conformance hardening, focused false-positive/performance regressions, type/lint/unit checks, Chrome/Edge/Firefox builds, build validation, bundle limits, and Playwright E2E. The full local command also runs the reusable scanner example on both Chromium and Firefox, matching the CI browser matrix.
 
 No rule semantics or public capability claims are changed by this hardening layer; it makes the existing behavior harder to regress and documents where browser automation evidence stops.

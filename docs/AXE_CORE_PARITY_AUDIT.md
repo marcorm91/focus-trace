@@ -1,6 +1,6 @@
 # axe-core 4.13.0 parity audit
 
-Status: exhaustive classification complete  
+Status: historical classification snapshot; not a current full-parity certification
 FocusTrace baseline: 0.2.9  
 External benchmark: axe-core 4.13.0  
 Baseline tracking issue: #224  
@@ -12,11 +12,13 @@ This audit measures FocusTrace against the public axe-core rule set so that miss
 
 WCAG, ACT Rules, WAI-ARIA, AccName, HTML and related standards remain the normative sources. axe-core is used only as an external implementation benchmark. FocusTrace must continue to run locally without a Deque account, API, service or Pro license.
 
+Later work in #229–#249 expanded the engine beyond this classification-stage inventory. The checked-in classification summary remains a benchmark snapshot: its `missing`/`partial` counts must not be presented as a freshly reviewed measurement of current `main`. For example, table caption/header and landmark evidence was added after the original classification. Reassess each relationship against implementation, exceptions and fixtures before changing it; a similar rule name is insufficient to claim equivalence. See [the final issue review](FINAL_RELEASE_REVIEW.md) for the release evidence and outstanding gates.
+
 ## Verified inventory
 
 ### FocusTrace
 
-The current public capability catalog contains 118 source-defined identifiers:
+The classification-stage capability catalog contained 118 source-defined identifiers (historical counts, not the current source inventory):
 
 | Family | Count |
 | --- | ---: |

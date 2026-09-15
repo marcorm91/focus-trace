@@ -39,6 +39,12 @@ describe('hermetic release tooling', () => {
     }
   });
 
+  it('includes both extension and cross-browser scanner tests in the full local release gate', () => {
+    expect(packageJson.scripts['release:check:full']).toBe(
+      'npm run release:check && npm run e2e && npm run test:e2e -- --config=playwright.focustrace-example.config.ts',
+    );
+  });
+
   it('cleans production output before release builds in local and CI gates', () => {
     const releaseCheck = packageJson.scripts['release:check'] ?? '';
     const firstProductionBuild = releaseCheck.indexOf('npm run build &&');

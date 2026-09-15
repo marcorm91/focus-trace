@@ -155,7 +155,7 @@ A contrast result becomes `FAIL` only when the computed colors and threshold are
 - CSS filters;
 - an unresolved computed background color.
 
-This conservative model intentionally avoids converting uncertain rendering into false WCAG failures.
+This conservative model intentionally avoids converting uncertain rendering into false WCAG failures. Stacked backdrop verification handles opaque RGB and transparent RGBA separately. It verifies at most 100 text/non-text contrast candidates per scan; candidates beyond that budget become REVIEW with an explicit unverified-background reason and adjusted rule counters.
 
 ## Non-text contrast scope
 

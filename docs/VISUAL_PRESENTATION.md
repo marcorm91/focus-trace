@@ -39,7 +39,7 @@ Text and non-text contrast continue to use the existing color evaluator. Complex
 
 The #234 package adds a real-browser stacking guard for deterministic contrast failures. When `document.elementsFromPoint()` shows a separately stacked painted element behind the target, FocusTrace downgrades that measured FAIL to REVIEW because the effective rendered backdrop cannot safely be reconstructed from the target's ancestor background chain alone. The rule-result counters are updated so the scan remains internally consistent.
 
-This guard is bounded to the first 100 contrast failures in a scan and never stores screenshots, page pixels or arbitrary background content. It prefers a false negative/review over a false deterministic contrast failure.
+This guard verifies at most 100 contrast candidates per scan and never stores screenshots, page pixels or arbitrary background content. Later candidates remain REVIEW with an explicit verification-budget reason, rather than retaining an unverified FAIL. Failure/review counters follow the downgrade. The shared CSS color parser distinguishes opaque RGB channels from RGBA alpha, including opaque black/red and fully transparent backgrounds.
 
 ## Severity decisions
 
