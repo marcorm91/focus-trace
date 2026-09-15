@@ -685,3 +685,5 @@ These results are labelled **informative APG guidance** in Report. APG describes
 The browser test suite includes accessible, failure and review fixtures for every supported APG pattern. All evidence remains local and bounded; the feature adds no browser permissions or inspected-page transmission.
 
 Report groups guided tests and the current 200% text-resize status in an initially collapsed **Manual checks** accordion. Review focuses on findings and no longer displays the lifecycle summary or the zoom-status card; underlying lifecycle data and resize analysis remain available.
+
+Long page URLs in the Report page list and PDF audit index are visually limited to two lines with an ellipsis; the full URLs remain in the report data.

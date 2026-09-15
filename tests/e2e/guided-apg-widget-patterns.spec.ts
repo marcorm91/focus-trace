@@ -68,6 +68,15 @@ test('APG guided report labels guidance as informative and retains the implement
   await expect(panel.getByRole('heading', { level: 2, name: /Tabs pattern review|Revisión del patrón de pestañas/ })).toBeVisible();
   await expect(panel.getByText(/Informative APG guidance|Guía APG informativa/)).toBeVisible();
   const variation = panel.getByLabel(/Implementation variation|Variante de implementación/);
+  for (const width of [560, 360]) {
+    await panel.setViewportSize({ width, height: 850 });
+    const labels = await panel.locator('.guided-test-selectors > label').evaluateAll((items) => items.map((item) => {
+      const rect = item.getBoundingClientRect();
+      return { top: rect.top, bottom: rect.bottom };
+    }));
+    if (width === 560) expect(Math.abs(labels[0]!.top - labels[1]!.top)).toBeLessThanOrEqual(1);
+    else expect(labels[1]!.top).toBeGreaterThanOrEqual(labels[0]!.bottom);
+  }
   await variation.selectOption('manual-activation');
 
   await panel.getByRole('button', { name: /Start guided test|Iniciar prueba guiada/ }).click();
@@ -76,6 +85,7 @@ test('APG guided report labels guidance as informative and retains the implement
   await expect(panel.getByText(/relevant widget-pattern observations|observaciones relevantes del patrón de widget/i)).toBeVisible();
 
   for (let index = 0; index < 3; index += 1) {
+    await expect(panel.locator('.guided-test-progress')).toHaveText(new RegExp(`Step ${index + 1} of 3|Paso ${index + 1} de 3`));
     await panel.getByRole('radio', { name: /No issue found|No he encontrado problemas/ }).check();
     await panel.getByRole('button', { name: index === 2 ? /Save result|Guardar resultado/ : /Save and continue|Guardar y continuar/ }).click();
   }

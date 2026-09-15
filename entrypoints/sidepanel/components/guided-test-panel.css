@@ -136,6 +136,7 @@
 }
 
 .report-manual-checks {
+  display: block;
   min-width: 0;
   padding: 0;
   border: 1px solid var(--ft-border-soft);
@@ -166,6 +167,7 @@
   background: currentColor;
   mask: var(--ft-i-chevron-right) center / contain no-repeat;
 }
+.report-manual-checks[open] > summary { border-radius: var(--ft-radius-lg) var(--ft-radius-lg) 0 0; }
 .report-manual-checks[open] > summary::after { mask-image: var(--ft-i-chevron-down); }
 .report-manual-checks > summary:hover { background: var(--ft-surface-subtle); }
 .report-manual-checks > summary:focus-visible,
@@ -228,4 +230,15 @@
   .report-manual-checks, .report-text-resize, .guided-test-step fieldset,
   .guided-test-panel :is(button, select, textarea) { border-color: CanvasText; }
   .guided-test-boundary, .guided-test-runtime-hint { border-color: Highlight; }
+}
+
+.guided-test-selectors {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: end;
+  gap: 14px;
+}
+.guided-test-selectors > .guided-test-selector {
+  flex: 1 1 210px;
+  min-width: 0;
 }

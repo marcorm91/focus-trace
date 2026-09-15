@@ -137,6 +137,10 @@ test('manual checks use a keyboard accordion and themed controls outside Review'
   const accordion = panel.locator('.report-manual-checks');
   await expect(accordion).not.toHaveAttribute('open', '');
   const disclosure = accordion.locator('summary');
+  const closedBounds = await accordion.boundingBox();
+  const summaryBounds = await disclosure.boundingBox();
+  expect(Math.abs(closedBounds!.height - summaryBounds!.height)).toBeLessThanOrEqual(3);
+  await expect(disclosure.locator('small')).toHaveText(/^(Guided tests|Pruebas guiadas)$/);
   await disclosure.focus();
   await disclosure.press('Enter');
   await expect(accordion).toHaveAttribute('open', '');
