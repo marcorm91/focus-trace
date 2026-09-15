@@ -68,7 +68,7 @@
 .trace-accordion-body,
 .finding-guidance-severity,
 .finding-guidance-severity > summary,
-.finding-guidance section,
+.finding-guidance section:not(.finding-guidance-fix),
 .instructions-start,
 .instructions-card,
 .instructions-card > summary,
