@@ -1,0 +1,133 @@
+name: Prepare FocusTrace 1.0.2
+
+on:
+  push:
+    branches:
+      - release/v1.0.2
+
+permissions:
+  contents: write
+
+jobs:
+  prepare:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: release/v1.0.2
+          fetch-depth: 0
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: 22
+      - name: Prepare 1.0.2 release metadata and documentation
+        run: |
+          node --input-type=module <<'NODE'
+          import { readFileSync, writeFileSync } from 'node:fs';
+
+          const read = (path) => readFileSync(path, 'utf8');
+          const write = (path, content) => writeFileSync(path, content);
+          const replaceRequired = (content, from, to, label) => {
+            if (!content.includes(from)) throw new Error(`Expected ${label} text was not found.`);
+            return content.replace(from, to);
+          };
+
+          const pkgPath = 'package.json';
+          const pkg = JSON.parse(read(pkgPath));
+          pkg.version = '1.0.2';
+          write(pkgPath, `${JSON.stringify(pkg, null, 2)}\n`);
+
+          const lockPath = 'package-lock.json';
+          const lock = JSON.parse(read(lockPath));
+          lock.version = '1.0.2';
+          lock.packages[''].version = '1.0.2';
+          write(lockPath, `${JSON.stringify(lock, null, 2)}\n`);
+
+          const contractPath = 'tests/release-contract.test.ts';
+          write(contractPath, read(contractPath).replaceAll('1.0.1', '1.0.2'));
+
+          for (const path of ['docs/RELEASE_CHECKLIST.md', 'docs/STORE_SUBMISSION.md']) {
+            write(path, read(path).replaceAll('1.0.1', '1.0.2'));
+          }
+
+          const checklistPath = 'docs/RELEASE_CHECKLIST.md';
+          let checklist = read(checklistPath);
+          const bypassSmoke = '- Confirm the rule does not require the literal text “Skip to content”.';
+          const missingMainSmoke = '- Analyze substantial navigation with no exposed `<main>` / `role="main"` landmark and confirm `FT-REVIEW-012` remains contextual `REVIEW`, explaining that FocusTrace cannot validate the bypass destination automatically.\n';
+          if (!checklist.includes(missingMainSmoke.trim())) {
+            checklist = replaceRequired(checklist, bypassSmoke, `${missingMainSmoke}${bypassSmoke}`, 'Bypass Blocks smoke-test');
+          }
+          write(checklistPath, checklist);
+
+          const changelogPath = 'docs/changelog/CHANGELOG.md';
+          let changelog = read(changelogPath);
+          if (!changelog.includes('## 1.0.2\n')) {
+            const entry = `## 1.0.2\n\n### Fixed\n\n- Prevented H1-H6 headings from being reported as empty when direct text is absent but meaningful accessible descendant content is available through ARIA naming or image alternative text.\n- Kept decorative-only headings empty and preserved heading-level jump detection as an independent Structure signal.\n- Extended \`FT-REVIEW-012\` so substantial navigation without an exposed main landmark remains a contextual WCAG 2.4.1 review instead of becoming silently inapplicable.\n- Preserved broken early bypass-fragment candidates as review evidence even when no main landmark is exposed, while short navigation remains inapplicable.\n\nSee \`docs/changelog/RELEASE_NOTES_1.0.2.md\` for release scope and validation boundaries.\n\n`;
+            changelog = replaceRequired(changelog, '## 1.0.1\n', `${entry}## 1.0.1\n`, '1.0.1 changelog marker');
+          }
+          write(changelogPath, changelog);
+
+          write('docs/changelog/RELEASE_NOTES_1.0.2.md', `# FocusTrace 1.0.2\n\nFocusTrace 1.0.2 is a maintenance release improving heading Structure evidence and the contextual WCAG 2.4.1 Bypass Blocks review. It includes the changes merged in #293 and #294 after 1.0.1.\n\n## Heading structure\n\n- Fixed a false positive where H1-H6 headings without direct text content were reported as empty even when meaningful accessible content was exposed by descendants.\n- Heading Structure evidence can use descendant \`aria-label\`, \`aria-labelledby\` and image \`alt\` text when direct heading text is unavailable.\n- Decorative-only or genuinely empty headings remain marked as empty.\n- Heading-level jump detection remains independent from empty-heading detection.\n- The resolved accessible text is shown in the heading outline when direct text is unavailable.\n\n## Bypass Blocks review\n\n- Improved \`FT-REVIEW-012\` for pages where primary content is not exposed through \`<main>\` or \`role="main"\`.\n- Substantial exposed navigation with at least three sequential keyboard stops now remains applicable as contextual \`REVIEW\` when FocusTrace cannot validate a bypass destination because the main landmark is missing.\n- An early likely fragment bypass whose target is broken remains review evidence even without an exposed main landmark.\n- Short navigation without an exposed main landmark remains inapplicable to avoid noisy reviews.\n- The rule remains \`REVIEW\`, not automatic \`FAIL\`, because WCAG 2.4.1 can be satisfied by mechanisms that cannot be proven from this bounded DOM heuristic.\n\n## Compatibility\n\nChrome, Edge and Firefox manifests inherit version 1.0.2 from the package metadata. This release does not add permissions, change storage behavior or modify export schemas. Existing local history, saved flows and auditor notes remain compatible.\n\nNo new FocusTrace rule ID is introduced; 1.0.2 refines Structure evidence and the applicability/evidence boundary of the existing \`FT-REVIEW-012\` rule.\n\n## Validation\n\nThe heading change in #293 and the Bypass Blocks change in #294 each passed FocusTrace CI before merge. The 1.0.2 release candidate must also pass its own CI and release contract before tagging and packaging.\n\nManual packaged-browser and assistive-technology checks remain tracked in \`docs/RELEASE_CHECKLIST.md\`. Generate production packages only from the approved release commit; E2E builds contain test-only permissions and must not be distributed.\n`);
+
+          const readmePath = 'README.md';
+          let readme = read(readmePath);
+          readme = replaceRequired(
+            readme,
+            '| **Structure** | Current full-page analysis | Exposes headings, semantic review and structural metrics prepared with the page scan; Refresh recalculates them after page changes. | H1-H6 outline, suggestions and counts. |',
+            '| **Structure** | Current full-page analysis | Exposes headings, semantic review and structural metrics prepared with the page scan; Refresh recalculates them after page changes. | H1-H6 outline, suggestions and counts; headings without direct text can use meaningful accessible descendant content, while decorative-only content remains empty. |',
+            'English Structure capability',
+          );
+          readme = replaceRequired(
+            readme,
+            '| `FT-REVIEW-012` | Substantial navigation appears before primary content without a validated early keyboard-focusable fragment link that reaches the main region. | REVIEW / PASS | WCAG 2.4.1 |',
+            '| `FT-REVIEW-012` | Substantial navigation appears before primary content without a validated early keyboard-focusable fragment link that reaches the main region, or substantial navigation is present while no exposed main landmark is available to validate a bypass destination. | REVIEW / PASS | WCAG 2.4.1 |',
+            'English FT-REVIEW-012 catalog row',
+          );
+          write(readmePath, readme);
+
+          const readmeEsPath = 'README.es.md';
+          let readmeEs = read(readmeEsPath);
+          readmeEs = replaceRequired(
+            readmeEs,
+            '| **Estructura** | Análisis actual de página completa | Expone encabezados, revisión semántica y métricas estructurales preparadas con el análisis; Actualizar las recalcula tras cambios de la página. | Árbol H1-H6, sugerencias y recuentos. |',
+            '| **Estructura** | Análisis actual de página completa | Expone encabezados, revisión semántica y métricas estructurales preparadas con el análisis; Actualizar las recalcula tras cambios de la página. | Árbol H1-H6, sugerencias y recuentos; los encabezados sin texto directo pueden usar contenido accesible significativo de sus descendientes, mientras el contenido únicamente decorativo sigue considerándose vacío. |',
+            'Spanish Structure capability',
+          );
+          readmeEs = replaceRequired(
+            readmeEs,
+            '| `FT-REVIEW-012` | Aparece una navegación significativa antes del contenido principal sin un enlace temprano de fragmento, alcanzable por teclado y validado, que lleve a la región main. | REVIEW / PASS | WCAG 2.4.1 |',
+            '| `FT-REVIEW-012` | Aparece una navegación significativa antes del contenido principal sin un enlace temprano de fragmento, alcanzable por teclado y validado, que lleve a la región main, o existe navegación significativa sin un landmark main expuesto que permita validar el destino de bypass. | REVIEW / PASS | WCAG 2.4.1 |',
+            'Spanish FT-REVIEW-012 catalog row',
+          );
+          write(readmeEsPath, readmeEs);
+
+          const rulesPath = 'docs/RULES.md';
+          let rules = read(rulesPath);
+          rules = replaceRequired(
+            rules,
+            '`FT-REVIEW-012` provides conservative page-level review evidence for WCAG 2.4.1 Bypass Blocks. It does not search for a literal label such as “Skip to content”. Instead, FocusTrace looks for an exposed primary `main` landmark, a substantial navigation landmark before that main content, and an early sequentially focusable same-document fragment link whose target resolves to the main landmark or to content inside it.\n\nA validated fragment bypass records `PASS` for this tested expectation. When a substantial pre-main navigation block is observed but no such validated link is found, FocusTrace emits `REVIEW`, not `FAIL`, because WCAG 2.4.1 can be satisfied by other mechanisms that cannot be proved from this single DOM pattern. A likely bypass link whose fragment target is missing is also reported for review with the broken target as evidence.',
+            '`FT-REVIEW-012` provides conservative page-level review evidence for WCAG 2.4.1 Bypass Blocks. It does not search for a literal label such as “Skip to content”. When an exposed primary `main` landmark exists, FocusTrace looks for a substantial navigation landmark before that main content and an early sequentially focusable same-document fragment link whose target resolves to the main landmark or to content inside it.\n\nA validated fragment bypass records `PASS` for this tested expectation. When substantial pre-main navigation is observed but no validated link is found, FocusTrace emits `REVIEW`, not `FAIL`, because WCAG 2.4.1 can be satisfied by other mechanisms that cannot be proved from this single DOM pattern. When no exposed main landmark exists, substantial exposed navigation with at least three sequential keyboard stops also produces contextual `REVIEW` because FocusTrace cannot validate a bypass destination; shorter navigation remains inapplicable. A likely bypass link whose fragment target is missing is reported for review in either case with the broken target as evidence.',
+            'Bypass Blocks methodology',
+          );
+          rules = replaceRequired(
+            rules,
+            '| FT-REVIEW-012 Missing or broken keyboard bypass candidate before repeated navigation | REVIEW/PASS | WCAG 2.4.1 A |',
+            '| FT-REVIEW-012 Missing, broken or unverifiable keyboard bypass around substantial navigation | REVIEW/PASS | WCAG 2.4.1 A |',
+            'FT-REVIEW-012 methodology table row',
+          );
+          rules = replaceRequired(
+            rules,
+            '- `FT-REVIEW-012` validates only the observable keyboard fragment-bypass pattern around substantial pre-main navigation; other WCAG 2.4.1 bypass mechanisms and repeated-block applicability still require manual context.',
+            '- `FT-REVIEW-012` validates only the observable keyboard fragment-bypass pattern when an exposed main landmark is available and treats substantial navigation without an exposed main landmark only as contextual review; other WCAG 2.4.1 bypass mechanisms and repeated-block applicability still require manual context.',
+            'FT-REVIEW-012 limitation note',
+          );
+          write(rulesPath, rules);
+          NODE
+      - name: Commit prepared release candidate
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git rm .github/workflows/prepare-release-v1.0.2.yml
+          git add package.json package-lock.json tests/release-contract.test.ts docs/RELEASE_CHECKLIST.md docs/STORE_SUBMISSION.md docs/changelog/CHANGELOG.md docs/changelog/RELEASE_NOTES_1.0.2.md README.md README.es.md docs/RULES.md
+          git commit -m "chore(release): prepare v1.0.2"
+          git push origin HEAD:release/v1.0.2
