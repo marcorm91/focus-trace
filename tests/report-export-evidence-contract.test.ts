@@ -7,6 +7,14 @@ function source(path: string): string {
 }
 
 describe('report export evidence contract', () => {
+  it('exports JUnit for saved scans without borrowing live runtime events', () => {
+    const report = source('entrypoints/sidepanel/views/SessionReportView.tsx');
+    expect(report).toContain('buildSessionExport({ scan, events: livePage ? events : [] })');
+    expect(report).toContain('renderVersionedJUnit(envelope)');
+    expect(report).toContain('onClick={downloadJUnitReport}');
+    expect(report).toContain('Exportar JUnit (.xml)');
+    expect(report).toContain('no la grabación completa de Trace');
+  });
   it('keeps single-page capture uncapped by finding count while bounding the stored print payload by size', () => {
     const evidence = source('lib/report/visual-evidence.ts');
     const auditHook = source('entrypoints/sidepanel/hooks/useMultipageAudit.ts');

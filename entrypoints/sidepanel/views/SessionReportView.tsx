@@ -14,6 +14,7 @@ import { buildReportComponentIndex, type ReportComponentIdentity } from '../../.
 import { buildSessionReportModel } from '../../../lib/report/session-report';
 import { buildStructureReportEvidence, structureHintCopy } from '../../../lib/report/structure-report';
 import { buildTextReportFilename, buildTextSessionReport } from '../../../lib/report/text-report';
+import { buildSessionExport, renderVersionedJUnit } from '../../../lib/report/versioned-export';
 import {
   captureReportVisualEvidence,
   collectReportComponents,
@@ -155,6 +156,16 @@ export function SessionReportView({
     downloadFile(`${base}.json`, renderAuditEvidenceJson(bundle), 'application/json');
   };
 
+  const downloadJUnitReport = () => {
+    if (!scan) return;
+    const envelope = buildSessionExport({ scan, events: livePage ? events : [] });
+    downloadFile(
+      `focustrace-${safeFilename(scan.title || scan.url)}.junit.xml`,
+      renderVersionedJUnit(envelope),
+      'application/xml',
+    );
+  };
+
   const openPrintableReport = async () => {
     if (!scan) return;
     setExportingPdf(true);
@@ -265,6 +276,10 @@ export function SessionReportView({
               <details className="report-more-formats">
                 <summary>{tr(language, 'More formats', 'Más formatos')}</summary>
                 <div className="report-format-options">
+                  <button type="button" disabled={!scan || exportingPdf} onClick={downloadJUnitReport}>
+                    <span aria-hidden="true">↓</span>
+                    {tr(language, 'Export JUnit (.xml)', 'Exportar JUnit (.xml)')}
+                  </button>
                   <button className="export-text-report" type="button" disabled={!scan || exportingPdf} onClick={downloadTextReport}>
                     <span aria-hidden="true">↓</span>
                     {tr(language, 'Session report (.txt)', 'Informe de sesión (.txt)')}
@@ -281,10 +296,21 @@ export function SessionReportView({
                 <small className="report-format-note">
                   {tr(
                     language,
-                    'TXT exports the session report. Markdown and JSON export the recorded Trace evidence.',
-                    'TXT exporta el informe de sesión. Markdown y JSON exportan la evidencia grabada de Trace.',
+                    'TXT exports the session report. JUnit exports findings for QA/CI; only FAIL counts as a failure. Markdown and JSON export the recorded Trace evidence.',
+                    'TXT exporta el informe de sesión. JUnit exporta hallazgos para QA/CI; solo FAIL cuenta como fallo. Markdown y JSON exportan la evidencia grabada de Trace.',
                   )}
                 </small>
+                {graph.focusEvents === 0 && (
+                  <small className="report-format-note">
+                    {!livePage ? tr(language,
+                      'Markdown and JSON are unavailable: saved audits retain the static analysis, not the full Trace recording.',
+                      'Markdown y JSON no están disponibles: las auditorías guardadas conservan el análisis estático, no la grabación completa de Trace.',
+                    ) : tr(language,
+                      'Markdown and JSON require recorded focus events. Record a Trace on this page first.',
+                      'Markdown y JSON necesitan eventos de foco grabados. Graba primero una traza en esta página.',
+                    )}
+                  </small>
+                )}
               </details>
               {onDeleteSavedReport && (
                 <button

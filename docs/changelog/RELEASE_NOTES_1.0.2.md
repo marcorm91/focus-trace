@@ -20,6 +20,8 @@ FocusTrace 1.0.2 is a maintenance release improving heading Structure evidence, 
 
 ## Interface and PDF exports
 
+- More formats now includes JUnit XML for current and saved page/component reports; only deterministic FAIL creates a failing testcase. Disabled Markdown/JSON Trace exports explain why the required recording is unavailable.
+
 - Current audit headings and scope prompts list every accepted domain rather than only the initial audit name, with wrapping in narrow panels.
 
 - Individual PDF index rows now match the compact multipage index typography and spacing, without solid row separators.

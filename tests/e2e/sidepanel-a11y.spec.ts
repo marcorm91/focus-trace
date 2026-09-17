@@ -1,4 +1,5 @@
 import type { BrowserContext, Worker } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
 import { expect, test } from './support/extension';
 
 declare const chrome: {
@@ -285,6 +286,22 @@ test('report opens a formatted PDF preview without exposing CSS selectors', asyn
     document.documentElement.scrollWidth <= document.documentElement.clientWidth,
   );
   expect(reportFits).toBe(true);
+
+  await panel.locator('.report-more-formats > summary').click();
+  await expect(panel.getByRole('button', { name: /Trace evidence \(\.md\)|Evidencia de Trace \(\.md\)/ })).toBeDisabled();
+  await expect(panel.getByRole('button', { name: /Trace evidence \(\.json\)|Evidencia de Trace \(\.json\)/ })).toBeDisabled();
+  await expect(panel.getByText(/Markdown and JSON require recorded focus events|Markdown y JSON necesitan eventos de foco grabados/)).toBeVisible();
+  const junitDownload = panel.waitForEvent('download');
+  await panel.getByRole('button', { name: /Export JUnit|Exportar JUnit/ }).click();
+  const downloaded = await junitDownload;
+  expect(downloaded.suggestedFilename()).toMatch(/\.junit\.xml$/);
+  const downloadPath = await downloaded.path();
+  expect(downloadPath).toBeTruthy();
+  const xml = await readFile(downloadPath!, 'utf8');
+  expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
+  expect(xml).toContain('failures="1"');
+  expect(xml).toContain('FT-WCAG-003');
+  await panel.locator('.report-more-formats > summary').click();
 
   const exportPdf = panel.getByRole('button', { name: /Export PDF|Exportar PDF/ });
   await expect(exportPdf).toBeVisible();
