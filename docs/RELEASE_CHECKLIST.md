@@ -1,6 +1,6 @@
 # FocusTrace release checklist
 
-Current release candidate: **1.0.1**.
+Current release candidate: **1.0.2**.
 
 Use this checklist before publishing a release build or submitting an updated package to a browser store. Keep the candidate version above aligned with `package.json`, `package-lock.json`, the browser manifests and the release contract test.
 
@@ -147,6 +147,7 @@ The automated side-panel E2E smoke test is a regression guard; it is not a subst
 - Analyze a page with substantial repeated navigation before main content and a valid early keyboard-focusable same-document bypass link; confirm the review is suppressed when its target resolves to the main content area.
 - Remove the observable bypass mechanism and confirm `FT-REVIEW-012` remains a contextual `REVIEW`, not automatic `FAIL`.
 - Confirm a `<main>` landmark alone is not treated as proof that repeated blocks can be bypassed.
+- Analyze substantial navigation with no exposed `<main>` / `role="main"` landmark and confirm `FT-REVIEW-012` remains contextual `REVIEW`, explaining that FocusTrace cannot validate the bypass destination automatically.
 - Confirm the rule does not require the literal text “Skip to content”.
 
 ### WCAG 2.4.7 Focus Visible
@@ -424,18 +425,18 @@ Before changing visibility:
 
 ## Release
 
-For the current candidate, the release version is **1.0.1** and the intended tag is **`v1.0.1`**.
+For the current candidate, the release version is **1.0.2** and the intended tag is **`v1.0.2`**.
 
-- Confirm `package.json`, `package-lock.json` and all browser manifests report `1.0.1`.
-- Confirm `tests/release-contract.test.ts` targets `v1.0.1` and passes.
-- Confirm `docs/changelog/RELEASE_NOTES_1.0.1.md` and `docs/changelog/CHANGELOG.md` match the shipped behavior and limitations.
-- Confirm the version shown in Settings comes from the installed manifest and displays `1.0.1` in the packaged candidate.
+- Confirm `package.json`, `package-lock.json` and all browser manifests report `1.0.2`.
+- Confirm `tests/release-contract.test.ts` targets `v1.0.2` and passes.
+- Confirm `docs/changelog/RELEASE_NOTES_1.0.2.md` and `docs/changelog/CHANGELOG.md` match the shipped behavior and limitations.
+- Confirm the version shown in Settings comes from the installed manifest and displays `1.0.2` in the packaged candidate.
 - Confirm the release commit is on `main` and CI is green on that exact commit.
 - Build the production Chrome, Edge and Firefox MV3 artifacts from that commit.
 - Smoke-test the unpacked production build in supported Chromium browsers, including F12 → FocusTrace → Inspect in DOM.
 - Complete the Firefox packaged-build and optional DevTools/Inspector smoke checklist before describing Firefox as officially supported.
-- Tag the exact approved commit as `v1.0.1`.
+- Tag the exact approved commit as `v1.0.2`.
 - Review the generated ZIPs before attaching/uploading them.
 - Only then publish/distribute the release artifacts or submit the updated packages to browser stores.
 
-After publishing 1.0.1, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.
+After publishing 1.0.2, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.

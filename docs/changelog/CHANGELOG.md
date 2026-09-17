@@ -2,6 +2,17 @@
 
 All notable FocusTrace release changes are summarized here. Detailed release notes remain under `docs/changelog/RELEASE_NOTES_<version>.md`.
 
+## 1.0.2
+
+### Fixed
+
+- Prevented H1-H6 headings from being reported as empty when direct text is absent but meaningful accessible descendant content is available through ARIA naming or image alternative text.
+- Kept decorative-only headings empty and preserved heading-level jump detection as an independent Structure signal.
+- Extended `FT-REVIEW-012` so substantial navigation without an exposed main landmark remains a contextual WCAG 2.4.1 review instead of becoming silently inapplicable.
+- Preserved broken early bypass-fragment candidates as review evidence even when no main landmark is exposed, while short navigation remains inapplicable.
+
+See `docs/changelog/RELEASE_NOTES_1.0.2.md` for release scope and validation boundaries.
+
 ## 1.0.1
 
 ### Fixed

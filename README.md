@@ -48,7 +48,7 @@ FocusTrace uses WCAG 2.2 as its conformance source. WCAG 2.2 criteria are also r
 | **Pointer target size** | Observable rendered pointer targets | Measures target geometry and WCAG 2.5.8 spacing while preserving contextual exceptions as REVIEW. | CSS-pixel size, neighboring target and pass/review rationale. |
 | **Color suggestion** | Deterministic contrast failure | Suggests a small sRGB adjustment that reaches the required ratio when it can be computed safely. | Measured HEX/RGB, suggestion and copy action. |
 | **How to fix** | Findings with remediation guidance | Shows concrete remediation strategies and a verification step. | Localized EN/ES guidance. |
-| **Structure** | Current full-page analysis | Exposes headings, semantic review and structural metrics prepared with the page scan; Refresh recalculates them after page changes. | H1-H6 outline, suggestions and counts. |
+| **Structure** | Current full-page analysis | Exposes headings, semantic review and structural metrics prepared with the page scan; Refresh recalculates them after page changes. | H1-H6 outline, suggestions and counts; headings without direct text can use meaningful accessible descendant content, while decorative-only content remains empty. |
 | **Trace** | Real interaction | Records keyboard/pointer input, focus, non-sensitive setting-change events, relevant mutations, SPA routes, dialogs, status-message candidates, ARIA widgets and causal/context-change evidence. | Events correlated by interaction; control values are not retained by context-change tracking. |
 | **Virtual focus** | Compatible `aria-activedescendant` widgets | Records valid virtual-focus changes as informational evidence without treating them as DOM focus movement or a finding. | Virtual destination available in Trace, Journey and Graph. |
 | **Focus Walk** | Active page | Automates sequential focus traversal to build navigation evidence. | Journey of reachable focus targets. |
@@ -111,7 +111,7 @@ Saved Replay regressions remain in extension-local storage with no time-based ex
 | `FT-REVIEW-009` | Visible `section` / `article` without its own heading or computed accessible name. | REVIEW | HTML |
 | `FT-REVIEW-010` | Repeated navigation/search/complementary landmarks without distinguishable names. | REVIEW | WAI-ARIA APG |
 | `FT-REVIEW-011` | The same help mechanisms change relative order across sampled pages. | REVIEW | WCAG 3.2.6 |
-| `FT-REVIEW-012` | Substantial navigation appears before primary content without a validated early keyboard-focusable fragment link that reaches the main region. | REVIEW / PASS | WCAG 2.4.1 |
+| `FT-REVIEW-012` | Substantial navigation appears before primary content without a validated early keyboard-focusable fragment link that reaches the main region, or substantial navigation is present while no exposed main landmark is available to validate a bypass destination. | REVIEW / PASS | WCAG 2.4.1 |
 | `FT-REVIEW-013` | The exact same repeated navigation destination set changes relative order across sampled pages. | REVIEW | WCAG 3.2.3 AA |
 | `FT-REVIEW-014` | A form control uses recognizable standard `autocomplete` purpose vocabulary in a malformed token sequence. Unknown-only/custom taxonomies are deliberately ignored. | REVIEW / PASS | WCAG 1.3.5 AA · ACT 73f2c2 |
 | `FT-REVIEW-015` | A uniquely observed native link points to the same exact destination on same-language sampled pages but its identification changes substantially. | REVIEW | WCAG 3.2.4 AA |

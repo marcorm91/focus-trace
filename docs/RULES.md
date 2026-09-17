@@ -435,9 +435,9 @@ The rule remains contextual because WCAG 1.3.5 applies to fields that collect in
 
 ## Bypass Blocks keyboard review scope
 
-`FT-REVIEW-012` provides conservative page-level review evidence for WCAG 2.4.1 Bypass Blocks. It does not search for a literal label such as “Skip to content”. Instead, FocusTrace looks for an exposed primary `main` landmark, a substantial navigation landmark before that main content, and an early sequentially focusable same-document fragment link whose target resolves to the main landmark or to content inside it.
+`FT-REVIEW-012` provides conservative page-level review evidence for WCAG 2.4.1 Bypass Blocks. It does not search for a literal label such as “Skip to content”. When an exposed primary `main` landmark exists, FocusTrace looks for a substantial navigation landmark before that main content and an early sequentially focusable same-document fragment link whose target resolves to the main landmark or to content inside it.
 
-A validated fragment bypass records `PASS` for this tested expectation. When a substantial pre-main navigation block is observed but no such validated link is found, FocusTrace emits `REVIEW`, not `FAIL`, because WCAG 2.4.1 can be satisfied by other mechanisms that cannot be proved from this single DOM pattern. A likely bypass link whose fragment target is missing is also reported for review with the broken target as evidence.
+A validated fragment bypass records `PASS` for this tested expectation. When substantial pre-main navigation is observed but no validated link is found, FocusTrace emits `REVIEW`, not `FAIL`, because WCAG 2.4.1 can be satisfied by other mechanisms that cannot be proved from this single DOM pattern. When no exposed main landmark exists, substantial exposed navigation with at least three sequential keyboard stops also produces contextual `REVIEW` because FocusTrace cannot validate a bypass destination; shorter navigation remains inapplicable. A likely bypass link whose fragment target is missing is reported for review in either case with the broken target as evidence.
 
 The rule is full-page only. Component-scoped analysis does not execute `FT-REVIEW-012`, because repeated-block bypass behavior depends on document-level order and page context.
 
@@ -490,7 +490,7 @@ The rule is full-page only. Component-scoped analysis does not execute `FT-REVIE
 | FT-REVIEW-009 Unidentified section/article structure | REVIEW | HTML Living Standard |
 | FT-REVIEW-010 Repeated landmarks without distinguishable names | REVIEW | WAI-ARIA APG |
 | FT-REVIEW-011 Repeated help mechanisms change relative order across sampled pages | REVIEW | WCAG 3.2.6 |
-| FT-REVIEW-012 Missing or broken keyboard bypass candidate before repeated navigation | REVIEW/PASS | WCAG 2.4.1 A |
+| FT-REVIEW-012 Missing, broken or unverifiable keyboard bypass around substantial navigation | REVIEW/PASS | WCAG 2.4.1 A |
 | FT-REVIEW-013 Exact repeated navigation destination set changes relative order across sampled pages | REVIEW | WCAG 3.2.3 AA |
 | FT-REVIEW-014 Standard autocomplete purpose token sequence may be malformed | REVIEW/PASS | WCAG 1.3.5 AA · ACT 73f2c2 |
 | FT-REVIEW-015 Exact unique link function may have substantially inconsistent identification across sampled pages | REVIEW | WCAG 3.2.4 AA |
@@ -542,7 +542,7 @@ The rule is full-page only. Component-scoped analysis does not execute `FT-REVIE
 - `FT-RUNTIME-008` and `FT-RUNTIME-009` correlate only observed focus/input events with route, dialog and DOM-focus changes inside a bounded window. They cannot prove author-handler causation, and `FT-RUNTIME-009` cannot always establish whether prior user advice satisfies WCAG 3.2.2.
 - `FT-RUNTIME-010` observes only trusted manual Tab focus transitions with a stable local pixel comparison. A visible focus cue outside the bounded target region, viewport/capture instability or non-Tab focus paths can remain outside this detector, so absence of a review is not proof of complete WCAG 2.4.7 conformance.
 - `FT-REVIEW-011` uses bounded, text-based help-mechanism candidates over Site Audit samples and therefore cannot establish full WCAG 3.2.6 applicability or site-wide conformance.
-- `FT-REVIEW-012` validates only the observable keyboard fragment-bypass pattern around substantial pre-main navigation; other WCAG 2.4.1 bypass mechanisms and repeated-block applicability still require manual context.
+- `FT-REVIEW-012` validates only the observable keyboard fragment-bypass pattern when an exposed main landmark is available and treats substantial navigation without an exposed main landmark only as contextual review; other WCAG 2.4.1 bypass mechanisms and repeated-block applicability still require manual context.
 - `FT-REVIEW-013` requires an exact repeated destination-set match and ignores partial/ambiguous navigation matches; it therefore favors false negatives, and Site Audit cannot prove whether an observed order change was initiated by the user.
 - `FT-REVIEW-014` validates only explicit standard-like `autocomplete` token sequences. It does not infer missing input-purpose metadata, judge unknown-only custom taxonomies, or prove that a field collects information about the user; those boundaries intentionally favor false negatives over false WCAG failures.
 - `FT-REVIEW-015` currently compares only unique rendered native HTTP(S) links with the same exact destination, same declared primary page language and same bounded observed naming source. It deliberately ignores duplicated destinations, buttons/custom controls, unknown-language pages and semantically uncertain label variations, so it favors false negatives over noisy 3.2.4 reviews.
