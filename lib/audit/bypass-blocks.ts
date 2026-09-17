@@ -36,11 +36,11 @@ function navigationStops(element: Element): number {
     .length;
 }
 
-function bypassWorthyNavigation(main: Element): Array<{ element: Element; stops: number }> {
+function bypassWorthyNavigation(main?: Element): Array<{ element: Element; stops: number }> {
   return [...document.querySelectorAll('nav, [role]')]
     .filter(isNavigationLandmark)
     .filter((element) => !isProgrammaticallyHidden(element))
-    .filter((element) => precedes(element, main))
+    .filter((element) => !main || precedes(element, main))
     .map((element) => ({ element, stops: navigationStops(element) }))
     .filter(({ stops }) => stops >= MIN_NAVIGATION_STOPS);
 }
@@ -88,7 +88,29 @@ function hintedBrokenCandidate(links: HTMLAnchorElement[]): { link: HTMLAnchorEl
 
 export function evaluateBypassBlocks(): BypassBlocksEvaluation {
   const main = exposedMainLandmarks()[0];
-  if (!main) return { status: 'inapplicable' };
+
+  if (!main) {
+    const navigation = bypassWorthyNavigation();
+    if (!navigation.length) return { status: 'inapplicable' };
+
+    const first = navigation[0]!;
+    const broken = hintedBrokenCandidate(earlyFragmentLinks(first.element));
+    if (broken) {
+      return {
+        status: 'review',
+        target: broken.link,
+        description: 'An early keyboard-focusable fragment link looks like a bypass mechanism, but its destination does not exist. Review the intended skip-link behavior and any alternative mechanism before treating this as a WCAG 2.4.1 failure.',
+        evidence: `Potential bypass link points to missing fragment target #${broken.id}.`,
+      };
+    }
+
+    return {
+      status: 'review',
+      target: first.element,
+      description: 'A substantial navigation block is present, but FocusTrace did not find an exposed main landmark that would allow it to validate a keyboard bypass destination. Review the page structure and whether another mechanism satisfies WCAG 2.4.1 Bypass Blocks.',
+      evidence: `Navigation landmark exposes ${first.stops} sequential keyboard stops. No exposed main landmark was available to validate a bypass destination.`,
+    };
+  }
 
   const navigation = bypassWorthyNavigation(main);
   const boundary = navigation[0]?.element ?? main;

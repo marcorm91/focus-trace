@@ -48,11 +48,32 @@ describe('WCAG 2.4.1 bypass blocks review', () => {
     expect(evaluation.evidence).toContain('3 sequential keyboard stops');
   });
 
+  it('reviews substantial navigation when the page has no exposed main landmark', () => {
+    render(`${nav()}<div class="content"><h1>Article</h1></div>`);
+
+    const evaluation = evaluateBypassBlocks();
+    expect(evaluation.status).toBe('review');
+    expect(evaluation.target).toBe(document.querySelector('nav'));
+    expect(evaluation.evidence).toContain('No exposed main landmark');
+  });
+
   it('reviews an early likely bypass link whose fragment target is missing', () => {
     render(`
       <a id="jump" href="#main-content">Skip to main content</a>
       ${nav()}
       <main><h1>Article</h1></main>
+    `);
+
+    const evaluation = evaluateBypassBlocks();
+    expect(evaluation).toMatchObject({ status: 'review', target: document.querySelector('#jump') });
+    expect(evaluation.evidence).toContain('missing fragment target #main-content');
+  });
+
+  it('reviews an early likely bypass link with a missing target even when main is absent', () => {
+    render(`
+      <a id="jump" href="#main-content">Skip to main content</a>
+      ${nav()}
+      <div class="content"><h1>Article</h1></div>
     `);
 
     const evaluation = evaluateBypassBlocks();
@@ -73,6 +94,11 @@ describe('WCAG 2.4.1 bypass blocks review', () => {
 
   it('does not require a bypass review for a short navigation block', () => {
     render(`${nav(2)}<main id="main"><h1>Article</h1></main>`);
+    expect(evaluateBypassBlocks().status).toBe('inapplicable');
+  });
+
+  it('remains inapplicable without main when navigation is too short to require review', () => {
+    render(`${nav(2)}<div class="content"><h1>Article</h1></div>`);
     expect(evaluateBypassBlocks().status).toBe('inapplicable');
   });
 
@@ -99,5 +125,22 @@ describe('WCAG 2.4.1 bypass blocks review', () => {
       .toEqual(expect.arrayContaining([expect.objectContaining({ type: 'WCAG', id: '2.4.1', level: 'A' })]));
     expect(component.ruleResults?.some((entry) => entry.ruleId === 'FT-REVIEW-012')).toBe(false);
     expect(component.review.some((issue) => issue.ruleId === 'FT-REVIEW-012')).toBe(false);
+  });
+
+  it('surfaces missing main as a full-page WCAG 2.4.1 review', () => {
+    render(`${nav()}<div class="content"><h1>Article</h1></div>`);
+
+    const fullPage = runFocusTraceScan();
+    const issue = fullPage.review.find((entry) => entry.ruleId === 'FT-REVIEW-012');
+
+    expect(issue).toBeDefined();
+    expect(issue?.evidence).toContain('No exposed main landmark');
+    expect(fullPage.ruleResults?.find((entry) => entry.ruleId === 'FT-REVIEW-012')).toMatchObject({
+      applicable: 1,
+      passed: 0,
+      failures: 0,
+      reviews: 1,
+      warnings: 0,
+    });
   });
 });
