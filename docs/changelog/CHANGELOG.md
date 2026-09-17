@@ -2,6 +2,19 @@
 
 All notable FocusTrace release changes are summarized here. Detailed release notes remain under `docs/changelog/RELEASE_NOTES_<version>.md`.
 
+## 1.0.1
+
+### Fixed
+
+- Unified guided/manual report controls, recording actions and finding-review reset styling with the existing theme.
+- Improved report URL wrapping, guided-check layout, Structure section spacing and suggested-fix presentation.
+- Completed Spanish audit titles and localized report evidence.
+- Applied shared action styling to auditor notes, audit profiles, saved flows, runtime rechecks, dialog confirmations and Settings controls.
+- Preserved red destructive confirmations, keyboard focus and disabled states across light/dark themes, and corrected theme tokens in Site Audit.
+- Inset Settings and Report select indicators and aligned the Contact section with the other Settings fieldsets.
+
+See `docs/changelog/RELEASE_NOTES_1.0.1.md` for release scope and validation boundaries.
+
 ## 1.0.0
 
 ### Added
