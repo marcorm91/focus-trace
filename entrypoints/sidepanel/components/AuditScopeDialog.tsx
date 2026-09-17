@@ -69,13 +69,13 @@ export function AuditScopeDialog({
       </dl>
 
       <div className="trace-reset-dialog-actions audit-scope-actions">
-        <button type="button" onClick={onCancel}>
+        <button className="ft-button" type="button" onClick={onCancel}>
           {tr(language, 'Cancel', 'Cancelar')}
         </button>
-        <button type="button" onClick={onAdd}>
+        <button className="ft-button" type="button" onClick={onAdd}>
           {tr(language, 'Add to current audit', 'Añadir a la auditoría actual')}
         </button>
-        <button ref={newAuditRef} className="trace-reset-confirm" type="button" onClick={onNew}>
+        <button ref={newAuditRef} className="ft-button trace-reset-confirm danger" type="button" onClick={onNew}>
           {tr(language, 'Start new audit', 'Empezar una nueva auditoría')}
         </button>
       </div>

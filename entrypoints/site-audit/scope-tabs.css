@@ -4,9 +4,9 @@
   width: fit-content;
   max-width: 100%;
   padding: 3px;
-  border: 1px solid color-mix(in srgb, CanvasText 14%, transparent);
+  border: 1px solid var(--ft-border-soft);
   border-radius: 10px;
-  background: color-mix(in srgb, CanvasText 4%, Canvas);
+  background: var(--ft-surface-subtle);
 }
 
 .site-scope-tabs button {
@@ -15,27 +15,27 @@
   border: 1px solid transparent;
   border-radius: 7px;
   background: transparent;
-  color: CanvasText;
+  color: var(--ft-ink);
   font-weight: 800;
 }
 
 .site-scope-tabs button[aria-selected='true'] {
-  border-color: color-mix(in srgb, CanvasText 16%, transparent);
-  background: Canvas;
-  box-shadow: 0 2px 8px color-mix(in srgb, CanvasText 8%, transparent);
+  border-color: var(--ft-border);
+  background: var(--ft-surface);
+  box-shadow: var(--ft-shadow-sm);
 }
 
 .site-scope-tabs button:not([aria-selected='true']):hover {
-  background: color-mix(in srgb, Highlight 9%, Canvas);
+  background: var(--ft-accent-soft);
 }
 
 .site-scope-panel {
   display: grid;
   gap: 12px;
   padding: 15px;
-  border: 1px solid color-mix(in srgb, CanvasText 12%, transparent);
+  border: 1px solid var(--ft-border-soft);
   border-radius: 11px;
-  background: color-mix(in srgb, CanvasText 1.5%, Canvas);
+  background: var(--ft-surface);
 }
 
 .site-domain-field,
@@ -50,10 +50,10 @@
 .site-manual-urls textarea {
   width: 100%;
   padding: 10px 11px;
-  border: 1px solid color-mix(in srgb, CanvasText 18%, transparent);
+  border: 1px solid var(--ft-border-soft);
   border-radius: 8px;
-  background: Canvas;
-  color: CanvasText;
+  background: var(--ft-surface);
+  color: var(--ft-ink);
   font: inherit;
 }
 
@@ -85,16 +85,16 @@
 }
 
 .site-manual-summary strong {
-  color: color-mix(in srgb, Highlight 78%, CanvasText);
+  color: var(--ft-accent-strong);
 }
 
 .site-manual-warning {
   margin: 0;
   padding: 9px 10px;
-  border-left: 3px solid #b54708;
+  border-left: 3px solid var(--ft-warning);
   border-radius: 7px;
-  background: color-mix(in srgb, #b54708 7%, Canvas);
-  color: CanvasText;
+  background: var(--ft-warning-soft);
+  color: var(--ft-ink);
   font-size: 13px;
   line-height: 1.45;
 }

@@ -62,6 +62,7 @@ export function FirefoxDevtoolsSettings({ language }: { language: AppLanguage })
         )}
       </p>
       <button
+        className="ft-button"
         type="button"
         disabled={enabled === true || requesting}
         onClick={() => void enableDevtools()}

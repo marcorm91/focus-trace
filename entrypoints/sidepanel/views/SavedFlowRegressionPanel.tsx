@@ -444,7 +444,7 @@ export function SavedFlowRegressionPanel({
             onChange={(event) => setName(event.currentTarget.value)}
           />
         </label>
-        <button type="button" disabled={!canSave} onClick={() => void saveCurrent()}>
+        <button className="ft-button" type="button" disabled={!canSave} onClick={() => void saveCurrent()}>
           {tr(language, 'Save current Trace', 'Guardar Trace actual')}
         </button>
       </div>
@@ -476,16 +476,17 @@ export function SavedFlowRegressionPanel({
           )}
           <div className="saved-flow-actions">
             <button
+              className="ft-button"
               type="button"
               disabled={!selected || recording || busy || runState === 'running' || runState === 'manual-stop' || !selected.steps.length}
               onClick={() => void startRun()}
             >
               {tr(language, 'Run saved regression', 'Ejecutar regresión guardada')}
             </button>
-            <button type="button" disabled={!selected || busy || runState === 'running' || runState === 'manual-stop'} onClick={() => void deleteSelected()}>
+            <button className="ft-button" type="button" disabled={!selected || busy || runState === 'running' || runState === 'manual-stop'} onClick={() => void deleteSelected()}>
               {tr(language, 'Delete flow', 'Eliminar flujo')}
             </button>
-            <button type="button" disabled={!flows.length || busy || runState === 'running' || runState === 'manual-stop'} onClick={() => void clearAll()}>
+            <button className="ft-button" type="button" disabled={!flows.length || busy || runState === 'running' || runState === 'manual-stop'} onClick={() => void clearAll()}>
               {tr(language, 'Delete all', 'Eliminar todos')}
             </button>
           </div>
@@ -499,10 +500,10 @@ export function SavedFlowRegressionPanel({
           <strong>{tr(language, 'Manual stop required', 'Se requiere parada manual')}</strong>
           <p>{manualInstruction(manualStep, language)}</p>
           <div className="saved-flow-stop-actions">
-            <button type="button" disabled={busy} onClick={() => void continueManual()}>
+            <button className="ft-button" type="button" disabled={busy} onClick={() => void continueManual()}>
               {tr(language, 'I performed this step — continue', 'He realizado este paso — continuar')}
             </button>
-            <button type="button" disabled={busy} onClick={() => void cancelManualReplay()}>
+            <button className="ft-button" type="button" disabled={busy} onClick={() => void cancelManualReplay()}>
               {tr(language, 'Cancel replay', 'Cancelar replay')}
             </button>
           </div>

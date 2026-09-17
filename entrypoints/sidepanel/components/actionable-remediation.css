@@ -1,9 +1,10 @@
+@layer components {
 .actionable-remediation {
   margin-top: 12px;
   padding: 12px 14px;
-  border: 1px solid var(--border-subtle, #d9dee7);
-  border-radius: 10px;
-  background: var(--surface-elevated, #fff);
+  border: 1px solid var(--ft-border-soft);
+  border-radius: var(--ft-radius-md);
+  background: var(--ft-surface);
 }
 
 .actionable-remediation > strong {
@@ -22,4 +23,5 @@
 
 .actionable-remediation p {
   margin: 10px 0 0;
+}
 }

@@ -157,7 +157,7 @@ export function SettingsView({
     <section className="panel settings-panel" aria-labelledby="settings-title">
       <button
         type="button"
-        className="settings-back-trigger"
+        className="ft-button settings-back-trigger"
         onClick={closeFocusedSettingsView}
       >
         <span aria-hidden="true">←</span>
@@ -219,7 +219,7 @@ export function SettingsView({
         >
           <button
             type="button"
-            className="ui-scale-step"
+            className="ft-button ui-scale-step"
             disabled={uiScale === 100}
             aria-label={tr(language, 'Decrease text and interface size', 'Reducir tamaño de texto e interfaz')}
             title={tr(language, 'Decrease FocusTrace size', 'Reducir tamaño de FocusTrace')}
@@ -236,7 +236,7 @@ export function SettingsView({
           </output>
           <button
             type="button"
-            className="ui-scale-step"
+            className="ft-button ui-scale-step"
             disabled={uiScale === 130}
             aria-label={tr(language, 'Increase text and interface size', 'Aumentar tamaño de texto e interfaz')}
             title={tr(language, 'Increase FocusTrace size', 'Aumentar tamaño de FocusTrace')}
@@ -306,8 +306,8 @@ export function SettingsView({
 
       <FocusMemorySettings language={language} />
 
-      <section className="settings-group settings-contact" aria-labelledby="settings-contact-title">
-        <h3 id="settings-contact-title">{tr(language, 'Contact', 'Contacto')}</h3>
+      <fieldset className="settings-group settings-contact">
+        <legend>{tr(language, 'Contact', 'Contacto')}</legend>
         <p className="settings-help">
           {tr(
             language,
@@ -318,7 +318,7 @@ export function SettingsView({
         <a className="settings-contact-link" href={CREATOR_LINKEDIN} target="_blank" rel="noreferrer">
           {tr(language, 'Contact Marco on LinkedIn', 'Contactar con Marco en LinkedIn')} <span aria-hidden="true">↗</span>
         </a>
-      </section>
+      </fieldset>
 
       <footer
         className="settings-meta"
