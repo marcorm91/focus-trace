@@ -31,6 +31,28 @@ describe('heading outline', () => {
     expect(outline[2]?.signals).toContain('empty');
   });
 
+  it('uses a meaningful descendant accessible name instead of marking an image heading as empty', () => {
+    render(`
+      <main>
+        <h1 title="elDiario.es - Noticias de actualidad - Periodismo a pesar de todo">
+          <a href="/" aria-label="elDiario.es Noticias de actualidad - Periodismo a pesar de todo">
+            <img src="logo.svg" alt="elDiario.es - Noticias de actualidad - Periodismo a pesar de todo">
+          </a>
+        </h1>
+      </main>
+    `);
+    const [heading] = collectHeadingOutline();
+    expect(heading?.signals).not.toContain('empty');
+    expect(heading?.text).toBe('elDiario.es Noticias de actualidad - Periodismo a pesar de todo');
+  });
+
+  it('keeps an image-only heading empty when its descendant has no accessible name', () => {
+    render('<main><h1><a href="/"><img src="logo.svg" alt=""></a></h1></main>');
+    const [heading] = collectHeadingOutline();
+    expect(heading?.signals).toContain('empty');
+    expect(heading?.text).toBe('');
+  });
+
   it('marks an outline that starts below H1 for review', () => {
     render('<main><h2>Section before title</h2><h1>Page title</h1><h2>Content</h2></main>');
     const outline = collectHeadingOutline();
