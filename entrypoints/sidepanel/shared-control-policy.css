@@ -52,6 +52,16 @@
   cursor: not-allowed;
 }
 
+/* Keep Settings target sizes while sharing all action appearance and states. */
+.ft-button.ui-scale-step {
+  min-height: 42px;
+}
+
+.ft-button.settings-back-trigger,
+.settings-memory-actions .ft-button {
+  min-height: 38px;
+}
+
 /* Settings and instructions are focused sub-views. This state belongs in the
    policy layer so component-level display declarations cannot reopen chrome. */
 html[data-ft-focused-subview-open] .quick-start,

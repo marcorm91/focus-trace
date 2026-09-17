@@ -95,6 +95,7 @@ export function FocusMemorySettings({ language }: { language: AppLanguage }) {
 
         <div className="settings-memory-actions">
           <button
+            className="ft-button"
             type="button"
             disabled={!ready || !hasHistory}
             onClick={() => void clearHistory()}
