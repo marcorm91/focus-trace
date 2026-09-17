@@ -298,6 +298,7 @@ function runMultipleMainLandmarks(): RuleExecution {
       `${landmarks.length} exposed main landmarks were detected. Native HTML should not expose multiple visible <main> elements; multiple ARIA main landmarks require clear structural purpose and distinguishable labels.`,
     ));
   }
+
   return result;
 }
 
@@ -491,6 +492,27 @@ function visibleHeadings(): Element[] {
     .filter((heading) => !isProgrammaticallyHidden(heading));
 }
 
+const HEADING_NAMED_DESCENDANT_SELECTOR =
+  'img,svg,[aria-label],[aria-labelledby],[role="img"],input,button,a[href]';
+
+function headingAccessibleText(heading: Element): string {
+  const ownName = accessibleNameDetails(heading);
+  if (
+    (ownName.source === 'aria-label' || ownName.source === 'aria-labelledby') &&
+    ownName.name.trim()
+  ) {
+    return ownName.name.replace(/\s+/g, ' ').trim();
+  }
+
+  for (const descendant of heading.querySelectorAll<HTMLElement>(HEADING_NAMED_DESCENDANT_SELECTOR)) {
+    if (isProgrammaticallyHidden(descendant)) continue;
+    const name = accessibleNameDetails(descendant).name.replace(/\s+/g, ' ').trim();
+    if (name) return name;
+  }
+
+  return '';
+}
+
 export function collectHeadingOutline(): HeadingSnapshot[] {
   const headings = visibleHeadings();
   const h1Count = headings.filter((heading) => heading.tagName === 'H1').length;
@@ -498,7 +520,8 @@ export function collectHeadingOutline(): HeadingSnapshot[] {
 
   return headings.map((heading, index) => {
     const level = Number(heading.tagName.slice(1)) as HeadingSnapshot['level'];
-    const text = heading.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+    const textContent = heading.textContent?.replace(/\s+/g, ' ').trim() ?? '';
+    const text = textContent || headingAccessibleText(heading);
     const signals: HeadingSnapshot['signals'] = [];
     if (!text) signals.push('empty');
     if ((index === 0 && level > 1) || (previousLevel != null && level > previousLevel + 1)) signals.push('level-jump');
