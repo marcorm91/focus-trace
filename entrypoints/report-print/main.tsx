@@ -492,7 +492,7 @@ function PrintableReport({ report }: { report: LoadedReport }) {
             {tocEntries.map((entry, index) => (
               <li key={entry.id}>
                 <a href={`#${entry.id}`}>
-                  <strong>{index + 1}. {entry.label}</strong>
+                  <span>{index + 1}. {entry.label}</span>
                   <span className="report-print-toc-leader" aria-hidden="true" />
                   <span
                     className="report-print-toc-number"

@@ -8,28 +8,27 @@
 
 .report-print-toc > ol {
   display: grid;
-  gap: 10px;
-  margin: 0;
+  gap: 5px;
+  margin: 8px 0 0 18px;
   padding: 0;
   list-style: none;
 }
 
 .report-print-toc > ol > li {
-  padding-bottom: 9px;
-  border-bottom: 1px solid #e2e6ef;
+  padding: 0;
+  border: 0;
 }
 
-.report-print-toc a {
+.report-print-toc > ol > li > a {
   display: grid;
   grid-template-columns: auto minmax(18px, 1fr) auto;
   align-items: baseline;
   gap: 7px;
-  color: inherit;
+  color: #475569;
+  font-size: 11px;
+  font-weight: 400;
+  font-family: inherit;
   text-decoration: none;
-}
-
-.report-print-toc a strong {
-  font-size: 13px;
 }
 
 .report-print-toc-leader {
@@ -39,7 +38,7 @@
 }
 
 .report-print-toc-number {
-  color: #475569;
+  color: #667085;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
 }

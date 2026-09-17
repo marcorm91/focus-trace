@@ -3,6 +3,7 @@ import { browser } from '#imports';
 import {
   activeAuditFromStore,
   auditScopeForUrl,
+  normalizeAuditPageUrl,
   type AccessibilityAudit,
   type AuditAnalysisPlan,
   type AuditPageVisualEvidence,
@@ -15,6 +16,7 @@ import {
   clearMultipageAudits,
   deleteMultipageAuditPage,
   recordMultipageAuditScan,
+  recordMultipageAuditScope,
 } from '../../../lib/audit/multipage-audit-storage';
 import {
   captureReportVisualEvidence,
@@ -27,6 +29,7 @@ interface PendingAuditScope {
   audit: AccessibilityAudit;
   site: string;
   url: string;
+  purpose: 'analysis' | 'trace';
 }
 
 type PendingResolver = (plan: AuditAnalysisPlan | null) => void;
@@ -41,10 +44,16 @@ function staticVisualTargetCount(scan: ScanResult): number {
   ).size;
 }
 
-export function useMultipageAudit() {
+export function useMultipageAudit(tabId?: number) {
   const [store, setStore] = useState<MultipageAuditStore>();
   const [pendingScope, setPendingScope] = useState<PendingAuditScope>();
   const pendingResolver = useRef<PendingResolver | undefined>(undefined);
+
+  useEffect(() => () => {
+    pendingResolver.current?.(null);
+    pendingResolver.current = undefined;
+    setPendingScope(undefined);
+  }, [tabId]);
 
   const refresh = useCallback(async () => {
     const next = await loadMultipageAuditStore();
@@ -70,17 +79,31 @@ export function useMultipageAudit() {
     [store],
   );
 
-  const preparePageAnalysis = useCallback(async (url: string): Promise<AuditAnalysisPlan | null> => {
+  const preparePageAnalysis = useCallback(async (url: string, purpose: 'analysis' | 'trace' = 'analysis'): Promise<AuditAnalysisPlan | null> => {
     const latest = await refresh();
     const scope: AuditScopeCheck = auditScopeForUrl(latest, url);
     if (scope.kind === 'new' || scope.kind === 'same-site') return scope.plan;
 
     if (pendingResolver.current) pendingResolver.current(null);
-    setPendingScope({ audit: scope.audit, site: scope.site, url: scope.url });
+    setPendingScope({ audit: scope.audit, site: scope.site, url: scope.url, purpose });
     return new Promise<AuditAnalysisPlan | null>((resolve) => {
       pendingResolver.current = resolve;
     });
   }, [refresh]);
+
+  const prepareTraceScope = useCallback(async (targetTabId: number): Promise<boolean> => {
+    const tab = await browser.tabs.get(targetTabId);
+    if (!tab.url) throw new Error('FocusTrace could not resolve the current page URL.');
+    const plan = await preparePageAnalysis(tab.url, 'trace');
+    if (!plan) return false;
+    // Navigation while the modal is open invalidates the user's scope decision.
+    const current = await browser.tabs.get(targetTabId);
+    if (!current.url || normalizeAuditPageUrl(current.url) !== normalizeAuditPageUrl(tab.url)) {
+      throw new Error('The page changed. Start Trace again on the current page.');
+    }
+    setStore(await recordMultipageAuditScope(plan));
+    return true;
+  }, [preparePageAnalysis]);
 
   const resolvePending = useCallback((plan: AuditAnalysisPlan | null) => {
     const resolve = pendingResolver.current;
@@ -164,6 +187,7 @@ export function useMultipageAudit() {
     pendingScope,
     decisionPending: Boolean(pendingScope),
     preparePageAnalysis,
+    prepareTraceScope,
     recordPageAnalysis,
     deleteAuditPage,
     clearAuditHistory,

@@ -302,8 +302,9 @@
   margin: 0;
 }
 
-.audit-scope-dialog {
-  width: min(560px, calc(100vw - 32px));
+.trace-reset-dialog.audit-scope-dialog {
+  width: min(720px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
 }
 
 .audit-scope-context div {

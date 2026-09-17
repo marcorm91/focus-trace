@@ -301,4 +301,13 @@ test('report opens a formatted PDF preview without exposing CSS selectors', asyn
   await expect(printable.getByRole('button', { name: /Print \/ Save as PDF|Imprimir \/ Guardar como PDF/ })).toBeVisible();
   await expect(printable.getByRole('link', { name: 'WCAG 4.1.2 (A)' })).toBeVisible();
   await expect(printable.getByText('#private-selector-must-not-print')).toHaveCount(0);
+  const index = printable.locator('.report-print-toc');
+  await expect(index.locator('ol')).toHaveCSS('row-gap', '5px');
+  await expect(index.locator('li').first()).toHaveCSS('border-bottom-width', '0px');
+  await expect(index.locator('a').first()).toHaveCSS('font-size', '11px');
+  await expect(index.locator('a').first()).toHaveCSS('font-weight', '400');
+  await expect(index.locator('a').first()).toHaveCSS('color', 'rgb(71, 85, 105)');
+  await printable.emulateMedia({ media: 'print' });
+  await expect(index.locator('a').first()).toHaveCSS('font-size', '11px');
+  await expect(index.locator('a').first()).toHaveCSS('font-weight', '400');
 });

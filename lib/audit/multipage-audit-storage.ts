@@ -10,6 +10,7 @@ import {
   MULTIPAGE_AUDIT_VERSION,
   activeAuditFromStore,
   applyAuditAnalysis,
+  applyAuditScope,
   emptyMultipageAuditStore,
   removeAuditPage,
   updateAuditScan,
@@ -195,6 +196,12 @@ export async function saveMultipageAuditStore(store: MultipageAuditStore): Promi
 
 function auditId(): string {
   return `audit-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+export async function recordMultipageAuditScope(plan: AuditAnalysisPlan): Promise<MultipageAuditStore> {
+  const current = await loadMultipageAuditStore();
+  await saveMultipageAuditStore(applyAuditScope(current, plan, auditId(), Date.now()));
+  return loadMultipageAuditStore();
 }
 
 export async function recordMultipageAuditScan(
