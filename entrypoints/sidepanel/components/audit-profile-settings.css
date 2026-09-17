@@ -1,3 +1,4 @@
+@layer components {
 .audit-profile-settings {
   display: grid;
   gap: 14px;
@@ -17,7 +18,9 @@
 .audit-profile-field select,
 .audit-profile-field textarea {
   width: 100%;
+  min-width: 0;
   min-height: 36px;
+  padding: 7px 10px;
 }
 
 .audit-profile-field textarea {
@@ -77,4 +80,5 @@
   .audit-profile-settings {
     border: 1px solid CanvasText;
   }
+}
 }

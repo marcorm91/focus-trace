@@ -170,13 +170,13 @@ export function AuditProfileSettings({ language }: { language: AppLanguage }) {
       </label>
 
       <div className="audit-profile-actions">
-        <button type="button" onClick={() => void createFromSelected()}>
+        <button className="ft-button" type="button" onClick={() => void createFromSelected()}>
           {tr(language, 'Duplicate to edit', 'Duplicar para editar')}
         </button>
-        <button type="button" disabled={!editable} onClick={() => void deleteSelected()}>
+        <button className="ft-button" type="button" disabled={!editable} onClick={() => void deleteSelected()}>
           {tr(language, 'Delete profile', 'Eliminar perfil')}
         </button>
-        <button type="button" onClick={() => void resetProfiles()}>
+        <button className="ft-button" type="button" onClick={() => void resetProfiles()}>
           {tr(language, 'Reset profiles', 'Restablecer perfiles')}
         </button>
       </div>
@@ -288,7 +288,7 @@ export function AuditProfileSettings({ language }: { language: AppLanguage }) {
         </small>
       </label>
 
-      <button className="audit-profile-save" type="button" disabled={!editable} onClick={() => void saveDraft()}>
+      <button className="ft-button audit-profile-save" type="button" disabled={!editable} onClick={() => void saveDraft()}>
         {tr(language, 'Save and apply profile', 'Guardar y aplicar perfil')}
       </button>
 

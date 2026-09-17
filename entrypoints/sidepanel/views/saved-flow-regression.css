@@ -1,9 +1,10 @@
+@layer components {
 .saved-flow-panel {
   margin-top: 1rem;
   padding: 1rem;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--ft-border-soft);
   border-radius: 0.75rem;
-  background: var(--surface-raised);
+  background: var(--ft-surface-raised);
 }
 
 .saved-flow-heading h3,
@@ -37,6 +38,8 @@
 .saved-flow-library select {
   width: 100%;
   min-width: 0;
+  min-height: 36px;
+  padding: 7px 10px;
 }
 
 .saved-flow-actions {
@@ -78,7 +81,7 @@
   display: grid;
   gap: 0.2rem;
   padding: 0.65rem;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--ft-border-soft);
   border-radius: 0.55rem;
 }
 
@@ -117,4 +120,5 @@
   .saved-flow-results li {
     border: 1px solid CanvasText;
   }
+}
 }

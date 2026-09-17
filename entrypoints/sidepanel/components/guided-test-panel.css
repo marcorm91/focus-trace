@@ -1,3 +1,4 @@
+@layer components {
 .guided-test-panel {
   display: grid;
   gap: 14px;
@@ -232,4 +233,5 @@
 .guided-test-selectors > .guided-test-selector {
   flex: 1 1 210px;
   min-width: 0;
+}
 }

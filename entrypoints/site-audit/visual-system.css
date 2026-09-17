@@ -171,7 +171,10 @@ textarea {
   font-weight: 900;
 }
 
-.site-extra-urls textarea {
+.site-extra-urls textarea,
+.site-limit-controls input {
+  min-height: 36px;
+  padding: 7px 10px;
   border: 1.5px solid var(--ft-border-soft);
   border-radius: var(--ft-radius-sm);
   background: var(--ft-surface);
@@ -179,7 +182,9 @@ textarea {
 }
 
 .site-extra-urls textarea:hover,
-.site-extra-urls textarea:focus {
+.site-extra-urls textarea:focus,
+.site-limit-controls input:hover,
+.site-limit-controls input:focus {
   border-color: var(--ft-border);
 }
 

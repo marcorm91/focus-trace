@@ -15,38 +15,12 @@
   background: transparent;
 }
 
-.auditor-note-editor button {
-  min-height: 32px;
-  border: 1px solid var(--ft-border, ButtonBorder);
-  border-radius: 7px;
-  padding: 5px 9px;
-  background: var(--ft-surface, ButtonFace);
-  color: inherit;
-  cursor: pointer;
-  font-size: 14px;
-}
-
-.auditor-note-editor button.primary {
-  border-color: var(--ft-brand, Highlight);
-  background: var(--ft-brand, Highlight);
-  color: #fff;
-  font-weight: 700;
-}
-
-.auditor-note-editor button.danger {
-  color: var(--ft-danger, #b3261e);
-}
-
-.auditor-note-editor button:disabled {
-  cursor: not-allowed;
-  opacity: .55;
-}
-
 .auditor-note-heading,
 .auditor-note-heading > div,
 .auditor-note-form-footer,
 .auditor-note-form-footer > div {
   display: flex;
+  flex-wrap: wrap;
   align-items: center;
   justify-content: space-between;
   gap: 7px;
@@ -82,7 +56,7 @@
 }
 
 .auditor-note-form textarea:focus-visible {
-  outline: 3px solid #786ff0;
+  outline: 3px solid var(--ft-focus);
   outline-offset: 2px;
 }
 

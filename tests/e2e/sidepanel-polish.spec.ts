@@ -138,7 +138,28 @@ test('sidepanel controls and finding surfaces expose their intended behavior', a
 
   await scanFinding.locator(':scope > summary').click();
   const scanNoteEditor = scanFinding.locator('.auditor-note-editor');
-  await scanNoteEditor.getByRole('button', { name: /Add auditor note|Añadir nota del auditor/ }).click();
+  const addNote = scanNoteEditor.getByRole('button', { name: /Add auditor note|Añadir nota del auditor/ });
+  // Lazy component CSS must not override the shared action theme in either mode.
+  for (const colorScheme of ['light', 'dark'] as const) {
+    await panel.emulateMedia({ colorScheme, reducedMotion: 'reduce' });
+    const theme = await firstQuickAction.evaluate((button) => {
+      const style = getComputedStyle(button);
+      return { background: style.backgroundColor, color: style.color, border: style.borderTopColor };
+    });
+    await expect(addNote).toHaveCSS('background-color', theme.background);
+    await expect(addNote).toHaveCSS('color', theme.color);
+    await expect(addNote).toHaveCSS('border-top-color', theme.border);
+    await expect(addNote).not.toHaveCSS('box-shadow', 'none');
+    await addNote.focus();
+    await panel.keyboard.press('Tab');
+    await panel.keyboard.press('Shift+Tab');
+    await expect(addNote).toBeFocused();
+    await expect(addNote).toHaveCSS('outline-style', 'solid');
+  }
+  await panel.emulateMedia({ colorScheme: 'light', reducedMotion: 'no-preference' });
+  await addNote.click();
+  await expect(scanNoteEditor.getByRole('button', { name: /Save note|Guardar nota/ })).toBeDisabled();
+  await expect(scanNoteEditor.getByRole('button', { name: /Save note|Guardar nota/ })).toHaveCSS('box-shadow', 'none');
   await scanNoteEditor.getByRole('textbox').fill('Confirmed with keyboard.');
   await scanNoteEditor.getByRole('button', { name: /Save note|Guardar nota/ }).click();
   await expect(scanNoteEditor.locator('.auditor-note-text')).toHaveText('Confirmed with keyboard.');

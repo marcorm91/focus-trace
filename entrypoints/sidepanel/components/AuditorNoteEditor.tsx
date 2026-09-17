@@ -38,7 +38,7 @@ export function AuditorNoteEditor({
   if (!editing && !note) {
     return (
       <div className="auditor-note-editor is-empty">
-        <button type="button" onClick={() => setEditing(true)}>
+        <button className="ft-button" type="button" onClick={() => setEditing(true)}>
           <span aria-hidden="true">＋</span>
           {tr(language, 'Add auditor note', 'Añadir nota del auditor')}
         </button>
@@ -52,10 +52,10 @@ export function AuditorNoteEditor({
         <strong>{tr(language, 'Auditor note', 'Nota del auditor')}</strong>
         {!editing && (
           <div>
-            <button type="button" onClick={() => setEditing(true)}>
+            <button className="ft-button" type="button" onClick={() => setEditing(true)}>
               {tr(language, 'Edit', 'Editar')}
             </button>
-            <button className="danger" type="button" onClick={() => void save('')} disabled={saving}>
+            <button className="ft-button danger" type="button" onClick={() => void save('')} disabled={saving}>
               {tr(language, 'Remove', 'Eliminar')}
             </button>
           </div>
@@ -86,14 +86,14 @@ export function AuditorNoteEditor({
           <div className="auditor-note-form-footer">
             <small>{draft.length}/{MAX_AUDITOR_NOTE_LENGTH}</small>
             <div>
-              <button type="button" onClick={() => {
+              <button className="ft-button" type="button" onClick={() => {
                 setEditing(false);
                 setSaveError(false);
               }} disabled={saving}>
                 {tr(language, 'Cancel', 'Cancelar')}
               </button>
               <button
-                className="primary"
+                className="ft-button primary"
                 type="button"
                 onClick={() => void save(draft)}
                 disabled={saving || !draft.trim() || draft.trim() === note?.text}
