@@ -119,16 +119,6 @@
   padding: 14px 18px 18px;
 }
 
-.trace-reset-confirm {
-  border-color: rgba(176, 42, 42, 0.72);
-  background: rgba(176, 42, 42, 0.1);
-  font-weight: 700;
-}
-
-.trace-reset-confirm:not(:disabled):hover {
-  background: rgba(176, 42, 42, 0.16);
-}
-
 @media (min-width: 560px) {
   .trace-hero-actions {
     justify-content: flex-end;

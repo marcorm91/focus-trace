@@ -28,6 +28,13 @@
   color: var(--ft-danger);
 }
 
+/* Dialog confirmations retain their red tint; dimensions and interaction
+   structure come from the same action style as the neutral cancel button. */
+.ft-button.trace-reset-confirm {
+  border-color: var(--ft-danger);
+  background: var(--ft-danger-soft);
+}
+
 .ft-button.danger:not(:disabled):hover {
   border-color: var(--ft-danger);
   background: var(--ft-danger-soft);
