@@ -148,6 +148,7 @@ export function RuntimeView({
         </div>
         <div className="trace-reset-dialog-actions">
           <button
+            className="ft-button"
             ref={cancelDeleteRef}
             type="button"
             disabled={deleting}
@@ -156,7 +157,7 @@ export function RuntimeView({
             {tr(language, 'Cancel', 'Cancelar')}
           </button>
           <button
-            className="trace-reset-confirm"
+            className="ft-button trace-reset-confirm danger"
             type="button"
             disabled={deleting}
             onClick={() => void confirmDelete()}
@@ -438,7 +439,7 @@ function RuntimeEventRow({
         )}
         {signature && (
           <div className="runtime-finding-recheck">
-            <button
+            <button className="ft-button"
               type="button"
               disabled={rechecking}
               aria-describedby={recheck || recheckError ? `runtime-recheck-${event.id}` : undefined}

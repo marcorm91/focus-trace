@@ -114,6 +114,7 @@
 .trace-reset-dialog-actions {
   display: flex;
   justify-content: flex-end;
+  flex-wrap: wrap;
   gap: 8px;
   padding: 14px 18px 18px;
 }

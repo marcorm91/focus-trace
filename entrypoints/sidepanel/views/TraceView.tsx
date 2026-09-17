@@ -242,6 +242,7 @@ export function TraceView({
         </div>
         <div className="trace-reset-dialog-actions">
           <button
+            className="ft-button"
             ref={cancelResetRef}
             type="button"
             disabled={resetting}
@@ -250,7 +251,7 @@ export function TraceView({
             {tr(language, 'Cancel', 'Cancelar')}
           </button>
           <button
-            className="trace-reset-confirm"
+            className="ft-button trace-reset-confirm danger"
             type="button"
             disabled={resetting}
             onClick={() => void resetSession()}
