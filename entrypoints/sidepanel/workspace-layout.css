@@ -18,7 +18,9 @@
   position: absolute;
   top: 18px;
   right: 18px;
-  z-index: 20;
+  /* Focused subviews place Back in the header area. Keep it above the sticky
+     topbar so the header surface never intercepts its pointer target. */
+  z-index: 50;
   width: fit-content;
   min-height: 38px;
   display: inline-flex;

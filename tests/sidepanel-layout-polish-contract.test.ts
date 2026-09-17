@@ -69,12 +69,14 @@ describe('sidepanel layout polish contract', () => {
   it('keeps the global header visible on the body surface and protects compact Trace tabs', () => {
     const visual = source('entrypoints/sidepanel/visual-system.css');
     const devtools = source('entrypoints/sidepanel/devtools-surface.css');
+    const workspace = source('entrypoints/sidepanel/workspace-layout.css');
     const trace = source('entrypoints/sidepanel/views/trace-polish.css');
     const audit = source('entrypoints/sidepanel/audit.css');
 
     expect(visual).toContain('position: sticky;');
     expect(visual).toContain('background: var(--ft-paper);');
     expect(devtools).toContain('background: var(--ft-paper, Canvas);');
+    expect(workspace).toMatch(/\.settings-back-trigger\s*\{[\s\S]*?z-index:\s*50;/);
     expect(trace).toContain('grid-template-columns: 20px minmax(0, 1fr) auto;');
     expect(trace).toContain('@media (max-width: 680px)');
     expect(trace).toContain('grid-template-columns: repeat(2, minmax(0, 1fr));');
