@@ -1,6 +1,6 @@
 # FocusTrace 1.0.2
 
-FocusTrace 1.0.2 is a maintenance release improving heading Structure evidence and the contextual WCAG 2.4.1 Bypass Blocks review. It includes the changes merged in #293 and #294 after 1.0.1.
+FocusTrace 1.0.2 is a maintenance release improving heading Structure evidence, the contextual WCAG 2.4.1 Bypass Blocks review, compact side-panel layouts and printable report navigation. It includes the changes merged after 1.0.1.
 
 ## Heading structure
 
@@ -18,11 +18,19 @@ FocusTrace 1.0.2 is a maintenance release improving heading Structure evidence a
 - Short navigation without an exposed main landmark remains inapplicable to avoid noisy reviews.
 - The rule remains `REVIEW`, not automatic `FAIL`, because WCAG 2.4.1 can be satisfied by mechanisms that cannot be proven from this bounded DOM heuristic.
 
+## Interface and PDF exports
+
+- The global FocusTrace header now remains visible while scrolling and uses the same theme background as the page instead of a white surface.
+- The active page or selected component is shown as the Review heading subtitle instead of being repeated inside the quick-action panel.
+- Trace inspector tabs switch to a two-column layout before their icons, labels or result counters can overlap at compact widths.
+- The cross-site audit decision dialog uses a wider responsive layout.
+- Single-page and component PDF exports now include a linked section index with measured print page numbers, matching the navigation provided by complete audit PDFs.
+
 ## Compatibility
 
 Chrome, Edge and Firefox manifests inherit version 1.0.2 from the package metadata. This release does not add permissions, change storage behavior or modify export schemas. Existing local history, saved flows and auditor notes remain compatible.
 
-No new FocusTrace rule ID is introduced; 1.0.2 refines Structure evidence and the applicability/evidence boundary of the existing `FT-REVIEW-012` rule.
+No new FocusTrace rule ID is introduced; 1.0.2 refines Structure evidence, the applicability/evidence boundary of the existing `FT-REVIEW-012` rule, interface presentation and report navigation.
 
 ## Validation
 

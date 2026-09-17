@@ -10,6 +10,8 @@ All notable FocusTrace release changes are summarized here. Detailed release not
 - Kept decorative-only headings empty and preserved heading-level jump detection as an independent Structure signal.
 - Extended `FT-REVIEW-012` so substantial navigation without an exposed main landmark remains a contextual WCAG 2.4.1 review instead of becoming silently inapplicable.
 - Preserved broken early bypass-fragment candidates as review evidence even when no main landmark is exposed, while short navigation remains inapplicable.
+- Kept the global header visible on the page background, moved page/component identity into the Review subtitle, protected Trace icons and counters at compact widths, and widened the cross-site audit dialog.
+- Added a linked, page-numbered index to individual page and component PDF exports.
 
 See `docs/changelog/RELEASE_NOTES_1.0.2.md` for release scope and validation boundaries.
 

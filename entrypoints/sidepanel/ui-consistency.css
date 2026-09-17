@@ -268,7 +268,7 @@ body {
   justify-content: flex-end;
 }
 
-@media (max-width: 440px) {
+@media (max-width: 680px) {
   .trace-workspace .trace-mode-switcher {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

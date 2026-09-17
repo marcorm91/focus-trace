@@ -51,14 +51,36 @@ describe('sidepanel layout polish contract', () => {
     expect(siteAudit).not.toContain('document.querySelector');
   });
 
-  it('keeps component context compact and removes duplicated actions from the rendered layout', () => {
+  it('moves page and component identity from quick actions into the scan subtitle', () => {
     const css = source('entrypoints/sidepanel/component-scan.css');
+    const app = source('entrypoints/sidepanel/App.tsx');
+    const scan = source('entrypoints/sidepanel/views/ScanView.tsx');
 
-    expect(css).toContain('.component-scan-panel #scan-title + p');
+    expect(css).not.toContain('.component-scan-panel #scan-title + p');
+    expect(app).not.toContain('currentAnalysisLabel');
+    expect(app).not.toContain("`${tr(language, 'Component', 'Componente')}: ${componentScan.label || componentScan.tag}`");
+    expect(scan).toContain('<p title={scan.url}>{componentScope?.label || scan.title || scan.url}</p>');
     expect(css).toContain('.scan-scope-copy strong');
     expect(css).toContain('.scan-scope-actions button + button');
     expect(css).toContain('align-items: start;');
     expect(css).toContain('align-self: start;');
+  });
+
+  it('keeps the global header visible on the body surface and protects compact Trace tabs', () => {
+    const visual = source('entrypoints/sidepanel/visual-system.css');
+    const devtools = source('entrypoints/sidepanel/devtools-surface.css');
+    const workspace = source('entrypoints/sidepanel/workspace-layout.css');
+    const trace = source('entrypoints/sidepanel/views/trace-polish.css');
+    const audit = source('entrypoints/sidepanel/audit.css');
+
+    expect(visual).toContain('position: sticky;');
+    expect(visual).toContain('background: var(--ft-paper);');
+    expect(devtools).toContain('background: var(--ft-paper, Canvas);');
+    expect(workspace).toMatch(/\.settings-back-trigger\s*\{[\s\S]*?z-index:\s*50;/);
+    expect(trace).toContain('grid-template-columns: 20px minmax(0, 1fr) auto;');
+    expect(trace).toContain('@media (max-width: 680px)');
+    expect(trace).toContain('grid-template-columns: repeat(2, minmax(0, 1fr));');
+    expect(audit).toContain('width: min(560px, calc(100vw - 32px));');
   });
 
   it('uses the danger palette for heading hierarchy signals and gives the signal badge more emphasis', () => {

@@ -302,6 +302,10 @@
   margin: 0;
 }
 
+.audit-scope-dialog {
+  width: min(560px, calc(100vw - 32px));
+}
+
 .audit-scope-context div {
   display: grid;
   grid-template-columns: minmax(120px, 0.8fr) minmax(0, 1.2fr);

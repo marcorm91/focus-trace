@@ -30,6 +30,21 @@ describe('report export evidence contract', () => {
     expect(printable).toContain("const tabIdParam = params.get('tabId');");
   });
 
+  it('adds a measured section index to individual page and component PDFs', () => {
+    const printable = source('entrypoints/report-print/main.tsx');
+    const css = source('entrypoints/report-print/table-of-contents.css');
+
+    expect(printable).toContain('measuredReportPrintPageNumbers');
+    expect(printable).toContain("tr(language, 'Report index', 'Índice del informe')");
+    expect(printable).toContain('className="report-print-toc"');
+    expect(printable).toContain('className="report-print-toc-leader"');
+    expect(printable).toContain('className="report-print-toc-number"');
+    expect(printable).toContain('id="report-scan"');
+    expect(printable).toContain('id="report-recommendations"');
+    expect(css).toContain('.report-print-body');
+    expect(css).toContain('page-break-before: always;');
+  });
+
   it('scopes export permission state to the report whose PDF button was clicked', () => {
     const evidence = source('lib/report/visual-evidence.ts');
 

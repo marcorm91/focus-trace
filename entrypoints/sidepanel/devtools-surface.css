@@ -17,11 +17,10 @@ html[data-ft-surface='devtools'] .app-shell {
 }
 
 html[data-ft-surface='devtools'] .topbar {
-  position: sticky;
-  top: 0;
-  z-index: 30;
+  margin-inline: -18px;
+  padding-inline: 18px;
   padding-block: 4px 10px;
-  background: var(--ft-surface, Canvas);
+  background: var(--ft-paper, Canvas);
 }
 
 html[data-ft-surface='devtools'] .section-heading p {

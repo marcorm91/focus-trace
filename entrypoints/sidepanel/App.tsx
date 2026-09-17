@@ -101,7 +101,6 @@ export default function App() {
     cancelPendingAuditScope,
   } = useMultipageAudit();
   const scan = session.scan;
-  const componentScan = scan?.scope?.type === 'component' ? scan.scope : undefined;
   const openTrace = useCallback(() => setView('trace'), []);
 
   const saveScan = useCallback(async (
@@ -422,10 +421,6 @@ export default function App() {
     { id: 'report', label: tr(language, 'Report', 'Informe'), icon: '▤' },
   ];
 
-  const currentAnalysisLabel = componentScan
-    ? `${tr(language, 'Component', 'Componente')}: ${componentScan.label || componentScan.tag}`
-    : scan?.title || scan?.url;
-
   return (
     <main className="app-shell">
       <header className="topbar">
@@ -498,13 +493,11 @@ export default function App() {
                   'Return to the page and interact normally. Recording continues while this panel is not focused.',
                   'Vuelve a la página e interactúa con normalidad. La grabación continúa aunque este panel no tenga el foco.',
                 )
-              : currentAnalysisLabel
-                ? currentAnalysisLabel
-                : tr(
-                    language,
-                    'Analyze the page, select a component or trace a real keyboard journey.',
-                    'Analiza la página, selecciona un componente o traza un recorrido real con teclado.',
-                  )}
+              : tr(
+                  language,
+                  'Analyze the page, select a component or trace a real keyboard journey.',
+                  'Analiza la página, selecciona un componente o traza un recorrido real con teclado.',
+                )}
           </p>
         </div>
         <div className="quick-actions">
