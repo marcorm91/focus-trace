@@ -1,7 +1,14 @@
 import { describe, expect, it } from 'vitest';
-import { applyAuditScope, auditScopeForUrl, emptyMultipageAuditStore } from '../lib/audit/multipage-audit';
+import { applyAuditScope, auditScopeForUrl, auditScopeLabel, emptyMultipageAuditStore } from '../lib/audit/multipage-audit';
 
 describe('Trace audit scope without fabricated page evidence', () => {
+  it('labels all accepted domains instead of the original audit name', () => {
+    expect(auditScopeLabel({ name: 'bidafarma.es', sites: ['bidafarma.es', 'antena3.com'] }))
+      .toBe('bidafarma.es · antena3.com');
+    expect(auditScopeLabel({ name: 'Old name', sites: ['www.bidafarma.es', 'bidafarma.es'] }))
+      .toBe('bidafarma.es');
+    expect(auditScopeLabel({ name: 'Legacy audit', sites: [] })).toBe('Legacy audit');
+  });
   it('creates a scope with no analyzed pages and accepts other pages of the same site', () => {
     const store = applyAuditScope(emptyMultipageAuditStore(), { kind: 'new', site: 'example.com' }, 'a', 1);
     expect(store.audits[0]?.pages).toEqual([]);

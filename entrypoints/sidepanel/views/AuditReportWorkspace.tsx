@@ -1,6 +1,6 @@
 import { useMemo, useState } from 'react';
 import { browser } from '#imports';
-import { auditPageKey, auditSummary, type AccessibilityAudit } from '../../../lib/audit/multipage-audit';
+import { auditPageKey, auditScopeLabel, auditSummary, type AccessibilityAudit } from '../../../lib/audit/multipage-audit';
 import { storeAuditPrintEvidence } from '../../../lib/audit/multipage-audit-storage';
 import type { StructureSnapshot } from '../../../lib/runtime/structure-evidence';
 import { tr, type AppLanguage } from '../../../shared/i18n';
@@ -106,7 +106,7 @@ export function AuditReportWorkspace({
           <div className="audit-overview-heading">
             <div>
               <span className="report-kicker">{tr(language, 'Current audit', 'Auditoría actual')}</span>
-              <h2 id="audit-overview-title">{audit.name}</h2>
+              <h2 id="audit-overview-title">{auditScopeLabel(audit)}</h2>
             </div>
             <div className="audit-overview-actions">
               <button

@@ -29,6 +29,11 @@
 
 .audit-overview-heading h2 {
   margin-top: 3px;
+  overflow-wrap: anywhere;
+}
+
+.audit-overview-heading > div:first-child {
+  min-width: 0;
 }
 
 .audit-overview-heading p {

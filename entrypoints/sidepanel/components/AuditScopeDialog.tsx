@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react';
 import { tr, type AppLanguage } from '../../../shared/i18n';
-import type { AccessibilityAudit } from '../../../lib/audit/multipage-audit';
+import { auditScopeLabel, type AccessibilityAudit } from '../../../lib/audit/multipage-audit';
 
 export function AuditScopeDialog({
   audit,
@@ -66,7 +66,7 @@ export function AuditScopeDialog({
       <dl className="audit-scope-context">
         <div>
           <dt>{tr(language, 'Current audit', 'Auditoría actual')}</dt>
-          <dd>{audit?.name}</dd>
+          <dd>{audit ? auditScopeLabel(audit) : ''}</dd>
         </div>
         <div>
           <dt>{tr(language, 'Current page site', 'Sitio de la página actual')}</dt>

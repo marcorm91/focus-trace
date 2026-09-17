@@ -20,6 +20,8 @@ FocusTrace 1.0.2 is a maintenance release improving heading Structure evidence, 
 
 ## Interface and PDF exports
 
+- Current audit headings and scope prompts list every accepted domain rather than only the initial audit name, with wrapping in narrow panels.
+
 - Individual PDF index rows now match the compact multipage index typography and spacing, without solid row separators.
 - Trace and Focus Walk validate the inspected site's audit scope before recording, with cancel/add/new decisions and a navigation recheck.
 - The audit scope dialog now grows to 720px (viewport permitting); its width is protected from the shared reset-dialog style.

@@ -15,7 +15,7 @@ for (const decision of ['add', 'new'] as const) {
       await api.storage.local.set({
         'focustrace:multipage-audits:v1': {
           version: 1, activeAuditId: 'previous', audits: [{
-            id: 'previous', name: 'previous.test', sites: ['previous.test'],
+            id: 'previous', name: 'previous.test', sites: ['previous.test', 'second.test'],
             pages: [], createdAt: 1, updatedAt: 1,
           }],
         },
@@ -30,6 +30,7 @@ for (const decision of ['add', 'new'] as const) {
     const dialog = panel.locator('.audit-scope-dialog');
     await start.click();
     await expect(dialog).toBeVisible();
+    await expect(dialog.locator('.audit-scope-context dd').first()).toHaveText('previous.test · second.test');
     await expect(dialog).toHaveCSS('width', '720px');
     await panel.setViewportSize({ width: 464, height: 800 });
     await expect(dialog).toHaveCSS('width', '440px');
