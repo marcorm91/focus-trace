@@ -62,6 +62,8 @@ Each result includes a stable synthetic web-artifact location plus the sanitized
 
 ## JUnit
 
+In the extension, open **Report → More formats → Export JUnit (.xml)** on a page/component report. This works for saved reviews without a Trace recording; historical exports include only their saved static findings, never another page's live events. It downloads results, not an executable test suite. Markdown/JSON options in this menu remain Trace-evidence exports and require recorded focus events.
+
 JUnit uses one testcase per FocusTrace finding:
 
 - only deterministic `FAIL` creates a `<failure>` element and increments the suite failure count;

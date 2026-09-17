@@ -20,6 +20,14 @@ FocusTrace 1.0.2 is a maintenance release improving heading Structure evidence, 
 
 ## Interface and PDF exports
 
+- More formats now includes JUnit XML for current and saved page/component reports; only deterministic FAIL creates a failing testcase. Disabled Markdown/JSON Trace exports explain why the required recording is unavailable.
+
+- Current audit headings and scope prompts list every accepted domain rather than only the initial audit name, with wrapping in narrow panels.
+
+- Individual PDF index rows now match the compact multipage index typography and spacing, without solid row separators.
+- Trace and Focus Walk validate the inspected site's audit scope before recording, with cancel/add/new decisions and a navigation recheck.
+- The audit scope dialog now grows to 720px (viewport permitting); its width is protected from the shared reset-dialog style.
+
 - The global FocusTrace header now remains visible while scrolling and uses the same theme background as the page instead of a white surface.
 - The active page or selected component is shown as the Review heading subtitle instead of being repeated inside the quick-action panel.
 - Trace inspector tabs switch to a two-column layout before their icons, labels or result counters can overlap at compact widths.

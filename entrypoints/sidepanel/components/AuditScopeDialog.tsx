@@ -1,11 +1,12 @@
 import { useEffect, useRef } from 'react';
 import { tr, type AppLanguage } from '../../../shared/i18n';
-import type { AccessibilityAudit } from '../../../lib/audit/multipage-audit';
+import { auditScopeLabel, type AccessibilityAudit } from '../../../lib/audit/multipage-audit';
 
 export function AuditScopeDialog({
   audit,
   site,
   language,
+  purpose = 'analysis',
   onAdd,
   onNew,
   onCancel,
@@ -13,6 +14,7 @@ export function AuditScopeDialog({
   audit?: AccessibilityAudit | undefined;
   site?: string | undefined;
   language: AppLanguage;
+  purpose?: 'analysis' | 'trace' | undefined;
   onAdd: () => void;
   onNew: () => void;
   onCancel: () => void;
@@ -50,7 +52,11 @@ export function AuditScopeDialog({
           'This page belongs to another site',
           'Esta página pertenece a otro sitio',
         )}</h3>
-        <p id="audit-scope-description">{tr(
+        <p id="audit-scope-description">{purpose === 'trace' ? tr(
+          language,
+          'Choose whether to use the current audit or start a separate one for this site. Trace will not start until you choose. This does not run a page scan.',
+          'Elige si quieres usar la auditoría actual o iniciar una independiente para este sitio. Trace no comenzará hasta que elijas. Esto no ejecuta un análisis de página.',
+        ) : tr(
           language,
           'Choose whether this page should join the current audit or start a separate one. Nothing is analyzed until you choose.',
           'Elige si esta página debe añadirse a la auditoría actual o iniciar una independiente. No se analizará nada hasta que elijas.',
@@ -60,7 +66,7 @@ export function AuditScopeDialog({
       <dl className="audit-scope-context">
         <div>
           <dt>{tr(language, 'Current audit', 'Auditoría actual')}</dt>
-          <dd>{audit?.name}</dd>
+          <dd>{audit ? auditScopeLabel(audit) : ''}</dd>
         </div>
         <div>
           <dt>{tr(language, 'Current page site', 'Sitio de la página actual')}</dt>

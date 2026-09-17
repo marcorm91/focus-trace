@@ -1,4 +1,5 @@
 import type { BrowserContext, Worker } from '@playwright/test';
+import { readFile } from 'node:fs/promises';
 import { expect, test } from './support/extension';
 
 declare const chrome: {
@@ -286,6 +287,22 @@ test('report opens a formatted PDF preview without exposing CSS selectors', asyn
   );
   expect(reportFits).toBe(true);
 
+  await panel.locator('.report-more-formats > summary').click();
+  await expect(panel.getByRole('button', { name: /Trace evidence \(\.md\)|Evidencia de Trace \(\.md\)/ })).toBeDisabled();
+  await expect(panel.getByRole('button', { name: /Trace evidence \(\.json\)|Evidencia de Trace \(\.json\)/ })).toBeDisabled();
+  await expect(panel.getByText(/Markdown and JSON require recorded focus events|Markdown y JSON necesitan eventos de foco grabados/)).toBeVisible();
+  const junitDownload = panel.waitForEvent('download');
+  await panel.getByRole('button', { name: /Export JUnit|Exportar JUnit/ }).click();
+  const downloaded = await junitDownload;
+  expect(downloaded.suggestedFilename()).toMatch(/\.junit\.xml$/);
+  const downloadPath = await downloaded.path();
+  expect(downloadPath).toBeTruthy();
+  const xml = await readFile(downloadPath!, 'utf8');
+  expect(xml).toContain('<?xml version="1.0" encoding="UTF-8"?>');
+  expect(xml).toContain('failures="1"');
+  expect(xml).toContain('FT-WCAG-003');
+  await panel.locator('.report-more-formats > summary').click();
+
   const exportPdf = panel.getByRole('button', { name: /Export PDF|Exportar PDF/ });
   await expect(exportPdf).toBeVisible();
   const visualEvidence = panel.getByRole('checkbox', { name: /Include visual evidence|Incluir evidencia visual/ });
@@ -301,4 +318,13 @@ test('report opens a formatted PDF preview without exposing CSS selectors', asyn
   await expect(printable.getByRole('button', { name: /Print \/ Save as PDF|Imprimir \/ Guardar como PDF/ })).toBeVisible();
   await expect(printable.getByRole('link', { name: 'WCAG 4.1.2 (A)' })).toBeVisible();
   await expect(printable.getByText('#private-selector-must-not-print')).toHaveCount(0);
+  const index = printable.locator('.report-print-toc');
+  await expect(index.locator('ol')).toHaveCSS('row-gap', '5px');
+  await expect(index.locator('li').first()).toHaveCSS('border-bottom-width', '0px');
+  await expect(index.locator('a').first()).toHaveCSS('font-size', '11px');
+  await expect(index.locator('a').first()).toHaveCSS('font-weight', '400');
+  await expect(index.locator('a').first()).toHaveCSS('color', 'rgb(71, 85, 105)');
+  await printable.emulateMedia({ media: 'print' });
+  await expect(index.locator('a').first()).toHaveCSS('font-size', '11px');
+  await expect(index.locator('a').first()).toHaveCSS('font-weight', '400');
 });

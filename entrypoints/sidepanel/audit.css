@@ -29,6 +29,11 @@
 
 .audit-overview-heading h2 {
   margin-top: 3px;
+  overflow-wrap: anywhere;
+}
+
+.audit-overview-heading > div:first-child {
+  min-width: 0;
 }
 
 .audit-overview-heading p {
@@ -302,8 +307,9 @@
   margin: 0;
 }
 
-.audit-scope-dialog {
-  width: min(560px, calc(100vw - 32px));
+.trace-reset-dialog.audit-scope-dialog {
+  width: min(720px, calc(100vw - 24px));
+  max-width: calc(100vw - 24px);
 }
 
 .audit-scope-context div {

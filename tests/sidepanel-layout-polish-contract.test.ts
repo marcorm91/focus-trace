@@ -80,7 +80,8 @@ describe('sidepanel layout polish contract', () => {
     expect(trace).toContain('grid-template-columns: 20px minmax(0, 1fr) auto;');
     expect(trace).toContain('@media (max-width: 680px)');
     expect(trace).toContain('grid-template-columns: repeat(2, minmax(0, 1fr));');
-    expect(audit).toContain('width: min(560px, calc(100vw - 32px));');
+    expect(audit).toContain('.trace-reset-dialog.audit-scope-dialog');
+    expect(audit).toContain('width: min(720px, calc(100vw - 24px));');
   });
 
   it('uses the danger palette for heading hierarchy signals and gives the signal badge more emphasis', () => {

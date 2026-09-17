@@ -40,6 +40,7 @@ type UseTraceActionsOptions = {
   refresh: (tabId: number) => Promise<void>;
   ensureInjected: (mode: RuntimeInjectionMode) => Promise<void>;
   requestPageAccess: () => Promise<void>;
+  prepareTraceScope: (tabId: number) => Promise<boolean>;
   setBusy: Dispatch<SetStateAction<boolean>>;
   setError: Dispatch<SetStateAction<string | undefined>>;
   focusPathVisible: boolean;
@@ -106,6 +107,7 @@ export function useTraceActions({
   refresh,
   ensureInjected,
   requestPageAccess,
+  prepareTraceScope,
   setBusy,
   setError,
   focusPathVisible,
@@ -124,8 +126,12 @@ export function useTraceActions({
     setBusy(true);
     setError(undefined);
     try {
-      await ensureInjected('trace');
       const enabled = !session.recording;
+      if (enabled) {
+        await requestPageAccess();
+        if (!await prepareTraceScope(tabId)) return;
+      }
+      await ensureInjected('trace');
       const resumingFromBreakpoint = enabled && session.pausedByBreakpoint != null;
 
       if (enabled) {
@@ -166,6 +172,8 @@ export function useTraceActions({
     }
   }, [
     breakpointSettings,
+    prepareTraceScope,
+    requestPageAccess,
     ensureInjected,
     language,
     onOpenTrace,
@@ -186,6 +194,8 @@ export function useTraceActions({
     let runtimeStarted = false;
 
     try {
+      await requestPageAccess();
+      if (!await prepareTraceScope(tabId)) return;
       await ensureInjected('trace');
       await browser.scripting.executeScript({
         target: { tabId },
@@ -242,6 +252,8 @@ export function useTraceActions({
     }
   }, [
     breakpointSettings,
+    prepareTraceScope,
+    requestPageAccess,
     ensureInjected,
     language,
     onOpenTrace,

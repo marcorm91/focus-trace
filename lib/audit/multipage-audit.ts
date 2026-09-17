@@ -93,6 +93,11 @@ export function activeAuditFromStore(store: MultipageAuditStore): AccessibilityA
   return store.audits.find((audit) => audit.id === store.activeAuditId);
 }
 
+export function auditScopeLabel(audit: Pick<AccessibilityAudit, 'sites' | 'name'>): string {
+  const sites = [...new Set(audit.sites.map(auditSiteKey).filter(Boolean))];
+  return sites.join(' · ') || audit.name;
+}
+
 export function auditScopeForUrl(store: MultipageAuditStore, url: string): AuditScopeCheck {
   const site = auditSiteKey(url);
   const active = activeAuditFromStore(store);
@@ -105,6 +110,33 @@ export function auditScopeForUrl(store: MultipageAuditStore, url: string): Audit
     };
   }
   return { kind: 'different-site', audit: active, site, url };
+}
+
+// Selecting a Trace scope must not manufacture a static page review.
+export function applyAuditScope(
+  store: MultipageAuditStore,
+  plan: AuditAnalysisPlan,
+  id: string,
+  now: number,
+): MultipageAuditStore {
+  if (plan.kind === 'new') {
+    return {
+      ...store,
+      activeAuditId: id,
+      audits: [...store.audits, {
+        id, name: plan.site, sites: [plan.site], pages: [], createdAt: now, updatedAt: now,
+      }],
+    };
+  }
+  const audit = store.audits.find((item) => item.id === plan.auditId);
+  if (!audit) throw new Error('The selected audit is no longer available.');
+  return {
+    ...store,
+    activeAuditId: audit.id,
+    audits: store.audits.map((item) => item.id === audit.id && plan.addSite
+      ? { ...item, sites: [...new Set([...item.sites, plan.site])], updatedAt: now }
+      : item),
+  };
 }
 
 function pageRecord(scan: ScanResult, visualEvidence?: AuditPageVisualEvidence): AuditPageRecord {

@@ -93,13 +93,14 @@ export default function App() {
     pendingScope,
     decisionPending,
     preparePageAnalysis,
+    prepareTraceScope,
     recordPageAnalysis,
     deleteAuditPage,
     clearAuditHistory,
     addPendingSiteToCurrentAudit,
     startPendingSiteAsNewAudit,
     cancelPendingAuditScope,
-  } = useMultipageAudit();
+  } = useMultipageAudit(tabId);
   const scan = session.scan;
   const openTrace = useCallback(() => setView('trace'), []);
 
@@ -371,6 +372,7 @@ export default function App() {
     setSelectedFocusSelector,
     resetFocusPathState,
     onOpenTrace: openTrace,
+    prepareTraceScope,
   });
 
   const resetEverything = useCallback(async () => {
@@ -466,6 +468,7 @@ export default function App() {
       </header>
 
       <AuditScopeDialog
+        purpose={pendingScope?.purpose}
         audit={pendingScope?.audit}
         site={pendingScope?.site}
         language={language}

@@ -90,6 +90,13 @@ export function localizedUserError(
   const raw = errorMessage(reason).trim();
   const normalized = raw.toLowerCase();
 
+  if (normalized === 'the page changed. start trace again on the current page.') {
+    return tr(language,
+      'The page changed while choosing the audit. Start Trace again on the current page.',
+      'La página ha cambiado mientras elegías la auditoría. Inicia Trace de nuevo en la página actual.',
+    );
+  }
+
   if (includesAny(normalized, [
     'cannot access a chrome://',
     'cannot access a chrome-extension://',
