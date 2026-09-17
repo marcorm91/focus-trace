@@ -306,8 +306,8 @@ export function SettingsView({
 
       <FocusMemorySettings language={language} />
 
-      <section className="settings-group settings-contact" aria-labelledby="settings-contact-title">
-        <h3 id="settings-contact-title">{tr(language, 'Contact', 'Contacto')}</h3>
+      <fieldset className="settings-group settings-contact">
+        <legend>{tr(language, 'Contact', 'Contacto')}</legend>
         <p className="settings-help">
           {tr(
             language,
@@ -318,7 +318,7 @@ export function SettingsView({
         <a className="settings-contact-link" href={CREATOR_LINKEDIN} target="_blank" rel="noreferrer">
           {tr(language, 'Contact Marco on LinkedIn', 'Contactar con Marco en LinkedIn')} <span aria-hidden="true">↗</span>
         </a>
-      </section>
+      </fieldset>
 
       <footer
         className="settings-meta"

@@ -37,6 +37,12 @@ button:not(:disabled):hover {
 }
 
 @media (forced-colors: active) {
+  select:not([multiple]):not([size]),
+  select:not([multiple])[size='1'] {
+    appearance: auto;
+    background-image: none;
+  }
+
   .ft-button {
     border-color: ButtonText;
     background: ButtonFace;
