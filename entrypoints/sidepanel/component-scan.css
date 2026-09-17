@@ -9,13 +9,6 @@
   box-shadow: var(--ft-shadow-sm);
 }
 
-/* The active page/component is already summarized in the quick-start area.
-   Component scans keep the section heading compact instead of repeating a
-   potentially long accessible label above the component context. */
-.component-scan-panel #scan-title + p {
-  display: none;
-}
-
 .scan-scope-banner {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;

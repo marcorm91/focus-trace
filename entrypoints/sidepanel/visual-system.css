@@ -132,10 +132,15 @@ code {
 }
 
 .topbar {
+  position: sticky;
+  top: 0;
+  z-index: 40;
   align-items: center;
+  margin-inline: -16px;
   margin-bottom: 12px;
-  padding-bottom: 11px;
+  padding: 6px 16px 11px;
   border-bottom: 2px solid var(--ft-border);
+  background: var(--ft-paper);
 }
 
 .brand {
@@ -792,7 +797,9 @@ input:not([type='checkbox']):not([type='radio']):hover {
   }
 
   .topbar {
+    margin-inline: -12px;
     margin-bottom: 10px;
+    padding-inline: 12px;
   }
 
   .quick-start,

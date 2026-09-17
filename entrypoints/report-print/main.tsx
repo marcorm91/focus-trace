@@ -39,6 +39,85 @@ interface LoadedReport {
   evidence?: PrintableReportEvidenceBundle;
 }
 
+type ReportPrintPageNumbers = Record<string, number>;
+
+const REPORT_SECTION_IDS = [
+  'report-notes',
+  'report-summary',
+  'report-priority',
+  'report-runtime',
+  'report-scan',
+  'report-structure',
+  'report-recommendations',
+] as const;
+
+function initialReportPrintPageNumbers(): ReportPrintPageNumbers {
+  return Object.fromEntries(REPORT_SECTION_IDS.map((id) => [id, 3]));
+}
+
+function measuredReportPrintPageNumbers(): ReportPrintPageNumbers | undefined {
+  const report = document.querySelector<HTMLElement>('.report-page:not(.report-print-measure)');
+  if (!report) return undefined;
+
+  const clone = report.cloneNode(true) as HTMLElement;
+  clone.classList.add('report-print-measure');
+  clone.setAttribute('aria-hidden', 'true');
+  clone.setAttribute('inert', '');
+  const ruler = document.createElement('div');
+  ruler.className = 'report-print-page-ruler';
+  document.body.append(clone, ruler);
+
+  try {
+    const pageHeight = ruler.getBoundingClientRect().height;
+    const cover = clone.querySelector<HTMLElement>('.print-cover');
+    const toc = clone.querySelector<HTMLElement>('.report-print-toc');
+    const body = clone.querySelector<HTMLElement>('.report-print-body');
+    if (!cover || !toc || !body || pageHeight <= 0) return undefined;
+
+    const pageSpan = (element: HTMLElement) => Math.max(
+      1,
+      Math.ceil((element.getBoundingClientRect().height - 0.5) / pageHeight),
+    );
+    const firstBodyPage = pageSpan(cover) + pageSpan(toc) + 1;
+    const bodyTop = body.getBoundingClientRect().top;
+    const fragmentShifts: Array<{ offset: number; added: number }> = [];
+    let addedHeight = 0;
+    const unbreakableBlocks = [...body.querySelectorAll<HTMLElement>([
+      '.print-report-notes',
+      '.print-finding',
+      '.print-trace-story',
+      '.print-suggestion-list li',
+      '.print-recommendation-list li',
+      '.print-heading-list li',
+    ].join(', '))].sort((first, second) => first.getBoundingClientRect().top - second.getBoundingClientRect().top);
+
+    for (const block of unbreakableBlocks) {
+      const rect = block.getBoundingClientRect();
+      if (rect.height >= pageHeight) continue;
+      const offset = Math.max(0, rect.top - bodyTop);
+      const shiftedOffset = offset + addedHeight;
+      const offsetWithinPage = shiftedOffset % pageHeight;
+      if (offsetWithinPage <= 0 || offsetWithinPage + rect.height <= pageHeight) continue;
+      const added = pageHeight - offsetWithinPage;
+      addedHeight += added;
+      fragmentShifts.push({ offset, added });
+    }
+
+    return Object.fromEntries(REPORT_SECTION_IDS.flatMap((id) => {
+      const section = clone.querySelector<HTMLElement>(`#${id}`);
+      if (!section) return [];
+      const offset = Math.max(0, section.getBoundingClientRect().top - bodyTop);
+      const fragmentation = fragmentShifts
+        .filter((shift) => shift.offset <= offset)
+        .reduce((total, shift) => total + shift.added, 0);
+      return [[id, firstBodyPage + Math.floor((offset + fragmentation) / pageHeight)]];
+    }));
+  } finally {
+    clone.remove();
+    ruler.remove();
+  }
+}
+
 const DISPLAY_SEVERITIES: Severity[] = ['critical', 'serious', 'moderate', 'minor'];
 
 function referenceLabel(reference: StandardReference): string {
@@ -226,7 +305,7 @@ function Finding({
 function ReportNotes({ language }: { language: AppLanguage }) {
   const legend = ruleLegendCopy(language);
   return (
-    <section className="print-report-notes" aria-labelledby="report-notes-title">
+    <section id="report-notes" className="print-report-notes" aria-labelledby="report-notes-title">
       <div>
         <h2 id="report-notes-title">{tr(language, 'How to read this report', 'Cómo interpretar este informe')}</h2>
         <p>{tr(
@@ -318,6 +397,42 @@ function PrintableReport({ report }: { report: LoadedReport }) {
     dateStyle: 'medium',
     timeStyle: 'short',
   }).format(generatedAt);
+  const [printPageNumbers, setPrintPageNumbers] = useState<ReportPrintPageNumbers>(
+    initialReportPrintPageNumbers,
+  );
+  const tocEntries = [
+    { id: 'report-notes', label: tr(language, 'How to read this report', 'Cómo interpretar este informe') },
+    { id: 'report-summary', label: tr(language, 'Executive summary', 'Resumen ejecutivo') },
+    { id: 'report-priority', label: tr(language, 'Highest priority', 'Máxima prioridad') },
+    { id: 'report-runtime', label: tr(language, 'Runtime trace', 'Traza runtime') },
+    {
+      id: 'report-scan',
+      label: componentScope
+        ? tr(language, 'Component scan', 'Análisis de componente')
+        : tr(language, 'Full page scan', 'Barrido completo de página'),
+    },
+    { id: 'report-structure', label: tr(language, 'Document structure', 'Estructura del documento') },
+    { id: 'report-recommendations', label: tr(language, 'Recommended next steps', 'Sugerencias de mejora') },
+  ];
+
+  useEffect(() => {
+    let cancelled = false;
+    let frame = 0;
+    const updatePageNumbers = () => {
+      frame = window.requestAnimationFrame(() => {
+        const measured = measuredReportPrintPageNumbers();
+        if (!cancelled && measured) setPrintPageNumbers(measured);
+      });
+    };
+    updatePageNumbers();
+    void document.fonts?.ready.then(updatePageNumbers);
+    window.addEventListener('resize', updatePageNumbers);
+    return () => {
+      cancelled = true;
+      window.cancelAnimationFrame(frame);
+      window.removeEventListener('resize', updatePageNumbers);
+    };
+  }, [evidence, language, scan, session.events]);
 
   return (
     <>
@@ -361,9 +476,42 @@ function PrintableReport({ report }: { report: LoadedReport }) {
           </div>
         </header>
 
-        <ReportNotes language={language} />
+        <nav className="report-print-toc" aria-labelledby="report-toc-title">
+          <div className="print-section-title">
+            <span>00</span>
+            <div>
+              <h2 id="report-toc-title">{tr(language, 'Report index', 'Índice del informe')}</h2>
+              <p>{tr(
+                language,
+                'Sections included in this page or component audit.',
+                'Secciones incluidas en esta auditoría de página o componente.',
+              )}</p>
+            </div>
+          </div>
+          <ol>
+            {tocEntries.map((entry, index) => (
+              <li key={entry.id}>
+                <a href={`#${entry.id}`}>
+                  <strong>{index + 1}. {entry.label}</strong>
+                  <span className="report-print-toc-leader" aria-hidden="true" />
+                  <span
+                    className="report-print-toc-number"
+                    aria-label={tr(
+                      language,
+                      `Page ${printPageNumbers[entry.id] ?? 3}`,
+                      `Página ${printPageNumbers[entry.id] ?? 3}`,
+                    )}
+                  >{printPageNumbers[entry.id] ?? 3}</span>
+                </a>
+              </li>
+            ))}
+          </ol>
+        </nav>
 
-        <section className="print-section" aria-labelledby="summary-title">
+        <div className="report-print-body">
+          <ReportNotes language={language} />
+
+        <section id="report-summary" className="print-section" aria-labelledby="summary-title">
           <div className="print-section-title">
             <span>00</span>
             <div><h2 id="summary-title">{tr(language, 'Executive summary', 'Resumen ejecutivo')}</h2></div>
@@ -397,7 +545,7 @@ function PrintableReport({ report }: { report: LoadedReport }) {
           )}
         </section>
 
-        <section className="print-section print-priority" aria-labelledby="priority-title">
+        <section id="report-priority" className="print-section print-priority" aria-labelledby="priority-title">
           <div className="print-section-title">
             <span>!</span>
             <div>
@@ -418,7 +566,7 @@ function PrintableReport({ report }: { report: LoadedReport }) {
           ) : <p className="print-empty">{tr(language, 'No high-priority automated recommendation was produced.', 'No se ha generado ninguna recomendación automática de prioridad alta.')}</p>}
         </section>
 
-        <section className="print-section" aria-labelledby="runtime-title">
+        <section id="report-runtime" className="print-section" aria-labelledby="runtime-title">
           <div className="print-section-title">
             <span>01</span>
             <div>
@@ -498,7 +646,7 @@ function PrintableReport({ report }: { report: LoadedReport }) {
           )}
         </section>
 
-        <section className="print-section" aria-labelledby="scan-title">
+        <section id="report-scan" className="print-section" aria-labelledby="scan-title">
           <div className="print-section-title">
             <span>02</span>
             <div>
@@ -549,7 +697,7 @@ function PrintableReport({ report }: { report: LoadedReport }) {
           ))}
         </section>
 
-        <section className="print-section" aria-labelledby="structure-title">
+        <section id="report-structure" className="print-section" aria-labelledby="structure-title">
           <div className="print-section-title">
             <span>03</span>
             <div>
@@ -666,7 +814,7 @@ function PrintableReport({ report }: { report: LoadedReport }) {
           )}
         </section>
 
-        <section className="print-section" aria-labelledby="recommendations-title">
+        <section id="report-recommendations" className="print-section" aria-labelledby="recommendations-title">
           <div className="print-section-title">
             <span>04</span>
             <div>
@@ -686,6 +834,7 @@ function PrintableReport({ report }: { report: LoadedReport }) {
             </ol>
           ) : <p className="print-empty">{tr(language, 'No automated recommendations were produced.', 'No se han generado recomendaciones automáticas.')}</p>}
         </section>
+        </div>
 
         <footer className="print-footer">
           <p>{tr(

@@ -1,0 +1,81 @@
+.report-print-toc {
+  display: grid;
+  gap: 18px;
+  padding: 22px 0;
+  break-before: page;
+  page-break-before: always;
+}
+
+.report-print-toc > ol {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.report-print-toc > ol > li {
+  padding-bottom: 9px;
+  border-bottom: 1px solid #e2e6ef;
+}
+
+.report-print-toc a {
+  display: grid;
+  grid-template-columns: auto minmax(18px, 1fr) auto;
+  align-items: baseline;
+  gap: 7px;
+  color: inherit;
+  text-decoration: none;
+}
+
+.report-print-toc a strong {
+  font-size: 13px;
+}
+
+.report-print-toc-leader {
+  min-width: 18px;
+  border-bottom: 1px dotted currentColor;
+  opacity: .65;
+}
+
+.report-print-toc-number {
+  color: #475569;
+  font-variant-numeric: tabular-nums;
+  font-weight: 700;
+}
+
+.report-print-body {
+  break-before: page;
+  page-break-before: always;
+}
+
+.report-print-measure {
+  position: absolute;
+  inset: 0 auto auto -200vw;
+  width: 186mm;
+  margin: 0;
+  padding: 0;
+  visibility: hidden;
+  pointer-events: none;
+  box-shadow: none;
+}
+
+.report-print-measure .print-section {
+  padding-block: 16px;
+}
+
+.report-print-page-ruler {
+  position: absolute;
+  width: 1px;
+  height: 270mm;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+@media print {
+  .report-print-toc,
+  .report-print-body {
+    break-before: page;
+    page-break-before: always;
+  }
+}
