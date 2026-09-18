@@ -94,8 +94,12 @@ export function activeAuditFromStore(store: MultipageAuditStore): AccessibilityA
 }
 
 export function auditScopeLabel(audit: Pick<AccessibilityAudit, 'sites' | 'name'>): string {
+  return auditScopeSites(audit).join(' · ');
+}
+
+export function auditScopeSites(audit: Pick<AccessibilityAudit, 'sites' | 'name'>): string[] {
   const sites = [...new Set(audit.sites.map(auditSiteKey).filter(Boolean))];
-  return sites.join(' · ') || audit.name;
+  return sites.length ? sites : [audit.name];
 }
 
 export function auditScopeForUrl(store: MultipageAuditStore, url: string): AuditScopeCheck {
