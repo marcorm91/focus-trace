@@ -22,6 +22,14 @@ async function openSidepanel(context: BrowserContext, extensionWorker: Worker) {
 test('sidepanel controls and finding surfaces expose their intended behavior', async ({ context, extensionWorker }) => {
   const panel = await openSidepanel(context, extensionWorker);
 
+  const [shellBox, topbarBox] = await Promise.all([
+    panel.locator('.app-shell').boundingBox(),
+    panel.locator('.topbar').boundingBox(),
+  ]);
+  if (!shellBox || !topbarBox) throw new Error('Could not measure the sidepanel header.');
+  expect(Math.abs(topbarBox.x - shellBox.x)).toBeLessThan(1);
+  expect(Math.abs((topbarBox.x + topbarBox.width) - (shellBox.x + shellBox.width))).toBeLessThan(1);
+
   const settings = panel.locator('.settings-trigger');
   await expect(settings).toHaveAttribute('title', /Settings|Ajustes/);
   await expect(settings).toHaveAttribute('aria-label', /Open settings|Abrir ajustes/);

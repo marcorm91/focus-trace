@@ -32,6 +32,19 @@ for (const decision of ['add', 'new'] as const) {
     await expect(dialog).toBeVisible();
     await expect(dialog.locator('.audit-scope-context dd').first()).toHaveText('previous.test · second.test');
     await expect(dialog).toHaveCSS('width', '720px');
+    const alignment = await dialog.evaluate((element) => {
+      const copy = element.querySelector('.trace-reset-dialog-copy')!.getBoundingClientRect();
+      const context = element.querySelector('.audit-scope-context')!.getBoundingClientRect();
+      const term = element.querySelector('.audit-scope-context dt')!.getBoundingClientRect();
+      const description = element.querySelector('.audit-scope-context dd')!.getBoundingClientRect();
+      return {
+        copyLeft: copy.left + Number.parseFloat(getComputedStyle(element.querySelector('.trace-reset-dialog-copy')!).paddingLeft),
+        contextLeft: context.left,
+        fieldGap: description.left - term.right,
+      };
+    });
+    expect(Math.abs(alignment.copyLeft - alignment.contextLeft)).toBeLessThan(1);
+    expect(alignment.fieldGap).toBeLessThanOrEqual(14.5);
     await panel.setViewportSize({ width: 464, height: 800 });
     await expect(dialog).toHaveCSS('width', '440px');
     await expect(dialog.locator('#audit-scope-description')).toContainText(/Trace/);

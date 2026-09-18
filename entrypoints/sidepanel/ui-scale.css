@@ -31,6 +31,10 @@ html[data-ft-ui-scale='130'] {
   font-size: 20px;
 }
 
+.app-shell .audit-overview-title {
+  font-size: 15px;
+}
+
 .app-shell h3 {
   font-size: 18px;
 }

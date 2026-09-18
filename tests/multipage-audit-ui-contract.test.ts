@@ -133,6 +133,21 @@ describe('multipage audit UI contract', () => {
     expect(accordionCss).not.toContain('.report-accordion-summary:hover');
   });
 
+  it('shows audit sites as a compact vertical list and keeps scope rows aligned', () => {
+    const workspace = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/views/AuditReportWorkspace.tsx'), 'utf8');
+    const auditCss = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/audit.css'), 'utf8');
+    const layoutCss = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/workspace-layout.css'), 'utf8');
+    const scaleCss = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/ui-scale.css'), 'utf8');
+
+    expect(workspace).toContain('auditScopeSites(audit).map');
+    expect(workspace).toContain('className="audit-overview-title"');
+    expect(auditCss).toContain('.audit-overview-title {\n  display: grid;');
+    expect(scaleCss).toContain('.app-shell .audit-overview-title {\n  font-size: 15px;');
+    expect(auditCss).toContain('margin: 0 18px;');
+    expect(auditCss).toContain('grid-template-columns: max-content minmax(0, 1fr);');
+    expect(layoutCss).toContain('.topbar {\n  width: auto;\n  max-width: none;');
+  });
+
   it('keeps saved-report chrome minimal and formats the printable audit summary', () => {
     const workspace = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/views/AuditReportWorkspace.tsx'), 'utf8');
     const auditCss = readFileSync(resolve(process.cwd(), 'entrypoints/sidepanel/audit.css'), 'utf8');
