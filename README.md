@@ -326,7 +326,7 @@ Causality explains the recorded chain; it does not by itself promote a contextua
 | **Headings** | Reuses the current analysis to show the H1-H6 outline expanded by default, with hierarchy, branch controls and page location. |
 | **Semantics** | Finds concrete native-HTML opportunities and generic interactions that need review. |
 | **Metrics** | Counts semantic regions, lists, forms, buttons, links, controls, tables and images. |
-| **Location** | A heading or metric group can be located and highlighted on the page. |
+| **Location** | A heading can be located on the page. Metric buttons toggle persistent, additive group highlights; selecting the same metric again removes only that group, and leaving Metrics or Structure clears all metric highlights. |
 | **Unified page analysis** | **Analyze this page** prepares Semantics and Metrics together with the normal full-page scan; **Refresh** recalculates the Structure snapshot after page changes. |
 | **Component boundary** | Component scans do not reuse a stale full-page Structure snapshot as component evidence. |
 | **Safety bound** | The collector processes at most 10,000 elements by default. |

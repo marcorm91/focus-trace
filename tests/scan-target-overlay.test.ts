@@ -88,6 +88,31 @@ describe('scan target page overlay', () => {
     expect(group?.textContent).toContain('Listas · 2');
   });
 
+  it('keeps multiple persistent Structure metrics and toggles only the selected group', () => {
+    document.body.innerHTML = '<main><h1>Title</h1><button>Action</button></main>';
+    Object.defineProperty(Element.prototype, 'scrollIntoView', { configurable: true, value: vi.fn() });
+    document.querySelectorAll('h1,button').forEach((element, index) => {
+      Object.defineProperty(element, 'getBoundingClientRect', {
+        configurable: true,
+        value: () => rect(20 + index * 60),
+      });
+    });
+    const metricSelector = (id: string, selector: string) => `__focustrace_group__:${encodeURIComponent(JSON.stringify({
+      id, selector, label: id, additive: true, persistent: true,
+    }))}`;
+    const headings = metricSelector('headings', 'h1');
+    const buttons = metricSelector('buttons', 'button');
+
+    locateScanTargetInPage(headings);
+    locateScanTargetInPage(buttons);
+    expect(document.querySelectorAll('[data-focustrace-structure-highlights]')).toHaveLength(2);
+
+    locateScanTargetInPage(headings);
+    const remaining = document.querySelectorAll('[data-focustrace-structure-highlights]');
+    expect(remaining).toHaveLength(1);
+    expect(remaining[0]?.getAttribute('data-focustrace-structure-highlight-id')).toBe('buttons');
+  });
+
   it('still works when serialized like chrome.scripting.executeScript', () => {
     installFixture();
 

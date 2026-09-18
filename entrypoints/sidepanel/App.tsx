@@ -5,7 +5,7 @@ import { type ExplanationLevel } from '../../lib/runtime/explanations';
 import { clearFocusPathInPage } from '../../lib/runtime/focus-path-overlay';
 import { clearHeadingOutlineInPage } from '../../lib/runtime/heading-overlay';
 import { pickComponentInPage, type ComponentPickerResult } from '../../lib/runtime/component-picker';
-import { locateScanTargetInPage } from '../../lib/runtime/scan-target-overlay';
+import { clearScanTargetHighlightInPage, locateScanTargetInPage } from '../../lib/runtime/scan-target-overlay';
 import { collectStructureEvidenceInPage, type StructureSnapshot } from '../../lib/runtime/structure-evidence';
 import { tr, type AppLanguage } from '../../shared/i18n';
 import type {
@@ -323,6 +323,14 @@ export default function App() {
     }
   }, [language, requestPageAccess, resetFocusPathState, tabId]);
 
+  const clearScanTargetHighlights = useCallback(async () => {
+    if (tabId == null) return;
+    await browser.scripting.executeScript({
+      target: { tabId },
+      func: clearScanTargetHighlightInPage,
+    }).catch(() => undefined);
+  }, [tabId]);
+
   const refreshStructure = useCallback(async () => {
     if (tabId == null) return;
     setBusy(true);
@@ -574,6 +582,7 @@ export default function App() {
             busy={busy}
             onRefresh={refreshStructure}
             onLocate={locateScanTarget}
+            onClearHighlights={clearScanTargetHighlights}
           />
         )}
         {view === 'trace' && (

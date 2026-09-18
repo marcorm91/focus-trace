@@ -118,7 +118,13 @@ function metricCopy(id: StructureMetricId, language: AppLanguage): MetricCopy {
 }
 
 function groupLocateSelector(metric: StructureMetricTarget, label: string): string {
-  return `__focustrace_group__:${encodeURIComponent(JSON.stringify({ selector: metric.selector, label }))}`;
+  return `__focustrace_group__:${encodeURIComponent(JSON.stringify({
+    selector: metric.selector,
+    label,
+    id: metric.id,
+    additive: true,
+    persistent: true,
+  }))}`;
 }
 
 function SnapshotEmpty({
@@ -152,11 +158,13 @@ function SnapshotEmpty({
 function StructureMetricButton({
   metric,
   language,
-  onLocate,
+  active,
+  onToggle,
 }: {
   metric: StructureMetricTarget;
   language: AppLanguage;
-  onLocate: (selector: string) => void | Promise<void>;
+  active: boolean;
+  onToggle: () => void;
 }) {
   const copy = metricCopy(metric.id, language);
   return (
@@ -164,12 +172,13 @@ function StructureMetricButton({
       className="structure-metric"
       type="button"
       disabled={metric.count === 0}
+      aria-pressed={active}
       aria-label={tr(
         language,
-        `Locate ${metric.count} ${copy.label.toLocaleLowerCase()}`,
-        `Localizar ${metric.count} ${copy.label.toLocaleLowerCase()}`,
+        `${active ? 'Hide' : 'Highlight'} ${metric.count} ${copy.label.toLocaleLowerCase()}`,
+        `${active ? 'Ocultar' : 'Resaltar'} ${metric.count} ${copy.label.toLocaleLowerCase()}`,
       )}
-      onClick={() => void onLocate(groupLocateSelector(metric, copy.label))}
+      onClick={onToggle}
     >
       <strong>{metric.count}</strong>
       <span>{copy.label}</span>
@@ -185,6 +194,7 @@ export function StructureView({
   busy,
   onRefresh,
   onLocate,
+  onClearHighlights,
 }: {
   snapshot?: StructureSnapshot;
   scan?: ScanResult;
@@ -192,13 +202,35 @@ export function StructureView({
   busy: boolean;
   onRefresh: () => void | Promise<void>;
   onLocate: (selector: string) => void | Promise<void>;
+  onClearHighlights: () => void | Promise<void>;
 }) {
   const componentScan = scan?.scope?.type === 'component';
   const [mode, setMode] = useState<StructureMode>(componentScan ? 'semantics' : 'headings');
+  const [activeMetricIds, setActiveMetricIds] = useState<Set<StructureMetricId>>(() => new Set());
 
   useEffect(() => {
     if (componentScan && mode === 'headings') setMode('semantics');
   }, [componentScan, mode]);
+
+  useEffect(() => () => {
+    void onClearHighlights();
+  }, [onClearHighlights]);
+
+  useEffect(() => {
+    if (mode === 'metrics' || activeMetricIds.size === 0) return;
+    setActiveMetricIds(new Set());
+    void onClearHighlights();
+  }, [activeMetricIds, mode, onClearHighlights]);
+
+  const toggleMetric = (metric: StructureMetricTarget, label: string) => {
+    setActiveMetricIds((current) => {
+      const next = new Set(current);
+      if (next.has(metric.id)) next.delete(metric.id);
+      else next.add(metric.id);
+      return next;
+    });
+    void onLocate(groupLocateSelector(metric, label));
+  };
 
   return (
     <section className="panel structure-panel" aria-labelledby="structure-title">
@@ -321,7 +353,8 @@ export function StructureView({
                   key={metric.id}
                   metric={metric}
                   language={language}
-                  onLocate={onLocate}
+                  active={activeMetricIds.has(metric.id)}
+                  onToggle={() => toggleMetric(metric, metricCopy(metric.id, language).label)}
                 />
               ))}
             </div>

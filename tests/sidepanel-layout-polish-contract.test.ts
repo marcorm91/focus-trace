@@ -38,6 +38,13 @@ describe('sidepanel layout polish contract', () => {
     expect(structureView).toContain("tr(language, 'Analyze structure', 'Analizar estructura')");
     expect(structureView).toContain("tr(language, 'Refresh', 'Actualizar')");
     expect(structureView).not.toContain('if (!snapshot && !busy) void onRefresh();');
+    expect(structureView).toContain('aria-pressed={active}');
+    expect(structureView).toContain('activeMetricIds');
+    expect(structureView).toContain('additive: true');
+    expect(structureView).toContain('persistent: true');
+    expect(structureView).not.toContain('structure-metric-check');
+    expect(structureView).toContain("if (mode === 'metrics' || activeMetricIds.size === 0) return;");
+    expect(structureView).toContain('void onClearHighlights();');
   });
 
   it('renders four composed quick actions as 2x2 and one column when narrow', () => {

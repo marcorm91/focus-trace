@@ -326,7 +326,7 @@ La causalidad explica la cadena registrada; no convierte por sí misma una situa
 | **Encabezados** | Reutiliza el análisis actual para mostrar el árbol H1-H6 abierto por defecto, con jerarquía, controles por rama y localización visual. |
 | **Semántica** | Busca oportunidades concretas de HTML nativo e interacciones genéricas que necesitan revisión. |
 | **Métricas** | Cuenta regiones semánticas, listas, formularios, botones, enlaces, campos, tablas e imágenes. |
-| **Localización** | Un encabezado o conjunto de una métrica puede localizarse y resaltarse en la página. |
+| **Localización** | Un encabezado puede localizarse en la página. Los botones de métricas activan resaltados persistentes y acumulables; volver a pulsar la misma métrica retira solo ese grupo, y salir de Métricas o Estructura los limpia todos. |
 | **Análisis unificado de página** | **Analizar esta página** prepara Semántica y Métricas junto con el análisis normal de página completa; **Actualizar** recalcula el snapshot de Estructura después de cambios de la página. |
 | **Límite de componente** | Los análisis de componente no reutilizan un snapshot antiguo de Estructura de página completa como si fuera evidencia del componente. |
 | **Límite de seguridad** | El colector procesa como máximo 10.000 elementos por defecto. |
