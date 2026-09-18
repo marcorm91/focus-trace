@@ -15,10 +15,10 @@ export interface ScanTargetHighlightResult {
 
 export function clearScanTargetHighlightInPage(): { removed: boolean } {
   const existing = document.querySelector('[data-focustrace-scan-highlight]');
-  const group = document.querySelector('[data-focustrace-structure-highlights]');
-  const removed = Boolean(existing || group);
+  const groups = [...document.querySelectorAll('[data-focustrace-structure-highlights]')];
+  const removed = Boolean(existing || groups.length);
   existing?.remove();
-  group?.remove();
+  groups.forEach((group) => group.remove());
   return { removed };
 }
 
@@ -34,19 +34,37 @@ export function locateScanTargetInPage(
   options: ScanTargetHighlightOptions = {},
 ): ScanTargetHighlightResult {
   document.querySelector('[data-focustrace-scan-highlight]')?.remove();
-  document.querySelector('[data-focustrace-structure-highlights]')?.remove();
 
   const GROUP_PREFIX = '__focustrace_group__:';
   if (selector.startsWith(GROUP_PREFIX)) {
-    let payload: { selector: string; label?: string } | undefined;
+    let payload: {
+      selector: string;
+      label?: string;
+      id?: string;
+      additive?: boolean;
+      persistent?: boolean;
+    } | undefined;
     try {
       payload = JSON.parse(decodeURIComponent(selector.slice(GROUP_PREFIX.length))) as {
         selector: string;
         label?: string;
+        id?: string;
+        additive?: boolean;
+        persistent?: boolean;
       };
     } catch {
       return { found: false, selector, rendered: false };
     }
+
+    const existingGroups = [...document.querySelectorAll('[data-focustrace-structure-highlights]')];
+    const matchingGroup = payload.id
+      ? existingGroups.find((group) => group.getAttribute('data-focustrace-structure-highlight-id') === payload.id)
+      : undefined;
+    if (payload.additive && matchingGroup) {
+      matchingGroup.remove();
+      return { found: true, selector, rendered: true };
+    }
+    if (!payload.additive) existingGroups.forEach((group) => group.remove());
 
     let targets: Element[] = [];
     try {
@@ -71,6 +89,7 @@ export function locateScanTargetInPage(
     const fill = 'rgba(20, 88, 159, 0.08)';
     const root = document.createElement('div');
     root.setAttribute('data-focustrace-structure-highlights', 'true');
+    if (payload.id) root.setAttribute('data-focustrace-structure-highlight-id', payload.id);
     root.setAttribute('aria-hidden', 'true');
     Object.assign(root.style, {
       position: 'absolute',
@@ -124,10 +143,12 @@ export function locateScanTargetInPage(
     });
 
     document.documentElement.append(root);
-    const durationMs = options.durationMs ?? 7000;
+    const durationMs = payload.persistent ? 0 : options.durationMs ?? 7000;
     if (durationMs > 0) window.setTimeout(() => root.remove(), durationMs);
     return { found: true, selector, rendered: true };
   }
+
+  document.querySelectorAll('[data-focustrace-structure-highlights]').forEach((group) => group.remove());
 
   const nestedFrameDocument = (frame: Element): Document | null => {
     try {

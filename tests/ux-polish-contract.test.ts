@@ -52,6 +52,7 @@ describe('UX polish contract', () => {
     expect(css).toContain('--ft-mask: var(--ft-i-reset)');
     expect(css).toContain('.topbar-tools .settings-trigger > span');
     expect(css).toContain('--ft-mask: var(--ft-i-settings)');
+    expect(css).toContain("stroke-width='2.4'");
     expect(css).not.toContain('--ft-i-code');
     expect(css).not.toContain('!important');
   });

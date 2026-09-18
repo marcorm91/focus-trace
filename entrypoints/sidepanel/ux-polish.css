@@ -72,8 +72,8 @@ body,
   height: 30px;
   display: grid;
   place-items: center;
-  border-radius: 9px;
-  background: var(--ft-surface-subtle);
+  border-radius: 0;
+  background: transparent;
   font-size: 20px;
   font-weight: 750;
   line-height: 1;

@@ -209,14 +209,16 @@
 }
 
 .structure-metric {
+  position: relative;
   min-width: 0;
   display: grid;
   gap: 3px;
-  padding: 10px;
-  border: 1px solid var(--ft-border-soft);
+  padding: 11px 12px;
+  border: 1.5px solid var(--ft-border);
   border-radius: var(--ft-radius-sm);
   background: var(--ft-surface);
   color: var(--ft-text);
+  box-shadow: var(--ft-shadow-sm);
   text-align: left;
   cursor: pointer;
 }
@@ -224,7 +226,23 @@
 .structure-metric:not(:disabled):hover,
 .structure-metric:not(:disabled):focus-visible {
   border-color: var(--ft-border);
-  box-shadow: inset 3px 0 0 var(--ft-border);
+  background: color-mix(in srgb, var(--ft-ink) 4%, var(--ft-surface));
+}
+
+.structure-metric:not(:disabled):active {
+  box-shadow: none;
+  transform: translate(1px, 1px);
+}
+
+.structure-metric[aria-pressed='true'] {
+  border-color: var(--ft-ink);
+  background: var(--ft-ink);
+  color: var(--ft-surface);
+  box-shadow: var(--ft-shadow-sm);
+}
+
+.structure-metric[aria-pressed='true'] small {
+  color: color-mix(in srgb, var(--ft-surface) 78%, transparent);
 }
 
 .structure-metric:disabled {

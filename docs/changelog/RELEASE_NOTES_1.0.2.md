@@ -20,6 +20,9 @@ FocusTrace 1.0.2 is a maintenance release improving heading Structure evidence, 
 
 ## Interface and PDF exports
 
+- Structure metric cards now use explicit button styling and support multiple persistent page highlights. Pressing an active metric removes only its group; leaving Metrics or Structure clears all metric overlays.
+- Primary workspace icons no longer use individual background tiles, and Start over uses a clearer reset glyph.
+
 - More formats now includes JUnit XML for current and saved page/component reports; only deterministic FAIL creates a failing testcase. Disabled Markdown/JSON Trace exports explain why the required recording is unavailable.
 
 - Current audit headings and scope prompts list every accepted domain rather than only the initial audit name, with wrapping in narrow panels.
