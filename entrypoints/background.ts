@@ -146,9 +146,17 @@ function invalidateScanAfterNavigation(tabId: number, url: string): Promise<void
   });
 }
 
-function pauseTraceAfterDocumentNavigation(tabId: number, url: string): Promise<void> {
+function pauseTraceAfterDocumentNavigation(
+  tabId: number,
+  url: string,
+  navigationStartedAt: number,
+): Promise<void> {
   return serializeTabWrite(tabId, async () => {
     const state = await getSession(tabId);
+    // tabs.onUpdated may have fired before Trace was started while its async
+    // storage work is still queued. Do not let that stale navigation pause a
+    // recording that began afterwards.
+    if (state.startedAt != null && state.startedAt > navigationStartedAt) return;
     const next = pauseSessionForNavigation(state, url);
     if (next === state) return;
     await saveSession(next);
@@ -418,7 +426,12 @@ export default defineBackground(() => {
     }
 
     if (changeInfo.status === 'loading' && tab.url) {
-      void pauseTraceAfterDocumentNavigation(tabId, changeInfo.url ?? tab.url).catch(() => undefined);
+      const navigationStartedAt = Date.now();
+      void pauseTraceAfterDocumentNavigation(
+        tabId,
+        changeInfo.url ?? tab.url,
+        navigationStartedAt,
+      ).catch(() => undefined);
     }
 
     if (changeInfo.status !== 'complete') return;
