@@ -45,6 +45,17 @@ describe('Trace visual polish contract', () => {
     expect(css).not.toContain('!important');
   });
 
+  it('gives Trace interaction disclosures balanced padding and explicit chevrons', () => {
+    const css = source('entrypoints/sidepanel/style.css');
+
+    expect(css).toContain('grid-template-columns: minmax(0, 1fr) auto 18px;');
+    expect(css).toContain('padding: 12px 16px;');
+    expect(css).toContain('.interaction details > summary::-webkit-details-marker');
+    expect(css).toContain('-webkit-mask: var(--ft-i-chevron-right) center / contain no-repeat;');
+    expect(css).toContain('.interaction details[open] > summary::after');
+    expect(css).toContain('-webkit-mask-image: var(--ft-i-chevron-down);');
+  });
+
   it('gives the report context line padding and wrapping room', () => {
     const css = source('entrypoints/sidepanel/views/session-report.css');
 
