@@ -31,7 +31,7 @@ response has an eight-second timeout and is streamed under a 6 MB
 actually-received byte limit; the body is cancelled if it crosses that bound.
 Discovered URLs remain subject to the documented same-origin and count limits.
 
-Session data, multipage audit evidence and preferences may be stored using browser extension storage so the product can preserve state and user settings. Browser storage is controlled by the browser profile and browser platform.
+Session data, bounded page-attributed Trace, multipage audit evidence and preferences may be stored using browser extension storage so the product can preserve state and user settings. Browser storage is controlled by the browser profile and browser platform.
 
 ## Structure evidence
 
@@ -51,7 +51,9 @@ A full-page analysis can be retained as the latest review for that normalized UR
 
 To keep visual evidence available after the user navigates away, FocusTrace may also retain up to three local screenshot crops for eligible findings from that page review. These are element-level JPEG crops rather than full-page screenshots. A later review of the same URL replaces the previous crops together with the previous scan result so stale visual evidence is not intentionally kept as the current audit state. Users can delete a saved page review, including its retained crops, from the Report workspace.
 
-Audit visual evidence is bounded again at storage level. FocusTrace keeps at most 40 pages per audit, at most 8 audits, no more than three visual crops per reviewed page and a shared approximate visual-data budget of 3,000,000 data-URL characters. When that visual budget is exhausted, older crops can be discarded while the underlying text-based audit result remains available. The Report workspace identifies pages without saved images before the printable audit is generated.
+When Trace events have already been attributed to a reviewed page, FocusTrace may retain up to 200 of the most recent events with that saved page. This synchronization occurs when Trace stops, pauses after document navigation, pauses at a configured breakpoint, when the page is analyzed again or when the complete audit PDF is prepared. Event IDs are deduplicated. Runtime URL query and fragment values remain redacted, and FocusTrace does not attach an event when that redacted URL matches more than one reviewed page. Re-analyzing a page preserves its retained Trace; deleting the page review removes it.
+
+Audit evidence is bounded again at storage level. FocusTrace keeps at most 40 pages per audit, at most 8 audits, no more than 200 recent Trace events and three visual crops per reviewed page, plus a shared approximate visual-data budget of 3,000,000 data-URL characters. The complete serialized audit store also has an overall size budget. When a budget is exhausted, older evidence or audit history can be discarded according to the documented newest-review preference. The Report workspace identifies pages without saved images before the printable audit is generated.
 
 Audit screenshots remain local to extension storage and the generated local PDF preview. Users should review the PDF before sharing it because a crop can contain text or other information visible on the inspected page.
 
@@ -59,9 +61,9 @@ Audit screenshots remain local to extension storage and the generated local PDF 
 
 Users can add, edit and remove an optional plain-text auditor note on any static finding or Trace event. A note is human-authored context and is kept separately from FocusTrace evidence: it does not change the finding outcome, severity, rule result or report counts.
 
-The note is stored with its parent finding or event in the current per-tab extension session. Notes on full-page findings are also updated in the matching saved multipage-audit review. When a matching FocusTrace Memory observation exists, static-finding notes are retained with that local observation; this includes notes on failures, reviews and warnings. Trace-event notes remain part of the Trace session and its exports rather than being converted into static Memory observations.
+The note is stored with its parent finding or event in the current per-tab extension session. Notes on full-page findings are also updated in the matching saved multipage-audit review. When a matching FocusTrace Memory observation exists, static-finding notes are retained with that local observation; this includes notes on failures, reviews and warnings. A Trace-event note is also updated in matching page-attributed audit evidence when that event has been retained; it is not converted into a static Memory observation.
 
-Auditor notes are included in the report/PDF and text exports that contain their parent evidence. Static-finding notes are included in exported FocusTrace Memory JSON; Trace-event notes are included in Trace JSON (`schemaVersion: 2`) and Markdown. Export is an explicit local user action. An exported file is outside extension storage and cannot be changed or retracted by later editing or deleting the original note.
+Auditor notes are included in the report/PDF and text exports that contain their parent evidence. Static-finding notes are included in exported FocusTrace Memory JSON; Trace-event notes are included in Trace JSON (`schemaVersion: 2`), Markdown and any complete audit PDF section that contains the retained parent event. Export is an explicit local user action. An exported file is outside extension storage and cannot be changed or retracted by later editing or deleting the original note.
 
 Removing a note removes it from the current parent and matching local copies. Removing a saved audit page, clearing the parent session/Trace interaction, clearing Memory history or replacing/pruning the parent evidence also removes the note stored with that parent. Notes can contain page, client or testing context entered by the user, so users should review them before sharing an export.
 

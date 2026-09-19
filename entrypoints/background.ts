@@ -18,7 +18,11 @@ import {
   saveFindingReviewState,
   syncStoredFindingReviewNote,
 } from '../lib/audit/finding-review-storage';
-import { updateStoredMultipageAuditScan } from '../lib/audit/multipage-audit-storage';
+import {
+  removeStoredMultipageAuditTraceInteraction,
+  updateStoredMultipageAuditScan,
+  updateStoredMultipageAuditTrace,
+} from '../lib/audit/multipage-audit-storage';
 import {
   captureVisibleTabFromSource,
   visibleTabCaptureSource,
@@ -148,6 +152,7 @@ function pauseTraceAfterDocumentNavigation(tabId: number, url: string): Promise<
     const next = pauseSessionForNavigation(state, url);
     if (next === state) return;
     await saveSession(next);
+    await updateStoredMultipageAuditTrace(next.events).catch(() => false);
     await broadcast(next);
   });
 }
@@ -242,6 +247,9 @@ export default defineBackground(() => {
         const state = await getSession(tabId);
         const next = appendRuntimeEventsToSession(state, events);
         await saveSession(next);
+        if (state.recording && !next.recording) {
+          await updateStoredMultipageAuditTrace(next.events).catch(() => false);
+        }
         await broadcast(next);
       });
     }
@@ -275,6 +283,7 @@ export default defineBackground(() => {
         const next = removeSessionInteraction(current, message.interactionId);
         if (next === current) return current;
         await saveSession(next);
+        await removeStoredMultipageAuditTraceInteraction(message.interactionId).catch(() => false);
         await broadcast(next);
         return next;
       });
@@ -297,6 +306,9 @@ export default defineBackground(() => {
           if (results[0]?.status === 'rejected') warnings.push('finding-review-write-failed');
           if (results[1]?.status === 'rejected') warnings.push('focus-memory-write-failed');
           if (results[2]?.status === 'rejected') warnings.push('multipage-audit-write-failed');
+        } else if (message.target.kind === 'runtime-event') {
+          const persisted = await Promise.allSettled([updateStoredMultipageAuditTrace(next.events)]);
+          if (persisted[0]?.status === 'rejected') warnings.push('multipage-audit-write-failed');
         }
         await broadcast(next);
         return {
@@ -356,6 +368,9 @@ export default defineBackground(() => {
         const state = await getSession(message.tabId);
         const next = setSessionRecordingState(state, message.enabled, message.startedAt, message.pageUrl);
         await saveSession(next);
+        if (!message.enabled) {
+          await updateStoredMultipageAuditTrace(next.events).catch(() => false);
+        }
         await broadcast(next);
         return next;
       });

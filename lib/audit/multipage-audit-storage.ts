@@ -1,5 +1,5 @@
 import { browser } from '#imports';
-import type { ScanResult } from '../../shared/types';
+import type { RuntimeEvent, ScanResult } from '../../shared/types';
 import {
   applyAuditProfile,
   profileSupportsScope,
@@ -8,11 +8,14 @@ import { loadActiveAuditProfile } from './audit-profile-storage';
 import { applyStoredFindingReviews } from './finding-review-storage';
 import {
   MULTIPAGE_AUDIT_VERSION,
+  MAX_TRACE_EVENTS_PER_AUDIT_PAGE,
   activeAuditFromStore,
   applyAuditAnalysis,
   applyAuditScope,
   emptyMultipageAuditStore,
   removeAuditPage,
+  removeAuditTraceInteraction,
+  updateAuditTraceEvents,
   updateAuditScan,
   type AccessibilityAudit,
   type AuditAnalysisPlan,
@@ -37,14 +40,35 @@ function normalizeAudit(audit: AccessibilityAudit): AccessibilityAudit {
     ...audit,
     sites: [...new Set(audit.sites)].filter(Boolean),
     pages: audit.pages.slice(-MAX_PAGES_PER_AUDIT).map((page) => {
+      const {
+        traceEvents: _traceEvents,
+        traceUpdatedAt: _traceUpdatedAt,
+        traceTruncated: _traceTruncated,
+        ...pageWithoutTrace
+      } = page;
+      const traceEvents = Array.isArray(page.traceEvents)
+        ? page.traceEvents.slice(-MAX_TRACE_EVENTS_PER_AUDIT_PAGE)
+        : [];
       const evidence = page.visualEvidence;
       if (!evidence || !Array.isArray(evidence.visuals)) {
-        const { visualEvidence: _visualEvidence, ...rest } = page;
-        return rest;
+        const { visualEvidence: _visualEvidence, ...rest } = pageWithoutTrace;
+        return {
+          ...rest,
+          ...(traceEvents.length ? { traceEvents } : {}),
+          ...(traceEvents.length ? { traceUpdatedAt: Math.max(...traceEvents.map((event) => event.timestamp)) } : {}),
+          ...(page.traceTruncated ? { traceTruncated: true } : {}),
+          ...(Array.isArray(page.traceEvents) && page.traceEvents.length > traceEvents.length
+            ? { traceTruncated: true }
+            : {}),
+        };
       }
       const visuals = evidence.visuals.slice(0, MAX_VISUALS_PER_PAGE);
       return {
-        ...page,
+        ...pageWithoutTrace,
+        ...(traceEvents.length ? { traceEvents } : {}),
+        ...(traceEvents.length ? { traceUpdatedAt: Math.max(...traceEvents.map((event) => event.timestamp)) } : {}),
+        ...(page.traceTruncated ? { traceTruncated: true } : {}),
+        ...(page.traceEvents && page.traceEvents.length > traceEvents.length ? { traceTruncated: true } : {}),
         visualEvidence: {
           capturedAt: Number.isFinite(evidence.capturedAt) ? evidence.capturedAt : page.reviewedAt,
           visuals,
@@ -208,6 +232,7 @@ export async function recordMultipageAuditScan(
   scan: ScanResult,
   plan: AuditAnalysisPlan,
   visualEvidence?: AuditPageVisualEvidence,
+  traceEvents: RuntimeEvent[] = [],
 ): Promise<MultipageAuditStore> {
   const current = await loadMultipageAuditStore();
   const activeProfile = await loadActiveAuditProfile();
@@ -215,9 +240,26 @@ export async function recordMultipageAuditScan(
   const preparedScan = profileSupportsScope(activeProfile, 'site')
     ? applyAuditProfile(reviewedScan, activeProfile, 'site')
     : reviewedScan;
-  const next = applyAuditAnalysis(current, preparedScan, plan, auditId(), visualEvidence);
+  const next = applyAuditAnalysis(current, preparedScan, plan, auditId(), visualEvidence, traceEvents);
   await saveMultipageAuditStore(next);
   return loadMultipageAuditStore();
+}
+
+export async function updateStoredMultipageAuditTrace(events: RuntimeEvent[]): Promise<boolean> {
+  if (!events.length) return false;
+  const current = await loadMultipageAuditStore();
+  const next = updateAuditTraceEvents(current, events);
+  if (next === current) return false;
+  await saveMultipageAuditStore(next);
+  return true;
+}
+
+export async function removeStoredMultipageAuditTraceInteraction(interactionId: string): Promise<boolean> {
+  const current = await loadMultipageAuditStore();
+  const next = removeAuditTraceInteraction(current, interactionId);
+  if (next === current) return false;
+  await saveMultipageAuditStore(next);
+  return true;
 }
 
 export async function deleteMultipageAuditPage(auditId: string, pageKey: string): Promise<MultipageAuditStore> {

@@ -6,11 +6,14 @@ import {
   auditSiteKey,
   auditSummary,
   emptyMultipageAuditStore,
+  MAX_TRACE_EVENTS_PER_AUDIT_PAGE,
   removeAuditPage,
+  removeAuditTraceInteraction,
+  updateAuditTraceEvents,
   updateAuditScan,
   type AuditPageVisualEvidence,
 } from '../lib/audit/multipage-audit';
-import type { ScanResult } from '../shared/types';
+import type { RuntimeEvent, ScanResult } from '../shared/types';
 
 function scan(url: string, scannedAt: number, failures = 1): ScanResult {
   return {
@@ -45,6 +48,17 @@ function visualEvidence(capturedAt: number, marker: string): AuditPageVisualEvid
     eligibleCount: 1,
     limitReached: false,
     captureUnavailable: false,
+  };
+}
+
+function traceEvent(id: string, pageUrl: string, timestamp: number): RuntimeEvent {
+  return {
+    id,
+    pageUrl,
+    timestamp,
+    kind: 'focus',
+    severity: 'info',
+    title: `Trace ${id}`,
   };
 }
 
@@ -125,6 +139,92 @@ describe('multipage audit model', () => {
     );
     const summary = auditSummary(store.audits[0]!);
     expect(summary).toMatchObject({ pages: 2, failures: 2, reviews: 0, warnings: 0 });
+  });
+
+  it('persists and deduplicates Trace evidence under its matching audit page', () => {
+    let store = applyAuditAnalysis(
+      emptyMultipageAuditStore(),
+      scan('https://bidafarma.es/account?token=private', 100),
+      { kind: 'new', site: 'bidafarma.es' },
+      'audit-1',
+    );
+    store = applyAuditAnalysis(
+      store,
+      scan('https://antena3.com/news', 200),
+      { kind: 'existing', auditId: 'audit-1', site: 'antena3.com', addSite: true },
+      'unused',
+    );
+    const firstPageEvent = traceEvent('trace-1', 'https://bidafarma.es/account?[redacted]', 300);
+    const secondPageEvent = traceEvent('trace-2', 'https://antena3.com/news', 400);
+
+    store = updateAuditTraceEvents(store, [firstPageEvent, secondPageEvent]);
+    store = updateAuditTraceEvents(store, [firstPageEvent]);
+
+    expect(store.audits[0]?.pages[0]?.traceEvents).toEqual([firstPageEvent]);
+    expect(store.audits[0]?.pages[1]?.traceEvents).toEqual([secondPageEvent]);
+
+    const refreshed = applyAuditAnalysis(
+      store,
+      scan('https://bidafarma.es/account?token=private', 500),
+      { kind: 'existing', auditId: 'audit-1', site: 'bidafarma.es', addSite: false },
+      'unused',
+    );
+    expect(refreshed.audits[0]?.pages[0]?.traceEvents).toEqual([firstPageEvent]);
+  });
+
+  it('bounds stored Trace evidence per page and marks truncation', () => {
+    const initial = applyAuditAnalysis(
+      emptyMultipageAuditStore(),
+      scan('https://bidafarma.es/', 100),
+      { kind: 'new', site: 'bidafarma.es' },
+      'audit-1',
+    );
+    const events = Array.from({ length: MAX_TRACE_EVENTS_PER_AUDIT_PAGE + 5 }, (_, index) =>
+      traceEvent(`trace-${index}`, 'https://bidafarma.es/', index));
+    const next = updateAuditTraceEvents(initial, events);
+
+    expect(next.audits[0]?.pages[0]?.traceEvents).toHaveLength(MAX_TRACE_EVENTS_PER_AUDIT_PAGE);
+    expect(next.audits[0]?.pages[0]?.traceEvents?.[0]?.id).toBe('trace-5');
+    expect(next.audits[0]?.pages[0]?.traceTruncated).toBe(true);
+  });
+
+  it('does not guess a Trace association when redacted URLs match multiple reviewed pages', () => {
+    let store = applyAuditAnalysis(
+      emptyMultipageAuditStore(),
+      scan('https://bidafarma.es/account?user=one', 100),
+      { kind: 'new', site: 'bidafarma.es' },
+      'audit-1',
+    );
+    store = applyAuditAnalysis(
+      store,
+      scan('https://bidafarma.es/account?user=two', 200),
+      { kind: 'existing', auditId: 'audit-1', site: 'bidafarma.es', addSite: false },
+      'unused',
+    );
+    const next = updateAuditTraceEvents(store, [
+      traceEvent('ambiguous', 'https://bidafarma.es/account?[redacted]', 300),
+    ]);
+
+    expect(next).toBe(store);
+    expect(next.audits[0]?.pages.every((page) => page.traceEvents == null)).toBe(true);
+  });
+
+  it('removes a deleted Trace interaction from its persisted page evidence', () => {
+    const event = {
+      ...traceEvent('trace-1', 'https://bidafarma.es/', 200),
+      interactionId: 'manual-1',
+    };
+    let store = applyAuditAnalysis(
+      emptyMultipageAuditStore(),
+      scan('https://bidafarma.es/', 100),
+      { kind: 'new', site: 'bidafarma.es' },
+      'audit-1',
+      undefined,
+      [event],
+    );
+    store = removeAuditTraceInteraction(store, 'manual-1');
+
+    expect(store.audits[0]?.pages[0]?.traceEvents).toBeUndefined();
   });
 
   it('removes saved page reports and drops an audit when its final page is deleted', () => {
