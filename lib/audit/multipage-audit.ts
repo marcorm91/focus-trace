@@ -1,9 +1,11 @@
 import type { ReportVisualEvidence } from '../report/visual-evidence';
-import type { ScanResult } from '../../shared/types';
+import { sanitizeRuntimeUrl } from '../runtime/url-privacy';
+import type { RuntimeEvent, ScanResult } from '../../shared/types';
 import { auditProfileSnapshotKey } from './audit-profiles';
 import { applyFindingLifecycle } from './finding-lifecycle';
 
 export const MULTIPAGE_AUDIT_VERSION = 1 as const;
+export const MAX_TRACE_EVENTS_PER_AUDIT_PAGE = 200;
 
 export interface AuditPageVisualEvidence {
   capturedAt: number;
@@ -21,6 +23,9 @@ export interface AuditPageRecord {
   reviewedAt: number;
   scan: ScanResult;
   visualEvidence?: AuditPageVisualEvidence;
+  traceEvents?: RuntimeEvent[];
+  traceUpdatedAt?: number;
+  traceTruncated?: boolean;
 }
 
 export interface AccessibilityAudit {
@@ -143,8 +148,58 @@ export function applyAuditScope(
   };
 }
 
-function pageRecord(scan: ScanResult, visualEvidence?: AuditPageVisualEvidence): AuditPageRecord {
+function traceEventsForPage(pageUrl: string, events: RuntimeEvent[]): RuntimeEvent[] {
+  const safePageUrl = sanitizeRuntimeUrl(pageUrl);
+  return events.filter((event) => event.pageUrl === safePageUrl);
+}
+
+export function mergeAuditPageTraceEvents(
+  page: AuditPageRecord,
+  events: RuntimeEvent[],
+): AuditPageRecord {
+  const incoming = traceEventsForPage(page.url, events);
+  if (!incoming.length) return page;
+  const byId = new Map((page.traceEvents ?? []).map((event) => [event.id, event]));
+  incoming.forEach((event) => byId.set(event.id, event));
+  const combined = [...byId.values()].sort((first, second) => first.timestamp - second.timestamp);
+  const traceTruncated = Boolean(page.traceTruncated) || combined.length > MAX_TRACE_EVENTS_PER_AUDIT_PAGE;
+  const traceEvents = combined.slice(-MAX_TRACE_EVENTS_PER_AUDIT_PAGE);
+  if (JSON.stringify(traceEvents) === JSON.stringify(page.traceEvents ?? [])
+    && traceTruncated === Boolean(page.traceTruncated)) return page;
   return {
+    ...page,
+    traceEvents,
+    traceUpdatedAt: Math.max(...traceEvents.map((event) => event.timestamp)),
+    ...(traceTruncated ? { traceTruncated: true } : {}),
+  };
+}
+
+export function mergeAuditTraceEvents(
+  audit: AccessibilityAudit,
+  events: RuntimeEvent[],
+): AccessibilityAudit {
+  if (!events.length) return audit;
+  const pageMatchCounts = new Map<string, number>();
+  audit.pages.forEach((page) => {
+    const safeUrl = sanitizeRuntimeUrl(page.url);
+    pageMatchCounts.set(safeUrl, (pageMatchCounts.get(safeUrl) ?? 0) + 1);
+  });
+  const unambiguousEvents = events.filter((event) =>
+    event.pageUrl && pageMatchCounts.get(event.pageUrl) === 1);
+  const pages = audit.pages.map((page) => mergeAuditPageTraceEvents(page, unambiguousEvents));
+  if (pages.every((page, index) => page === audit.pages[index])) return audit;
+  return {
+    ...audit,
+    pages,
+    updatedAt: Math.max(audit.updatedAt, ...pages.map((page) => page.traceUpdatedAt ?? page.reviewedAt)),
+  };
+}
+
+function pageRecord(
+  scan: ScanResult,
+  visualEvidence?: AuditPageVisualEvidence,
+): AuditPageRecord {
+  const record: AuditPageRecord = {
     key: auditPageKey(scan.url),
     url: normalizeAuditPageUrl(scan.url),
     title: scan.title,
@@ -152,6 +207,7 @@ function pageRecord(scan: ScanResult, visualEvidence?: AuditPageVisualEvidence):
     scan,
     ...(visualEvidence ? { visualEvidence } : {}),
   };
+  return record;
 }
 
 export function upsertAuditPage(
@@ -166,7 +222,13 @@ export function upsertAuditPage(
     && auditProfileSnapshotKey(previousCandidate) === auditProfileSnapshotKey(scan)
     ? previousCandidate
     : undefined;
-  const record = pageRecord(applyFindingLifecycle(previousScan, scan), visualEvidence);
+  const previousPage = index >= 0 ? audit.pages[index] : undefined;
+  const record: AuditPageRecord = {
+    ...pageRecord(applyFindingLifecycle(previousScan, scan), visualEvidence),
+    ...(previousPage?.traceEvents ? { traceEvents: previousPage.traceEvents } : {}),
+    ...(previousPage?.traceUpdatedAt ? { traceUpdatedAt: previousPage.traceUpdatedAt } : {}),
+    ...(previousPage?.traceTruncated ? { traceTruncated: true } : {}),
+  };
   const pages = [...audit.pages];
   if (index >= 0) pages[index] = record;
   else pages.push(record);
@@ -184,18 +246,19 @@ export function applyAuditAnalysis(
   plan: AuditAnalysisPlan,
   auditId: string,
   visualEvidence?: AuditPageVisualEvidence,
+  traceEvents: RuntimeEvent[] = [],
 ): MultipageAuditStore {
   if (plan.kind === 'new') {
     const reviewedAt = scan.scannedAt;
     const normalizedScan = applyFindingLifecycle(undefined, scan);
-    const audit: AccessibilityAudit = {
+    const audit = mergeAuditTraceEvents({
       id: auditId,
       name: plan.site || scan.title || 'Audit',
       createdAt: reviewedAt,
       updatedAt: reviewedAt,
       sites: [plan.site],
       pages: [pageRecord(normalizedScan, visualEvidence)],
-    };
+    }, traceEvents);
     return {
       version: MULTIPAGE_AUDIT_VERSION,
       activeAuditId: audit.id,
@@ -205,20 +268,71 @@ export function applyAuditAnalysis(
 
   const index = store.audits.findIndex((audit) => audit.id === plan.auditId);
   if (index < 0) {
-    return applyAuditAnalysis(store, scan, { kind: 'new', site: plan.site }, auditId, visualEvidence);
+    return applyAuditAnalysis(store, scan, { kind: 'new', site: plan.site }, auditId, visualEvidence, traceEvents);
   }
 
   const current = store.audits[index]!;
   const sites = plan.addSite && !current.sites.includes(plan.site)
     ? [...current.sites, plan.site]
     : current.sites;
-  const nextAudit = upsertAuditPage({ ...current, sites }, scan, visualEvidence);
+  const nextAudit = mergeAuditTraceEvents(
+    upsertAuditPage({ ...current, sites }, scan, visualEvidence),
+    traceEvents,
+  );
   const audits = [...store.audits];
   audits[index] = nextAudit;
   return {
     version: MULTIPAGE_AUDIT_VERSION,
     activeAuditId: nextAudit.id,
     audits,
+  };
+}
+
+export function updateAuditTraceEvents(
+  store: MultipageAuditStore,
+  events: RuntimeEvent[],
+): MultipageAuditStore {
+  const active = activeAuditFromStore(store);
+  if (!active) return store;
+  const nextAudit = mergeAuditTraceEvents(active, events);
+  if (nextAudit === active) return store;
+  return {
+    ...store,
+    audits: store.audits.map((audit) => audit.id === active.id ? nextAudit : audit),
+  };
+}
+
+export function removeAuditTraceInteraction(
+  store: MultipageAuditStore,
+  interactionId: string,
+): MultipageAuditStore {
+  const active = activeAuditFromStore(store);
+  if (!active) return store;
+  let changed = false;
+  const pages = active.pages.map((page) => {
+    if (!page.traceEvents?.some((event) => event.interactionId === interactionId)) return page;
+    changed = true;
+    const traceEvents = page.traceEvents.filter((event) => event.interactionId !== interactionId);
+    if (!traceEvents.length) {
+      const {
+        traceEvents: _traceEvents,
+        traceUpdatedAt: _traceUpdatedAt,
+        traceTruncated: _traceTruncated,
+        ...rest
+      } = page;
+      return rest;
+    }
+    return {
+      ...page,
+      traceEvents,
+      traceUpdatedAt: Math.max(...traceEvents.map((event) => event.timestamp)),
+    };
+  });
+  if (!changed) return store;
+  const nextAudit = { ...active, pages };
+  return {
+    ...store,
+    audits: store.audits.map((audit) => audit.id === active.id ? nextAudit : audit),
   };
 }
 

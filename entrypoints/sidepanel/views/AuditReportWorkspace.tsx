@@ -1,7 +1,16 @@
 import { useMemo, useState } from 'react';
 import { browser } from '#imports';
-import { auditPageKey, auditScopeSites, auditSummary, type AccessibilityAudit } from '../../../lib/audit/multipage-audit';
-import { storeAuditPrintEvidence } from '../../../lib/audit/multipage-audit-storage';
+import {
+  auditPageKey,
+  auditScopeSites,
+  auditSummary,
+  mergeAuditTraceEvents,
+  type AccessibilityAudit,
+} from '../../../lib/audit/multipage-audit';
+import {
+  storeAuditPrintEvidence,
+  updateStoredMultipageAuditTrace,
+} from '../../../lib/audit/multipage-audit-storage';
 import type { StructureSnapshot } from '../../../lib/runtime/structure-evidence';
 import { tr, type AppLanguage } from '../../../shared/i18n';
 import type { RuntimeEvent, ScanResult } from '../../../shared/types';
@@ -38,6 +47,10 @@ export function AuditReportWorkspace({
   const [deletingPageKey, setDeletingPageKey] = useState<string>();
   const [openPageKey, setOpenPageKey] = useState<string>();
   const summary = useMemo(() => audit ? auditSummary(audit) : undefined, [audit]);
+  const auditWithLiveTrace = useMemo(
+    () => audit ? mergeAuditTraceEvents(audit, events) : undefined,
+    [audit, events],
+  );
   const currentPageKey = scan ? auditPageKey(scan.url) : undefined;
   const hasAuditPages = Boolean(audit?.pages.length);
   const savedVisualCount = audit?.pages.reduce(
@@ -53,7 +66,8 @@ export function AuditReportWorkspace({
     if (!audit?.pages.length || exportingAudit) return;
     setExportingAudit(true);
     try {
-      const evidence = await storeAuditPrintEvidence(audit);
+      await updateStoredMultipageAuditTrace(events).catch(() => false);
+      const evidence = await storeAuditPrintEvidence(auditWithLiveTrace ?? audit);
       const params = new URLSearchParams({ language, evidence });
       await browser.tabs.create({
         url: browser.runtime.getURL(`/audit-print.html?${params.toString()}`),
@@ -67,8 +81,8 @@ export function AuditReportWorkspace({
     if (!audit || deletingPageKey) return;
     const confirmed = window.confirm(tr(
       language,
-      `Delete the saved report for “${pageTitle}”? This removes its analysis and saved visual evidence from the current audit.`,
-      `¿Eliminar el informe guardado de «${pageTitle}»? Se borrarán de la auditoría actual su análisis y la evidencia visual guardada.`,
+      `Delete the saved report for “${pageTitle}”? This removes its analysis, Trace and saved visual evidence from the current audit.`,
+      `¿Eliminar el informe guardado de «${pageTitle}»? Se borrarán de la auditoría actual su análisis, Trace y evidencia visual guardada.`,
     ));
     if (!confirmed) return;
     setDeletingPageKey(pageKey);
@@ -160,6 +174,8 @@ export function AuditReportWorkspace({
           <div className="audit-page-history" aria-label={tr(language, 'Reviewed pages', 'Páginas revisadas')}>
             {audit.pages.map((page, index) => {
               const active = currentPageKey === page.key;
+              const pageWithTrace = auditWithLiveTrace?.pages.find((candidate) => candidate.key === page.key) ?? page;
+              const pageTraceEvents = pageWithTrace.traceEvents ?? [];
               const open = openPageKey === page.key;
               const warnings = page.scan.warnings?.length ?? 0;
               return (
@@ -180,6 +196,9 @@ export function AuditReportWorkspace({
                       <span><strong>{page.scan.issues.length}</strong>{tr(language, 'failures', 'fallos')}</span>
                       <span><strong>{page.scan.review.length}</strong>{tr(language, 'reviews', 'revisiones')}</span>
                       <span><strong>{warnings}</strong>{tr(language, 'warnings', 'avisos')}</span>
+                      {pageTraceEvents.length > 0 && (
+                        <span><strong>{pageTraceEvents.length}</strong>Trace</span>
+                      )}
                     </span>
                   </summary>
 
@@ -187,7 +206,7 @@ export function AuditReportWorkspace({
                     <div className="audit-page-report-body">
                       <SessionReportView
                         scan={page.scan}
-                        events={active ? events : []}
+                        events={pageTraceEvents}
                         structureSnapshot={active ? structureSnapshot : undefined}
                         language={language}
                         onLocate={onLocate}

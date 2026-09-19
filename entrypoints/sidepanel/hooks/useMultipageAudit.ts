@@ -23,7 +23,7 @@ import {
   collectReportComponents,
 } from '../../../lib/report/visual-evidence';
 import { resolveVisibleTabCaptureSource } from '../../../lib/extension/visible-tab-capture';
-import type { ScanResult } from '../../../shared/types';
+import type { ExtensionMessage, ScanResult, SessionState } from '../../../shared/types';
 
 interface PendingAuditScope {
   audit: AccessibilityAudit;
@@ -168,7 +168,11 @@ export function useMultipageAudit(tabId?: number) {
       // this page must be analyzed again before images can be included.
     }
 
-    const next = await recordMultipageAuditScan(scan, plan, visualEvidence);
+    const session = await browser.runtime.sendMessage({
+      type: 'FOCUSTRACE_GET_SESSION',
+      tabId,
+    } satisfies ExtensionMessage) as SessionState;
+    const next = await recordMultipageAuditScan(scan, plan, visualEvidence, session.events);
     setStore(next);
   }, []);
 

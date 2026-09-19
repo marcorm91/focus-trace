@@ -65,9 +65,17 @@ test('captures focused-node removal, breakpoint pause, graph evidence and export
   expect(renderAuditEvidenceMarkdown(bundle)).toContain('Focus was lost after an element disappeared');
 });
 
-test('continues recording after a full page reload without the side panel open', async ({ page, extensionWorker }) => {
+test('pauses recording after a full page reload without losing the previous evidence', async ({ page, extensionWorker }) => {
   await openFixture(page, 'focus-removed.html');
   const tabId = await startRecording(extensionWorker, page);
+
+  const control = page.getByRole('button', { name: 'Remove focused control' });
+  await control.focus();
+  await waitForSession(
+    extensionWorker,
+    tabId,
+    (state) => state.events.some((event) => event.kind === 'focus'),
+  );
 
   await page.reload();
   await expect(page.locator('main')).toBeVisible();
@@ -80,16 +88,13 @@ test('continues recording after a full page reload without the side panel open',
     }
   }, tabId)).toBe(true);
 
-  const control = page.getByRole('button', { name: 'Remove focused control' });
-  await control.focus();
-  await page.keyboard.press('Enter');
-
   const session = await waitForSession(
     extensionWorker,
     tabId,
-    (state) => sessionHasCause(state, 'FOCUSED_NODE_REMOVED'),
+    (state) => state.recording === false && state.pausedByNavigation != null,
   );
   expect(session.events.some((event) => event.kind === 'focus')).toBe(true);
+  expect(session.events.some((event) => event.kind === 'route')).toBe(true);
 });
 
 test('detects a dialog that opens without moving focus inside', async ({ page, extensionWorker }) => {

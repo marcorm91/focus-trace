@@ -4,6 +4,7 @@ import { browser } from '#imports';
 import { auditSummary, type AccessibilityAudit } from '../../lib/audit/multipage-audit';
 import { readAuditPrintEvidence } from '../../lib/audit/multipage-audit-storage';
 import { guidanceForIssue, reportFindingDescription } from '../../lib/report/finding-guidance';
+import { buildSessionReportModel } from '../../lib/report/session-report';
 import type { ReportVisualEvidence } from '../../lib/report/visual-evidence';
 import { localizedScanIssue, localizedSeverity, tr, type AppLanguage } from '../../shared/i18n';
 import { sortBySeverity } from '../../shared/severity';
@@ -19,7 +20,7 @@ function initialPrintPageNumbers(audit: AccessibilityAudit): PrintPageNumbers {
     const pageNumber = index + 3;
     return [
       [pageId, pageNumber],
-      ...['headings', 'fail', 'review', 'warning'].map((section) => [`${pageId}-${section}`, pageNumber]),
+      ...['trace', 'headings', 'fail', 'review', 'warning'].map((section) => [`${pageId}-${section}`, pageNumber]),
     ];
   }));
 }
@@ -59,7 +60,7 @@ function measuredPrintPageNumbers(audit: AccessibilityAudit): PrintPageNumbers |
       const fragmentShifts: Array<{ offset: number; added: number }> = [];
       let addedHeight = 0;
       const unbreakableBlocks = [...pageSection.querySelectorAll<HTMLElement>(
-        '.print-finding, .print-heading-list li',
+        '.print-finding, .print-heading-list li, .audit-print-trace-list li',
       )].sort((first, second) => first.getBoundingClientRect().top - second.getBoundingClientRect().top);
       for (const block of unbreakableBlocks) {
         const rect = block.getBoundingClientRect();
@@ -80,7 +81,7 @@ function measuredPrintPageNumbers(audit: AccessibilityAudit): PrintPageNumbers |
         return offset + fragmentation;
       };
       pageNumbers[pageId] = nextPage;
-      for (const section of ['headings', 'fail', 'review', 'warning']) {
+      for (const section of ['trace', 'headings', 'fail', 'review', 'warning']) {
         const sectionId = `${pageId}-${section}`;
         const sectionElement = clone.querySelector<HTMLElement>(`#${sectionId}`);
         if (!sectionElement) continue;
@@ -281,6 +282,11 @@ function AuditPrintReport({
               const pageNumber = index + 1;
               const sections = [
                 {
+                  id: 'trace',
+                  label: tr(language, 'Trace runtime evidence', 'Evidencia runtime de Trace'),
+                  count: page.traceEvents?.length ?? 0,
+                },
+                {
                   id: 'headings',
                   label: tr(language, 'Headings that need review', 'Encabezados que requieren revisión'),
                   count: (page.scan.headings ?? []).filter((heading) => heading.signals.length > 0).length,
@@ -336,6 +342,8 @@ function AuditPrintReport({
           const scan = page.scan;
           const headings = scan.headings ?? [];
           const headingReviews = headings.filter((heading) => heading.signals.length > 0);
+          const traceEvents = page.traceEvents ?? [];
+          const traceModel = buildSessionReportModel(scan, traceEvents, language);
           const groups = [
             { id: 'fail', label: tr(language, 'Failures', 'Fallos'), issues: sortBySeverity(scan.issues) },
             { id: 'review', label: tr(language, 'Review', 'Revisión'), issues: sortBySeverity(scan.review) },
@@ -373,7 +381,46 @@ function AuditPrintReport({
                 <span><strong>{scan.review.length}</strong> {tr(language, 'reviews', 'revisiones')}</span>
                 <span><strong>{scan.warnings?.length ?? 0}</strong> {tr(language, 'warnings', 'avisos')}</span>
                 <span><strong>{headings.length}</strong> {tr(language, 'headings', 'encabezados')}</span>
+                <span><strong>{traceEvents.length}</strong> Trace</span>
               </div>
+
+              {traceEvents.length > 0 && (
+                <div className="audit-print-trace" id={`audit-page-${index + 1}-trace`}>
+                  <h3>{tr(language, 'Trace runtime evidence', 'Evidencia runtime de Trace')} <span>{traceEvents.length}</span></h3>
+                  <p>{tr(
+                    language,
+                    'Interactions recorded on this page and retained with its audit report.',
+                    'Interacciones registradas en esta página y conservadas con su informe de auditoría.',
+                  )}</p>
+                  {page.traceTruncated && (
+                    <p className="audit-print-trace-limit">{tr(
+                      language,
+                      'Only the most recent bounded Trace evidence is included.',
+                      'Solo se incluye la evidencia Trace acotada más reciente.',
+                    )}</p>
+                  )}
+                  {traceModel.traceStories.length > 0 ? (
+                    <ol className="audit-print-trace-list">
+                      {traceModel.traceStories.map((story) => (
+                        <li className={`tone-${story.tone}`} key={story.id}>
+                          <div>
+                            <strong>{story.result}</strong>
+                            <span>{story.occurrenceCount} {tr(language, 'occurrences', 'apariciones')}</span>
+                          </div>
+                          <p>{story.detail}</p>
+                          {story.trigger && <small>{story.trigger}</small>}
+                        </li>
+                      ))}
+                    </ol>
+                  ) : (
+                    <p>{tr(
+                      language,
+                      'No review signal was generated; the recorded events remain available as page evidence.',
+                      'No se generó ninguna señal de revisión; los eventos grabados permanecen como evidencia de la página.',
+                    )}</p>
+                  )}
+                </div>
+              )}
 
               {visualEvidence && visualEvidence.eligibleCount > 0 && visualEvidence.visuals.length > 0 && (
                 <p className="print-visual-summary">

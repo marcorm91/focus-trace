@@ -41,6 +41,26 @@
   justify-content: flex-start;
 }
 
+.trace-navigation-pause {
+  display: grid;
+  gap: 4px;
+  margin: 10px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--ft-border);
+  border-left: 4px solid var(--ft-warning);
+  border-radius: 8px;
+  background: var(--ft-surface-subtle);
+}
+
+.trace-navigation-pause p {
+  margin: 0;
+}
+
+.trace-navigation-pause small {
+  overflow-wrap: anywhere;
+  color: var(--ft-muted);
+}
+
 .trace-hero-actions button {
   min-height: 42px;
   min-width: 0;

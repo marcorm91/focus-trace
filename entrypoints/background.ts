@@ -18,7 +18,11 @@ import {
   saveFindingReviewState,
   syncStoredFindingReviewNote,
 } from '../lib/audit/finding-review-storage';
-import { updateStoredMultipageAuditScan } from '../lib/audit/multipage-audit-storage';
+import {
+  removeStoredMultipageAuditTraceInteraction,
+  updateStoredMultipageAuditScan,
+  updateStoredMultipageAuditTrace,
+} from '../lib/audit/multipage-audit-storage';
 import {
   captureVisibleTabFromSource,
   visibleTabCaptureSource,
@@ -35,6 +39,7 @@ import {
   emptySessionState,
   invalidateSessionScanForUrl,
   normalizeSessionState,
+  pauseSessionForNavigation,
   removeSessionInteraction,
   resetSessionState,
   setSessionRecordingState,
@@ -121,13 +126,44 @@ async function syncContentState(
   } satisfies ExtensionMessage);
 }
 
-async function restoreContentStateAfterNavigation(tabId: number, state: SessionState) {
+async function getRuntimeDocumentToken(tabId: number): Promise<string | undefined> {
+  const token = await browser.tabs.sendMessage(tabId, {
+    type: 'FOCUSTRACE_GET_DOCUMENT_TOKEN',
+  } satisfies ExtensionMessage).catch(() => undefined);
+  return typeof token === 'string' ? token : undefined;
+}
+
+async function reconcileContentStateAfterNavigation(tabId: number, url: string) {
+  const current = await getSession(tabId);
+  if (!current.recording) return;
   const injected = await ensureInjected(tabId, 'trace');
   if (!injected) return;
+  const documentToken = await getRuntimeDocumentToken(tabId);
+
+  const next = await serializeTabWrite(tabId, async () => {
+    const state = await getSession(tabId);
+    if (!state.recording) return state;
+
+    const reconciled = state.traceDocumentToken && documentToken
+      && state.traceDocumentToken !== documentToken
+      ? pauseSessionForNavigation(state, url)
+      : documentToken && state.traceDocumentToken !== documentToken
+        ? { ...state, traceDocumentToken: documentToken }
+        : state;
+    if (reconciled !== state) {
+      await saveSession(reconciled);
+      if (!reconciled.recording) {
+        await updateStoredMultipageAuditTrace(reconciled.events).catch(() => false);
+      }
+      await broadcast(reconciled);
+    }
+    return reconciled;
+  });
+
   await browser.tabs.sendMessage(tabId, {
     type: 'FOCUSTRACE_SET_RECORDING',
-    enabled: state.recording,
-    breakpoints: state.breakpoints,
+    enabled: next.recording,
+    breakpoints: next.breakpoints,
   } satisfies ExtensionMessage);
 }
 
@@ -231,6 +267,9 @@ export default defineBackground(() => {
         const state = await getSession(tabId);
         const next = appendRuntimeEventsToSession(state, events);
         await saveSession(next);
+        if (state.recording && !next.recording) {
+          await updateStoredMultipageAuditTrace(next.events).catch(() => false);
+        }
         await broadcast(next);
       });
     }
@@ -264,6 +303,7 @@ export default defineBackground(() => {
         const next = removeSessionInteraction(current, message.interactionId);
         if (next === current) return current;
         await saveSession(next);
+        await removeStoredMultipageAuditTraceInteraction(message.interactionId).catch(() => false);
         await broadcast(next);
         return next;
       });
@@ -286,6 +326,9 @@ export default defineBackground(() => {
           if (results[0]?.status === 'rejected') warnings.push('finding-review-write-failed');
           if (results[1]?.status === 'rejected') warnings.push('focus-memory-write-failed');
           if (results[2]?.status === 'rejected') warnings.push('multipage-audit-write-failed');
+        } else if (message.target.kind === 'runtime-event') {
+          const persisted = await Promise.allSettled([updateStoredMultipageAuditTrace(next.events)]);
+          if (persisted[0]?.status === 'rejected') warnings.push('multipage-audit-write-failed');
         }
         await broadcast(next);
         return {
@@ -343,8 +386,22 @@ export default defineBackground(() => {
     if (message.type === 'FOCUSTRACE_SET_RECORDING_STATE') {
       return serializeTabWrite(message.tabId, async () => {
         const state = await getSession(message.tabId);
-        const next = setSessionRecordingState(state, message.enabled, message.startedAt);
+        const recordingState = setSessionRecordingState(
+          state,
+          message.enabled,
+          message.startedAt,
+          message.pageUrl,
+        );
+        const documentToken = message.enabled
+          ? await getRuntimeDocumentToken(message.tabId)
+          : undefined;
+        const next = documentToken
+          ? { ...recordingState, traceDocumentToken: documentToken }
+          : recordingState;
         await saveSession(next);
+        if (!message.enabled) {
+          await updateStoredMultipageAuditTrace(next.events).catch(() => false);
+        }
         await broadcast(next);
         return next;
       });
@@ -386,15 +443,13 @@ export default defineBackground(() => {
     }
   });
 
-  browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.url) {
       void invalidateScanAfterNavigation(tabId, changeInfo.url).catch(() => undefined);
     }
 
     if (changeInfo.status !== 'complete') return;
-    void getSession(tabId)
-      .then((state) => state.recording ? restoreContentStateAfterNavigation(tabId, state) : undefined)
-      .catch(() => undefined);
+    if (tab.url) void reconcileContentStateAfterNavigation(tabId, tab.url).catch(() => undefined);
   });
 
   browser.tabs.onRemoved.addListener((tabId) => {

@@ -598,6 +598,7 @@ export default function App() {
             selectedSelector={selectedFocusSelector}
             breakpointSettings={breakpointSettings}
             pausedByBreakpoint={session.pausedByBreakpoint}
+            pausedByNavigation={session.pausedByNavigation}
             level={explanationLevel}
             language={language}
             page={scan ? { url: scan.url, title: scan.title } : undefined}

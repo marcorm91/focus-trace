@@ -228,8 +228,12 @@ export function SessionReportView({
                   )
                 : tr(
                     language,
-                    'Saved static analysis from this review. Historical Trace and Structure evidence are not persisted in this version.',
-                    'Análisis estático guardado de esta revisión. En esta versión no se conserva el Trace ni la evidencia de Estructura históricos.',
+                    events.length
+                      ? 'Saved static analysis and page-attributed Trace evidence from this review. Historical Structure evidence is not persisted.'
+                      : 'Saved static analysis from this review. Historical Structure evidence is not persisted.',
+                    events.length
+                      ? 'Análisis estático guardado y evidencia Trace atribuida a esta página. No se conserva la evidencia histórica de Estructura.'
+                      : 'Análisis estático guardado de esta revisión. No se conserva la evidencia histórica de Estructura.',
                   )
               : tr(language, 'Analyze the page to start the report.', 'Analiza la página para iniciar el informe.')}
           </p>
@@ -511,10 +515,10 @@ export function SessionReportView({
               <div className="report-pending">
                 <strong>{livePage
                   ? tr(language, 'Trace evidence pending', 'Evidencia de Trace pendiente')
-                  : tr(language, 'Historical Trace unavailable', 'Trace histórico no disponible')}</strong>
+                  : tr(language, 'No saved Trace evidence', 'Sin evidencia Trace guardada')}</strong>
                 <p>{livePage
                   ? tr(language, 'Record a real interaction or use Automate focus to add runtime context to this report.', 'Graba una interacción real o utiliza Automatizar foco para añadir contexto runtime al informe.')
-                  : tr(language, 'This saved review keeps its static analysis, but Trace evidence was not persisted with historical pages in this version.', 'Esta revisión guardada conserva su análisis estático, pero en esta versión la evidencia de Trace no se persiste con las páginas históricas.')}</p>
+                  : tr(language, 'This saved page does not contain attributed Trace events yet.', 'Esta página guardada todavía no contiene eventos Trace atribuidos.')}</p>
               </div>
             )}
             {annotatedRuntimeEvents.length > 0 && (

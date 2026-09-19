@@ -79,3 +79,65 @@ for (const decision of ['add', 'new'] as const) {
     await expect(dialog).not.toBeVisible();
   });
 }
+
+test('Trace pauses on document navigation, preserves evidence and revalidates the destination site', async ({ context, extensionWorker }) => {
+  const inspected = await context.newPage();
+  await inspected.goto(`${fixtures.origin}/scan-targets.html`);
+  const tabId = await extensionWorker.evaluate(async (url) => {
+    const api = (globalThis as any).chrome;
+    const tabs = await api.tabs.query({});
+    await api.storage.local.set({
+      'focustrace:multipage-audits:v1': {
+        version: 1, activeAuditId: 'current', audits: [{
+          id: 'current', name: 'current audit', sites: ['127.0.0.1'],
+          pages: [], createdAt: 1, updatedAt: 1,
+        }],
+      },
+    });
+    return tabs.find((tab: any) => tab.url === url).id as number;
+  }, inspected.url());
+  const panel = await context.newPage();
+  await panel.goto(`chrome-extension://${new URL(extensionWorker.url()).hostname}/sidepanel.html?focustraceTabId=${tabId}`);
+  await panel.getByRole('button', { name: 'Trace', exact: true }).click();
+  await panel.locator('.trace-record.start').click();
+  await expect(panel.locator('.trace-record.stop')).toBeVisible();
+
+  await inspected.keyboard.press('Tab');
+  await inspected.goto(`${fixtures.origin}/component-scan.html`);
+
+  const pause = panel.locator('.trace-navigation-pause');
+  await expect(pause).toBeVisible();
+  await expect(pause).toContainText(/preserved|conservado/);
+  const resume = panel.locator('.trace-record.start');
+  await expect(resume).toContainText(/Resume|Reanudar/);
+  const pausedSession = await extensionWorker.evaluate(async (id) => {
+    const api = (globalThis as any).chrome;
+    return (await api.storage.session.get(`session:${id}`))[`session:${id}`];
+  }, tabId);
+  expect(pausedSession.recording).toBe(false);
+  expect(pausedSession.events.some((event: any) => event.kind === 'route'
+    && event.fromUrl.includes('/scan-targets.html')
+    && event.toUrl.includes('/component-scan.html'))).toBe(true);
+
+  await resume.click();
+  await expect(panel.locator('.trace-record.stop')).toBeVisible();
+  await expect(panel.locator('.audit-scope-dialog')).not.toBeVisible();
+
+  const otherSiteUrl = `${fixtures.origin.replace('127.0.0.1', 'localhost')}/scan-targets.html`;
+  await inspected.goto(otherSiteUrl);
+  await expect(pause).toBeVisible();
+  await resume.click();
+  const dialog = panel.locator('.audit-scope-dialog');
+  await expect(dialog).toBeVisible();
+  await expect(dialog.locator('.audit-scope-context dd').last()).toContainText('localhost');
+  await dialog.getByRole('button', { name: /Add to current audit|Añadir a la auditoría actual/ }).click();
+  await expect(panel.locator('.trace-record.stop')).toBeVisible();
+
+  const resumedSession = await extensionWorker.evaluate(async (id) => {
+    const api = (globalThis as any).chrome;
+    return (await api.storage.session.get(`session:${id}`))[`session:${id}`];
+  }, tabId);
+  expect(resumedSession.pausedByNavigation).toBeUndefined();
+  expect(resumedSession.events.length).toBeGreaterThanOrEqual(pausedSession.events.length + 1);
+  expect(resumedSession.tracePageUrl).toContain('localhost');
+});

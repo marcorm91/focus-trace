@@ -130,7 +130,7 @@ test('historical audit reports stay static, single-open and separate from live p
   const historicalRule = historical.locator('.report-rule-group').first();
   await historicalRule.locator(':scope > summary').click();
   await expect(historical.getByRole('button', { name: /Review on page|Revisar en la página/ })).toHaveCount(0);
-  await expect(historical.getByText(/Historical Trace unavailable|Trace histórico no disponible/)).toBeAttached();
+  await expect(historical.getByText(/No saved Trace evidence|Sin evidencia Trace guardada/)).toBeAttached();
 
   await current.locator(':scope > summary').click();
   await expect(current).toHaveAttribute('open', '');

@@ -62,6 +62,7 @@ async function applyRecordingState(input: {
   enabled: boolean;
   breakpoints: RuntimeBreakpointSettings;
   startedAt?: number;
+  pageUrl?: string;
 }): Promise<SessionState> {
   // The background session is the source of truth. Persist the requested state
   // first, then apply it to the inspected page. If enabling the page runtime
@@ -72,6 +73,7 @@ async function applyRecordingState(input: {
     tabId: input.tabId,
     enabled: input.enabled,
     ...(input.startedAt ? { startedAt: input.startedAt } : {}),
+    ...(input.pageUrl ? { pageUrl: input.pageUrl } : {}),
   } satisfies ExtensionMessage)) as SessionState;
 
   try {
@@ -132,7 +134,9 @@ export function useTraceActions({
         if (!await prepareTraceScope(tabId)) return;
       }
       await ensureInjected('trace');
-      const resumingFromBreakpoint = enabled && session.pausedByBreakpoint != null;
+      const resumingFromPause = enabled
+        && (session.pausedByBreakpoint != null || session.pausedByNavigation != null);
+      const tracePage = enabled ? await browser.tabs.get(tabId) : undefined;
 
       if (enabled) {
         await browser.scripting.executeScript({
@@ -146,7 +150,7 @@ export function useTraceActions({
         await waitForRuntimeFlush(tabId);
       }
 
-      if (enabled && !resumingFromBreakpoint) {
+      if (enabled && !resumingFromPause) {
         await browser.runtime.sendMessage({ type: 'FOCUSTRACE_CLEAR_SESSION', tabId } satisfies ExtensionMessage);
       }
 
@@ -155,6 +159,7 @@ export function useTraceActions({
         enabled,
         breakpoints: breakpointSettings,
         ...(enabled ? { startedAt: Date.now() } : {}),
+        ...(enabled && tracePage?.url ? { pageUrl: tracePage.url } : {}),
       });
       setSession(next);
 
@@ -180,6 +185,7 @@ export function useTraceActions({
     refresh,
     resetFocusPathState,
     session.pausedByBreakpoint,
+    session.pausedByNavigation,
     session.recording,
     setBusy,
     setError,

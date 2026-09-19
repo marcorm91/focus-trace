@@ -179,6 +179,58 @@
   margin: 18px 0 24px;
 }
 
+.audit-print-trace {
+  margin: 18px 0 24px;
+  padding: 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.audit-print-trace > h3,
+.audit-print-trace > p {
+  margin: 0 0 8px;
+}
+
+.audit-print-trace > h3 {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.audit-print-trace-list {
+  display: grid;
+  gap: 8px;
+  margin: 12px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.audit-print-trace-list li {
+  padding: 10px;
+  border-left: 4px solid #64748b;
+  background: #fff;
+  break-inside: avoid;
+}
+
+.audit-print-trace-list li.tone-review { border-left-color: #b45309; }
+.audit-print-trace-list li.tone-handled { border-left-color: #047857; }
+
+.audit-print-trace-list li > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.audit-print-trace-list p {
+  margin: 5px 0;
+}
+
+.audit-print-trace-limit {
+  font-weight: 700;
+  color: #92400e;
+}
+
 @media print {
   .audit-print-page {
     break-before: page;

@@ -16,7 +16,7 @@ Responsibilities include:
 - managing user-facing settings;
 - requesting optional HTTP/HTTPS page access directly from explicit user actions, before querying privileged tab URL fields on a fresh installation;
 - collecting bounded local Memory evidence for an explicit scan when Memory is enabled;
-- adding/replacing a full-page result and bounded local visual context in the active multipage audit;
+- adding/replacing a full-page result, bounded page-attributed Trace and local visual context in the active multipage audit;
 - presenting FocusTrace Memory comparisons without mutating scan history merely by rendering a view.
 
 The side panel treats the background session as the source of truth for the active tab. Asynchronous tab refreshes are guarded so a slow response from a previously selected tab cannot overwrite the current tab state.
@@ -39,7 +39,7 @@ The background stores a completed static scan before broadcasting the updated se
 
 `entrypoints/runtime.content.ts` and `lib/runtime/` execute or support code that observes the inspected page.
 
-Injection is capability-scoped. A static page/component analysis or Site Audit representative-page scan loads only `runtime.content.ts`. Starting Trace or Focus Walk additionally loads the focus-visible and hover/focus-content observer entrypoints. Restoring an active recording after navigation always selects the complete Trace set, even if another action asks for the smaller scan runtime at the same time.
+Injection is capability-scoped. A static page/component analysis or Site Audit representative-page scan loads only `runtime.content.ts`. Starting Trace or Focus Walk additionally loads the focus-visible and hover/focus-content observer entrypoints. A full document navigation pauses an active Trace before the new document is instrumented; explicit resume validates the new page against the active audit scope and then selects the complete Trace set.
 
 Responsibilities include:
 
@@ -76,7 +76,7 @@ remain in `lib/site-audit/` so presentation components do not redefine evidence.
 
 Single-page printable visual evidence is user initiated. Broader screenshot capability is requested for the export action when the browser requires it and is not a permanent production host permission.
 
-Multipage audit visual evidence is different: an explicit full-page analysis can retain a small bounded crop set locally so a later individual or audit PDF can preserve context after the user has navigated away. Those crops use the active analysis context and are stored with the audit review; they are not re-captured against whichever page is active during historical export.
+Multipage audit evidence is different: an explicit full-page analysis can retain a small bounded crop set locally, while stop/navigation/breakpoint boundaries can retain bounded Trace events already attributed to an unambiguous reviewed page. A later individual or audit PDF can therefore preserve both kinds of context after the user has navigated away. Crops use the active analysis context and are not re-captured against whichever page is active during historical export.
 
 ## Library layout
 
@@ -152,20 +152,20 @@ Closing a tab removes its session entry. **Start Over** clears the page/Trace ev
 
 - interface language and scale;
 - breakpoint preferences;
-- multipage audit history and bounded recent visual crops;
+- multipage audit history, up to 200 recent attributed Trace events per page and bounded recent visual crops;
 - FocusTrace Memory settings, bounded history and optional bounded local evidence.
 
 Here, durable means across normal browser restarts and extension updates while FocusTrace remains installed. The browser owns the extension-storage lifecycle and automatically removes this local data when FocusTrace is uninstalled. A later installation begins with empty extension storage; only an explicit portable JSON export made before uninstall can be imported to reuse supported Memory evidence and notes. Exported files are outside extension storage and are not affected by uninstall.
 
-Multipage audits retain the latest saved full-page result per normalized URL. Storage is bounded by audit/page counts, at most three visual crops per review, a shared visual-data budget and an overall serialized audit-store budget. Audit evidence remains bound to the exact tab and normalized page URL that produced the scan; if that source is no longer visible, capture is marked unavailable instead of borrowing pixels from another active tab. Pruning prefers the newest active review: older inactive audit history is removed first, then older pages. A quota-write fallback attempts to preserve the newest active page without screenshot data rather than losing the latest static review entirely.
+Multipage audits retain the latest saved full-page result per normalized URL. Storage is bounded by audit/page counts, up to 200 recent Trace events per reviewed page, at most three visual crops per review, a shared visual-data budget and an overall serialized audit-store budget. Trace URLs redact query and fragment values; events are attached only when the redacted URL identifies one reviewed page unambiguously. Audit visual evidence remains bound to the exact tab and normalized page URL that produced the scan; if that source is no longer visible, capture is marked unavailable instead of borrowing pixels from another active tab. Pruning prefers the newest active review: older inactive audit history is removed first, then older pages. A quota-write fallback attempts to preserve the newest active page without screenshot data rather than losing the latest static review entirely.
 
-Historical audit pages in 0.1.4 persist their static scan/headings and audit visual crops. They do **not** persist complete Trace or Structure snapshots; the UI must label those historical sections as unavailable rather than borrowing live evidence from the current tab.
+Historical audit pages persist their static scan/headings, bounded page-attributed Trace events and audit visual crops. They do **not** persist Structure snapshots; the UI labels that historical section as unavailable rather than borrowing live evidence from the current tab.
 
 FocusTrace Memory is enabled by default and can be disabled by the user. Its normal observation data includes hashed fingerprints, counts, timestamps and any auditor notes attached to remembered static findings. To preserve useful context for a resolved finding, it can also retain a compact target locator and, when available, a small local JPEG crop of the visible failing element. Memory does not store page HTML, a full DOM snapshot or a full-page screenshot.
 
 Current Memory capacity bounds are 8 observations per scope, 200 observations total and 24 visual previews across remembered findings. Observations and compact resolved markers do not expire by age; the oldest retained evidence is replaced when a capacity limit is reached. Only the newest retained preview for a finding is kept. Users can clear saved history, notes and evidence from Settings even when Memory is disabled.
 
-Auditor notes use one shared plain-text contract (`2,000` characters plus `updatedAt`) and remain embedded in their parent `ScanIssue` or `RuntimeEvent`. The background session writer serializes note edits with other per-tab writes. Static note edits also patch the exact matching Memory observation and saved multipage-audit scan without recreating visual evidence. Deleting a note or its retained parent therefore deletes the associated local copy. Trace JSON schema version 2 and Memory baseline JSON version 2 expose notes explicitly; the Memory parser remains backward-compatible with version 1 files.
+Auditor notes use one shared plain-text contract (`2,000` characters plus `updatedAt`) and remain embedded in their parent `ScanIssue` or `RuntimeEvent`. The background session writer serializes note edits with other per-tab writes. Static note edits patch the exact matching Memory observation and saved multipage-audit scan without recreating visual evidence; Trace-note edits patch a matching retained audit event. Deleting a note or its retained parent therefore deletes the associated local copy. Trace JSON schema version 2 and Memory baseline JSON version 2 expose notes explicitly; the Memory parser remains backward-compatible with version 1 files.
 
 ## Static scan flow
 
@@ -229,7 +229,7 @@ FOCUSTRACE_SESSION_UPDATED
 Side panel views / graph / journey / replay / current report
 ```
 
-Trace is session evidence. It must not be silently attached to a historical audit page that did not persist that Trace.
+Trace starts as session evidence. On stop, document-navigation pause, breakpoint pause, explicit page reanalysis or complete-audit export, attributed events can be merged into the matching reviewed page. Event IDs are deduplicated, only an unambiguous redacted page URL is accepted, and the per-page retention limit prevents the audit store from becoming an unbounded interaction log.
 
 The inspected-page runtime coalesces ordinary event bursts over a single 16 ms
 window before crossing the extension boundary. A breakpoint bypasses that wait,

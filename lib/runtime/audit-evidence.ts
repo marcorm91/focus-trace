@@ -62,6 +62,9 @@ export interface AuditEvidenceBundle {
       kind: string;
       title: string;
       selector?: string;
+      pageUrl?: string;
+      fromUrl?: string;
+      toUrl?: string;
       ruleId?: string;
       outcome?: string;
       auditorNote?: AuditorNote;
@@ -157,6 +160,9 @@ export function buildAuditEvidenceBundle(input: {
         kind: event.kind,
         title: humanRuntimeEventTitle(event, language),
         ...(event.element?.selector ? { selector: event.element.selector } : {}),
+        ...(event.pageUrl ? { pageUrl: event.pageUrl } : {}),
+        ...(event.fromUrl ? { fromUrl: event.fromUrl } : {}),
+        ...(event.toUrl ? { toUrl: event.toUrl } : {}),
         ...(event.ruleId ? { ruleId: event.ruleId } : {}),
         ...(event.outcome ? { outcome: event.outcome } : {}),
         ...(event.auditorNote ? { auditorNote: event.auditorNote } : {}),
@@ -185,6 +191,14 @@ export function renderAuditEvidenceMarkdown(
       tr(language, `- Title: ${bundle.page?.title || '—'}`, `- Título: ${bundle.page?.title || '—'}`),
       `- URL: ${bundle.page?.url || '—'}`,
     );
+  }
+
+  const observedPages = [...new Set(bundle.interactions.flatMap((interaction) =>
+    interaction.events.flatMap((event) => [event.pageUrl, event.fromUrl, event.toUrl])
+      .filter((url): url is string => Boolean(url))))];
+  if (observedPages.length) {
+    lines.push('', tr(language, '## Pages observed during Trace', '## Páginas observadas durante Trace'), '');
+    observedPages.forEach((url) => lines.push(`- ${url}`));
   }
 
   lines.push('', `## ${legend.title}`, '', legend.intro, '');

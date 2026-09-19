@@ -44,7 +44,7 @@ describe('multipage audit UI contract', () => {
     expect(workspace).toContain('const open = openPageKey === page.key;');
     expect(workspace).toContain('livePage={active}');
     expect(workspace).toContain("className={`audit-page-report${active ? ' is-current' : ' is-history'}`}");
-    expect(workspace).toContain('events={active ? events : []}');
+    expect(workspace).toContain('events={pageTraceEvents}');
     expect(workspace).toContain('structureSnapshot={active ? structureSnapshot : undefined}');
     expect(workspace).toContain('savedVisualEvidence={page.visualEvidence}');
     expect(report).toContain('livePage = true');
@@ -52,7 +52,7 @@ describe('multipage audit UI contract', () => {
     expect(report).toContain('session: {');
     expect(report).toContain('savedVisualEvidence?.visuals');
     expect(report).toContain('onLocate={livePage ? onLocate : undefined}');
-    expect(report).toContain('Historical Trace unavailable');
+    expect(report).toContain('No saved Trace evidence');
     expect(report).toContain('Historical Structure unavailable');
     expect(compact).not.toContain('requestActivePageAccess');
     expect(compact).not.toContain('locateScanTargetInPage');
@@ -72,7 +72,7 @@ describe('multipage audit UI contract', () => {
     expect(workspace).not.toContain('Include saved images');
     expect(workspace).not.toContain('Incluir imágenes guardadas');
     expect(workspace).toContain('Las imágenes de la auditoría completa se guardan página a página.');
-    expect(workspace).toContain('storeAuditPrintEvidence(audit)');
+    expect(workspace).toContain('storeAuditPrintEvidence(auditWithLiveTrace ?? audit)');
     expect(hook).toContain('deleteMultipageAuditPage');
     expect(storage).toContain('removeAuditPage(current, auditId, pageKey)');
   });
@@ -102,7 +102,10 @@ describe('multipage audit UI contract', () => {
     expect(storage).toContain('oldestInactiveIndex');
     expect(storage).toContain('pages: audit.pages.slice(1)');
     expect(storage).toContain('storageTrimmed: true');
+    expect(storage).toContain('MAX_TRACE_EVENTS_PER_AUDIT_PAGE');
     expect(printable).toContain('page.visualEvidence?.visuals');
+    expect(printable).toContain('page.traceEvents ?? []');
+    expect(printable).toContain('Evidencia runtime de Trace');
     expect(printable).toContain('print-visual-evidence');
     expect(printable).not.toContain('No se pudo capturar evidencia visual para esta revisión');
   });
