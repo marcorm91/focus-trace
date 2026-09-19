@@ -437,6 +437,7 @@ export interface SessionState {
   pausedByBreakpoint?: RuntimeBreakpointHit;
   pausedByNavigation?: TraceNavigationPause;
   tracePageUrl?: string;
+  traceDocumentToken?: string;
   scan?: ScanResult;
   textResizeBaseline?: TextResizeBaseline;
 }
@@ -480,6 +481,7 @@ export type ExtensionMessage =
   | { type: 'FOCUSTRACE_ENSURE_INJECTED'; tabId: number; mode: RuntimeInjectionMode }
   | { type: 'FOCUSTRACE_SESSION_UPDATED'; state: SessionState }
   | { type: 'FOCUSTRACE_SET_RECORDING'; enabled: boolean; breakpoints?: RuntimeBreakpointSettings }
+  | { type: 'FOCUSTRACE_GET_DOCUMENT_TOKEN' }
   | { type: 'FOCUSTRACE_SET_RECORDING_STATE'; tabId: number; enabled: boolean; startedAt?: number; pageUrl?: string }
   | { type: 'FOCUSTRACE_CONFIGURE_BREAKPOINTS'; breakpoints: RuntimeBreakpointSettings }
   | { type: 'FOCUSTRACE_SAVE_BREAKPOINTS'; tabId: number; breakpoints: RuntimeBreakpointSettings }

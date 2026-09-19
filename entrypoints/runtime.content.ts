@@ -118,6 +118,7 @@ export default defineContentScript({
   matches: ['http://*/*', 'https://*/*'],
   runAt: 'document_idle',
   main(ctx) {
+    const documentToken = crypto.randomUUID();
     let recording = false;
     let explicitStateVersion = 0;
     let breakpointSettings = defaultRuntimeBreakpointSettings();
@@ -921,6 +922,7 @@ export default defineContentScript({
 
     browser.runtime.onMessage.addListener((message: ExtensionMessage | { type: 'FOCUSTRACE_PING' }) => {
       if (message.type === 'FOCUSTRACE_PING') return Promise.resolve(true);
+      if (message.type === 'FOCUSTRACE_GET_DOCUMENT_TOKEN') return Promise.resolve(documentToken);
 
       if (message.type === 'FOCUSTRACE_FLUSH_CONTENT_EVENTS') {
         return runtimeEventBatcher.flush().then(() => true);

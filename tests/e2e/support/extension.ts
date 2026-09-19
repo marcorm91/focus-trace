@@ -57,16 +57,6 @@ export async function startRecording(worker: Worker, page: Page): Promise<number
     const chromeApi = (globalThis as any).chrome;
     const key = `session:${id}`;
 
-    await chromeApi.storage.session.set({
-      [key]: {
-        tabId: id,
-        recording: true,
-        startedAt: Date.now(),
-        events: [],
-        breakpoints,
-      },
-    });
-
     const ensureContentScript = async (pingType: string, file: string) => {
       const ready = await chromeApi.tabs.sendMessage(id, { type: pingType })
         .then((response: unknown) => response === true)
@@ -81,6 +71,20 @@ export async function startRecording(worker: Worker, page: Page): Promise<number
     await ensureContentScript('FOCUSTRACE_PING', '/content-scripts/runtime.js');
     await ensureContentScript('FOCUSTRACE_FOCUS_VISIBLE_PING', '/content-scripts/focus-visible.js');
     await ensureContentScript('FOCUSTRACE_HOVER_FOCUS_PING', '/content-scripts/hover-focus-content.js');
+    const traceDocumentToken = await chromeApi.tabs.sendMessage(id, {
+      type: 'FOCUSTRACE_GET_DOCUMENT_TOKEN',
+    });
+
+    await chromeApi.storage.session.set({
+      [key]: {
+        tabId: id,
+        recording: true,
+        startedAt: Date.now(),
+        events: [],
+        breakpoints,
+        traceDocumentToken,
+      },
+    });
 
     await chromeApi.tabs.sendMessage(id, {
       type: 'FOCUSTRACE_SET_RECORDING',

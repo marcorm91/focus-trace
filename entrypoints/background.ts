@@ -126,13 +126,44 @@ async function syncContentState(
   } satisfies ExtensionMessage);
 }
 
-async function restoreContentStateAfterNavigation(tabId: number, state: SessionState) {
+async function getRuntimeDocumentToken(tabId: number): Promise<string | undefined> {
+  const token = await browser.tabs.sendMessage(tabId, {
+    type: 'FOCUSTRACE_GET_DOCUMENT_TOKEN',
+  } satisfies ExtensionMessage).catch(() => undefined);
+  return typeof token === 'string' ? token : undefined;
+}
+
+async function reconcileContentStateAfterNavigation(tabId: number, url: string) {
+  const current = await getSession(tabId);
+  if (!current.recording) return;
   const injected = await ensureInjected(tabId, 'trace');
   if (!injected) return;
+  const documentToken = await getRuntimeDocumentToken(tabId);
+
+  const next = await serializeTabWrite(tabId, async () => {
+    const state = await getSession(tabId);
+    if (!state.recording) return state;
+
+    const reconciled = state.traceDocumentToken && documentToken
+      && state.traceDocumentToken !== documentToken
+      ? pauseSessionForNavigation(state, url)
+      : documentToken && state.traceDocumentToken !== documentToken
+        ? { ...state, traceDocumentToken: documentToken }
+        : state;
+    if (reconciled !== state) {
+      await saveSession(reconciled);
+      if (!reconciled.recording) {
+        await updateStoredMultipageAuditTrace(reconciled.events).catch(() => false);
+      }
+      await broadcast(reconciled);
+    }
+    return reconciled;
+  });
+
   await browser.tabs.sendMessage(tabId, {
     type: 'FOCUSTRACE_SET_RECORDING',
-    enabled: state.recording,
-    breakpoints: state.breakpoints,
+    enabled: next.recording,
+    breakpoints: next.breakpoints,
   } satisfies ExtensionMessage);
 }
 
@@ -142,25 +173,6 @@ function invalidateScanAfterNavigation(tabId: number, url: string): Promise<void
     const next = invalidateSessionScanForUrl(state, url);
     if (next === state) return;
     await saveSession(next);
-    await broadcast(next);
-  });
-}
-
-function pauseTraceAfterDocumentNavigation(
-  tabId: number,
-  url: string,
-  navigationStartedAt: number,
-): Promise<void> {
-  return serializeTabWrite(tabId, async () => {
-    const state = await getSession(tabId);
-    // tabs.onUpdated may have fired before Trace was started while its async
-    // storage work is still queued. Do not let that stale navigation pause a
-    // recording that began afterwards.
-    if (state.startedAt != null && state.startedAt > navigationStartedAt) return;
-    const next = pauseSessionForNavigation(state, url);
-    if (next === state) return;
-    await saveSession(next);
-    await updateStoredMultipageAuditTrace(next.events).catch(() => false);
     await broadcast(next);
   });
 }
@@ -374,7 +386,18 @@ export default defineBackground(() => {
     if (message.type === 'FOCUSTRACE_SET_RECORDING_STATE') {
       return serializeTabWrite(message.tabId, async () => {
         const state = await getSession(message.tabId);
-        const next = setSessionRecordingState(state, message.enabled, message.startedAt, message.pageUrl);
+        const recordingState = setSessionRecordingState(
+          state,
+          message.enabled,
+          message.startedAt,
+          message.pageUrl,
+        );
+        const documentToken = message.enabled
+          ? await getRuntimeDocumentToken(message.tabId)
+          : undefined;
+        const next = documentToken
+          ? { ...recordingState, traceDocumentToken: documentToken }
+          : recordingState;
         await saveSession(next);
         if (!message.enabled) {
           await updateStoredMultipageAuditTrace(next.events).catch(() => false);
@@ -425,19 +448,8 @@ export default defineBackground(() => {
       void invalidateScanAfterNavigation(tabId, changeInfo.url).catch(() => undefined);
     }
 
-    if (changeInfo.status === 'loading' && tab.url) {
-      const navigationStartedAt = Date.now();
-      void pauseTraceAfterDocumentNavigation(
-        tabId,
-        changeInfo.url ?? tab.url,
-        navigationStartedAt,
-      ).catch(() => undefined);
-    }
-
     if (changeInfo.status !== 'complete') return;
-    void getSession(tabId)
-      .then((state) => state.recording ? restoreContentStateAfterNavigation(tabId, state) : undefined)
-      .catch(() => undefined);
+    if (tab.url) void reconcileContentStateAfterNavigation(tabId, tab.url).catch(() => undefined);
   });
 
   browser.tabs.onRemoved.addListener((tabId) => {
