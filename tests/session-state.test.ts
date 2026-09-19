@@ -9,6 +9,7 @@ import {
   emptySessionState,
   invalidateSessionScanForUrl,
   normalizeSessionState,
+  pauseSessionForNavigation,
   removeSessionInteraction,
   resetSessionState,
   setSessionRecordingState,
@@ -297,6 +298,54 @@ describe('runtime session state helpers', () => {
       'focus-fell-back-to-body': false,
       'focused-element-became-hidden': false,
     });
+  });
+
+  it('attributes runtime evidence to the Trace page without storing query or fragment values', () => {
+    const recording = setSessionRecordingState(
+      session({ recording: false }),
+      true,
+      1234,
+      'https://example.com/checkout?token=secret#payment',
+    );
+    const next = appendRuntimeEventToSession(recording, event('1'));
+
+    expect(next.tracePageUrl).toBe('https://example.com/checkout?[redacted]#[redacted]');
+    expect(next.events[0]?.pageUrl).toBe(next.tracePageUrl);
+  });
+
+  it('pauses Trace on full-page navigation and preserves an attributed transition', () => {
+    const current = setSessionRecordingState(
+      session({
+        scan: { url: 'https://first.example/start' } as NonNullable<SessionState['scan']>,
+        events: [event('1')],
+      }),
+      true,
+      100,
+      'https://first.example/start',
+    );
+
+    const paused = pauseSessionForNavigation(current, 'https://second.example/account?session=private', 200);
+
+    expect(paused.recording).toBe(false);
+    expect(paused.scan).toBeUndefined();
+    expect(paused.pausedByNavigation).toEqual({
+      fromUrl: 'https://first.example/start',
+      toUrl: 'https://second.example/account?[redacted]',
+      timestamp: 200,
+    });
+    expect(paused.events).toHaveLength(2);
+    expect(paused.events[0]?.pageUrl).toBeUndefined();
+    expect(paused.events[1]).toMatchObject({
+      kind: 'route',
+      pageUrl: 'https://first.example/start',
+      fromUrl: 'https://first.example/start',
+      toUrl: 'https://second.example/account?[redacted]',
+    });
+
+    const resumed = setSessionRecordingState(paused, true, 201, 'https://second.example/account?session=private');
+    expect(resumed.pausedByNavigation).toBeUndefined();
+    expect(resumed.tracePageUrl).toBe('https://second.example/account?[redacted]');
+    expect(resumed.events).toEqual(paused.events);
   });
 
   it('invalidates stale scans when the inspected document URL changes', () => {

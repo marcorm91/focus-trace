@@ -35,6 +35,7 @@ import {
   emptySessionState,
   invalidateSessionScanForUrl,
   normalizeSessionState,
+  pauseSessionForNavigation,
   removeSessionInteraction,
   resetSessionState,
   setSessionRecordingState,
@@ -135,6 +136,16 @@ function invalidateScanAfterNavigation(tabId: number, url: string): Promise<void
   return serializeTabWrite(tabId, async () => {
     const state = await getSession(tabId);
     const next = invalidateSessionScanForUrl(state, url);
+    if (next === state) return;
+    await saveSession(next);
+    await broadcast(next);
+  });
+}
+
+function pauseTraceAfterDocumentNavigation(tabId: number, url: string): Promise<void> {
+  return serializeTabWrite(tabId, async () => {
+    const state = await getSession(tabId);
+    const next = pauseSessionForNavigation(state, url);
     if (next === state) return;
     await saveSession(next);
     await broadcast(next);
@@ -343,7 +354,7 @@ export default defineBackground(() => {
     if (message.type === 'FOCUSTRACE_SET_RECORDING_STATE') {
       return serializeTabWrite(message.tabId, async () => {
         const state = await getSession(message.tabId);
-        const next = setSessionRecordingState(state, message.enabled, message.startedAt);
+        const next = setSessionRecordingState(state, message.enabled, message.startedAt, message.pageUrl);
         await saveSession(next);
         await broadcast(next);
         return next;
@@ -386,9 +397,13 @@ export default defineBackground(() => {
     }
   });
 
-  browser.tabs.onUpdated.addListener((tabId, changeInfo) => {
+  browser.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
     if (changeInfo.url) {
       void invalidateScanAfterNavigation(tabId, changeInfo.url).catch(() => undefined);
+    }
+
+    if (changeInfo.status === 'loading' && tab.url) {
+      void pauseTraceAfterDocumentNavigation(tabId, changeInfo.url ?? tab.url).catch(() => undefined);
     }
 
     if (changeInfo.status !== 'complete') return;

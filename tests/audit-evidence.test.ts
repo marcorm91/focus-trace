@@ -17,6 +17,7 @@ const events: RuntimeEvent[] = [
     severity: 'info',
     title: 'Key: Enter',
     interactionId: 'ix-a-1',
+    pageUrl: 'https://example.test/profile',
     element: { tag: 'button', selector: '#edit', name: 'Edit profile' },
   },
   {
@@ -88,6 +89,7 @@ describe('audit evidence', () => {
     expect(markdown).toContain('Focus was lost after an element disappeared');
     expect(markdown).toContain('not a WCAG conformance claim');
     expect(markdown).toContain('## Auditor notes');
+    expect(markdown).toContain('## Pages observed during Trace');
     expect(markdown).toContain('Reproduced after activating Edit profile.');
 
     const json = JSON.parse(renderAuditEvidenceJson(bundle)) as typeof bundle;
@@ -98,5 +100,6 @@ describe('audit evidence', () => {
       text: 'Reproduced after activating Edit profile.',
       updatedAt: 25,
     });
+    expect(json.interactions[0]?.events[0]?.pageUrl).toBe('https://example.test/profile');
   });
 });

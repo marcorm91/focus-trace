@@ -1,5 +1,6 @@
 import { defaultRuntimeBreakpointSettings, normalizeRuntimeBreakpointSettings } from './breakpoints';
 import { focusWalkIntervals, isManualTraceInteractionId } from './trace-evidence-editing';
+import { sanitizeRuntimeUrl } from './url-privacy';
 import type {
   RuntimeBreakpointSettings,
   RuntimeEvent,
@@ -99,11 +100,14 @@ export function appendRuntimeEventsToSession(
   events: RuntimeEvent[],
 ): SessionState {
   if (events.length === 0) return state;
-  const firstBreakpointHit = events.find((event) => event.breakpointHits?.length)?.breakpointHits?.[0];
+  const attributedEvents = state.tracePageUrl
+    ? events.map((event) => event.pageUrl ? event : { ...event, pageUrl: state.tracePageUrl })
+    : events;
+  const firstBreakpointHit = attributedEvents.find((event) => event.breakpointHits?.length)?.breakpointHits?.[0];
   return {
     ...state,
     recording: firstBreakpointHit ? false : state.recording,
-    events: trimRuntimeEvents([...state.events, ...events]),
+    events: trimRuntimeEvents([...state.events, ...attributedEvents]),
     ...(firstBreakpointHit ? { pausedByBreakpoint: firstBreakpointHit } : {}),
   };
 }
@@ -111,7 +115,9 @@ export function appendRuntimeEventsToSession(
 export function clearSessionEvents(state: SessionState, tabId = state.tabId): SessionState {
   const {
     pausedByBreakpoint: _paused,
+    pausedByNavigation: _navigationPause,
     startedAt: _startedAt,
+    tracePageUrl: _tracePageUrl,
     ...rest
   } = state;
   return {
@@ -153,12 +159,50 @@ export function setSessionRecordingState(
   state: SessionState,
   enabled: boolean,
   startedAt?: number,
+  pageUrl?: string,
 ): SessionState {
-  const { pausedByBreakpoint: _paused, ...rest } = state;
+  const {
+    pausedByBreakpoint: _paused,
+    pausedByNavigation: _navigationPause,
+    ...rest
+  } = state;
   return {
     ...rest,
     recording: enabled,
     ...(enabled && startedAt ? { startedAt } : {}),
+    ...(enabled && pageUrl ? { tracePageUrl: sanitizeRuntimeUrl(pageUrl) } : {}),
+  };
+}
+
+export function pauseSessionForNavigation(
+  state: SessionState,
+  destinationUrl: string,
+  timestamp = Date.now(),
+): SessionState {
+  const invalidated = invalidateSessionScanForUrl(state, destinationUrl);
+  if (!state.recording) return invalidated;
+
+  const fromUrl = state.tracePageUrl ?? (state.scan?.url ? sanitizeRuntimeUrl(state.scan.url) : undefined);
+  const toUrl = sanitizeRuntimeUrl(destinationUrl);
+  const navigationEvent: RuntimeEvent = {
+    id: `trace-navigation-${timestamp}`,
+    timestamp,
+    kind: 'route',
+    severity: 'info',
+    title: 'Full-page navigation',
+    detail: 'Trace paused before recording the new document. Resume Trace to validate its audit scope.',
+    ...(fromUrl ? { pageUrl: fromUrl, fromUrl } : {}),
+    toUrl,
+  };
+
+  return {
+    ...appendRuntimeEventToSession(invalidated, navigationEvent),
+    recording: false,
+    pausedByNavigation: {
+      ...(fromUrl ? { fromUrl } : {}),
+      toUrl,
+      timestamp,
+    },
   };
 }
 

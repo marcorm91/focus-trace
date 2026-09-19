@@ -174,7 +174,7 @@ export function buildSessionExport({
 }): FocusTraceExportEnvelopeV1 {
   const staticFindings = scanFindings(scan, 'scan');
   const runtimeFindings = events
-    .map((event) => runtimeFinding(event, scan.url))
+    .map((event) => runtimeFinding(event, event.pageUrl ?? scan.url))
     .filter((finding): finding is FocusTraceExportFinding => Boolean(finding));
   const findings = [...staticFindings, ...runtimeFindings];
   return {

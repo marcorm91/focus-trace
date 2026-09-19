@@ -133,6 +133,7 @@ export interface RuntimeEvent {
   breakpointHits?: RuntimeBreakpointHit[];
   fromUrl?: string;
   toUrl?: string;
+  pageUrl?: string;
   inputEventType?: RuntimeInputEventType;
   contextChange?: RuntimeContextChangeEvidence;
   outcome?: FindingOutcome;
@@ -140,6 +141,12 @@ export interface RuntimeEvent {
   references?: StandardReference[];
   focusWalk?: FocusWalkResult;
   auditorNote?: AuditorNote;
+}
+
+export interface TraceNavigationPause {
+  fromUrl?: string;
+  toUrl: string;
+  timestamp: number;
 }
 
 export interface RuntimeInteraction {
@@ -428,6 +435,8 @@ export interface SessionState {
   events: RuntimeEvent[];
   breakpoints?: RuntimeBreakpointSettings;
   pausedByBreakpoint?: RuntimeBreakpointHit;
+  pausedByNavigation?: TraceNavigationPause;
+  tracePageUrl?: string;
   scan?: ScanResult;
   textResizeBaseline?: TextResizeBaseline;
 }
@@ -471,7 +480,7 @@ export type ExtensionMessage =
   | { type: 'FOCUSTRACE_ENSURE_INJECTED'; tabId: number; mode: RuntimeInjectionMode }
   | { type: 'FOCUSTRACE_SESSION_UPDATED'; state: SessionState }
   | { type: 'FOCUSTRACE_SET_RECORDING'; enabled: boolean; breakpoints?: RuntimeBreakpointSettings }
-  | { type: 'FOCUSTRACE_SET_RECORDING_STATE'; tabId: number; enabled: boolean; startedAt?: number }
+  | { type: 'FOCUSTRACE_SET_RECORDING_STATE'; tabId: number; enabled: boolean; startedAt?: number; pageUrl?: string }
   | { type: 'FOCUSTRACE_CONFIGURE_BREAKPOINTS'; breakpoints: RuntimeBreakpointSettings }
   | { type: 'FOCUSTRACE_SAVE_BREAKPOINTS'; tabId: number; breakpoints: RuntimeBreakpointSettings }
   | { type: 'FOCUSTRACE_RUN_SCAN'; scope?: ComponentScanScope; textResize?: TextResizeContext }

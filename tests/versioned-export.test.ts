@@ -62,6 +62,7 @@ const runtimeReview: RuntimeEvent = {
   detail: 'Focus fell back to body.',
   outcome: 'review',
   ruleId: 'FT-RUNTIME-FOCUS',
+  pageUrl: 'https://other.example.test/checkout?token=runtime-secret#payment',
   element: { tag: 'button', selector: '#save', name: 'Guardar' },
   references: [{
     type: 'WCAG',
@@ -139,6 +140,7 @@ describe('versioned exports', () => {
     expect(envelope.summary).toEqual({ findings: 4, failures: 1, reviews: 2, warnings: 1 });
     expect(envelope.findings[0]?.remediation).toContain('Give the button an accessible name');
     expect(envelope.findings.at(-1)).toMatchObject({ source: 'runtime', outcome: 'review', ruleId: 'FT-RUNTIME-FOCUS' });
+    expect(envelope.findings.at(-1)?.pageUrl).toBe('https://other.example.test/checkout?[redacted]#[redacted]');
     expect(envelope.findings.at(-1)?.remediation).toContain('WCAG 2.4.3');
 
     const jsonText = renderVersionedJson(envelope);
@@ -148,6 +150,7 @@ describe('versioned exports', () => {
     expect(jsonText).not.toContain('token=secret');
     expect(jsonText).not.toContain('view=compact');
     expect(jsonText).not.toContain('private-account');
+    expect(jsonText).not.toContain('runtime-secret');
     expect(() => parseVersionedJson('{"schemaVersion":"2.0.0"}')).toThrow(/schema/i);
   });
 

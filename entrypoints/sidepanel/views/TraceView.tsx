@@ -20,6 +20,7 @@ import type {
   RuntimeBreakpointSettings,
   RuntimeEvent,
   RuntimeInteraction,
+  TraceNavigationPause,
 } from '../../../shared/types';
 import { FocusGraphView } from './FocusGraphView';
 import { FocusView } from './FocusView';
@@ -58,6 +59,7 @@ export function TraceView({
   selectedSelector,
   breakpointSettings,
   pausedByBreakpoint,
+  pausedByNavigation,
   level,
   language,
   page,
@@ -80,6 +82,7 @@ export function TraceView({
   selectedSelector?: string | undefined;
   breakpointSettings: RuntimeBreakpointSettings;
   pausedByBreakpoint?: RuntimeBreakpointHit | undefined;
+  pausedByNavigation?: TraceNavigationPause | undefined;
   level: ExplanationLevel;
   language: AppLanguage;
   page?: { url?: string; title?: string } | undefined;
@@ -191,14 +194,18 @@ export function TraceView({
             type="button"
             title={recording
               ? tr(language, 'Stop the current Trace recording', 'Detener la grabación actual de Trace')
-              : tr(language, 'Start recording a new Trace session', 'Iniciar la grabación de una nueva sesión de Trace')}
+              : pausedByNavigation
+                ? tr(language, 'Resume Trace after validating the new page', 'Reanudar Trace tras validar la página nueva')
+                : tr(language, 'Start recording a new Trace session', 'Iniciar la grabación de una nueva sesión de Trace')}
             disabled={busy}
             onClick={() => void onToggleRecording()}
           >
             <span className="trace-button-icon" aria-hidden="true">{recording ? '■' : '▶'}</span>
             {recording
               ? tr(language, 'Stop trace', 'Detener traza')
-              : tr(language, 'Start trace', 'Iniciar traza')}
+              : pausedByNavigation
+                ? tr(language, 'Resume trace', 'Reanudar traza')
+                : tr(language, 'Start trace', 'Iniciar traza')}
           </button>
           <button
             className="trace-reset"
@@ -215,6 +222,19 @@ export function TraceView({
           </button>
         </div>
       </div>
+      {pausedByNavigation && !recording && (
+        <div className="trace-navigation-pause" role="status">
+          <strong>{tr(language, 'Trace paused after navigating', 'Trace pausado tras navegar')}</strong>
+          <p>{tr(
+            language,
+            'The recorded evidence was preserved. Resume Trace to validate the current page against the active audit before recording more interactions.',
+            'La evidencia grabada se ha conservado. Reanuda Trace para validar la página actual con la auditoría activa antes de registrar más interacciones.',
+          )}</p>
+          <small>{pausedByNavigation.fromUrl
+            ? `${pausedByNavigation.fromUrl} → ${pausedByNavigation.toUrl}`
+            : pausedByNavigation.toUrl}</small>
+        </div>
+      )}
 
       {resetError && <div className="trace-reset-error" role="alert">{resetError}</div>}
 
