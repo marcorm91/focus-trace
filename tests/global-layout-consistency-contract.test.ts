@@ -45,4 +45,13 @@ describe('global layout and card surface consistency', () => {
     expect(css).toContain('background: var(--ft-surface, #fff);');
     expect(css).not.toContain('!important');
   });
+
+  it('preserves visible metric copy when a Structure metric is selected', () => {
+    const css = source('entrypoints/sidepanel/global-layout-consistency.css');
+
+    expect(css).toContain(".structure-metric[aria-pressed='true'] {");
+    expect(css).toContain('background: var(--ft-ink);');
+    expect(css).toContain('color: var(--ft-surface);');
+    expect(css).toContain(".structure-metric[aria-pressed='true'] small");
+  });
 });

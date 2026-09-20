@@ -9,6 +9,7 @@ function source(path: string): string {
 describe('finding management workflow contract', () => {
   it('exposes every professional auditor state through an accessible native control', () => {
     const control = source('entrypoints/sidepanel/components/FindingReviewStateControl.tsx');
+    const css = source('entrypoints/sidepanel/components/finding-review-state.css');
     const model = source('lib/audit/finding-review.ts');
     expect(control).toContain('<select');
     expect(control).toContain("aria-label={tr(language, 'Finding workflow status'");
@@ -16,6 +17,7 @@ describe('finding management workflow contract', () => {
       expect(model).toContain(`'${state}'`);
     }
     expect(control).toContain("'Reset status', 'Restablecer estado'");
+    expect(css).toContain('padding-inline-start: 10px;');
   });
 
   it('persists managed state locally and updates saved Site Audit evidence', () => {
