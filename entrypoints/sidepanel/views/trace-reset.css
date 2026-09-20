@@ -39,11 +39,17 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 8px;
-  margin: 0 12px 10px;
+  margin: 0 16px 10px;
   padding: 9px 10px;
   border: 1px solid color-mix(in srgb, var(--ft-danger) 26%, var(--ft-border));
   border-radius: 9px;
   background: color-mix(in srgb, var(--ft-danger-soft) 38%, var(--ft-surface));
+}
+
+@media (max-width: 380px) {
+  .interaction-edit-actions {
+    margin-inline: 14px;
+  }
 }
 
 .interaction-edit-actions small {

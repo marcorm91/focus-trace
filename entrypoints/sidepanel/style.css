@@ -49,18 +49,22 @@ code { display: inline-block; max-width: 100%; overflow-wrap: anywhere; white-sp
 .interaction { border: 1px solid color-mix(in srgb, CanvasText 14%, transparent); border-radius: 10px; overflow: hidden; }
 .interaction.has-finding { border-color: color-mix(in srgb, #b3261e 45%, CanvasText 14%); }
 .interaction.has-breakpoint { box-shadow: inset 3px 0 0 #8a4f00; }
-.interaction details > summary { display: flex; justify-content: space-between; gap: 12px; align-items: flex-start; padding: 12px; cursor: pointer; list-style-position: inside; }
-.interaction details > summary > span { display: grid; gap: 3px; }
+.interaction details > summary { display: grid; grid-template-columns: minmax(0, 1fr) auto 18px; gap: 12px; align-items: center; padding: 12px 16px; cursor: pointer; list-style: none; }
+.interaction details > summary::-webkit-details-marker { display: none; }
+.interaction details > summary::after { width: 18px; height: 18px; grid-column: 3; grid-row: 1; align-self: center; background: currentColor; color: var(--ft-muted); content: ''; -webkit-mask: var(--ft-i-chevron-right) center / contain no-repeat; mask: var(--ft-i-chevron-right) center / contain no-repeat; }
+.interaction details[open] > summary::after { -webkit-mask-image: var(--ft-i-chevron-down); mask-image: var(--ft-i-chevron-down); }
+.interaction details > summary > span { min-width: 0; display: grid; gap: 3px; }
 .interaction details > summary strong { font-size: 14px; }
 .interaction details > summary small { color: GrayText; font-size: 14px; line-height: 1.35; }
-.interaction-summary { text-align: right; flex: 0 0 auto; }
+.interaction-summary { grid-column: 2; text-align: right; }
 .interaction-summary time { color: GrayText; font-size: 14px; font-variant-numeric: tabular-nums; }
-.cause-box, .breakpoint-hit-box { margin: 0 12px 10px; padding: 10px; border-left: 3px solid Highlight; background: color-mix(in srgb, Highlight 6%, Canvas); }
+.cause-box, .breakpoint-hit-box { margin: 0 16px 10px; padding: 10px; border-left: 3px solid Highlight; background: color-mix(in srgb, Highlight 6%, Canvas); }
 .breakpoint-hit-box { border-left-color: #8a4f00; background: color-mix(in srgb, #8a4f00 7%, Canvas); }
 .cause-box > strong, .breakpoint-hit-box > strong { display: block; font-size: 14px; text-transform: uppercase; letter-spacing: .05em; }
 .cause-box p, .breakpoint-hit-box p { margin: 6px 0 0; font-size: 14px; line-height: 1.4; }
-.causal-chain { list-style: none; margin: 0; padding: 0 12px 6px; display: grid; }
+.causal-chain { list-style: none; margin: 0; padding: 0 16px 8px; display: grid; }
 .causal-chain > li { display: grid; grid-template-columns: 74px 1fr; gap: 10px; padding: 10px 0; border-top: 1px solid color-mix(in srgb, CanvasText 10%, transparent); }
+.causal-chain > li > div { min-width: 0; overflow-wrap: anywhere; }
 .causal-chain time { font-variant-numeric: tabular-nums; color: GrayText; font-size: 14px; padding-top: 3px; }
 .causal-chain strong { display: block; margin: 5px 0 3px; font-size: 14px; }
 .causal-chain p { margin: 3px 0; font-size: 14px; }
@@ -192,8 +196,11 @@ code { display: inline-block; max-width: 100%; overflow-wrap: anywhere; white-sp
 @media (max-width: 380px) {
   .actions { grid-template-columns: 1fr; }
   .tabs { grid-template-columns: repeat(3, 1fr); }
-  .interaction details > summary { display: grid; }
-  .interaction-summary { text-align: left; }
+  .interaction details > summary { grid-template-columns: minmax(0, 1fr) 18px; padding-inline: 14px; }
+  .interaction details > summary::after { grid-column: 2; grid-row: 1 / span 2; }
+  .interaction-summary { grid-column: 1; text-align: left; }
+  .cause-box, .breakpoint-hit-box { margin-inline: 14px; }
+  .causal-chain { padding-inline: 14px; }
   .explanation-level { grid-template-columns: 1fr; }
   .explanation-level select { width: 100%; }
   .graph-filter, .graph-export { grid-template-columns: 1fr; }

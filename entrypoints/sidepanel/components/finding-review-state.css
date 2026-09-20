@@ -50,7 +50,10 @@
   flex: 1 1 180px;
   min-width: 0;
 }
-.finding-review-state-controls select { width: 100%; }
+.finding-review-state-controls select {
+  width: 100%;
+  padding-inline-start: 10px;
+}
 .finding-review-state-controls > button {
   flex: 0 1 auto;
   width: auto;

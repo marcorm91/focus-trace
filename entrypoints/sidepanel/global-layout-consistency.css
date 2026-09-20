@@ -77,6 +77,17 @@
   background-image: none;
 }
 
+/* Metric buttons use the shared surface at rest, but their pressed state must
+   retain a filled treatment so its count, label and description stay visible. */
+.structure-metric[aria-pressed='true'] {
+  background: var(--ft-ink);
+  color: var(--ft-surface);
+}
+
+.structure-metric[aria-pressed='true'] small {
+  color: color-mix(in srgb, var(--ft-surface) 78%, transparent);
+}
+
 /* A heading row is only a layout wrapper. Its own surface would paint the
    indentation gutter as a white strip; the badge and heading button already
    provide the intended visible surfaces. */
