@@ -2,6 +2,20 @@
 
 All notable FocusTrace release changes are summarized here. Detailed release notes remain under `docs/changelog/RELEASE_NOTES_<version>.md`.
 
+## 1.0.3
+
+### Changed
+
+- Persisted bounded Trace evidence with its matching page inside multipage audits so complete PDF reports place each recorded journey in the correct page section instead of relying on the currently open session.
+- Paused an active Trace after a real document navigation and preserved its recorded evidence for an explicit resume, while keeping same-document SPA route changes in the active recording.
+
+### Fixed
+
+- Improved Trace disclosure spacing, card insets and chevron alignment so expanded evidence remains readable at narrow side-panel widths.
+- Kept active Structure metric labels visible and added readable inset spacing to finding-management selects.
+
+See `docs/changelog/RELEASE_NOTES_1.0.3.md` for release scope and validation boundaries.
+
 ## 1.0.2
 
 ### Fixed
