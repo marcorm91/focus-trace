@@ -1,6 +1,6 @@
 # FocusTrace release checklist
 
-Current release candidate: **1.0.2**.
+Current release candidate: **1.0.3**.
 
 Use this checklist before publishing a release build or submitting an updated package to a browser store. Keep the candidate version above aligned with `package.json`, `package-lock.json`, the browser manifests and the release contract test.
 
@@ -425,18 +425,18 @@ Before changing visibility:
 
 ## Release
 
-For the current candidate, the release version is **1.0.2** and the intended tag is **`v1.0.2`**.
+For the current candidate, the release version is **1.0.3** and the intended tag is **`v1.0.3`**.
 
-- Confirm `package.json`, `package-lock.json` and all browser manifests report `1.0.2`.
-- Confirm `tests/release-contract.test.ts` targets `v1.0.2` and passes.
-- Confirm `docs/changelog/RELEASE_NOTES_1.0.2.md` and `docs/changelog/CHANGELOG.md` match the shipped behavior and limitations.
-- Confirm the version shown in Settings comes from the installed manifest and displays `1.0.2` in the packaged candidate.
+- Confirm `package.json`, `package-lock.json` and all browser manifests report `1.0.3`.
+- Confirm `tests/release-contract.test.ts` targets `v1.0.3` and passes.
+- Confirm `docs/changelog/RELEASE_NOTES_1.0.3.md` and `docs/changelog/CHANGELOG.md` match the shipped behavior and limitations.
+- Confirm the version shown in Settings comes from the installed manifest and displays `1.0.3` in the packaged candidate.
 - Confirm the release commit is on `main` and CI is green on that exact commit.
 - Build the production Chrome, Edge and Firefox MV3 artifacts from that commit.
 - Smoke-test the unpacked production build in supported Chromium browsers, including F12 → FocusTrace → Inspect in DOM.
 - Complete the Firefox packaged-build and optional DevTools/Inspector smoke checklist before describing Firefox as officially supported.
-- Tag the exact approved commit as `v1.0.2`.
+- Tag the exact approved commit as `v1.0.3`.
 - Review the generated ZIPs before attaching/uploading them.
 - Only then publish/distribute the release artifacts or submit the updated packages to browser stores.
 
-After publishing 1.0.2, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.
+After publishing 1.0.3, update the candidate version at the top of this checklist when preparing the next release rather than copying a version-specific checklist.
