@@ -5,6 +5,7 @@ import {
 } from './element-internals-registration';
 
 export const WEB_PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'] as const;
+const WEB_PAGE_ACCESS_PERMISSION = { origins: [...WEB_PAGE_ACCESS_ORIGINS] };
 const PAGE_ACCESS_TRIGGER_SELECTOR = [
   '.scan-action',
   '.component-scan-action',
@@ -14,6 +15,18 @@ const PAGE_ACCESS_TRIGGER_SELECTOR = [
   '.structure-refresh',
 ].join(',');
 let pendingWebPageAccessRequest: Promise<boolean> | undefined;
+
+async function requestOrConfirmWebPageAccess(): Promise<boolean> {
+  const requested = await browser.permissions.request(WEB_PAGE_ACCESS_PERMISSION)
+    .catch(() => false);
+  if (requested) return true;
+
+  // Firefox can retain an optional host grant while a repeated request returns
+  // false without presenting another dialog. The permission store is the
+  // authoritative fallback in that case.
+  return browser.permissions.contains(WEB_PAGE_ACCESS_PERMISSION)
+    .catch(() => false);
+}
 
 export interface WebPageTab {
   id: number;
@@ -53,9 +66,7 @@ export async function webPageTabById(tabId: number): Promise<WebPageTab | undefi
  */
 export function armWebPageAccessRequest(target: EventTarget | null): void {
   if (!(target instanceof Element) || !target.closest(PAGE_ACCESS_TRIGGER_SELECTOR)) return;
-  pendingWebPageAccessRequest = browser.permissions.request({
-    origins: [...WEB_PAGE_ACCESS_ORIGINS],
-  }).catch(() => false);
+  pendingWebPageAccessRequest = requestOrConfirmWebPageAccess();
 }
 
 /**
@@ -70,9 +81,7 @@ export function armWebPageAccessRequest(target: EventTarget | null): void {
 export async function requestWebPageAccess(): Promise<boolean> {
   const pending = pendingWebPageAccessRequest;
   pendingWebPageAccessRequest = undefined;
-  const granted = await (pending ?? browser.permissions.request({
-    origins: [...WEB_PAGE_ACCESS_ORIGINS],
-  }));
+  const granted = await (pending ?? requestOrConfirmWebPageAccess());
   if (!granted) return false;
   // Registration is best-effort. Chromium and Firefox 128+ can capture future
   // attachInternals() calls at document_start; older Firefox releases degrade

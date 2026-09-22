@@ -2,6 +2,17 @@
 
 All notable FocusTrace release changes are summarized here. Detailed release notes remain under `docs/changelog/RELEASE_NOTES_<version>.md`.
 
+## 1.0.5
+
+### Fixed
+
+- Preserved Firefox's transient user activation by starting optional page-access requests directly from the native click, before React dispatch or awaited work.
+- Recognized retained Firefox host grants when a repeated runtime request returns `false` without showing another permission dialog.
+- Reused the same permission request across Analyze, component analysis, Site Audit, Focus Walk, Trace start and Structure refresh actions.
+- Added a fresh-install regression contract for the Firefox permission click path.
+
+See `docs/changelog/RELEASE_NOTES_1.0.5.md` for release scope and validation boundaries.
+
 ## 1.0.4
 
 ### Fixed
