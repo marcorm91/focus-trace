@@ -152,6 +152,11 @@ button { font: inherit; }
 .print-recommendation-list li > div { grid-row: 1 / span 2; display: grid; align-content: start; gap: 3px; }
 .print-recommendation-list li > div span { width: fit-content; padding: 2px 6px; border-radius: 999px; background: #f0f2f6; font-size: 8.5px; font-weight: 900; text-transform: uppercase; }
 .print-recommendation-list li > div small { color: #667085; font-size: 8.5px; }
+.print-structure-details { grid-column: 2; display: grid; gap: 4px; margin: 3px 0 0; padding: 7px 8px; border: 1px solid #e1e5ed; border-radius: 7px; background: #fafbfc; }
+.print-structure-details > div { display: grid; grid-template-columns: 76px minmax(0, 1fr); gap: 7px; align-items: start; }
+.print-structure-details dt { color: #667085; font-size: 9px; font-weight: 800; }
+.print-structure-details dd { min-width: 0; margin: 0; color: #344054; font-size: 9px; overflow-wrap: anywhere; }
+.print-structure-details code { font-size: 9px; white-space: normal; word-break: break-word; }
 
 .print-empty { margin: 0; padding: 10px; border: 1px dashed #d8dde6; border-radius: 8px; color: #667085; font-size: 10.5px; }
 .print-footer { display: grid; gap: 12px; padding-top: 18px; }
