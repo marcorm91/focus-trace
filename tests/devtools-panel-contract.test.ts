@@ -28,7 +28,8 @@ describe('FocusTrace DevTools panel contract', () => {
     const validator = source('tools/validate-browser-builds.mjs');
 
     expect(config).toContain("'devtools'");
-    expect(config).toContain('optional_permissions: FIREFOX_115_OPTIONAL_PERMISSIONS');
+    expect(config).toContain('optional_host_permissions: OPTIONAL_HOST_PERMISSIONS');
+    expect(config).toContain('optional_permissions: FIREFOX_LEGACY_OPTIONAL_PERMISSIONS');
     expect(settings).toContain('<FirefoxDevtoolsSettings language={language} />');
     expect(firefoxSettings).toContain('firefoxDevtoolsPermissions()');
     expect(firefoxSettings).toContain("permissions.contains({ permissions: ['devtools'] })");
