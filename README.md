@@ -696,6 +696,8 @@ Report groups guided tests in an initially collapsed **Manual checks** accordion
 
 Long page URLs in the Report page list and PDF audit index are visually limited to two lines with an ellipsis; the full URLs remain in the report data.
 
+Structural suggestions in Report and the single-page PDF include the affected element, available text or label, the detection trigger and a copyable CSS selector so the finding can be located without exporting raw HTML.
+
 The 200% text-resize status appears only within the Resize and reflow guided workflow, as inline guidance without a separate card.
 
 Spanish display copy includes descriptive names for the complete static rule catalog, localized standards-matrix labels and specific nested-context/landmark evidence. Captured page names, selectors and canonical rule IDs retain their original values.
