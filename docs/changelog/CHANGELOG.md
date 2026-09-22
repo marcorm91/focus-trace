@@ -2,6 +2,16 @@
 
 All notable FocusTrace release changes are summarized here. Detailed release notes remain under `docs/changelog/RELEASE_NOTES_<version>.md`.
 
+## 1.0.4
+
+### Fixed
+
+- Restored runtime page-access prompts in current Firefox Manifest V3 packages by declaring HTTP/HTTPS and visual-capture hosts through `optional_host_permissions`.
+- Retained the legacy optional-host declaration for the experimental Firefox 115-127 target while keeping `devtools` optional and all global host access non-required.
+- Tightened release contracts and generated-manifest validation so Firefox packages cannot silently omit the standard Manifest V3 optional-host field again.
+
+See `docs/changelog/RELEASE_NOTES_1.0.4.md` for release scope and validation boundaries.
+
 ## 1.0.3
 
 ### Changed
