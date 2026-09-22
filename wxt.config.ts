@@ -7,7 +7,7 @@ const OPTIONAL_HOST_PERMISSIONS = [
   ...OPTIONAL_PAGE_HOST_PERMISSIONS,
   OPTIONAL_VISUAL_CAPTURE_HOST_PERMISSION,
 ];
-const FIREFOX_115_OPTIONAL_PERMISSIONS = [
+const FIREFOX_LEGACY_OPTIONAL_PERMISSIONS = [
   ...OPTIONAL_HOST_PERMISSIONS,
   'devtools',
 ] as unknown as NonNullable<UserManifest['optional_permissions']>;
@@ -61,11 +61,12 @@ export function manifestForBrowser(browser: string): UserManifest {
       : ['activeTab', 'scripting', 'storage', 'sidePanel'],
     ...(firefox
       ? {
-          // Firefox 115 keeps optional host patterns under optional_permissions.
-          // DevTools is optional too so introducing the panel in an update does
-          // not force a new install/update permission warning. Users can enable
-          // it explicitly from FocusTrace Settings when they want the F12 panel.
-          optional_permissions: FIREFOX_115_OPTIONAL_PERMISSIONS,
+          // Firefox 128+ exposes MV3 runtime host grants through
+          // optional_host_permissions. Keep the legacy declaration as well for
+          // Firefox 115-127, which accepted optional hosts only through
+          // optional_permissions. DevTools remains optional on every version.
+          optional_host_permissions: OPTIONAL_HOST_PERMISSIONS,
+          optional_permissions: FIREFOX_LEGACY_OPTIONAL_PERMISSIONS,
         }
       : { optional_host_permissions: OPTIONAL_HOST_PERMISSIONS }),
     ...(e2eHostPermissions ? { host_permissions: e2eHostPermissions } : {}),

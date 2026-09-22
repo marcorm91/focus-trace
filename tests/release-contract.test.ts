@@ -112,6 +112,7 @@ describe('v1.0.3 release contract', () => {
     expect(firefoxManifest.permissions).not.toContain('sidePanel');
     expect(firefoxManifest.permissions).not.toContain('devtools');
     expect(firefoxManifest.host_permissions).toBeUndefined();
+    expect(firefoxManifest.optional_host_permissions).toEqual(OPTIONAL_HOSTS);
     expect(firefoxManifest.optional_permissions).toEqual(FIREFOX_OPTIONAL_PERMISSIONS);
     expect(firefoxManifest.minimum_chrome_version).toBeUndefined();
     expect(firefoxManifest.browser_specific_settings?.gecko).toMatchObject({

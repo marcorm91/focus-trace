@@ -371,7 +371,7 @@ Firefox required production permissions must remain:
 - `scripting`
 - `storage`
 
-Firefox uses `sidebar_action` generated from the WXT sidepanel entrypoint rather than the Chromium `sidePanel` permission. Firefox may additionally list `devtools` under **optional permissions** for the explicit DevTools integration opt-in; it must not become a required permission.
+Firefox uses `sidebar_action` generated from the WXT sidepanel entrypoint rather than the Chromium `sidePanel` permission. Firefox 128+ must expose runtime page/capture grants through `optional_host_permissions`; the Firefox 115-127 compatibility declaration remains under `optional_permissions`. Firefox may additionally list `devtools` under **optional permissions** for the explicit DevTools integration opt-in; it must not become a required permission.
 
 Production builds must not declare required global host permissions. Optional HTTP/HTTPS host access may be requested only from an explicit page action and must remain documented in the README and privacy policy. The localhost/global visual-capture authority added by the E2E build is test-only and must not become a required production host permission.
 

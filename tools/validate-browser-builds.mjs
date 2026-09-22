@@ -71,7 +71,7 @@ function hasFirefoxOptionalDevtoolsAndHosts(manifest) {
   const hasDevtools = optionalPermissions.includes('devtools');
   const legacyHosts = EXPECTED_OPTIONAL_HOSTS.every((host) => optionalPermissions.includes(host));
   const mv3Hosts = sameValues(manifest.optional_host_permissions, EXPECTED_OPTIONAL_HOSTS);
-  return hasDevtools && (legacyHosts || mv3Hosts);
+  return hasDevtools && legacyHosts && mv3Hosts;
 }
 
 function listBuildFiles(root) {
@@ -195,7 +195,7 @@ assert(!firefox.minimum_chrome_version, 'Firefox manifest must not contain minim
 assert(sameValues(firefox.permissions, FIREFOX_PERMISSIONS), 'Firefox permissions must exactly match the reviewed Firefox permission set');
 assert(
   hasFirefoxOptionalDevtoolsAndHosts(firefox),
-  'Firefox must keep page/capture hosts and DevTools access optional',
+  'Firefox must declare page/capture hosts through MV3 optional_host_permissions, retain the Firefox 115-127 compatibility declaration and keep DevTools optional',
 );
 assert(firefox.sidebar_action?.default_panel === 'sidepanel.html', 'Firefox must expose sidepanel.html as sidebar_action');
 assert(firefox.devtools_page === 'devtools.html', 'Firefox must register the optional FocusTrace DevTools page');

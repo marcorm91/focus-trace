@@ -501,7 +501,7 @@ FocusTrace intentionally keeps its production permission set narrow:
 
 Firefox uses its native sidebar manifest integration instead of the Chromium-only `sidePanel` permission.
 
-Production builds do not require global host access at install time. HTTP/HTTPS access is optional and requested from explicit user actions. Broad `<all_urls>` capture access is requested only when a visual export needs it and is removed after the operation when FocusTrace acquired it for that export.
+Production builds do not require global host access at install time. HTTP/HTTPS access is optional and requested from explicit user actions. Firefox 128+ exposes these runtime grants through the Manifest V3 `optional_host_permissions` field, while the experimental Firefox 115-127 target retains its compatible legacy declaration. Broad `<all_urls>` capture access is requested only when a visual export needs it and is removed after the operation when FocusTrace acquired it for that export.
 
 ## Privacy
 
