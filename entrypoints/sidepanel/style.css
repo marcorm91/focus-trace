@@ -1264,7 +1264,7 @@ code {
 
 .report-structure-details dt {
   color: var(--ft-muted);
-  font-size: 13px;
+  font-size: 14px;
   font-weight: 750;
 }
 
@@ -1272,7 +1272,7 @@ code {
   min-width: 0;
   margin: 0;
   color: var(--ft-text);
-  font-size: 13px;
+  font-size: 14px;
   overflow-wrap: anywhere;
 }
 
