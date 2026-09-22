@@ -12,7 +12,11 @@ import { buildFocusGraph } from '../../../lib/runtime/focus-graph';
 import type { StructureSnapshot } from '../../../lib/runtime/structure-evidence';
 import { buildReportComponentIndex, type ReportComponentIdentity } from '../../../lib/report/component-identity';
 import { buildSessionReportModel } from '../../../lib/report/session-report';
-import { buildStructureReportEvidence, structureHintCopy } from '../../../lib/report/structure-report';
+import {
+  buildStructureReportEvidence,
+  structureHintCopy,
+  structureHintDetails,
+} from '../../../lib/report/structure-report';
 import { buildTextReportFilename, buildTextSessionReport } from '../../../lib/report/text-report';
 import { buildSessionExport, renderVersionedJUnit } from '../../../lib/report/versioned-export';
 import {
@@ -690,6 +694,7 @@ export function SessionReportView({
                     <ol className="suggestion-list report-structure-hints">
                       {structureHints.map((hint) => {
                         const copy = structureHintCopy(hint, language);
+                        const details = structureHintDetails(hint, language);
                         return (
                           <li className="priority-medium" key={hint.id}>
                             <div>
@@ -699,6 +704,16 @@ export function SessionReportView({
                             <strong>{copy.title}</strong>
                             <p>{copy.description}</p>
                             {copy.suggestion && <p>{copy.suggestion}</p>}
+                            {details.length > 0 && (
+                              <dl className="report-structure-details">
+                                {details.map((detail) => (
+                                  <div key={detail.id}>
+                                    <dt>{detail.label}</dt>
+                                    <dd>{detail.code ? <code>{detail.value}</code> : detail.value}</dd>
+                                  </div>
+                                ))}
+                              </dl>
+                            )}
                           </li>
                         );
                       })}

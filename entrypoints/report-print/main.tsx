@@ -11,7 +11,11 @@ import {
 import { guidanceForIssue, reportFindingDescription } from '../../lib/report/finding-guidance';
 import { buildSessionReportModel } from '../../lib/report/session-report';
 import { humanRuntimeEventTitle } from '../../lib/runtime/explanations';
-import { structureHintCopy, structureSummaryLabels } from '../../lib/report/structure-report';
+import {
+  structureHintCopy,
+  structureHintDetails,
+  structureSummaryLabels,
+} from '../../lib/report/structure-report';
 import {
   readPrintableReportEvidence,
   type PrintableReportEvidenceBundle,
@@ -787,6 +791,7 @@ function PrintableReport({ report }: { report: LoadedReport }) {
                   <ol className="print-recommendation-list">
                     {structureHints.map((hint) => {
                       const copy = structureHintCopy(hint, language);
+                      const details = structureHintDetails(hint, language);
                       return (
                         <li key={hint.id}>
                           <div>
@@ -796,6 +801,16 @@ function PrintableReport({ report }: { report: LoadedReport }) {
                           <strong>{copy.title}</strong>
                           <p>{copy.description}</p>
                           {copy.suggestion && <p>{copy.suggestion}</p>}
+                          {details.length > 0 && (
+                            <dl className="print-structure-details">
+                              {details.map((detail) => (
+                                <div key={detail.id}>
+                                  <dt>{detail.label}</dt>
+                                  <dd>{detail.code ? <code>{detail.value}</code> : detail.value}</dd>
+                                </div>
+                              ))}
+                            </dl>
+                          )}
                         </li>
                       );
                     })}

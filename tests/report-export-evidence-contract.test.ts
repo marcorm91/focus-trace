@@ -53,6 +53,27 @@ describe('report export evidence contract', () => {
     expect(css).toContain('page-break-before: always;');
   });
 
+  it('keeps structural suggestions locatable in the report and PDF', () => {
+    const helper = source('lib/report/structure-report.ts');
+    const report = source('entrypoints/sidepanel/views/SessionReportView.tsx');
+    const printable = source('entrypoints/report-print/main.tsx');
+    const reportCss = source('entrypoints/sidepanel/style.css');
+    const printableCss = source('entrypoints/report-print/style.css');
+
+    expect(helper).toContain('export function structureHintDetails');
+    expect(helper).toContain("tr(language, 'Text / label', 'Texto / etiqueta')");
+    expect(helper).toContain("tr(language, 'Detected by', 'Detectado por')");
+    expect(helper).toContain("tr(language, 'CSS selector', 'Selector CSS')");
+    expect(helper).toContain('element?.selector ?? hint.selector');
+    expect(report).toContain('structureHintDetails(hint, language)');
+    expect(report).toContain('className="report-structure-details"');
+    expect(printable).toContain('structureHintDetails(hint, language)');
+    expect(printable).toContain('className="print-structure-details"');
+    expect(reportCss).toContain('.report-structure-details code');
+    expect(printableCss).toContain('.print-structure-details code');
+    expect(printableCss).toContain('word-break: break-word;');
+  });
+
   it('scopes export permission state to the report whose PDF button was clicked', () => {
     const evidence = source('lib/report/visual-evidence.ts');
 

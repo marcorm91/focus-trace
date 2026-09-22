@@ -696,6 +696,8 @@ Informe reúne las pruebas guiadas en el acordeón **Comprobaciones manuales**, 
 
 Las URLs largas de la lista de páginas de Informe y del índice de auditoría del PDF se limitan visualmente a dos líneas con elipsis; las URLs completas se conservan en los datos del informe.
 
+Las sugerencias estructurales de Informe y del PDF de una página incluyen el elemento afectado, el texto o etiqueta disponible, el origen de la detección y un selector CSS copiable para localizar el hallazgo sin exportar el HTML completo.
+
 El estado del texto al 200 % aparece únicamente dentro del flujo guiado de resize y reflow, como indicación integrada sin tarjeta independiente.
 
 La presentación en español incluye nombres descriptivos para todo el catálogo de reglas estáticas, etiquetas traducidas en la matriz de estándares y evidencias específicas de contextos anidados y regiones de navegación. Los nombres capturados de la página, los selectores y los identificadores canónicos conservan sus valores originales.
