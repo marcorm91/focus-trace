@@ -45,8 +45,13 @@ describe('fresh-install page access', () => {
     expect(bootstrap).toContain('armWebPageAccessRequest(event.target);');
     expect(access).toContain("'.scan-action'");
     expect(access).toContain("'.site-audit-launch'");
-    expect(access.indexOf('pendingWebPageAccessRequest = browser.permissions.request')).toBeGreaterThanOrEqual(0);
+    expect(access).toContain('pendingWebPageAccessRequest = requestOrConfirmWebPageAccess();');
     expect(access).toContain('const pending = pendingWebPageAccessRequest;');
-    expect(access).toContain('const granted = await (pending ?? browser.permissions.request');
+    expect(access).toContain('const granted = await (pending ?? requestOrConfirmWebPageAccess());');
+    expect(access.indexOf('browser.permissions.request(WEB_PAGE_ACCESS_PERMISSION)')).toBeGreaterThanOrEqual(0);
+    expect(access.indexOf('browser.permissions.contains(WEB_PAGE_ACCESS_PERMISSION)')).toBeGreaterThanOrEqual(0);
+    expect(access.indexOf('browser.permissions.request(WEB_PAGE_ACCESS_PERMISSION)')).toBeLessThan(
+      access.indexOf('browser.permissions.contains(WEB_PAGE_ACCESS_PERMISSION)'),
+    );
   });
 });
