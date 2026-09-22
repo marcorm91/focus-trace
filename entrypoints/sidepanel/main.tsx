@@ -3,6 +3,7 @@ import { createRoot } from 'react-dom/client';
 import { browser } from '#imports';
 import { armReportVisualEvidencePermissionRequest } from '../../lib/report/visual-evidence';
 import {
+  armWebPageAccessRequest,
   requestActivePageAccess,
   requestTabPageAccess,
   type WebPageTab,
@@ -180,6 +181,7 @@ async function locateCurrentOccurrence(
 // Start permission-sensitive work synchronously from the original click.
 // Browser permission APIs can lose user-gesture eligibility after awaited work.
 document.addEventListener('click', (event) => {
+  armWebPageAccessRequest(event.target);
   armReportVisualEvidencePermissionRequest(event.target);
 
   const target = event.target instanceof Element ? event.target : null;

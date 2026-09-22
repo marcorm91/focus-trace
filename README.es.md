@@ -501,7 +501,7 @@ FocusTrace mantiene intencionadamente un conjunto reducido de permisos en produc
 
 Firefox utiliza su integración nativa de sidebar en el manifest en lugar del permiso exclusivo de Chromium `sidePanel`.
 
-Los builds de producción no necesitan permisos globales de host al instalarse. El acceso HTTP/HTTPS se declara como opcional y se solicita desde acciones explícitas del usuario. Firefox 128+ expone estos permisos concedidos en ejecución mediante el campo Manifest V3 `optional_host_permissions`, mientras que el objetivo experimental Firefox 115-127 conserva su declaración heredada compatible. La captura amplia `<all_urls>` se solicita únicamente cuando una exportación visual la necesita y se elimina al finalizar cuando FocusTrace la adquirió para esa operación.
+Los builds de producción no necesitan permisos globales de host al instalarse. El acceso HTTP/HTTPS se declara como opcional y se solicita desde acciones explícitas del usuario. Las herramientas de página que necesitan permisos inician esa solicitud directamente desde el clic nativo, antes del trabajo asíncrono de la interfaz, para conservar el requisito de acción de usuario de Firefox. Firefox 128+ expone estos permisos concedidos en ejecución mediante el campo Manifest V3 `optional_host_permissions`, mientras que el objetivo experimental Firefox 115-127 conserva su declaración heredada compatible. La captura amplia `<all_urls>` se solicita únicamente cuando una exportación visual la necesita y se elimina al finalizar cuando FocusTrace la adquirió para esa operación.
 
 ## Privacidad
 
