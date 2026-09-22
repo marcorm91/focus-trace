@@ -34,11 +34,19 @@ describe('fresh-install page access', () => {
   it('starts Analyze and Site Audit permission requests directly from their click paths', () => {
     const hook = source('entrypoints/sidepanel/hooks/usePageRuntimeAccess.ts');
     const launcher = source('entrypoints/sidepanel/components/SiteAuditLauncher.tsx');
+    const bootstrap = source('entrypoints/sidepanel/main.tsx');
+    const access = source('lib/extension/page-access.ts');
 
     expect(hook).toContain('await requestTabPageAccess(tabId)');
     expect(hook).toContain("throw new Error('FocusTrace page access permission was not granted.')");
     expect(launcher.indexOf('await requestWebPageAccess()')).toBeLessThan(
       launcher.indexOf('browser.tabs.query'),
     );
+    expect(bootstrap).toContain('armWebPageAccessRequest(event.target);');
+    expect(access).toContain("'.scan-action'");
+    expect(access).toContain("'.site-audit-launch'");
+    expect(access.indexOf('pendingWebPageAccessRequest = browser.permissions.request')).toBeGreaterThanOrEqual(0);
+    expect(access).toContain('const pending = pendingWebPageAccessRequest;');
+    expect(access).toContain('const granted = await (pending ?? browser.permissions.request');
   });
 });

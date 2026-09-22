@@ -14,7 +14,7 @@ Responsibilities include:
 - starting/stopping Trace and Focus Walk;
 - rendering scan, Structure, focus, replay and report views;
 - managing user-facing settings;
-- requesting optional HTTP/HTTPS page access directly from explicit user actions, before querying privileged tab URL fields on a fresh installation;
+- arming optional HTTP/HTTPS page access in the native capture-phase click, before React or other asynchronous work can consume Firefox's transient user activation and before querying privileged tab URL fields on a fresh installation;
 - collecting bounded local Memory evidence for an explicit scan when Memory is enabled;
 - adding/replacing a full-page result, bounded page-attributed Trace and local visual context in the active multipage audit;
 - presenting FocusTrace Memory comparisons without mutating scan history merely by rendering a view.

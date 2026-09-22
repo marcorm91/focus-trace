@@ -5,6 +5,15 @@ import {
 } from './element-internals-registration';
 
 export const WEB_PAGE_ACCESS_ORIGINS = ['http://*/*', 'https://*/*'] as const;
+const PAGE_ACCESS_TRIGGER_SELECTOR = [
+  '.scan-action',
+  '.component-scan-action',
+  '.site-audit-launch',
+  '.focus-walk-action',
+  '.trace-record.start',
+  '.structure-refresh',
+].join(',');
+let pendingWebPageAccessRequest: Promise<boolean> | undefined;
 
 export interface WebPageTab {
   id: number;
@@ -37,6 +46,19 @@ export async function webPageTabById(tabId: number): Promise<WebPageTab | undefi
 }
 
 /**
+ * Firefox expires user activation as soon as an event handler crosses an async
+ * boundary. Start the permission request in the native capture-phase click
+ * handler, before React dispatch and any awaited application work, then let the
+ * requested action consume the same promise.
+ */
+export function armWebPageAccessRequest(target: EventTarget | null): void {
+  if (!(target instanceof Element) || !target.closest(PAGE_ACCESS_TRIGGER_SELECTOR)) return;
+  pendingWebPageAccessRequest = browser.permissions.request({
+    origins: [...WEB_PAGE_ACCESS_ORIGINS],
+  }).catch(() => false);
+}
+
+/**
  * Requests normal web-page access before reading privileged tab URL fields.
  *
  * A fresh Chromium installation may hide Tab.url until host access has already
@@ -46,7 +68,11 @@ export async function webPageTabById(tabId: number): Promise<WebPageTab | undefi
  * permissions.request().
  */
 export async function requestWebPageAccess(): Promise<boolean> {
-  const granted = await browser.permissions.request({ origins: [...WEB_PAGE_ACCESS_ORIGINS] });
+  const pending = pendingWebPageAccessRequest;
+  pendingWebPageAccessRequest = undefined;
+  const granted = await (pending ?? browser.permissions.request({
+    origins: [...WEB_PAGE_ACCESS_ORIGINS],
+  }));
   if (!granted) return false;
   // Registration is best-effort. Chromium and Firefox 128+ can capture future
   // attachInternals() calls at document_start; older Firefox releases degrade
