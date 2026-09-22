@@ -1286,7 +1286,8 @@ code {
   .report-coverage { grid-template-columns: 1fr; }
   .suggestion-list li { grid-template-columns: 1fr; }
   .suggestion-list li > div { grid-row: auto; display: flex; }
-  .suggestion-list li > p { grid-column: 1; }
+  .suggestion-list li > p,
+  .report-structure-details { grid-column: 1; }
 }
 
 
