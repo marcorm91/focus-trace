@@ -14,6 +14,57 @@ export type StructureHintCopy = {
   suggestion?: string;
 };
 
+export type StructureHintDetail = {
+  id: 'element' | 'label' | 'trigger' | 'selector';
+  label: string;
+  value: string;
+  code?: boolean;
+};
+
+export function structureHintDetails(
+  hint: StructureHint,
+  language: AppLanguage,
+): StructureHintDetail[] {
+  const details: StructureHintDetail[] = [];
+  const element = hint.element;
+
+  if (element?.tag) {
+    details.push({
+      id: 'element',
+      label: tr(language, 'Element', 'Elemento'),
+      value: `<${element.tag}>`,
+      code: true,
+    });
+  }
+  if (element?.label) {
+    details.push({
+      id: 'label',
+      label: tr(language, 'Text / label', 'Texto / etiqueta'),
+      value: element.label,
+    });
+  }
+  if (element?.trigger) {
+    details.push({
+      id: 'trigger',
+      label: tr(language, 'Detected by', 'Detectado por'),
+      value: element.trigger,
+      code: true,
+    });
+  }
+
+  const selector = element?.selector ?? hint.selector;
+  if (selector) {
+    details.push({
+      id: 'selector',
+      label: tr(language, 'CSS selector', 'Selector CSS'),
+      value: selector,
+      code: true,
+    });
+  }
+
+  return details;
+}
+
 export function buildStructureReportEvidence(
   snapshot: StructureSnapshot | undefined,
 ): StructureReportEvidence | undefined {
