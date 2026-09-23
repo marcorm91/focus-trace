@@ -2,6 +2,24 @@
 
 All notable FocusTrace release changes are summarized here. Detailed release notes remain under `docs/changelog/RELEASE_NOTES_<version>.md`.
 
+## 1.0.8
+
+### Fixed
+
+- Fixed a severe Analyze performance regression in Firefox caused by repeated stylesheet-wide selector matching during stacked-background contrast verification.
+- Replaced the expensive authored-CSS fallback with a spatial-first paint-stack check using the target center and four interior sample points.
+- Reduced structural fallback work to bounded searches across up to 8 ancestors, 12 sibling branches and 24 descendants per branch.
+- Added shared caching for computed styles, pseudo-element backdrop conclusions and geometry during the contrast verification pass.
+- Added a hard per-scan budget of 800 computed-style observations; unresolved candidates become REVIEW instead of blocking analysis or retaining an unverified FAIL.
+- Preserved the 1.0.7 contrast safeguards for sibling/ancestor backdrops, full-inset pseudo-elements and same-origin iframe rendering contexts.
+
+### Validation
+
+- Added regression coverage that caps computed-style work under a large synthetic page.
+- Added coverage proving local search truncation becomes REVIEW rather than an unverified deterministic failure.
+
+See `docs/changelog/RELEASE_NOTES_1.0.8.md` for release scope and validation boundaries.
+
 ## 1.0.7
 
 ### Added
