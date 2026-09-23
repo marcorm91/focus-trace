@@ -113,7 +113,17 @@ describe('contrast backdrop verification', () => {
   it('reviews a contrast failure when the bounded sibling search is truncated', () => {
     const siblings = Array.from({ length: 13 }, (_, index) => `<span data-sibling="${index}"></span>`).join('');
     document.body.innerHTML = `<main>${siblings}<p id="target">Text</p></main>`;
-    const result = scan([issue('contrast')]);
+    const result = scan([{
+      ...issue('contrast'),
+      contrast: {
+        kind: 'text',
+        subject: 'text',
+        requiredRatio: 4.5,
+        ratio: 1,
+        foreground: 'rgb(255, 255, 255)',
+        background: 'rgb(255, 255, 255)',
+      },
+    }]);
 
     downgradeUncertainStackingContrast(result, document);
 
