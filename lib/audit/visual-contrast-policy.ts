@@ -8,12 +8,59 @@ const MAX_STACK_CHECKS = 100;
 const MAX_SIBLING_BACKDROPS = 50;
 const MAX_DESCENDANT_BACKDROPS = 80;
 const MAX_BACKDROP_ANCESTORS = 16;
-const MAX_AUTHORED_RULES = 5_000;
+const MAX_BACKDROP_STYLE_CHECKS = 2_500;
+const STYLE_BUDGET_REASON = 'The per-scan visual-backdrop style budget was reached before this contrast candidate could be verified safely. Review the composed pixels manually.';
 
 function computedStyleFor(element: Element, pseudo?: string): CSSStyleDeclaration {
   const view = element.ownerDocument.defaultView;
   if (!view) return getComputedStyle(element, pseudo);
   return view.getComputedStyle(element, pseudo);
+}
+
+interface BackdropScanContext {
+  styleChecks: number;
+  exhausted: boolean;
+  styleCache: WeakMap<Element, CSSStyleDeclaration>;
+  paintedCache: WeakMap<Element, boolean>;
+  mediaCache: WeakMap<Element, boolean>;
+  pseudoBackdropCache: WeakMap<Element, string | null>;
+}
+
+function createBackdropScanContext(): BackdropScanContext {
+  return {
+    styleChecks: 0,
+    exhausted: false,
+    styleCache: new WeakMap(),
+    paintedCache: new WeakMap(),
+    mediaCache: new WeakMap(),
+    pseudoBackdropCache: new WeakMap(),
+  };
+}
+
+function styleFor(element: Element, context: BackdropScanContext): CSSStyleDeclaration | undefined {
+  const cached = context.styleCache.get(element);
+  if (cached) return cached;
+  if (context.styleChecks >= MAX_BACKDROP_STYLE_CHECKS) {
+    context.exhausted = true;
+    return undefined;
+  }
+  context.styleChecks += 1;
+  const style = computedStyleFor(element);
+  context.styleCache.set(element, style);
+  return style;
+}
+
+function pseudoStyleFor(
+  element: Element,
+  pseudo: '::before' | '::after',
+  context: BackdropScanContext,
+): CSSStyleDeclaration | undefined {
+  if (context.styleChecks >= MAX_BACKDROP_STYLE_CHECKS) {
+    context.exhausted = true;
+    return undefined;
+  }
+  context.styleChecks += 1;
+  return computedStyleFor(element, pseudo);
 }
 
 function stylePaintsBackground(style: CSSStyleDeclaration): boolean {
@@ -27,16 +74,27 @@ function stylePaintsBackground(style: CSSStyleDeclaration): boolean {
   return parsed == null || parsed.a > 0;
 }
 
-function paintedBackground(element: Element): boolean {
-  const style = computedStyleFor(element);
+function paintedBackground(element: Element, context: BackdropScanContext): boolean {
+  const cached = context.paintedCache.get(element);
+  if (cached != null) return cached;
+  const style = styleFor(element, context);
+  if (!style) return false;
   const tag = element.tagName.toLowerCase();
-  if (['img', 'video', 'canvas', 'svg'].includes(tag)) return style.display !== 'none' && style.visibility !== 'hidden' && style.visibility !== 'collapse';
-  if (tag === 'picture' && element.querySelector('img')) return style.display !== 'none' && style.visibility !== 'hidden' && style.visibility !== 'collapse';
-  return stylePaintsBackground(style);
+  const painted = ['img', 'video', 'canvas', 'svg'].includes(tag)
+    ? style.display !== 'none' && style.visibility !== 'hidden' && style.visibility !== 'collapse'
+    : tag === 'picture' && element.querySelector('img')
+      ? style.display !== 'none' && style.visibility !== 'hidden' && style.visibility !== 'collapse'
+      : stylePaintsBackground(style);
+  context.paintedCache.set(element, painted);
+  return painted;
 }
 
-function containsPaintedMedia(element: Element): boolean {
-  return Boolean(element.querySelector('img, picture, video, canvas, svg'));
+function containsPaintedMedia(element: Element, context: BackdropScanContext): boolean {
+  const cached = context.mediaCache.get(element);
+  if (cached != null) return cached;
+  const contains = Boolean(element.querySelector('img, picture, video, canvas, svg'));
+  context.mediaCache.set(element, contains);
+  return contains;
 }
 
 function targetsFor(issue: ScanIssue, document: Document): Element[] {
@@ -100,101 +158,48 @@ function lowerStackedSibling(
   return candidateZ != null && targetZ != null && candidateZ < targetZ;
 }
 
-function appendMatchingRules(
-  rules: CSSRuleList,
-  element: Element,
-  chunks: string[],
-  counter: { value: number },
-): void {
-  for (let index = 0; index < rules.length; index += 1) {
-    if (counter.value >= MAX_AUTHORED_RULES) return;
-    const rule = rules[index];
-    if (!rule) continue;
-    counter.value += 1;
-
-    if ('selectorText' in rule && 'style' in rule) {
-      try {
-        const styleRule = rule as CSSStyleRule;
-        if (element.matches(styleRule.selectorText)) chunks.push(styleRule.style.cssText);
-      } catch {
-        // Ignore selectors the current engine cannot evaluate.
-      }
-      continue;
-    }
-
-    if ('cssRules' in rule) {
-      try {
-        appendMatchingRules((rule as CSSGroupingRule).cssRules, element, chunks, counter);
-      } catch {
-        // Inaccessible nested CSSOM remains unknown rather than being bypassed.
-      }
-    }
-  }
-}
-
-function authoredCssText(element: Element): string {
-  const chunks = [element.getAttribute('style') ?? ''];
-  const document = element.ownerDocument;
-  const counter = { value: 0 };
-  for (let index = 0; index < document.styleSheets.length; index += 1) {
-    if (counter.value >= MAX_AUTHORED_RULES) break;
-    const sheet = document.styleSheets[index];
-    if (!sheet) continue;
-    try {
-      appendMatchingRules(sheet.cssRules, element, chunks, counter);
-    } catch {
-      // Cross-origin/inaccessible stylesheets cannot be used as deterministic evidence.
-    }
-  }
-  return chunks.join(';').toLowerCase();
-}
-
-function authoredBackdropReason(candidate: Element): string | undefined {
-  const css = authoredCssText(candidate);
-  if (!/(?:^|;)\s*position\s*:\s*(?:absolute|fixed)\b/.test(css)) return undefined;
-  const paints = /(?:^|;)\s*background(?:-color|-image)?\s*:\s*(?!transparent\b|none\b)[^;]+/.test(css);
-  if (!paints) return undefined;
-
-  const fullInset = /(?:^|;)\s*inset\s*:\s*0(?:px)?(?:\s+0(?:px)?){0,3}\s*(?:;|$)/.test(css)
-    || ['top', 'right', 'bottom', 'left'].every((property) =>
-      new RegExp(`(?:^|;)\\s*${property}\\s*:\\s*0(?:px)?\\s*(?:;|$)`).test(css));
-  if (!fullInset) return undefined;
-
-  return 'A sibling is authored as an absolute/fixed painted full-inset layer, so it can participate in the target backdrop independently of the ancestor background chain. FocusTrace keeps the effective contrast background unresolved.';
-}
-
-function descendantPaintedBackdropReason(candidate: Element, x: number, y: number): string | undefined {
+function descendantPaintedBackdropReason(
+  candidate: Element,
+  x: number,
+  y: number,
+  context: BackdropScanContext,
+): string | undefined {
+  const walker = candidate.ownerDocument.createTreeWalker(candidate, 1);
   let inspected = 0;
-  for (const descendant of candidate.querySelectorAll('*')) {
-    if (inspected >= MAX_DESCENDANT_BACKDROPS) break;
+  let descendant = walker.nextNode() as Element | null;
+
+  while (descendant && inspected < MAX_DESCENDANT_BACKDROPS) {
     inspected += 1;
+    if (paintedBackground(descendant, context)) {
+      const style = styleFor(descendant, context);
+      if (!style) return undefined;
 
-    const authoredReason = authoredBackdropReason(descendant);
-    if (authoredReason) {
-      return 'A painted descendant inside a sibling branch is authored as a full-inset absolute/fixed layer, so that branch can provide the visual backdrop independently of the target ancestor background chain.';
+      if (fillsContainingBlock(style)) {
+        return 'A painted descendant inside a sibling branch fills its containing block, so that sibling subtree can provide the visual backdrop independently of the target ancestor background chain.';
+      }
+
+      const rect = descendant.getBoundingClientRect();
+      if (coversPoint(rect, x, y)) {
+        return 'A painted descendant inside a sibling branch overlaps the target at its measured center point, so the effective rendered background cannot be reduced safely to the target ancestor background chain.';
+      }
     }
-
-    if (!paintedBackground(descendant)) continue;
-    const style = getComputedStyle(descendant);
-
-    if (fillsContainingBlock(style)) {
-      return 'A painted descendant inside a sibling branch fills its containing block, so that sibling subtree can provide the visual backdrop independently of the target ancestor background chain.';
-    }
-
-    const rect = descendant.getBoundingClientRect();
-    if (coversPoint(rect, x, y)) {
-      return 'A painted descendant inside a sibling branch overlaps the target at its measured center point, so the effective rendered background cannot be reduced safely to the target ancestor background chain.';
-    }
+    if (context.exhausted) return undefined;
+    descendant = walker.nextNode() as Element | null;
   }
 
   return undefined;
 }
-
-function positionedSiblingBackdropReason(element: Element, x: number, y: number): string | undefined {
+function positionedSiblingBackdropReason(
+  element: Element,
+  x: number,
+  y: number,
+  context: BackdropScanContext,
+): string | undefined {
   const parent = element.parentElement;
   if (!parent) return undefined;
-  const targetStyle = computedStyleFor(element);
-  const parentStyle = computedStyleFor(parent);
+  const targetStyle = styleFor(element, context);
+  const parentStyle = styleFor(parent, context);
+  if (!targetStyle || !parentStyle) return undefined;
 
   let inspected = 0;
   for (const candidate of parent.children) {
@@ -202,72 +207,100 @@ function positionedSiblingBackdropReason(element: Element, x: number, y: number)
     if (inspected >= MAX_SIBLING_BACKDROPS) break;
     inspected += 1;
 
-    const authoredReason = authoredBackdropReason(candidate);
-    if (authoredReason) return authoredReason;
+    const style = styleFor(candidate, context);
+    if (!style) return undefined;
+    const candidatePainted = paintedBackground(candidate, context);
+    const candidateContainsMedia = containsPaintedMedia(candidate, context);
 
-    const descendantReason = descendantPaintedBackdropReason(candidate, x, y);
-    if (descendantReason) return descendantReason;
+    if (['absolute', 'fixed', 'sticky', 'relative'].includes(style.position)
+      && (candidatePainted || candidateContainsMedia)) {
+      if (fillsContainingBlock(style)) {
+        return 'A painted absolute/fixed sibling uses zero inset on every side, so it fills its containing block and participates in the target backdrop. The effective contrast background cannot be reduced safely to the target ancestor chain.';
+      }
 
-    const style = computedStyleFor(candidate);
-    if (!['absolute', 'fixed', 'sticky', 'relative'].includes(style.position)) continue;
-    if (!paintedBackground(candidate) && !containsPaintedMedia(candidate)) continue;
+      const rect = candidate.getBoundingClientRect();
+      if (coversPoint(rect, x, y)) {
+        return 'A positioned painted sibling overlaps this target at its measured center point. Its final stacking/compositing relationship cannot be reconstructed safely from the target ancestor chain, so the effective contrast background remains ambiguous.';
+      }
 
-    if (fillsContainingBlock(style)) {
-      return 'A painted absolute/fixed sibling uses zero inset on every side, so it fills its containing block and participates in the target backdrop. The effective contrast background cannot be reduced safely to the target ancestor chain.';
+      if (lowerStackedSibling(style, targetStyle, parentStyle)) {
+        return 'A painted absolute/fixed sibling has a lower authored stacking level than this target inside the same positioned container. Layout engines or test environments that cannot expose reliable paint geometry still require this backdrop relationship to be treated as ambiguous rather than as the ancestor background.';
+      }
     }
 
-    const rect = candidate.getBoundingClientRect();
-    if (coversPoint(rect, x, y)) {
-      return 'A positioned painted sibling overlaps this target at its measured center point. Its final stacking/compositing relationship cannot be reconstructed safely from the target ancestor chain, so the effective contrast background remains ambiguous.';
-    }
-
-    if (lowerStackedSibling(style, targetStyle, parentStyle)) {
-      return 'A painted absolute/fixed sibling has a lower authored stacking level than this target inside the same positioned container. Layout engines or test environments that cannot expose reliable paint geometry still require this backdrop relationship to be treated as ambiguous rather than as the ancestor background.';
+    if (candidate.children.length > 0) {
+      const descendantReason = descendantPaintedBackdropReason(candidate, x, y, context);
+      if (descendantReason) return descendantReason;
+      if (context.exhausted) return undefined;
     }
   }
   return undefined;
 }
+function ownPseudoBackdropReason(
+  element: Element,
+  context: BackdropScanContext,
+): string | undefined {
+  const cached = context.pseudoBackdropCache.get(element);
+  if (cached !== undefined) return cached ?? undefined;
 
-function generatedPseudoBackdropReason(element: Element): string | undefined {
+  for (const pseudo of ['::before', '::after'] as const) {
+    let style: CSSStyleDeclaration | undefined;
+    try {
+      style = pseudoStyleFor(element, pseudo, context);
+    } catch {
+      continue;
+    }
+    if (!style) break;
+
+    const content = style.content.trim().toLowerCase();
+    if (!content || content === 'none' || content === 'normal') continue;
+    if (!stylePaintsBackground(style)) continue;
+    if (style.position !== 'absolute' && style.position !== 'fixed') continue;
+    if (!fillsContainingBlock(style)) continue;
+
+    const reason = `A painted ${pseudo} pseudo-element on the target or one of its ancestors fills its containing block, so the rendered backdrop cannot be reduced safely to ordinary ancestor background-color values.`;
+    context.pseudoBackdropCache.set(element, reason);
+    return reason;
+  }
+
+  context.pseudoBackdropCache.set(element, null);
+  return undefined;
+}
+
+function generatedPseudoBackdropReason(
+  element: Element,
+  context: BackdropScanContext,
+): string | undefined {
   let current: Element | null = element;
   let inspected = 0;
 
   while (current && inspected < MAX_BACKDROP_ANCESTORS) {
-    for (const pseudo of ['::before', '::after'] as const) {
-      let style: CSSStyleDeclaration;
-      try {
-        style = computedStyleFor(current, pseudo);
-      } catch {
-        continue;
-      }
-
-      const content = style.content.trim().toLowerCase();
-      if (!content || content === 'none' || content === 'normal') continue;
-      if (!stylePaintsBackground(style)) continue;
-      if (style.position !== 'absolute' && style.position !== 'fixed') continue;
-      if (!fillsContainingBlock(style)) continue;
-
-      return `A painted ${pseudo} pseudo-element on the target or one of its ancestors fills its containing block, so the rendered backdrop cannot be reduced safely to ordinary ancestor background-color values.`;
-    }
-
+    const reason = ownPseudoBackdropReason(current, context);
+    if (reason) return reason;
+    if (context.exhausted) return undefined;
     current = current.parentElement;
     inspected += 1;
   }
 
   return undefined;
 }
-
-function ancestorSiblingBackdropReason(element: Element, x: number, y: number): string | undefined {
+function ancestorSiblingBackdropReason(
+  element: Element,
+  x: number,
+  y: number,
+  context: BackdropScanContext,
+): string | undefined {
   let branch: Element | null = element;
   let inspected = 0;
 
   while (branch && inspected < MAX_BACKDROP_ANCESTORS) {
-    const reason = positionedSiblingBackdropReason(branch, x, y);
+    const reason = positionedSiblingBackdropReason(branch, x, y, context);
     if (reason) {
       return inspected === 0
         ? reason
         : `${reason} The painted layer belongs to an ancestor-level stacking context rather than the text element's direct parent.`;
     }
+    if (context.exhausted) return undefined;
     branch = branch.parentElement;
     inspected += 1;
   }
@@ -275,7 +308,10 @@ function ancestorSiblingBackdropReason(element: Element, x: number, y: number): 
   return undefined;
 }
 
-function stackedBackdropReason(element: Element): string | undefined {
+function stackedBackdropReason(
+  element: Element,
+  context: BackdropScanContext,
+): string | undefined {
   const document = element.ownerDocument;
   const view = document.defaultView;
   const rect = element.getBoundingClientRect();
@@ -296,14 +332,14 @@ function stackedBackdropReason(element: Element): string | undefined {
       for (const candidate of stack.slice(ownIndex + 1)) {
         if (candidate === document.documentElement || candidate === document.body) continue;
         if (element.contains(candidate) || candidate.contains(element)) continue;
-        if (!paintedBackground(candidate) && !containsPaintedMedia(candidate)) continue;
+        if (!paintedBackground(candidate, context) && !containsPaintedMedia(candidate, context)) continue;
         return 'A separately stacked painted element is rendered behind this target, so the effective contrast background cannot be reduced safely to the target ancestor chain.';
       }
     }
   }
 
-  return generatedPseudoBackdropReason(element)
-    ?? ancestorSiblingBackdropReason(element, x, y);
+  return generatedPseudoBackdropReason(element, context)
+    ?? ancestorSiblingBackdropReason(element, x, y, context);
 }
 
 export function downgradeUncertainStackingContrast(
@@ -312,6 +348,7 @@ export function downgradeUncertainStackingContrast(
 ): void {
   const retained: ScanIssue[] = [];
   const downgraded: ScanIssue[] = [];
+  const context = createBackdropScanContext();
   let checked = 0;
 
   for (const issue of result.issues) {
@@ -319,15 +356,21 @@ export function downgradeUncertainStackingContrast(
       retained.push(issue);
       continue;
     }
-    const budgetExhausted = checked >= MAX_STACK_CHECKS;
+    let budgetExhausted = checked >= MAX_STACK_CHECKS || context.exhausted;
     let reason: string | undefined = budgetExhausted
-      ? 'The per-scan limit of 100 contrast backdrop checks was reached. The effective rendered background of this remaining candidate was not verified; review the composed pixels manually.'
+      ? context.exhausted
+        ? STYLE_BUDGET_REASON
+        : 'The per-scan limit of 100 contrast backdrop checks was reached. The effective rendered background of this remaining candidate was not verified; review the composed pixels manually.'
       : undefined;
     if (!budgetExhausted) {
       checked += 1;
       for (const element of targetsFor(issue, document)) {
-        reason = stackedBackdropReason(element);
-        if (reason) break;
+        reason = stackedBackdropReason(element, context);
+        if (reason || context.exhausted) break;
+      }
+      if (!reason && context.exhausted) {
+        budgetExhausted = true;
+        reason = STYLE_BUDGET_REASON;
       }
     }
     if (!reason) {
