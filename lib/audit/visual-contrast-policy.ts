@@ -5,19 +5,30 @@ import { parseCssColor } from './contrast';
 const CONTRAST_RULE_IDS = new Set([RULES.textContrast.id, RULES.nonTextContrast.id]);
 const MAX_STACK_CHECKS = 100;
 const MAX_SIBLING_BACKDROPS = 50;
+const MAX_BACKDROP_ANCESTORS = 16;
 const MAX_AUTHORED_RULES = 5_000;
 
-function paintedBackground(element: Element): boolean {
-  const style = getComputedStyle(element);
+function stylePaintsBackground(style: CSSStyleDeclaration): boolean {
   if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') return false;
-  const tag = element.tagName.toLowerCase();
-  if (['img', 'video', 'canvas', 'svg'].includes(tag)) return true;
-  if (tag === 'picture' && element.querySelector('img')) return true;
+  const opacity = Number.parseFloat(style.opacity || '1');
+  if (Number.isFinite(opacity) && opacity <= 0) return false;
   if (style.backgroundImage && style.backgroundImage !== 'none') return true;
   const color = style.backgroundColor.trim().toLowerCase();
   if (!color || color === 'transparent' || color === 'rgba(0, 0, 0, 0)') return false;
   const parsed = parseCssColor(color);
   return parsed == null || parsed.a > 0;
+}
+
+function paintedBackground(element: Element): boolean {
+  const style = getComputedStyle(element);
+  const tag = element.tagName.toLowerCase();
+  if (['img', 'video', 'canvas', 'svg'].includes(tag)) return style.display !== 'none' && style.visibility !== 'hidden' && style.visibility !== 'collapse';
+  if (tag === 'picture' && element.querySelector('img')) return style.display !== 'none' && style.visibility !== 'hidden' && style.visibility !== 'collapse';
+  return stylePaintsBackground(style);
+}
+
+function containsPaintedMedia(element: Element): boolean {
+  return Boolean(element.querySelector('img, picture, video, canvas, svg'));
 }
 
 function targetsFor(issue: ScanIssue, document: Document): Element[] {
@@ -160,7 +171,7 @@ function positionedSiblingBackdropReason(element: Element, x: number, y: number)
 
     const style = getComputedStyle(candidate);
     if (!['absolute', 'fixed', 'sticky', 'relative'].includes(style.position)) continue;
-    if (!paintedBackground(candidate)) continue;
+    if (!paintedBackground(candidate) && !containsPaintedMedia(candidate)) continue;
 
     if (fillsContainingBlock(style)) {
       return 'A painted absolute/fixed sibling uses zero inset on every side, so it fills its containing block and participates in the target backdrop. The effective contrast background cannot be reduced safely to the target ancestor chain.';
@@ -175,6 +186,53 @@ function positionedSiblingBackdropReason(element: Element, x: number, y: number)
       return 'A painted absolute/fixed sibling has a lower authored stacking level than this target inside the same positioned container. Layout engines or test environments that cannot expose reliable paint geometry still require this backdrop relationship to be treated as ambiguous rather than as the ancestor background.';
     }
   }
+  return undefined;
+}
+
+function generatedPseudoBackdropReason(element: Element): string | undefined {
+  let current: Element | null = element;
+  let inspected = 0;
+
+  while (current && inspected < MAX_BACKDROP_ANCESTORS) {
+    for (const pseudo of ['::before', '::after'] as const) {
+      let style: CSSStyleDeclaration;
+      try {
+        style = getComputedStyle(current, pseudo);
+      } catch {
+        continue;
+      }
+
+      const content = style.content.trim().toLowerCase();
+      if (!content || content === 'none' || content === 'normal') continue;
+      if (!stylePaintsBackground(style)) continue;
+      if (style.position !== 'absolute' && style.position !== 'fixed') continue;
+      if (!fillsContainingBlock(style)) continue;
+
+      return `A painted ${pseudo} pseudo-element on the target or one of its ancestors fills its containing block, so the rendered backdrop cannot be reduced safely to ordinary ancestor background-color values.`;
+    }
+
+    current = current.parentElement;
+    inspected += 1;
+  }
+
+  return undefined;
+}
+
+function ancestorSiblingBackdropReason(element: Element, x: number, y: number): string | undefined {
+  let branch: Element | null = element;
+  let inspected = 0;
+
+  while (branch && inspected < MAX_BACKDROP_ANCESTORS) {
+    const reason = positionedSiblingBackdropReason(branch, x, y);
+    if (reason) {
+      return inspected === 0
+        ? reason
+        : `${reason} The painted layer belongs to an ancestor-level stacking context rather than the text element's direct parent.`;
+    }
+    branch = branch.parentElement;
+    inspected += 1;
+  }
+
   return undefined;
 }
 
@@ -195,13 +253,14 @@ function stackedBackdropReason(element: Element, document: Document): string | u
       for (const candidate of stack.slice(ownIndex + 1)) {
         if (candidate === document.documentElement || candidate === document.body) continue;
         if (element.contains(candidate) || candidate.contains(element)) continue;
-        if (!paintedBackground(candidate)) continue;
+        if (!paintedBackground(candidate) && !containsPaintedMedia(candidate)) continue;
         return 'A separately stacked painted element is rendered behind this target, so the effective contrast background cannot be reduced safely to the target ancestor chain.';
       }
     }
   }
 
-  return positionedSiblingBackdropReason(element, x, y);
+  return generatedPseudoBackdropReason(element)
+    ?? ancestorSiblingBackdropReason(element, x, y);
 }
 
 export function downgradeUncertainStackingContrast(
