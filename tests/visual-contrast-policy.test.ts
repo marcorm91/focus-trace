@@ -29,6 +29,22 @@ describe('contrast backdrop verification', () => {
     },
   );
 
+  it('detects a painted descendant inside a static sibling background branch', () => {
+    document.body.innerHTML = '<div class="fullwidth-block" style="position:relative"><div class="container-background"><figure><img alt="" src="hero.jpg" style="position:absolute;inset:0"></figure><div class="bg-overlay" style="position:absolute;inset:0;background:rgba(0,20,60,.65)"></div></div><div class="container"><div class="row"><div class="col"><article><div class="article__body"><header><h2><a id="target" href="#" style="color:#fff;background:transparent;font-size:16px;font-weight:600">White title</a></h2></header></div></article></div></div></div></div>';
+    const result = scan([{
+      ...issue('contrast'),
+      contrast: { kind: 'text', subject: 'text', requiredRatio: 4.5, ratio: 1, foreground: 'rgb(255, 255, 255)', background: 'rgb(255, 255, 255)' },
+    }]);
+
+    downgradeUncertainStackingContrast(result, document);
+
+    expect(result.issues).toHaveLength(0);
+    expect(result.review).toHaveLength(1);
+    expect(result.review[0]?.contrast?.ratio).toBeUndefined();
+    expect(result.review[0]?.contrast?.background).toBeUndefined();
+    expect(result.review[0]?.contrast?.reason).toContain('sibling branch');
+  });
+
   it('detects a painted backdrop attached to an ancestor-level sibling', () => {
     document.body.innerHTML = '<section style="position:relative"><picture style="position:absolute;inset:0;z-index:0"><img alt="" src="hero.jpg"></picture><div style="position:relative;z-index:1"><article><header><h2><a id="target" href="#" style="color:#fff;background:transparent;font-size:16px;font-weight:400">White text</a></h2></header></article></div></section>';
     const result = scan([{
