@@ -10,6 +10,9 @@ const MAX_AUTHORED_RULES = 5_000;
 function paintedBackground(element: Element): boolean {
   const style = getComputedStyle(element);
   if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') return false;
+  const tag = element.tagName.toLowerCase();
+  if (['img', 'video', 'canvas', 'svg'].includes(tag)) return true;
+  if (tag === 'picture' && element.querySelector('img')) return true;
   if (style.backgroundImage && style.backgroundImage !== 'none') return true;
   const color = style.backgroundColor.trim().toLowerCase();
   if (!color || color === 'transparent' || color === 'rgba(0, 0, 0, 0)') return false;
@@ -230,9 +233,17 @@ export function downgradeUncertainStackingContrast(
       continue;
     }
 
+    const contrast = issue.contrast ? { ...issue.contrast } : undefined;
+    if (contrast) {
+      delete contrast.ratio;
+      delete contrast.background;
+      contrast.reason = reason;
+    }
+
     downgraded.push({
       ...issue,
       outcome: 'review',
+      ...(contrast ? { contrast } : {}),
       description: budgetExhausted
         ? 'FocusTrace measured a contrast candidate, but the backdrop verification budget was exhausted. Review the actual composed pixels before treating this as a WCAG failure.'
         : 'FocusTrace measured a contrast candidate, but a separately stacked painted backdrop makes the effective rendered background ambiguous. Review the actual composed pixels before treating this as a WCAG failure.',

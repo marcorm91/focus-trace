@@ -18,6 +18,13 @@ describe('heading outline', () => {
     ]);
   });
 
+  it('counts a native H1 with redundant heading ARIA only once', () => {
+    render('<main><h1 role="heading" aria-level="1">Store</h1></main>');
+    const outline = collectHeadingOutline();
+    expect(outline).toHaveLength(1);
+    expect(outline[0]).toMatchObject({ level: 1, text: 'Store' });
+  });
+
   it('marks multiple H1 elements for review without turning them into a scan failure', () => {
     render('<main><h1>Store</h1><section><h2>Products</h2></section><footer><h1>Help</h1></footer></main>');
     const outline = collectHeadingOutline();

@@ -212,7 +212,9 @@ export function collectStructureEvidenceInPage(options?: StructureCollectionOpti
     const tag = current.tagName.toLowerCase();
     const role = current.getAttribute('role')?.trim().toLowerCase() || undefined;
     const isLandmark = landmarkTags.has(tag) || Boolean(role && landmarkRoles.has(role));
-    const isHeading = headingTags.has(tag) || role === 'heading';
+    const isNativeHeading = headingTags.has(tag);
+    const isAriaHeading = !isNativeHeading && role === 'heading';
+    const isHeading = isNativeHeading || isAriaHeading;
     const isList = tag === 'ul' || tag === 'ol' || tag === 'dl' || role === 'list';
     const isForm = tag === 'form' || role === 'form';
     const isButton = tag === 'button'
@@ -233,6 +235,20 @@ export function collectStructureEvidenceInPage(options?: StructureCollectionOpti
     if (isFormControl) metrics.formControlCount += 1;
     if (isTable) metrics.tableCount += 1;
     if (isImage) metrics.imageCount += 1;
+
+    if (tag === 'a' && current.hasAttribute('href')) {
+      const title = clip(current.getAttribute('title'));
+      const visibleText = clip(current.textContent);
+      const comparable = (value: string) => value.replace(/\s+/g, ' ').trim().toLocaleLowerCase();
+      if (title && visibleText && comparable(title) === comparable(visibleText)) {
+        addHint(current, {
+          tone: 'review',
+          title: 'Redundant link title attribute',
+          description: 'This link repeats its visible text in the title attribute, so the tooltip does not add useful information and can create duplicate announcement or extra noise.',
+          suggestion: 'Remove the redundant title attribute. Keep title only when it provides genuinely useful supplementary information that is not already conveyed by the link text.',
+        }, 'title duplicates visible link text');
+      }
+    }
 
     if (genericTags.has(tag)) {
       if (role === 'button') {
@@ -283,7 +299,7 @@ export function collectStructureEvidenceInPage(options?: StructureCollectionOpti
   if (current) truncated = true;
 
   const metricTargets: StructureMetricTarget[] = [
-    { id: 'headings', count: metrics.headingCount, selector: 'h1,h2,h3,h4,h5,h6,[role="heading"]' },
+    { id: 'headings', count: metrics.headingCount, selector: 'h1,h2,h3,h4,h5,h6,[role="heading"]:not(h1):not(h2):not(h3):not(h4):not(h5):not(h6)' },
     {
       id: 'landmarks',
       count: metrics.landmarkCount,

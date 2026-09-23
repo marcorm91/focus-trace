@@ -53,6 +53,13 @@ function hintCopy(hint: StructureHint, language: AppLanguage): HintCopy {
       suggestion: 'Cuando la jerarquía del documento lo permita, valora utilizar un <h1>–<h6> nativo.',
     };
   }
+  if (hint.title === 'Redundant link title attribute') {
+    return {
+      title: 'Atributo title redundante en el enlace',
+      description: 'El atributo title repite el texto visible del enlace, por lo que no aporta información útil adicional y puede generar repetición o ruido.',
+      suggestion: 'Elimina el atributo title redundante. Úsalo solo cuando aporte información complementaria que no esté ya presente en el texto del enlace.',
+    };
+  }
   if (hint.title === 'Generic element with click handler') {
     return {
       title: 'Elemento genérico con evento de clic',
