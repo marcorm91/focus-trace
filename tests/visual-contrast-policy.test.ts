@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { runFocusTraceScan } from '../lib/audit/scan';
 import { downgradeUncertainStackingContrast } from '../lib/audit/visual-contrast-policy';
 import { localizedScanIssue } from '../shared/i18n';
@@ -110,6 +110,28 @@ describe('contrast backdrop verification', () => {
     expect(result.review[0]?.contrast?.reason).toContain('painted');
   });
 
+  it('reviews a contrast failure when the bounded sibling search is truncated', () => {
+    const siblings = Array.from({ length: 13 }, (_, index) => `<span data-sibling="${index}"></span>`).join('');
+    document.body.innerHTML = `<main>${siblings}<p id="target">Text</p></main>`;
+    const result = scan([{
+      ...issue('contrast'),
+      contrast: {
+        kind: 'text',
+        subject: 'text',
+        requiredRatio: 4.5,
+        ratio: 1,
+        foreground: 'rgb(255, 255, 255)',
+        background: 'rgb(255, 255, 255)',
+      },
+    }]);
+
+    downgradeUncertainStackingContrast(result, document);
+
+    expect(result.issues).toHaveLength(0);
+    expect(result.review).toHaveLength(1);
+    expect(result.review[0]?.contrast?.reason).toContain('bounded visual-backdrop search');
+  });
+
   it('does not downgrade because of a fully transparent backdrop', () => {
     document.body.innerHTML = '<main style="position:relative"><div style="position:absolute;left:0;top:0;width:100px;height:100px;z-index:0;background:rgba(0,0,0,0)"></div><p id="target" style="position:relative;z-index:1">Text</p></main>';
     const result = scan([issue('contrast')]);
@@ -169,6 +191,31 @@ describe('contrast backdrop verification', () => {
     const result = runFocusTraceScan();
     expect(result.issues.filter((finding) => finding.ruleId === 'FT-WCAG-010')).toHaveLength(0);
     expect(result.review.some((finding) => finding.ruleId === 'FT-WCAG-010' && finding.targets.includes('#target0'))).toBe(true);
+  });
+
+  it('keeps computed-style work bounded on a large ambiguous page', () => {
+    const sections = Array.from({ length: 100 }, (_, index) => {
+      const siblings = Array.from({ length: 13 }, (__, sibling) => `<span data-sibling="${index}-${sibling}"></span>`).join('');
+      return `<section>${siblings}<p id="target-${index}">Text</p></section>`;
+    }).join('');
+    document.body.innerHTML = sections;
+
+    const issues = Array.from({ length: 100 }, (_, index) => ({
+      ...issue(`contrast-${index}`),
+      targets: [`#target-${index}`],
+    }));
+    const result = scan(issues);
+    const getComputedStyleSpy = vi.spyOn(window, 'getComputedStyle');
+
+    try {
+      downgradeUncertainStackingContrast(result, document);
+
+      expect(getComputedStyleSpy.mock.calls.length).toBeLessThanOrEqual(800);
+      expect(result.issues).toHaveLength(0);
+      expect(result.review).toHaveLength(100);
+    } finally {
+      getComputedStyleSpy.mockRestore();
+    }
   });
 
   it('reviews the 101st ambiguous target and preserves aggregate counters', () => {
