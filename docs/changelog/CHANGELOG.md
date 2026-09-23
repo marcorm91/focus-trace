@@ -2,6 +2,26 @@
 
 All notable FocusTrace release changes are summarized here. Detailed release notes remain under `docs/changelog/RELEASE_NOTES_<version>.md`.
 
+## 1.0.7
+
+### Added
+
+- Added a persistent **Ignore iframe contents** scan-scope setting. When enabled, FocusTrace still evaluates the `iframe` / `frame` element itself but does not traverse or audit descendants inside the embedded document.
+
+### Fixed
+
+- Reduced contrast false positives when the rendered backdrop is supplied by painted descendants in sibling branches, ancestor-level stacking contexts, absolute/fixed image/media layers or full-inset `::before` / `::after` pseudo-elements.
+- Prevented synthetic white-on-white contrast evidence from being reported when the actual composed backdrop cannot be resolved deterministically; uncertain cases now remain REVIEW without a fabricated ratio/background.
+- Made contrast evaluation document-aware for same-origin iframes by resolving composed `|frame|` selectors and using each element's own `ownerDocument` / `defaultView`.
+- Preserved same-origin iframe text candidates during contrast scanning instead of discarding them against the top-level document body.
+
+### Changed
+
+- Frame traversal can now be disabled at the composed-tree source rather than filtering iframe findings after analysis.
+- When iframe contents are ignored, descendant-dependent frame checks are skipped while frame-host accessible-name and duplicate-purpose checks remain available.
+
+See `docs/changelog/RELEASE_NOTES_1.0.7.md` for release scope and validation boundaries.
+
 ## 1.0.6
 
 ### Fixed
