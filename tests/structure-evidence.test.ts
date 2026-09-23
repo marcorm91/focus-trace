@@ -39,6 +39,28 @@ describe('Structure evidence collector', () => {
     expect(snapshot.metricTargets.find((metric) => metric.id === 'buttons')?.selector).toContain('[role="button"]');
   });
 
+  it('counts native headings with redundant role/aria-level semantics only once', () => {
+    document.body.innerHTML = '<main><h1 id="title" role="heading" aria-level="1">Title</h1></main>';
+
+    const snapshot = collectStructureEvidenceInPage();
+    const headingMetric = snapshot.metricTargets.find((metric) => metric.id === 'headings');
+
+    expect(snapshot.metrics.headingCount).toBe(1);
+    expect(headingMetric?.count).toBe(1);
+    expect(headingMetric?.selector).toContain('[role="heading"]:not(h1)');
+  });
+
+  it('surfaces a redundant link title as semantic review guidance', () => {
+    document.body.innerHTML = '<main><a id="redundant" href="/account" title="Account">Account</a><a href="/help" title="Open account help">Help</a></main>';
+
+    const snapshot = collectStructureEvidenceInPage();
+    const redundant = snapshot.hints.find((hint) => hint.title === 'Redundant link title attribute');
+
+    expect(redundant?.selector).toBe('#redundant');
+    expect(redundant?.tone).toBe('review');
+    expect(snapshot.hints.filter((hint) => hint.title === 'Redundant link title attribute')).toHaveLength(1);
+  });
+
   it('keeps Semantics focused on concrete native-HTML opportunities with element evidence', () => {
     document.body.innerHTML = `
       <main>
