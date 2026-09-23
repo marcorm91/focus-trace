@@ -22,7 +22,6 @@ interface BackdropScanContext {
   exhausted: boolean;
   styleCache: WeakMap<Element, CSSStyleDeclaration>;
   paintedCache: WeakMap<Element, boolean>;
-  mediaCache: WeakMap<Element, boolean>;
   pseudoBackdropCache: WeakMap<Element, string | null>;
 }
 
@@ -32,7 +31,6 @@ function createBackdropScanContext(): BackdropScanContext {
     exhausted: false,
     styleCache: new WeakMap(),
     paintedCache: new WeakMap(),
-    mediaCache: new WeakMap(),
     pseudoBackdropCache: new WeakMap(),
   };
 }
@@ -87,14 +85,6 @@ function paintedBackground(element: Element, context: BackdropScanContext): bool
       : stylePaintsBackground(style);
   context.paintedCache.set(element, painted);
   return painted;
-}
-
-function containsPaintedMedia(element: Element, context: BackdropScanContext): boolean {
-  const cached = context.mediaCache.get(element);
-  if (cached != null) return cached;
-  const contains = Boolean(element.querySelector('img, picture, video, canvas, svg'));
-  context.mediaCache.set(element, contains);
-  return contains;
 }
 
 function targetsFor(issue: ScanIssue, document: Document): Element[] {
@@ -210,10 +200,9 @@ function positionedSiblingBackdropReason(
     const style = styleFor(candidate, context);
     if (!style) return undefined;
     const candidatePainted = paintedBackground(candidate, context);
-    const candidateContainsMedia = containsPaintedMedia(candidate, context);
 
     if (['absolute', 'fixed', 'sticky', 'relative'].includes(style.position)
-      && (candidatePainted || candidateContainsMedia)) {
+      && candidatePainted) {
       if (fillsContainingBlock(style)) {
         return 'A painted absolute/fixed sibling uses zero inset on every side, so it fills its containing block and participates in the target backdrop. The effective contrast background cannot be reduced safely to the target ancestor chain.';
       }
@@ -332,7 +321,7 @@ function stackedBackdropReason(
       for (const candidate of stack.slice(ownIndex + 1)) {
         if (candidate === document.documentElement || candidate === document.body) continue;
         if (element.contains(candidate) || candidate.contains(element)) continue;
-        if (!paintedBackground(candidate, context) && !containsPaintedMedia(candidate, context)) continue;
+        if (!paintedBackground(candidate, context)) continue;
         return 'A separately stacked painted element is rendered behind this target, so the effective contrast background cannot be reduced safely to the target ancestor chain.';
       }
     }
