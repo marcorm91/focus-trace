@@ -8,6 +8,10 @@ import { pickComponentInPage, type ComponentPickerResult } from '../../lib/runti
 import { clearScanTargetHighlightInPage, locateScanTargetInPage } from '../../lib/runtime/scan-target-overlay';
 import { collectStructureEvidenceInPage, type StructureSnapshot } from '../../lib/runtime/structure-evidence';
 import { tr, type AppLanguage } from '../../shared/i18n';
+import {
+  normalizeScanPreferences,
+  SCAN_PREFERENCES_STORAGE_KEY,
+} from '../../shared/scan-preferences';
 import type {
   AuditorNoteTarget,
   ExtensionMessage,
@@ -29,6 +33,11 @@ import { useSidepanelLanguage } from './hooks/useSidepanelLanguage';
 import { useSidepanelSession } from './hooks/useSidepanelSession';
 import { useTraceActions } from './hooks/useTraceActions';
 type View = 'scan' | 'structure' | 'trace' | 'report' | 'instructions' | 'settings';
+
+async function currentScanPreferences() {
+  const stored = await browser.storage.local.get(SCAN_PREFERENCES_STORAGE_KEY);
+  return normalizeScanPreferences(stored[SCAN_PREFERENCES_STORAGE_KEY]);
+}
 
 const AuditReportWorkspace = lazy(() => import('./views/AuditReportWorkspace')
   .then((module) => ({ default: module.AuditReportWorkspace })));
@@ -200,8 +209,10 @@ export default function App() {
           zoomFactor,
         } satisfies ExtensionMessage)) as TextResizeBaseline;
       }
+      const preferences = await currentScanPreferences();
       const result = (await browser.tabs.sendMessage(tabId, {
         type: 'FOCUSTRACE_RUN_SCAN',
+        preferences,
         textResize: {
           ...(zoomFactor != null ? { zoomFactor } : {}),
           ...(textResizeBaseline ? { baseline: textResizeBaseline } : {}),
@@ -257,8 +268,10 @@ export default function App() {
       if (!picked || picked.cancelled || !picked.scope) return;
       setStructureSnapshot(undefined);
 
+      const preferences = await currentScanPreferences();
       const result = (await browser.tabs.sendMessage(tabId, {
         type: 'FOCUSTRACE_RUN_SCAN',
+        preferences,
       } satisfies ExtensionMessage)) as ScanResult;
       if (result.scope?.type !== 'component') {
         throw new Error('FocusTrace component scope handoff failed.');
