@@ -5,6 +5,7 @@ import { parseCssColor } from './contrast';
 const CONTRAST_RULE_IDS = new Set([RULES.textContrast.id, RULES.nonTextContrast.id]);
 const MAX_STACK_CHECKS = 100;
 const MAX_SIBLING_BACKDROPS = 50;
+const MAX_DESCENDANT_BACKDROPS = 80;
 const MAX_BACKDROP_ANCESTORS = 16;
 const MAX_AUTHORED_RULES = 5_000;
 
@@ -154,6 +155,33 @@ function authoredBackdropReason(candidate: Element): string | undefined {
   return 'A sibling is authored as an absolute/fixed painted full-inset layer, so it can participate in the target backdrop independently of the ancestor background chain. FocusTrace keeps the effective contrast background unresolved.';
 }
 
+function descendantPaintedBackdropReason(candidate: Element, x: number, y: number): string | undefined {
+  let inspected = 0;
+  for (const descendant of candidate.querySelectorAll('*')) {
+    if (inspected >= MAX_DESCENDANT_BACKDROPS) break;
+    inspected += 1;
+
+    const authoredReason = authoredBackdropReason(descendant);
+    if (authoredReason) {
+      return 'A painted descendant inside a sibling branch is authored as a full-inset absolute/fixed layer, so that branch can provide the visual backdrop independently of the target ancestor background chain.';
+    }
+
+    if (!paintedBackground(descendant)) continue;
+    const style = getComputedStyle(descendant);
+
+    if (fillsContainingBlock(style)) {
+      return 'A painted descendant inside a sibling branch fills its containing block, so that sibling subtree can provide the visual backdrop independently of the target ancestor background chain.';
+    }
+
+    const rect = descendant.getBoundingClientRect();
+    if (coversPoint(rect, x, y)) {
+      return 'A painted descendant inside a sibling branch overlaps the target at its measured center point, so the effective rendered background cannot be reduced safely to the target ancestor background chain.';
+    }
+  }
+
+  return undefined;
+}
+
 function positionedSiblingBackdropReason(element: Element, x: number, y: number): string | undefined {
   const parent = element.parentElement;
   if (!parent) return undefined;
@@ -168,6 +196,9 @@ function positionedSiblingBackdropReason(element: Element, x: number, y: number)
 
     const authoredReason = authoredBackdropReason(candidate);
     if (authoredReason) return authoredReason;
+
+    const descendantReason = descendantPaintedBackdropReason(candidate, x, y);
+    if (descendantReason) return descendantReason;
 
     const style = getComputedStyle(candidate);
     if (!['absolute', 'fixed', 'sticky', 'relative'].includes(style.position)) continue;
