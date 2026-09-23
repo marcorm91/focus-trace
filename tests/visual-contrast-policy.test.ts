@@ -29,12 +29,41 @@ describe('contrast backdrop verification', () => {
     },
   );
 
+  it('treats an absolute image sibling as an unresolved painted backdrop', () => {
+    document.body.innerHTML = '<main style="position:relative"><img alt="" src="hero.jpg" style="position:absolute;inset:0;z-index:0"><p id="target" style="position:relative;z-index:1">Text</p></main>';
+    const result = scan([{
+      ...issue('contrast'),
+      contrast: { kind: 'text', subject: 'text', requiredRatio: 4.5, ratio: 1, foreground: 'rgb(255, 255, 255)', background: 'rgb(255, 255, 255)' },
+    }]);
+    downgradeUncertainStackingContrast(result, document);
+
+    expect(result.issues).toHaveLength(0);
+    expect(result.review).toHaveLength(1);
+    expect(result.review[0]?.contrast?.ratio).toBeUndefined();
+    expect(result.review[0]?.contrast?.background).toBeUndefined();
+    expect(result.review[0]?.contrast?.reason).toContain('painted');
+  });
+
   it('does not downgrade because of a fully transparent backdrop', () => {
     document.body.innerHTML = '<main style="position:relative"><div style="position:absolute;left:0;top:0;width:100px;height:100px;z-index:0;background:rgba(0,0,0,0)"></div><p id="target" style="position:relative;z-index:1">Text</p></main>';
     const result = scan([issue('contrast')]);
     downgradeUncertainStackingContrast(result, document);
     expect(result.issues).toHaveLength(1);
     expect(result.review).toHaveLength(0);
+  });
+
+  it('downgrades a false white-on-white failure when an absolute image is the visual backdrop', () => {
+    document.open();
+    document.write('<!doctype html><html lang="en"><head><title>Test</title></head><body style="background:#fff"><main style="position:relative"><img alt="" src="hero.jpg" style="position:absolute;inset:0;z-index:0"><h1>Test</h1><p id="image-target" style="position:relative;z-index:1;color:#fff;background:transparent;font-size:16px;font-weight:400">White text</p></main></body></html>');
+    document.close();
+
+    const result = runFocusTraceScan();
+    const finding = result.review.find((entry) => entry.ruleId === 'FT-WCAG-010' && entry.targets.includes('#image-target'));
+
+    expect(result.issues.some((entry) => entry.ruleId === 'FT-WCAG-010' && entry.targets.includes('#image-target'))).toBe(false);
+    expect(finding).toBeDefined();
+    expect(finding?.contrast?.background).toBeUndefined();
+    expect(finding?.contrast?.ratio).toBeUndefined();
   });
 
   it('applies opaque-backdrop handling through the full scanner', () => {
