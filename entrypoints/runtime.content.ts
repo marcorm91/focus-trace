@@ -962,7 +962,7 @@ export default defineContentScript({
         return Promise.resolve(captureTextResizeBaseline(message.zoomFactor));
       }
       if (message.type === 'FOCUSTRACE_RUN_SCAN') {
-        return Promise.resolve(runFocusTraceScan(message.scope, message.textResize));
+        return Promise.resolve(runFocusTraceScan(message.scope, message.textResize, message.preferences));
       }
       if (message.type === 'FOCUSTRACE_RUN_FOCUS_WALK') return runAutomaticFocusWalk(message.options);
     });
