@@ -21,6 +21,7 @@ function computedStyleFor(element: Element, pseudo?: string): CSSStyleDeclaratio
 interface BackdropScanContext {
   styleChecks: number;
   exhausted: boolean;
+  localTruncated: boolean;
   styleCache: WeakMap<Element, CSSStyleDeclaration>;
   paintedCache: WeakMap<Element, boolean>;
   pseudoBackdropCache: WeakMap<Element, string | null>;
@@ -31,6 +32,7 @@ function createBackdropScanContext(): BackdropScanContext {
   return {
     styleChecks: 0,
     exhausted: false,
+    localTruncated: false,
     styleCache: new WeakMap(),
     paintedCache: new WeakMap(),
     pseudoBackdropCache: new WeakMap(),
@@ -188,7 +190,7 @@ function descendantPaintedBackdropReason(
     descendant = walker.nextNode() as Element | null;
   }
 
-  if (descendant) return LOCAL_SEARCH_BUDGET_REASON;
+  if (descendant) context.localTruncated = true;
   return undefined;
 }
 function positionedSiblingBackdropReason(
@@ -236,7 +238,7 @@ function positionedSiblingBackdropReason(
     }
   }
 
-  if (parent.children.length - 1 > inspected) return LOCAL_SEARCH_BUDGET_REASON;
+  if (parent.children.length - 1 > inspected) context.localTruncated = true;
   return undefined;
 }
 function ownPseudoBackdropReason(
@@ -285,7 +287,7 @@ function generatedPseudoBackdropReason(
     inspected += 1;
   }
 
-  if (current) return LOCAL_SEARCH_BUDGET_REASON;
+  if (current) context.localTruncated = true;
   return undefined;
 }
 function ancestorSiblingBackdropReason(
@@ -309,7 +311,7 @@ function ancestorSiblingBackdropReason(
     inspected += 1;
   }
 
-  if (branch) return LOCAL_SEARCH_BUDGET_REASON;
+  if (branch) context.localTruncated = true;
   return undefined;
 }
 
@@ -363,8 +365,13 @@ function stackedBackdropReason(
     ? Math.min(Math.max(rect.top + rect.height / 2, 0), Math.max(0, viewportHeight - 1))
     : 0;
 
-  return generatedPseudoBackdropReason(element, context)
-    ?? ancestorSiblingBackdropReason(element, x, y, context);
+  const pseudoReason = generatedPseudoBackdropReason(element, context);
+  if (pseudoReason) return pseudoReason;
+
+  const siblingReason = ancestorSiblingBackdropReason(element, x, y, context);
+  if (siblingReason) return siblingReason;
+
+  return context.localTruncated ? LOCAL_SEARCH_BUDGET_REASON : undefined;
 }
 
 export function downgradeUncertainStackingContrast(
@@ -389,6 +396,7 @@ export function downgradeUncertainStackingContrast(
       : undefined;
     if (!budgetExhausted) {
       checked += 1;
+      context.localTruncated = false;
       for (const element of targetsFor(issue, document)) {
         reason = stackedBackdropReason(element, context);
         if (reason || context.exhausted) break;
