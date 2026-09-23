@@ -1,3 +1,5 @@
+import type { ScanPreferences } from './scan-preferences';
+
 export type Severity = 'critical' | 'serious' | 'moderate' | 'minor' | 'info';
 export type FindingOutcome = 'fail' | 'review' | 'warning';
 export type FindingReviewState = 'open' | 'reviewed' | 'accepted' | 'false-positive' | 'resolved' | 'regressed';
@@ -485,7 +487,7 @@ export type ExtensionMessage =
   | { type: 'FOCUSTRACE_SET_RECORDING_STATE'; tabId: number; enabled: boolean; startedAt?: number; pageUrl?: string }
   | { type: 'FOCUSTRACE_CONFIGURE_BREAKPOINTS'; breakpoints: RuntimeBreakpointSettings }
   | { type: 'FOCUSTRACE_SAVE_BREAKPOINTS'; tabId: number; breakpoints: RuntimeBreakpointSettings }
-  | { type: 'FOCUSTRACE_RUN_SCAN'; scope?: ComponentScanScope; textResize?: TextResizeContext }
+  | { type: 'FOCUSTRACE_RUN_SCAN'; scope?: ComponentScanScope; textResize?: TextResizeContext; preferences?: ScanPreferences }
   | { type: 'FOCUSTRACE_CAPTURE_TEXT_RESIZE_BASELINE'; zoomFactor: number }
   | { type: 'FOCUSTRACE_RUN_FOCUS_WALK'; options?: FocusWalkOptions }
   | { type: 'FOCUSTRACE_SAVE_SCAN'; tabId: number; scan: ScanResult; memoryEvidence?: FocusMemoryCapturedEvidence[]; textResizeBaseline?: TextResizeBaseline };
