@@ -635,7 +635,7 @@ Form evidence is deliberately privacy-bounded. FocusTrace does not read or persi
 
 `FT-REVIEW-042` reviews visible content with a resolvable quarter-turn `transform` or `rotate` authored under portrait/landscape media queries. Essential-orientation exceptions, inaccessible stylesheets, script-driven locking and alternate controls remain contextual. Contrast remains conservative too: when a separately stacked painted element makes the effective backdrop ambiguous, a deterministic contrast failure is downgraded to REVIEW instead of guessing the composed background. See [`docs/VISUAL_PRESENTATION.md`](docs/VISUAL_PRESENTATION.md) for the bounded methodology and scan budgets.
 
-Backdrop verification remains bounded to 100 contrast candidates per scan. Remaining candidates are explicitly REVIEW because their backdrop was not verified, with an exhaustion reason and consistent counters. Opaque RGB colors (including black and red) are distinguished from transparent RGBA colors.
+Backdrop verification remains bounded to 100 contrast candidates per scan and 2,500 computed-style observations shared across that verification pass. It reuses computed styles and never performs a stylesheet-wide selector/rule scan for every candidate. If either budget is exhausted, remaining candidates are explicitly REVIEW because their backdrop was not verified, with an exhaustion reason and consistent counters. Opaque RGB colors (including black and red) are distinguished from transparent RGBA colors.
 
 ### Keyboard, navigation, refresh and motion
 
