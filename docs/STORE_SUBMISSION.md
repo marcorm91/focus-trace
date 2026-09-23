@@ -2,12 +2,12 @@
 
 This document keeps the Chrome Web Store, Microsoft Edge Add-ons and Firefox release copy aligned with the actual extension behavior. It is not a substitute for the public privacy policy or the release checklist.
 
-Current release candidate: **1.0.5**.
+Current release candidate: **1.0.6**.
 
 ## Release positioning
 
 - Product: FocusTrace
-- Version: 1.0.5
+- Version: 1.0.6
 - Supported targets: Chrome 114+ and Chromium-based Microsoft Edge
 - Firefox: Firefox 115+ packaged target; keep the public support claim conservative until the manual Firefox packaged-build and DevTools smoke checklist in `RELEASE_CHECKLIST.md` has passed
 - Architecture: Manifest V3, local-first, no required backend
@@ -166,14 +166,14 @@ Record the final public URLs here before submission:
 
 ## Final submission gate
 
-Before uploading the production ZIP for 1.0.5:
+Before uploading the production ZIP for 1.0.6:
 
 1. Complete `npm run release:check:full` on the release candidate.
-2. Confirm CI is green on the exact commit intended for `v1.0.5`.
+2. Confirm CI is green on the exact commit intended for `v1.0.6`.
 3. Complete the manual Standards Coverage/EN 301 549, WCAG 2.2 regression, native EN/ES browser i18n, Structure, DevTools DOM inspection, multipage Report and FocusTrace Memory smoke items in `RELEASE_CHECKLIST.md`.
 4. Smoke-test the unpacked production Chrome and Edge builds, including the regular side panel and **F12 → FocusTrace → Inspect in DOM** flow.
 5. Complete the Firefox 115+ packaged-build smoke, including the optional DevTools permission and native Inspector path, before making a broad Firefox support claim.
 6. Confirm production manifests contain only the intended required and optional permissions and that Firefox `devtools` remains optional.
 7. Confirm the public privacy-policy, support/contact and voluntary-support URLs resolve without authentication.
 8. Review the final store declarations against `PRIVACY.md` and actual behavior, including standards traceability, media/form/keyboard-pointer review evidence, reflow, use-of-color, moving-content, link-purpose and Resize Text evidence, target geometry, Focus Visible temporary captures, runtime status-message candidates, auditor notes and their exports, unified Structure evidence, DevTools DOM selection, bounded multipage-audit visual evidence and default-enabled Memory notes/previews/locators.
-9. Tag the exact approved commit as `v1.0.5` only after the release candidate is accepted.
+9. Tag the exact approved commit as `v1.0.6` only after the release candidate is accepted.

@@ -2,6 +2,22 @@
 
 All notable FocusTrace release changes are summarized here. Detailed release notes remain under `docs/changelog/RELEASE_NOTES_<version>.md`.
 
+## 1.0.6
+
+### Fixed
+
+- Prevented native `h1`–`h6` elements from being counted twice when they redundantly also expose `role="heading"` and `aria-level`.
+- Added semantic review guidance for links whose `title` attribute only repeats the visible link text, reducing redundant accessible-name noise.
+- Applied stacking-aware contrast verification during normal scans so absolute/fixed image and painted backdrops no longer produce deterministic false failures against an unrelated ancestor background.
+- Removed unreliable ratio/background evidence when the final composed backdrop cannot be resolved safely and downgraded those cases to REVIEW.
+
+### Changed
+
+- Structure metrics now deduplicate native headings and equivalent ARIA heading semantics at the element level.
+- Contrast review evidence now explicitly preserves uncertainty for image/media backdrops instead of presenting an ancestor color as the rendered background.
+
+See `docs/changelog/RELEASE_NOTES_1.0.6.md` for release scope and validation boundaries.
+
 ## 1.0.5
 
 ### Fixed
