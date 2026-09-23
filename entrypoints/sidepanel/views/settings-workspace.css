@@ -2,3 +2,45 @@
 
 @import url('../settings-scale.css') layer(components);
 @import url('../components/focus-memory-settings.css') layer(components);
+
+
+.settings-scan-group {
+  display: grid;
+  gap: 12px;
+}
+
+.settings-scan-option {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  padding: 10px 11px;
+  border: 1px solid var(--ft-border-soft);
+  border-radius: var(--ft-radius-sm);
+  background: var(--ft-surface);
+  cursor: pointer;
+}
+
+.settings-scan-option:hover {
+  border-color: var(--ft-border);
+}
+
+.settings-scan-option:focus-within {
+  outline: 3px solid var(--ft-focus);
+  outline-offset: 3px;
+}
+
+.settings-scan-option input {
+  margin-top: 3px;
+}
+
+.settings-scan-option > span {
+  display: grid;
+  gap: 4px;
+  min-width: 0;
+}
+
+.settings-scan-option small {
+  color: var(--ft-muted);
+  line-height: 1.45;
+}
