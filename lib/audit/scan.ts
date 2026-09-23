@@ -1,3 +1,4 @@
+import { normalizeScanPreferences, type ScanPreferences } from '../../shared/scan-preferences';
 import type { ComponentScanScope, ElementSnapshot, FindingOutcome, ScanIssue, ScanResult, TextResizeContext } from '../../shared/types';
 import {
   ALLOWED_ARIA_CHILD_RULE,
@@ -771,6 +772,15 @@ function runFocusTraceScanWithCache(scope?: ComponentScanScope, textResize?: Tex
   return result;
 }
 
-export function runFocusTraceScan(scope?: ComponentScanScope, textResize?: TextResizeContext): ScanResult {
-  return withScanElementQueryCache(() => runFocusTraceScanWithCache(scope, textResize));
+export function runFocusTraceScan(
+  scope?: ComponentScanScope,
+  textResize?: TextResizeContext,
+  preferences?: ScanPreferences,
+): ScanResult {
+  const normalizedPreferences = normalizeScanPreferences(preferences);
+  return withScanElementQueryCache(
+    () => runFocusTraceScanWithCache(scope, textResize),
+    undefined,
+    { includeFrameContents: !normalizedPreferences.ignoreIframeContents },
+  );
 }
