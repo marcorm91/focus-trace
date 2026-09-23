@@ -285,6 +285,7 @@ function generatedPseudoBackdropReason(
     inspected += 1;
   }
 
+  if (current) return LOCAL_SEARCH_BUDGET_REASON;
   return undefined;
 }
 function ancestorSiblingBackdropReason(
