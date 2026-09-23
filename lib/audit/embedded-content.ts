@@ -173,6 +173,11 @@ function evaluateObjects(root: ScanRoot): EmbeddedContentEvaluation[] {
 function evaluateFrames(root: ScanRoot): EmbeddedContentEvaluation[] {
   const evaluations: EmbeddedContentEvaluation[] = [];
   const frames = scopedElements(root, 'iframe, frame').filter((element) => isFrame(element) && !isProgrammaticallyHidden(element));
+  const ignoredFrames = new Set(
+    composedCoverageLimits(root)
+      .filter((limit) => limit.kind === 'frame-ignored' && limit.element)
+      .map((limit) => limit.element!),
+  );
   const named: Array<{ element: Element; normalized: string; name: string }> = [];
 
   for (const element of frames) {
@@ -199,6 +204,8 @@ function evaluateFrames(root: ScanRoot): EmbeddedContentEvaluation[] {
         accessibleName: name,
       });
     }
+
+    if (ignoredFrames.has(element)) continue;
 
     const inspection = inspectFrame(element);
     evaluations.push({

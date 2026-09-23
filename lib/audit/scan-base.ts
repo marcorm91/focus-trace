@@ -376,7 +376,7 @@ function runPositiveTabindex(root: ScanRoot): RuleExecution {
 function runTextContrast(root: ScanRoot): RuleExecution {
   const result = emptyExecution(RULES.textContrast);
   const elements = root instanceof Document
-    ? document.body ? scopedElements(root, '*').filter((element) => document.body?.contains(element)) : []
+    ? scopedElements(root, '*').filter((element) => element.ownerDocument.body?.contains(element) ?? false)
     : scopedElements(root, '*');
   if (!elements.length) return result;
 

@@ -37,6 +37,23 @@ describe('composed audit contexts (#236)', () => {
     expect(resolveComposedSelector(composedSelectorFor(target))).toBe(target);
   });
 
+  it('keeps the iframe host but skips same-origin descendants when frame contents are disabled', () => {
+    render();
+    const frame = document.createElement('iframe');
+    frame.id = 'frame';
+    document.body.append(frame);
+    frame.contentDocument!.body.innerHTML = '<button id="inside-frame">Inside frame</button>';
+
+    const result = traverseComposedTree(document, { includeFrameContents: false });
+
+    expect(result.elements).toContain(frame);
+    expect(result.elements.some((element) => element.id === 'inside-frame')).toBe(false);
+    expect(result.framesTraversed).toBe(0);
+    expect(result.coverageLimits).toEqual(expect.arrayContaining([
+      expect.objectContaining({ kind: 'frame-ignored', element: frame }),
+    ]));
+  });
+
   it('records an unavailable frame instead of certifying its descendants', () => {
     render();
     const frame = document.createElement('iframe');

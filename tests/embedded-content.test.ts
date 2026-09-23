@@ -3,6 +3,7 @@
 import { beforeEach, describe, expect, it } from 'vitest';
 import { evaluateEmbeddedContent } from '../lib/audit/embedded-content';
 import { runFocusTraceScan } from '../lib/audit/scan';
+import { withScanElementQueryCache } from '../lib/audit/scan-elements';
 
 function mount(body: string) {
   document.open();
@@ -67,6 +68,29 @@ describe('embedded content accessibility', () => {
     expect(focusability[0]?.outcome).toBe('fail');
     expect(focusability[0]?.detail).toContain('(button)');
     expect(focusability[0]?.detail).not.toContain('Save');
+  });
+
+  it('keeps iframe host checks while suppressing embedded descendant inspection when configured', () => {
+    mount('<iframe id="editor" title="Editor" tabindex="-1"></iframe>');
+    const frame = document.getElementById('editor') as HTMLIFrameElement;
+    frame.contentDocument!.open();
+    frame.contentDocument!.write('<!doctype html><html><body><button id="nested">Save</button></body></html>');
+    frame.contentDocument!.close();
+
+    const evaluations = withScanElementQueryCache(
+      () => evaluateEmbeddedContent(document),
+      undefined,
+      { includeFrameContents: false },
+    );
+
+    expect(evaluations.some((entry) => entry.rule.id === 'FT-WCAG-019' && entry.element === frame)).toBe(true);
+    expect(evaluations.some((entry) => entry.rule.id === 'FT-WCAG-020' && entry.element === frame)).toBe(false);
+    expect(evaluations.some((entry) => entry.rule.id === 'FT-REVIEW-039' && entry.element === frame)).toBe(false);
+
+    const scan = runFocusTraceScan(undefined, undefined, { ignoreIframeContents: true });
+    expect(scan.issues.some((entry) => entry.targets.some((target) => target.includes('|frame|')))).toBe(false);
+    expect(scan.review.some((entry) => entry.targets.some((target) => target.includes('|frame|')))).toBe(false);
+    expect(scan.warnings.some((entry) => entry.targets.some((target) => target.includes('|frame|')))).toBe(false);
   });
 
   it('passes a negative-tabindex same-origin frame when no embedded descendant is sequentially focusable', () => {

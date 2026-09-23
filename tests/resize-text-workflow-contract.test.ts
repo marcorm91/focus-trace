@@ -17,7 +17,7 @@ describe('guided 200% text-resize workflow', () => {
   it('keeps baseline capture in the inspected page runtime', () => {
     expect(runtime).toContain("message.type === 'FOCUSTRACE_CAPTURE_TEXT_RESIZE_BASELINE'");
     expect(runtime).toContain('captureTextResizeBaseline(message.zoomFactor)');
-    expect(runtime).toContain('runFocusTraceScan(message.scope, message.textResize)');
+    expect(runtime).toContain('runFocusTraceScan(message.scope, message.textResize, message.preferences)');
   });
 
   it('presents the 100% and 200% steps without claiming conformance', () => {

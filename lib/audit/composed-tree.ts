@@ -11,6 +11,7 @@ export interface ComposedTraversalLimits {
   maxShadowRoots: number;
   maxFrames: number;
   maxDepth: number;
+  includeFrameContents: boolean;
 }
 
 export const DEFAULT_COMPOSED_TRAVERSAL_LIMITS: ComposedTraversalLimits = {
@@ -18,9 +19,10 @@ export const DEFAULT_COMPOSED_TRAVERSAL_LIMITS: ComposedTraversalLimits = {
   maxShadowRoots: 100,
   maxFrames: 50,
   maxDepth: 40,
+  includeFrameContents: true,
 };
 
-export type ComposedCoverageLimitKind = 'closed-shadow' | 'frame-unavailable' | 'budget';
+export type ComposedCoverageLimitKind = 'closed-shadow' | 'frame-unavailable' | 'frame-ignored' | 'budget';
 
 export interface ComposedCoverageLimit {
   kind: ComposedCoverageLimitKind;
@@ -272,19 +274,27 @@ export function traverseComposedTree(
 
     const tag = element.tagName.toLowerCase();
     if (tag === 'iframe' || tag === 'frame') {
-      const nested = sameOriginFrameDocument(element);
-      if (!nested) {
+      if (!budget.includeFrameContents) {
         coverageLimits.push({
-          kind: 'frame-unavailable',
+          kind: 'frame-ignored',
           element,
-          detail: 'Nested frame document was unavailable to the local composed traversal; its descendants were not verified clean.',
+          detail: 'Nested frame descendants were intentionally excluded by the current FocusTrace scan preference.',
         });
-      } else if (framesTraversed >= budget.maxFrames) {
-        noteBudget(element);
-      } else if (!seenDocuments.has(nested)) {
-        framesTraversed += 1;
-        seenDocuments.add(nested);
-        visitContainer(nested, depth + 1);
+      } else {
+        const nested = sameOriginFrameDocument(element);
+        if (!nested) {
+          coverageLimits.push({
+            kind: 'frame-unavailable',
+            element,
+            detail: 'Nested frame document was unavailable to the local composed traversal; its descendants were not verified clean.',
+          });
+        } else if (framesTraversed >= budget.maxFrames) {
+          noteBudget(element);
+        } else if (!seenDocuments.has(nested)) {
+          framesTraversed += 1;
+          seenDocuments.add(nested);
+          visitContainer(nested, depth + 1);
+        }
       }
     }
 

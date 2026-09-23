@@ -49,6 +49,11 @@ interface OklabColor {
 const WHITE: RgbaColor = { r: 255, g: 255, b: 255, a: 1 };
 const ICON_FONT_FAMILY_PATTERN = /(?:font\s*awesome|fontawesome|material\s+(?:icons|symbols)|glyphicons|icomoon|ionicons|bootstrap\s+icons)/i;
 
+function computedStyleFor(element: Element, pseudo?: string): CSSStyleDeclaration {
+  const view = element.ownerDocument.defaultView;
+  return view?.getComputedStyle(element, pseudo) ?? getComputedStyle(element, pseudo);
+}
+
 function clamp(value: number, min: number, max: number): number {
   return Math.min(max, Math.max(min, value));
 }
@@ -434,7 +439,7 @@ export function effectiveBackground(element: Element): { color?: RgbaColor; reas
   const layers: RgbaColor[] = [];
   let current: Element | null = element;
   while (current) {
-    const style = getComputedStyle(current);
+    const style = computedStyleFor(current);
     const complex = complexVisualReason(style);
     if (complex) return { reason: complex };
     const background = parseCssColor(style.backgroundColor);
@@ -509,8 +514,8 @@ export function evaluateTextContrastForElement(
   // the host control keeps unit tests deterministic; real extension contexts
   // always ask the browser for the actual ::placeholder style.
   const style = pseudo && !navigator.userAgent.toLowerCase().includes('jsdom')
-    ? getComputedStyle(element, pseudo)
-    : getComputedStyle(element);
+    ? computedStyleFor(element, pseudo)
+    : computedStyleFor(element);
   if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') {
     return { status: 'inapplicable' };
   }
@@ -695,22 +700,26 @@ export function textContrastSubjectsForElement(element: Element): TextContrastSu
   const subjects: TextContrastSubject[] = [];
   if (hasDirectRenderedText(element)) subjects.push({ subject: 'text' });
 
-  if (element instanceof HTMLInputElement) {
-    const type = element.type.toLowerCase();
+  const tag = element.tagName.toLowerCase();
+  if (tag === 'input') {
+    const input = element as HTMLInputElement;
+    const type = input.type.toLowerCase();
     if (['submit', 'reset'].includes(type)) {
       // Browsers render localized default labels even when value is omitted.
       subjects.push({ subject: 'input value' });
-    } else if (type === 'button' && element.value.trim()) {
+    } else if (type === 'button' && input.value.trim()) {
       subjects.push({ subject: 'input value' });
     } else if (TEXT_VALUE_INPUT_TYPES.has(type)) {
-      if (element.value.trim()) subjects.push({ subject: 'input value' });
-      else if (element.placeholder.trim()) subjects.push({ subject: 'placeholder', pseudo: '::placeholder' });
+      if (input.value.trim()) subjects.push({ subject: 'input value' });
+      else if (input.placeholder.trim()) subjects.push({ subject: 'placeholder', pseudo: '::placeholder' });
     }
-  } else if (element instanceof HTMLTextAreaElement) {
-    if (element.value.trim()) subjects.push({ subject: 'textarea value' });
-    else if (element.placeholder.trim()) subjects.push({ subject: 'placeholder', pseudo: '::placeholder' });
-  } else if (element instanceof HTMLSelectElement) {
-    const selectedText = [...element.selectedOptions]
+  } else if (tag === 'textarea') {
+    const textarea = element as HTMLTextAreaElement;
+    if (textarea.value.trim()) subjects.push({ subject: 'textarea value' });
+    else if (textarea.placeholder.trim()) subjects.push({ subject: 'placeholder', pseudo: '::placeholder' });
+  } else if (tag === 'select') {
+    const select = element as HTMLSelectElement;
+    const selectedText = [...select.selectedOptions]
       .map((option) => option.textContent?.trim() ?? '')
       .filter(Boolean)
       .join(' ');
@@ -719,7 +728,7 @@ export function textContrastSubjectsForElement(element: Element): TextContrastSu
 
   if (!navigator.userAgent.toLowerCase().includes('jsdom')) {
     for (const pseudo of ['::before', '::after'] as const) {
-      const style = getComputedStyle(element, pseudo);
+      const style = computedStyleFor(element, pseudo);
       const content = style.content?.trim();
       if (classifyGeneratedContentForContrast(content ?? '', style.fontFamily) !== 'text') continue;
       subjects.push({ subject: 'generated text', pseudo });

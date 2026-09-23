@@ -7,6 +7,12 @@ import {
 } from '../../../lib/runtime/breakpoints';
 import { localizedBreakpoint, tr, type AppLanguage } from '../../../shared/i18n';
 import { RUNTIME_BREAKPOINT_SETTINGS_STORAGE_KEY } from '../../../shared/runtime-breakpoint-preferences';
+import {
+  DEFAULT_SCAN_PREFERENCES,
+  normalizeScanPreferences,
+  SCAN_PREFERENCES_STORAGE_KEY,
+  type ScanPreferences,
+} from '../../../shared/scan-preferences';
 import type {
   ExtensionMessage,
   RuntimeBreakpointId,
@@ -78,6 +84,7 @@ export function SettingsView({
   const [breakpointSettings, setBreakpointSettings] = useState<RuntimeBreakpointSettings>(
     defaultRuntimeBreakpointSettings,
   );
+  const [scanPreferences, setScanPreferences] = useState<ScanPreferences>(DEFAULT_SCAN_PREFERENCES);
   const version = browser.runtime.getManifest().version;
 
   useEffect(() => {
@@ -93,6 +100,21 @@ export function SettingsView({
       setUiScale(savedScale);
       document.documentElement.dataset.ftUiScale = String(savedScale);
     });
+  }, []);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    void browser.storage.local.get(SCAN_PREFERENCES_STORAGE_KEY)
+      .then((stored) => {
+        if (cancelled) return;
+        setScanPreferences(normalizeScanPreferences(stored[SCAN_PREFERENCES_STORAGE_KEY]));
+      })
+      .catch(() => undefined);
+
+    return () => {
+      cancelled = true;
+    };
   }, []);
 
   useEffect(() => {
@@ -127,6 +149,17 @@ export function SettingsView({
     setUiScale(nextScale);
     document.documentElement.dataset.ftUiScale = String(nextScale);
     void browser.storage.local.set({ [UI_SCALE_STORAGE_KEY]: nextScale });
+  };
+
+  const updateIgnoreIframeContents = async (ignoreIframeContents: boolean) => {
+    const nextPreferences: ScanPreferences = {
+      ...scanPreferences,
+      ignoreIframeContents,
+    };
+    setScanPreferences(nextPreferences);
+    await browser.storage.local.set({
+      [SCAN_PREFERENCES_STORAGE_KEY]: nextPreferences,
+    });
   };
 
   const updateBreakpoint = async (breakpointId: RuntimeBreakpointId, enabled: boolean) => {
@@ -252,6 +285,35 @@ export function SettingsView({
             'Tamaños disponibles: 100%, 110%, 120% y 130%. La elección se conserva para futuras sesiones.',
           )}
         </small>
+      </fieldset>
+
+      <fieldset className="settings-group settings-scan-group">
+        <legend>{tr(language, 'Analysis scope', 'Alcance del análisis')}</legend>
+        <p className="settings-help">
+          {tr(
+            language,
+            'Choose whether FocusTrace should inspect accessible same-origin documents embedded inside iframes.',
+            'Elige si FocusTrace debe inspeccionar documentos same-origin accesibles incrustados dentro de iframes.',
+          )}
+        </p>
+
+        <label className="settings-scan-option">
+          <input
+            type="checkbox"
+            checked={scanPreferences.ignoreIframeContents}
+            onChange={(event) => void updateIgnoreIframeContents(event.currentTarget.checked)}
+          />
+          <span>
+            <strong>{tr(language, 'Ignore iframe contents', 'Ignorar contenido de iframes')}</strong>
+            <small>
+              {tr(
+                language,
+                'When enabled, FocusTrace still evaluates the iframe element itself, but does not inspect descendants inside its embedded document.',
+                'Al activarlo, FocusTrace sigue evaluando el propio elemento iframe, pero no inspecciona los descendientes de su documento incrustado.',
+              )}
+            </small>
+          </span>
+        </label>
       </fieldset>
 
       <FirefoxDevtoolsSettings language={language} />

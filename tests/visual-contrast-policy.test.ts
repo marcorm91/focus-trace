@@ -29,6 +29,72 @@ describe('contrast backdrop verification', () => {
     },
   );
 
+  it('detects a painted descendant inside a static sibling background branch', () => {
+    document.body.innerHTML = '<div class="fullwidth-block" style="position:relative"><div class="container-background"><figure><img alt="" src="hero.jpg" style="position:absolute;inset:0"></figure><div class="bg-overlay" style="position:absolute;inset:0;background:rgba(0,20,60,.65)"></div></div><div class="container"><div class="row"><div class="col"><article><div class="article__body"><header><h2><a id="target" href="#" style="color:#fff;background:transparent;font-size:16px;font-weight:600">White title</a></h2></header></div></article></div></div></div></div>';
+    const result = scan([{
+      ...issue('contrast'),
+      contrast: { kind: 'text', subject: 'text', requiredRatio: 4.5, ratio: 1, foreground: 'rgb(255, 255, 255)', background: 'rgb(255, 255, 255)' },
+    }]);
+
+    downgradeUncertainStackingContrast(result, document);
+
+    expect(result.issues).toHaveLength(0);
+    expect(result.review).toHaveLength(1);
+    expect(result.review[0]?.contrast?.ratio).toBeUndefined();
+    expect(result.review[0]?.contrast?.background).toBeUndefined();
+    expect(result.review[0]?.contrast?.reason).toContain('sibling branch');
+  });
+
+  it('detects a painted backdrop attached to an ancestor-level sibling', () => {
+    document.body.innerHTML = '<section style="position:relative"><picture style="position:absolute;inset:0;z-index:0"><img alt="" src="hero.jpg"></picture><div style="position:relative;z-index:1"><article><header><h2><a id="target" href="#" style="color:#fff;background:transparent;font-size:16px;font-weight:400">White text</a></h2></header></article></div></section>';
+    const result = scan([{
+      ...issue('contrast'),
+      contrast: { kind: 'text', subject: 'text', requiredRatio: 4.5, ratio: 1, foreground: 'rgb(255, 255, 255)', background: 'rgb(255, 255, 255)' },
+    }]);
+
+    downgradeUncertainStackingContrast(result, document);
+
+    expect(result.issues).toHaveLength(0);
+    expect(result.review).toHaveLength(1);
+    expect(result.review[0]?.contrast?.ratio).toBeUndefined();
+    expect(result.review[0]?.contrast?.background).toBeUndefined();
+    expect(result.review[0]?.contrast?.reason).toContain('ancestor-level');
+  });
+
+  it('detects a full-inset painted pseudo-element on an ancestor', () => {
+    document.body.innerHTML = '<section id="hero" style="position:relative"><div><p id="target">Text</p></div></section>';
+    const nativeGetComputedStyle = globalThis.getComputedStyle;
+    globalThis.getComputedStyle = ((element: Element, pseudo?: string | null) => {
+      if (element.id === 'hero' && pseudo === '::before') {
+        return {
+          display: 'block',
+          visibility: 'visible',
+          opacity: '1',
+          backgroundImage: 'linear-gradient(rgb(0,0,0), rgb(0,0,0))',
+          backgroundColor: 'rgba(0, 0, 0, 0)',
+          position: 'absolute',
+          content: '""',
+          top: '0px',
+          right: '0px',
+          bottom: '0px',
+          left: '0px',
+          getPropertyValue: (property: string) => property === 'inset' ? '0px' : '',
+        } as unknown as CSSStyleDeclaration;
+      }
+      return nativeGetComputedStyle(element, pseudo);
+    }) as typeof getComputedStyle;
+
+    try {
+      const result = scan([issue('contrast')]);
+      downgradeUncertainStackingContrast(result, document);
+      expect(result.issues).toHaveLength(0);
+      expect(result.review).toHaveLength(1);
+      expect(result.review[0]?.contrast?.reason ?? result.review[0]?.evidence).toContain('pseudo-element');
+    } finally {
+      globalThis.getComputedStyle = nativeGetComputedStyle;
+    }
+  });
+
   it('treats an absolute image sibling as an unresolved painted backdrop', () => {
     document.body.innerHTML = '<main style="position:relative"><img alt="" src="hero.jpg" style="position:absolute;inset:0;z-index:0"><p id="target" style="position:relative;z-index:1">Text</p></main>';
     const result = scan([{
@@ -52,6 +118,20 @@ describe('contrast backdrop verification', () => {
     expect(result.review).toHaveLength(0);
   });
 
+  it('downgrades white-on-white fallback when the visual image backdrop is nested outside the target parent', () => {
+    document.open();
+    document.write('<!doctype html><html lang="en"><head><title>Test</title></head><body style="background:#fff"><section style="position:relative"><picture style="position:absolute;inset:0;z-index:0"><img alt="" src="hero.jpg"></picture><div style="position:relative;z-index:1"><article><header><h2><a id="target" href="#" style="color:#fff;background:transparent;font-size:16px;font-weight:400">White link text</a></h2></header></article></div></section></body></html>');
+    document.close();
+
+    const result = runFocusTraceScan();
+    const finding = result.review.find((entry) => entry.ruleId === 'FT-WCAG-010' && entry.targets.includes('#target'));
+
+    expect(result.issues.some((entry) => entry.ruleId === 'FT-WCAG-010' && entry.targets.includes('#target'))).toBe(false);
+    expect(finding).toBeDefined();
+    expect(finding?.contrast?.background).toBeUndefined();
+    expect(finding?.contrast?.ratio).toBeUndefined();
+  });
+
   it('downgrades a false white-on-white failure when an absolute image is the visual backdrop', () => {
     document.open();
     document.write('<!doctype html><html lang="en"><head><title>Test</title></head><body style="background:#fff"><main style="position:relative"><img alt="" src="hero.jpg" style="position:absolute;inset:0;z-index:0"><h1>Test</h1><p id="image-target" style="position:relative;z-index:1;color:#fff;background:transparent;font-size:16px;font-weight:400">White text</p></main></body></html>');
@@ -61,6 +141,24 @@ describe('contrast backdrop verification', () => {
     const finding = result.review.find((entry) => entry.ruleId === 'FT-WCAG-010' && entry.targets.includes('#image-target'));
 
     expect(result.issues.some((entry) => entry.ruleId === 'FT-WCAG-010' && entry.targets.includes('#image-target'))).toBe(false);
+    expect(finding).toBeDefined();
+    expect(finding?.contrast?.background).toBeUndefined();
+    expect(finding?.contrast?.ratio).toBeUndefined();
+  });
+
+  it('uses the nested iframe document when verifying a same-origin contrast backdrop', () => {
+    document.body.innerHTML = '<iframe id="frame" title="Preview"></iframe>';
+    const frame = document.getElementById('frame') as HTMLIFrameElement;
+    const nested = frame.contentDocument!;
+    nested.open();
+    nested.write('<!doctype html><html lang="en"><head><title>Frame</title></head><body style="background:#fff"><main style="position:relative"><img alt="" src="hero.jpg" style="position:absolute;inset:0;z-index:0"><p id="target" style="position:relative;z-index:1;color:#fff;background:transparent;font-size:16px;font-weight:400">White text</p></main></body></html>');
+    nested.close();
+
+    const result = runFocusTraceScan();
+    const selector = '#frame |frame| #target';
+    const finding = result.review.find((entry) => entry.ruleId === 'FT-WCAG-010' && entry.targets.includes(selector));
+
+    expect(result.issues.some((entry) => entry.ruleId === 'FT-WCAG-010' && entry.targets.includes(selector))).toBe(false);
     expect(finding).toBeDefined();
     expect(finding?.contrast?.background).toBeUndefined();
     expect(finding?.contrast?.ratio).toBeUndefined();

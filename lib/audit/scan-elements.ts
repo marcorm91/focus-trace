@@ -1,6 +1,7 @@
 import {
   traverseComposedTree,
   type ComposedCoverageLimit,
+  type ComposedTraversalLimits,
   type ComposedTraversalResult,
 } from './composed-tree';
 
@@ -15,6 +16,7 @@ export interface ScanQueryMetrics {
 type ScanQueryCache = {
   results: WeakMap<ScanRoot, Map<string, Element[]>>;
   traversals: WeakMap<ScanRoot, ComposedTraversalResult>;
+  traversalLimits?: Partial<ComposedTraversalLimits>;
   metrics?: ScanQueryMetrics;
 };
 
@@ -23,11 +25,13 @@ let activeCache: ScanQueryCache | undefined;
 export function withScanElementQueryCache<T>(
   run: () => T,
   metrics?: ScanQueryMetrics,
+  traversalLimits?: Partial<ComposedTraversalLimits>,
 ): T {
   const previous = activeCache;
   activeCache = {
     results: new WeakMap(),
     traversals: new WeakMap(),
+    ...(traversalLimits ? { traversalLimits } : {}),
     metrics,
   };
   try {
@@ -42,7 +46,7 @@ function traversalFor(root: ScanRoot): ComposedTraversalResult {
   const cached = cache?.traversals.get(root);
   if (cached) return cached;
 
-  const traversal = traverseComposedTree(root);
+  const traversal = traverseComposedTree(root, cache?.traversalLimits);
   cache?.traversals.set(root, traversal);
   if (cache?.metrics) cache.metrics.domQueries += 1;
   return traversal;
