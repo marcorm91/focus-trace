@@ -49,6 +49,7 @@ import { scopedElements, withScanElementQueryCache } from './scan-elements';
 import { evaluateTargetSize, type TargetSizeEvaluation } from './target-size';
 import { evaluateTextSpacing, type TextSpacingEvaluation } from './text-spacing';
 import { evaluateInlineLinkUseOfColor, type UseOfColorEvaluation } from './use-of-color';
+import { downgradeUncertainStackingContrast } from './visual-contrast-policy';
 
 export { collectHeadingOutline };
 
@@ -688,6 +689,7 @@ function runFocusTraceScanWithCache(scope?: ComponentScanScope, textResize?: Tex
 
   pruneInactiveTextContrast(result, root);
   pruneUnresolvedContrastReviews(result);
+  downgradeUncertainStackingContrast(result, document);
   annotateObservedContrastStates(result);
   if (!componentScope) {
     appendDocumentStructureReviews(result);
