@@ -1,5 +1,6 @@
 import { RULES } from '../../shared/rule-catalog';
 import type { ScanIssue, ScanResult } from '../../shared/types';
+import { resolveComposedSelector } from './composed-tree';
 import { parseCssColor } from './contrast';
 
 const CONTRAST_RULE_IDS = new Set([RULES.textContrast.id, RULES.nonTextContrast.id]);
@@ -8,6 +9,12 @@ const MAX_SIBLING_BACKDROPS = 50;
 const MAX_DESCENDANT_BACKDROPS = 80;
 const MAX_BACKDROP_ANCESTORS = 16;
 const MAX_AUTHORED_RULES = 5_000;
+
+function computedStyleFor(element: Element, pseudo?: string): CSSStyleDeclaration {
+  const view = element.ownerDocument.defaultView;
+  if (!view) return getComputedStyle(element, pseudo);
+  return view.getComputedStyle(element, pseudo);
+}
 
 function stylePaintsBackground(style: CSSStyleDeclaration): boolean {
   if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') return false;
@@ -21,7 +28,7 @@ function stylePaintsBackground(style: CSSStyleDeclaration): boolean {
 }
 
 function paintedBackground(element: Element): boolean {
-  const style = getComputedStyle(element);
+  const style = computedStyleFor(element);
   const tag = element.tagName.toLowerCase();
   if (['img', 'video', 'canvas', 'svg'].includes(tag)) return style.display !== 'none' && style.visibility !== 'hidden' && style.visibility !== 'collapse';
   if (tag === 'picture' && element.querySelector('img')) return style.display !== 'none' && style.visibility !== 'hidden' && style.visibility !== 'collapse';
@@ -38,13 +45,13 @@ function targetsFor(issue: ScanIssue, document: Document): Element[] {
   for (const selector of issue.targets) {
     if (!selector) continue;
     try {
-      const element = document.querySelector(selector);
+      const element = resolveComposedSelector(selector, document);
       if (element && !seen.has(element)) {
         seen.add(element);
         targets.push(element);
       }
     } catch {
-      // Invalid or pseudo-element-like selectors are not resolvable DOM targets.
+      // Invalid or inaccessible composed selectors are not resolvable targets.
     }
   }
   return targets;
@@ -105,9 +112,10 @@ function appendMatchingRules(
     if (!rule) continue;
     counter.value += 1;
 
-    if (rule instanceof CSSStyleRule) {
+    if ('selectorText' in rule && 'style' in rule) {
       try {
-        if (element.matches(rule.selectorText)) chunks.push(rule.style.cssText);
+        const styleRule = rule as CSSStyleRule;
+        if (element.matches(styleRule.selectorText)) chunks.push(styleRule.style.cssText);
       } catch {
         // Ignore selectors the current engine cannot evaluate.
       }
@@ -185,8 +193,8 @@ function descendantPaintedBackdropReason(candidate: Element, x: number, y: numbe
 function positionedSiblingBackdropReason(element: Element, x: number, y: number): string | undefined {
   const parent = element.parentElement;
   if (!parent) return undefined;
-  const targetStyle = getComputedStyle(element);
-  const parentStyle = getComputedStyle(parent);
+  const targetStyle = computedStyleFor(element);
+  const parentStyle = computedStyleFor(parent);
 
   let inspected = 0;
   for (const candidate of parent.children) {
@@ -200,7 +208,7 @@ function positionedSiblingBackdropReason(element: Element, x: number, y: number)
     const descendantReason = descendantPaintedBackdropReason(candidate, x, y);
     if (descendantReason) return descendantReason;
 
-    const style = getComputedStyle(candidate);
+    const style = computedStyleFor(candidate);
     if (!['absolute', 'fixed', 'sticky', 'relative'].includes(style.position)) continue;
     if (!paintedBackground(candidate) && !containsPaintedMedia(candidate)) continue;
 
@@ -228,7 +236,7 @@ function generatedPseudoBackdropReason(element: Element): string | undefined {
     for (const pseudo of ['::before', '::after'] as const) {
       let style: CSSStyleDeclaration;
       try {
-        style = getComputedStyle(current, pseudo);
+        style = computedStyleFor(current, pseudo);
       } catch {
         continue;
       }
@@ -267,14 +275,18 @@ function ancestorSiblingBackdropReason(element: Element, x: number, y: number): 
   return undefined;
 }
 
-function stackedBackdropReason(element: Element, document: Document): string | undefined {
+function stackedBackdropReason(element: Element): string | undefined {
+  const document = element.ownerDocument;
+  const view = document.defaultView;
   const rect = element.getBoundingClientRect();
   const hasGeometry = rect.width > 0 && rect.height > 0;
+  const viewportWidth = view?.innerWidth ?? document.documentElement.clientWidth;
+  const viewportHeight = view?.innerHeight ?? document.documentElement.clientHeight;
   const x = hasGeometry
-    ? Math.min(Math.max(rect.left + rect.width / 2, 0), Math.max(0, window.innerWidth - 1))
+    ? Math.min(Math.max(rect.left + rect.width / 2, 0), Math.max(0, viewportWidth - 1))
     : 0;
   const y = hasGeometry
-    ? Math.min(Math.max(rect.top + rect.height / 2, 0), Math.max(0, window.innerHeight - 1))
+    ? Math.min(Math.max(rect.top + rect.height / 2, 0), Math.max(0, viewportHeight - 1))
     : 0;
 
   if (hasGeometry && typeof document.elementsFromPoint === 'function') {
@@ -314,7 +326,7 @@ export function downgradeUncertainStackingContrast(
     if (!budgetExhausted) {
       checked += 1;
       for (const element of targetsFor(issue, document)) {
-        reason = stackedBackdropReason(element, document);
+        reason = stackedBackdropReason(element);
         if (reason) break;
       }
     }
