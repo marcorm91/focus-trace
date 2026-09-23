@@ -146,6 +146,24 @@ describe('contrast backdrop verification', () => {
     expect(finding?.contrast?.ratio).toBeUndefined();
   });
 
+  it('uses the nested iframe document when verifying a same-origin contrast backdrop', () => {
+    document.body.innerHTML = '<iframe id="frame" title="Preview"></iframe>';
+    const frame = document.getElementById('frame') as HTMLIFrameElement;
+    const nested = frame.contentDocument!;
+    nested.open();
+    nested.write('<!doctype html><html lang="en"><head><title>Frame</title></head><body style="background:#fff"><main style="position:relative"><img alt="" src="hero.jpg" style="position:absolute;inset:0;z-index:0"><p id="target" style="position:relative;z-index:1;color:#fff;background:transparent;font-size:16px;font-weight:400">White text</p></main></body></html>');
+    nested.close();
+
+    const result = runFocusTraceScan();
+    const selector = '#frame |frame| #target';
+    const finding = result.review.find((entry) => entry.ruleId === 'FT-WCAG-010' && entry.targets.includes(selector));
+
+    expect(result.issues.some((entry) => entry.ruleId === 'FT-WCAG-010' && entry.targets.includes(selector))).toBe(false);
+    expect(finding).toBeDefined();
+    expect(finding?.contrast?.background).toBeUndefined();
+    expect(finding?.contrast?.ratio).toBeUndefined();
+  });
+
   it('applies opaque-backdrop handling through the full scanner', () => {
     renderCards(1, 'left:0;top:0;width:100px;height:100px;background:#000');
     const result = runFocusTraceScan();
