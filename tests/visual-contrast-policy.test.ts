@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { runFocusTraceScan } from '../lib/audit/scan';
 import { downgradeUncertainStackingContrast } from '../lib/audit/visual-contrast-policy';
 import { localizedScanIssue } from '../shared/i18n';
@@ -181,6 +181,31 @@ describe('contrast backdrop verification', () => {
     const result = runFocusTraceScan();
     expect(result.issues.filter((finding) => finding.ruleId === 'FT-WCAG-010')).toHaveLength(0);
     expect(result.review.some((finding) => finding.ruleId === 'FT-WCAG-010' && finding.targets.includes('#target0'))).toBe(true);
+  });
+
+  it('keeps computed-style work bounded on a large ambiguous page', () => {
+    const sections = Array.from({ length: 100 }, (_, index) => {
+      const siblings = Array.from({ length: 13 }, (__, sibling) => `<span data-sibling="${index}-${sibling}"></span>`).join('');
+      return `<section>${siblings}<p id="target-${index}">Text</p></section>`;
+    }).join('');
+    document.body.innerHTML = sections;
+
+    const issues = Array.from({ length: 100 }, (_, index) => ({
+      ...issue(`contrast-${index}`),
+      targets: [`#target-${index}`],
+    }));
+    const result = scan(issues);
+    const getComputedStyleSpy = vi.spyOn(window, 'getComputedStyle');
+
+    try {
+      downgradeUncertainStackingContrast(result, document);
+
+      expect(getComputedStyleSpy.mock.calls.length).toBeLessThanOrEqual(800);
+      expect(result.issues).toHaveLength(0);
+      expect(result.review).toHaveLength(100);
+    } finally {
+      getComputedStyleSpy.mockRestore();
+    }
   });
 
   it('reviews the 101st ambiguous target and preserves aggregate counters', () => {
