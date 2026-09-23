@@ -5,11 +5,12 @@ import { parseCssColor } from './contrast';
 
 const CONTRAST_RULE_IDS = new Set([RULES.textContrast.id, RULES.nonTextContrast.id]);
 const MAX_STACK_CHECKS = 100;
-const MAX_SIBLING_BACKDROPS = 50;
-const MAX_DESCENDANT_BACKDROPS = 80;
-const MAX_BACKDROP_ANCESTORS = 16;
-const MAX_BACKDROP_STYLE_CHECKS = 2_500;
+const MAX_SIBLING_BACKDROPS = 12;
+const MAX_DESCENDANT_BACKDROPS = 24;
+const MAX_BACKDROP_ANCESTORS = 8;
+const MAX_BACKDROP_STYLE_CHECKS = 800;
 const STYLE_BUDGET_REASON = 'The per-scan visual-backdrop style budget was reached before this contrast candidate could be verified safely. Review the composed pixels manually.';
+const LOCAL_SEARCH_BUDGET_REASON = 'The bounded visual-backdrop search reached its local ancestor, sibling or descendant limit before FocusTrace could exclude a separately stacked backdrop safely. Review the composed pixels manually.';
 
 function computedStyleFor(element: Element, pseudo?: string): CSSStyleDeclaration {
   const view = element.ownerDocument.defaultView;
@@ -23,6 +24,7 @@ interface BackdropScanContext {
   styleCache: WeakMap<Element, CSSStyleDeclaration>;
   paintedCache: WeakMap<Element, boolean>;
   pseudoBackdropCache: WeakMap<Element, string | null>;
+  rectCache: WeakMap<Element, DOMRect>;
 }
 
 function createBackdropScanContext(): BackdropScanContext {
@@ -32,6 +34,7 @@ function createBackdropScanContext(): BackdropScanContext {
     styleCache: new WeakMap(),
     paintedCache: new WeakMap(),
     pseudoBackdropCache: new WeakMap(),
+    rectCache: new WeakMap(),
   };
 }
 
@@ -59,6 +62,14 @@ function pseudoStyleFor(
   }
   context.styleChecks += 1;
   return computedStyleFor(element, pseudo);
+}
+
+function rectFor(element: Element, context: BackdropScanContext): DOMRect {
+  const cached = context.rectCache.get(element);
+  if (cached) return cached;
+  const rect = element.getBoundingClientRect();
+  context.rectCache.set(element, rect);
+  return rect;
 }
 
 function stylePaintsBackground(style: CSSStyleDeclaration): boolean {
@@ -168,7 +179,7 @@ function descendantPaintedBackdropReason(
         return 'A painted descendant inside a sibling branch fills its containing block, so that sibling subtree can provide the visual backdrop independently of the target ancestor background chain.';
       }
 
-      const rect = descendant.getBoundingClientRect();
+      const rect = rectFor(descendant, context);
       if (coversPoint(rect, x, y)) {
         return 'A painted descendant inside a sibling branch overlaps the target at its measured center point, so the effective rendered background cannot be reduced safely to the target ancestor background chain.';
       }
@@ -177,6 +188,7 @@ function descendantPaintedBackdropReason(
     descendant = walker.nextNode() as Element | null;
   }
 
+  if (descendant) return LOCAL_SEARCH_BUDGET_REASON;
   return undefined;
 }
 function positionedSiblingBackdropReason(
@@ -207,7 +219,7 @@ function positionedSiblingBackdropReason(
         return 'A painted absolute/fixed sibling uses zero inset on every side, so it fills its containing block and participates in the target backdrop. The effective contrast background cannot be reduced safely to the target ancestor chain.';
       }
 
-      const rect = candidate.getBoundingClientRect();
+      const rect = rectFor(candidate, context);
       if (coversPoint(rect, x, y)) {
         return 'A positioned painted sibling overlaps this target at its measured center point. Its final stacking/compositing relationship cannot be reconstructed safely from the target ancestor chain, so the effective contrast background remains ambiguous.';
       }
@@ -223,6 +235,8 @@ function positionedSiblingBackdropReason(
       if (context.exhausted) return undefined;
     }
   }
+
+  if (parent.children.length - 1 > inspected) return LOCAL_SEARCH_BUDGET_REASON;
   return undefined;
 }
 function ownPseudoBackdropReason(
@@ -294,6 +308,7 @@ function ancestorSiblingBackdropReason(
     inspected += 1;
   }
 
+  if (branch) return LOCAL_SEARCH_BUDGET_REASON;
   return undefined;
 }
 
@@ -303,29 +318,49 @@ function stackedBackdropReason(
 ): string | undefined {
   const document = element.ownerDocument;
   const view = document.defaultView;
-  const rect = element.getBoundingClientRect();
+  const rect = rectFor(element, context);
   const hasGeometry = rect.width > 0 && rect.height > 0;
   const viewportWidth = view?.innerWidth ?? document.documentElement.clientWidth;
   const viewportHeight = view?.innerHeight ?? document.documentElement.clientHeight;
-  const x = hasGeometry
-    ? Math.min(Math.max(rect.left + rect.width / 2, 0), Math.max(0, viewportWidth - 1))
-    : 0;
-  const y = hasGeometry
-    ? Math.min(Math.max(rect.top + rect.height / 2, 0), Math.max(0, viewportHeight - 1))
-    : 0;
 
   if (hasGeometry && typeof document.elementsFromPoint === 'function') {
-    const stack = document.elementsFromPoint(x, y);
-    const ownIndex = stack.findIndex((candidate) => candidate === element || element.contains(candidate));
-    if (ownIndex >= 0) {
+    const points = [
+      [0.5, 0.5],
+      [0.2, 0.2],
+      [0.8, 0.2],
+      [0.2, 0.8],
+      [0.8, 0.8],
+    ] as const;
+
+    for (const [horizontal, vertical] of points) {
+      const x = Math.min(
+        Math.max(rect.left + rect.width * horizontal, 0),
+        Math.max(0, viewportWidth - 1),
+      );
+      const y = Math.min(
+        Math.max(rect.top + rect.height * vertical, 0),
+        Math.max(0, viewportHeight - 1),
+      );
+      const stack = document.elementsFromPoint(x, y);
+      const ownIndex = stack.findIndex((candidate) => candidate === element || element.contains(candidate));
+      if (ownIndex < 0) continue;
+
       for (const candidate of stack.slice(ownIndex + 1)) {
         if (candidate === document.documentElement || candidate === document.body) continue;
         if (element.contains(candidate) || candidate.contains(element)) continue;
         if (!paintedBackground(candidate, context)) continue;
         return 'A separately stacked painted element is rendered behind this target, so the effective contrast background cannot be reduced safely to the target ancestor chain.';
       }
+      if (context.exhausted) return undefined;
     }
   }
+
+  const x = hasGeometry
+    ? Math.min(Math.max(rect.left + rect.width / 2, 0), Math.max(0, viewportWidth - 1))
+    : 0;
+  const y = hasGeometry
+    ? Math.min(Math.max(rect.top + rect.height / 2, 0), Math.max(0, viewportHeight - 1))
+    : 0;
 
   return generatedPseudoBackdropReason(element, context)
     ?? ancestorSiblingBackdropReason(element, x, y, context);
