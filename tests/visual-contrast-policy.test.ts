@@ -110,6 +110,18 @@ describe('contrast backdrop verification', () => {
     expect(result.review[0]?.contrast?.reason).toContain('painted');
   });
 
+  it('reviews a contrast failure when the bounded sibling search is truncated', () => {
+    const siblings = Array.from({ length: 13 }, (_, index) => `<span data-sibling="${index}"></span>`).join('');
+    document.body.innerHTML = `<main>${siblings}<p id="target">Text</p></main>`;
+    const result = scan([issue('contrast')]);
+
+    downgradeUncertainStackingContrast(result, document);
+
+    expect(result.issues).toHaveLength(0);
+    expect(result.review).toHaveLength(1);
+    expect(result.review[0]?.contrast?.reason).toContain('bounded visual-backdrop search');
+  });
+
   it('does not downgrade because of a fully transparent backdrop', () => {
     document.body.innerHTML = '<main style="position:relative"><div style="position:absolute;left:0;top:0;width:100px;height:100px;z-index:0;background:rgba(0,0,0,0)"></div><p id="target" style="position:relative;z-index:1">Text</p></main>';
     const result = scan([issue('contrast')]);
