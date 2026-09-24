@@ -116,6 +116,10 @@ export function localizedRuleTitle(ruleId: string, fallback: string, language: A
 }
 
 const CONTRAST_REASONS_ES: Record<string, string> = {
+  'The contrast target could not be resolved for backdrop verification. Review the current element and composed pixels manually.': 'No se pudo localizar el objetivo para verificar su fondo. Revisa manualmente el elemento actual y los píxeles renderizados.',
+  'The per-scan visual-backdrop style budget was reached before this contrast candidate could be verified safely. Review the composed pixels manually.': 'Se ha alcanzado el límite de 800 lecturas de estilos antes de verificar este candidato. Revisa manualmente los píxeles renderizados.',
+  'The bounded visual-backdrop search reached its local ancestor, sibling or descendant limit before FocusTrace could exclude a separately stacked backdrop safely. Review the composed pixels manually.': 'La búsqueda de fondos ha alcanzado su límite local de 8 ancestros, 12 hermanos o 24 descendientes. Revisa manualmente los píxeles renderizados.',
+
   'A background image or gradient affects the rendered background.': 'Una imagen de fondo o un degradado afecta al fondo renderizado.',
   'Element or ancestor opacity affects the rendered colors.': 'La opacidad del elemento o de uno de sus ancestros afecta a los colores renderizados.',
   'mix-blend-mode affects the rendered colors.': 'La propiedad mix-blend-mode afecta a los colores renderizados.',

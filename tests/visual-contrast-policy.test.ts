@@ -19,6 +19,55 @@ function renderCards(count: number, backdrop = 'inset:0;background:#000'): void 
 }
 
 describe('contrast backdrop verification', () => {
+  it.each([{ targets: [] }, { targets: ['#missing'] }, { targets: ['#target', '#missing'] }])('reviews unresolved contrast targets: %j', ({ targets }) => {
+    document.body.innerHTML = '<p id="target">Text</p>';
+    const result = scan([{ ...issue('missing'), targets,
+      contrast: { kind: 'text', subject: 'text', requiredRatio: 4.5, ratio: 1, background: '#fff' },
+    }]);
+    result.ruleResults = [{ ruleId: 'FT-WCAG-010', applicable: 1, passed: 0, failures: 1, reviews: 0, warnings: 0 }];
+    downgradeUncertainStackingContrast(result, document);
+    expect(result.issues).toHaveLength(0);
+    expect(result.review[0]?.contrast?.reason).toContain('could not be resolved');
+    expect(result.review[0]?.contrast?.ratio).toBeUndefined();
+    expect(result.ruleResults[0]).toMatchObject({ failures: 0, reviews: 1 });
+  });
+
+  it('uses offscreen geometry without hit-testing unrelated viewport-edge pixels', () => {
+    document.body.innerHTML = '<main><div id="backdrop" style="position:absolute;background:black"></div><p id="target">Text</p></main>';
+    const target = document.querySelector('#target')!;
+    const backdrop = document.querySelector('#backdrop')!;
+    vi.spyOn(target, 'getBoundingClientRect').mockReturnValue({ left: 100, top: 2000, right: 200, bottom: 2020, width: 100, height: 20 } as DOMRect);
+    vi.spyOn(backdrop, 'getBoundingClientRect').mockReturnValue({ left: 90, top: 1990, right: 210, bottom: 2030, width: 120, height: 40 } as DOMRect);
+    const previous = Object.getOwnPropertyDescriptor(document, 'elementsFromPoint');
+    const hitTest = vi.fn(() => [target, backdrop]);
+    Object.defineProperty(document, 'elementsFromPoint', { configurable: true, value: hitTest });
+    try {
+      const result = scan([issue('offscreen')]);
+      downgradeUncertainStackingContrast(result, document);
+      expect(hitTest).not.toHaveBeenCalled();
+      expect(result.review).toHaveLength(1);
+      expect(result.review[0]?.evidence).toContain('measured center point');
+    } finally {
+      vi.restoreAllMocks();
+      if (previous) Object.defineProperty(document, 'elementsFromPoint', previous);
+      else Reflect.deleteProperty(document, 'elementsFromPoint');
+    }
+  });
+
+  it.each([
+    ['The per-scan visual-backdrop style budget was reached.', '800'],
+    ['The bounded visual-backdrop search reached its local limit.', '8 ancestros'],
+  ])('localizes the actual exhausted contrast budget: %s', (reason, expected) => {
+    const finding = { ...issue('budget'), outcome: 'review' as const,
+      description: 'FocusTrace measured a contrast candidate, but the backdrop verification budget was exhausted.',
+      evidence: reason,
+      contrast: { kind: 'text' as const, subject: 'text' as const, requiredRatio: 4.5, reason },
+    };
+    const localized = localizedScanIssue(finding, 'es');
+    expect(localized.evidence).toContain(expected);
+    expect(localized.evidence).not.toContain('100 comprobaciones');
+  });
+
   it.each(['rgb(0, 0, 0)', 'rgb(255, 0, 0)', 'rgb(0, 0, 255)', 'rgba(0, 0, 0, 0.5)'])(
     'recognizes the painted backdrop %s without treating the blue channel as alpha', (color) => {
       document.body.innerHTML = `<main style="position:relative"><div style="position:absolute;left:0;top:0;width:100px;height:100px;z-index:0;background-color:${color}"></div><p id="target" style="position:relative;z-index:1">Text</p></main>`;

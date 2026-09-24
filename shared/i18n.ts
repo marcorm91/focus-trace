@@ -482,10 +482,16 @@ export function localizedScanIssue(issue: ScanIssue, language: AppLanguage): Sca
     && issue.outcome === 'review'
     && issue.description.includes('backdrop verification budget was exhausted')) {
     const localized = localizeIssueSourceCopy(issue, baseLocalizedScanIssue(issue, language), language);
+    const reason = issue.contrast?.reason ?? issue.evidence ?? '';
+    const limit = reason.includes('visual-backdrop style budget')
+      ? 'Se ha alcanzado el límite de 800 lecturas de estilos de fondo por análisis.'
+      : reason.includes('bounded visual-backdrop search')
+        ? 'Se ha alcanzado el límite local de búsqueda de fondos: 8 ancestros, 12 hermanos o 24 descendientes.'
+        : 'Se ha alcanzado el límite de 100 comprobaciones de fondo por análisis.';
     return {
       ...localized,
       description: 'FocusTrace ha medido un candidato de contraste, pero se ha alcanzado el límite de comprobaciones del fondo. Revisa los píxeles realmente renderizados antes de considerarlo un fallo WCAG.',
-      evidence: `${localized.evidence ?? ''} Se ha alcanzado el límite de 100 comprobaciones de fondo por análisis. El fondo efectivo de este candidato no se ha verificado; revisa manualmente la composición visual.`.trim(),
+      evidence: `${localized.evidence ?? ''} ${limit} El fondo efectivo de este candidato no se ha verificado; revisa manualmente la composición visual.`.trim(),
     };
   }
 

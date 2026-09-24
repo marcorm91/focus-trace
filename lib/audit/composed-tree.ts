@@ -209,10 +209,6 @@ function knownClosedShadowHosts(targetDocument: Document): Set<Element> {
   return hosts;
 }
 
-function directChildren(container: Document | ShadowRoot | Element): Element[] {
-  if (isDocument(container)) return container.documentElement ? [container.documentElement] : [];
-  return Array.from(container.children);
-}
 
 export function traverseComposedTree(
   root: ComposedRoot,
@@ -254,7 +250,7 @@ export function traverseComposedTree(
       noteBudget(container instanceof Element ? container : undefined);
       return;
     }
-    for (const child of directChildren(container)) {
+    for (let child = container.firstElementChild; child; child = child.nextElementSibling) {
       visitElement(child, depth);
       if (budgetExceeded) return;
     }
@@ -323,12 +319,18 @@ export function traverseComposedTree(
         ? (element as HTMLSlotElement).assignedElements({ flatten: true })
         : [];
       if (assigned.length) {
-        for (const assignedElement of assigned) visitElement(assignedElement, depth + 1);
+        for (const assignedElement of assigned) {
+          visitElement(assignedElement, depth + 1);
+          if (budgetExceeded) break;
+        }
         return;
       }
     }
 
-    for (const child of Array.from(element.children)) visitElement(child, depth + 1);
+    for (let child = element.firstElementChild; child; child = child.nextElementSibling) {
+      visitElement(child, depth + 1);
+      if (budgetExceeded) break;
+    }
   };
 
   if (isDocument(root)) {

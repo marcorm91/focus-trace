@@ -701,3 +701,7 @@ Structural suggestions in Report and the single-page PDF include the affected el
 The 200% text-resize status appears only within the Resize and reflow guided workflow, as inline guidance without a separate card.
 
 Spanish display copy includes descriptive names for the complete static rule catalog, localized standards-matrix labels and specific nested-context/landmark evidence. Captured page names, selectors and canonical rule IDs retain their original values.
+
+Release 1.0.9 keeps pointer-target spacing comparisons within each owning document (including same-origin frames) and reuses one geometry/style snapshot per target during the evaluation. Composed traversal stops enumerating siblings as soon as its shared budget is exhausted. Contrast verification uses actual offscreen coordinates for its structural fallback, skips out-of-viewport hit-test points, and marks unresolved targets as REVIEW. Spanish evidence distinguishes the candidate, style-read and local-search limits.
+
+The 1.0.9 session/persistence review also serializes multipage audit mutations through a single background writer, preventing simultaneous panels from overwriting saved pages. Clears wait for earlier accepted writes, and closing a tab removes its session after pending writes finish. The panel rejects obsolete session/audit refreshes and previous-tab action responses; changing language no longer restarts tab selection. Pending scope decisions are cancelled when their tab changes.

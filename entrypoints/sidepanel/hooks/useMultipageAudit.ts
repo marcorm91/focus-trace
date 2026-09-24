@@ -13,11 +13,13 @@ import {
 import {
   loadMultipageAuditStore,
   MULTIPAGE_AUDIT_STORAGE_KEY,
+} from '../../../lib/audit/multipage-audit-storage';
+import {
   clearMultipageAudits,
   deleteMultipageAuditPage,
   recordMultipageAuditScan,
   recordMultipageAuditScope,
-} from '../../../lib/audit/multipage-audit-storage';
+} from '../../../lib/audit/multipage-audit-client';
 import {
   captureReportVisualEvidence,
   collectReportComponents,
@@ -49,26 +51,40 @@ export function useMultipageAudit(tabId?: number) {
   const [pendingScope, setPendingScope] = useState<PendingAuditScope>();
   const pendingResolver = useRef<PendingResolver | undefined>(undefined);
 
+  const refreshRevision = useRef(0);
+  const scopeGeneration = useRef(0);
+  const mounted = useRef(true);
+
+  useEffect(() => {
+    mounted.current = true;
+    return () => {
+      mounted.current = false;
+      refreshRevision.current += 1;
+    };
+  }, []);
+
   useEffect(() => () => {
+    scopeGeneration.current += 1;
     pendingResolver.current?.(null);
     pendingResolver.current = undefined;
     setPendingScope(undefined);
   }, [tabId]);
 
   const refresh = useCallback(async () => {
+    const revision = ++refreshRevision.current;
     const next = await loadMultipageAuditStore();
-    setStore(next);
+    if (mounted.current && revision === refreshRevision.current) setStore(next);
     return next;
   }, []);
 
   useEffect(() => {
-    void refresh();
+    void refresh().catch(() => undefined);
     const onChanged = (
       changes: StorageChangeMap,
       areaName: string,
     ) => {
       if (areaName !== 'local' || !changes[MULTIPAGE_AUDIT_STORAGE_KEY]) return;
-      void refresh();
+      void refresh().catch(() => undefined);
     };
     browser.storage.onChanged.addListener(onChanged);
     return () => browser.storage.onChanged.removeListener(onChanged);
@@ -80,7 +96,9 @@ export function useMultipageAudit(tabId?: number) {
   );
 
   const preparePageAnalysis = useCallback(async (url: string, purpose: 'analysis' | 'trace' = 'analysis'): Promise<AuditAnalysisPlan | null> => {
+    const generation = scopeGeneration.current;
     const latest = await refresh();
+    if (!mounted.current || generation !== scopeGeneration.current) return null;
     const scope: AuditScopeCheck = auditScopeForUrl(latest, url);
     if (scope.kind === 'new' || scope.kind === 'same-site') return scope.plan;
 
@@ -101,9 +119,10 @@ export function useMultipageAudit(tabId?: number) {
     if (!current.url || normalizeAuditPageUrl(current.url) !== normalizeAuditPageUrl(tab.url)) {
       throw new Error('The page changed. Start Trace again on the current page.');
     }
-    setStore(await recordMultipageAuditScope(plan));
+    await recordMultipageAuditScope(plan);
+    await refresh();
     return true;
-  }, [preparePageAnalysis]);
+  }, [preparePageAnalysis, refresh]);
 
   const resolvePending = useCallback((plan: AuditAnalysisPlan | null) => {
     const resolve = pendingResolver.current;
@@ -172,19 +191,19 @@ export function useMultipageAudit(tabId?: number) {
       type: 'FOCUSTRACE_GET_SESSION',
       tabId,
     } satisfies ExtensionMessage) as SessionState;
-    const next = await recordMultipageAuditScan(scan, plan, visualEvidence, session.events);
-    setStore(next);
-  }, []);
+    await recordMultipageAuditScan(scan, plan, visualEvidence, session.events);
+    await refresh();
+  }, [refresh]);
 
   const deleteAuditPage = useCallback(async (auditId: string, pageKey: string) => {
-    const next = await deleteMultipageAuditPage(auditId, pageKey);
-    setStore(next);
-  }, []);
+    await deleteMultipageAuditPage(auditId, pageKey);
+    await refresh();
+  }, [refresh]);
 
   const clearAuditHistory = useCallback(async () => {
-    const next = await clearMultipageAudits();
-    setStore(next);
-  }, []);
+    await clearMultipageAudits();
+    await refresh();
+  }, [refresh]);
 
   return {
     activeAudit,

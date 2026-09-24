@@ -11,6 +11,7 @@ declare const chrome: {
   storage: {
     local: {
       set(items: Record<string, unknown>): Promise<void>;
+      get(key: string): Promise<Record<string, unknown>>;
     };
   };
 };
@@ -157,4 +158,31 @@ test('historical audit reports stay static, single-open and separate from live p
   await panel.getByRole('button', { name: /Start over|Empezar de cero/ }).click();
   await panel.getByRole('button', { name: /Report|Informe/ }).click();
   await expect(panel.locator('.audit-page-report')).toHaveCount(0);
+});
+
+
+test('concurrent panel writers preserve every saved audit page', async ({ context, extensionWorker }) => {
+  const first = await openSidepanel(context, extensionWorker);
+  const second = await openSidepanel(context, extensionWorker);
+  const initial = await first.evaluate(() => chrome.runtime.sendMessage({
+    type: 'FOCUSTRACE_AUDIT_SCOPE', plan: { kind: 'new', site: 'https://example.test' },
+  })) as { activeAuditId: string };
+  const plan = { kind: 'existing', auditId: initial.activeAuditId, site: 'https://example.test', addSite: false };
+  const scans = Array.from({ length: 8 }, (_, index) => scan(
+    `https://example.test/concurrent-${index}`, `Page ${index}`, 100 + index, `#target-${index}`,
+  ));
+  await Promise.all([first, second].map((panel, index) => panel.evaluate(async (payload) => {
+    await Promise.all(payload.scans.map((value) => chrome.runtime.sendMessage({
+      type: 'FOCUSTRACE_AUDIT_SCAN', scan: value, plan: payload.plan, traceEvents: [],
+    })));
+  }, { plan, scans: scans.slice(index * 4, index * 4 + 4) })));
+  const stored = await first.evaluate(async () => {
+    const result = await chrome.storage.local.get('focustrace:multipage-audits:v1');
+    return result['focustrace:multipage-audits:v1'];
+  }) as { audits: Array<{ pages: Array<{ url: string }> }> };
+  expect(stored.audits).toHaveLength(1);
+  expect(stored.audits[0]!.pages.map((page) => page.url).sort()).toEqual(scans.map((value) => value.url).sort());
+  await first.evaluate(() => chrome.runtime.sendMessage({ type: 'FOCUSTRACE_AUDIT_CLEAR' }));
+  const cleared = await second.evaluate(() => chrome.storage.local.get('focustrace:multipage-audits:v1'));
+  expect(cleared['focustrace:multipage-audits:v1']).toBeUndefined();
 });

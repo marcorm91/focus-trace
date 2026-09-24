@@ -41,57 +41,107 @@ export function useSidepanelSession({
   refresh: (tabId: number) => Promise<void>;
 } {
   const [tabId, setTabId] = useState<number>();
-  const [session, setSession] = useState<SessionState>(EMPTY_SESSION);
+  const [session, setSessionState] = useState<SessionState>(EMPTY_SESSION);
   const [inspectedTabId] = useState(fixedDevtoolsTabId);
   const selectedTabRef = useRef<number | undefined>(undefined);
   const panelWindowRef = useRef<number | undefined>(undefined);
 
+  const revisionRef = useRef(0);
+  const selectionRef = useRef(0);
+  const mountedRef = useRef(true);
+  const callbacksRef = useRef({ onError, onTabSelected });
+  callbacksRef.current = { onError, onTabSelected };
+  const pendingActivationsRef = useRef(new Map<number, number>());
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      revisionRef.current += 1;
+    };
+  }, []);
+
+  const selection = selectionRef.current;
+  const setSession: Dispatch<SetStateAction<SessionState>> = useCallback((update) => {
+    if (!mountedRef.current || selectedTabRef.current !== tabId || selectionRef.current !== selection) return;
+    // Action callbacks can finish after the user has selected another tab.
+    if (typeof update !== 'function' && update.tabId !== tabId) return;
+    revisionRef.current += 1;
+    setSessionState((current) => {
+      if (selectedTabRef.current !== tabId || selectionRef.current !== selection) return current;
+      const next = typeof update === 'function' ? update(current) : update;
+      return next.tabId === tabId ? next : current;
+    });
+  }, [selection, tabId]);
+
   const refresh = useCallback(async (id: number) => {
-    const state = (await browser.runtime.sendMessage({
-      type: 'FOCUSTRACE_GET_SESSION',
-      tabId: id,
-    } satisfies ExtensionMessage)) as SessionState;
-    if (selectedTabRef.current !== id) return;
-    setSession(state);
+    if (!mountedRef.current || selectedTabRef.current !== id) return;
+    const revision = ++revisionRef.current;
+    try {
+      const state = (await browser.runtime.sendMessage({
+        type: 'FOCUSTRACE_GET_SESSION',
+        tabId: id,
+      } satisfies ExtensionMessage)) as SessionState;
+      if (!mountedRef.current || selectedTabRef.current !== id || revisionRef.current !== revision) return;
+      if (state.tabId === id) setSessionState(state);
+    } catch (reason) {
+      if (mountedRef.current && selectedTabRef.current === id && revisionRef.current === revision) throw reason;
+    }
   }, []);
 
   const selectTab = useCallback(async (id: number) => {
+    selectionRef.current += 1;
+    revisionRef.current += 1;
     selectedTabRef.current = id;
     setTabId(id);
-    setSession({ ...EMPTY_SESSION, tabId: id });
-    onTabSelected();
+    setSessionState({ ...EMPTY_SESSION, tabId: id });
+    callbacksRef.current.onTabSelected();
     await refresh(id);
-  }, [onTabSelected, refresh]);
+  }, [refresh]);
 
   useEffect(() => {
+    let cancelled = false;
+    const reportError = (reason: unknown) => {
+      if (!cancelled) callbacksRef.current.onError(reason);
+    };
     if (inspectedTabId != null) {
-      void selectTab(inspectedTabId).catch(onError);
-      return;
+      void selectTab(inspectedTabId).catch(reportError);
+    } else {
+      void activeTabForCurrentWindow()
+        .then(({ tabId: activeTabId, windowId }) => {
+          if (cancelled) return;
+          panelWindowRef.current = windowId;
+          const latestTabId = pendingActivationsRef.current.get(windowId) ?? activeTabId;
+          pendingActivationsRef.current.clear();
+          return selectTab(latestTabId);
+        })
+        .catch(reportError);
     }
-
-    void activeTabForCurrentWindow()
-      .then(({ tabId: activeTabId, windowId }) => {
-        panelWindowRef.current = windowId;
-        return selectTab(activeTabId);
-      })
-      .catch(onError);
-  }, [inspectedTabId, onError, selectTab]);
+    return () => { cancelled = true; };
+  }, [inspectedTabId, selectTab]);
 
   useEffect(() => {
     if (inspectedTabId != null) return;
 
     const listener = ({ tabId: nextTabId, windowId }: { tabId: number; windowId: number }) => {
+      if (panelWindowRef.current == null) {
+        pendingActivationsRef.current.set(windowId, nextTabId);
+        return;
+      }
       if (!activationBelongsToPanelWindow(panelWindowRef.current, windowId)) return;
-      void selectTab(nextTabId).catch(onError);
+      void selectTab(nextTabId).catch((reason) => {
+        if (mountedRef.current) callbacksRef.current.onError(reason);
+      });
     };
     browser.tabs.onActivated.addListener(listener);
     return () => browser.tabs.onActivated.removeListener(listener);
-  }, [inspectedTabId, onError, selectTab]);
+  }, [inspectedTabId, selectTab]);
 
   useEffect(() => {
     const listener = (message: ExtensionMessage) => {
       if (message.type !== 'FOCUSTRACE_SESSION_UPDATED' || message.state.tabId !== selectedTabRef.current) return;
-      setSession(message.state);
+      revisionRef.current += 1;
+      setSessionState(message.state);
     };
     browser.runtime.onMessage.addListener(listener);
     return () => browser.runtime.onMessage.removeListener(listener);

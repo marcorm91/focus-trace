@@ -305,3 +305,13 @@ Before adding a new persistent feature, define:
 5. how concurrent writes are serialized;
 6. how the user can clear it or how automatic pruning works;
 7. what privacy documentation must change.
+
+### 1.0.9 scan work bounds
+
+Composed traversal enumerates child elements incrementally and stops when the shared traversal budget is exhausted, instead of eagerly allocating complete sibling arrays. Target-size evaluation takes one style/geometry snapshot per eligible target, partitions spacing neighbors by owner document, and discards snapshots after the synchronous evaluation. No long-lived DOM cache or additional permission is introduced.
+
+### Multipage writer and presentation ordering
+
+Multipage scope, scan, page deletion and clear requests from panels are forwarded through `multipage-audit-client.ts` to the background service worker. The storage module serializes entire read/modify/write operations there, including Trace/note updates originating in background handlers. A queue local to each panel would not protect other windows, so panels no longer mutate the durable audit store directly. Print handoffs retain their separate session-storage token lifecycle. Rejected writes do not block subsequent work.
+
+Tab removal is enqueued behind writes already accepted for that tab, preventing those in-flight writes from recreating its session after removal. Sidepanel refreshes use request revisions and selection generations: a broadcast invalidates older reads, a previous visit cannot update a later visit to the same tab, and previous-tab action setters are ignored. Unmount invalidates outstanding reads and removes listeners. Presentation callback changes do not restart selection. Audit presentation likewise ignores older reads and cancels delayed scope decisions when the tab changes. Storage schemas and permissions remain unchanged.

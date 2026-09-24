@@ -52,7 +52,7 @@ describe('FocusTrace DevTools panel contract', () => {
 
     expect(session).toContain("get('focustraceTabId')");
     expect(session).toContain('if (inspectedTabId != null)');
-    expect(session).toContain('void selectTab(inspectedTabId).catch(onError)');
+    // Tab pinning and lifecycle behavior are executed in sidepanel-session-lifecycle.test.ts.
     expect(session).toContain('if (inspectedTabId != null) return;');
 
     expect(css).toContain("html[data-ft-surface='devtools'] .app-shell");
