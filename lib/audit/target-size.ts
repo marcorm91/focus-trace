@@ -81,6 +81,7 @@ interface TargetSnapshot {
   element: Element;
   rect: RectSnapshot;
   sizeKnowledge: SizeKnowledge;
+  style: CSSStyleDeclaration;
 }
 
 function normalizedRole(element: Element): string | null {
@@ -100,7 +101,11 @@ function hasPointerSignal(element: Element): boolean {
   return POINTER_SIGNAL_ATTRIBUTES.some((attribute) => element.hasAttribute(attribute));
 }
 
-function isSemanticPointerTarget(element: Element): boolean {
+function computedStyleFor(element: Element): CSSStyleDeclaration {
+  return element.ownerDocument.defaultView?.getComputedStyle(element) ?? getComputedStyle(element);
+}
+
+function isSemanticPointerTarget(element: Element, readStyle?: () => CSSStyleDeclaration): boolean {
   if (NATIVE_POINTER_TAGS.has(element.tagName)) {
     if ((element.tagName === 'A' || element.tagName === 'AREA') && !element.hasAttribute('href')) return false;
     if (element.tagName === 'INPUT' && element.getAttribute('type')?.trim().toLowerCase() === 'hidden') return false;
@@ -112,7 +117,7 @@ function isSemanticPointerTarget(element: Element): boolean {
 
   const tabindex = Number.parseInt(element.getAttribute('tabindex') ?? '', 10);
   if (Number.isFinite(tabindex) && tabindex >= 0) {
-    return getComputedStyle(element).cursor === 'pointer';
+    return (readStyle?.() ?? computedStyleFor(element)).cursor === 'pointer';
   }
   return false;
 }
@@ -134,13 +139,10 @@ function rectSnapshot(element: Element): RectSnapshot | undefined {
   };
 }
 
-function isRenderedPointerTarget(element: Element): boolean {
-  if (isDisabledTarget(element)) return false;
-  if (element.closest('[inert]')) return false;
-  const style = getComputedStyle(element);
+function isRenderedPointerTarget(style: CSSStyleDeclaration): boolean {
   if (style.display === 'none' || style.visibility === 'hidden' || style.visibility === 'collapse') return false;
   if (style.pointerEvents === 'none') return false;
-  return rectSnapshot(element) != null;
+  return true;
 }
 
 function borderRadiusValues(style: CSSStyleDeclaration): number[] {
@@ -153,8 +155,7 @@ function borderRadiusValues(style: CSSStyleDeclaration): number[] {
   ].flatMap((value) => value.split(/\s+/).map((part) => Number.parseFloat(part)).filter(Number.isFinite));
 }
 
-function hasNonRectangularAuthorShape(element: Element, rect: RectSnapshot): boolean {
-  const style = getComputedStyle(element);
+function hasNonRectangularAuthorShape(element: Element, rect: RectSnapshot, style: CSSStyleDeclaration): boolean {
   const clipPath = style.clipPath || style.getPropertyValue('-webkit-clip-path');
   if (clipPath && clipPath !== 'none') return true;
   if (style.transform && style.transform !== 'none') return true;
@@ -170,17 +171,28 @@ function hasNonRectangularAuthorShape(element: Element, rect: RectSnapshot): boo
   return Math.min(rect.width, rect.height) < ROUNDED_RECT_SAFE_MINIMUM_CSS_PX;
 }
 
-function sizeKnowledgeFor(element: Element, rect: RectSnapshot): SizeKnowledge {
+function sizeKnowledgeFor(element: Element, rect: RectSnapshot, style: CSSStyleDeclaration): SizeKnowledge {
   if (rect.width < TARGET_SIZE_MINIMUM_CSS_PX || rect.height < TARGET_SIZE_MINIMUM_CSS_PX) return 'undersized';
-  if (!hasNonRectangularAuthorShape(element, rect)) return 'meets';
+  if (!hasNonRectangularAuthorShape(element, rect, style)) return 'meets';
   return 'unknown';
 }
 
-function targetElements(root: ScanRoot): Element[] {
-  const candidates = scopedElements(root, POINTER_TARGET_SELECTOR);
-  return candidates.filter((element, index) => candidates.indexOf(element) === index)
-    .filter(isSemanticPointerTarget)
-    .filter(isRenderedPointerTarget);
+function targetSnapshots(root: ScanRoot): TargetSnapshot[] {
+  const targets: TargetSnapshot[] = [];
+  // The composed traversal already deduplicates elements. Read each target's
+  // style and geometry once, using its own browsing context.
+  for (const element of scopedElements(root, POINTER_TARGET_SELECTOR)) {
+    let cachedStyle: CSSStyleDeclaration | undefined;
+    const readStyle = () => cachedStyle ??= computedStyleFor(element);
+    if (!isSemanticPointerTarget(element, readStyle)) continue;
+    if (isDisabledTarget(element) || element.closest('[inert]')) continue;
+    const style = readStyle();
+    if (!isRenderedPointerTarget(style)) continue;
+    const rect = rectSnapshot(element);
+    if (!rect) continue;
+    targets.push({ element, rect, style, sizeKnowledge: sizeKnowledgeFor(element, rect, style) });
+  }
+  return targets;
 }
 
 function hasNonTargetSentenceText(element: Element): boolean {
@@ -189,13 +201,12 @@ function hasNonTargetSentenceText(element: Element): boolean {
   for (const node of paragraph.childNodes) {
     if (node === element) continue;
     if (node.nodeType === Node.TEXT_NODE && node.textContent?.trim()) return true;
-    if (node instanceof Element && !isSemanticPointerTarget(node) && node.textContent?.trim()) return true;
+    if (node.nodeType === Node.ELEMENT_NODE && !isSemanticPointerTarget(node as Element) && node.textContent?.trim()) return true;
   }
   return false;
 }
 
-function hasInlineException(element: Element): boolean {
-  const style = getComputedStyle(element);
+function hasInlineException(element: Element, style: CSSStyleDeclaration): boolean {
   return style.display === 'inline' && hasNonTargetSentenceText(element);
 }
 
@@ -239,18 +250,22 @@ function rounded(value: number): string {
 export function evaluateTargetSize(root: ScanRoot = document): TargetSizeEvaluation[] {
   // Spacing is document-contextual: when a component is scanned, targets just
   // outside the selected component can still invalidate its spacing exception.
-  const allTargets = targetElements(document).map((element): TargetSnapshot | undefined => {
-    const rect = rectSnapshot(element);
-    if (!rect) return undefined;
-    return { element, rect, sizeKnowledge: sizeKnowledgeFor(element, rect) };
-  }).filter((entry): entry is TargetSnapshot => entry != null);
-
-  const subjectSet = new Set(targetElements(root));
-  return allTargets.filter(({ element }) => subjectSet.has(element)).map((subject) => {
-    const { element, rect } = subject;
+  const ownerDocument = root.nodeType === 9 ? root as Document : root.ownerDocument!;
+  const allTargets = targetSnapshots(ownerDocument);
+  // DOMRects are viewport-relative. Targets in different frame documents must
+  // never be compared as if they shared the same coordinate system.
+  const targetsByDocument = new Map<Document, TargetSnapshot[]>();
+  for (const target of allTargets) {
+    const documentTargets = targetsByDocument.get(target.element.ownerDocument) ?? [];
+    documentTargets.push(target);
+    targetsByDocument.set(target.element.ownerDocument, documentTargets);
+  }
+  const subjectSet = root === ownerDocument ? undefined : new Set(scopedElements(root, POINTER_TARGET_SELECTOR));
+  return allTargets.filter(({ element }) => !subjectSet || subjectSet.has(element)).map((subject) => {
+    const { element, rect, style } = subject;
     const size = `${rounded(rect.width)} × ${rounded(rect.height)} CSS px`;
 
-    if (hasInlineException(element)) {
+    if (hasInlineException(element, style)) {
       return {
         element,
         status: 'pass',
@@ -272,7 +287,7 @@ export function evaluateTargetSize(root: ScanRoot = document): TargetSizeEvaluat
       };
     }
 
-    const conflict = spacingConflict(subject, allTargets);
+    const conflict = spacingConflict(subject, targetsByDocument.get(element.ownerDocument)!);
     if (!conflict) {
       return {
         element,

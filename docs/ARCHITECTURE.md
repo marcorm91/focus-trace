@@ -305,3 +305,7 @@ Before adding a new persistent feature, define:
 5. how concurrent writes are serialized;
 6. how the user can clear it or how automatic pruning works;
 7. what privacy documentation must change.
+
+### 1.0.9 scan work bounds
+
+Composed traversal enumerates child elements incrementally and stops when the shared traversal budget is exhausted, instead of eagerly allocating complete sibling arrays. Target-size evaluation takes one style/geometry snapshot per eligible target, partitions spacing neighbors by owner document, and discards snapshots after the synchronous evaluation. No long-lived DOM cache or additional permission is introduced.

@@ -2,6 +2,14 @@
 
 All notable FocusTrace release changes are summarized here. Detailed release notes remain under `docs/changelog/RELEASE_NOTES_<version>.md`.
 
+## 1.0.9
+
+- Fix cross-document pointer-target spacing and reuse per-evaluation geometry/style snapshots.
+- Stop composed sibling traversal at its shared budget without eager child-array allocation.
+- Correct offscreen contrast backdrop coordinates and downgrade unresolved targets to REVIEW.
+- Correct Spanish evidence for style and local-search budget exhaustion.
+- Preserve existing Firefox limits, iframe preferences, permissions and stored data formats.
+
 ## 1.0.8
 
 ### Fixed

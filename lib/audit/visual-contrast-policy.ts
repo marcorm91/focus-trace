@@ -100,22 +100,23 @@ function paintedBackground(element: Element, context: BackdropScanContext): bool
   return painted;
 }
 
-function targetsFor(issue: ScanIssue, document: Document): Element[] {
+function targetsFor(issue: ScanIssue, document: Document): Element[] | undefined {
   const targets: Element[] = [];
   const seen = new Set<Element>();
   for (const selector of issue.targets) {
-    if (!selector) continue;
+    if (!selector) return undefined;
     try {
       const element = resolveComposedSelector(selector, document);
-      if (element && !seen.has(element)) {
+      if (!element) return undefined;
+      if (!seen.has(element)) {
         seen.add(element);
         targets.push(element);
       }
     } catch {
-      // Invalid or inaccessible composed selectors are not resolvable targets.
+      return undefined;
     }
   }
-  return targets;
+  return targets.length ? targets : undefined;
 }
 
 function coversPoint(rect: DOMRect, x: number, y: number): boolean {
@@ -336,14 +337,11 @@ function stackedBackdropReason(
     ] as const;
 
     for (const [horizontal, vertical] of points) {
-      const x = Math.min(
-        Math.max(rect.left + rect.width * horizontal, 0),
-        Math.max(0, viewportWidth - 1),
-      );
-      const y = Math.min(
-        Math.max(rect.top + rect.height * vertical, 0),
-        Math.max(0, viewportHeight - 1),
-      );
+      const x = rect.left + rect.width * horizontal;
+      const y = rect.top + rect.height * vertical;
+      // Hit testing is viewport-relative: clamping offscreen points samples
+      // unrelated pixels at the viewport edge.
+      if (x < 0 || y < 0 || x >= viewportWidth || y >= viewportHeight) continue;
       const stack = document.elementsFromPoint(x, y);
       const ownIndex = stack.findIndex((candidate) => candidate === element || element.contains(candidate));
       if (ownIndex < 0) continue;
@@ -358,12 +356,8 @@ function stackedBackdropReason(
     }
   }
 
-  const x = hasGeometry
-    ? Math.min(Math.max(rect.left + rect.width / 2, 0), Math.max(0, viewportWidth - 1))
-    : 0;
-  const y = hasGeometry
-    ? Math.min(Math.max(rect.top + rect.height / 2, 0), Math.max(0, viewportHeight - 1))
-    : 0;
+  const x = hasGeometry ? rect.left + rect.width / 2 : 0;
+  const y = hasGeometry ? rect.top + rect.height / 2 : 0;
 
   const pseudoReason = generatedPseudoBackdropReason(element, context);
   if (pseudoReason) return pseudoReason;
@@ -397,10 +391,15 @@ export function downgradeUncertainStackingContrast(
     if (!budgetExhausted) {
       checked += 1;
       context.localTruncated = false;
-      for (const element of targetsFor(issue, document)) {
+      const targets = targetsFor(issue, document);
+      if (!targets) {
+        reason = 'The contrast target could not be resolved for backdrop verification. Review the current element and composed pixels manually.';
+      }
+      for (const element of targets ?? []) {
         reason = stackedBackdropReason(element, context);
         if (reason || context.exhausted) break;
       }
+      if (reason === LOCAL_SEARCH_BUDGET_REASON) budgetExhausted = true;
       if (!reason && context.exhausted) {
         budgetExhausted = true;
         reason = STYLE_BUDGET_REASON;
@@ -424,7 +423,7 @@ export function downgradeUncertainStackingContrast(
       ...(contrast ? { contrast } : {}),
       description: budgetExhausted
         ? 'FocusTrace measured a contrast candidate, but the backdrop verification budget was exhausted. Review the actual composed pixels before treating this as a WCAG failure.'
-        : 'FocusTrace measured a contrast candidate, but a separately stacked painted backdrop makes the effective rendered background ambiguous. Review the actual composed pixels before treating this as a WCAG failure.',
+        : 'FocusTrace measured a contrast candidate, but the effective rendered background could not be verified safely. Review the actual composed pixels before treating this as a WCAG failure.',
       evidence: issue.evidence ? `${issue.evidence} ${reason}` : reason,
     });
 

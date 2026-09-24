@@ -1,6 +1,6 @@
 // @vitest-environment jsdom
 
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 import { runFocusTraceScan } from '../lib/audit/scan';
 import { evaluateTargetSize, TARGET_SIZE_MINIMUM_CSS_PX } from '../lib/audit/target-size';
 import { remediationForIssue } from '../lib/site-audit/remediation';
@@ -33,7 +33,38 @@ function setRect(selector: string, left: number, top: number, width: number, hei
   return element;
 }
 
+afterEach(() => vi.restoreAllMocks());
+
 describe('WCAG 2.5.8 target size', () => {
+  it('measures each target once and refreshes geometry for the next evaluation', () => {
+    render('<button id="one">One</button><button id="two">Two</button>');
+    const one = setRect('#one', 0, 0, 20, 20);
+    const two = setRect('#two', 24, 0, 20, 20);
+    const style = vi.spyOn(window, 'getComputedStyle');
+    expect(evaluateTargetSize().every((entry) => entry.status === 'pass')).toBe(true);
+    expect(one.getBoundingClientRect).toHaveBeenCalledTimes(1);
+    expect(two.getBoundingClientRect).toHaveBeenCalledTimes(1);
+    expect(style).toHaveBeenCalledTimes(2);
+    vi.mocked(two.getBoundingClientRect).mockReturnValue(rect(22, 0, 20, 20));
+    expect(evaluateTargetSize().every((entry) => entry.status === 'review')).toBe(true);
+  });
+
+  it('keeps spacing neighbors within their frame coordinate system', () => {
+    render('<button id="outer">Outer</button><iframe id="frame"></iframe>');
+    setRect('#outer', 0, 0, 20, 20);
+    const nested = (document.querySelector('#frame') as HTMLIFrameElement).contentDocument!;
+    nested.body.innerHTML = '<button id="inner">Inner</button><button id="neighbor">Neighbor</button>';
+    const inner = nested.querySelector('#inner')!;
+    const neighbor = nested.querySelector('#neighbor')!;
+    vi.spyOn(inner, 'getBoundingClientRect').mockReturnValue(rect(0, 0, 20, 20));
+    vi.spyOn(neighbor, 'getBoundingClientRect').mockReturnValue(rect(22, 0, 20, 20));
+    const evaluations = evaluateTargetSize();
+    expect(evaluations.find((entry) => entry.element.id === 'outer')).toMatchObject({ status: 'pass' });
+    expect(evaluations.find((entry) => entry.element === inner)).toMatchObject({ status: 'review', neighbor });
+    expect(evaluateTargetSize(nested)).toHaveLength(2);
+    expect(evaluateTargetSize(inner)).toEqual([expect.objectContaining({ element: inner, neighbor, status: 'review' })]);
+  });
+
   it('uses the WCAG 2.2 minimum of 24 CSS pixels', () => {
     expect(TARGET_SIZE_MINIMUM_CSS_PX).toBe(24);
   });

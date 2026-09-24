@@ -678,3 +678,9 @@ All four remain `guided-manual` / `automated: false` and remain outside automate
 Where FocusTrace already observes relevant runtime behavior, guided evidence reuses that stream with pattern-specific filtering. Tabs reuse tab activation findings; disclosure reuses expanded-state evidence; menu reuses open-focus/Escape observations; combobox/listbox, tree and grid reuse active-descendant, selection, roving-tabindex and arrow-navigation observations. Carousel and tooltip retain bounded keyboard/focus/change observations. Runtime evidence can support a manual conclusion but never selects the answer automatically.
 
 The acceptance fixture catalog contains accessible, failure and review/variation scenarios for all eight patterns. These fixtures are test-only and are not shipped as an APG conformance engine. Machine-readable guided declarations remain `coverage: "guided-manual"`, `automated: false`, with the APG set additionally marked `guidance: "apg-informative"`.
+
+### 1.0.9 verification corrections
+
+`FT-WCAG-012` compares target spacing only among elements in the same owner document: iframe viewport coordinates are not comparable to parent-document coordinates. Component scans still include neighbors outside the selected component in the same document. Style and geometry snapshots live only for one evaluation.
+
+`FT-WCAG-010` and `FT-WCAG-011` use unclamped coordinates for structural backdrop overlap checks and only hit-test points inside the owning viewport. Missing or partially unresolved target lists become REVIEW, with unverifiable ratio/background removed and rule counters adjusted. Global style, candidate and local structural budgets remain unchanged and are distinguished in Spanish evidence.

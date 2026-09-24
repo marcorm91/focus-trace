@@ -1,5 +1,5 @@
 // @vitest-environment jsdom
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { composedSelectorFor, resolveComposedSelector, traverseComposedTree } from '../lib/audit/composed-tree';
 import { runFocusTraceScan } from '../lib/audit/scan';
 import { CLOSED_SHADOW_HOST_EVENT, CLOSED_SHADOW_REQUEST_EVENT } from '../shared/nested-context-bridge';
@@ -10,6 +10,31 @@ function render(): HTMLElement {
 }
 
 describe('composed audit contexts (#236)', () => {
+  it('stops enumerating siblings as soon as the shared element budget is exceeded', () => {
+    document.body.innerHTML = '<main>' + '<span></span>'.repeat(2000) + '</main>';
+    const root = document.querySelector('main')!;
+    const nextSibling = vi.spyOn(Element.prototype, 'nextElementSibling', 'get');
+    const nativeIterator = HTMLCollection.prototype[Symbol.iterator];
+    let collectionElementsRead = 0;
+    const collectionIterator = vi.spyOn(HTMLCollection.prototype, Symbol.iterator).mockImplementation(function* (this: HTMLCollection) {
+      for (const element of nativeIterator.call(this)) {
+        collectionElementsRead += 1;
+        yield element;
+      }
+      return undefined;
+    });
+    try {
+      const result = traverseComposedTree(root, { maxElements: 5 });
+      expect(result.elements).toHaveLength(5);
+      expect(result.budgetExceeded).toBe(true);
+      expect(result.coverageLimits).toEqual([expect.objectContaining({ kind: 'budget' })]);
+      expect(nextSibling.mock.calls.length + collectionElementsRead).toBeLessThanOrEqual(5);
+    } finally {
+      nextSibling.mockRestore();
+      collectionIterator.mockRestore();
+    }
+  });
+
   it('traverses open roots and assigned slots exactly once', () => {
     const host = render();
     host.attachShadow({ mode: 'open' }).innerHTML = '<slot name="action"></slot><button id="inside">Inside</button>';
