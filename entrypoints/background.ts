@@ -19,6 +19,10 @@ import {
   syncStoredFindingReviewNote,
 } from '../lib/audit/finding-review-storage';
 import {
+  clearMultipageAudits,
+  deleteMultipageAuditPage,
+  recordMultipageAuditScan,
+  recordMultipageAuditScope,
   removeStoredMultipageAuditTraceInteraction,
   updateStoredMultipageAuditScan,
   updateStoredMultipageAuditTrace,
@@ -250,6 +254,13 @@ export default defineBackground(() => {
   configurePanelAction();
 
   browser.runtime.onMessage.addListener((message: ExtensionMessage | FocusVisibleCaptureMessage, sender) => {
+    if (message.type === 'FOCUSTRACE_AUDIT_SCOPE') return recordMultipageAuditScope(message.plan);
+    if (message.type === 'FOCUSTRACE_AUDIT_SCAN') {
+      return recordMultipageAuditScan(message.scan, message.plan, message.visualEvidence, message.traceEvents);
+    }
+    if (message.type === 'FOCUSTRACE_AUDIT_DELETE_PAGE') return deleteMultipageAuditPage(message.auditId, message.pageKey);
+    if (message.type === 'FOCUSTRACE_AUDIT_CLEAR') return clearMultipageAudits();
+
     if (message.type === 'FOCUSTRACE_CAPTURE_VIEWPORT') {
       const tab = sender.tab;
       if (tab?.id == null) return Promise.resolve(undefined);
@@ -453,7 +464,9 @@ export default defineBackground(() => {
   });
 
   browser.tabs.onRemoved.addListener((tabId) => {
-    tabWriteQueues.delete(tabId);
-    void browser.storage.session.remove(keyForTab(tabId));
+    // Remove after already accepted writes finish; deleting immediately allows
+    // an in-flight write to recreate the closed tab's session.
+    void serializeTabWrite(tabId, () => browser.storage.session.remove(keyForTab(tabId)))
+      .catch(() => undefined);
   });
 });

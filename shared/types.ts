@@ -1,3 +1,4 @@
+import type { AuditAnalysisPlan, AuditPageVisualEvidence } from '../lib/audit/multipage-audit';
 import type { ScanPreferences } from './scan-preferences';
 
 export type Severity = 'critical' | 'serious' | 'moderate' | 'minor' | 'info';
@@ -469,6 +470,10 @@ export interface SaveFindingReviewStateResponse {
 }
 
 export type ExtensionMessage =
+  | { type: 'FOCUSTRACE_AUDIT_SCOPE'; plan: AuditAnalysisPlan }
+  | { type: 'FOCUSTRACE_AUDIT_SCAN'; scan: ScanResult; plan: AuditAnalysisPlan; visualEvidence?: AuditPageVisualEvidence; traceEvents: RuntimeEvent[] }
+  | { type: 'FOCUSTRACE_AUDIT_DELETE_PAGE'; auditId: string; pageKey: string }
+  | { type: 'FOCUSTRACE_AUDIT_CLEAR' }
   | { type: 'FOCUSTRACE_EVENT'; event: RuntimeEvent }
   | { type: 'FOCUSTRACE_EVENTS'; events: RuntimeEvent[] }
   | { type: 'FOCUSTRACE_GET_CONTENT_STATE' }

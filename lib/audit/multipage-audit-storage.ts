@@ -31,6 +31,16 @@ const MAX_VISUALS_PER_PAGE = 3;
 const MAX_VISUAL_DATA_CHARS = 3_000_000;
 const MAX_AUDIT_STORE_CHARS = 4_500_000;
 
+// All production mutations run in the background service worker. Serialize the
+// entire read/modify/write operation, including clears, across tabs and panels.
+let auditWriteQueue: Promise<unknown> = Promise.resolve();
+
+function serializeAuditWrite<T>(work: () => Promise<T>): Promise<T> {
+  const next = auditWriteQueue.catch(() => undefined).then(work);
+  auditWriteQueue = next;
+  return next;
+}
+
 export interface AuditPrintEvidence {
   audit: AccessibilityAudit;
 }
@@ -190,7 +200,7 @@ export async function loadMultipageAuditStore(): Promise<MultipageAuditStore> {
   return normalizeStore(stored[MULTIPAGE_AUDIT_STORAGE_KEY]);
 }
 
-export async function saveMultipageAuditStore(store: MultipageAuditStore): Promise<void> {
+async function saveMultipageAuditStore(store: MultipageAuditStore): Promise<void> {
   const bounded = boundMultipageAuditStore(store);
   try {
     await browser.storage.local.set({
@@ -223,9 +233,11 @@ function auditId(): string {
 }
 
 export async function recordMultipageAuditScope(plan: AuditAnalysisPlan): Promise<MultipageAuditStore> {
-  const current = await loadMultipageAuditStore();
-  await saveMultipageAuditStore(applyAuditScope(current, plan, auditId(), Date.now()));
-  return loadMultipageAuditStore();
+  return serializeAuditWrite(async () => {
+    const current = await loadMultipageAuditStore();
+    await saveMultipageAuditStore(applyAuditScope(current, plan, auditId(), Date.now()));
+    return loadMultipageAuditStore();
+  });
 }
 
 export async function recordMultipageAuditScan(
@@ -234,53 +246,65 @@ export async function recordMultipageAuditScan(
   visualEvidence?: AuditPageVisualEvidence,
   traceEvents: RuntimeEvent[] = [],
 ): Promise<MultipageAuditStore> {
-  const current = await loadMultipageAuditStore();
-  const activeProfile = await loadActiveAuditProfile();
-  const reviewedScan = await applyStoredFindingReviews(scan);
-  const preparedScan = profileSupportsScope(activeProfile, 'site')
-    ? applyAuditProfile(reviewedScan, activeProfile, 'site')
-    : reviewedScan;
-  const next = applyAuditAnalysis(current, preparedScan, plan, auditId(), visualEvidence, traceEvents);
-  await saveMultipageAuditStore(next);
-  return loadMultipageAuditStore();
+  return serializeAuditWrite(async () => {
+    const current = await loadMultipageAuditStore();
+    const activeProfile = await loadActiveAuditProfile();
+    const reviewedScan = await applyStoredFindingReviews(scan);
+    const preparedScan = profileSupportsScope(activeProfile, 'site')
+      ? applyAuditProfile(reviewedScan, activeProfile, 'site')
+      : reviewedScan;
+    const next = applyAuditAnalysis(current, preparedScan, plan, auditId(), visualEvidence, traceEvents);
+    await saveMultipageAuditStore(next);
+    return loadMultipageAuditStore();
+  });
 }
 
 export async function updateStoredMultipageAuditTrace(events: RuntimeEvent[]): Promise<boolean> {
-  if (!events.length) return false;
-  const current = await loadMultipageAuditStore();
-  const next = updateAuditTraceEvents(current, events);
-  if (next === current) return false;
-  await saveMultipageAuditStore(next);
-  return true;
+  return serializeAuditWrite(async () => {
+    if (!events.length) return false;
+    const current = await loadMultipageAuditStore();
+    const next = updateAuditTraceEvents(current, events);
+    if (next === current) return false;
+    await saveMultipageAuditStore(next);
+    return true;
+  });
 }
 
 export async function removeStoredMultipageAuditTraceInteraction(interactionId: string): Promise<boolean> {
-  const current = await loadMultipageAuditStore();
-  const next = removeAuditTraceInteraction(current, interactionId);
-  if (next === current) return false;
-  await saveMultipageAuditStore(next);
-  return true;
+  return serializeAuditWrite(async () => {
+    const current = await loadMultipageAuditStore();
+    const next = removeAuditTraceInteraction(current, interactionId);
+    if (next === current) return false;
+    await saveMultipageAuditStore(next);
+    return true;
+  });
 }
 
 export async function deleteMultipageAuditPage(auditId: string, pageKey: string): Promise<MultipageAuditStore> {
-  const current = await loadMultipageAuditStore();
-  const next = removeAuditPage(current, auditId, pageKey);
-  await saveMultipageAuditStore(next);
-  return loadMultipageAuditStore();
+  return serializeAuditWrite(async () => {
+    const current = await loadMultipageAuditStore();
+    const next = removeAuditPage(current, auditId, pageKey);
+    await saveMultipageAuditStore(next);
+    return loadMultipageAuditStore();
+  });
 }
 
 export async function updateStoredMultipageAuditScan(scan: ScanResult): Promise<boolean> {
-  const current = await loadMultipageAuditStore();
-  const next = updateAuditScan(current, scan);
-  if (next === current) return false;
-  await saveMultipageAuditStore(next);
-  return true;
+  return serializeAuditWrite(async () => {
+    const current = await loadMultipageAuditStore();
+    const next = updateAuditScan(current, scan);
+    if (next === current) return false;
+    await saveMultipageAuditStore(next);
+    return true;
+  });
 }
 
 export async function clearMultipageAudits(): Promise<MultipageAuditStore> {
-  const next = emptyMultipageAuditStore();
-  await browser.storage.local.remove(MULTIPAGE_AUDIT_STORAGE_KEY);
-  return next;
+  return serializeAuditWrite(async () => {
+    const next = emptyMultipageAuditStore();
+    await browser.storage.local.remove(MULTIPAGE_AUDIT_STORAGE_KEY);
+    return next;
+  });
 }
 
 export async function storeAuditPrintEvidence(
