@@ -39,9 +39,9 @@
       "authority": "WHATWG",
       "url": "https://html.spec.whatwg.org/multipage/",
       "role": "normative",
-      "contentHash": "7cef0dd44431f96d5222a779a0caeec3cd217034be98dbf5cb3baea80bf61916",
-      "etag": "W/\"6aa01a84-25c76\"",
-      "lastModified": "Tue, 08 Sep 2026 14:24:04 GMT"
+      "contentHash": "6e9428f5e1843d10e9040a6fc100726a00f28957b0b21016a7eded14c14bcf4c",
+      "etag": "W/\"6aa81b44-25c77\"",
+      "lastModified": "Mon, 14 Sep 2026 16:05:24 GMT"
     },
     {
       "id": "html-aam",
@@ -58,9 +58,9 @@
       "authority": "WHATWG",
       "url": "https://html.spec.whatwg.org/multipage/obsolete.html",
       "role": "normative",
-      "contentHash": "973ae5b6f7f26b1202900fc7f38042c073189b898833b2e6bd4b62c393a15d69",
-      "etag": "W/\"6aa01a85-2abbb\"",
-      "lastModified": "Tue, 08 Sep 2026 14:24:05 GMT"
+      "contentHash": "f5a716a419747e0c3569c6de08ef658de26a5fb258c4dcc658853734be28e724",
+      "etag": "W/\"6aa81b46-2abbc\"",
+      "lastModified": "Mon, 14 Sep 2026 16:05:26 GMT"
     },
     {
       "id": "iana-language-subtags",
