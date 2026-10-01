@@ -4,7 +4,7 @@
     "authority": "IANA",
     "url": "https://www.iana.org/assignments/language-subtag-registry/language-subtag-registry",
     "fallbackMirror": "https://raw.githubusercontent.com/Masterain98/IANA-BCP47/main/src/iana_bcp47/language-subtag-registry.txt",
-    "fileDate": "2026-08-08"
+    "fileDate": "2026-09-17"
   },
   "summary": {
     "languages": 8795,
